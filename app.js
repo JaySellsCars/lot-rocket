@@ -2,7 +2,8 @@
 // Lot Rocket - simple listing booster server
 
 const express = require("express");
-const fetch = require("node-fetch");
+// Using built-in fetch in Node
+
 const cheerio = require("cheerio");
 
 const app = express();
