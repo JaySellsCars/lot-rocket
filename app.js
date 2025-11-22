@@ -1,7 +1,8 @@
 // app.js
 // Lot Rocket – Social Media Post Kit for Automotive Salespeople
-// Phase 2.2: title cleanup, condition handling, EV/PHEV awareness, tighter hashtags,
-// plus all Phase 2 features (strong copy, blocked-site detection, price cleanup, certified boost).
+// Phase 2.3: mobile polish, copy-all button, plus Phase 2.2 features
+// (title cleanup, condition handling, EV/PHEV awareness, tighter hashtags,
+// strong copy, blocked-site detection, price cleanup, certified boost).
 
 const express = require("express");
 const cheerio = require("cheerio");
@@ -42,8 +43,13 @@ app.get("/", (req, res) => {
     }
     button:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(255, 50, 50, 0.6); }
     button:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;
-            padding: 5px 10px; border-radius: 999px; background: #181818; color: #ccc; }
+
+    .primary-btn { width: 100%; justify-content: center; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;
+      padding: 5px 10px; border-radius: 999px; background: #181818; color: #ccc;
+    }
     .copy-box {
       background: #050505; border-radius: 12px; padding: 12px;
       border: 1px solid #333; white-space: pre-wrap;
@@ -65,6 +71,33 @@ app.get("/", (req, res) => {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
     }
+
+    .copy-all-btn {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 16px;
+      width: min(480px, calc(100% - 32px));
+      z-index: 50;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      body { font-size: 16px; }
+      h1 { font-size: 1.6rem; }
+      .app { padding: 24px 12px 96px; }
+      .card { padding: 16px; }
+      input[type="text"] { font-size: 1rem; padding: 12px 14px; }
+      button { padding: 12px 18px; font-size: 0.95rem; }
+    }
+
+    @media (min-width: 769px) {
+      .copy-all-btn { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .copy-all-btn { display: inline-flex; }
+    }
   </style>
 </head>
 <body>
@@ -76,7 +109,7 @@ app.get("/", (req, res) => {
       <form id="lotrocket-form">
         <label for="url">Dealer vehicle URL</label>
         <input id="url" type="text" placeholder="Paste a full link from a vehicle details page" />
-        <button type="submit">🚀 Boost This Listing</button>
+        <button type="submit" class="primary-btn">🚀 Boost This Listing</button>
       </form>
       <div id="status" class="small"></div>
       <div id="vehicle-summary" class="small" style="margin-top:6px; color:#ccc;"></div>
@@ -86,7 +119,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">📘 Facebook Post</div>
-          <button type="button" data-copy-target="fb-output">📋 Copy</button>
+          <button type="button" class="copy-btn" data-copy-target="fb-output">📋 Copy</button>
         </div>
         <div id="fb-output" class="copy-box">Your Facebook post will appear here.</div>
       </div>
@@ -94,7 +127,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">📸 Instagram Caption</div>
-          <button type="button" data-copy-target="ig-output">📋 Copy</button>
+          <button type="button" class="copy-btn" data-copy-target="ig-output">📋 Copy</button>
         </div>
         <div id="ig-output" class="copy-box">Your Instagram caption will appear here.</div>
       </div>
@@ -102,7 +135,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">🎵 TikTok Caption</div>
-          <button type="button" data-copy-target="tt-output">📋 Copy</button>
+          <button type="button" class="copy-btn" data-copy-target="tt-output">📋 Copy</button>
         </div>
         <div id="tt-output" class="copy-box">Your TikTok caption will appear here.</div>
       </div>
@@ -110,7 +143,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">💼 LinkedIn Post</div>
-          <button type="button" data-copy-target="li-output">📋 Copy</button>
+          <button type="button" class="copy-btn" data-copy-target="li-output">📋 Copy</button>
         </div>
         <div id="li-output" class="copy-box">Your LinkedIn post will appear here.</div>
       </div>
@@ -118,7 +151,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">🐦 X / Twitter Post</div>
-          <button type="button" data-copy-target="tw-output">📋 Copy</button>
+          <button type="button" class="copy-btn" data-copy-target="tw-output">📋 Copy</button>
         </div>
         <div id="tw-output" class="copy-box">Your X/Twitter post will appear here.</div>
       </div>
@@ -126,7 +159,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">💬 Text / DM Blurb</div>
-          <button type="button" data-copy-target="sms-output">📋 Copy</button>
+          <button type="button" class="copy-btn" data-copy-target="sms-output">📋 Copy</button>
         </div>
         <div id="sms-output" class="copy-box">Your short message will appear here.</div>
       </div>
@@ -135,7 +168,7 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="card-header">
         <div class="pill">🛒 Facebook Marketplace Description</div>
-        <button type="button" data-copy-target="mp-output">📋 Copy</button>
+        <button type="button" class="copy-btn" data-copy-target="mp-output">📋 Copy</button>
       </div>
       <div id="mp-output" class="copy-box">Your Facebook Marketplace description will appear here.</div>
       <p class="small">
@@ -147,13 +180,15 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="card-header">
         <div class="pill">🏷 Hashtags</div>
-        <button type="button" data-copy-target="hashtags-output">📋 Copy</button>
+        <button type="button" class="copy-btn" data-copy-target="hashtags-output">📋 Copy</button>
       </div>
       <div id="hashtags-output" class="copy-box">Hashtags will appear here.</div>
       <p class="small">Use these on Instagram, TikTok, and X. You can always add store-specific tags or location tags.</p>
     </div>
 
     <p class="small">Prototype – images and automatic video creation will come in a later version. For now, use this as your “done-for-you” social copy engine.</p>
+
+    <button type="button" id="copy-all-btn" class="copy-all-btn">📋 Copy All Posts</button>
   </div>
 
   <script>
@@ -169,6 +204,14 @@ app.get("/", (req, res) => {
     const smsEl = document.getElementById("sms-output");
     const mpEl = document.getElementById("mp-output");
     const hashtagsEl = document.getElementById("hashtags-output");
+    const copyAllBtn = document.getElementById("copy-all-btn");
+
+    window.addEventListener("load", () => {
+      const urlInput = document.getElementById("url");
+      if (urlInput) {
+        try { urlInput.focus(); } catch (e) {}
+      }
+    });
 
     async function handleCopy(targetId) {
       const el = document.getElementById(targetId);
@@ -187,12 +230,53 @@ app.get("/", (req, res) => {
       }
     }
 
+    async function handleCopyAll() {
+      const blocks = [
+        { label: "Facebook", el: fbEl },
+        { label: "Instagram", el: igEl },
+        { label: "TikTok", el: ttEl },
+        { label: "LinkedIn", el: liEl },
+        { label: "X / Twitter", el: twEl },
+        { label: "Text / DM", el: smsEl },
+        { label: "Marketplace", el: mpEl },
+        { label: "Hashtags", el: hashtagsEl }
+      ];
+
+      const chunks = [];
+      blocks.forEach(b => {
+        if (!b.el) return;
+        const text = (b.el.textContent || "").trim();
+        if (!text) return;
+        chunks.push(\`=== \${b.label} ===\\n\${text}\`);
+      });
+
+      if (!chunks.length) {
+        statusEl.textContent = "Nothing to copy yet.";
+        return;
+      }
+
+      const full = chunks.join("\\n\\n");
+      try {
+        await navigator.clipboard.writeText(full);
+        statusEl.textContent = "All posts copied ✅";
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "Could not copy automatically – select and copy manually.";
+      }
+    }
+
     document.querySelectorAll("button[data-copy-target]").forEach(btn => {
       btn.addEventListener("click", () => {
         const target = btn.getAttribute("data-copy-target");
         handleCopy(target);
       });
     });
+
+    if (copyAllBtn) {
+      copyAllBtn.addEventListener("click", () => {
+        handleCopyAll();
+      });
+    }
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -337,7 +421,7 @@ async function scrapeVehicle(url) {
     const price = cleanPrice(rawPrice);
 
     // Detect year
-    const yearMatch = title.match(/(20\d{2}|19\d{2})/);
+    const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
 
     // Detect condition (New / Certified / Pre-Owned etc.) from title
@@ -568,17 +652,17 @@ function buildSocialPosts(vehicle, hashtags) {
   const price = vehicle.price || "Message for current pricing";
   const { label: baseLabel, bullets } = generateFeatureStack(vehicle);
   const label = vehicle.condition
-    ? `${baseLabel} – ${vehicle.condition}`
+    ? \`\${baseLabel} – \${vehicle.condition}\`
     : baseLabel;
 
-  const featureLines = bullets.map(b => `🔥 ${b}`).join("  \n");
+  const featureLines = bullets.map(b => \`🔥 \${b}\`).join("  \\n");
 
   const fullString =
     ((vehicle.title || "") + " " + (vehicle.makeModel || "") + " " + (vehicle.condition || "")).toLowerCase();
   const isCertified = /certified|cpo/.test(fullString);
 
   const certifiedLineLong = isCertified
-    ? "\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\n"
+    ? "\\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\\n"
     : "";
 
   const certifiedLineShort = isCertified
@@ -586,98 +670,98 @@ function buildSocialPosts(vehicle, hashtags) {
     : "";
 
   const facebook =
-`🚗 ${label} – LOADED & READY TO IMPRESS
+\`🚗 \${label} – LOADED & READY TO IMPRESS
 
-If you're serious about driving something that looks sharp, feels strong, and makes sense in real life, this ${label} is the kind of unit you move on – not think about for three weeks.${certifiedLineLong}
+If you're serious about driving something that looks sharp, feels strong, and makes sense in real life, this \${label} is the kind of unit you move on – not think about for three weeks.\${certifiedLineLong}
 💰 Current pricing:
-${price}
+\${price}
 
 💎 Why this one stands out:
-${featureLines}
+\${featureLines}
 
 I move a lot of metal, and clean, well-optioned units like this do NOT sit. If this lines up with what you’ve been telling yourself you want, this is your moment to take action.
 
 📲 DM “INFO” and I’ll walk you through it quickly and professionally – no nonsense, just straight answers and a real plan.
 
-${hashtags}`;
+\${hashtags}\`;
 
   const instagram =
-`🚗 ${label}
-💰 ${price}
+\`🚗 \${label}
+💰 \${price}
 
-If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.${certifiedLineShort}
+If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.\${certifiedLineShort}
 
-${featureLines}
+\${featureLines}
 
 👀 If this matches what you’ve been looking for, don’t overthink it.
 
 📲 DM “INFO” and I’ll show you how easy it is to make it yours.
 
-${hashtags}`;
+\${hashtags}\`;
 
   const tiktok =
-`🚗 ${label}
-💰 ${price}
+\`🚗 \${label}
+💰 \${price}
 
-If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on.${certifiedLineShort}
+If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on.\${certifiedLineShort}
 
-${featureLines}
+\${featureLines}
 
 ⏳ Clean, dialed-in rides like this DO NOT sit.
 
 📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.
 
-${hashtags}`;
+\${hashtags}\`;
 
   const linkedin =
-`🚗 ${label} – Strong, Clean, and Ready for the Next Owner
+\`🚗 \${label} – Strong, Clean, and Ready for the Next Owner
 
-For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This ${label} checks those boxes.${certifiedLineShort}
+For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This \${label} checks those boxes.\${certifiedLineShort}
 
 💰 Current pricing:
-${price}
+\${price}
 
 Key highlights:
-${featureLines}
+\${featureLines}
 
 If you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.
 
 📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.
 
-${hashtags}`;
+\${hashtags}\`;
 
   const twitter =
-`🚗 ${label}
-💰 ${price}
+\`🚗 \${label}
+💰 \${price}
 
-Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first.${certifiedLineShort}
+Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first.\${certifiedLineShort}
 
-${hashtags}
+\${hashtags}
 
-📲 DM “INFO” for photos, a walkaround, and next steps.`;
+📲 DM “INFO” for photos, a walkaround, and next steps.\`;
 
   const sms =
-`Just pulled a ${label} that checks a lot of boxes. It’s at ${price} right now and it’s clean, sharp, and ready to go.${certifiedLineShort} Want me to send you photos or a quick walkaround video?`;
+\`Just pulled a \${label} that checks a lot of boxes. It’s at \${price} right now and it’s clean, sharp, and ready to go.\${certifiedLineShort} Want me to send you photos or a quick walkaround video?\`;
 
   const marketplace =
-`Title idea:
-${label} – Clean, Sharp & Ready to Go!
+\`Title idea:
+\${label} – Clean, Sharp & Ready to Go!
 
 Suggested description for Facebook Marketplace:
 
-🚗 This ${label} just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life.${certifiedLineShort}
+🚗 This \${label} just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life.\${certifiedLineShort}
 
 💰 Current pricing:
-${price}
+\${price}
 
 🔥 Why this one is worth a serious look:
-${featureLines}
+\${featureLines}
 
 If you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.
 
 📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.
 
-⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.`;
+⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.\`;
 
   return {
     facebook,
