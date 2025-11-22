@@ -1,9 +1,7 @@
 // app.js
-// Lot Rocket - simple listing booster server
+// Lot Rocket - listing booster with basic image scraping
 
 const express = require("express");
-// Using built-in fetch in Node
-
 const cheerio = require("cheerio");
 
 const app = express();
@@ -45,17 +43,36 @@ app.get("/", (req, res) => {
             padding: 5px 10px; border-radius: 999px; background: #181818; color: #ccc; }
     .copy-box { background: #050505; border-radius: 12px; padding: 12px; border: 1px solid #333; white-space: pre-wrap; font-size: 0.9rem; min-height: 100px;}
     .small { font-size: 0.8rem; color: #777; margin-top: 8px; }
+
+    .images-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
+      gap: 8px; 
+      margin-top: 10px;
+    }
+    .image-thumb {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #333;
+      background: #000;
+    }
+    .image-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <h1><span class="brand">Lot Rocket</span> Listing Booster</h1>
-    <p class="sub">Paste any dealer vehicle URL. Get copy + social text ready to post.</p>
+    <p class="sub">Paste a dealer vehicle URL. Get copy + social text + photos preview.</p>
 
     <div class="card">
       <form id="lotrocket-form">
         <label for="url">Dealer vehicle URL</label>
-        <input id="url" type="text" placeholder="Paste a listing URL from your dealer site" />
+        <input id="url" type="text" placeholder="Paste the full URL from your dealer's vehicle page" />
         <button type="submit">🚀 Boost This Listing</button>
       </form>
       <div id="status" class="small"></div>
@@ -64,6 +81,12 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="pill">✨ Generated Sales Copy</div>
       <div id="copy-output" class="copy-box">Your copy will appear here.</div>
+    </div>
+
+    <div class="card">
+      <div class="pill">🖼 Photos from the page</div>
+      <div id="images" class="images-grid"></div>
+      <div class="small" id="images-note"></div>
     </div>
 
     <div class="card">
@@ -79,6 +102,8 @@ app.get("/", (req, res) => {
     const statusEl = document.getElementById("status");
     const copyEl = document.getElementById("copy-output");
     const socialEl = document.getElementById("social-preview");
+    const imagesEl = document.getElementById("images");
+    const imagesNoteEl = document.getElementById("images-note");
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -86,13 +111,15 @@ app.get("/", (req, res) => {
       const url = urlInput.value.trim();
 
       if (!url) {
-        statusEl.textContent = "Please paste a vehicle URL first.";
+        statusEl.textContent = "Please paste a full vehicle URL from your dealer site.";
         return;
       }
 
       statusEl.textContent = "Processing listing…";
       copyEl.textContent = "";
       socialEl.textContent = "";
+      imagesEl.innerHTML = "";
+      imagesNoteEl.textContent = "";
 
       try {
         const res = await fetch("/api/process-listing", {
@@ -109,6 +136,22 @@ app.get("/", (req, res) => {
         const data = await res.json();
         copyEl.textContent = data.salesCopy || "No copy generated.";
         socialEl.textContent = data.socialPreview || "";
+
+        if (Array.isArray(data.images) && data.images.length > 0) {
+          data.images.forEach(src => {
+            const div = document.createElement("div");
+            div.className = "image-thumb";
+            const img = document.createElement("img");
+            img.src = src;
+            img.alt = "Vehicle photo";
+            div.appendChild(img);
+            imagesEl.appendChild(div);
+          });
+          imagesNoteEl.textContent = "These are scraped from the dealer page – review and download the ones you want.";
+        } else {
+          imagesNoteEl.textContent = "No images found on that page, or this dealer blocks scraping.";
+        }
+
         statusEl.textContent = "Done. Review and tweak, then post.";
       } catch (err) {
         console.error(err);
@@ -140,6 +183,31 @@ async function scrapeVehicle(url) {
       $('meta[itemprop="price"]').attr("content") ||
       "";
 
+    // Collect image URLs
+    const images = [];
+    $("img").each((_, el) => {
+      let src = $(el).attr("src");
+      if (!src) return;
+
+      // Skip tiny / logo-ish stuff
+      if (src.toLowerCase().includes("logo")) return;
+
+      // Try to only keep likely photo file types
+      if (!/\.(jpe?g|png|webp|gif)$/i.test(src.split("?")[0])) return;
+
+      try {
+        // Make relative URLs absolute
+        src = new URL(src, url).toString();
+      } catch (e) {
+        // ignore URL errors
+      }
+
+      if (!images.includes(src)) {
+        images.push(src);
+      }
+      if (images.length >= 12) return false;
+    });
+
     const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
     const makeModel = year ? title.replace(year, "").trim() : title;
@@ -148,7 +216,8 @@ async function scrapeVehicle(url) {
       title,
       year,
       makeModel,
-      price: priceText
+      price: priceText,
+      images
     };
   } catch (e) {
     console.error("Scrape error:", e);
@@ -156,7 +225,8 @@ async function scrapeVehicle(url) {
       title: "Vehicle",
       year: "",
       makeModel: "",
-      price: ""
+      price: "",
+      images: []
     };
   }
 }
@@ -220,7 +290,8 @@ app.post("/api/process-listing", async (req, res) => {
     res.json({
       vehicle,
       salesCopy,
-      socialPreview
+      socialPreview,
+      images: vehicle.images || []
     });
   } catch (err) {
     console.error("Pipeline error:", err);
