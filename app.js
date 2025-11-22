@@ -1,24 +1,16 @@
 // app.js
-//
-// Simple end-to-end prototype for your "Lot Rocket" listing booster.
-// One file: serves a UI + backend API stubs.
-//
-// HOW TO RUN (cloud hosts will do this for you):
-// npm install
-// node app.js
+// Lot Rocket - simple listing booster server
 
 const express = require("express");
 const fetch = require("node-fetch");
 const cheerio = require("cheerio");
-const path = require("path");
 
 const app = express();
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "5mb" }));
 
-// --------- FRONTEND (Single Page UI) ----------
+// ---------- FRONTEND ----------
 app.get("/", (req, res) => {
-  res.send(`
-<!DOCTYPE html>
+  res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -33,12 +25,12 @@ app.get("/", (req, res) => {
     p.sub { color: #aaa; margin-top: 0; }
     .card { background: #111; border-radius: 16px; padding: 20px; border: 1px solid #333; margin-top: 16px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; }
-    input[type="text"], textarea {
+    input[type="text"] {
       width: 100%; padding: 10px 12px; border-radius: 10px;
       border: 1px solid #333; background: #050505; color: #f5f5f5;
       font-size: 0.95rem;
     }
-    input:focus, textarea:focus { outline: 1px solid #ff3232; border-color: #ff3232; }
+    input:focus { outline: 1px solid #ff3232; border-color: #ff3232; }
     button {
       border: none; border-radius: 999px; padding: 10px 18px; font-weight: 600;
       display: inline-flex; align-items: center; gap: 8px;
@@ -47,94 +39,65 @@ app.get("/", (req, res) => {
       box-shadow: 0 8px 20px rgba(255, 50, 50, 0.4);
       transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(255, 50, 50, 0.6); }
     button:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
-    .row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
-    .col { flex: 1 1 280px; }
     .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;
             padding: 5px 10px; border-radius: 999px; background: #181818; color: #ccc; }
-    .copy-box { background: #050505; border-radius: 12px; padding: 12px; border: 1px solid #333; white-space: pre-wrap; font-size: 0.9rem; }
-    .images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
-    .image-thumb { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-    .image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); font-size: 0.7rem; padding: 3px 6px; border-radius: 999px; }
-    .status { margin-top: 12px; font-size: 0.85rem; color: #aaa; }
-    .status strong { color: #ff7b32; }
+    .copy-box { background: #050505; border-radius: 12px; padding: 12px; border: 1px solid #333; white-space: pre-wrap; font-size: 0.9rem; min-height: 100px;}
     .small { font-size: 0.8rem; color: #777; margin-top: 8px; }
-    .video-preview { margin-top: 8px; font-size: 0.85rem; padding: 8px; border-radius: 10px; border: 1px dashed #444; color: #ddd; }
   </style>
 </head>
 <body>
   <div class="app">
     <h1><span class="brand">Lot Rocket</span> Listing Booster</h1>
-    <p class="sub">Paste a dealer vehicle URL. Get pro copy, images, and a social-ready package.</p>
+    <p class="sub">Paste any dealer vehicle URL. Get copy + social text ready to post.</p>
 
     <div class="card">
-      <label for="url">Dealer vehicle URL</label>
-      <input id="url" type="text" placeholder="Paste a listing URL from any dealer site" />
-
-      <button id="processBtn">
-        🚀 Boost This Listing
-      </button>
-
-      <div class="status" id="status"></div>
+      <form id="lotrocket-form">
+        <label for="url">Dealer vehicle URL</label>
+        <input id="url" type="text" placeholder="Paste a listing URL from your dealer site" />
+        <button type="submit">🚀 Boost This Listing</button>
+      </form>
+      <div id="status" class="small"></div>
     </div>
 
-    <div class="row">
-      <div class="col">
-        <div class="card">
-          <div class="pill">✨ Generated Copy</div>
-          <div id="copy-output" class="copy-box" style="min-height:120px; margin-top:10px;">
-            Paste a URL and hit "Boost" to generate your ad copy.
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="card">
-          <div class="pill">🖼 Images & Video</div>
-          <div id="images" class="images-grid"></div>
-          <div id="video" class="video-preview">
-            Video plan will appear here.
-          </div>
-        </div>
-      </div>
+    <div class="card">
+      <div class="pill">✨ Generated Sales Copy</div>
+      <div id="copy-output" class="copy-box">Your copy will appear here.</div>
     </div>
 
     <div class="card">
       <div class="pill">📣 Social Preview</div>
       <div id="social-preview" class="copy-box"></div>
     </div>
+
+    <p class="small">Prototype only – always review and edit before posting to Facebook Marketplace or other platforms.</p>
   </div>
 
   <script>
-    const processBtn = document.getElementById("processBtn");
+    const form = document.getElementById("lotrocket-form");
     const statusEl = document.getElementById("status");
-    const copyOutputEl = document.getElementById("copy-output");
-    const imagesEl = document.getElementById("images");
-    const videoEl = document.getElementById("video");
-    const socialPreviewEl = document.getElementById("social-preview");
+    const copyEl = document.getElementById("copy-output");
+    const socialEl = document.getElementById("social-preview");
 
-    function setStatus(text) {
-      statusEl.innerHTML = text || "";
-    }
-
-    processBtn.addEventListener("click", async () => {
-      const url = document.getElementById("url").value.trim();
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const urlInput = document.getElementById("url");
+      const url = urlInput.value.trim();
 
       if (!url) {
-        setStatus("<strong>Missing URL:</strong> paste a dealer listing link first.");
+        statusEl.textContent = "Please paste a vehicle URL first.";
         return;
       }
 
-      processBtn.disabled = true;
-      setStatus("Processing listing…");
+      statusEl.textContent = "Processing listing…";
+      copyEl.textContent = "";
+      socialEl.textContent = "";
 
       try {
         const res = await fetch("/api/process-listing", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url: url })
         });
 
         if (!res.ok) {
@@ -143,46 +106,21 @@ app.get("/", (req, res) => {
         }
 
         const data = await res.json();
-
-        copyOutputEl.textContent = data.salesCopy || "No copy generated.";
-
-        imagesEl.innerHTML = "";
-        (data.images || []).forEach((img, idx) => {
-          const div = document.createElement("div");
-          div.className = "image-thumb";
-          const tag = img.cleaned ? "Cleaned" : "Original";
-          div.innerHTML = \`
-            <img src="\${img.url}" alt="Vehicle image \${idx+1}" />
-            <div class="badge">\${tag}</div>
-          \`;
-          imagesEl.appendChild(div);
-        });
-
-        videoEl.innerHTML = \`
-          <strong>Planned Video:</strong><br>
-          Length: \${data.videoPlan.lengthSeconds || 30}s<br>
-          Hook: "\${data.videoPlan.hook}"<br>
-          Structure: \${data.videoPlan.structure.join(" → ")}<br>
-          Music: \${data.videoPlan.musicDescription}
-        \`;
-
-        socialPreviewEl.textContent = data.socialPreview || "";
-
-        setStatus("<strong>Done!</strong>");
+        copyEl.textContent = data.salesCopy || "No copy generated.";
+        socialEl.textContent = data.socialPreview || "";
+        statusEl.textContent = "Done. Review and tweak, then post.";
       } catch (err) {
         console.error(err);
-        setStatus("<strong>Error:</strong> " + (err.message || "Something went wrong."));
-      } finally {
-        processBtn.disabled = false;
+        statusEl.textContent = "Error: " + (err.message || "Something went wrong.");
       }
     });
   </script>
 </body>
-</html>
-  `);
+</html>`);
 });
 
-// --------- GENERIC DEALER SCRAPER ----------
+// ---------- SCRAPING & COPY ----------
+
 async function scrapeVehicle(url) {
   try {
     const resp = await fetch(url);
@@ -201,17 +139,7 @@ async function scrapeVehicle(url) {
       $('meta[itemprop="price"]').attr("content") ||
       "";
 
-    const imageCandidates = [];
-    $('img').each((_, el) => {
-      const src = $(el).attr("src");
-      if (!src) return;
-      if (!src.match(/\.(jpe?g|png|webp)/i)) return;
-      if (src.includes("logo")) return;
-      if (imageCandidates.length >= 12) return false;
-      imageCandidates.push(src);
-    });
-
-    const yearMatch = title.match(/(20\d{2}|19\d{2})/);
+    const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
     const makeModel = year ? title.replace(year, "").trim() : title;
 
@@ -219,9 +147,7 @@ async function scrapeVehicle(url) {
       title,
       year,
       makeModel,
-      price: priceText,
-      description: "",
-      images: imageCandidates
+      price: priceText
     };
   } catch (e) {
     console.error("Scrape error:", e);
@@ -229,35 +155,81 @@ async function scrapeVehicle(url) {
       title: "Vehicle",
       year: "",
       makeModel: "",
-      price: "",
-      description: "",
-      images: []
+      price: ""
     };
   }
 }
 
-// Image placeholder
-function cleanImages(imageUrls) {
-  return imageUrls.map((url) => ({
-    url,
-    cleaned: true
-  }));
-}
-
-// Copy generator
 function generateSalesCopy(vehicle) {
   const name = vehicle.title || "this vehicle";
-  const price = vehicle.price || "Ask about pricing";
+  const price = vehicle.price || "Ask for current pricing";
   const year = vehicle.year ? vehicle.year + " " : "";
   const mm = vehicle.makeModel || "";
 
   return (
-`🔥 ${year}${mm || "Vehicle"} – Available Now!
+`🔥 ${year}${mm || "Vehicle"} – Available Now
 
-Looking for a reliable ride that stands out from the crowd? Check out ${name}.
+Looking for a solid ride that looks good on the lot and even better on the road? Check out ${name}.
 
 💰 Price:
 ${price}
 
 🚗 Highlights:
-• Clean, well-kept inside and out
+• Clean, well-kept inside and out  
+• Strong running and driving – ready for daily use  
+• Great for commuters, families, or anyone needing a dependable ride  
+
+🤝 Why work with this salesperson:
+• Straight answers and real numbers  
+• Options for challenged credit and tough situations  
+• Focused on helping you get approved and driving
+
+📲 Next step:
+Message or call now and say “I saw the ${mm || "vehicle"} on Lot Rocket – let’s talk numbers.”`
+  );
+}
+
+function buildSocialPreview(vehicle, copy) {
+  const header = vehicle.price
+    ? `${vehicle.title || "Vehicle for sale"} – ${vehicle.price}`
+    : (vehicle.title || "Vehicle for sale");
+
+  return `${header}
+
+${copy}
+
+Use this on Facebook Marketplace, your dealer page, or other socials. Always follow the platform rules and your dealership's policies.`;
+}
+
+// ---------- API ROUTE ----------
+
+app.post("/api/process-listing", async (req, res) => {
+  const body = req.body || {};
+  const url = body.url;
+
+  if (!url || typeof url !== "string") {
+    return res.status(400).send("Missing or invalid 'url'.");
+  }
+
+  try {
+    const vehicle = await scrapeVehicle(url);
+    const salesCopy = generateSalesCopy(vehicle);
+    const socialPreview = buildSocialPreview(vehicle, salesCopy);
+
+    res.json({
+      vehicle,
+      salesCopy,
+      socialPreview
+    });
+  } catch (err) {
+    console.error("Pipeline error:", err);
+    res.status(500).send("Failed to process listing.");
+  }
+});
+
+// ---------- START SERVER ----------
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Lot Rocket running on http://localhost:" + PORT);
+});
