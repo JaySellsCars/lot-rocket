@@ -138,8 +138,8 @@ app.get("/", (req, res) => {
       </div>
       <div id="mp-output" class="copy-box">Your Facebook Marketplace description will appear here.</div>
       <p class="small">
-        Use this in the Marketplace description box. Title can be something like
-        “YEAR MAKE MODEL – Clean, Ready to Drive”.
+        Use this in the Marketplace description box. For the title, use something like
+        “YEAR MAKE MODEL – Clean, Sharp & Ready to Go!”.
       </p>
     </div>
 
@@ -247,7 +247,7 @@ app.get("/", (req, res) => {
         statusEl.textContent = "Social kit ready. Review, tweak, and post. 💪";
       } catch (err) {
         console.error(err);
-        statusEl.textContent = "Error: " + (err.message || "Something went wrong.");
+        statusEl.textContent = "Error: " + (err.message || "Something went wrong.";
       }
     });
   </script>
@@ -303,7 +303,7 @@ async function scrapeVehicle(url) {
     const title = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = title.match(/(20\d{2}|19\d{2})/);
+    const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
     const makeModel = year ? title.replace(year, "").trim() : title;
 
@@ -364,7 +364,7 @@ function buildSocialPosts(vehicle, hashtags) {
 
   const shortLabel = label || "this vehicle";
 
-  const facebook = 
+  const facebook =
 `🚗 ${shortLabel} – Just Hit My List!
 
 If you're looking for something clean, easy to live with, and ready to drive home, this one is worth a serious look.
@@ -382,7 +382,7 @@ If this looks close to what you're after, send me a message and I'll get you pho
 
 ${hashtags}`;
 
-  const instagram = 
+  const instagram =
 `🚗 ${shortLabel}
 💰 ${price}
 
@@ -390,7 +390,7 @@ Clean, solid, and easy to say yes to. If you’ve been waiting for the right one
 
 ${hashtags}`;
 
-  const tiktok = 
+  const tiktok =
 `🚗 ${shortLabel}
 💰 ${price}
 
@@ -399,7 +399,7 @@ Want a walkaround, sound check, or numbers breakdown? Drop a comment or DM “IN
 
 ${hashtags}`;
 
-  const linkedin = 
+  const linkedin =
 `🚗 ${shortLabel} – Available Now
 
 Helping customers find the right vehicle is a lot easier when the unit checks the boxes: strong condition, practical for daily use, and great value for the money. This one fits that profile.
@@ -412,32 +412,35 @@ If you or someone in your network is in the market for a dependable vehicle, I�
 
 ${hashtags}`;
 
-  const twitter = 
+  const twitter =
 `🚗 ${shortLabel}
 💰 ${price}
 
 Clean, solid unit that’s easy to say yes to. DM “INFO” for details, photos, or a quick walkaround. ${hashtags}`;
 
-  const sms = 
+  const sms =
 `Hey! Just pulled a ${shortLabel} that I think fits what you told me you’re looking for. It’s priced at ${price}. Want me to send you photos or a quick walkaround video?`;
 
   const marketplace =
 `Title idea:
-${shortLabel} – Clean, Ready to Drive
+${shortLabel} – Clean, Sharp & Ready to Go!
 
 Suggested description for Facebook Marketplace:
 
-${shortLabel} in strong condition inside and out. Comfortable, easy to drive, and a solid choice for daily use, work, or family duty.
+🚗 Check this out – this ${shortLabel} just hit my list and it’s a clean, sharp ride that’s ready to move. If you’ve been waiting for something solid, stylish, and road-ready, this might be the one. 👀
 
 💰 Price: ${price}
 
-Highlights:
-• Clean inside and out  
-• Drives strong and smooth  
-• Practical, comfortable, and easy to live with  
-• Great fit for commuting, work, or family use  
+🔥 Why this one is worth a serious look:
+• Looks great inside and out  
+• Smooth, confident drive  
+• Easy to live with for daily use  
+• Strong choice for work, family, or commuting  
 
-Use this in the description box. Then add your photos, pick the right category, and set your price.`;
+👀 Want more info, pics, or a quick walkaround video?
+Send a message and I’ll get it over to you.
+
+⚡ First come, first served – don’t wait on this one.`;
 
   return {
     facebook,
