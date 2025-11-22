@@ -1,6 +1,6 @@
 // app.js
 // Lot Rocket – Social Media Post Kit for Automotive Salespeople
-// Paste a vehicle URL -> get platform-specific copy for FB, IG, TikTok, LinkedIn, X, and SMS/DM.
+// Paste a vehicle URL -> get platform-specific copy for FB, IG, TikTok, LinkedIn, X, SMS/DM, and Facebook Marketplace.
 
 const express = require("express");
 const cheerio = require("cheerio");
@@ -69,7 +69,7 @@ app.get("/", (req, res) => {
 <body>
   <div class="app">
     <h1><span class="brand">Lot Rocket</span> Social Media Kit</h1>
-    <p class="sub">Paste a vehicle URL. Get ready-to-use posts for Facebook, Instagram, TikTok, LinkedIn, X, and text/DM – in seconds. 🔥</p>
+    <p class="sub">Paste a vehicle URL. Get ready-to-use posts for Facebook, Instagram, TikTok, LinkedIn, X, Marketplace, and text/DM – in seconds. 🔥</p>
 
     <div class="card">
       <form id="lotrocket-form">
@@ -133,6 +133,18 @@ app.get("/", (req, res) => {
 
     <div class="card">
       <div class="card-header">
+        <div class="pill">🛒 Facebook Marketplace Description</div>
+        <button type="button" data-copy-target="mp-output">📋 Copy</button>
+      </div>
+      <div id="mp-output" class="copy-box">Your Facebook Marketplace description will appear here.</div>
+      <p class="small">
+        Use this in the Marketplace description box. Title can be something like
+        “YEAR MAKE MODEL – Clean, Ready to Drive”.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
         <div class="pill">🏷 Hashtags</div>
         <button type="button" data-copy-target="hashtags-output">📋 Copy</button>
       </div>
@@ -154,6 +166,7 @@ app.get("/", (req, res) => {
     const liEl = document.getElementById("li-output");
     const twEl = document.getElementById("tw-output");
     const smsEl = document.getElementById("sms-output");
+    const mpEl = document.getElementById("mp-output");
     const hashtagsEl = document.getElementById("hashtags-output");
 
     async function handleCopy(targetId) {
@@ -198,6 +211,7 @@ app.get("/", (req, res) => {
       liEl.textContent = "";
       twEl.textContent = "";
       smsEl.textContent = "";
+      mpEl.textContent = "";
       hashtagsEl.textContent = "";
 
       try {
@@ -214,13 +228,14 @@ app.get("/", (req, res) => {
 
         const data = await res.json();
 
-        fbEl.textContent = data.posts?.facebook || "No Facebook post generated.";
-        igEl.textContent = data.posts?.instagram || "No Instagram caption generated.";
-        ttEl.textContent = data.posts?.tiktok || "No TikTok caption generated.";
-        liEl.textContent = data.posts?.linkedin || "No LinkedIn post generated.";
-        twEl.textContent = data.posts?.twitter || "No X/Twitter post generated.";
-        smsEl.textContent = data.posts?.sms || "No short message generated.";
-        hashtagsEl.textContent = data.posts?.hashtags || "";
+        fbEl.textContent = data.posts && data.posts.facebook || "No Facebook post generated.";
+        igEl.textContent = data.posts && data.posts.instagram || "No Instagram caption generated.";
+        ttEl.textContent = data.posts && data.posts.tiktok || "No TikTok caption generated.";
+        liEl.textContent = data.posts && data.posts.linkedin || "No LinkedIn post generated.";
+        twEl.textContent = data.posts && data.posts.twitter || "No X/Twitter post generated.";
+        smsEl.textContent = data.posts && data.posts.sms || "No short message generated.";
+        mpEl.textContent = data.posts && data.posts.marketplace || "No Marketplace description generated.";
+        hashtagsEl.textContent = data.posts && data.posts.hashtags || "";
 
         if (data.vehicle) {
           const v = data.vehicle;
@@ -288,7 +303,7 @@ async function scrapeVehicle(url) {
     const title = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
+    const yearMatch = title.match(/(20\d{2}|19\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
     const makeModel = year ? title.replace(year, "").trim() : title;
 
@@ -326,7 +341,6 @@ function generateHashtags(vehicle) {
     tags.add("#" + clean.toLowerCase());
   });
 
-  // Add generic car sales tags
   [
     "#carsales",
     "#cardeals",
@@ -345,10 +359,10 @@ function buildSocialPosts(vehicle, hashtags) {
   const title = vehicle.title || "this vehicle";
   const year = vehicle.year ? vehicle.year + " " : "";
   const mm = vehicle.makeModel || "";
-  const label = year + (mm || "Vehicle");
+  const label = (year + (mm || "Vehicle")).trim();
   const price = vehicle.price || "Call for details";
 
-  const shortLabel = label.trim() || "this vehicle";
+  const shortLabel = label || "this vehicle";
 
   const facebook = 
 `🚗 ${shortLabel} – Just Hit My List!
@@ -407,13 +421,32 @@ Clean, solid unit that’s easy to say yes to. DM “INFO” for details, photos
   const sms = 
 `Hey! Just pulled a ${shortLabel} that I think fits what you told me you’re looking for. It’s priced at ${price}. Want me to send you photos or a quick walkaround video?`;
 
+  const marketplace =
+`Title idea:
+${shortLabel} – Clean, Ready to Drive
+
+Suggested description for Facebook Marketplace:
+
+${shortLabel} in strong condition inside and out. Comfortable, easy to drive, and a solid choice for daily use, work, or family duty.
+
+💰 Price: ${price}
+
+Highlights:
+• Clean inside and out  
+• Drives strong and smooth  
+• Practical, comfortable, and easy to live with  
+• Great fit for commuting, work, or family use  
+
+Use this in the description box. Then add your photos, pick the right category, and set your price.`;
+
   return {
     facebook,
     instagram,
     tiktok,
     linkedin,
     twitter,
-    sms
+    sms,
+    marketplace
   };
 }
 
