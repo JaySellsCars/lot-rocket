@@ -247,7 +247,7 @@ app.get("/", (req, res) => {
         statusEl.textContent = "Social kit ready. Review, tweak, and post. 💪";
       } catch (err) {
         console.error(err);
-        statusEl.textContent = "Error: " + (err.message || "Something went wrong.";
+        statusEl.textContent = "Error: " + (err.message || "Something went wrong.");
       }
     });
   </script>
@@ -303,7 +303,7 @@ async function scrapeVehicle(url) {
     const title = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
+    const yearMatch = title.match(/(20\d{2}|19\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
     const makeModel = year ? title.replace(year, "").trim() : title;
 
@@ -324,6 +324,53 @@ async function scrapeVehicle(url) {
   }
 }
 
+// ---------- FEATURE STACK (generic but hype) ----------
+
+function generateFeatureStack(vehicle) {
+  const label = (vehicle.year ? vehicle.year + " " : "") + (vehicle.makeModel || "this vehicle");
+
+  // VERY simple classification based on keywords in title
+  const nameLower = (vehicle.makeModel || "").toLowerCase();
+  const isTruckOrSuv =
+    ["tahoe", "suburban", "silverado", "sierra", "ram", "f-150", "f150", "bronco", "explorer", "traverse", "highlander", "4runner", "durango"].some(
+      (k) => nameLower.includes(k)
+    );
+
+  const baseFeatures = isTruckOrSuv
+    ? [
+        "Aggressive stance that looks sharp on the road",
+        "Comfortable, roomy interior that actually fits people and gear",
+        "Strong powertrain built to handle real-world driving",
+        "Modern touchscreen with smartphone connection",
+        "Backup camera for easy parking and tight spots",
+        "Premium wheel and tire look",
+        "Solid ride quality – feels planted and confident",
+        "Family, work, and weekend ready",
+        "Road-trip approved comfort",
+        "Tons of presence – this thing gets noticed"
+      ]
+    : [
+        "Clean, sharp exterior styling",
+        "Comfortable seating that’s easy to live with daily",
+        "Fuel-efficient and practical for real-world driving",
+        "Modern touchscreen with smartphone connection",
+        "Backup camera for simple, confident parking",
+        "Smooth, quiet ride that feels dialed-in",
+        "Easy to drive and easy to park",
+        "Smart layout – controls are where you want them",
+        "Great daily driver for work, school, or family",
+        "Strong value for the money in this segment"
+      ];
+
+  // Take 10–12 bullets
+  const selected = baseFeatures.slice(0, 10);
+
+  return {
+    label,
+    bullets: selected
+  };
+}
+
 // ---------- HASHTAGS & POSTS ----------
 
 function generateHashtags(vehicle) {
@@ -332,10 +379,10 @@ function generateHashtags(vehicle) {
 
   if (vehicle.year) baseWords.push(vehicle.year);
   if (vehicle.makeModel) {
-    vehicle.makeModel.split(/\s+/).forEach(w => baseWords.push(w));
+    vehicle.makeModel.split(/\s+/).forEach((w) => baseWords.push(w));
   }
 
-  baseWords.forEach(w => {
+  baseWords.forEach((w) => {
     const clean = w.replace(/[^a-z0-9]/gi, "");
     if (!clean) return;
     tags.add("#" + clean.toLowerCase());
@@ -350,97 +397,111 @@ function generateHashtags(vehicle) {
     "#carlife",
     "#autodeals",
     "#lotrocket"
-  ].forEach(t => tags.add(t));
+  ].forEach((t) => tags.add(t));
 
   return Array.from(tags).join(" ");
 }
 
 function buildSocialPosts(vehicle, hashtags) {
-  const title = vehicle.title || "this vehicle";
-  const year = vehicle.year ? vehicle.year + " " : "";
-  const mm = vehicle.makeModel || "";
-  const label = (year + (mm || "Vehicle")).trim();
   const price = vehicle.price || "Call for details";
+  const { label, bullets } = generateFeatureStack(vehicle);
 
-  const shortLabel = label || "this vehicle";
+  const featureLines = bullets.map((b) => `🔥 ${b}`).join("  \n");
 
   const facebook =
-`🚗 ${shortLabel} – Just Hit My List!
+`🚗 ${label} – LOADED & READY TO IMPRESS
 
-If you're looking for something clean, easy to live with, and ready to drive home, this one is worth a serious look.
+If you're serious about driving something that looks sharp, feels strong, and makes sense in real life, this ${label} is the kind of unit you move on – not think about for three weeks.
 
-💰 Price: ${price}
+💰 Current pricing:
+${price}
 
-Why I like this one:
-• Strong condition inside and out  
-• Drives solid – easy daily driver  
-• Great fit for work, family, or commuting  
+💎 Why this one stands out:
+${featureLines}
 
-If this looks close to what you're after, send me a message and I'll get you photos, a walkaround video, or numbers that fit your situation.
+I move a lot of metal, and clean, well-optioned units like this do NOT sit. If this lines up with what you’ve been telling yourself you want, this is your moment to take action.
 
-📲 Comment “INFO” or DM me and I’ll follow up right away.
+📲 DM “INFO” and I’ll walk you through it quickly and professionally – no nonsense, just straight answers and a real plan.
 
 ${hashtags}`;
 
   const instagram =
-`🚗 ${shortLabel}
+`🚗 ${label}
 💰 ${price}
 
-Clean, solid, and easy to say yes to. If you’ve been waiting for the right one to pop up, this might be it. Tap in before it’s gone. 👀
+If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.
+
+${featureLines}
+
+👀 If this matches what you’ve been looking for, don’t overthink it.
+
+📲 DM “INFO” and I’ll show you how easy it is to make it yours.
 
 ${hashtags}`;
 
   const tiktok =
-`🚗 ${shortLabel}
+`🚗 ${label}
 💰 ${price}
 
-If this popped up on your FYP, it might be your sign. 👀
-Want a walkaround, sound check, or numbers breakdown? Drop a comment or DM “INFO” and I’ll send it over. 🔥
+If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on.
+
+${featureLines}
+
+⏳ Clean, dialed-in rides like this DO NOT sit.
+
+📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast, serious buyers don’t wait.
 
 ${hashtags}`;
 
   const linkedin =
-`🚗 ${shortLabel} – Available Now
+`🚗 ${label} – Strong, Clean, and Ready for the Next Owner
 
-Helping customers find the right vehicle is a lot easier when the unit checks the boxes: strong condition, practical for daily use, and great value for the money. This one fits that profile.
+For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This ${label} checks those boxes.
 
-💰 Price: ${price}
+💰 Current pricing:
+${price}
 
-If you or someone in your network is in the market for a dependable vehicle, I’m happy to share more details, photos, or a quick video walkaround.
+Key highlights:
+${featureLines}
 
-📩 Send me a message here and I’ll follow up with options.
+If you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.
+
+📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.
 
 ${hashtags}`;
 
   const twitter =
-`🚗 ${shortLabel}
+`🚗 ${label}
 💰 ${price}
 
-Clean, solid unit that’s easy to say yes to. DM “INFO” for details, photos, or a quick walkaround. ${hashtags}`;
+Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first.
+
+${hashtags}
+
+📲 DM “INFO” for photos, walkaround, and next steps.`;
 
   const sms =
-`Hey! Just pulled a ${shortLabel} that I think fits what you told me you’re looking for. It’s priced at ${price}. Want me to send you photos or a quick walkaround video?`;
+`Just pulled a ${label} that checks a lot of boxes. It’s at ${price} right now and it’s clean, sharp, and ready to go. Want me to send you photos or a quick walkaround video?`;
 
   const marketplace =
 `Title idea:
-${shortLabel} – Clean, Sharp & Ready to Go!
+${label} – Clean, Sharp & Ready to Go!
 
 Suggested description for Facebook Marketplace:
 
-🚗 Check this out – this ${shortLabel} just hit my list and it’s a clean, sharp ride that’s ready to move. If you’ve been waiting for something solid, stylish, and road-ready, this might be the one. 👀
+🚗 This ${label} just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life.
 
-💰 Price: ${price}
+💰 Current pricing:
+${price}
 
 🔥 Why this one is worth a serious look:
-• Looks great inside and out  
-• Smooth, confident drive  
-• Easy to live with for daily use  
-• Strong choice for work, family, or commuting  
+${featureLines}
 
-👀 Want more info, pics, or a quick walkaround video?
-Send a message and I’ll get it over to you.
+If you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.
 
-⚡ First come, first served – don’t wait on this one.`;
+📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.
+
+⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.`;
 
   return {
     facebook,
