@@ -1,8 +1,6 @@
 // app.js
 // Lot Rocket – Social Media Post Kit for Automotive Salespeople
-// Phase 2.3: mobile polish, copy-all button, plus Phase 2.2 features
-// (title cleanup, condition handling, EV/PHEV awareness, tighter hashtags,
-// strong copy, blocked-site detection, price cleanup, certified boost).
+// Mobile polish + Phase 2.2 behavior
 
 const express = require("express");
 const cheerio = require("cheerio");
@@ -21,29 +19,28 @@ app.get("/", (req, res) => {
   <style>
     * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     body { margin: 0; background: #050505; color: #f5f5f5; }
-    .app { max-width: 1000px; margin: 0 auto; padding: 32px 16px 80px; }
+    .app { max-width: 1000px; margin: 0 auto; padding: 32px 16px 96px; }
     h1 { font-size: 2rem; margin-bottom: 4px; }
     h1 span.brand { color: #ff3232; }
     p.sub { color: #aaa; margin-top: 0; }
     .card { background: #111; border-radius: 16px; padding: 20px; border: 1px solid #333; margin-top: 16px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; }
     input[type="text"] {
-      width: 100%; padding: 10px 12px; border-radius: 10px;
+      width: 100%; padding: 12px 14px; border-radius: 10px;
       border: 1px solid #333; background: #050505; color: #f5f5f5;
-      font-size: 0.95rem;
+      font-size: 1rem;
     }
     input:focus { outline: 1px solid #ff3232; border-color: #ff3232; }
     button {
-      border: none; border-radius: 999px; padding: 8px 14px; font-weight: 600;
+      border: none; border-radius: 999px; padding: 10px 16px; font-weight: 600;
       display: inline-flex; align-items: center; gap: 6px;
-      cursor: pointer; margin-top: 10px; font-size: 0.85rem;
+      cursor: pointer; margin-top: 10px; font-size: 0.95rem;
       background: linear-gradient(135deg, #ff3232, #ff7b32); color: #fff;
       box-shadow: 0 8px 16px rgba(255, 50, 50, 0.4);
       transition: transform 0.08s ease, box-shadow 0.08s ease;
     }
     button:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(255, 50, 50, 0.6); }
     button:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
-
     .primary-btn { width: 100%; justify-content: center; }
 
     .pill {
@@ -64,7 +61,7 @@ app.get("/", (req, res) => {
       margin-top: 0;
       box-shadow: none;
       padding: 6px 10px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
     }
     .grid-2 {
       display: grid;
@@ -87,8 +84,6 @@ app.get("/", (req, res) => {
       h1 { font-size: 1.6rem; }
       .app { padding: 24px 12px 96px; }
       .card { padding: 16px; }
-      input[type="text"] { font-size: 1rem; padding: 12px 14px; }
-      button { padding: 12px 18px; font-size: 0.95rem; }
     }
 
     @media (min-width: 769px) {
@@ -119,7 +114,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">📘 Facebook Post</div>
-          <button type="button" class="copy-btn" data-copy-target="fb-output">📋 Copy</button>
+          <button type="button" data-copy-target="fb-output">📋 Copy</button>
         </div>
         <div id="fb-output" class="copy-box">Your Facebook post will appear here.</div>
       </div>
@@ -127,7 +122,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">📸 Instagram Caption</div>
-          <button type="button" class="copy-btn" data-copy-target="ig-output">📋 Copy</button>
+          <button type="button" data-copy-target="ig-output">📋 Copy</button>
         </div>
         <div id="ig-output" class="copy-box">Your Instagram caption will appear here.</div>
       </div>
@@ -135,7 +130,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">🎵 TikTok Caption</div>
-          <button type="button" class="copy-btn" data-copy-target="tt-output">📋 Copy</button>
+          <button type="button" data-copy-target="tt-output">📋 Copy</button>
         </div>
         <div id="tt-output" class="copy-box">Your TikTok caption will appear here.</div>
       </div>
@@ -143,7 +138,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">💼 LinkedIn Post</div>
-          <button type="button" class="copy-btn" data-copy-target="li-output">📋 Copy</button>
+          <button type="button" data-copy-target="li-output">📋 Copy</button>
         </div>
         <div id="li-output" class="copy-box">Your LinkedIn post will appear here.</div>
       </div>
@@ -151,7 +146,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">🐦 X / Twitter Post</div>
-          <button type="button" class="copy-btn" data-copy-target="tw-output">📋 Copy</button>
+          <button type="button" data-copy-target="tw-output">📋 Copy</button>
         </div>
         <div id="tw-output" class="copy-box">Your X/Twitter post will appear here.</div>
       </div>
@@ -159,7 +154,7 @@ app.get("/", (req, res) => {
       <div class="card">
         <div class="card-header">
           <div class="pill">💬 Text / DM Blurb</div>
-          <button type="button" class="copy-btn" data-copy-target="sms-output">📋 Copy</button>
+          <button type="button" data-copy-target="sms-output">📋 Copy</button>
         </div>
         <div id="sms-output" class="copy-box">Your short message will appear here.</div>
       </div>
@@ -168,7 +163,7 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="card-header">
         <div class="pill">🛒 Facebook Marketplace Description</div>
-        <button type="button" class="copy-btn" data-copy-target="mp-output">📋 Copy</button>
+        <button type="button" data-copy-target="mp-output">📋 Copy</button>
       </div>
       <div id="mp-output" class="copy-box">Your Facebook Marketplace description will appear here.</div>
       <p class="small">
@@ -180,7 +175,7 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="card-header">
         <div class="pill">🏷 Hashtags</div>
-        <button type="button" class="copy-btn" data-copy-target="hashtags-output">📋 Copy</button>
+        <button type="button" data-copy-target="hashtags-output">📋 Copy</button>
       </div>
       <div id="hashtags-output" class="copy-box">Hashtags will appear here.</div>
       <p class="small">Use these on Instagram, TikTok, and X. You can always add store-specific tags or location tags.</p>
@@ -206,7 +201,7 @@ app.get("/", (req, res) => {
     const hashtagsEl = document.getElementById("hashtags-output");
     const copyAllBtn = document.getElementById("copy-all-btn");
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", function () {
       const urlInput = document.getElementById("url");
       if (urlInput) {
         try { urlInput.focus(); } catch (e) {}
@@ -243,11 +238,11 @@ app.get("/", (req, res) => {
       ];
 
       const chunks = [];
-      blocks.forEach(b => {
+      blocks.forEach(function (b) {
         if (!b.el) return;
         const text = (b.el.textContent || "").trim();
         if (!text) return;
-        chunks.push(\`=== \${b.label} ===\\n\${text}\`);
+        chunks.push("=== " + b.label + " ===\\n" + text);
       });
 
       if (!chunks.length) {
@@ -265,15 +260,15 @@ app.get("/", (req, res) => {
       }
     }
 
-    document.querySelectorAll("button[data-copy-target]").forEach(btn => {
-      btn.addEventListener("click", () => {
+    document.querySelectorAll("button[data-copy-target]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
         const target = btn.getAttribute("data-copy-target");
         handleCopy(target);
       });
     });
 
     if (copyAllBtn) {
-      copyAllBtn.addEventListener("click", () => {
+      copyAllBtn.addEventListener("click", function () {
         handleCopyAll();
       });
     }
@@ -313,14 +308,14 @@ app.get("/", (req, res) => {
 
         const data = await res.json();
 
-        fbEl.textContent = data.posts && data.posts.facebook || "No Facebook post generated.";
-        igEl.textContent = data.posts && data.posts.instagram || "No Instagram caption generated.";
-        ttEl.textContent = data.posts && data.posts.tiktok || "No TikTok caption generated.";
-        liEl.textContent = data.posts && data.posts.linkedin || "No LinkedIn post generated.";
-        twEl.textContent = data.posts && data.posts.twitter || "No X/Twitter post generated.";
-        smsEl.textContent = data.posts && data.posts.sms || "No short message generated.";
-        mpEl.textContent = data.posts && data.posts.marketplace || "No Marketplace description generated.";
-        hashtagsEl.textContent = data.posts && data.posts.hashtags || "";
+        fbEl.textContent = (data.posts && data.posts.facebook) || "No Facebook post generated.";
+        igEl.textContent = (data.posts && data.posts.instagram) || "No Instagram caption generated.";
+        ttEl.textContent = (data.posts && data.posts.tiktok) || "No TikTok caption generated.";
+        liEl.textContent = (data.posts && data.posts.linkedin) || "No LinkedIn post generated.";
+        twEl.textContent = (data.posts && data.posts.twitter) || "No X/Twitter post generated.";
+        smsEl.textContent = (data.posts && data.posts.sms) || "No short message generated.";
+        mpEl.textContent = (data.posts && data.posts.marketplace) || "No Marketplace description generated.";
+        hashtagsEl.textContent = (data.posts && data.posts.hashtags) || "";
 
         if (data.vehicle) {
           const v = data.vehicle;
@@ -346,20 +341,11 @@ function cleanTitle(rawTitle) {
   if (!rawTitle) return "Vehicle";
   let t = rawTitle;
 
-  // Drop dealer name/location after |
-  t = t.split("|")[0];
-
-  // Remove VIN-like chunks
-  t = t.replace(/[A-HJ-NPR-Z0-9]{11,17}/g, " ");
-
-  // Remove "for sale in/near ..." type tails
+  t = t.split("|")[0]; // drop dealer/location after |
+  t = t.replace(/[A-HJ-NPR-Z0-9]{11,17}/g, " "); // VIN-like strings
   t = t.replace(/\bfor sale in\b.*$/i, "");
   t = t.replace(/\bfor sale near\b.*$/i, "");
-
-  // Smart spacing: insert a space before CapitalLetter following lowercase (JeepGrand -> Jeep Grand)
-  t = t.replace(/([a-z])([A-Z])/g, "$1 $2");
-
-  // Collapse extra spaces
+  t = t.replace(/([a-z])([A-Z])/g, "$1 $2"); // JeepGrand -> Jeep Grand
   t = t.replace(/\s{2,}/g, " ").trim();
 
   return t || "Vehicle";
@@ -367,15 +353,13 @@ function cleanTitle(rawTitle) {
 
 function cleanPrice(raw) {
   if (!raw) return "";
-  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length === 0) return "";
 
-  const dollarLine = lines.find(l => /\$\s*\d/.test(l));
+  const dollarLine = lines.find((l) => /\$\s*\d/.test(l));
   if (dollarLine) return dollarLine;
 
-  const numericLine = lines.find(
-    l => /\d/.test(l) && !/^price$/i.test(l)
-  );
+  const numericLine = lines.find((l) => /\d/.test(l) && !/^price$/i.test(l));
   if (numericLine) return numericLine;
 
   return "Message for current pricing";
@@ -389,7 +373,6 @@ async function scrapeVehicle(url) {
     const html = await resp.text();
     const $ = cheerio.load(html);
 
-    // Detect blocked/bot pages
     const pageTitle = $("title").text().toLowerCase();
     const pageText = $("body").text().toLowerCase();
 
@@ -401,7 +384,7 @@ async function scrapeVehicle(url) {
       "bot detected"
     ];
 
-    if (blockedPhrases.some(p => pageTitle.includes(p) || pageText.includes(p))) {
+    if (blockedPhrases.some((p) => pageTitle.includes(p) || pageText.includes(p))) {
       throw new Error("SCRAPE_BLOCKED");
     }
 
@@ -417,15 +400,12 @@ async function scrapeVehicle(url) {
       "";
 
     const cleanedTitle = cleanTitle(rawTitle);
-    let title = cleanedTitle;
     const price = cleanPrice(rawPrice);
 
-    // Detect year
-    const yearMatch = title.match(/(20\\d{2}|19\\d{2})/);
+    const yearMatch = cleanedTitle.match(/(20\d{2}|19\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
 
-    // Detect condition (New / Certified / Pre-Owned etc.) from title
-    const lowerTitle = title.toLowerCase();
+    const lowerTitle = cleanedTitle.toLowerCase();
     let condition = "";
     if (/\bnew\b/.test(lowerTitle)) {
       condition = "New";
@@ -435,15 +415,13 @@ async function scrapeVehicle(url) {
       condition = "Pre-Owned";
     }
 
-    // Build make/model string without year and without generic condition words
-    let makeModel = year ? title.replace(year, "").trim() : title;
+    let makeModel = year ? cleanedTitle.replace(year, "").trim() : cleanedTitle;
 
     if (condition) {
       const condRegex = new RegExp("\\b" + condition.replace(/\s+/g, "\\s+") + "\\b", "i");
       makeModel = makeModel.replace(condRegex, " ");
     }
 
-    // Strip generic condition words
     makeModel = makeModel.replace(/\b(new|used|pre[-\s]?owned|certified|cpo)\b/gi, " ");
     makeModel = makeModel.replace(/\s{2,}/g, " ").trim();
 
@@ -467,7 +445,7 @@ async function scrapeVehicle(url) {
   }
 }
 
-// ---------- FEATURE STACK (Phase 2 + EV/PHEV awareness) ----------
+// ---------- FEATURE STACK (with EV/PHEV awareness) ----------
 
 function generateFeatureStack(vehicle) {
   const baseLabel =
@@ -491,9 +469,9 @@ function generateFeatureStack(vehicle) {
     "mustang","camaro","corvette","challenger","charger","gr"
   ];
 
-  const isTruckOrSuv = truckSuvKeywords.some(k => nameLower.includes(k));
-  const isLuxury = luxuryKeywords.some(k => nameLower.includes(k));
-  const isSporty = sportyKeywords.some(k => nameLower.includes(k));
+  const isTruckOrSuv = truckSuvKeywords.some((k) => nameLower.includes(k));
+  const isLuxury = luxuryKeywords.some((k) => nameLower.includes(k));
+  const isSporty = sportyKeywords.some((k) => nameLower.includes(k));
 
   const isPhevOrHybrid =
     /phev|plug[-\s]?in|plug in|plug-in|hybrid/.test(nameLower);
@@ -556,7 +534,6 @@ function generateFeatureStack(vehicle) {
     ];
   }
 
-  // EV / PHEV / Hybrid – add electric-focused selling points
   if (isPhevOrHybrid || isEv) {
     const electrifiedFeatures = [
       "Plug-in hybrid setup that gives you electric driving with gas backup for real-world range",
@@ -564,7 +541,7 @@ function generateFeatureStack(vehicle) {
       "Smooth, quiet electric-feel driving around town",
       "Perfect for drivers who want SUV practicality with modern efficiency and tech"
     ];
-    baseFeatures = [...electrifiedFeatures, ...baseFeatures];
+    baseFeatures = electrifiedFeatures.concat(baseFeatures);
   }
 
   const selected = baseFeatures.slice(0, 10);
@@ -583,7 +560,7 @@ function generateHashtags(vehicle) {
 
   if (vehicle.year) baseWords.push(vehicle.year);
   if (vehicle.makeModel) {
-    vehicle.makeModel.split(/\s+/).forEach(w => baseWords.push(w));
+    vehicle.makeModel.split(/\s+/).forEach((w) => baseWords.push(w));
   }
 
   const fullString =
@@ -591,7 +568,6 @@ function generateHashtags(vehicle) {
 
   const fullLower = fullString.toLowerCase();
 
-  // Combined special tag for CPO
   if (/certified/i.test(fullLower) && /pre/i.test(fullLower) && /owned/i.test(fullLower)) {
     tags.add("#certifiedpreowned");
   }
@@ -613,7 +589,7 @@ function generateHashtags(vehicle) {
     "this"
   ]);
 
-  baseWords.forEach(w => {
+  baseWords.forEach((w) => {
     const clean = w.replace(/[^a-z0-9]/gi, "");
     if (!clean) return;
     const lower = clean.toLowerCase();
@@ -621,7 +597,6 @@ function generateHashtags(vehicle) {
     tags.add("#" + lower);
   });
 
-  // EV / Hybrid specific tags
   if (/phev|plug[-\s]?in|plug in|plug-in/.test(fullLower)) {
     tags.add("#phev");
     tags.add("#pluginhybrid");
@@ -643,26 +618,29 @@ function generateHashtags(vehicle) {
     "#carlife",
     "#autodeals",
     "#lotrocket"
-  ].forEach(t => tags.add(t));
+  ].forEach((t) => tags.add(t));
 
   return Array.from(tags).join(" ");
 }
 
 function buildSocialPosts(vehicle, hashtags) {
   const price = vehicle.price || "Message for current pricing";
-  const { label: baseLabel, bullets } = generateFeatureStack(vehicle);
+  const featureData = generateFeatureStack(vehicle);
+  const baseLabel = featureData.label;
+  const bullets = featureData.bullets;
+
   const label = vehicle.condition
-    ? \`\${baseLabel} – \${vehicle.condition}\`
+    ? baseLabel + " – " + vehicle.condition
     : baseLabel;
 
-  const featureLines = bullets.map(b => \`🔥 \${b}\`).join("  \\n");
+  const featureLines = bullets.map((b) => "🔥 " + b).join("  \n");
 
   const fullString =
-    ((vehicle.title || "") + " " + (vehicle.makeModel || "") + " " + (vehicle.condition || "")).toLowerCase();
-  const isCertified = /certified|cpo/.test(fullString);
+    (vehicle.title || "") + " " + (vehicle.makeModel || "") + " " + (vehicle.condition || "");
+  const isCertified = /certified|cpo/i.test(fullString);
 
   const certifiedLineLong = isCertified
-    ? "\\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\\n"
+    ? "\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\n"
     : "";
 
   const certifiedLineShort = isCertified
@@ -670,98 +648,79 @@ function buildSocialPosts(vehicle, hashtags) {
     : "";
 
   const facebook =
-\`🚗 \${label} – LOADED & READY TO IMPRESS
-
-If you're serious about driving something that looks sharp, feels strong, and makes sense in real life, this \${label} is the kind of unit you move on – not think about for three weeks.\${certifiedLineLong}
-💰 Current pricing:
-\${price}
-
-💎 Why this one stands out:
-\${featureLines}
-
-I move a lot of metal, and clean, well-optioned units like this do NOT sit. If this lines up with what you’ve been telling yourself you want, this is your moment to take action.
-
-📲 DM “INFO” and I’ll walk you through it quickly and professionally – no nonsense, just straight answers and a real plan.
-
-\${hashtags}\`;
+"🚗 " + label + " – LOADED & READY TO IMPRESS\n\n" +
+"If you're serious about driving something that looks sharp, feels strong, and makes sense in real life, this " + label + " is the kind of unit you move on – not think about for three weeks." +
+certifiedLineLong +
+"\n💰 Current pricing:\n" +
+price +
+"\n\n💎 Why this one stands out:\n" +
+featureLines +
+"\n\nI move a lot of metal, and clean, well-optioned units like this do NOT sit. If this lines up with what you’ve been telling yourself you want, this is your moment to take action.\n\n" +
+"📲 DM “INFO” and I’ll walk you through it quickly and professionally – no nonsense, just straight answers and a real plan.\n\n" +
+hashtags;
 
   const instagram =
-\`🚗 \${label}
-💰 \${price}
-
-If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.\${certifiedLineShort}
-
-\${featureLines}
-
-👀 If this matches what you’ve been looking for, don’t overthink it.
-
-📲 DM “INFO” and I’ll show you how easy it is to make it yours.
-
-\${hashtags}\`;
+"🚗 " + label + "\n" +
+"💰 " + price + "\n\n" +
+"If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it." +
+certifiedLineShort +
+"\n\n" +
+featureLines +
+"\n\n👀 If this matches what you’ve been looking for, don’t overthink it.\n\n" +
+"📲 DM “INFO” and I’ll show you how easy it is to make it yours.\n\n" +
+hashtags;
 
   const tiktok =
-\`🚗 \${label}
-💰 \${price}
-
-If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on.\${certifiedLineShort}
-
-\${featureLines}
-
-⏳ Clean, dialed-in rides like this DO NOT sit.
-
-📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.
-
-\${hashtags}\`;
+"🚗 " + label + "\n" +
+"💰 " + price + "\n\n" +
+"If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on." +
+certifiedLineShort +
+"\n\n" +
+featureLines +
+"\n\n⏳ Clean, dialed-in rides like this DO NOT sit.\n\n" +
+"📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.\n\n" +
+hashtags;
 
   const linkedin =
-\`🚗 \${label} – Strong, Clean, and Ready for the Next Owner
-
-For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This \${label} checks those boxes.\${certifiedLineShort}
-
-💰 Current pricing:
-\${price}
-
-Key highlights:
-\${featureLines}
-
-If you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.
-
-📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.
-
-\${hashtags}\`;
+"🚗 " + label + " – Strong, Clean, and Ready for the Next Owner\n\n" +
+"For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This " + label + " checks those boxes." +
+certifiedLineShort +
+"\n\n💰 Current pricing:\n" +
+price +
+"\n\nKey highlights:\n" +
+featureLines +
+"\n\nIf you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.\n\n" +
+"📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.\n\n" +
+hashtags;
 
   const twitter =
-\`🚗 \${label}
-💰 \${price}
-
-Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first.\${certifiedLineShort}
-
-\${hashtags}
-
-📲 DM “INFO” for photos, a walkaround, and next steps.\`;
+"🚗 " + label + "\n" +
+"💰 " + price + "\n\n" +
+"Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first." +
+certifiedLineShort +
+"\n\n" +
+hashtags +
+"\n\n📲 DM “INFO” for photos, a walkaround, and next steps.";
 
   const sms =
-\`Just pulled a \${label} that checks a lot of boxes. It’s at \${price} right now and it’s clean, sharp, and ready to go.\${certifiedLineShort} Want me to send you photos or a quick walkaround video?\`;
+"Just pulled a " + label + " that checks a lot of boxes. It’s at " + price +
+" right now and it’s clean, sharp, and ready to go." +
+certifiedLineShort +
+" Want me to send you photos or a quick walkaround video?";
 
   const marketplace =
-\`Title idea:
-\${label} – Clean, Sharp & Ready to Go!
-
-Suggested description for Facebook Marketplace:
-
-🚗 This \${label} just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life.\${certifiedLineShort}
-
-💰 Current pricing:
-\${price}
-
-🔥 Why this one is worth a serious look:
-\${featureLines}
-
-If you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.
-
-📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.
-
-⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.\`;
+"Title idea:\n" +
+label + " – Clean, Sharp & Ready to Go!\n\n" +
+"Suggested description for Facebook Marketplace:\n\n" +
+"🚗 This " + label + " just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life." +
+certifiedLineShort +
+"\n\n💰 Current pricing:\n" +
+price +
+"\n\n🔥 Why this one is worth a serious look:\n" +
+featureLines +
+"\n\nIf you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.\n\n" +
+"📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.\n\n" +
+"⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.";
 
   return {
     facebook,
@@ -777,7 +736,8 @@ If you’ve been waiting for the right one instead of just “another” vehicle
 // ---------- API ROUTE ----------
 
 app.post("/api/process-listing", async (req, res) => {
-  const { url } = req.body || {};
+  const body = req.body || {};
+  const url = body.url;
   if (!url || typeof url !== "string") {
     return res.status(400).send("Missing or invalid 'url'.");
   }
