@@ -1,6 +1,6 @@
 // app.js
 // Lot Rocket – Social Media Post Kit for Automotive Salespeople
-// Single clean version – replace your whole app.js with this.
+// Viral mode + EV/PHEV awareness + video script / shot plan
 
 const express = require("express");
 const cheerio = require("cheerio");
@@ -18,45 +18,116 @@ app.get("/", (req, res) => {
   <title>Lot Rocket – Social Media Post Kit</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; background: #050505; color: #f5f5f5; }
-    .app { max-width: 1000px; margin: 0 auto; padding: 32px 16px 96px; }
-    h1 { font-size: 2rem; margin-bottom: 4px; }
-    h1 span.brand { color: #ff3232; }
-    p.sub { color: #aaa; margin-top: 0; }
-    .card { background: #111; border-radius: 16px; padding: 20px; border: 1px solid #333; margin-top: 16px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      background: #050505;
+      color: #f5f5f5;
+    }
+    .app {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 16px 96px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 4px;
+    }
+    h1 span.brand {
+      color: #ff3232;
+    }
+    p.sub {
+      color: #aaa;
+      margin-top: 0;
+    }
+    .card {
+      background: #111;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #333;
+      margin-top: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
     input[type="text"] {
-      width: 100%; padding: 12px 14px; border-radius: 10px;
-      border: 1px solid #333; background: #050505; color: #f5f5f5;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #050505;
+      color: #f5f5f5;
       font-size: 1rem;
     }
-    input:focus { outline: 1px solid #ff3232; border-color: #ff3232; }
+    input:focus {
+      outline: 1px solid #ff3232;
+      border-color: #ff3232;
+    }
     button {
-      border: none; border-radius: 999px; padding: 10px 16px; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 6px;
-      cursor: pointer; margin-top: 10px; font-size: 0.95rem;
-      background: linear-gradient(135deg, #ff3232, #ff7b32); color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 0.95rem;
+      background: linear-gradient(135deg, #ff3232, #ff7b32);
+      color: #fff;
       box-shadow: 0 8px 16px rgba(255, 50, 50, 0.4);
       transition: transform 0.08s ease, box-shadow 0.08s ease;
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(255, 50, 50, 0.6); }
-    button:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
-    .primary-btn { width: 100%; justify-content: center; }
-
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(255, 50, 50, 0.6);
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+    .primary-btn {
+      width: 100%;
+      justify-content: center;
+    }
     .pill {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;
-      padding: 5px 10px; border-radius: 999px; background: #181818; color: #ccc;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #181818;
+      color: #ccc;
     }
     .copy-box {
-      background: #050505; border-radius: 12px; padding: 12px;
-      border: 1px solid #333; white-space: pre-wrap;
-      font-size: 0.9rem; min-height: 60px;
+      background: #050505;
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid #333;
+      white-space: pre-wrap;
+      font-size: 0.9rem;
+      min-height: 60px;
     }
-    .small { font-size: 0.8rem; color: #777; margin-top: 8px; }
+    .small {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 8px;
+    }
     .card-header {
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 10px; flex-wrap: wrap;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .card-header button {
       margin-top: 0;
@@ -69,7 +140,6 @@ app.get("/", (req, res) => {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
     }
-
     .copy-all-btn {
       position: fixed;
       left: 50%;
@@ -79,27 +149,37 @@ app.get("/", (req, res) => {
       z-index: 50;
       justify-content: center;
     }
-
     @media (max-width: 768px) {
-      body { font-size: 16px; }
-      h1 { font-size: 1.6rem; }
-      .app { padding: 24px 12px 96px; }
-      .card { padding: 16px; }
+      body {
+        font-size: 16px;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      .app {
+        padding: 24px 12px 96px;
+      }
+      .card {
+        padding: 16px;
+      }
+      .copy-all-btn {
+        display: inline-flex;
+      }
     }
-
     @media (min-width: 769px) {
-      .copy-all-btn { display: none; }
-    }
-
-    @media (max-width: 768px) {
-      .copy-all-btn { display: inline-flex; }
+      .copy-all-btn {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
   <div class="app">
     <h1><span class="brand">Lot Rocket</span> Social Media Kit</h1>
-    <p class="sub">Paste a vehicle URL. Get ready-to-use posts for Facebook, Instagram, TikTok, LinkedIn, X, Marketplace, text/DM – plus a viral video script & shot plan. 🔥</p>
+    <p class="sub">
+      Paste a vehicle URL. Get ready-to-use posts for Facebook, Instagram, TikTok, LinkedIn, X,
+      Marketplace, text/DM – plus a viral video script & shot plan. 🔥
+    </p>
 
     <div class="card">
       <form id="lotrocket-form">
@@ -185,22 +265,25 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="card-header">
         <div class="pill">🎥 Viral Video Script</div>
-        <button type="button" data-copy-target="video-script-output">📋 Copy</button>
+        <button type="button" data-copy-target="video-output">📋 Copy</button>
       </div>
-      <div id="video-script-output" class="copy-box">Your viral video script will appear here.</div>
+      <div id="video-output" class="copy-box">Your viral video script will appear here.</div>
       <p class="small">Read this on camera for Reels, TikTok, Shorts, or Facebook Reels.</p>
     </div>
 
     <div class="card">
       <div class="card-header">
         <div class="pill">👀 Viral Visual Shot Plan</div>
-        <button type="button" data-copy-target="shot-plan-output">📋 Copy</button>
+        <button type="button" data-copy-target="shot-output">📋 Copy</button>
       </div>
-      <div id="shot-plan-output" class="copy-box">Your viral visual shot plan will appear here.</div>
+      <div id="shot-output" class="copy-box">Your shot plan will appear here.</div>
       <p class="small">Follow these shots so your video looks clean, confident, and high-impact.</p>
     </div>
 
-    <p class="small">Prototype – full image and automatic video creation will come in a later version. For now, use this as your “done-for-you” social copy engine.</p>
+    <p class="small">
+      Prototype – full image and automatic video creation will come in a later version.
+      For now, use this as your “done-for-you” social copy engine.
+    </p>
 
     <button type="button" id="copy-all-btn" class="copy-all-btn">📋 Copy All Posts</button>
   </div>
@@ -218,8 +301,8 @@ app.get("/", (req, res) => {
     const smsEl = document.getElementById("sms-output");
     const mpEl = document.getElementById("mp-output");
     const hashtagsEl = document.getElementById("hashtags-output");
-    const videoScriptEl = document.getElementById("video-script-output");
-    const shotPlanEl = document.getElementById("shot-plan-output");
+    const videoEl = document.getElementById("video-output");
+    const shotEl = document.getElementById("shot-output");
     const copyAllBtn = document.getElementById("copy-all-btn");
 
     window.addEventListener("load", function () {
@@ -256,8 +339,8 @@ app.get("/", (req, res) => {
         { label: "Text / DM", el: smsEl },
         { label: "Marketplace", el: mpEl },
         { label: "Hashtags", el: hashtagsEl },
-        { label: "Viral Video Script", el: videoScriptEl },
-        { label: "Viral Shot Plan", el: shotPlanEl }
+        { label: "Video Script", el: videoEl },
+        { label: "Shot Plan", el: shotEl }
       ];
 
       const chunks = [];
@@ -265,7 +348,7 @@ app.get("/", (req, res) => {
         if (!b.el) return;
         const text = (b.el.textContent || "").trim();
         if (!text) return;
-        chunks.push("=== " + b.label + " ===\\n" + text);
+        chunks.push("=== " + b.label + " ===\n" + text);
       });
 
       if (!chunks.length) {
@@ -273,7 +356,7 @@ app.get("/", (req, res) => {
         return;
       }
 
-      const full = chunks.join("\\n\\n");
+      const full = chunks.join("\n\n");
       try {
         await navigator.clipboard.writeText(full);
         statusEl.textContent = "All posts copied ✅";
@@ -316,8 +399,8 @@ app.get("/", (req, res) => {
       smsEl.textContent = "";
       mpEl.textContent = "";
       hashtagsEl.textContent = "";
-      videoScriptEl.textContent = "";
-      shotPlanEl.textContent = "";
+      videoEl.textContent = "";
+      shotEl.textContent = "";
 
       try {
         const res = await fetch("/api/process-listing", {
@@ -341,8 +424,8 @@ app.get("/", (req, res) => {
         smsEl.textContent = (data.posts && data.posts.sms) || "No short message generated.";
         mpEl.textContent = (data.posts && data.posts.marketplace) || "No Marketplace description generated.";
         hashtagsEl.textContent = (data.posts && data.posts.hashtags) || "";
-        videoScriptEl.textContent = (data.posts && data.posts.videoScript) || "No viral video script generated.";
-        shotPlanEl.textContent = (data.posts && data.posts.shotPlan) || "No viral shot plan generated.";
+        videoEl.textContent = (data.posts && data.posts.videoScript) || "No video script generated.";
+        shotEl.textContent = (data.posts && data.posts.shotPlan) || "No shot plan generated.";
 
         if (data.vehicle) {
           const v = data.vehicle;
@@ -368,11 +451,20 @@ function cleanTitle(rawTitle) {
   if (!rawTitle) return "Vehicle";
   let t = rawTitle;
 
-  t = t.split("|")[0]; // drop dealer/location after |
-  t = t.replace(/[A-HJ-NPR-Z0-9]{11,17}/g, " "); // VIN-like strings
+  // Drop dealer/location after |
+  t = t.split("|")[0];
+
+  // Remove VIN-like strings
+  t = t.replace(/[A-HJ-NPR-Z0-9]{11,17}/g, " ");
+
+  // Remove trailing "for sale in ..." / "for sale near ..."
   t = t.replace(/\bfor sale in\b.*$/i, "");
   t = t.replace(/\bfor sale near\b.*$/i, "");
-  t = t.replace(/([a-z])([A-Z])/g, "$1 $2"); // JeepGrand -> Jeep Grand
+
+  // Fix CamelCase like "JeepGrand"
+  t = t.replace(/([a-z])([A-Z])/g, "$1 $2");
+
+  // Collapse spaces
   t = t.replace(/\s{2,}/g, " ").trim();
 
   return t || "Vehicle";
@@ -380,8 +472,12 @@ function cleanTitle(rawTitle) {
 
 function cleanPrice(raw) {
   if (!raw) return "";
-  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length === 0) return "";
+  const lines = raw
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (!lines.length) return "";
 
   const dollarLine = lines.find((l) => /\$\s*\d/.test(l));
   if (dollarLine) return dollarLine;
@@ -395,19 +491,6 @@ function cleanPrice(raw) {
 // ---------- SCRAPE VEHICLE DATA (with BLOCK DETECTION + CONDITION) ----------
 
 async function scrapeVehicle(url) {
-  // Basic guard against totally unsupported link types
-  const lowerUrl = url.toLowerCase();
-  if (lowerUrl.includes("dpapp.autoipacket.com/packet/view")) {
-    // Site is behind automation protection – we just can't scrape a real title/price
-    return {
-      title: "Autoi Packet",
-      year: "",
-      makeModel: "Autoi Packet",
-      price: "",
-      condition: ""
-    };
-  }
-
   try {
     const resp = await fetch(url);
     const html = await resp.text();
@@ -442,30 +525,29 @@ async function scrapeVehicle(url) {
     const cleanedTitle = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = cleanedTitle.match(/(20\\d{2}|19\\d{2})/);
+    const yearMatch = cleanedTitle.match(/(20\d{2}|19\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
 
     const lowerTitle = cleanedTitle.toLowerCase();
     let condition = "";
-    if (/\\bnew\\b/.test(lowerTitle)) {
+
+    if (/\bnew\b/.test(lowerTitle)) {
       condition = "New";
     } else if (/certified|cpo/.test(lowerTitle)) {
       condition = "Certified Pre-Owned";
-    } else if (/pre[-\\s]?owned/.test(lowerTitle)) {
-      condition = "Pre-Owned";
-    } else if (/used/.test(lowerTitle)) {
+    } else if (/pre[-\s]?owned/.test(lowerTitle) || /\bused\b/.test(lowerTitle)) {
       condition = "Used";
     }
 
     let makeModel = year ? cleanedTitle.replace(year, "").trim() : cleanedTitle;
 
     if (condition) {
-      const condRegex = new RegExp("\\\\b" + condition.replace(/\\s+/g, "\\\\s+") + "\\\\b", "i");
+      const condRegex = new RegExp("\\b" + condition.replace(/\s+/g, "\\s+") + "\\b", "i");
       makeModel = makeModel.replace(condRegex, " ");
     }
 
-    makeModel = makeModel.replace(/\\b(new|used|pre[-\\s]?owned|certified|cpo)\\b/gi, " ");
-    makeModel = makeModel.replace(/\\s{2,}/g, " ").trim();
+    makeModel = makeModel.replace(/\b(new|used|pre[-\s]?owned|certified|cpo)\b/gi, " ");
+    makeModel = makeModel.replace(/\s{2,}/g, " ").trim();
 
     return {
       title: cleanedTitle,
@@ -498,17 +580,17 @@ function generateFeatureStack(vehicle) {
     "tahoe","suburban","silverado","sierra","ram","f-150","f150","bronco","explorer",
     "traverse","highlander","4runner","durango","tacoma","ridgeline","wrangler","gladiator",
     "grand cherokee","escape","equinox","ascent","pilot","telluride","seltos","palisade",
-    "outlander","cr-v","rav4","blazer","acadia","suv","truck","pickup"
+    "outlander","cr-v","rav4","trax","acadia","blazer","suv","navigator","escalade"
   ];
 
   const luxuryKeywords = [
     "bmw","mercedes","amg","audi","lexus","infiniti","acura","volvo","cadillac","lincoln",
-    "genesis","porsche","jaguar","land rover","range rover","aston martin","bentley","maserati"
+    "genesis","porsche","jaguar","land rover","range rover","aston martin","bentley"
   ];
 
   const sportyKeywords = [
     "m3","m4","m5","m2","type s","sti","ss","gt","sport","srt","rs","si","z","nismo",
-    "mustang","camaro","corvette","challenger","charger","gr","z06","hellcat"
+    "mustang","camaro","corvette","challenger","charger","gr","z06","hellcat","amg"
   ];
 
   const isTruckOrSuv = truckSuvKeywords.some((k) => nameLower.includes(k));
@@ -516,9 +598,9 @@ function generateFeatureStack(vehicle) {
   const isSporty = sportyKeywords.some((k) => nameLower.includes(k));
 
   const isPhevOrHybrid =
-    /phev|plug[-\\s]?in|plug in|plug-in|hybrid/.test(nameLower);
+    /phev|plug[-\s]?in|plug in|plug-in|hybrid/.test(nameLower);
   const isEv =
-    (/(^|\\s)ev(\\s|$)/.test(nameLower)) || /electric/.test(nameLower);
+    /\bev\b/.test(nameLower) || /electric/.test(nameLower);
 
   let baseFeatures;
 
@@ -578,10 +660,10 @@ function generateFeatureStack(vehicle) {
 
   if (isPhevOrHybrid || isEv) {
     const electrifiedFeatures = [
-      "Plug-in hybrid / electrified setup that gives you electric-style driving with real-world range confidence",
+      "Plug-in hybrid / electrified setup that gives you electric-style driving with real-world range",
       "Lower fuel stops by using electricity for short trips and gas for the longer runs",
       "Smooth, quiet electric-feel driving around town",
-      "Perfect for drivers who want everyday practicality with modern efficiency and tech"
+      "Perfect for drivers who want SUV practicality with modern efficiency and tech"
     ];
     baseFeatures = electrifiedFeatures.concat(baseFeatures);
   }
@@ -594,49 +676,84 @@ function generateFeatureStack(vehicle) {
   };
 }
 
-// ---------- HASHTAGS & POSTS & VIRAL CONTENT ----------
+// ---------- HASHTAGS ----------
 
 function generateHashtags(vehicle) {
   const tags = new Set();
-  const baseWords = [];
+  const words = [];
 
-  if (vehicle.year) baseWords.push(vehicle.year);
+  if (vehicle.year) words.push(String(vehicle.year));
   if (vehicle.makeModel) {
-    vehicle.makeModel.split(/\\s+/).forEach((w) => baseWords.push(w));
+    vehicle.makeModel.split(/\s+/).forEach((w) => words.push(w));
   }
 
-  const fullString =
-    (vehicle.year ? vehicle.year + " " : "") + (vehicle.makeModel || "");
-  const fullLower = fullString.toLowerCase();
+  const fullLower = (
+    (vehicle.year ? vehicle.year + " " : "") +
+    (vehicle.makeModel || "")
+  ).toLowerCase();
 
-  if (/certified/i.test(fullLower) && /pre/i.test(fullLower) && /owned/i.test(fullLower)) {
+  // Certified / hybrid / EV awareness
+  if (/certified|cpo/.test(fullLower)) {
     tags.add("#certifiedpreowned");
   }
-
-  const stopWords = new Set([
-    "for","sale","in","at","the","a","an","near","with","on","and","or","of","this","plug","hybrid","drive"
-  ]);
-
-  baseWords.forEach((w) => {
-    const clean = w.replace(/[^a-z0-9]/gi, "");
-    if (!clean) return;
-    const lower = clean.toLowerCase();
-    if (stopWords.has(lower)) return;
-    tags.add("#" + lower);
-  });
-
-  if (/phev|plug[-\\s]?in|plug in|plug-in/.test(fullLower)) {
+  if (/phev|plug[-\s]?in|plug in|plug-in/.test(fullLower)) {
     tags.add("#hybrid");
     tags.add("#pluginhybrid");
   }
-  if (/\\bhybrid\\b/.test(fullLower)) {
+  if (/\bhybrid\b/.test(fullLower)) {
     tags.add("#hybrid");
   }
-  if (/(^|\\s)ev(\\s|$)/.test(fullLower) || /electric/.test(fullLower)) {
+  if (/(^|\s)ev(\s|$)/.test(fullLower) || /electric/.test(fullLower)) {
     tags.add("#ev");
     tags.add("#electricvehicle");
   }
 
+  const stopWords = new Set([
+    "for","sale","in","at","the","a","an","near","with","on","and","or",
+    "of","this","plug","hybrid","drive","all-wheel","awd","4wd","fwd","rwd"
+  ]);
+
+  words.forEach((w) => {
+    const clean = w.replace(/[^a-z0-9]/gi, "");
+    if (!clean) return;
+    let lower = clean.toLowerCase();
+    if (stopWords.has(lower)) return;
+
+    // Normalize some common makes
+    if (lower === "chevrolet") lower = "chevy";
+
+    tags.add("#" + lower);
+  });
+
+  // Type-based extras
+  const mm = (vehicle.makeModel || "").toLowerCase();
+  const isSuv =
+    mm.includes("tahoe") || mm.includes("suburban") || mm.includes("acadia") ||
+    mm.includes("traverse") || mm.includes("pilot") || mm.includes("rav4") ||
+    mm.includes("blazer") || mm.includes("suv") || mm.includes("trax");
+  const isTruck =
+    mm.includes("sierra") || mm.includes("silverado") || mm.includes("ram") ||
+    mm.includes("f-150") || mm.includes("f150") || mm.includes("truck") ||
+    mm.includes("3500");
+  const isSport =
+    mm.includes("corvette") || mm.includes("camaro") || mm.includes("mustang") ||
+    mm.includes("charger") || mm.includes("challenger") || mm.includes("z06") ||
+    mm.includes("hellcat") || mm.includes("amg") || mm.includes("sport");
+
+  if (isSuv) {
+    tags.add("#suvforsale");
+    tags.add("#familySUV");
+  }
+  if (isTruck) {
+    tags.add("#truckforsale");
+    tags.add("#worktruck");
+  }
+  if (isSport) {
+    tags.add("#sportscar");
+    tags.add("#performancecar");
+  }
+
+  // Evergreen sales tags
   [
     "#carsforsale",
     "#carshopping",
@@ -646,42 +763,21 @@ function generateHashtags(vehicle) {
     "#testdrive"
   ].forEach((t) => tags.add(t));
 
-  // Type-based extras
-  const lowerMM = (vehicle.makeModel || "").toLowerCase();
-  if (lowerMM.includes("tahoe") || lowerMM.includes("suburban") || lowerMM.includes("acadia") ||
-      lowerMM.includes("traverse") || lowerMM.includes("pilot") || lowerMM.includes("telluride") ||
-      lowerMM.includes("palisade") || lowerMM.includes("rav4") || lowerMM.includes("blazer") ||
-      lowerMM.includes("suv")) {
-    tags.add("#suvforsale");
-    tags.add("#familySUV");
-  }
-  if (lowerMM.includes("sierra") || lowerMM.includes("silverado") || lowerMM.includes("ram") ||
-      lowerMM.includes("f-150") || lowerMM.includes("f150") || lowerMM.includes("truck")) {
-    tags.add("#truckforsale");
-    tags.add("#worktruck");
-  }
-  if (lowerMM.includes("corvette") || lowerMM.includes("camaro") || lowerMM.includes("mustang") ||
-      lowerMM.includes("charger") || lowerMM.includes("challenger") || lowerMM.includes("z06") ||
-      lowerMM.includes("sport")) {
-    tags.add("#sportscar");
-    tags.add("#performancecar");
-  }
-
   return Array.from(tags).join(" ");
 }
 
-function buildViralVideoScript(vehicle) {
-  const label = (vehicle.year ? vehicle.year + " " : "") +
-    (vehicle.makeModel || vehicle.title || "this vehicle");
-  const typeHint = (vehicle.makeModel || "").toLowerCase().includes("suv") ||
-    (vehicle.makeModel || "").toLowerCase().includes("tahoe") ||
-    (vehicle.makeModel || "").toLowerCase().includes("acadia") ? "SUV or truck" : "car";
+// ---------- VIRAL VIDEO SCRIPT & SHOT PLAN ----------
 
-  return (
-`🎥 Viral Video Script (30–40 seconds)
+function buildViralVideoScript(vehicle) {
+  const label =
+    (vehicle.year ? vehicle.year + " " : "") +
+    (vehicle.makeModel || "this vehicle") +
+    (vehicle.condition ? " – " + vehicle.condition : "");
+
+  return `🎥 Viral Video Script (30–40 seconds)
 
 HOOK (2–3 sec)
-“Stop scrolling and look at this ${label}. If you’ve been waiting for the right ${typeHint}, this is it.”
+“Stop scrolling and look at this ${label}. If you’ve been waiting for the right one, this is it.”
 
 EXTERIOR (5–10 sec)
 “Check out the stance, wheels, and overall look on this one. It’s clean, sharp, and it looks even better in person than it does online.”
@@ -693,13 +789,11 @@ BENEFIT HOOK (5–8 sec)
 “If you’re tired of settling for ‘good enough’ and you want something that actually feels like a win every time you drive it, this is that move.”
 
 CTA (5–8 sec)
-“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”`
-  );
+“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”`;
 }
 
 function buildShotPlan() {
-  return (
-`👀 Viral Visual Shot Plan (Simple 5–7 shots)
+  return `👀 Viral Visual Shot Plan (Simple 5–7 shots)
 
 1️⃣ Hook Shot (2–3 sec)
 - Start with a close-up of the front corner, grille, or headlights while you deliver the hook line.
@@ -726,10 +820,10 @@ function buildShotPlan() {
 - Film vertical.
 - Keep clips short (1–3 seconds).
 - Use natural light when possible.
-- Speak clearly, confident, and like you already know this unit will sell.
-Follow these shots so your video looks clean, confident, and high-impact.`
-  );
+- Speak clearly, confident, and like you already know this unit will sell.`;
 }
+
+// ---------- POSTS (VIRAL MODE) ----------
 
 function buildSocialPosts(vehicle, hashtags) {
   const price = vehicle.price || "Message for current pricing";
@@ -738,97 +832,108 @@ function buildSocialPosts(vehicle, hashtags) {
   const bullets = featureData.bullets;
 
   const label = vehicle.condition
-    ? baseLabel + " – " + vehicle.condition
+    ? `${baseLabel} – ${vehicle.condition}`
     : baseLabel;
 
-  const featureLines = bullets.map((b) => "🔥 " + b).join("  \n");
+  const bulletLines = bullets.map((b) => `🔥 ${b}`).join("\n");
 
   const fullString =
-    (vehicle.title || "") + " " + (vehicle.makeModel || "") + " " + (vehicle.condition || "");
+    `${vehicle.title || ""} ${vehicle.makeModel || ""} ${vehicle.condition || ""}`;
   const isCertified = /certified|cpo/i.test(fullString);
 
   const certifiedLineLong = isCertified
-    ? "\\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\\n"
+    ? "\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\n"
     : "";
 
   const certifiedLineShort = isCertified
     ? " It’s certified, which means extra inspection-backed peace of mind compared to typical used units."
     : "";
 
-  const facebook =
-"🔥 STOP SCROLLING. Read this before someone else buys it.\\n\\n" +
-"🚗 " + label + "\\n" +
-"💰 Price: " + price + "\\n\\n" +
-"If you're serious about driving something that looks sharp, feels strong, and actually makes sense in real life, this " + label + " is the kind of unit you move on – not think about for three weeks." +
-certifiedLineLong +
-"💎 Why this one hits different:\\n" +
-featureLines +
-"\\n\\nWhen the right unit shows up, serious buyers move first. If this lines up with what you’ve been telling yourself you want, this is your green light to take action.\\n\\n" +
-"📲 Comment or DM “INFO” and I’ll get you pricing, photos, and a quick walkaround – straight answers, no nonsense.\\n\\n" +
-hashtags;
+  const facebook = `🔥 STOP SCROLLING. Read this before someone else buys it.
 
-  const instagram =
-"🚗 " + label + "\\n" +
-"💰 " + price + "\\n\\n" +
-"If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it." +
-certifiedLineShort +
-"\\n\\n" +
-featureLines +
-"\\n\\n👀 If this matches what you’ve been looking for, don’t overthink it.\\n\\n" +
-"📲 DM “INFO” and I’ll show you how easy it is to make it yours.\\n\\n" +
-hashtags;
+🚗 ${label}
+💰 Price: ${price}
 
-  const tiktok =
-"🚗 " + label + "\\n" +
-"💰 " + price + "\\n\\n" +
-"If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on." +
-certifiedLineShort +
-"\\n\\n" +
-featureLines +
-"\\n\\n⏳ Clean, dialed-in rides like this DO NOT sit.\\n\\n" +
-"📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.\\n\\n" +
-hashtags;
+If you're serious about driving something that looks sharp, feels strong, and actually makes sense in real life, this ${label} is the kind of unit you move on – not think about for three weeks.${certifiedLineLong}💎 Why this one hits different:
+${bulletLines}
 
-  const linkedin =
-"🚗 " + label + " – Strong, Clean, and Ready for the Next Owner\\n\\n" +
-"For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This " + label + " checks those boxes." +
-certifiedLineShort +
-"\\n\\n💰 Current pricing:\\n" +
-price +
-"\\n\\nKey highlights:\\n" +
-featureLines +
-"\\n\\nIf you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.\\n\\n" +
-"📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.\\n\\n" +
-hashtags;
+When the right unit shows up, serious buyers move first. If this lines up with what you’ve been telling yourself you want, this is your green light to take action.
 
-  const twitter =
-"🚗 " + label + "\\n" +
-"💰 " + price + "\\n\\n" +
-"Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first." +
-certifiedLineShort +
-"\\n\\n" +
-hashtags +
-"\\n\\n📲 DM “INFO” for photos, a walkaround, and next steps.";
+📲 Comment or DM “INFO” and I’ll get you pricing, photos, and a quick walkaround – straight answers, no nonsense.
 
-  const sms =
-"Just pulled a " + label + " that checks a lot of boxes. It’s at " + price +
-" right now and it’s clean, sharp, and ready to go." +
-certifiedLineShort +
-" Want me to send you photos or a quick walkaround video?";
+${hashtags}`;
 
-  const marketplace =
-"Title idea:\\n" +
-label + " – Clean, Sharp & Ready to Go!\\n\\n" +
-"Suggested description for Facebook Marketplace:\\n\\n" +
-"🚗 This " + label + " just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life." +
-certifiedLineShort +
-"\\n\\n💰 Current pricing:\\n" +
-price +
-"\\n\\n🔥 Why this one is worth a serious look:\\n" +
-featureLines +
-"\\n\\nIf you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.\\n\\n" +
-"📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.\\n\\n" +
-"⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.";
+  const instagram = `🚗 ${label}
+💰 ${price}
+
+If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.${certifiedLineShort}
+
+${bulletLines}
+
+👀 If this matches what you’ve been looking for, don’t overthink it.
+
+📲 DM “INFO” and I’ll show you how easy it is to make it yours.
+
+${hashtags}`;
+
+  const tiktok = `🚗 ${label}
+💰 ${price}
+
+If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on.${certifiedLineShort}
+
+${bulletLines}
+
+⏳ Clean, dialed-in rides like this DO NOT sit.
+
+📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.
+
+${hashtags}`;
+
+  const linkedin = `🚗 ${label} – Strong, Clean, and Ready for the Next Owner
+
+For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This ${label} checks those boxes.${certifiedLineShort}
+
+💰 Current pricing:
+${price}
+
+Key highlights:
+${bulletLines}
+
+If you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.
+
+📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.
+
+${hashtags}`;
+
+  const twitter = `🚗 ${label}
+💰 ${price}
+
+Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first.${certifiedLineShort}
+
+${hashtags}
+
+📲 DM “INFO” for photos, a walkaround, and next steps.`;
+
+  const sms = `Just pulled a ${label} that checks a lot of boxes. It’s at ${price} right now and it’s clean, sharp, and ready to go.${certifiedLineShort} Want me to send you photos or a quick walkaround video?`;
+
+  const marketplace = `Title idea:
+${label} – Clean, Sharp & Ready to Go!
+
+Suggested description for Facebook Marketplace:
+
+🚗 This ${label} just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life.${certifiedLineShort}
+
+💰 Current pricing:
+${price}
+
+🔥 Why this one is worth a serious look:
+${bulletLines}
+
+If you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.
+
+📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.
+
+⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.`;
 
   const videoScript = buildViralVideoScript(vehicle);
   const shotPlan = buildShotPlan();
@@ -856,28 +961,6 @@ app.post("/api/process-listing", async (req, res) => {
   }
 
   try {
-    const lower = url.toLowerCase();
-
-    if (lower.includes("dpapp.autoipacket.com/packet/view")) {
-      const vehicle = {
-        title: "Autoi Packet",
-        year: "",
-        makeModel: "Autoi Packet",
-        price: "",
-        condition: ""
-      };
-      const hashtags = generateHashtags(vehicle);
-      const posts = buildSocialPosts(vehicle, hashtags);
-
-      return res.json({
-        vehicle,
-        posts: {
-          ...posts,
-          hashtags
-        }
-      });
-    }
-
     const vehicle = await scrapeVehicle(url);
     const hashtags = generateHashtags(vehicle);
     const posts = buildSocialPosts(vehicle, hashtags);
