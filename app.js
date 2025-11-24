@@ -1,6 +1,6 @@
 // app.js
 // Lot Rocket – Social Media Post Kit for Automotive Salespeople
-// Viral Mode default + Mobile polish + Video Script & Visual Plan
+// Viral mode + category auto-detect + EV/PHEV awareness + video script/shot plan
 
 const express = require("express");
 const cheerio = require("cheerio");
@@ -98,7 +98,10 @@ app.get("/", (req, res) => {
 <body>
   <div class="app">
     <h1><span class="brand">Lot Rocket</span> Social Media Kit</h1>
-    <p class="sub">Paste a vehicle URL. Get ready-to-use posts for Facebook, Instagram, TikTok, LinkedIn, X, Marketplace, text/DM – plus a viral video script & shot plan. 🔥</p>
+    <p class="sub">
+      Paste a vehicle URL. Get ready-to-use posts for Facebook, Instagram, TikTok, LinkedIn, X,
+      Marketplace, text/DM – plus a viral video script & shot plan. 🔥
+    </p>
 
     <div class="card">
       <form id="lotrocket-form">
@@ -184,22 +187,22 @@ app.get("/", (req, res) => {
     <div class="card">
       <div class="card-header">
         <div class="pill">🎥 Viral Video Script</div>
-        <button type="button" data-copy-target="video-output">📋 Copy</button>
+        <button type="button" data-copy-target="video-script-output">📋 Copy</button>
       </div>
-      <div id="video-output" class="copy-box">A short viral video script will appear here.</div>
+      <div id="video-script-output" class="copy-box">Your viral video script will appear here.</div>
       <p class="small">Read this on camera for Reels, TikTok, Shorts, or Facebook Reels.</p>
     </div>
 
     <div class="card">
       <div class="card-header">
         <div class="pill">👀 Viral Visual Shot Plan</div>
-        <button type="button" data-copy-target="visual-output">📋 Copy</button>
+        <button type="button" data-copy-target="shot-plan-output">📋 Copy</button>
       </div>
-      <div id="visual-output" class="copy-box">A simple shot plan will appear here.</div>
+      <div id="shot-plan-output" class="copy-box">Your shot plan will appear here.</div>
       <p class="small">Follow these shots so your video looks clean, confident, and high-impact.</p>
     </div>
 
-    <p class="small">Prototype – full image and automatic video creation will come in a later version. For now, use this as your “done-for-you” social copy engine.</p>
+    <p class="small">Prototype – images and automatic video creation will come in a later version. For now, use this as your “done-for-you” social copy engine.</p>
 
     <button type="button" id="copy-all-btn" class="copy-all-btn">📋 Copy All Posts</button>
   </div>
@@ -217,8 +220,8 @@ app.get("/", (req, res) => {
     const smsEl = document.getElementById("sms-output");
     const mpEl = document.getElementById("mp-output");
     const hashtagsEl = document.getElementById("hashtags-output");
-    const videoEl = document.getElementById("video-output");
-    const visualEl = document.getElementById("visual-output");
+    const videoScriptEl = document.getElementById("video-script-output");
+    const shotPlanEl = document.getElementById("shot-plan-output");
     const copyAllBtn = document.getElementById("copy-all-btn");
 
     window.addEventListener("load", function () {
@@ -255,8 +258,8 @@ app.get("/", (req, res) => {
         { label: "Text / DM", el: smsEl },
         { label: "Marketplace", el: mpEl },
         { label: "Hashtags", el: hashtagsEl },
-        { label: "Video Script", el: videoEl },
-        { label: "Visual Shot Plan", el: visualEl }
+        { label: "Viral Video Script", el: videoScriptEl },
+        { label: "Shot Plan", el: shotPlanEl }
       ];
 
       const chunks = [];
@@ -315,8 +318,8 @@ app.get("/", (req, res) => {
       smsEl.textContent = "";
       mpEl.textContent = "";
       hashtagsEl.textContent = "";
-      videoEl.textContent = "";
-      visualEl.textContent = "";
+      videoScriptEl.textContent = "";
+      shotPlanEl.textContent = "";
 
       try {
         const res = await fetch("/api/process-listing", {
@@ -340,8 +343,8 @@ app.get("/", (req, res) => {
         smsEl.textContent = (data.posts && data.posts.sms) || "No short message generated.";
         mpEl.textContent = (data.posts && data.posts.marketplace) || "No Marketplace description generated.";
         hashtagsEl.textContent = (data.posts && data.posts.hashtags) || "";
-        videoEl.textContent = (data.posts && data.posts.videoScript) || "No video script generated.";
-        visualEl.textContent = (data.posts && data.posts.visualPlan) || "No visual shot plan generated.";
+        videoScriptEl.textContent = (data.posts && data.posts.videoScript) || "No viral video script generated.";
+        shotPlanEl.textContent = (data.posts && data.posts.shotPlan) || "No shot plan generated.";
 
         if (data.vehicle) {
           const v = data.vehicle;
@@ -391,39 +394,21 @@ function cleanPrice(raw) {
   return "Message for current pricing";
 }
 
-// ---------- VEHICLE CLASSIFICATION HELPERS ----------
-
-const TRUCK_SUV_KEYWORDS = [
-  "tahoe","suburban","silverado","sierra","ram","f-150","f150","bronco","explorer",
-  "traverse","highlander","4runner","durango","tacoma","ridgeline","wrangler","gladiator",
-  "grand cherokee","escape","equinox","ascent","pilot","telluride","seltos","palisade",
-  "outlander","cr-v","crv","rav4","rav 4","trailblazer","blazer","acadia"
-];
-
-const LUXURY_KEYWORDS = [
-  "bmw","mercedes","amg","audi","lexus","infiniti","acura","volvo","cadillac","lincoln",
-  "genesis","porsche","jaguar","land rover","range rover"
-];
-
-const SPORTY_KEYWORDS = [
-  "m3","m4","m5","m2","type s","sti","ss","gt","sport","srt","rs","si","z","nismo",
-  "mustang","camaro","corvette","challenger","charger","gr","z06","z07"
-];
-
-function classifyVehicleKind(vehicle) {
-  const nameLower = (vehicle.makeModel || "").toLowerCase();
-  const isTruckOrSuv = TRUCK_SUV_KEYWORDS.some((k) => nameLower.includes(k));
-  const isLuxury = LUXURY_KEYWORDS.some((k) => nameLower.includes(k));
-  const isSporty = SPORTY_KEYWORDS.some((k) => nameLower.includes(k));
-  const isPhevOrHybrid = /phev|plug[-\s]?in|plug in|plug-in|hybrid/.test(nameLower);
-  const isEv = /\bev\b/.test(nameLower) || /electric/.test(nameLower);
-  return { isTruckOrSuv, isLuxury, isSporty, isPhevOrHybrid, isEv };
-}
-
-// ---------- SCRAPE VEHICLE DATA (with BLOCK DETECTION + CONDITION) ----------
+// ---------- SCRAPE VEHICLE DATA (with BLOCK + UNSUPPORTED LINK DETECTION) ----------
 
 async function scrapeVehicle(url) {
   try {
+    // Detect unsupported wrapper links like Auto iPacket
+    try {
+      const u = new URL(url);
+      const host = (u.hostname || "").toLowerCase();
+      if (host.includes("autoipacket")) {
+        throw new Error("UNSUPPORTED_LINK");
+      }
+    } catch (e) {
+      // ignore URL parse errors, continue
+    }
+
     const resp = await fetch(url);
     const html = await resp.text();
     const $ = cheerio.load(html);
@@ -443,6 +428,11 @@ async function scrapeVehicle(url) {
       throw new Error("SCRAPE_BLOCKED");
     }
 
+    // Also treat autoipacket based on page text/title if not caught by URL
+    if (pageTitle.includes("autoipacket") || pageText.includes("autoipacket")) {
+      throw new Error("UNSUPPORTED_LINK");
+    }
+
     const rawTitle =
       $('meta[property="og:title"]').attr("content") ||
       $("h1").first().text().trim() ||
@@ -457,7 +447,7 @@ async function scrapeVehicle(url) {
     const cleanedTitle = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = cleanedTitle.match(/(20\d{2}|19\d{2})/);
+    const yearMatch = cleanedTitle.match(/(20\\d{2}|19\\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
 
     const lowerTitle = cleanedTitle.toLowerCase();
@@ -466,19 +456,19 @@ async function scrapeVehicle(url) {
       condition = "New";
     } else if (/certified|cpo/.test(lowerTitle)) {
       condition = "Certified Pre-Owned";
-    } else if (/pre[-\s]?owned/.test(lowerTitle)) {
+    } else if (/pre[-\\s]?owned/.test(lowerTitle)) {
       condition = "Pre-Owned";
     }
 
     let makeModel = year ? cleanedTitle.replace(year, "").trim() : cleanedTitle;
 
     if (condition) {
-      const condRegex = new RegExp("\\b" + condition.replace(/\s+/g, "\\s+") + "\\b", "i");
+      const condRegex = new RegExp("\\\\b" + condition.replace(/\\s+/g, "\\\\s+") + "\\\\b", "i");
       makeModel = makeModel.replace(condRegex, " ");
     }
 
-    makeModel = makeModel.replace(/\b(new|used|pre[-\s]?owned|certified|cpo)\b/gi, " ");
-    makeModel = makeModel.replace(/\s{2,}/g, " ").trim();
+    makeModel = makeModel.replace(/\\b(new|used|pre[-\\s]?owned|certified|cpo)\\b/gi, " ");
+    makeModel = makeModel.replace(/\\s{2,}/g, " ").trim();
 
     return {
       title: cleanedTitle,
@@ -488,7 +478,7 @@ async function scrapeVehicle(url) {
       condition
     };
   } catch (e) {
-    if (e.message === "SCRAPE_BLOCKED") throw e;
+    if (e.message === "SCRAPE_BLOCKED" || e.message === "UNSUPPORTED_LINK") throw e;
 
     return {
       title: "Vehicle",
@@ -500,18 +490,73 @@ async function scrapeVehicle(url) {
   }
 }
 
-// ---------- FEATURE STACK (with EV/PHEV awareness) ----------
+// ---------- CATEGORY & FEATURE STACK (with EV/PHEV awareness) ----------
 
 function generateFeatureStack(vehicle) {
   const baseLabel =
     (vehicle.year ? vehicle.year + " " : "") + (vehicle.makeModel || "this vehicle");
+  const fullString =
+    (vehicle.year ? vehicle.year + " " : "") + (vehicle.makeModel || "");
+  const nameLower = fullString.toLowerCase();
 
-  const kind = classifyVehicleKind(vehicle);
-  const { isTruckOrSuv, isLuxury, isSporty, isPhevOrHybrid, isEv } = kind;
+  const suvKeywords = [
+    "tahoe","suburban","trax","equinox","blazer","traverse","envoy","acadia",
+    "highlander","4runner","pilot","cr-v","crv","rav4","seltos","telluride","palisade",
+    "durango","explorer","escape","bronco","outlander","ascent","sorento","sportage"
+  ];
+
+  const truckKeywords = [
+    "silverado","sierra","ram","f-150","f150","f-250","f250","f-350","f350",
+    "tacoma","tundra","colorado","canyon","gladiator","frontier","ridgeline","1500","2500","3500","hd"
+  ];
+
+  const luxuryKeywords = [
+    "bmw","mercedes","amg","audi","lexus","infiniti","acura","volvo","cadillac","lincoln",
+    "genesis","porsche","jaguar","land rover","range rover","aston martin","maserati","bentley"
+  ];
+
+  const sportyKeywords = [
+    "m3","m4","m5","m2","type s","sti","ss","gt","sport","srt","rs","si","z","nismo",
+    "mustang","camaro","corvette","challenger","charger","gr","z06","hellcat"
+  ];
+
+  const isTruck = truckKeywords.some((k) => nameLower.includes(k));
+  const isSuv = !isTruck && suvKeywords.some((k) => nameLower.includes(k));
+  const isLuxury = luxuryKeywords.some((k) => nameLower.includes(k));
+  const isSporty = sportyKeywords.some((k) => nameLower.includes(k));
+
+  const isPhevOrHybrid = /phev|plug[-\\s]?in|plug in|plug-in|hybrid/.test(nameLower);
+  const isEv = /\\bev\\b/.test(nameLower) || /electric/.test(nameLower);
 
   let baseFeatures;
 
-  if (isTruckOrSuv && isLuxury) {
+  if (isTruck && isLuxury) {
+    baseFeatures = [
+      "Heavy-duty capability with a composed, confident ride",
+      "Premium interior that feels upscale the second you open the door",
+      "Powertrain built to handle towing, hauling, and real-world work",
+      "Modern touchscreen and driver tech that keeps you in control",
+      "Camera and driver-assist features that make big-truck life easier",
+      "Ride quality that stays stable, even with weight behind it",
+      "Cabin space that works for workdays and family days",
+      "Smart storage for tools, gear, and everything in between",
+      "Road presence that absolutely does not blend in",
+      "The kind of truck serious buyers keep for years"
+    ];
+  } else if (isTruck) {
+    baseFeatures = [
+      "Confident stance that looks right on the road and in the driveway",
+      "Interior space that actually fits people, gear, and daily life",
+      "Strong powertrain built to handle real-world driving and hauling",
+      "Modern touchscreen with practical connectivity for everyday use",
+      "Backup camera that makes parking and tight spots simple",
+      "Ride quality that feels planted, not sloppy",
+      "Ready for work, family duty, and weekend runs",
+      "Comfortable enough for long days behind the wheel",
+      "Smart storage and space use throughout the cabin",
+      "A truck that feels ready for whatever you throw at it"
+    ];
+  } else if (isSuv && (isLuxury || isSporty)) {
     baseFeatures = [
       "Confident all-weather capability with a composed, stable feel",
       "Upscale cabin with quality materials and a strong first impression",
@@ -524,7 +569,7 @@ function generateFeatureStack(vehicle) {
       "Strong balance of power and efficiency for daily driving",
       "Exactly the kind of SUV serious buyers hold onto"
     ];
-  } else if (isTruckOrSuv) {
+  } else if (isSuv) {
     baseFeatures = [
       "Confident stance that looks right on the road and in the driveway",
       "Interior space that actually fits people, gear, and daily life",
@@ -535,7 +580,7 @@ function generateFeatureStack(vehicle) {
       "Ready for work, family duty, and weekend runs",
       "Comfortable enough for long days behind the wheel",
       "Smart storage and space use throughout the cabin",
-      "A truck/SUV that feels ready for whatever you throw at it"
+      "An SUV that feels ready for whatever you throw at it"
     ];
   } else if (isLuxury || isSporty) {
     baseFeatures = [
@@ -565,106 +610,103 @@ function generateFeatureStack(vehicle) {
     ];
   }
 
-  if (isPhevOrHybrid || isEv) {
-    const electrifiedFeatures = [
-      "Plug-in hybrid / electrified setup that gives you electric-style driving with gas backup for real-world range",
-      "Lower fuel stops by using electricity for short trips and gas for the longer runs",
+  if (isPhevOrHybrid) {
+    const phevFeatures = [
+      "Plug-in hybrid setup that gives you electric-style driving with gas backup for real-world range",
+      "Fewer fuel stops by using electricity for short trips and gas for the longer runs",
       "Smooth, quiet electric-feel driving around town",
-      "Perfect for drivers who want SUV practicality with modern efficiency and tech"
+      "Perfect for drivers who want practicality with modern efficiency and tech"
     ];
-    baseFeatures = electrifiedFeatures.concat(baseFeatures);
+    baseFeatures = phevFeatures.concat(baseFeatures);
+  } else if (isEv) {
+    const evFeatures = [
+      "Fully electric setup that delivers instant torque and quiet power",
+      "Skip the gas station and charge at home or on the go",
+      "Smooth, near-silent driving that feels premium every time",
+      "Perfect for drivers who want modern tech, efficiency, and performance in one package"
+    ];
+    baseFeatures = evFeatures.concat(baseFeatures);
   }
 
   const selected = baseFeatures.slice(0, 10);
 
   return {
     label: baseLabel,
-    bullets: selected
+    bullets: selected,
+    meta: { isTruck, isSuv, isLuxury, isSporty, isPhevOrHybrid, isEv }
   };
 }
 
-// ---------- HASHTAGS (Buyer-focused, no Lot Rocket) ----------
+// ---------- HASHTAGS ----------
 
-function generateHashtags(vehicle) {
+function generateHashtags(vehicle, meta) {
   const tags = new Set();
-  const kind = classifyVehicleKind(vehicle);
 
-  const full = ((vehicle.year ? vehicle.year + " " : "") + (vehicle.makeModel || "")).trim();
-  const fullLower = full.toLowerCase();
+  // Core discovery tags
+  [
+    "#carsforsale",
+    "#carshopping",
+    "#carbuying",
+    "#cardeals",
+    "#carsales",
+    "#testdrive"
+  ].forEach((t) => tags.add(t));
 
-  // Core buyer-intent + reach
-  tags.add("#carsforsale");
-  tags.add("#carshopping");
-  tags.add("#carbuying");
-  tags.add("#cardeals");
-  tags.add("#carsales");
-  tags.add("#testdrive");
-
-  if (kind.isTruckOrSuv) {
+  // Category tags
+  if (meta.isTruck) {
+    tags.add("#truckforsale");
+    tags.add("#worktruck");
+  } else if (meta.isSuv) {
     tags.add("#suvforsale");
     tags.add("#familySUV");
   }
 
-  if (kind.isTruckOrSuv && /silverado|ram|f-150|f150|sierra|tundra|super duty|superduty|f250|f350/.test(fullLower)) {
-    tags.add("#truckforsale");
-    tags.add("#worktruck");
-  }
-
-  if (kind.isSporty) {
+  if (meta.isSporty || meta.isLuxury) {
     tags.add("#sportscar");
     tags.add("#performancecar");
   }
 
-  if (kind.isLuxury) {
-    tags.add("#luxurycars");
-  }
-
-  if (kind.isPhevOrHybrid) {
+  if (meta.isPhevOrHybrid) {
     tags.add("#hybrid");
     tags.add("#pluginhybrid");
   }
 
-  if (kind.isEv) {
+  if (meta.isEv) {
     tags.add("#ev");
     tags.add("#electricvehicle");
   }
 
-  // Vehicle-specific tags (model, trim, etc.) – limited to a few
-  const stopWords = new Set([
-    "for","sale","in","at","the","a","an","near","with","on","and","or","of","this",
-    "new","used","certified","pre-owned","preowned","preowned"
-  ]);
+  const fullString =
+    (vehicle.year ? vehicle.year + " " : "") + (vehicle.makeModel || "");
+  const lowerFull = fullString.toLowerCase();
 
-  let count = 0;
-  (vehicle.makeModel || "").split(/\s+/).forEach((w) => {
-    const clean = w.replace(/[^a-z0-9]/gi, "");
-    if (!clean) return;
-    const lower = clean.toLowerCase();
-    if (stopWords.has(lower)) return;
-    if (/^\d{4}$/.test(clean)) return; // skip pure years here
-    if (count >= 4) return;
-    tags.add("#" + lower);
-    count++;
-  });
+  // Make / model tags (simple guesses)
+  const parts = (vehicle.makeModel || "").split(/\\s+/).filter(Boolean);
+  if (parts.length) {
+    const make = parts[0].toLowerCase();
+    const model = parts.slice(1).join("").toLowerCase();
+    if (make) tags.add("#" + make);
+    if (model) tags.add("#" + model);
+  }
 
-  // Compressed full tag like #2025tahoerst if reasonable length
-  if (full) {
-    const slug = full.replace(/[^a-z0-9]+/gi, "").toLowerCase();
-    if (slug && slug.length <= 30) {
-      tags.add("#" + slug);
-    }
+  // Combined year + model tag
+  if (vehicle.year && vehicle.makeModel) {
+    const condensed =
+      (vehicle.year + vehicle.makeModel).replace(/\\s+/g, "").toLowerCase();
+    tags.add("#" + condensed);
   }
 
   return Array.from(tags).join(" ");
 }
 
-// ---------- VIRAL MODE POSTS + SCRIPT ----------
+// ---------- POSTS + VIDEO SCRIPT ----------
 
-function buildSocialPosts(vehicle, hashtags) {
+function buildSocialPosts(vehicle) {
   const price = vehicle.price || "Message for current pricing";
   const featureData = generateFeatureStack(vehicle);
   const baseLabel = featureData.label;
   const bullets = featureData.bullets;
+  const meta = featureData.meta;
 
   const label = vehicle.condition
     ? baseLabel + " – " + vehicle.condition
@@ -677,12 +719,14 @@ function buildSocialPosts(vehicle, hashtags) {
   const isCertified = /certified|cpo/i.test(fullString);
 
   const certifiedLineLong = isCertified
-    ? "\n✅ Certified gives you inspection-backed quality, added protection, and extra peace of mind compared to typical used units.\n"
+    ? "\\n✅ Certified gives you inspection-backed quality and extra peace of mind compared to ordinary used vehicles.\\n"
     : "";
 
   const certifiedLineShort = isCertified
     ? " It’s certified, which means extra inspection-backed peace of mind compared to typical used units."
     : "";
+
+  const hashtags = generateHashtags(vehicle, meta);
 
   const facebook =
 "🔥 STOP SCROLLING. Read this before someone else buys it.\n\n" +
@@ -759,18 +803,23 @@ featureLines +
 "📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.\n\n" +
 "⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.";
 
-  // Viral video script + visual plan
-  const kind = classifyVehicleKind(vehicle);
-  let typeLabel = "car";
-  if (kind.isTruckOrSuv) typeLabel = "SUV";
-  else if (kind.isSporty) typeLabel = "sports car";
+  // --------- Viral Video Script + Shot Plan (category-aware) ----------
+
+  let typeWord = "car";
+  if (meta.isTruck) typeWord = "truck";
+  else if (meta.isSuv) typeWord = "SUV";
+
+  if (meta.isEv) typeWord = "EV " + (meta.isSuv ? "SUV" : meta.isTruck ? "truck" : "car");
+  else if (meta.isPhevOrHybrid) typeWord = "hybrid " + (meta.isSuv ? "SUV" : meta.isTruck ? "truck" : "car");
+
+  const vehicleName = label;
 
   const videoScript =
 "🎥 Viral Video Script (30–40 seconds)\n\n" +
 "HOOK (2–3 sec)\n" +
-`“Stop scrolling and look at this ${label}. If you’ve been waiting for the right ${typeLabel}, this is it.”\n\n` +
+"“Stop scrolling and look at this " + vehicleName + ". If you’ve been waiting for the right " + typeWord + ", this is it.”\n\n" +
 "EXTERIOR (5–10 sec)\n" +
-`“Check out the stance, wheels, and overall look on this ${typeLabel}. It’s clean, sharp, and it looks even better in person than it does online.”\n\n` +
+"“Check out the stance, wheels, and overall look on this " + typeWord + ". It’s clean, sharp, and it looks even better in person than it does online.”\n\n" +
 "INTERIOR & FEATURES (10–15 sec)\n" +
 "“Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.”\n\n" +
 "BENEFIT HOOK (5–8 sec)\n" +
@@ -778,7 +827,7 @@ featureLines +
 "CTA (5–8 sec)\n" +
 "“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”";
 
-  const visualPlan =
+  const shotPlan =
 "👀 Viral Visual Shot Plan (Simple 5–7 shots)\n\n" +
 "1️⃣ Hook Shot (2–3 sec)\n" +
 "- Start with a close-up of the front corner, grille, or headlights while you deliver the hook line.\n\n" +
@@ -808,8 +857,9 @@ featureLines +
     twitter,
     sms,
     marketplace,
+    hashtags,
     videoScript,
-    visualPlan
+    shotPlan
   };
 }
 
@@ -824,15 +874,11 @@ app.post("/api/process-listing", async (req, res) => {
 
   try {
     const vehicle = await scrapeVehicle(url);
-    const hashtags = generateHashtags(vehicle);
-    const posts = buildSocialPosts(vehicle, hashtags);
+    const posts = buildSocialPosts(vehicle);
 
     res.json({
       vehicle,
-      posts: {
-        ...posts,
-        hashtags
-      }
+      posts
     });
   } catch (e) {
     if (e.message === "SCRAPE_BLOCKED") {
@@ -840,6 +886,12 @@ app.post("/api/process-listing", async (req, res) => {
         .status(400)
         .send("This dealer website is blocking automated tools. Try a different vehicle URL (or a different site for the same vehicle).");
     }
+    if (e.message === "UNSUPPORTED_LINK") {
+      return res
+        .status(400)
+        .send("That type of link isn’t supported. Open the dealer’s full vehicle detail page in your browser and paste THAT URL here instead.");
+    }
+    console.error(e);
     res.status(500).send("Failed to process listing.");
   }
 });
