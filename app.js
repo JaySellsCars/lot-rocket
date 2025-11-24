@@ -397,7 +397,7 @@ const TRUCK_SUV_KEYWORDS = [
   "tahoe","suburban","silverado","sierra","ram","f-150","f150","bronco","explorer",
   "traverse","highlander","4runner","durango","tacoma","ridgeline","wrangler","gladiator",
   "grand cherokee","escape","equinox","ascent","pilot","telluride","seltos","palisade",
-  "outlander","cr-v","crv","rav4","rav 4","trailblazer","blazer"
+  "outlander","cr-v","crv","rav4","rav 4","trailblazer","blazer","acadia"
 ];
 
 const LUXURY_KEYWORDS = [
@@ -457,28 +457,28 @@ async function scrapeVehicle(url) {
     const cleanedTitle = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = cleanedTitle.match(/(20\\d{2}|19\\d{2})/);
+    const yearMatch = cleanedTitle.match(/(20\d{2}|19\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
 
     const lowerTitle = cleanedTitle.toLowerCase();
     let condition = "";
-    if (/\\bnew\\b/.test(lowerTitle)) {
+    if (/\bnew\b/.test(lowerTitle)) {
       condition = "New";
     } else if (/certified|cpo/.test(lowerTitle)) {
       condition = "Certified Pre-Owned";
-    } else if (/pre[-\\s]?owned/.test(lowerTitle)) {
+    } else if (/pre[-\s]?owned/.test(lowerTitle)) {
       condition = "Pre-Owned";
     }
 
     let makeModel = year ? cleanedTitle.replace(year, "").trim() : cleanedTitle;
 
     if (condition) {
-      const condRegex = new RegExp("\\\\b" + condition.replace(/\\s+/g, "\\\\s+") + "\\\\b", "i");
+      const condRegex = new RegExp("\\b" + condition.replace(/\s+/g, "\\s+") + "\\b", "i");
       makeModel = makeModel.replace(condRegex, " ");
     }
 
-    makeModel = makeModel.replace(/\\b(new|used|pre[-\\s]?owned|certified|cpo)\\b/gi, " ");
-    makeModel = makeModel.replace(/\\s{2,}/g, " ").trim();
+    makeModel = makeModel.replace(/\b(new|used|pre[-\s]?owned|certified|cpo)\b/gi, " ");
+    makeModel = makeModel.replace(/\s{2,}/g, " ").trim();
 
     return {
       title: cleanedTitle,
@@ -636,12 +636,12 @@ function generateHashtags(vehicle) {
   ]);
 
   let count = 0;
-  (vehicle.makeModel || "").split(/\\s+/).forEach((w) => {
+  (vehicle.makeModel || "").split(/\s+/).forEach((w) => {
     const clean = w.replace(/[^a-z0-9]/gi, "");
     if (!clean) return;
     const lower = clean.toLowerCase();
     if (stopWords.has(lower)) return;
-    if (/^\\d{4}$/.test(clean)) return; // skip pure years here
+    if (/^\d{4}$/.test(clean)) return; // skip pure years here
     if (count >= 4) return;
     tags.add("#" + lower);
     count++;
@@ -670,14 +670,14 @@ function buildSocialPosts(vehicle, hashtags) {
     ? baseLabel + " – " + vehicle.condition
     : baseLabel;
 
-  const featureLines = bullets.map((b) => "🔥 " + b).join("  \\n");
+  const featureLines = bullets.map((b) => "🔥 " + b).join("  \n");
 
   const fullString =
     (vehicle.title || "") + " " + (vehicle.makeModel || "") + " " + (vehicle.condition || "");
   const isCertified = /certified|cpo/i.test(fullString);
 
   const certifiedLineLong = isCertified
-    ? "\\n✅ Certified gives you inspection-backed quality, added protection, and extra peace of mind compared to typical used units.\\n"
+    ? "\n✅ Certified gives you inspection-backed quality, added protection, and extra peace of mind compared to typical used units.\n"
     : "";
 
   const certifiedLineShort = isCertified
@@ -685,59 +685,59 @@ function buildSocialPosts(vehicle, hashtags) {
     : "";
 
   const facebook =
-"🔥 STOP SCROLLING. Read this before someone else buys it.\\n\\n" +
-"🚗 " + label + "\\n" +
-"💰 Price: " + price + "\\n\\n" +
+"🔥 STOP SCROLLING. Read this before someone else buys it.\n\n" +
+"🚗 " + label + "\n" +
+"💰 Price: " + price + "\n\n" +
 "If you're serious about driving something that looks sharp, feels strong, and actually makes sense in real life, this " + label + " is the kind of unit you move on – not think about for three weeks." +
 certifiedLineLong +
-"\\n💎 Why this one hits different:\\n" +
+"\n💎 Why this one hits different:\n" +
 featureLines +
-"\\n\\nWhen the right unit shows up, serious buyers move first. If this lines up with what you’ve been telling yourself you want, this is your green light to take action.\\n\\n" +
-"📲 Comment or DM “INFO” and I’ll get you pricing, photos, and a quick walkaround – straight answers, no nonsense.\\n\\n" +
+"\n\nWhen the right unit shows up, serious buyers move first. If this lines up with what you’ve been telling yourself you want, this is your green light to take action.\n\n" +
+"📲 Comment or DM “INFO” and I’ll get you pricing, photos, and a quick walkaround – straight answers, no nonsense.\n\n" +
 hashtags;
 
   const instagram =
-"🚗 " + label + "\\n" +
-"💰 " + price + "\\n\\n" +
+"🚗 " + label + "\n" +
+"💰 " + price + "\n\n" +
 "If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it." +
 certifiedLineShort +
-"\\n\\n" +
+"\n\n" +
 featureLines +
-"\\n\\n👀 If this matches what you’ve been looking for, don’t overthink it.\\n\\n" +
-"📲 DM “INFO” and I’ll show you how easy it is to make it yours.\\n\\n" +
+"\n\n👀 If this matches what you’ve been looking for, don’t overthink it.\n\n" +
+"📲 DM “INFO” and I’ll show you how easy it is to make it yours.\n\n" +
 hashtags;
 
   const tiktok =
-"🚗 " + label + "\\n" +
-"💰 " + price + "\\n\\n" +
+"🚗 " + label + "\n" +
+"💰 " + price + "\n\n" +
 "If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on." +
 certifiedLineShort +
-"\\n\\n" +
+"\n\n" +
 featureLines +
-"\\n\\n⏳ Clean, dialed-in rides like this DO NOT sit.\\n\\n" +
-"📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.\\n\\n" +
+"\n\n⏳ Clean, dialed-in rides like this DO NOT sit.\n\n" +
+"📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.\n\n" +
 hashtags;
 
   const linkedin =
-"🚗 " + label + " – Strong, Clean, and Ready for the Next Owner\\n\\n" +
+"🚗 " + label + " – Strong, Clean, and Ready for the Next Owner\n\n" +
 "For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. This " + label + " checks those boxes." +
 certifiedLineShort +
-"\\n\\n💰 Current pricing:\\n" +
+"\n\n💰 Current pricing:\n" +
 price +
-"\\n\\nKey highlights:\\n" +
+"\n\nKey highlights:\n" +
 featureLines +
-"\\n\\nIf you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.\\n\\n" +
-"📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.\\n\\n" +
+"\n\nIf you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.\n\n" +
+"📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.\n\n" +
 hashtags;
 
   const twitter =
-"🚗 " + label + "\\n" +
-"💰 " + price + "\\n\\n" +
+"🚗 " + label + "\n" +
+"💰 " + price + "\n\n" +
 "Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first." +
 certifiedLineShort +
-"\\n\\n" +
+"\n\n" +
 hashtags +
-"\\n\\n📲 DM “INFO” for photos, a walkaround, and next steps.";
+"\n\n📲 DM “INFO” for photos, a walkaround, and next steps.";
 
   const sms =
 "Just pulled a " + label + " that checks a lot of boxes. It’s at " + price +
@@ -746,17 +746,17 @@ certifiedLineShort +
 " Want me to send you photos or a quick walkaround video?";
 
   const marketplace =
-"Title idea:\\n" +
-label + " – Clean, Sharp & Ready to Go!\\n\\n" +
-"Suggested description for Facebook Marketplace:\\n\\n" +
+"Title idea:\n" +
+label + " – Clean, Sharp & Ready to Go!\n\n" +
+"Suggested description for Facebook Marketplace:\n\n" +
 "🚗 This " + label + " just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life." +
 certifiedLineShort +
-"\\n\\n💰 Current pricing:\\n" +
+"\n\n💰 Current pricing:\n" +
 price +
-"\\n\\n🔥 Why this one is worth a serious look:\\n" +
+"\n\n🔥 Why this one is worth a serious look:\n" +
 featureLines +
-"\\n\\nIf you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.\\n\\n" +
-"📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.\\n\\n" +
+"\n\nIf you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.\n\n" +
+"📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.\n\n" +
 "⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.";
 
   // Viral video script + visual plan
@@ -766,38 +766,38 @@ featureLines +
   else if (kind.isSporty) typeLabel = "sports car";
 
   const videoScript =
-"🎥 Viral Video Script (30–40 seconds)\\n\\n" +
-"HOOK (2–3 sec)\\n" +
-`“Stop scrolling and look at this ${label}. If you’ve been waiting for the right ${typeLabel}, this is it.”\\n\\n` +
-"EXTERIOR (5–10 sec)\\n" +
-`“Check out the stance, wheels, and overall look on this ${typeLabel}. It’s clean, sharp, and it looks even better in person than it does online.”\\n\\n` +
-"INTERIOR & FEATURES (10–15 sec)\\n" +
-"“Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.”\\n\\n" +
-"BENEFIT HOOK (5–8 sec)\\n" +
-"“If you’re tired of settling for ‘good enough’ and you want something that actually feels like a win every time you drive it, this is that move.”\\n\\n" +
-"CTA (5–8 sec)\\n" +
+"🎥 Viral Video Script (30–40 seconds)\n\n" +
+"HOOK (2–3 sec)\n" +
+`“Stop scrolling and look at this ${label}. If you’ve been waiting for the right ${typeLabel}, this is it.”\n\n` +
+"EXTERIOR (5–10 sec)\n" +
+`“Check out the stance, wheels, and overall look on this ${typeLabel}. It’s clean, sharp, and it looks even better in person than it does online.”\n\n` +
+"INTERIOR & FEATURES (10–15 sec)\n" +
+"“Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.”\n\n" +
+"BENEFIT HOOK (5–8 sec)\n" +
+"“If you’re tired of settling for ‘good enough’ and you want something that actually feels like a win every time you drive it, this is that move.”\n\n" +
+"CTA (5–8 sec)\n" +
 "“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”";
 
   const visualPlan =
-"👀 Viral Visual Shot Plan (Simple 5–7 shots)\\n\\n" +
-"1️⃣ Hook Shot (2–3 sec)\\n" +
-"- Start with a close-up of the front corner, grille, or headlights while you deliver the hook line.\\n\\n" +
-"2️⃣ Full Body Pass (3–4 sec)\\n" +
-"- Walk slowly from the front corner down the side to show the stance and overall look. Keep the camera steady at chest height.\\n\\n" +
-"3️⃣ Wheels & Details (2–3 sec)\\n" +
-"- Quick close-up of wheels, brakes, or badging. Small slow pan over the details that make it look sharp.\\n\\n" +
-"4️⃣ Interior Flex (4–6 sec)\\n" +
-"- Smooth pan across the dash, steering wheel, touchscreen, and seats. Hold steady for 1–2 seconds on the best angles.\\n\\n" +
-"5️⃣ Space & Practicality (3–4 sec)\\n" +
-"- Show rear seats, cargo area, or 3rd row. Open the liftgate, fold a seat, or highlight how usable the space is.\\n\\n" +
-"6️⃣ Feature Moment (2–3 sec)\\n" +
-"- Hit one button or feature on camera: remote start, sunroof, heated seats, backup camera, etc. Make it feel real and useful.\\n\\n" +
-"7️⃣ Power Ending (2–3 sec)\\n" +
-"- Finish with you in frame (or the front of the vehicle) delivering the CTA: “DM ‘INFO’ before someone else grabs it.”\\n\\n" +
-"🎯 Tips:\\n" +
-"- Film vertical.\\n" +
-"- Keep clips short (1–3 seconds).\\n" +
-"- Use natural light when possible.\\n" +
+"👀 Viral Visual Shot Plan (Simple 5–7 shots)\n\n" +
+"1️⃣ Hook Shot (2–3 sec)\n" +
+"- Start with a close-up of the front corner, grille, or headlights while you deliver the hook line.\n\n" +
+"2️⃣ Full Body Pass (3–4 sec)\n" +
+"- Walk slowly from the front corner down the side to show the stance and overall look. Keep the camera steady at chest height.\n\n" +
+"3️⃣ Wheels & Details (2–3 sec)\n" +
+"- Quick close-up of wheels, brakes, or badging. Small slow pan over the details that make it look sharp.\n\n" +
+"4️⃣ Interior Flex (4–6 sec)\n" +
+"- Smooth pan across the dash, steering wheel, touchscreen, and seats. Hold steady for 1–2 seconds on the best angles.\n\n" +
+"5️⃣ Space & Practicality (3–4 sec)\n" +
+"- Show rear seats, cargo area, or 3rd row. Open the liftgate, fold a seat, or highlight how usable the space is.\n\n" +
+"6️⃣ Feature Moment (2–3 sec)\n" +
+"- Hit one button or feature on camera: remote start, sunroof, heated seats, backup camera, etc. Make it feel real and useful.\n\n" +
+"7️⃣ Power Ending (2–3 sec)\n" +
+"- Finish with you in frame (or the front of the vehicle) delivering the CTA: “DM ‘INFO’ before someone else grabs it.”\n\n" +
+"🎯 Tips:\n" +
+"- Film vertical.\n" +
+"- Keep clips short (1–3 seconds).\n" +
+"- Use natural light when possible.\n" +
 "- Speak clearly, confident, and like you already know this unit will sell.";
 
   return {
