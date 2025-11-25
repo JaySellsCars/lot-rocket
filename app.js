@@ -1,14 +1,16 @@
-// app.js – Lot Rocket Social Media Kit (full UI + auto-photos + light/dark mode)
+// app.js – Lot Rocket Social Media Kit (auto-photos + light/dark mode)
 
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const OpenAI = require('openai');
-const cheerio = require('cheerio');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const OpenAI = require("openai");
+const cheerio = require("cheerio");
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// ---------- OpenAI client ----------
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,8 +19,6 @@ const client = new OpenAI({
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
-// (Optional) serve static files like logo later:
-// app.use(express.static(__dirname));
 
 // ---------- Helper: Scrape photos from dealer URL ----------
 
@@ -26,7 +26,7 @@ async function scrapeVehiclePhotos(pageUrl) {
   try {
     const res = await fetch(pageUrl);
     if (!res.ok) {
-      console.error('Failed to fetch page for photos:', res.status);
+      console.error("Failed to fetch page for photos:", res.status);
       return [];
     }
     const html = await res.text();
@@ -35,29 +35,29 @@ async function scrapeVehiclePhotos(pageUrl) {
 
     const base = new URL(pageUrl);
 
-    $('img').each((i, el) => {
-      let src = $(el).attr('data-src') || $(el).attr('src');
+    $("img").each((i, el) => {
+      let src = $(el).attr("data-src") || $(el).attr("src");
       if (!src) return;
 
       // Normalize to absolute URL
-      if (src.startsWith('//')) {
-        src = 'https:' + src;
-      } else if (src.startsWith('/')) {
+      if (src.startsWith("//")) {
+        src = "https:" + src;
+      } else if (src.startsWith("/")) {
         src = base.origin + src;
-      } else if (!src.startsWith('http')) {
+      } else if (!src.startsWith("http")) {
         // relative
-        src = base.origin + (src.startsWith('/') ? src : '/' + src);
+        src = base.origin + (src.startsWith("/") ? src : "/" + src);
       }
 
       const lower = src.toLowerCase();
 
       // crude filters to avoid logos / junk
       if (
-        lower.includes('logo') ||
-        lower.includes('icon') ||
-        lower.includes('badge') ||
-        lower.includes('spinner') ||
-        lower.includes('placeholder')
+        lower.includes("logo") ||
+        lower.includes("icon") ||
+        lower.includes("badge") ||
+        lower.includes("spinner") ||
+        lower.includes("placeholder")
       ) {
         return;
       }
@@ -67,7 +67,7 @@ async function scrapeVehiclePhotos(pageUrl) {
 
     return Array.from(urls).slice(0, 40);
   } catch (err) {
-    console.error('Error scraping photos:', err);
+    console.error("Error scraping photos:", err);
     return [];
   }
 }
@@ -82,7 +82,7 @@ Vehicle label (how we’ll refer to it in the copy):
 "${label}"
 
 Pricing / deal info as a short phrase:
-"${price || 'Message for current pricing'}"
+"${price || "Message for current pricing"}"
 
 Dealer vehicle URL:
 ${url}
@@ -134,7 +134,7 @@ You are writing a fresh social media post for a car salesperson.
 
 Platform: ${platform}
 Vehicle: "${label}"
-Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Pricing/deal phrase: "${price || "Message for current pricing"}"
 Vehicle URL: ${url}
 
 Write ONLY the post body text for this platform, no intro or explanation.
@@ -152,7 +152,8 @@ Length:
 - marketplace: short description suitable for Facebook Marketplace.
 
 DO NOT include hashtags. DO NOT include the word "hashtags".
-Just return the post text as plain text.`;
+Just return the post text as plain text.
+`;
 }
 
 function buildVideoScriptPrompt({ label, price, url }) {
@@ -161,7 +162,7 @@ Write a 30–40 second vertical video script a car salesperson can read on camer
 for this vehicle:
 
 Vehicle: "${label}"
-Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Pricing/deal phrase: "${price || "Message for current pricing"}"
 Vehicle URL: ${url}
 
 Format:
@@ -170,45 +171,67 @@ Format:
 - 4–7 short paragraphs or line breaks.
 - Clear call-to-action at the end (DM "INFO", message me, book a test drive, etc.).
 
-Return ONLY the script text, nothing else.`;
+Return ONLY the script text, nothing else.
+`;
 }
 
-// ---------- OpenAI helpers (Responses API) ----------
+// ---------- OpenAI helpers (new Responses API shape) ----------
+
+async function extractTextFromResponse(response) {
+  try {
+    const firstOutput = response.output && response.output[0];
+    if (!firstOutput || !firstOutput.content) return "";
+
+    const textItem =
+      firstOutput.content.find((c) => c.type === "output_text") ||
+      firstOutput.content[0];
+
+    if (!textItem) return "";
+    // In the Responses API, output_text.text is the string
+    return typeof textItem.text === "string" ? textItem.text : "";
+  } catch (e) {
+    console.error("Failed to extract text from OpenAI response:", e);
+    return "";
+  }
+}
 
 async function callOpenAIForJSON(prompt) {
   const response = await client.responses.create({
-    model: 'gpt-4.1-mini',
+    model: "gpt-4.1-mini",
     input: prompt,
-    text: { format: 'json_object' },
+    text: {
+      // This is the replacement for response_format in the Responses API
+      format: { type: "json_object" },
+    },
   });
 
-  const msg = response.output[0];
-  const textPart =
-    msg.content.find((p) => p.type === 'output_text') || msg.content[0];
-  const raw = textPart.text;
-  return JSON.parse(raw);
+  const raw = await extractTextFromResponse(response);
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error("JSON parse failed, raw text was:", raw);
+    throw e;
+  }
 }
 
 async function callOpenAIForText(prompt) {
   const response = await client.responses.create({
-    model: 'gpt-4.1-mini',
+    model: "gpt-4.1-mini",
     input: prompt,
   });
 
-  const msg = response.output[0];
-  const textPart =
-    msg.content.find((p) => p.type === 'output_text') || msg.content[0];
-  return textPart.text;
+  const text = await extractTextFromResponse(response);
+  return (text || "").trim();
 }
 
 // ---------- API routes ----------
 
 // Generate full social kit
-app.post('/api/social-kit', async (req, res) => {
+app.post("/api/social-kit", async (req, res) => {
   try {
     const { url, label, price } = req.body;
     if (!url || !label) {
-      return res.status(400).json({ error: 'Missing url or label' });
+      return res.status(400).json({ error: "Missing url or label" });
     }
 
     const prompt = buildSocialKitPrompt({ url, label, price });
@@ -219,17 +242,17 @@ app.post('/api/social-kit', async (req, res) => {
       kit: json,
     });
   } catch (err) {
-    console.error('Error in /api/social-kit:', err);
-    res.status(500).json({ error: 'Failed to generate social kit' });
+    console.error("Error in /api/social-kit:", err?.response?.body || err);
+    res.status(500).json({ error: "Failed to generate social kit" });
   }
 });
 
 // New post for a specific platform
-app.post('/api/new-post', async (req, res) => {
+app.post("/api/new-post", async (req, res) => {
   try {
     const { platform, label, price, url } = req.body;
     if (!platform || !label) {
-      return res.status(400).json({ error: 'Missing platform or label' });
+      return res.status(400).json({ error: "Missing platform or label" });
     }
 
     const prompt = buildSinglePostPrompt({ platform, label, price, url });
@@ -237,20 +260,20 @@ app.post('/api/new-post', async (req, res) => {
 
     res.json({
       success: true,
-      post: (text || '').trim(),
+      post: text.trim(),
     });
   } catch (err) {
-    console.error('Error in /api/new-post:', err);
-    res.status(500).json({ error: 'Failed to generate new post' });
+    console.error("Error in /api/new-post:", err?.response?.body || err);
+    res.status(500).json({ error: "Failed to generate new post" });
   }
 });
 
 // New video script
-app.post('/api/new-script', async (req, res) => {
+app.post("/api/new-script", async (req, res) => {
   try {
     const { label, price, url } = req.body;
     if (!label || !url) {
-      return res.status(400).json({ error: 'Missing label or url' });
+      return res.status(400).json({ error: "Missing label or url" });
     }
 
     const prompt = buildVideoScriptPrompt({ label, price, url });
@@ -258,36 +281,36 @@ app.post('/api/new-script', async (req, res) => {
 
     res.json({
       success: true,
-      script: (script || '').trim(),
+      script: script.trim(),
     });
   } catch (err) {
-    console.error('Error in /api/new-script:', err);
-    res.status(500).json({ error: 'Failed to generate video script' });
+    console.error("Error in /api/new-script:", err?.response?.body || err);
+    res.status(500).json({ error: "Failed to generate video script" });
   }
 });
 
 // Grab photos
-app.post('/api/grab-photos', async (req, res) => {
+app.post("/api/grab-photos", async (req, res) => {
   try {
     const { url } = req.body;
     if (!url) {
-      return res.status(400).json({ error: 'Missing url' });
+      return res.status(400).json({ error: "Missing url" });
     }
 
     const photos = await scrapeVehiclePhotos(url);
     res.json({ success: true, photos });
   } catch (err) {
-    console.error('Error in /api/grab-photos:', err);
-    res.status(500).json({ error: 'Failed to grab photos' });
+    console.error("Error in /api/grab-photos:", err);
+    res.status(500).json({ error: "Failed to grab photos" });
   }
 });
 
 // Build video plan from photos (simple template)
-app.post('/api/video-from-photos', async (req, res) => {
+app.post("/api/video-from-photos", async (req, res) => {
   try {
     const { photos, label } = req.body;
     if (!Array.isArray(photos) || photos.length === 0) {
-      return res.status(400).json({ error: 'No photos provided' });
+      return res.status(400).json({ error: "No photos provided" });
     }
 
     const total = photos.length;
@@ -296,28 +319,26 @@ app.post('/api/video-from-photos', async (req, res) => {
 
     const plan = [
       `Clip 1 – Photo 1 – 3–4 seconds\nOn-screen text: "${label}"`,
-      total > 4 ? `Clip 2 – Photo 4 – 3 seconds` : '',
-      total > 8 ? `Clip 3 – Photo 8 – 3 seconds` : '',
+      total > 4 ? `Clip 2 – Photo 4 – 3 seconds` : "",
+      total > 8 ? `Clip 3 – Photo 8 – 3 seconds` : "",
       `Clip 4 – Photo ${mid + 1} – 3–4 seconds\nOn-screen text: "Interior & tech"`,
-      total > 6
-        ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds`
-        : '',
+      total > 6 ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds` : "",
       `Clip 6 – Photo ${last + 1} – 3 seconds\nOn-screen text: "DM 'INFO' for details"`,
       `Recommended music: upbeat, confident track that fits Reels / TikTok.`,
     ]
       .filter(Boolean)
-      .join('\n\n');
+      .join("\n\n");
 
     res.json({ success: true, plan });
   } catch (err) {
-    console.error('Error in /api/video-from-photos:', err);
-    res.status(500).json({ error: 'Failed to build video plan' });
+    console.error("Error in /api/video-from-photos:", err);
+    res.status(500).json({ error: "Failed to build video plan" });
   }
 });
 
 // ---------- Front-end HTML ----------
 
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -781,7 +802,7 @@ app.get('/', (req, res) => {
       background: var(--accent);
       animation: pulse 1s infinite alternate;
       display: inline-block;
-      margin-right: 4px;
+      margin-right: 6px;
     }
     @keyframes pulse {
       from { transform: scale(1); opacity: 0.8; }
@@ -1023,39 +1044,39 @@ app.get('/', (req, res) => {
   </div>
 
   <script>
-    const apiBase = '';
+    const apiBase = "";
 
-    const vehicleUrlInput = document.getElementById('vehicleUrl');
-    const vehicleLabelInput = document.getElementById('vehicleLabel');
-    const priceInfoInput = document.getElementById('priceInfo');
-    const boostButton = document.getElementById('boostButton');
-    const statusText = document.getElementById('statusText');
+    const vehicleUrlInput = document.getElementById("vehicleUrl");
+    const vehicleLabelInput = document.getElementById("vehicleLabel");
+    const priceInfoInput = document.getElementById("priceInfo");
+    const boostButton = document.getElementById("boostButton");
+    const statusText = document.getElementById("statusText");
 
-    const summaryLabel = document.getElementById('summaryLabel');
-    const summaryPrice = document.getElementById('summaryPrice');
+    const summaryLabel = document.getElementById("summaryLabel");
+    const summaryPrice = document.getElementById("summaryPrice");
 
-    const facebookPost = document.getElementById('facebookPost');
-    const instagramPost = document.getElementById('instagramPost');
-    const tiktokPost = document.getElementById('tiktokPost');
-    const linkedinPost = document.getElementById('linkedinPost');
-    const twitterPost = document.getElementById('twitterPost');
-    const textBlurb = document.getElementById('textBlurb');
-    const marketplacePost = document.getElementById('marketplacePost');
-    const hashtags = document.getElementById('hashtags');
-    const videoScript = document.getElementById('videoScript');
-    const shotPlan = document.getElementById('shotPlan');
+    const facebookPost = document.getElementById("facebookPost");
+    const instagramPost = document.getElementById("instagramPost");
+    const tiktokPost = document.getElementById("tiktokPost");
+    const linkedinPost = document.getElementById("linkedinPost");
+    const twitterPost = document.getElementById("twitterPost");
+    const textBlurb = document.getElementById("textBlurb");
+    const marketplacePost = document.getElementById("marketplacePost");
+    const hashtags = document.getElementById("hashtags");
+    const videoScript = document.getElementById("videoScript");
+    const shotPlan = document.getElementById("shotPlan");
 
-    const grabPhotosButton = document.getElementById('grabPhotosButton');
-    const buildVideoButton = document.getElementById('buildVideoButton');
-    const photosGrid = document.getElementById('photosGrid');
-    const photosStatus = document.getElementById('photosStatus');
-    const videoPlan = document.getElementById('videoPlan');
+    const grabPhotosButton = document.getElementById("grabPhotosButton");
+    const buildVideoButton = document.getElementById("buildVideoButton");
+    const photosGrid = document.getElementById("photosGrid");
+    const photosStatus = document.getElementById("photosStatus");
+    const videoPlan = document.getElementById("videoPlan");
 
-    const newScriptButton = document.getElementById('newScriptButton');
+    const newScriptButton = document.getElementById("newScriptButton");
 
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    const themeLabel = document.getElementById('themeLabel');
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
 
     let currentPhotos = [];
     let isBoosting = false;
@@ -1064,33 +1085,30 @@ app.get('/', (req, res) => {
 
     function applyTheme(theme) {
       const root = document.documentElement;
-      root.setAttribute('data-theme', theme);
-      if (theme === 'dark') {
-        themeIcon.textContent = '🌙';
-        themeLabel.textContent = 'Dark';
+      root.setAttribute("data-theme", theme);
+      if (theme === "dark") {
+        themeIcon.textContent = "🌙";
+        themeLabel.textContent = "Dark";
       } else {
-        themeIcon.textContent = '☀️';
-        themeLabel.textContent = 'Light';
+        themeIcon.textContent = "☀️";
+        themeLabel.textContent = "Light";
       }
       try {
-        localStorage.setItem('lotRocketTheme', theme);
-      } catch (_) {}
+        localStorage.setItem("lotRocketTheme", theme);
+      } catch {}
     }
 
     function initTheme() {
+      let saved = "dark";
       try {
-        const saved = localStorage.getItem('lotRocketTheme');
-        if (saved === 'light' || saved === 'dark') {
-          applyTheme(saved);
-          return;
-        }
-      } catch (_) {}
-      applyTheme('dark');
+        saved = localStorage.getItem("lotRocketTheme") || "dark";
+      } catch {}
+      applyTheme(saved === "light" ? "light" : "dark");
     }
 
-    themeToggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
+    themeToggle.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "dark";
+      const next = current === "dark" ? "light" : "dark";
       applyTheme(next);
     });
 
@@ -1098,70 +1116,70 @@ app.get('/', (req, res) => {
 
     // ----- Helpers -----
 
-    function setStatus(text, isLoading = false) {
-      if (isLoading) {
-        statusText.innerHTML = '<span class="loading-dot"></span>' + text;
-      } else {
-        statusText.textContent = text;
-      }
-    }
-
     function safeTrim(str) {
-      return (str || '').toString().trim();
+      return (str || "").toString().trim();
     }
 
     function updateSummary(label, price) {
-      summaryLabel.textContent = safeTrim(label) || 'Vehicle ready';
-      summaryPrice.textContent = safeTrim(price) || 'Message for current pricing';
+      summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
+      summaryPrice.textContent = safeTrim(price) || "Message for current pricing";
     }
 
     function fillSocialKit(kit) {
-      facebookPost.value = kit.facebook || '';
-      instagramPost.value = kit.instagram || '';
-      tiktokPost.value = kit.tiktok || '';
-      linkedinPost.value = kit.linkedin || '';
-      twitterPost.value = kit.twitter || '';
-      textBlurb.value = kit.textBlurb || '';
-      marketplacePost.value = kit.marketplace || '';
-      hashtags.value = kit.hashtags || '';
-      videoScript.value = kit.videoScript || '';
-      shotPlan.value = kit.shotPlan || '';
+      facebookPost.value = kit.facebook || "";
+      instagramPost.value = kit.instagram || "";
+      tiktokPost.value = kit.tiktok || "";
+      linkedinPost.value = kit.linkedin || "";
+      twitterPost.value = kit.twitter || "";
+      textBlurb.value = kit.textBlurb || "";
+      marketplacePost.value = kit.marketplace || "";
+      hashtags.value = kit.hashtags || "";
+      videoScript.value = kit.videoScript || "";
+      shotPlan.value = kit.shotPlan || "";
     }
 
     function renderPhotosGrid(photos) {
-      photosGrid.innerHTML = '';
+      photosGrid.innerHTML = "";
       if (!photos || !photos.length) {
-        photosStatus.textContent = 'No photos found yet. Try Grab Photos From URL.';
+        photosStatus.textContent = "No photos found yet. Try Grab Photos From URL.";
         return;
       }
       photos.forEach((url) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'photo-thumb';
-        const img = document.createElement('img');
+        const wrapper = document.createElement("div");
+        wrapper.className = "photo-thumb";
+        const img = document.createElement("img");
         img.src = url;
-        img.alt = 'Vehicle photo';
+        img.alt = "Vehicle photo";
         wrapper.appendChild(img);
-        wrapper.addEventListener('click', () => {
-          window.open(url, '_blank');
+        wrapper.addEventListener("click", () => {
+          window.open(url, "_blank");
         });
         photosGrid.appendChild(wrapper);
       });
-      photosStatus.textContent = photos.length + ' photos found. Click any to open full size.';
+      photosStatus.textContent = photos.length + " photos found. Click any to open full size.";
     }
 
     async function callJson(endpoint, body) {
       const res = await fetch(apiBase + endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(body || {}),
       });
       if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error('Request failed: ' + res.status + ' ' + txt);
+        const txt = await res.text().catch(() => "");
+        throw new Error("Request failed: " + res.status + " " + txt);
       }
       return res.json();
+    }
+
+    function setStatusText(message, loading = false) {
+      if (loading) {
+        statusText.innerHTML = '<span class="loading-dot"></span>' + message;
+      } else {
+        statusText.textContent = message;
+      }
     }
 
     // ----- Boost flow -----
@@ -1170,69 +1188,69 @@ app.get('/', (req, res) => {
       if (isBoosting) return;
       const url = safeTrim(vehicleUrlInput.value);
       if (!url) {
-        alert('Paste a dealer vehicle URL first.');
+        alert("Paste a dealer vehicle URL first.");
         return;
       }
 
       let label = safeTrim(vehicleLabelInput.value);
       if (!label) {
-        label = 'This vehicle';
+        label = "This vehicle";
         vehicleLabelInput.value = label;
       }
       let price = safeTrim(priceInfoInput.value);
       if (!price) {
-        price = 'Message for current pricing';
+        price = "Message for current pricing";
         priceInfoInput.value = price;
       }
 
       isBoosting = true;
       boostButton.disabled = true;
-      setStatus('Building social kit with AI…', true);
+      setStatusText("Building social kit with AI…", true);
 
       try {
-        const resp = await callJson('/api/social-kit', { url, label, price });
-        if (!resp.success) throw new Error('API returned error');
+        const resp = await callJson("/api/social-kit", { url, label, price });
+        if (!resp.success) throw new Error("API returned error");
         fillSocialKit(resp.kit);
         updateSummary(label, price);
-        setStatus('Social kit ready. You can spin new posts or scripts anytime.');
+        setStatusText("Social kit ready. You can spin new posts or scripts anytime.");
 
         // Auto-load photos after kit is ready
         try {
-          photosStatus.textContent = 'Trying to grab photos from dealer page…';
-          const photoResp = await callJson('/api/grab-photos', { url });
+          photosStatus.textContent = "Trying to grab photos from dealer page…";
+          const photoResp = await callJson("/api/grab-photos", { url });
           if (photoResp.success) {
             currentPhotos = photoResp.photos || [];
             renderPhotosGrid(currentPhotos);
           } else {
-            photosStatus.textContent = 'Could not grab photos. Try the button again.';
+            photosStatus.textContent = "Could not grab photos. Try the button again.";
           }
         } catch (err) {
-          console.error('Auto photo grab failed:', err);
+          console.error("Auto photo grab failed:", err);
           photosStatus.textContent = 'Auto photo load failed. Try "Grab Photos From URL".';
         }
       } catch (err) {
         console.error(err);
-        setStatus('Something went wrong. Try again or check the URL.');
-        alert('Error building social kit. Check the URL and try again.');
+        setStatusText("Something went wrong. Try again or check the URL.");
+        alert("Error building social kit. Check the URL and try again.");
       } finally {
         isBoosting = false;
         boostButton.disabled = false;
       }
     }
 
-    boostButton.addEventListener('click', handleBoost);
+    boostButton.addEventListener("click", handleBoost);
 
     // ----- New post buttons -----
 
-    document.querySelectorAll('.button-new-post').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const platform = btn.getAttribute('data-platform');
+    document.querySelectorAll(".button-new-post").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const platform = btn.getAttribute("data-platform");
         const url = safeTrim(vehicleUrlInput.value);
         const label = safeTrim(vehicleLabelInput.value);
         const price = safeTrim(priceInfoInput.value);
 
         if (!url || !label) {
-          alert('Please paste a URL and hit Boost at least once before spinning posts.');
+          alert("Please paste a URL and hit Boost at least once before spinning posts.");
           return;
         }
 
@@ -1241,39 +1259,39 @@ app.get('/', (req, res) => {
         btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
         try {
-          const resp = await callJson('/api/new-post', { platform, url, label, price });
-          if (!resp.success) throw new Error('API returned error');
-          const text = resp.post || '';
+          const resp = await callJson("/api/new-post", { platform, url, label, price });
+          if (!resp.success) throw new Error("API returned error");
+          const text = resp.post || "";
 
           switch (platform) {
-            case 'facebook':
+            case "facebook":
               facebookPost.value = text;
               break;
-            case 'instagram':
+            case "instagram":
               instagramPost.value = text;
               break;
-            case 'tiktok':
+            case "tiktok":
               tiktokPost.value = text;
               break;
-            case 'linkedin':
+            case "linkedin":
               linkedinPost.value = text;
               break;
-            case 'twitter':
+            case "twitter":
               twitterPost.value = text;
               break;
-            case 'text':
+            case "text":
               textBlurb.value = text;
               break;
-            case 'marketplace':
+            case "marketplace":
               marketplacePost.value = text;
               break;
-            case 'hashtags':
+            case "hashtags":
               hashtags.value = text;
               break;
           }
         } catch (err) {
           console.error(err);
-          alert('Error generating a new post. Try again.');
+          alert("Error generating a new post. Try again.");
         } finally {
           btn.disabled = false;
           btn.innerHTML = oldText;
@@ -1283,13 +1301,13 @@ app.get('/', (req, res) => {
 
     // ----- New video script -----
 
-    newScriptButton.addEventListener('click', async () => {
+    newScriptButton.addEventListener("click", async () => {
       const url = safeTrim(vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput.value);
       const price = safeTrim(priceInfoInput.value);
 
       if (!url || !label) {
-        alert('Please paste a URL and hit Boost at least once before spinning scripts.');
+        alert("Please paste a URL and hit Boost at least once before spinning scripts.");
         return;
       }
 
@@ -1298,12 +1316,12 @@ app.get('/', (req, res) => {
       newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
       try {
-        const resp = await callJson('/api/new-script', { url, label, price });
-        if (!resp.success) throw new Error('API error');
-        videoScript.value = resp.script || '';
+        const resp = await callJson("/api/new-script", { url, label, price });
+        if (!resp.success) throw new Error("API error");
+        videoScript.value = resp.script || "";
       } catch (err) {
         console.error(err);
-        alert('Error generating a new script. Try again.');
+        alert("Error generating a new script. Try again.");
       } finally {
         newScriptButton.disabled = false;
         newScriptButton.innerHTML = oldText;
@@ -1312,25 +1330,25 @@ app.get('/', (req, res) => {
 
     // ----- Manual photo grab -----
 
-    grabPhotosButton.addEventListener('click', async () => {
+    grabPhotosButton.addEventListener("click", async () => {
       const url = safeTrim(vehicleUrlInput.value);
       if (!url) {
-        alert('Paste a dealer vehicle URL first.');
+        alert("Paste a dealer vehicle URL first.");
         return;
       }
       grabPhotosButton.disabled = true;
       const oldText = grabPhotosButton.innerHTML;
       grabPhotosButton.innerHTML = '<span class="icon">⏳</span><span>Grabbing…</span>';
-      photosStatus.textContent = 'Looking for vehicle photos on the dealer page…';
+      photosStatus.textContent = "Looking for vehicle photos on the dealer page…";
 
       try {
-        const resp = await callJson('/api/grab-photos', { url });
-        if (!resp.success) throw new Error('API error');
+        const resp = await callJson("/api/grab-photos", { url });
+        if (!resp.success) throw new Error("API error");
         currentPhotos = resp.photos || [];
         renderPhotosGrid(currentPhotos);
       } catch (err) {
         console.error(err);
-        photosStatus.textContent = 'Could not load photos. Try again or check the URL.';
+        photosStatus.textContent = "Could not load photos. Try again or check the URL.";
       } finally {
         grabPhotosButton.disabled = false;
         grabPhotosButton.innerHTML = oldText;
@@ -1339,9 +1357,9 @@ app.get('/', (req, res) => {
 
     // ----- Build video plan from photos -----
 
-    buildVideoButton.addEventListener('click', async () => {
+    buildVideoButton.addEventListener("click", async () => {
       if (!currentPhotos || !currentPhotos.length) {
-        alert('No photos yet. Grab photos from the dealer page first.');
+        alert("No photos yet. Grab photos from the dealer page first.");
         return;
       }
 
@@ -1350,16 +1368,16 @@ app.get('/', (req, res) => {
       buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
 
       try {
-        const label = safeTrim(vehicleLabelInput.value) || 'this vehicle';
-        const resp = await callJson('/api/video-from-photos', {
+        const label = safeTrim(vehicleLabelInput.value) || "this vehicle";
+        const resp = await callJson("/api/video-from-photos", {
           photos: currentPhotos,
           label,
         });
-        if (!resp.success) throw new Error('API error');
-        videoPlan.value = resp.plan || '';
+        if (!resp.success) throw new Error("API error");
+        videoPlan.value = resp.plan || "";
       } catch (err) {
         console.error(err);
-        alert('Error building video plan. Try again.');
+        alert("Error building video plan. Try again.");
       } finally {
         buildVideoButton.disabled = false;
         buildVideoButton.innerHTML = oldText;
