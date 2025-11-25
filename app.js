@@ -1,5 +1,5 @@
 // app.js
-// Lot Rocket – Social Media Post Kit (Viral mode, improved fallbacks + formatting)
+// Lot Rocket – Social Media Post Kit (Viral mode, improved fallbacks + formatting + random video scripts)
 
 const express = require("express");
 const cheerio = require("cheerio");
@@ -345,6 +345,7 @@ app.get("/", (req, res) => {
           const data = await res.json();
           videoEl.textContent = data.videoScript || "No video script generated.";
           statusEl.textContent = "New video script ready. 🎥";
+          videoEl.scrollIntoView({ behavior: "smooth", block: "center" });
         } catch (err) {
           console.error(err);
           statusEl.textContent = "Error refreshing video script.";
@@ -549,7 +550,7 @@ async function scrapeVehicle(url) {
     let makeModel = year ? cleanedTitle.replace(year, "").trim() : cleanedTitle;
 
     if (condition) {
-      const condRegex = new RegExp("\\\\b" + condition.replace(/\s+/g, "\\\\s+") + "\\\\b", "i");
+      const condRegex = new RegExp("\\b" + condition.replace(/\s+/g, "\\s+") + "\\b", "i");
       makeModel = makeModel.replace(condRegex, " ");
     }
 
@@ -749,27 +750,68 @@ function generateHashtags(vehicle) {
 
 // ---------- VIRAL VIDEO SCRIPT & SHOT PLAN ----------
 
+// NEW: randomized script generator so "New Script" actually looks new
 function buildViralVideoScript(vehicle) {
   const label =
     (vehicle.year ? vehicle.year + " " : "") +
     (vehicle.makeModel || "Vehicle");
 
+  const hooks = [
+    `“Stop scrolling and look at this ${label}. If you’ve been waiting for the right one, this is it.”`,
+    `“If this ${label} is still available while you’re watching this, you might be looking at your next ride.”`,
+    `“Pause for a second – this ${label} is the one people message me about later saying ‘I should’ve moved faster.’”`
+  ];
+
+  const exteriorLines = [
+    "“Check out the stance, wheels, and overall look on this one. It’s clean, sharp, and it looks even better in person than it does online.”",
+    "“From the front end to the taillights, this thing just looks right on the road – it has that ‘double-take in the parking lot’ presence.”",
+    "“You can see the body lines and details from here – this isn’t just another appliance, it actually has some style to it.”"
+  ];
+
+  const interiorLines = [
+    "“Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.”",
+    "“Take a look at the interior – screen, controls, and seating all dialed-in so you’re not fighting the car, you’re just enjoying the drive.”",
+    "“From the driver’s seat you get that ‘I could sit here every day’ feeling – tech is easy to use, materials feel solid, and it doesn’t wear you out on longer trips.”"
+  ];
+
+  const benefitHooks = [
+    "“If you’re tired of settling for ‘good enough’ and you want something that actually feels like a win every time you drive it, this is that move.”",
+    "“If your current ride feels more like a compromise than a reward, this is the upgrade that actually feels like it was worth it.”",
+    "“If you’ve been scrolling for weeks saying ‘I’ll know it when I see it,’ this might be the one that finally checks the boxes.”"
+  ];
+
+  const ctas = [
+    "“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”",
+    "“If this looks like it lines up with what you’ve been talking about, DM ‘INFO’ and I’ll fire over a quick video, numbers, and what it would take to get it in your driveway.”",
+    "“If you can picture yourself in this, DM me ‘INFO’ and I’ll send you a walkaround and straight-up numbers so you can decide without the runaround.”"
+  ];
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  const hook = pick(hooks);
+  const exterior = pick(exteriorLines);
+  const interior = pick(interiorLines);
+  const benefit = pick(benefitHooks);
+  const cta = pick(ctas);
+
   return `🎥 Viral Video Script (30–40 seconds)
 
 HOOK (2–3 sec)
-“Stop scrolling and look at this ${label}. If you’ve been waiting for the right one, this is it.”
+${hook}
 
 EXTERIOR (5–10 sec)
-“Check out the stance, wheels, and overall look on this one. It’s clean, sharp, and it looks even better in person than it does online.”
+${exterior}
 
 INTERIOR & FEATURES (10–15 sec)
-“Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.”
+${interior}
 
 BENEFIT HOOK (5–8 sec)
-“If you’re tired of settling for ‘good enough’ and you want something that actually feels like a win every time you drive it, this is that move.”
+${benefit}
 
 CTA (5–8 sec)
-“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”`;
+${cta}`;
 }
 
 function buildShotPlan() {
