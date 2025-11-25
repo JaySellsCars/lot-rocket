@@ -1,269 +1,4 @@
-// app.js – Lot Rocket Social Media Kit (fixed for new OpenAI Responses API)
-
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const OpenAI = require("openai");
-const cheerio = require("cheerio");
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ---------------------------------------------------------------------
-// SCRAPE VEHICLE PHOTOS
-// ---------------------------------------------------------------------
-async function scrapeVehiclePhotos(pageUrl) {
-  try {
-    const res = await fetch(pageUrl);
-    if (!res.ok) {
-      console.error("Failed to fetch page for photos:", res.status);
-      return [];
-    }
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    const urls = new Set();
-
-    const base = new URL(pageUrl);
-
-    $("img").each((i, el) => {
-      let src =
-        $(el).attr("data-src") ||
-        $(el).attr("data-srcset") ||
-        $(el).attr("src");
-      if (!src) return;
-
-      if (src.startsWith("//")) {
-        src = "https:" + src;
-      } else if (src.startsWith("/")) {
-        src = base.origin + src;
-      } else if (!src.startsWith("http")) {
-        src = base.origin + "/" + src;
-      }
-
-      const s = src.toLowerCase();
-      if (
-        s.includes("logo") ||
-        s.includes("icon") ||
-        s.includes("placeholder") ||
-        s.includes("spinner")
-      )
-        return;
-
-      urls.add(src);
-    });
-
-    return Array.from(urls).slice(0, 40);
-  } catch (err) {
-    console.error("Error scraping photos:", err);
-    return [];
-  }
-}
-
-// ---------------------------------------------------------------------
-// PROMPTS
-// ---------------------------------------------------------------------
-function buildSocialKitPrompt({ label, price, url }) {
-  return `
-You are writing a social-media content kit for a car salesperson.
-Vehicle label: "${label}"
-Pricing phrase: "${price || "Message for current pricing"}"
-URL: ${url}
-
-Return ONLY a JSON object with EXACT keys:
-{
-  "facebook": "",
-  "instagram": "",
-  "tiktok": "",
-  "linkedin": "",
-  "twitter": "",
-  "textBlurb": "",
-  "marketplace": "",
-  "hashtags": "",
-  "videoScript": "",
-  "shotPlan": ""
-}
-
-Rules:
-- Keep each section under 900 characters.
-- Tone: confident, natural salesperson.
-- Not corporate, not cringe.
-- hashtags = one line of space-separated tags.
-- No backticks, no explanation, no wrapper text.
-`;
-}
-
-function buildSinglePostPrompt({ platform, label, price, url }) {
-  return `
-Write a NEW fresh post for platform: ${platform}
-Vehicle: "${label}"
-Price phrase: "${price || "Message for current pricing"}"
-URL: ${url}
-
-Return ONLY the post text.
-No hashtags.
-No labels.
-Keep it tight, human, confident.
-`;
-}
-
-function buildVideoScriptPrompt({ label, price, url }) {
-  return `
-Write a 30–40 second vertical video script.
-Vehicle: "${label}"
-Price phrase: "${price || "Message for current pricing"}"
-URL: ${url}
-
-Rules:
-- NO labels like HOOK/CTA.
-- 4–8 short spoken paragraphs.
-- Natural salesperson.
-- End with CTA like DM "INFO".
-
-Return ONLY the script, plain text.
-`;
-}
-
-// ---------------------------------------------------------------------
-// OPENAI HELPERS
-// ---------------------------------------------------------------------
-
-// FIXED: Uses "text.format": "json"
-async function callOpenAIForJSON(prompt) {
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: prompt,
-    text: {
-      format: "json",
-    },
-  });
-
-  const content = response.output[0].content[0].text;
-  return JSON.parse(content);
-}
-
-async function callOpenAIForText(prompt) {
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: prompt,
-  });
-
-  const part = response.output[0].content.find(
-    (p) => p.type === "output_text"
-  );
-
-  return part ? part.text : response.output[0].content[0].text;
-}
-
-// ---------------------------------------------------------------------
-// ROUTES
-// ---------------------------------------------------------------------
-
-// SOCIAL KIT
-app.post("/api/social-kit", async (req, res) => {
-  try {
-    const { url, label, price } = req.body;
-    if (!url || !label)
-      return res.status(400).json({ error: "Missing url or label" });
-
-    const prompt = buildSocialKitPrompt({ url, label, price });
-    const data = await callOpenAIForJSON(prompt);
-
-    res.json({ success: true, kit: data });
-  } catch (err) {
-    console.error("Error /api/social-kit", err);
-    res.status(500).json({ error: "Failed social kit" });
-  }
-});
-
-// NEW POST
-app.post("/api/new-post", async (req, res) => {
-  try {
-    const { platform, label, price, url } = req.body;
-    if (!platform || !label)
-      return res.status(400).json({ error: "Missing platform or label" });
-
-    const prompt = buildSinglePostPrompt({ platform, label, price, url });
-    const text = await callOpenAIForText(prompt);
-
-    res.json({ success: true, post: text.trim() });
-  } catch (err) {
-    console.error("Error /api/new-post:", err);
-    res.status(500).json({ error: "Failed new post" });
-  }
-});
-
-// NEW VIDEO SCRIPT
-app.post("/api/new-script", async (req, res) => {
-  try {
-    const { label, price, url } = req.body;
-    const prompt = buildVideoScriptPrompt({ label, price, url });
-
-    const script = await callOpenAIForText(prompt);
-    res.json({ success: true, script: script.trim() });
-  } catch (err) {
-    console.error("Error /api/new-script:", err);
-    res.status(500).json({ error: "Failed script" });
-  }
-});
-
-// GRAB PHOTOS
-app.post("/api/grab-photos", async (req, res) => {
-  try {
-    const photos = await scrapeVehiclePhotos(req.body.url);
-    res.json({ success: true, photos });
-  } catch (err) {
-    console.error("Error /api/grab-photos:", err);
-    res.status(500).json({ error: "Failed photos" });
-  }
-});
-
-// VIDEO FROM PHOTOS
-app.post("/api/video-from-photos", async (req, res) => {
-  try {
-    const { photos, label } = req.body;
-    if (!photos || !photos.length)
-      return res.status(400).json({ error: "No photos" });
-
-    const total = photos.length;
-    const mid = Math.floor(total / 2);
-
-    const plan = `
-Clip 1 – Photo 1 – 3s
-Clip 2 – Photo ${mid} – 3s
-Clip 3 – Photo ${total} – 3s
-On-screen text: "${label}"
-CTA: DM "INFO" for details
-    `.trim();
-
-    res.json({ success: true, plan });
-  } catch (err) {
-    console.error("Error /api/video-from-photos:", err);
-    res.status(500).json({ error: "Failed video plan" });
-  }
-});
-
-// ---------------------------------------------------------------------
-// FRONTEND (kept exactly as you had it except theme + auto-photo logic)
-// ---------------------------------------------------------------------
-app.get("/", (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html><body><h1>Lot Rocket is running.</h1></body></html>`);
-});
-
-// ---------------------------------------------------------------------
-app.listen(port, () => {
-  console.log(`Lot Rocket server running on port ${port}`);
-});
-// app.js – Lot Rocket Social Media Kit (with auto-photos + light/dark mode)
+// app.js – Lot Rocket Social Media Kit (full UI + auto-photos + light/dark mode)
 
 require('dotenv').config();
 const express = require('express');
@@ -282,6 +17,8 @@ const client = new OpenAI({
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
+// (Optional) serve static files like logo later:
+// app.use(express.static(__dirname));
 
 // ---------- Helper: Scrape photos from dealer URL ----------
 
@@ -436,17 +173,20 @@ Format:
 Return ONLY the script text, nothing else.`;
 }
 
-// ---------- OpenAI helper ----------
+// ---------- OpenAI helpers (Responses API) ----------
 
 async function callOpenAIForJSON(prompt) {
   const response = await client.responses.create({
     model: 'gpt-4.1-mini',
     input: prompt,
-    response_format: { type: 'json_object' },
+    text: { format: 'json_object' },
   });
 
-  const content = response.output[0].content[0].text;
-  return JSON.parse(content);
+  const msg = response.output[0];
+  const textPart =
+    msg.content.find((p) => p.type === 'output_text') || msg.content[0];
+  const raw = textPart.text;
+  return JSON.parse(raw);
 }
 
 async function callOpenAIForText(prompt) {
@@ -455,8 +195,9 @@ async function callOpenAIForText(prompt) {
     input: prompt,
   });
 
-  const parts = response.output[0].content;
-  const textPart = parts.find((p) => p.type === 'output_text') || parts[0];
+  const msg = response.output[0];
+  const textPart =
+    msg.content.find((p) => p.type === 'output_text') || msg.content[0];
   return textPart.text;
 }
 
@@ -496,7 +237,7 @@ app.post('/api/new-post', async (req, res) => {
 
     res.json({
       success: true,
-      post: text.trim(),
+      post: (text || '').trim(),
     });
   } catch (err) {
     console.error('Error in /api/new-post:', err);
@@ -517,7 +258,7 @@ app.post('/api/new-script', async (req, res) => {
 
     res.json({
       success: true,
-      script: script.trim(),
+      script: (script || '').trim(),
     });
   } catch (err) {
     console.error('Error in /api/new-script:', err);
@@ -558,7 +299,9 @@ app.post('/api/video-from-photos', async (req, res) => {
       total > 4 ? `Clip 2 – Photo 4 – 3 seconds` : '',
       total > 8 ? `Clip 3 – Photo 8 – 3 seconds` : '',
       `Clip 4 – Photo ${mid + 1} – 3–4 seconds\nOn-screen text: "Interior & tech"`,
-      total > 6 ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds` : '',
+      total > 6
+        ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds`
+        : '',
       `Clip 6 – Photo ${last + 1} – 3 seconds\nOn-screen text: "DM 'INFO' for details"`,
       `Recommended music: upbeat, confident track that fits Reels / TikTok.`,
     ]
@@ -1025,21 +768,10 @@ app.get('/', (req, res) => {
       min-height: 130px;
     }
 
-    .cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
     .tiny-note {
       font-size: 10px;
       opacity: 0.75;
       margin-top: 4px;
-    }
-
-    .hidden {
-      display: none !important;
     }
 
     .loading-dot {
@@ -1048,6 +780,8 @@ app.get('/', (req, res) => {
       border-radius: 999px;
       background: var(--accent);
       animation: pulse 1s infinite alternate;
+      display: inline-block;
+      margin-right: 4px;
     }
     @keyframes pulse {
       from { transform: scale(1); opacity: 0.8; }
@@ -1324,7 +1058,6 @@ app.get('/', (req, res) => {
     const themeLabel = document.getElementById('themeLabel');
 
     let currentPhotos = [];
-    let currentUrl = '';
     let isBoosting = false;
 
     // ----- Theme handling -----
@@ -1339,16 +1072,20 @@ app.get('/', (req, res) => {
         themeIcon.textContent = '☀️';
         themeLabel.textContent = 'Light';
       }
-      localStorage.setItem('lotRocketTheme', theme);
+      try {
+        localStorage.setItem('lotRocketTheme', theme);
+      } catch (_) {}
     }
 
     function initTheme() {
-      const saved = localStorage.getItem('lotRocketTheme');
-      if (saved === 'light' || saved === 'dark') {
-        applyTheme(saved);
-      } else {
-        applyTheme('dark');
-      }
+      try {
+        const saved = localStorage.getItem('lotRocketTheme');
+        if (saved === 'light' || saved === 'dark') {
+          applyTheme(saved);
+          return;
+        }
+      } catch (_) {}
+      applyTheme('dark');
     }
 
     themeToggle.addEventListener('click', () => {
@@ -1362,9 +1099,10 @@ app.get('/', (req, res) => {
     // ----- Helpers -----
 
     function setStatus(text, isLoading = false) {
-      statusText.textContent = text;
       if (isLoading) {
-        statusText.innerHTML = '<span class="loading-dot"></span> ' + text;
+        statusText.innerHTML = '<span class="loading-dot"></span>' + text;
+      } else {
+        statusText.textContent = text;
       }
     }
 
@@ -1438,7 +1176,6 @@ app.get('/', (req, res) => {
 
       let label = safeTrim(vehicleLabelInput.value);
       if (!label) {
-        // minimal label default
         label = 'This vehicle';
         vehicleLabelInput.value = label;
       }
@@ -1453,7 +1190,6 @@ app.get('/', (req, res) => {
       setStatus('Building social kit with AI…', true);
 
       try {
-        currentUrl = url;
         const resp = await callJson('/api/social-kit', { url, label, price });
         if (!resp.success) throw new Error('API returned error');
         fillSocialKit(resp.kit);
