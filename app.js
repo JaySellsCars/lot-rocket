@@ -515,7 +515,7 @@ function vehicleFromUrl(url) {
 
     let segment = null;
     for (const p of parts) {
-      if (/(19|20)\\d{2}/.test(p)) {
+      if (/(19|20)\d{2}/.test(p)) {
         segment = p;
         break;
       }
@@ -523,17 +523,17 @@ function vehicleFromUrl(url) {
     if (!segment) return null;
 
     let decoded = decodeURIComponent(segment);
-    decoded = decoded.replace(/\\.html?$/i, "");
+    decoded = decoded.replace(/\.html?$/i, "");
     decoded = decoded.replace(/-/g, " ");
-    decoded = decoded.replace(/\\+/g, " ");
+    decoded = decoded.replace(/\+/g, " ");
     decoded = decoded.replace(/[A-HJ-NPR-Z0-9]{11,17}$/i, "").trim();
 
-    const yearMatch = decoded.match(/(19|20)\\d{2}/);
+    const yearMatch = decoded.match(/(19|20)\d{2}/);
     let year = "";
     if (yearMatch) year = yearMatch[1];
 
     let makeModel = year ? decoded.replace(year, "").trim() : decoded;
-    makeModel = makeModel.replace(/\\s{2,}/g, " ").trim();
+    makeModel = makeModel.replace(/\s{2,}/g, " ").trim();
 
     const title = (year ? year + " " : "") + makeModel;
     return {
@@ -585,16 +585,16 @@ async function scrapeVehicle(url) {
     const cleanedTitle = cleanTitle(rawTitle);
     const price = cleanPrice(rawPrice);
 
-    const yearMatch = cleanedTitle.match(/(20\\d{2}|19\\d{2})/);
+    const yearMatch = cleanedTitle.match(/(20\d{2}|19\d{2})/);
     const year = yearMatch ? yearMatch[1] : "";
 
     const lowerTitle = cleanedTitle.toLowerCase();
     let condition = "";
-    if (/\\bnew\\b/.test(lowerTitle)) {
+    if (/\bnew\b/.test(lowerTitle)) {
       condition = "New";
     } else if (/certified|cpo/.test(lowerTitle)) {
       condition = "Certified Pre-Owned";
-    } else if (/pre[-\\s]?owned/.test(lowerTitle)) {
+    } else if (/pre[-\s]?owned/.test(lowerTitle)) {
       condition = "Pre-Owned";
     } else if (/used/.test(lowerTitle)) {
       condition = "Used";
@@ -603,12 +603,12 @@ async function scrapeVehicle(url) {
     let makeModel = year ? cleanedTitle.replace(year, "").trim() : cleanedTitle;
 
     if (condition) {
-      const condRegex = new RegExp("\\\\b" + condition.replace(/\\s+/g, "\\\\s+") + "\\\\b", "i");
+      const condRegex = new RegExp("\\b" + condition.replace(/\s+/g, "\\s+") + "\\b", "i");
       makeModel = makeModel.replace(condRegex, " ");
     }
 
-    makeModel = makeModel.replace(/\\b(new|used|pre[-\\s]?owned|certified|cpo)\\b/gi, " ");
-    makeModel = makeModel.replace(/\\s{2,}/g, " ").trim();
+    makeModel = makeModel.replace(/\b(new|used|pre[-\s]?owned|certified|cpo)\b/gi, " ");
+    makeModel = makeModel.replace(/\s{2,}/g, " ").trim();
 
     return {
       title: cleanedTitle,
@@ -661,8 +661,8 @@ function generateFeatureStack(vehicle) {
   const isLuxury = luxuryKeywords.some((k) => nameLower.includes(k));
   const isSporty = sportyKeywords.some((k) => nameLower.includes(k));
 
-  const isPhevOrHybrid = /phev|plug[-\\s]?in|plug in|plug-in|hybrid/.test(nameLower);
-  const isEv = /\\bev\\b/.test(nameLower) || /electric/.test(nameLower) || /blazer ev/.test(nameLower);
+  const isPhevOrHybrid = /phev|plug[-\s]?in|plug in|plug-in|hybrid/.test(nameLower);
+  const isEv = /\bev\b/.test(nameLower) || /electric/.test(nameLower) || /blazer ev/.test(nameLower);
 
   let baseFeatures;
 
@@ -674,7 +674,7 @@ function generateFeatureStack(vehicle) {
       "Strong powertrain built to handle real-world driving and hauling",
       "Modern touchscreen with premium smartphone integration feel",
       "Backup camera and driver-assist tech that make it easy to maneuver",
-      "Refined ride – quiet, solid, and controlled at speed",
+      "Refined ride that feels quiet, solid, and controlled at speed",
       "Ready for family duty, work runs, and weekend escapes",
       "Smart storage and space use throughout the cabin",
       "Exactly the kind of SUV serious buyers hold onto"
@@ -708,11 +708,11 @@ function generateFeatureStack(vehicle) {
   } else {
     baseFeatures = [
       "Clean, sharp exterior styling that still looks modern",
-      "Comfortable seating that’s easy to live with every single day",
+      "Comfortable seating that is easy to live with every single day",
       "Practical fuel economy that makes sense for commuting and errands",
       "Modern touchscreen with straightforward smartphone connection",
       "Backup camera that makes parking and tight spots stress-free",
-      "Smooth, quiet ride that doesn’t beat you up on rough roads",
+      "Smooth, quiet ride that does not beat you up on rough roads",
       "Easy to drive, easy to park, easy to live with",
       "Controls and layout that make sense the first time you sit in it",
       "Great daily driver for work, school, or family runs",
@@ -722,7 +722,7 @@ function generateFeatureStack(vehicle) {
 
   if (isPhevOrHybrid || isEv) {
     const electrifiedFeatures = [
-      "Plug-in hybrid / electrified setup that gives you electric-style driving with gas backup for real-world range",
+      "Electrified setup that gives you electric-style driving with gas backup for real-world range",
       "Lower fuel stops by using electricity for short trips and gas for the longer runs",
       "Smooth, quiet electric-feel driving around town",
       "Perfect for drivers who want SUV practicality with modern efficiency and tech"
@@ -746,7 +746,7 @@ function generateHashtags(vehicle) {
 
   if (vehicle.year) baseWords.push(vehicle.year);
   if (vehicle.makeModel) {
-    vehicle.makeModel.split(/\\s+/).forEach((w) => baseWords.push(w));
+    vehicle.makeModel.split(/\s+/).forEach((w) => baseWords.push(w));
   }
 
   const fullString =
@@ -769,14 +769,14 @@ function generateHashtags(vehicle) {
     tags.add("#" + lower);
   });
 
-  if (/phev|plug[-\\s]?in|plug in|plug-in/.test(fullLower)) {
+  if (/phev|plug[-\s]?in|plug in|plug-in/.test(fullLower)) {
     tags.add("#hybrid");
     tags.add("#pluginhybrid");
   }
-  if (/\\bhybrid\\b/.test(fullLower)) {
+  if (/\bhybrid\b/.test(fullLower)) {
     tags.add("#hybrid");
   }
-  if (/\\bev\\b/.test(fullLower) || /electric/.test(fullLower)) {
+  if (/\bev\b/.test(fullLower) || /electric/.test(fullLower)) {
     tags.add("#ev");
     tags.add("#electricvehicle");
   }
@@ -792,7 +792,7 @@ function generateHashtags(vehicle) {
 
   const slug =
     (vehicle.year ? vehicle.year : "") +
-    (vehicle.makeModel ? vehicle.makeModel.replace(/\\s+/g, "").toLowerCase() : "");
+    (vehicle.makeModel ? vehicle.makeModel.replace(/\s+/g, "").toLowerCase() : "");
   if (slug) {
     tags.add("#" + slug);
   }
@@ -803,40 +803,39 @@ function generateHashtags(vehicle) {
 
 // ---------- VIRAL VIDEO SCRIPT & SHOT PLAN ----------
 
-// Randomized script generator
 function buildViralVideoScript(vehicle) {
   const label =
     (vehicle.year ? vehicle.year + " " : "") +
     (vehicle.makeModel || "Vehicle");
 
   const hooks = [
-    \`“Stop scrolling and look at this \${label}. If you’ve been waiting for the right one, this is it.”\`,
-    \`“If this \${label} is still available while you’re watching this, you might be looking at your next ride.”\`,
-    \`“Pause for a second – this \${label} is the one people message me about later saying ‘I should’ve moved faster.’”\`
+    `Stop scrolling and look at this ${label}. If you have been waiting for the right one, this is it.`,
+    `If this ${label} is still available while you are watching this, you might be looking at your next ride.`,
+    `Pause for a second – this ${label} is the one people message me about later saying "I should have moved faster."`
   ];
 
   const exteriorLines = [
-    "“Check out the stance, wheels, and overall look on this one. It’s clean, sharp, and it looks even better in person than it does online.”",
-    "“From the front end to the taillights, this thing just looks right on the road – it has that ‘double-take in the parking lot’ presence.”",
-    "“You can see the body lines and details from here – this isn’t just another appliance, it actually has some style to it.”"
+    "Check out the stance, wheels, and overall look on this one. It is clean, sharp, and it looks even better in person than it does online.",
+    "From the front end to the taillights, this thing just looks right on the road – it has that double-take-in-the-parking-lot presence.",
+    "You can see the body lines and details from here – this is not just another appliance, it actually has some style to it."
   ];
 
   const interiorLines = [
-    "“Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.”",
-    "“Take a look at the interior – screen, controls, and seating all dialed-in so you’re not fighting the car, you’re just enjoying the drive.”",
-    "“From the driver’s seat you get that ‘I could sit here every day’ feeling – tech is easy to use, materials feel solid, and it doesn’t wear you out on longer trips.”"
+    "Inside is where you really feel the upgrade – comfortable seating, modern tech, and a layout that actually makes sense for daily life. This is built for real driving – work, family, and weekend runs.",
+    "Take a look at the interior – screen, controls, and seating all dialed-in so you are not fighting the car, you are just enjoying the drive.",
+    "From the driver seat you get that 'I could sit here every day' feeling – tech is easy to use, materials feel solid, and it does not wear you out on longer trips."
   ];
 
   const benefitHooks = [
-    "“If you’re tired of settling for ‘good enough’ and you want something that actually feels like a win every time you drive it, this is that move.”",
-    "“If your current ride feels more like a compromise than a reward, this is the upgrade that actually feels like it was worth it.”",
-    "“If you’ve been scrolling for weeks saying ‘I’ll know it when I see it,’ this might be the one that finally checks the boxes.”"
+    "If you are tired of settling for 'good enough' and you want something that actually feels like a win every time you drive it, this is that move.",
+    "If your current ride feels more like a compromise than a reward, this is the upgrade that actually feels like it was worth it.",
+    "If you have been scrolling for weeks saying 'I will know it when I see it,' this might be the one that finally checks the boxes."
   ];
 
   const ctas = [
-    "“If this fits what you’ve been looking for, DM me ‘INFO’ and I’ll send a quick walkaround, pricing, and options to make it yours before someone else grabs it.”",
-    "“If this looks like it lines up with what you’ve been talking about, DM ‘INFO’ and I’ll fire over a quick video, numbers, and what it would take to get it in your driveway.”",
-    "“If you can picture yourself in this, DM me ‘INFO’ and I’ll send you a walkaround and straight-up numbers so you can decide without the runaround.”"
+    "If this fits what you have been looking for, DM me 'INFO' and I will send a quick walkaround, pricing, and options to make it yours before someone else grabs it.",
+    "If this looks like it lines up with what you have been talking about, DM 'INFO' and I will send a quick video, numbers, and what it would take to get it in your driveway.",
+    "If you can picture yourself in this, DM me 'INFO' and I will send you a walkaround and straight-up numbers so you can decide without the runaround."
   ];
 
   function pick(arr) {
@@ -849,26 +848,26 @@ function buildViralVideoScript(vehicle) {
   const benefit = pick(benefitHooks);
   const cta = pick(ctas);
 
-  return \`🎥 Viral Video Script (30–40 seconds)
+  return `🎥 Viral Video Script (30–40 seconds)
 
 HOOK (2–3 sec)
-\${hook}
+${hook}
 
 EXTERIOR (5–10 sec)
-\${exterior}
+${exterior}
 
 INTERIOR & FEATURES (10–15 sec)
-\${interior}
+${interior}
 
 BENEFIT HOOK (5–8 sec)
-\${benefit}
+${benefit}
 
 CTA (5–8 sec)
-\${cta}\`;
+${cta}`;
 }
 
 function buildShotPlan() {
-  return \`👀 Viral Visual Shot Plan (Simple 5–7 shots)
+  return `👀 Viral Visual Shot Plan (Simple 5–7 shots)
 
 1️⃣ Hook Shot (2–3 sec)
 - Start with a close-up of the front corner, grille, or headlights while you deliver the hook line.
@@ -889,13 +888,13 @@ function buildShotPlan() {
 - Hit one button or feature on camera: remote start, sunroof, heated seats, backup camera, etc. Make it feel real and useful.
 
 7️⃣ Power Ending (2–3 sec)
-- Finish with you in frame (or the front of the vehicle) delivering the CTA: “DM ‘INFO’ before someone else grabs it.”
+- Finish with you in frame (or the front of the vehicle) delivering the CTA: "DM 'INFO' before someone else grabs it."
 
 🎯 Tips:
 - Film vertical.
 - Keep clips short (1–3 seconds).
 - Use natural light when possible.
-- Speak clearly, confident, and like you already know this unit will sell.\`;
+- Speak clearly, confident, and like you already know this unit will sell.`;
 }
 
 // ---------- SOCIAL POSTS (VIRAL MODE, RANDOM HOOKS) ----------
@@ -907,32 +906,31 @@ function buildSocialPosts(vehicle, hashtags) {
   const bullets = featureData.bullets;
 
   const label = vehicle.condition
-    ? \`\${baseLabel} – \${vehicle.condition}\`
+    ? `${baseLabel} – ${vehicle.condition}`
     : baseLabel;
 
-  const featureLines = bullets.map((b) => \`🔥 \${b}\`).join("\\n");
+  const featureLines = bullets.map((b) => `🔥 ${b}`).join("\n");
 
   const fullString =
     (vehicle.title || "") + " " + (vehicle.makeModel || "") + " " + (vehicle.condition || "");
   const isCertified = /certified|cpo/i.test(fullString);
 
   const certifiedLineLong = isCertified
-    ? "\\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\\n"
+    ? "\n✅ Certified gives you factory-backed confidence, inspection-backed quality, and extra peace of mind compared to ordinary used vehicles.\n"
     : "";
 
   const certifiedLineShort = isCertified
-    ? " It’s certified, which means extra inspection-backed peace of mind compared to typical used units."
+    ? " It is certified, which means extra inspection-backed peace of mind compared to typical used units."
     : "";
 
   function pick(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  // FB hooks (random each time)
   const fbHooks = [
     "🔥 STOP SCROLLING. Read this before someone else buys it.",
-    "🔥 If this matches what you’ve been looking for, do NOT scroll past.",
-    "🔥 This is the one people message me about later saying, “I should’ve moved faster.”"
+    "🔥 If this matches what you have been looking for, do NOT scroll past.",
+    "🔥 This is the one people message me about later saying, \"I should have moved faster.\""
   ];
   const fbHookLine = pick(fbHooks);
 
@@ -940,107 +938,102 @@ function buildSocialPosts(vehicle, hashtags) {
     ? label
     : "this " + label;
 
-  const fb = \`\${fbHookLine}
+  const fb = `${fbHookLine}
 
-🚗 \${label}
-💰 Price: \${price}
+🚗 ${label}
+💰 Price: ${price}
 
-If you're serious about driving something that looks sharp, feels strong, and actually makes sense in real life, \${refName} is the kind of unit you move on – not think about for three weeks.\${certifiedLineLong}
+If you're serious about driving something that looks sharp, feels strong, and actually makes sense in real life, ${refName} is the kind of unit you move on – not think about for three weeks.${certifiedLineLong}
 💎 Why this one hits different:
-\${featureLines}
+${featureLines}
 
-When the right unit shows up, serious buyers move first. If this lines up with what you’ve been telling yourself you want, this is your green light to take action.
+When the right unit shows up, serious buyers move first. If this lines up with what you have been telling yourself you want, this is your green light to take action.
 
 📲 Comment or DM “INFO” and I’ll get you pricing, photos, and a quick walkaround – straight answers, no nonsense.
 
-\${hashtags}\`;
+${hashtags}`;
 
-  // IG intros
   const igIntros = [
-    "If you’ve been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.",
+    "If you have been waiting for the right one to pop up, this is the move. Clean, sharp, and built to actually enjoy driving – not just tolerate it.",
     "When you want something that feels good to drive and easy to live with every day, this is the kind of unit that earns its spot in your driveway.",
-    "If your current ride feels “just okay,” this is the one that’ll make you look forward to getting in and going somewhere."
+    "If your current ride feels \"just okay,\" this is the one that will make you look forward to getting in and going somewhere."
   ];
   const igIntro = pick(igIntros);
 
-  const ig = \`🚗 \${label}
-💰 \${price}
+  const ig = `🚗 ${label}
+💰 ${price}
 
-\${igIntro}\${certifiedLineShort}
+${igIntro}${certifiedLineShort}
 
-\${featureLines}
+${featureLines}
 
-👀 If this matches what you’ve been looking for, don’t overthink it.
+👀 If this matches what you have been looking for, don’t overthink it.
 
 📲 DM “INFO” and I’ll show you how easy it is to make it yours.
 
-\${hashtags}\`;
+${hashtags}`;
 
-  // TikTok intros
   const ttIntros = [
-    "If this showed up on your screen, that’s your sign. This is the kind of unit people regret hesitating on.",
-    "If TikTok pushed this onto your feed, take it as a hint – this might be the one that actually fits your life.",
-    "If you’ve been scrolling past “maybes,” this is one of those “pause and look again” kind of units."
+    "If this showed up on your screen, that is your sign. This is the kind of unit people regret hesitating on.",
+    "If the algorithm pushed this on your feed, take it as a hint – this might be the one that actually fits your life.",
+    "If you have been scrolling past \"maybes,\" this is one of those pause-and-look-again kind of units."
   ];
   const ttIntro = pick(ttIntros);
 
-  const tt = \`🚗 \${label}
-💰 \${price}
+  const tt = `🚗 ${label}
+💰 ${price}
 
-\${ttIntro}\${certifiedLineShort}
+${ttIntro}${certifiedLineShort}
 
-\${featureLines}
+${featureLines}
 
 ⏳ Clean, dialed-in rides like this DO NOT sit.
 
 📲 Comment or DM “INFO” and I’ll send you a quick breakdown and walkaround. Move fast – serious buyers don’t wait.
 
-\${hashtags}\`;
+${hashtags}`;
 
   const subjectForChecks = refName.charAt(0).toUpperCase() + refName.slice(1);
 
-  // LinkedIn intros
   const liIntros = [
-    \`For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. \${subjectForChecks} checks those boxes.\`,
-    \`How you show up to work, meetings, and life says a lot. \${subjectForChecks} sends the message that you value reliability, presence, and capability.\`,
-    \`For a lot of professionals, the right vehicle is part of their toolkit. \${subjectForChecks} is built to handle the day-to-day while still feeling like an upgrade.\`
+    `For the right driver, the vehicle they choose is a reflection of how they show up – prepared, sharp, and ready to handle business. ${subjectForChecks} checks those boxes.`,
+    `How you show up to work, meetings, and life says a lot. ${subjectForChecks} sends the message that you value reliability, presence, and capability.`,
+    `For a lot of professionals, the right vehicle is part of their toolkit. ${subjectForChecks} is built to handle the day-to-day while still feeling like an upgrade.`
   ];
   const liIntro = pick(liIntros);
 
-  const li = \`🚗 \${label} – Strong, Clean, and Ready for the Next Owner
+  const li = `🚗 ${label} – Strong, Clean, and Ready for the Next Owner
 
-\${liIntro}\${certifiedLineShort}
+${liIntro}${certifiedLineShort}
 
 💰 Current pricing:
-\${price}
+${price}
 
 Key highlights:
-\${featureLines}
+${featureLines}
 
 If you or someone in your network is in the market for something solid, professional, and dependable, I’m happy to share details, photos, or a quick video walkaround.
 
 📩 Message me directly and I’ll respond with options and next steps – fast, simple, and straightforward.
 
-\${hashtags}\`;
+${hashtags}`;
 
-  // Twitter intros
   const twIntros = [
     "Clean, strong, and dialed in. Units like this don’t sit – serious buyers move first.",
     "Dialed-in, ready to roll, and built to actually use every day – not just look at in the driveway.",
-    "If you’ve been looking for the sign to upgrade, this might be it."
+    "If you have been looking for the sign to upgrade, this might be it."
   ];
   const twIntro = pick(twIntros);
 
-  const tw = \`🚗 \${label}
-💰 \${price}
+  const tw = `🚗 ${label}
+💰 ${price}
 
-\${twIntro}\${certifiedLineShort}
+${twIntro}${certifiedLineShort}
 
-\${hashtags}
+${hashtags}
 
-📲 DM “INFO” for photos, a walkaround, and next steps.\`;
+📲 DM “INFO” for photos, a walkaround, and next steps.`;
 
-  // SMS variants
   const smsIntros = [
     "Just pulled a",
     "I’ve got a fresh unit –",
@@ -1048,9 +1041,8 @@ If you or someone in your network is in the market for something solid, professi
   ];
   const smsIntro = pick(smsIntros);
 
-  const sms = \`\${smsIntro} \${label} that checks a lot of boxes. It’s at \${price} right now and it’s clean, sharp, and ready to go.\${certifiedLineShort} Want me to send you photos or a quick walkaround video?\`;
+  const sms = `${smsIntro} ${label} that checks a lot of boxes. It’s at ${price} right now and it’s clean, sharp, and ready to go.${certifiedLineShort} Want me to send you photos or a quick walkaround video?`;
 
-  // Marketplace intros
   const mpIntros = [
     "just hit my list and it’s a legit, clean unit for someone who wants something that looks sharp, drives strong, and actually makes sense for real life.",
     "is the kind of unit that works for school runs, commutes, and weekend trips without feeling basic.",
@@ -1058,24 +1050,24 @@ If you or someone in your network is in the market for something solid, professi
   ];
   const mpIntro = pick(mpIntros);
 
-  const marketplace = \`Title idea:
-\${label} – Clean, Sharp & Ready to Go!
+  const marketplace = `Title idea:
+${label} – Clean, Sharp & Ready to Go!
 
 Suggested description for Facebook Marketplace:
 
-🚗 This \${label} \${mpIntro}\${certifiedLineShort}
+🚗 This ${label} ${mpIntro}${certifiedLineShort}
 
 💰 Current pricing:
-\${price}
+${price}
 
 🔥 Why this one is worth a serious look:
-\${featureLines}
+${featureLines}
 
 If you’ve been waiting for the right one instead of just “another” vehicle, this is the kind you move on – not scroll past.
 
 📲 Send a message if you want more photos, a walkaround video, or a simple breakdown of what it would take to put it in your driveway.
 
-⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.\`;
+⏳ If it’s listed, it’s available – for now. Strong units don’t sit long.`;
 
   const videoScript = buildViralVideoScript(vehicle);
   const shotPlan = buildShotPlan();
@@ -1144,7 +1136,6 @@ app.post("/api/regenerate-video-script", (req, res) => {
   res.json({ videoScript: script });
 });
 
-// New: per-channel post regeneration
 app.post("/api/regenerate-post", (req, res) => {
   const body = req.body || {};
   const vehicle = body.vehicle;
