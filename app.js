@@ -1,6 +1,5 @@
-// app.js – Lot Rocket Social Media Kit (single file)
+// app.js – Lot Rocket Social Media Kit (single file, 2-column posts + big logo)
 
-// ----------------- Setup -----------------
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -236,7 +235,6 @@ async function callOpenAIForText(prompt) {
 
 // ----------------- API routes -----------------
 
-// Full social kit
 app.post('/api/social-kit', async (req, res) => {
   try {
     const { url, label, price } = req.body;
@@ -254,7 +252,6 @@ app.post('/api/social-kit', async (req, res) => {
   }
 });
 
-// Single new post per platform
 app.post('/api/new-post', async (req, res) => {
   try {
     const { platform, label, price, url } = req.body;
@@ -271,7 +268,6 @@ app.post('/api/new-post', async (req, res) => {
   }
 });
 
-// New video script
 app.post('/api/new-script', async (req, res) => {
   try {
     const { label, price, url } = req.body;
@@ -288,7 +284,6 @@ app.post('/api/new-script', async (req, res) => {
   }
 });
 
-// Grab photos
 app.post('/api/grab-photos', async (req, res) => {
   try {
     const { url } = req.body;
@@ -303,7 +298,6 @@ app.post('/api/grab-photos', async (req, res) => {
   }
 });
 
-// Build video plan from photos
 app.post('/api/video-from-photos', async (req, res) => {
   try {
     const { photos, label } = req.body;
@@ -417,34 +411,48 @@ app.get('/', (req, res) => {
     .title-group {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
     }
 
-    .logo-circle {
-      width: 52px;
-      height: 52px;
-      border-radius: 999px;
-      border: 2px solid #b91c1c;
+    /* Logo like your image: big circle with LR + script inside */
+    .logo-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      overflow: hidden;
-      background: #f9fafb;
-      box-shadow: 0 0 0 1px rgba(15,23,42,0.15);
     }
-    .logo-circle-inner {
+
+    .logo-circle {
+      width: 96px;
+      height: 96px;
+      border-radius: 999px;
+      border: 3px solid #b91c1c;
+      position: relative;
+      background: #fdfdfd;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.18);
+    }
+
+    .logo-LR {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
       font-family: "Georgia", "Times New Roman", serif;
-      font-size: 30px;
+      font-size: 52px;
       font-weight: 700;
       color: #b91c1c;
       line-height: 1;
     }
-    .logo-wordmark {
+
+    .logo-script {
+      position: absolute;
+      bottom: 12%;
+      left: 50%;
+      transform: translateX(-50%);
       font-family: "Georgia", "Times New Roman", serif;
-      font-size: 18px;
+      font-size: 16px;
       color: #b91c1c;
-      margin-top: 2px;
+      font-style: italic;
+      white-space: nowrap;
     }
 
     .title-text-main {
@@ -749,11 +757,16 @@ app.get('/', (req, res) => {
       gap: 8px;
     }
 
-    /* SOCIAL GRID – long, full-width boxes */
+    /* SOCIAL GRID – rows of 2 long boxes */
     .social-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+    }
+    @media (max-width: 1000px) {
+      .social-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
 
     .social-card {
@@ -786,7 +799,7 @@ app.get('/', (req, res) => {
     }
 
     .textarea.social {
-      min-height: 170px;
+      min-height: 210px;
       max-height: 260px;
       font-size: 13px;
       line-height: 1.4;
@@ -827,14 +840,15 @@ app.get('/', (req, res) => {
   <div class="app-shell">
     <header class="app-header">
       <div class="title-group">
-        <div>
+        <div class="logo-wrapper">
           <div class="logo-circle">
-            <div class="logo-circle-inner">LR</div>
+            <div class="logo-LR">LR</div>
+            <div class="logo-script">Lot Rocket</div>
           </div>
         </div>
         <div>
-          <div class="logo-wordmark">Lot Rocket</div>
-          <div class="title-text-sub">Social Media Kit · Prototype for salespeople, not stores</div>
+          <div class="title-text-main">Social Media Kit</div>
+          <div class="title-text-sub">Prototype for salespeople, not stores</div>
         </div>
       </div>
       <div class="header-right">
@@ -893,7 +907,6 @@ app.get('/', (req, res) => {
           </div>
 
           <div class="pill-row">
-            <!-- Grab photos happens automatically on Boost, so we keep only video plan button -->
             <button id="buildVideoButton" class="button-ghost" type="button">
               <span class="icon">🎬</span><span>Build Video Plan from Photos</span>
             </button>
@@ -1083,7 +1096,7 @@ app.get('/', (req, res) => {
 
     const buildVideoButton = document.getElementById('buildVideoButton');
     const photosGrid = document.getElementById('photosGrid');
-    const photosStatus = document.getElementById('photosStatus');
+       const photosStatus = document.getElementById('photosStatus');
     const videoPlan = document.getElementById('videoPlan');
 
     const newScriptButton = document.getElementById('newScriptButton');
@@ -1095,7 +1108,6 @@ app.get('/', (req, res) => {
     let currentPhotos = [];
     let isBoosting = false;
 
-    // Theme handling
     function applyTheme(theme) {
       const root = document.documentElement;
       root.setAttribute('data-theme', theme);
@@ -1126,7 +1138,6 @@ app.get('/', (req, res) => {
 
     initTheme();
 
-    // Helpers
     function safeTrim(str) {
       return (str || '').toString().trim();
     }
@@ -1191,7 +1202,6 @@ app.get('/', (req, res) => {
       return res.json();
     }
 
-    // Boost flow
     async function handleBoost() {
       if (isBoosting) return;
 
@@ -1224,7 +1234,6 @@ app.get('/', (req, res) => {
         updateSummary(label, price);
         setStatus('Social kit ready. You can spin new posts or scripts anytime.', false);
 
-        // Auto-grab photos
         photosStatus.textContent = 'Trying to grab photos from dealer page…';
         try {
           const photoResp = await callJson('/api/grab-photos', { url });
@@ -1232,7 +1241,7 @@ app.get('/', (req, res) => {
             currentPhotos = photoResp.photos || [];
             renderPhotosGrid(currentPhotos);
           } else {
-            photosStatus.textContent = 'Could not grab photos. Video plan button will stay disabled.';
+            photosStatus.textContent = 'Could not grab photos.';
           }
         } catch (err) {
           console.error('Auto photo grab failed:', err);
@@ -1250,7 +1259,6 @@ app.get('/', (req, res) => {
 
     boostButton.addEventListener('click', handleBoost);
 
-    // New post buttons
     document.querySelectorAll('.button-new-post').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const platform = btn.getAttribute('data-platform');
@@ -1292,7 +1300,6 @@ app.get('/', (req, res) => {
       });
     });
 
-    // New video script
     newScriptButton.addEventListener('click', async () => {
       const url = safeTrim(vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput.value);
@@ -1320,7 +1327,6 @@ app.get('/', (req, res) => {
       }
     });
 
-    // Build video plan from photos
     buildVideoButton.addEventListener('click', async () => {
       if (!currentPhotos || !currentPhotos.length) {
         alert('No photos yet. Hit Boost first so we can pull photos from the dealer page.');
