@@ -1,17 +1,17 @@
 {
   "name": "lot-rocket",
   "version": "1.0.0",
-  "description": "Lot Rocket Social Media Kit",
+  "description": "Lot Rocket sales toolkit (vehicle scraper + AI message & campaign builder)",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "openai": "^4.78.1",
-    "cors": "^2.8.5",
     "body-parser": "^1.20.3",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "cheerio": "^1.0.0-rc.12"
+    "express": "^4.21.1",
+    "openai": "^4.67.0"
   }
 }
