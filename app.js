@@ -1,11 +1,12 @@
-// app.js – Lot Rocket Social Media Kit (viral-style posts + auto-photos + light/dark)
+// app.js – Lot Rocket Social Media Kit (single file)
 
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const OpenAI = require("openai");
-const cheerio = require("cheerio");
+// ----------------- Setup -----------------
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const OpenAI = require('openai');
+const cheerio = require('cheerio');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,43 +19,39 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ---------- Helper: Scrape photos from dealer URL ----------
+// ----------------- Helper: scrape photos -----------------
 
 async function scrapeVehiclePhotos(pageUrl) {
   try {
     const res = await fetch(pageUrl);
     if (!res.ok) {
-      console.error("Failed to fetch page for photos:", res.status);
+      console.error('Failed to fetch page for photos:', res.status);
       return [];
     }
     const html = await res.text();
     const $ = cheerio.load(html);
     const urls = new Set();
-
     const base = new URL(pageUrl);
 
-    $("img").each((i, el) => {
-      let src = $(el).attr("data-src") || $(el).attr("src");
+    $('img').each((i, el) => {
+      let src = $(el).attr('data-src') || $(el).attr('src');
       if (!src) return;
 
-      // Normalize to absolute URL
-      if (src.startsWith("//")) {
-        src = "https:" + src;
-      } else if (src.startsWith("/")) {
+      if (src.startsWith('//')) {
+        src = 'https:' + src;
+      } else if (src.startsWith('/')) {
         src = base.origin + src;
-      } else if (!src.startsWith("http")) {
-        src = base.origin + (src.startsWith("/") ? src : "/" + src);
+      } else if (!src.startsWith('http')) {
+        src = base.origin + (src.startsWith('/') ? src : '/' + src);
       }
 
       const lower = src.toLowerCase();
-
-      // crude filters to avoid logos / junk
       if (
-        lower.includes("logo") ||
-        lower.includes("icon") ||
-        lower.includes("badge") ||
-        lower.includes("spinner") ||
-        lower.includes("placeholder")
+        lower.includes('logo') ||
+        lower.includes('icon') ||
+        lower.includes('badge') ||
+        lower.includes('spinner') ||
+        lower.includes('placeholder')
       ) {
         return;
       }
@@ -64,31 +61,40 @@ async function scrapeVehiclePhotos(pageUrl) {
 
     return Array.from(urls).slice(0, 40);
   } catch (err) {
-    console.error("Error scraping photos:", err);
+    console.error('Error scraping photos:', err);
     return [];
   }
 }
 
-// ---------- Helper: base prompt for social kit (VIRAL STYLE) ----------
+// ----------------- Prompt builders -----------------
 
 function buildSocialKitPrompt({ label, price, url }) {
   return `
-You are helping a car salesperson create a **viral-style** social media content kit for a single vehicle.
+You are helping a car salesperson create a social media content kit for a single vehicle.
 
 Vehicle label (how we’ll refer to it in the copy):
 "${label}"
 
 Pricing / deal info as a short phrase:
-"${price || "Message for current pricing"}"
+"${price || 'Message for current pricing'}"
 
 Dealer vehicle URL:
 ${url}
 
-Overall goals:
-- Posts should feel like **big “scroll-stopper” boxes**: clear hook line on top, then spaced-out lines that are easy to read.
-- Use emojis to create energy (🚗🔥✨💥👀 etc.) on Facebook, Instagram, TikTok, and Marketplace.
-- Everything must be **copy-and-paste ready**. No [CUT TO] or bracketed stage directions. No instructions to the salesperson inside the post text.
-- Write like a confident, honest salesperson – not a corporate dealership.
+Goal:
+Write copy that is READY TO COPY/PASTE for each platform. It should feel like high-converting, thumb-stopping content a strong salesperson would actually post.
+
+Tone:
+- Confident, honest, direct
+- Feels human, not corporate
+- Has energy and modern vibe, with emojis and hooks
+- No cringe, but it CAN be hype and attention-grabbing
+
+IMPORTANT:
+- Use clear line breaks so it looks exactly like a social post when pasted.
+- Each field must be under ~900 characters.
+- Do NOT mention “template”, “JSON”, or “field”.
+- No backticks in the output.
 
 Return a JSON object ONLY with these exact keys:
 {
@@ -104,277 +110,231 @@ Return a JSON object ONLY with these exact keys:
   "shotPlan": "..."
 }
 
-Style guide (IMPORTANT):
-- Keep everything under ~900 characters per field.
-- Use **short lines separated by line breaks** so it looks like a “big box” of text a salesperson can paste.
-- Use the vehicle label naturally 1–3 times.
-- Include the pricing/deal phrase once near the top if it’s useful.
-- NO markdown, NO backticks, NO bullet characters like • unless you write them literally. Plain text only.
-
-Platform-by-platform instructions:
+Platform styles:
 
 facebook:
-- Start with a big hook like: "🔥 STOP SCROLLING. Look at this [vehicle] in [city] 🔥" or "🚨 DEAL ALERT 🚨".
-- Use 2–4 emoji in the first 2 lines.
-- Then 5–10 short lines calling out benefits (comfort, tech, fuel, space, etc.).
-- End with a strong CTA: comment/DM "INFO", book a test drive, etc.
-- Line breaks between sections so it pastes as a “big readable box”.
+- Strong hook in all caps or with emojis at top (e.g. "🔥 STOP SCROLLING. THIS IS THE ONE.")
+- 2–3 short paragraphs + 5–10 short benefit bullets using emojis.
+- Clear CTA with “Comment or DM ‘INFO’…” at bottom.
 
 instagram:
-- Also start with a hook + emojis.
-- Slightly more “vibe” / lifestyle tone, but still about the actual car.
-- 3–6 short benefit lines.
-- Clear CTA: "DM 'INFO'" or "DM for details".
-- Include the deal phrase where it makes sense.
+- Similar to facebook but slightly more “vibe”.
+- 3–6 short benefit lines, each starting with an emoji.
+- CTA with “DM ‘INFO’…” at the end.
 
 tiktok:
-- Write like a caption or voiceover text.
-- Hook + emojis at the top.
-- 3–6 short lines that feel like what’s on screen in a vertical video.
-- Clear CTA at the end.
+- Feels like captions for a vertical video.
+- Hook about “if this showed up on your feed…”.
+- 5–8 short lines.
+- Strong urgency and DM CTA at bottom.
 
 linkedin:
-- Less emojis, more professional, but **not** stiff or corporate.
-- One clear hook line, then 3–6 short lines explaining why this is a smart, practical choice.
-- CTA: connect or message for details.
+- Professional but still human.
+- Talks about how the vehicle fits work + family life.
+- 2–4 short paragraphs + simple CTA.
 
 twitter:
-- 1–2 short lines plus hashtags at the end.
-- Can include 1–2 emojis.
+- 1–3 short lines with a simple CTA.
+- Include some hashtags inline.
 
 textBlurb:
-- Short SMS/DM style, 1–3 lines max.
-- No emojis required, but allowed.
-- Very direct: what the vehicle is, that it’s available, ask if they want pics/walkaround/pricing.
+- 1–3 very short lines, perfect for SMS or DMs.
+- Example: “Just pulled a [vehicle]. It’s [deal phrase]. Want a quick walkaround video?”
 
 marketplace:
-- This should feel like a **spicy, scroll-stopping Facebook Marketplace description**, not boring.
-- Start with a strong first line, can include emojis, but the first characters should still read clean if someone skims.
-- Include a short “why this one is worth a serious look” style section.
-- Talk about: looks, daily comfort, tech, space, how it fits real life.
-- End with a clear CTA: message for details, more photos, simple breakdown of numbers, etc.
+- Perfect for Facebook Marketplace description.
+- Start with a plain sentence (no emojis in the first line).
+- Include bullet-style value points.
+- End with “If it’s listed, it’s available – for now.” style CTA.
 
 hashtags:
-- A single line of hashtags separated by spaces.
-- 8–15 tags, mostly lowercase, mix of year/make/model/local (#2024 #kia #suv #plymouthmi #carsforsale etc.).
-- No special characters beyond #.
+- Single line of 8–15 simple hashtags.
+- Mostly lowercase.
+- Example: #carsforsale #carshopping #usedcars #cityname #dealername
 
 videoScript:
-- 30–40 second script someone can read straight to camera.
-- No bracketed instructions like [Cut to exterior] or [B-roll].
-- 4–7 short paragraphs/lines.
-- Natural spoken language, feels like a salesperson talking.
-- Clear CTA at the end: DM "INFO", message me, or book a test drive.
+- 30–40 second script, in natural spoken language.
+- 4–7 short paragraphs separated by blank lines.
+- Hook, benefit content, and strong CTA (DM “INFO”, schedule a test drive, etc.).
+- No labels like “HOOK” or “CTA” – just the script.
 
 shotPlan:
-- 5–10 bullet-style lines describing shots to capture.
-- Each line should describe the shot in plain text (for example, "Front 3/4 exterior walk-around", "Interior tech close-up", etc.).
-- No brackets, no camera directions in square brackets. Just plain text bullet descriptions.
+- 5–10 bullet points.
+- Each bullet describes one shot for Reels / TikTok / Shorts.
+- Mention shots like “front 3/4”, “interior tech”, “cargo space”, “you on camera with CTA”.
 `;
 }
-
-// ---------- Helper: single-post prompts (VIRAL MODE) ----------
 
 function buildSinglePostPrompt({ platform, label, price, url }) {
   return `
-You are writing a **fresh, viral-style** social media post for a car salesperson.
+You are writing a fresh, copy-and-paste-ready social post for a car salesperson.
 
 Platform: ${platform}
 Vehicle: "${label}"
-Pricing/deal phrase: "${price || "Message for current pricing"}"
+Deal phrase: "${price || 'Message for current pricing'}"
 Vehicle URL: ${url}
 
-The post must be **copy-and-paste ready**. NO [CUT TO] directions, no script notes.
-Plain text only.
+Rules:
+- Output MUST be exactly what they will paste into the app. No explanations.
+- Preserve line breaks so it looks like a real post.
+- Use emojis and strong hooks for facebook/instagram/tiktok.
+- Use clear CTA (comment or DM “INFO”, message me, schedule a test drive, etc.).
+- Do NOT include hashtags (we handle them separately) except for "twitter" where a few are okay.
+- No backticks, no meta comments.
 
-Tone:
-- Confident, honest salesperson.
-- Conversational, not corporate.
-- Hooky and scroll-stopping, but not cringe or fake hype.
+Length:
+- facebook / instagram / linkedin / marketplace: 4–10 short lines.
+- tiktok: 5–10 short lines.
+- twitter: 1–3 short lines.
+- text: 1–3 very short lines (perfect for SMS/DM).
 
-Emojis:
-- facebook, instagram, tiktok, marketplace: use emojis in the hook and where they help.
-- twitter: 1–3 emojis maximum.
-- linkedin: emojis optional; keep it more professional.
-- textBlurb: emojis optional; keep it tight and direct.
-
-Length rules:
-- facebook, instagram, linkedin, marketplace: 3–10 short lines, separated by line breaks, so it looks like a big readable box.
-- tiktok: 3–6 short lines, feels like caption/voiceover.
-- twitter: 1–3 short lines total.
-- textBlurb: 1–3 very short lines.
-
-CTAs:
-- facebook/instagram/tiktok/marketplace: end with a clear CTA like "DM 'INFO' for details", "Message me to schedule a test drive", etc.
-- linkedin: ask them to message or connect for more details.
-- twitter: short CTA or invite to DM.
-- textBlurb: ask if they want photos, a quick walkaround video, or pricing.
-
-DO NOT include hashtags in this response. DO NOT use the word "hashtags".
-Return only the finished post as plain text that’s ready to paste.
-`;
+Return ONLY the post text.`;
 }
-
-// ---------- Helper: video script prompt (plain narration, no [CUT TO]) ----------
 
 function buildVideoScriptPrompt({ label, price, url }) {
   return `
-Write a 30–40 second vertical video script a car salesperson can read on camera
-for this vehicle:
+Write a 30–40 second vertical video script a car salesperson can read on camera.
 
 Vehicle: "${label}"
-Pricing/deal phrase: "${price || "Message for current pricing"}"
+Deal phrase: "${price || 'Message for current pricing'}"
 Vehicle URL: ${url}
 
 Format:
-- No labels like HOOK or CTA, just the script lines.
-- NO bracketed directions like [Cut to exterior] or [B-roll].
-- Use natural spoken language.
-- 4–7 short paragraphs or line breaks.
-- Clear call-to-action at the end (DM "INFO", message me, book a test drive, etc.).
+- 4–7 short paragraphs separated by blank lines.
+- No labels like HOOK / CTA, just natural sentences.
+- Talk like a confident salesperson: clear, upbeat, no cringe.
+- Include a strong CTA at the end (DM “INFO”, message me, or book a test drive).
 
-Return ONLY the script text, nothing else.
-`;
+Return ONLY the script text. No extra commentary.`;
 }
 
-// ---------- OpenAI helpers (no response_format param) ----------
+// ----------------- OpenAI helpers (Responses API) -----------------
 
 async function callOpenAIForJSON(prompt) {
   const response = await client.responses.create({
-    model: "gpt-4.1-mini",
+    model: 'gpt-4.1-mini',
     input: prompt,
   });
 
-  const text = response.output[0].content[0].text;
-
-  const cleaned = text
-    .trim()
-    .replace(/^```(?:json)?/i, "")
-    .replace(/```$/, "")
-    .trim();
-
-  return JSON.parse(cleaned);
+  const text = response.output_text || '';
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('Failed to parse JSON from model:', text);
+    throw err;
+  }
 }
 
 async function callOpenAIForText(prompt) {
   const response = await client.responses.create({
-    model: "gpt-4.1-mini",
+    model: 'gpt-4.1-mini',
     input: prompt,
   });
 
-  return response.output[0].content[0].text;
+  return (response.output_text || '').trim();
 }
 
-// ---------- API routes ----------
+// ----------------- API routes -----------------
 
-app.post("/api/social-kit", async (req, res) => {
+// Full social kit
+app.post('/api/social-kit', async (req, res) => {
   try {
     const { url, label, price } = req.body;
     if (!url || !label) {
-      return res.status(400).json({ error: "Missing url or label" });
+      return res.status(400).json({ success: false, error: 'Missing url or label' });
     }
 
     const prompt = buildSocialKitPrompt({ url, label, price });
-    const json = await callOpenAIForJSON(prompt);
+    const kit = await callOpenAIForJSON(prompt);
 
-    res.json({
-      success: true,
-      kit: json,
-    });
+    res.json({ success: true, kit });
   } catch (err) {
-    console.error("Error in /api/social-kit:", err);
-    res.status(500).json({ error: "Failed to generate social kit" });
+    console.error('Error in /api/social-kit:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate social kit' });
   }
 });
 
-app.post("/api/new-post", async (req, res) => {
+// Single new post per platform
+app.post('/api/new-post', async (req, res) => {
   try {
     const { platform, label, price, url } = req.body;
     if (!platform || !label) {
-      return res.status(400).json({ error: "Missing platform or label" });
+      return res.status(400).json({ success: false, error: 'Missing platform or label' });
     }
-
     const prompt = buildSinglePostPrompt({ platform, label, price, url });
-    const text = await callOpenAIForText(prompt);
+    const post = await callOpenAIForText(prompt);
 
-    res.json({
-      success: true,
-      post: text.trim(),
-    });
+    res.json({ success: true, post });
   } catch (err) {
-    console.error("Error in /api/new-post:", err);
-    res.status(500).json({ error: "Failed to generate new post" });
+    console.error('Error in /api/new-post:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate new post' });
   }
 });
 
-app.post("/api/new-script", async (req, res) => {
+// New video script
+app.post('/api/new-script', async (req, res) => {
   try {
     const { label, price, url } = req.body;
     if (!label || !url) {
-      return res.status(400).json({ error: "Missing label or url" });
+      return res.status(400).json({ success: false, error: 'Missing label or url' });
     }
-
     const prompt = buildVideoScriptPrompt({ label, price, url });
     const script = await callOpenAIForText(prompt);
 
-    res.json({
-      success: true,
-      script: script.trim(),
-    });
+    res.json({ success: true, script });
   } catch (err) {
-    console.error("Error in /api/new-script:", err);
-    res.status(500).json({ error: "Failed to generate video script" });
+    console.error('Error in /api/new-script:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate video script' });
   }
 });
 
-app.post("/api/grab-photos", async (req, res) => {
+// Grab photos
+app.post('/api/grab-photos', async (req, res) => {
   try {
     const { url } = req.body;
     if (!url) {
-      return res.status(400).json({ error: "Missing url" });
+      return res.status(400).json({ success: false, error: 'Missing url' });
     }
-
     const photos = await scrapeVehiclePhotos(url);
     res.json({ success: true, photos });
   } catch (err) {
-    console.error("Error in /api/grab-photos:", err);
-    res.status(500).json({ error: "Failed to grab photos" });
+    console.error('Error in /api/grab-photos:', err);
+    res.status(500).json({ success: false, error: 'Failed to grab photos' });
   }
 });
 
-app.post("/api/video-from-photos", async (req, res) => {
+// Build video plan from photos
+app.post('/api/video-from-photos', async (req, res) => {
   try {
     const { photos, label } = req.body;
     if (!Array.isArray(photos) || photos.length === 0) {
-      return res.status(400).json({ error: "No photos provided" });
+      return res.status(400).json({ success: false, error: 'No photos provided' });
     }
 
     const total = photos.length;
     const mid = Math.floor(total / 2);
     const last = total - 1;
 
-    const plan = [
+    const planLines = [
       `Clip 1 – Photo 1 – 3–4 seconds\nOn-screen text: "${label}"`,
-      total > 4 ? `Clip 2 – Photo 4 – 3 seconds` : "",
-      total > 8 ? `Clip 3 – Photo 8 – 3 seconds` : "",
+      total > 4 ? 'Clip 2 – Photo 4 – 3 seconds' : '',
+      total > 8 ? 'Clip 3 – Photo 8 – 3 seconds' : '',
       `Clip 4 – Photo ${mid + 1} – 3–4 seconds\nOn-screen text: "Interior & tech"`,
-      total > 6 ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds` : "",
+      total > 6 ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds` : '',
       `Clip 6 – Photo ${last + 1} – 3 seconds\nOn-screen text: "DM 'INFO' for details"`,
-      `Recommended music: upbeat, confident track that fits Reels / TikTok.`,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+      'Recommended music: upbeat, confident track that fits Reels / TikTok.',
+    ].filter(Boolean);
 
-    res.json({ success: true, plan });
+    res.json({ success: true, plan: planLines.join('\n\n') });
   } catch (err) {
-    console.error("Error in /api/video-from-photos:", err);
-    res.status(500).json({ error: "Failed to build video plan" });
+    console.error('Error in /api/video-from-photos:', err);
+    res.status(500).json({ success: false, error: 'Failed to build video plan' });
   }
 });
 
-// ---------- Front-end HTML (unchanged from last working version, except copy tweaks) ----------
+// ----------------- Front-end HTML -----------------
 
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -387,8 +347,8 @@ app.get("/", (req, res) => {
       --bg-dark-alt: #0c0f17;
       --bg-light: #f5f5f7;
       --bg-light-alt: #ffffff;
-      --accent: #ff4b4b;
-      --accent-soft: rgba(255, 75, 75, 0.15);
+      --accent: #d32525;
+      --accent-soft: rgba(211, 37, 37, 0.15);
       --border-dark: #252836;
       --border-light: #d0d3dd;
       --text-dark: #f9fafb;
@@ -459,19 +419,34 @@ app.get("/", (req, res) => {
       align-items: center;
       gap: 10px;
     }
-    .logo-pill {
-      display: inline-flex;
+
+    .logo-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      border: 2px solid #b91c1c;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 10% 0, #f97316, #ef4444);
-      color: #fff;
-      font-weight: 800;
-      font-size: 18px;
-      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35), 0 10px 25px rgba(239, 68, 68, 0.7);
+      position: relative;
+      overflow: hidden;
+      background: #f9fafb;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.15);
     }
+    .logo-circle-inner {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: #b91c1c;
+      line-height: 1;
+    }
+    .logo-wordmark {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 18px;
+      color: #b91c1c;
+      margin-top: 2px;
+    }
+
     .title-text-main {
       font-weight: 650;
       font-size: 20px;
@@ -630,10 +605,11 @@ app.get("/", (req, res) => {
       min-height: 34px;
       outline: none;
       transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+      white-space: pre-wrap;
     }
+
     .textarea {
       min-height: 90px;
-      white-space: pre-wrap;
     }
 
     [data-theme="dark"] .input,
@@ -670,14 +646,14 @@ app.get("/", (req, res) => {
       transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
     }
     [data-theme="dark"] .button-primary {
-      background: linear-gradient(135deg, #fb923c, #ef4444);
+      background: linear-gradient(135deg, #fb923c, #b91c1c);
       color: #fff;
-      box-shadow: 0 14px 30px rgba(248, 113, 113, 0.7);
+      box-shadow: 0 14px 30px rgba(185, 28, 28, 0.7);
     }
     [data-theme="light"] .button-primary {
-      background: linear-gradient(135deg, #f97316, #dc2626);
+      background: linear-gradient(135deg, #f97316, #b91c1c);
       color: #fff;
-      box-shadow: 0 12px 26px rgba(239, 68, 68, 0.6);
+      box-shadow: 0 12px 26px rgba(220, 38, 38, 0.6);
     }
     .button-primary:active {
       transform: translateY(1px) scale(0.99);
@@ -773,10 +749,11 @@ app.get("/", (req, res) => {
       gap: 8px;
     }
 
+    /* SOCIAL GRID – long, full-width boxes */
     .social-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .social-card {
@@ -808,20 +785,20 @@ app.get("/", (req, res) => {
       gap: 6px;
     }
 
-    .textarea.small {
-      min-height: 80px;
-      max-height: 150px;
-    }
-
-    .textarea.tall {
-      min-height: 120px;
+    .textarea.social {
+      min-height: 170px;
+      max-height: 260px;
+      font-size: 13px;
+      line-height: 1.4;
+      padding-top: 8px;
     }
 
     .textarea.script {
-      min-height: 150px;
+      min-height: 160px;
     }
 
-    .textarea.shotplan {
+    .textarea.shotplan,
+    #videoPlan {
       min-height: 130px;
     }
 
@@ -839,7 +816,6 @@ app.get("/", (req, res) => {
       display: inline-block;
       margin-right: 6px;
       animation: pulse 1s infinite alternate;
-      vertical-align: middle;
     }
     @keyframes pulse {
       from { transform: scale(1); opacity: 0.8; }
@@ -851,9 +827,13 @@ app.get("/", (req, res) => {
   <div class="app-shell">
     <header class="app-header">
       <div class="title-group">
-        <div class="logo-pill">🚀</div>
         <div>
-          <div class="title-text-main">Lot Rocket</div>
+          <div class="logo-circle">
+            <div class="logo-circle-inner">LR</div>
+          </div>
+        </div>
+        <div>
+          <div class="logo-wordmark">Lot Rocket</div>
           <div class="title-text-sub">Social Media Kit · Prototype for salespeople, not stores</div>
         </div>
       </div>
@@ -870,7 +850,7 @@ app.get("/", (req, res) => {
     </header>
 
     <div class="layout">
-      <!-- Left panel: URL + media -->
+      <!-- Left: URL + media -->
       <section class="card">
         <div class="card-header">
           <div>
@@ -908,35 +888,31 @@ app.get("/", (req, res) => {
           <div class="section-title-row">
             <div>
               <div class="card-title">Media Tools</div>
-              <div class="card-subtitle">Photos auto-load from the dealer page. Then build a simple video plan.</div>
+              <div class="card-subtitle">Dealer photos + simple video plan. Photo editor and real video builder coming next.</div>
             </div>
           </div>
 
           <div class="pill-row">
+            <!-- Grab photos happens automatically on Boost, so we keep only video plan button -->
             <button id="buildVideoButton" class="button-ghost" type="button">
-              <span class="icon">🎬</span><span>Video Shot Plan From Photos</span>
+              <span class="icon">🎬</span><span>Build Video Plan from Photos</span>
             </button>
           </div>
 
           <div class="field-group">
             <label class="field-label">Dealer Photos</label>
             <div id="photosGrid" class="photos-grid"></div>
-            <div id="photosStatus" class="tiny-note">Photos will auto-load after Boost if we can find them.</div>
+            <div id="photosStatus" class="tiny-note">Photos will auto-load after Boost if we can find them on the dealer page.</div>
           </div>
 
           <div class="field-group">
             <label class="field-label" for="videoPlan">Video From Photos Plan</label>
-            <textarea id="videoPlan" class="textarea shotplan" placeholder="After photos are loaded, hit 'Video Shot Plan From Photos' to get a simple shot list for Reels / TikTok." readonly></textarea>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label">Photo Editor (coming soon)</label>
-            <div class="tiny-note">Future version: remove watermarks, adjust lighting, crop, and export social-ready images directly from Lot Rocket.</div>
+            <textarea id="videoPlan" class="textarea shotplan" placeholder="Hit 'Build Video Plan from Photos' after Boost to get a simple shot list." readonly></textarea>
           </div>
         </div>
       </section>
 
-      <!-- Right panel: social kit -->
+      <!-- Right: Social kit -->
       <section class="card">
         <div class="card-header">
           <div>
@@ -958,7 +934,7 @@ app.get("/", (req, res) => {
           <div class="field-group">
             <label class="field-label">Social Media Posts</label>
             <div class="card-subtitle">
-              Each box is ready-to-use. Hit “New Post” to spin a fresh version for that platform.
+              Each box is full-length and ready to paste. Hit “New Post” to spin a fresh version for that platform.
             </div>
           </div>
 
@@ -971,7 +947,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea id="facebookPost" class="textarea small" readonly></textarea>
+              <textarea id="facebookPost" class="textarea social" readonly></textarea>
             </div>
 
             <!-- Instagram -->
@@ -982,7 +958,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea id="instagramPost" class="textarea small" readonly></textarea>
+              <textarea id="instagramPost" class="textarea social" readonly></textarea>
             </div>
 
             <!-- TikTok -->
@@ -993,7 +969,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea id="tiktokPost" class="textarea small" readonly></textarea>
+              <textarea id="tiktokPost" class="textarea social" readonly></textarea>
             </div>
 
             <!-- LinkedIn -->
@@ -1004,7 +980,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea id="linkedinPost" class="textarea small" readonly></textarea>
+              <textarea id="linkedinPost" class="textarea social" readonly></textarea>
             </div>
 
             <!-- X / Twitter -->
@@ -1015,7 +991,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea id="twitterPost" class="textarea small" readonly></textarea>
+              <textarea id="twitterPost" class="textarea social" readonly></textarea>
             </div>
 
             <!-- Text / DM -->
@@ -1026,7 +1002,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Text</span>
                 </button>
               </div>
-              <textarea id="textBlurb" class="textarea small" readonly></textarea>
+              <textarea id="textBlurb" class="textarea social" readonly></textarea>
             </div>
 
             <!-- Marketplace -->
@@ -1037,7 +1013,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea id="marketplacePost" class="textarea tall" readonly></textarea>
+              <textarea id="marketplacePost" class="textarea social" readonly></textarea>
             </div>
 
             <!-- Hashtags -->
@@ -1048,7 +1024,7 @@ app.get("/", (req, res) => {
                   <span class="icon">🔁</span><span>New Tags</span>
                 </button>
               </div>
-              <textarea id="hashtags" class="textarea small" readonly></textarea>
+              <textarea id="hashtags" class="textarea social" readonly></textarea>
             </div>
           </div>
 
@@ -1075,7 +1051,7 @@ app.get("/", (req, res) => {
           </div>
 
           <div class="tiny-note">
-            Prototype for salespeople. Copy, tweak, and make it yours. 🚀
+            Prototype for salespeople. Copy, tweak, and make it yours. 🚀 Photo editor + real video builder coming soon.
           </div>
         </div>
       </section>
@@ -1083,303 +1059,289 @@ app.get("/", (req, res) => {
   </div>
 
   <script>
-    const apiBase = "";
+    const apiBase = '';
 
-    const vehicleUrlInput = document.getElementById("vehicleUrl");
-    const vehicleLabelInput = document.getElementById("vehicleLabel");
-    const priceInfoInput = document.getElementById("priceInfo");
-    const boostButton = document.getElementById("boostButton");
-    const statusText = document.getElementById("statusText");
+    const vehicleUrlInput = document.getElementById('vehicleUrl');
+    const vehicleLabelInput = document.getElementById('vehicleLabel');
+    const priceInfoInput = document.getElementById('priceInfo');
+    const boostButton = document.getElementById('boostButton');
+    const statusText = document.getElementById('statusText');
 
-    const summaryLabel = document.getElementById("summaryLabel");
-    const summaryPrice = document.getElementById("summaryPrice");
+    const summaryLabel = document.getElementById('summaryLabel');
+    const summaryPrice = document.getElementById('summaryPrice');
 
-    const facebookPost = document.getElementById("facebookPost");
-    const instagramPost = document.getElementById("instagramPost");
-    const tiktokPost = document.getElementById("tiktokPost");
-    const linkedinPost = document.getElementById("linkedinPost");
-    const twitterPost = document.getElementById("twitterPost");
-    const textBlurb = document.getElementById("textBlurb");
-    const marketplacePost = document.getElementById("marketplacePost");
-    const hashtags = document.getElementById("hashtags");
-    const videoScript = document.getElementById("videoScript");
-    const shotPlan = document.getElementById("shotPlan");
+    const facebookPost = document.getElementById('facebookPost');
+    const instagramPost = document.getElementById('instagramPost');
+    const tiktokPost = document.getElementById('tiktokPost');
+    const linkedinPost = document.getElementById('linkedinPost');
+    const twitterPost = document.getElementById('twitterPost');
+    const textBlurb = document.getElementById('textBlurb');
+    const marketplacePost = document.getElementById('marketplacePost');
+    const hashtags = document.getElementById('hashtags');
+    const videoScript = document.getElementById('videoScript');
+    const shotPlan = document.getElementById('shotPlan');
 
-    const buildVideoButton = document.getElementById("buildVideoButton");
-    const photosGrid = document.getElementById("photosGrid");
-    const photosStatus = document.getElementById("photosStatus");
-    const videoPlan = document.getElementById("videoPlan");
+    const buildVideoButton = document.getElementById('buildVideoButton');
+    const photosGrid = document.getElementById('photosGrid');
+    const photosStatus = document.getElementById('photosStatus');
+    const videoPlan = document.getElementById('videoPlan');
 
-    const newScriptButton = document.getElementById("newScriptButton");
+    const newScriptButton = document.getElementById('newScriptButton');
 
-    const themeToggle = document.getElementById("themeToggle");
-    const themeIcon = document.getElementById("themeIcon");
-    const themeLabel = document.getElementById("themeLabel");
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeLabel = document.getElementById('themeLabel');
 
     let currentPhotos = [];
-    let currentUrl = "";
     let isBoosting = false;
 
+    // Theme handling
     function applyTheme(theme) {
       const root = document.documentElement;
-      root.setAttribute("data-theme", theme);
-      if (theme === "dark") {
-        themeIcon.textContent = "🌙";
-        themeLabel.textContent = "Dark";
+      root.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        themeIcon.textContent = '🌙';
+        themeLabel.textContent = 'Dark';
       } else {
-        themeIcon.textContent = "☀️";
-        themeLabel.textContent = "Light";
+        themeIcon.textContent = '☀️';
+        themeLabel.textContent = 'Light';
       }
-      localStorage.setItem("lotRocketTheme", theme);
+      localStorage.setItem('lotRocketTheme', theme);
     }
 
     function initTheme() {
-      const saved = localStorage.getItem("lotRocketTheme");
-      if (saved === "light" || saved === "dark") {
+      const saved = localStorage.getItem('lotRocketTheme');
+      if (saved === 'light' || saved === 'dark') {
         applyTheme(saved);
       } else {
-        applyTheme("dark");
+        applyTheme('dark');
       }
     }
 
-    themeToggle.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme") || "dark";
-      const next = current === "dark" ? "light" : "dark";
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
       applyTheme(next);
     });
 
     initTheme();
 
-    function setStatus(text, isLoading = false) {
-      if (isLoading) {
+    // Helpers
+    function safeTrim(str) {
+      return (str || '').toString().trim();
+    }
+
+    function setStatus(text, loading) {
+      if (loading) {
         statusText.innerHTML = '<span class="loading-dot"></span>' + text;
       } else {
         statusText.textContent = text;
       }
     }
 
-    function safeTrim(str) {
-      return (str || "").toString().trim();
-    }
-
     function updateSummary(label, price) {
-      summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
-      summaryPrice.textContent = safeTrim(price) || "Message for current pricing";
+      summaryLabel.textContent = safeTrim(label) || 'Vehicle ready';
+      summaryPrice.textContent = safeTrim(price) || 'Message for current pricing';
     }
 
     function fillSocialKit(kit) {
-      facebookPost.value = kit.facebook || "";
-      instagramPost.value = kit.instagram || "";
-      tiktokPost.value = kit.tiktok || "";
-      linkedinPost.value = kit.linkedin || "";
-      twitterPost.value = kit.twitter || "";
-      textBlurb.value = kit.textBlurb || "";
-      marketplacePost.value = kit.marketplace || "";
-      hashtags.value = kit.hashtags || "";
-      videoScript.value = kit.videoScript || "";
-      shotPlan.value = kit.shotPlan || "";
+      facebookPost.value = kit.facebook || '';
+      instagramPost.value = kit.instagram || '';
+      tiktokPost.value = kit.tiktok || '';
+      linkedinPost.value = kit.linkedin || '';
+      twitterPost.value = kit.twitter || '';
+      textBlurb.value = kit.textBlurb || '';
+      marketplacePost.value = kit.marketplace || '';
+      hashtags.value = kit.hashtags || '';
+      videoScript.value = kit.videoScript || '';
+      shotPlan.value = kit.shotPlan || '';
     }
 
     function renderPhotosGrid(photos) {
-      photosGrid.innerHTML = "";
+      photosGrid.innerHTML = '';
       if (!photos || !photos.length) {
-        photosStatus.textContent = "No photos found yet. They will auto-load on Boost if available.";
+        photosStatus.textContent = 'No photos found yet.';
         return;
       }
       photos.forEach((url) => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "photo-thumb";
-        const img = document.createElement("img");
+        const wrapper = document.createElement('div');
+        wrapper.className = 'photo-thumb';
+        const img = document.createElement('img');
         img.src = url;
-        img.alt = "Vehicle photo";
+        img.alt = 'Vehicle photo';
         wrapper.appendChild(img);
-        wrapper.addEventListener("click", () => {
-          window.open(url, "_blank");
+        wrapper.addEventListener('click', () => {
+          window.open(url, '_blank');
         });
         photosGrid.appendChild(wrapper);
       });
-      photosStatus.textContent = photos.length + " photos found. Click any to open full size.";
+      photosStatus.textContent = photos.length + ' photos found. Click any to open full size.';
     }
 
     async function callJson(endpoint, body) {
       const res = await fetch(apiBase + endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body || {}),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
       });
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error("Request failed: " + res.status + " " + txt);
+        const txt = await res.text().catch(() => '');
+        throw new Error('Request failed: ' + res.status + ' ' + txt);
       }
       return res.json();
     }
 
+    // Boost flow
     async function handleBoost() {
       if (isBoosting) return;
+
       const url = safeTrim(vehicleUrlInput.value);
       if (!url) {
-        alert("Paste a dealer vehicle URL first.");
+        alert('Paste a dealer vehicle URL first.');
         return;
       }
 
       let label = safeTrim(vehicleLabelInput.value);
       if (!label) {
-        label = "This vehicle";
+        label = 'This vehicle';
         vehicleLabelInput.value = label;
       }
+
       let price = safeTrim(priceInfoInput.value);
       if (!price) {
-        price = "Message for current pricing";
+        price = 'Message for current pricing';
         priceInfoInput.value = price;
       }
 
       isBoosting = true;
       boostButton.disabled = true;
-      setStatus("Building social kit with AI…", true);
+      setStatus('Building social kit with AI…', true);
 
       try {
-        currentUrl = url;
-        const resp = await callJson("/api/social-kit", { url, label, price });
-        if (!resp.success) throw new Error("API returned error");
-        fillSocialKit(resp.kit);
+        const kitResp = await callJson('/api/social-kit', { url, label, price });
+        if (!kitResp.success) throw new Error('API returned error');
+        fillSocialKit(kitResp.kit);
         updateSummary(label, price);
-        setStatus("Social kit ready. You can spin new posts or scripts anytime.");
+        setStatus('Social kit ready. You can spin new posts or scripts anytime.', false);
 
+        // Auto-grab photos
+        photosStatus.textContent = 'Trying to grab photos from dealer page…';
         try {
-          photosStatus.textContent = "Trying to grab photos from dealer page…";
-          const photoResp = await callJson("/api/grab-photos", { url });
+          const photoResp = await callJson('/api/grab-photos', { url });
           if (photoResp.success) {
             currentPhotos = photoResp.photos || [];
             renderPhotosGrid(currentPhotos);
           } else {
-            photosStatus.textContent = "Could not grab photos.";
+            photosStatus.textContent = 'Could not grab photos. Video plan button will stay disabled.';
           }
         } catch (err) {
-          console.error("Auto photo grab failed:", err);
-          photosStatus.textContent = "Auto photo load failed.";
+          console.error('Auto photo grab failed:', err);
+          photosStatus.textContent = 'Auto photo load failed.';
         }
       } catch (err) {
         console.error(err);
-        setStatus("Something went wrong. Try again or check the URL.");
-        alert("Error building social kit. Check the URL and try again.");
+        setStatus('Something went wrong. Try again or check the URL.', false);
+        alert('Error building social kit. Check the URL and try again.');
       } finally {
         isBoosting = false;
         boostButton.disabled = false;
       }
     }
 
-    boostButton.addEventListener("click", handleBoost);
+    boostButton.addEventListener('click', handleBoost);
 
-    document.querySelectorAll(".button-new-post").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const platform = btn.getAttribute("data-platform");
+    // New post buttons
+    document.querySelectorAll('.button-new-post').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const platform = btn.getAttribute('data-platform');
         const url = safeTrim(vehicleUrlInput.value);
         const label = safeTrim(vehicleLabelInput.value);
         const price = safeTrim(priceInfoInput.value);
 
         if (!url || !label) {
-          alert("Please paste a URL and hit Boost at least once before spinning posts.");
+          alert('Please paste a URL and hit Boost at least once before spinning posts.');
           return;
         }
 
         btn.disabled = true;
-        const oldText = btn.innerHTML;
+        const oldHtml = btn.innerHTML;
         btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
         try {
-          const resp = await callJson("/api/new-post", { platform, url, label, price });
-          if (!resp.success) throw new Error("API returned error");
-          const text = resp.post || "";
+          const resp = await callJson('/api/new-post', { platform, url, label, price });
+          if (!resp.success) throw new Error('API error');
+          const text = resp.post || '';
 
           switch (platform) {
-            case "facebook":
-              facebookPost.value = text;
-              break;
-            case "instagram":
-              instagramPost.value = text;
-              break;
-            case "tiktok":
-              tiktokPost.value = text;
-              break;
-            case "linkedin":
-              linkedinPost.value = text;
-              break;
-            case "twitter":
-              twitterPost.value = text;
-              break;
-            case "text":
-              textBlurb.value = text;
-              break;
-            case "marketplace":
-              marketplacePost.value = text;
-              break;
-            case "hashtags":
-              hashtags.value = text;
-              break;
+            case 'facebook': facebookPost.value = text; break;
+            case 'instagram': instagramPost.value = text; break;
+            case 'tiktok': tiktokPost.value = text; break;
+            case 'linkedin': linkedinPost.value = text; break;
+            case 'twitter': twitterPost.value = text; break;
+            case 'text': textBlurb.value = text; break;
+            case 'marketplace': marketplacePost.value = text; break;
+            case 'hashtags': hashtags.value = text; break;
           }
         } catch (err) {
           console.error(err);
-          alert("Error generating a new post. Try again.");
+          alert('Error generating a new post. Try again.');
         } finally {
           btn.disabled = false;
-          btn.innerHTML = oldText;
+          btn.innerHTML = oldHtml;
         }
       });
     });
 
-    newScriptButton.addEventListener("click", async () => {
+    // New video script
+    newScriptButton.addEventListener('click', async () => {
       const url = safeTrim(vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput.value);
       const price = safeTrim(priceInfoInput.value);
 
       if (!url || !label) {
-        alert("Please paste a URL and hit Boost at least once before spinning scripts.");
+        alert('Please paste a URL and hit Boost at least once before spinning scripts.');
         return;
       }
 
       newScriptButton.disabled = true;
-      const oldText = newScriptButton.innerHTML;
+      const oldHtml = newScriptButton.innerHTML;
       newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
       try {
-        const resp = await callJson("/api/new-script", { url, label, price });
-        if (!resp.success) throw new Error("API error");
-        videoScript.value = resp.script || "";
+        const resp = await callJson('/api/new-script', { url, label, price });
+        if (!resp.success) throw new Error('API error');
+        videoScript.value = resp.script || '';
       } catch (err) {
         console.error(err);
-        alert("Error generating a new script. Try again.");
+        alert('Error generating a new script. Try again.');
       } finally {
         newScriptButton.disabled = false;
-        newScriptButton.innerHTML = oldText;
+        newScriptButton.innerHTML = oldHtml;
       }
     });
 
-    buildVideoButton.addEventListener("click", async () => {
+    // Build video plan from photos
+    buildVideoButton.addEventListener('click', async () => {
       if (!currentPhotos || !currentPhotos.length) {
-        alert("No photos yet. Boost a listing first so we can grab the photos.");
+        alert('No photos yet. Hit Boost first so we can pull photos from the dealer page.');
         return;
       }
 
       buildVideoButton.disabled = true;
-      const oldText = buildVideoButton.innerHTML;
+      const oldHtml = buildVideoButton.innerHTML;
       buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
 
       try {
-        const label = safeTrim(vehicleLabelInput.value) || "this vehicle";
-        const resp = await callJson("/api/video-from-photos", {
-          photos: currentPhotos,
-          label,
-        });
-        if (!resp.success) throw new Error("API error");
-        videoPlan.value = resp.plan || "";
+        const label = safeTrim(vehicleLabelInput.value) || 'This vehicle';
+        const resp = await callJson('/api/video-from-photos', { photos: currentPhotos, label });
+        if (!resp.success) throw new Error('API error');
+        videoPlan.value = resp.plan || '';
       } catch (err) {
         console.error(err);
-        alert("Error building video plan. Try again.");
+        alert('Error building video plan. Try again.');
       } finally {
         buildVideoButton.disabled = false;
-        buildVideoButton.innerHTML = oldText;
+        buildVideoButton.innerHTML = oldHtml;
       }
     });
   </script>
@@ -1387,7 +1349,7 @@ app.get("/", (req, res) => {
 </html>`);
 });
 
-// ---------- Start server ----------
+// ----------------- Start server -----------------
 
 app.listen(port, () => {
   console.log(`Lot Rocket server running on port ${port}`);
