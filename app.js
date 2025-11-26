@@ -1,421 +1,1855 @@
-// app.js
-//
-// Simple end-to-end prototype for your "Jay Sells Cars" listing helper.
-// One file: serves a UI + backend API stubs.
-//
-// HOW TO RUN:
-// 1) npm init -y
-// 2) npm install express node-fetch cheerio
-// 3) node app.js
-// 4) Visit http://localhost:3000 in your browser.
+// app.js – Lot Rocket Social Media Kit with Objection Coach Modal
 
-const express = require("express");
-const fetch = require("node-fetch");
-const cheerio = require("cheerio");
-const path = require("path");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const OpenAI = require('openai');
+const cheerio = require('cheerio');
 
 const app = express();
-app.use(express.json({ limit: "10mb" }));
+const port = process.env.PORT || 3000;
 
-// --------- FRONTEND (Single Page UI) ----------
-app.get("/", (req, res) => {
-  res.send(`
-<!DOCTYPE html>
-<html lang="en">
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ---------------- Helper: scrape vehicle photos ----------------
+
+async function scrapeVehiclePhotos(pageUrl) {
+  try {
+    const res = await fetch(pageUrl);
+    if (!res.ok) {
+      console.error('Failed to fetch page for photos:', res.status);
+      return [];
+    }
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const urls = new Set();
+
+    const base = new URL(pageUrl);
+
+    $('img').each((i, el) => {
+      let src = $(el).attr('data-src') || $(el).attr('src');
+      if (!src) return;
+
+      if (src.startsWith('//')) {
+        src = 'https:' + src;
+      } else if (src.startsWith('/')) {
+        src = base.origin + src;
+      } else if (!src.startsWith('http')) {
+        src = base.origin + (src.startsWith('/') ? src : '/' + src);
+      }
+
+      const lower = src.toLowerCase();
+      if (
+        lower.includes('logo') ||
+        lower.includes('icon') ||
+        lower.includes('badge') ||
+        lower.includes('spinner') ||
+        lower.includes('placeholder')
+      ) {
+        return;
+      }
+
+      urls.add(src);
+    });
+
+    return Array.from(urls).slice(0, 40);
+  } catch (err) {
+    console.error('Error scraping photos:', err);
+    return [];
+  }
+}
+
+// ---------------- Helper: prompts ----------------
+
+function buildSocialKitPrompt({ label, price, url }) {
+  return `
+You are helping a car salesperson create a social media content kit for ONE used or new vehicle.
+
+Vehicle label (how we’ll refer to it in the copy):
+"${label}"
+
+Pricing / deal info as a short phrase:
+"${price || 'Message for current pricing'}"
+
+Dealer vehicle URL:
+${url}
+
+Goal:
+- Copy-and-paste ready posts that look great on each platform.
+- Strong hooks, scroll-stopping, modern, with emojis where they fit.
+- Talk like a confident, honest salesperson – not a stiff dealership ad.
+
+Return a JSON object ONLY with these exact keys:
+{
+  "facebook": "...",
+  "instagram": "...",
+  "tiktok": "...",
+  "linkedin": "...",
+  "twitter": "...",
+  "textBlurb": "...",
+  "marketplace": "...",
+  "hashtags": "...",
+  "videoScript": "...",
+  "shotPlan": "..."
+}
+
+IMPORTANT:
+- Keep everything under ~900 characters per field.
+- No hashtags inside the main posts (except twitter). Hashtags go in "hashtags".
+- No backticks, no code blocks, no explanations. Only the raw JSON object.
+
+Platform styles:
+- facebook: 
+  * Big hook line with emojis (ALL CAPS is okay on first line).
+  * 1–2 short paragraphs + 3–6 bullet points with emojis (✅, 🔥, 🚗, etc.).
+  * Clear CTA at the end.
+- instagram:
+  * Similar to facebook but slightly more vibe, fewer bullets.
+  * Emojis welcome.
+- tiktok:
+  * Short caption / voiceover text. High-energy, direct, 3–8 lines.
+- linkedin:
+  * Slightly more professional, but still human and friendly.
+- twitter:
+  * 1–3 concise lines plus a few inline hashtags.
+- textBlurb:
+  * SMS / DM style, 1–3 lines max. No hashtags.
+- marketplace:
+  * Facebook Marketplace description. No emojis at the very top, but you can use them later.
+  * Friendly, clear, focused on benefits + CTA to message for more info.
+- hashtags:
+  * One single line. 8–15 hashtags. Mostly lowercase, simple words, separated by spaces.
+- videoScript:
+  * 30–40 second script they can read on camera.
+  * 4–8 short paragraphs / line breaks.
+  * Clear CTA at the end (DM "INFO", message me, schedule test drive).
+- shotPlan:
+  * 5–10 bullet points describing shots for Reels / TikTok using dealer photos (exterior, interior, features, walk-around, closing shot, etc.).`;
+}
+
+function buildSinglePostPrompt({ platform, label, price, url }) {
+  return `
+You are writing a fresh, scroll-stopping social media post for a car salesperson.
+
+Platform: ${platform}
+Vehicle: "${label}"
+Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Vehicle URL: ${url}
+
+Write ONLY the post body text for this platform.
+
+Tone:
+- Confident, honest car salesperson.
+- Speaks like a real human, not a corporate script.
+- Strong hooks, emojis allowed (especially for facebook / instagram / tiktok).
+- No cringe or “hard sell”, but high energy and clear CTA.
+
+Length:
+- facebook, instagram, linkedin, marketplace: 3–10 short lines.
+- tiktok: 3–8 high-energy lines.
+- twitter: 1–3 short lines.
+- textBlurb: 1–3 very short lines (SMS style).
+- hashtags: single line of hashtags only.
+
+Rules:
+- Do NOT include the word "hashtags" anywhere.
+- For "hashtags" platform: return ONLY the hashtags line.
+- For all others: no hashtags (except twitter can include a few inline).
+
+Return only the post text, nothing else.`;
+}
+
+function buildVideoScriptPrompt({ label, price, url }) {
+  return `
+Write a 30–40 second vertical video script a car salesperson can read on camera
+for this vehicle.
+
+Vehicle: "${label}"
+Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Vehicle URL: ${url}
+
+Style:
+- Modern car sales trainer vibe: high-energy, confident, positive.
+- Ethical and honest: no pressure, no manipulation.
+- Talks directly to the viewer ("you").
+- 4–8 short paragraphs or line breaks.
+- Strong hook in the first 1–2 lines.
+- Clear CTA at the end (DM "INFO", message me, schedule a quick test drive, etc.).
+
+Return ONLY the script text, nothing else.`;
+}
+
+// Objection chat system prompt (Andy Elliott–style coach)
+function buildObjectionSystemPrompt({ label, price }) {
+  return `
+You are an automotive objections specialist and high-energy sales coach.
+Your style is inspired by trainers like Andy Elliott:
+- Confident, direct, high-energy.
+- Ethical and honest: no lying, no manipulation, no fake scarcity.
+- You help salespeople handle objections, keep control, and move the deal forward.
+
+The salesperson is working a customer on:
+- Vehicle: "${label || 'this vehicle'}"
+- Deal phrase: "${price || 'Message for current pricing'}"
+
+Rules for your replies:
+- Treat everything as part of a live role-play.
+- Always respect the customer and keep things ethical.
+- Use SHORT, punchy sentences that are easy to say out loud.
+- Structure most answers like:
+  1) Acknowledge and agree / align.
+  2) Reframe with logic or emotion.
+  3) Ask 1–2 strong questions that move things forward.
+  4) Give a clear suggested line or word track.
+
+- You are talking to the salesperson (not the customer), so explain what to say and why.
+- When you give word tracks, write them as spoken lines they can say immediately.
+
+You are in a continuous chat with this salesperson. They will paste objections and ask follow-up questions.
+Answer as their personal objection-handling coach.`;
+}
+
+// ---------------- OpenAI helpers ----------------
+
+async function callOpenAIForJSON(prompt) {
+  const response = await client.responses.create({
+    model: 'gpt-4.1-mini',
+    input: prompt,
+  });
+
+  const content = response.output[0].content[0].text;
+  return JSON.parse(content);
+}
+
+async function callOpenAIForText(prompt) {
+  const response = await client.responses.create({
+    model: 'gpt-4.1-mini',
+    input: prompt,
+  });
+
+  const parts = response.output[0].content;
+  const textPart = parts.find((p) => p.type === 'output_text') || parts[0];
+  return textPart.text;
+}
+
+// ---------------- API routes ----------------
+
+// Full social kit
+app.post('/api/social-kit', async (req, res) => {
+  try {
+    const { url, label, price } = req.body;
+    if (!url || !label) {
+      return res.status(400).json({ error: 'Missing url or label' });
+    }
+    const prompt = buildSocialKitPrompt({ url, label, price });
+    const json = await callOpenAIForJSON(prompt);
+
+    res.json({ success: true, kit: json });
+  } catch (err) {
+    console.error('Error in /api/social-kit:', err);
+    res.status(500).json({ error: 'Failed to generate social kit' });
+  }
+});
+
+// New post for a specific platform
+app.post('/api/new-post', async (req, res) => {
+  try {
+    const { platform, label, price, url } = req.body;
+    if (!platform || !label) {
+      return res.status(400).json({ error: 'Missing platform or label' });
+    }
+    const prompt = buildSinglePostPrompt({ platform, label, price, url });
+    const text = await callOpenAIForText(prompt);
+    res.json({ success: true, post: text.trim() });
+  } catch (err) {
+    console.error('Error in /api/new-post:', err);
+    res.status(500).json({ error: 'Failed to generate new post' });
+  }
+});
+
+// New video script
+app.post('/api/new-script', async (req, res) => {
+  try {
+    const { label, price, url } = req.body;
+    if (!label || !url) {
+      return res.status(400).json({ error: 'Missing label or url' });
+    }
+    const prompt = buildVideoScriptPrompt({ label, price, url });
+    const script = await callOpenAIForText(prompt);
+    res.json({ success: true, script: script.trim() });
+  } catch (err) {
+    console.error('Error in /api/new-script:', err);
+    res.status(500).json({ error: 'Failed to generate video script' });
+  }
+});
+
+// Objection chat (multi-turn)
+app.post('/api/objection-coach', async (req, res) => {
+  try {
+    const { messages, label, price } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Missing messages array' });
+    }
+
+    const systemPrompt = buildObjectionSystemPrompt({ label, price });
+
+    const input = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map((m) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content || '',
+      })),
+    ];
+
+    const response = await client.responses.create({
+      model: 'gpt-4.1-mini',
+      input,
+    });
+
+    const reply = response.output[0].content[0].text.trim();
+    res.json({ success: true, reply });
+  } catch (err) {
+    console.error('Error in /api/objection-coach:', err);
+    res.status(500).json({ error: 'Failed to generate objection response' });
+  }
+});
+
+// Grab photos
+app.post('/api/grab-photos', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'Missing url' });
+    }
+    const photos = await scrapeVehiclePhotos(url);
+    res.json({ success: true, photos });
+  } catch (err) {
+    console.error('Error in /api/grab-photos:', err);
+    res.status(500).json({ error: 'Failed to grab photos' });
+  }
+});
+
+// Video-from-photos plan
+app.post('/api/video-from-photos', async (req, res) => {
+  try {
+    const { photos, label } = req.body;
+    if (!Array.isArray(photos) || photos.length === 0) {
+      return res.status(400).json({ error: 'No photos provided' });
+    }
+
+    const total = photos.length;
+    const mid = Math.floor(total / 2);
+    const last = total - 1;
+
+    const plan = [
+      `Clip 1 – Photo 1 – 3–4 seconds\nOn-screen text: "${label}"`,
+      total > 4 ? `Clip 2 – Photo 4 – 3 seconds` : '',
+      total > 8 ? `Clip 3 – Photo 8 – 3 seconds` : '',
+      `Clip 4 – Photo ${mid + 1} – 3–4 seconds\nOn-screen text: "Interior & tech"`,
+      total > 6 ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds` : '',
+      `Clip 6 – Photo ${last + 1} – 3 seconds\nOn-screen text: "DM 'INFO' for details"`,
+      `Recommended music: upbeat, confident track that fits Reels / TikTok.`,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    res.json({ success: true, plan });
+  } catch (err) {
+    console.error('Error in /api/video-from-photos:', err);
+    res.status(500).json({ error: 'Failed to build video plan' });
+  }
+});
+
+// ---------------- Front-end HTML ----------------
+
+app.get('/', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <title>Jay Sells Cars – Listing Booster</title>
+  <title>Lot Rocket · Social Media Kit</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; background: #050505; color: #f5f5f5; }
-    .app { max-width: 900px; margin: 0 auto; padding: 32px 16px 80px; }
-    h1 { font-size: 2rem; margin-bottom: 4px; }
-    h1 span.brand { color: #ff3232; }
-    p.sub { color: #aaa; margin-top: 0; }
-    .card { background: #111; border-radius: 16px; padding: 20px; border: 1px solid #333; margin-top: 16px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    input[type="text"], textarea {
-      width: 100%; padding: 10px 12px; border-radius: 10px;
-      border: 1px solid #333; background: #050505; color: #f5f5f5;
-      font-size: 0.95rem;
+    :root {
+      --bg-dark: #05060a;
+      --bg-dark-alt: #0c0f17;
+      --bg-light: #f5f5f7;
+      --bg-light-alt: #ffffff;
+      --accent: #ff4b4b;
+      --accent-soft: rgba(255, 75, 75, 0.15);
+      --border-dark: #252836;
+      --border-light: #d0d3dd;
+      --text-dark: #f9fafb;
+      --text-muted-dark: #9ca3af;
+      --text-light: #111827;
+      --text-muted-light: #6b7280;
+      --card-radius: 18px;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.4);
+      --shadow-soft-light: 0 18px 40px rgba(15, 23, 42, 0.18);
+      --input-radius: 12px;
+      --transition-fast: 0.18s ease-out;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
-    input:focus, textarea:focus { outline: 1px solid #ff3232; border-color: #ff3232; }
-    button {
-      border: none; border-radius: 999px; padding: 10px 18px; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 8px;
-      cursor: pointer; margin-top: 10px; font-size: 0.95rem;
-      background: linear-gradient(135deg, #ff3232, #ff7b32); color: #fff;
-      box-shadow: 0 8px 20px rgba(255, 50, 50, 0.4);
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    [data-theme="dark"] body {
+      background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+      color: var(--text-dark);
     }
-    button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(255, 50, 50, 0.6); }
-    button:disabled { opacity: 0.4; cursor: default; box-shadow: none; transform: none; }
-    .row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
-    .col { flex: 1 1 280px; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;
-            padding: 5px 10px; border-radius: 999px; background: #181818; color: #ccc; }
-    .tag { display: inline-flex; padding: 3px 9px; border-radius: 999px; background: #222; font-size: 0.75rem; margin-right: 6px; margin-bottom: 4px; }
-    .copy-box { background: #050505; border-radius: 12px; padding: 12px; border: 1px solid #333; white-space: pre-wrap; font-size: 0.9rem; }
-    .images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
-    .image-thumb { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-    .image-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); font-size: 0.7rem; padding: 3px 6px; border-radius: 999px; }
-    .status { margin-top: 12px; font-size: 0.85rem; color: #aaa; }
-    .status strong { color: #ff7b32; }
-    .small { font-size: 0.8rem; color: #777; margin-top: 8px; }
-    .video-preview { margin-top: 8px; font-size: 0.85rem; padding: 8px; border-radius: 10px; border: 1px dashed #444; color: #ddd; }
-    @media (max-width: 600px) {
-      h1 { font-size: 1.6rem; }
+    [data-theme="light"] body {
+      background: radial-gradient(circle at top, #e5e7eb 0, #f9fafb 40%, #e5e7eb 100%);
+      color: var(--text-light);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-main);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1240px;
+      border-radius: 26px;
+      padding: 20px 22px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] .app-shell {
+      background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    [data-theme="light"] .app-shell {
+      background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+      box-shadow: var(--shadow-soft-light);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-circle {
+      width: 70px;
+      height: 70px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-sizing: border-box;
+    }
+    [data-theme="dark"] .logo-circle {
+      border: 2px solid #ef4444;
+      color: #ef4444;
+      background: radial-gradient(circle at center, rgba(239,68,68,0.08), transparent 60%);
+    }
+    [data-theme="light"] .logo-circle {
+      border: 2px solid #b91c1c;
+      color: #b91c1c;
+      background: #fff;
+    }
+    .logo-inner {
+      font-weight: 800;
+      font-size: 30px;
+      line-height: 1;
+      position: relative;
+      font-family: "Times New Roman", Georgia, serif;
+    }
+    .logo-inner span.rocket {
+      position: absolute;
+      left: 52%;
+      top: 32%;
+      font-size: 16px;
+      transform: translateX(-50%);
+    }
+    .logo-text-main {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .logo-text-sub {
+      font-size: 13px;
+      opacity: 0.78;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .chip {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    [data-theme="dark"] .chip {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted-dark);
+    }
+    [data-theme="light"] .chip {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted-light);
+    }
+    .chip span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+    }
+
+    .theme-toggle {
+      border-radius: 999px;
+      padding: 6px 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+    }
+    [data-theme="dark"] .theme-toggle {
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text-muted-dark);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.45);
+    }
+    [data-theme="light"] .theme-toggle {
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--text-muted-light);
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.5);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr);
+      gap: 16px;
+      margin-top: 6px;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      border-radius: var(--card-radius);
+      padding: 14px 14px 13px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    [data-theme="dark"] .card {
+      background: radial-gradient(circle at top left, #111827 0, #020617 60%);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+    }
+    [data-theme="light"] .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      opacity: 0.75;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    [data-theme="dark"] .badge {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(107, 114, 128, 0.9);
+      color: var(--text-muted-dark);
+    }
+    [data-theme="light"] .badge {
+      background: rgba(249, 250, 251, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      color: var(--text-muted-light);
+    }
+
+    label.field-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .field-group {
+      margin-bottom: 8px;
+    }
+
+    .input, .textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: var(--input-radius);
+      border: 1px solid;
+      padding: 7px 9px;
+      font-family: var(--font-main);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 34px;
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+    }
+    .textarea {
+      white-space: pre-wrap;
+    }
+
+    [data-theme="dark"] .input,
+    [data-theme="dark"] .textarea {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(55, 65, 81, 0.95);
+      color: var(--text-dark);
+    }
+    [data-theme="light"] .input,
+    [data-theme="light"] .textarea {
+      background: rgba(249, 250, 251, 0.96);
+      border-color: rgba(148, 163, 184, 0.9);
+      color: var(--text-light);
+    }
+
+    .input:focus,
+    .textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.5);
+    }
+
+    .button-primary {
+      border-radius: 999px;
+      padding: 7px 16px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+    [data-theme="dark"] .button-primary {
+      background: linear-gradient(135deg, #fb923c, #ef4444);
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(248, 113, 113, 0.7);
+    }
+    [data-theme="light"] .button-primary {
+      background: linear-gradient(135deg, #f97316, #dc2626);
+      color: #fff;
+      box-shadow: 0 12px 26px rgba(239, 68, 68, 0.6);
+    }
+    .button-primary:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: none;
+    }
+
+    .button-ghost {
+      border-radius: 999px;
+      padding: 5px 10px;
+      border: 1px solid;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    }
+    [data-theme="dark"] .button-ghost {
+      border-color: rgba(75, 85, 99, 0.85);
+      color: var(--text-muted-dark);
+    }
+    [data-theme="light"] .button-ghost {
+      border-color: rgba(148, 163, 184, 0.9);
+      color: var(--text-muted-light);
+    }
+    .button-ghost span.icon {
+      font-size: 13px;
+    }
+
+    .stack-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 11px;
+      border: 1px solid;
+    }
+    [data-theme="dark"] .pill {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(55, 65, 81, 0.9);
+      color: var(--text-muted-dark);
+    }
+    [data-theme="light"] .pill {
+      background: rgba(249, 250, 251, 0.96);
+      border-color: rgba(148, 163, 184, 0.9);
+      color: var(--text-muted-light);
+    }
+
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 6px;
+    }
+    .photo-thumb {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      aspect-ratio: 4 / 3;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+    .photo-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .status-text {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Social posts layout – 2 wide, long boxes */
+    .social-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 900px) {
+      .social-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .social-card {
+      border-radius: 16px;
+      padding: 10px 11px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.75);
+      min-height: 200px;
+    }
+    [data-theme="dark"] .social-card {
+      background: rgba(15, 23, 42, 0.98);
+    }
+    [data-theme="light"] .social-card {
+      background: rgba(249, 250, 251, 0.98);
+    }
+
+    .social-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .social-platform {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .textarea.post-box {
+      min-height: 210px;
+      max-height: 260px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .textarea.marketplace-box {
+      min-height: 230px;
+      max-height: 280px;
+    }
+
+    .textarea.script {
+      min-height: 160px;
+    }
+
+    .textarea.shotplan {
+      min-height: 130px;
+    }
+
+    .tiny-note {
+      font-size: 10px;
+      opacity: 0.75;
+      margin-top: 4px;
+    }
+
+    .loading-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      display: inline-block;
+      margin-right: 4px;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); opacity: 0.8; }
+      to   { transform: scale(1.4); opacity: 0.3; }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ----- Objection Coach Launcher (top-right) ----- */
+
+    .objection-launcher {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      z-index: 60;
+      border-radius: 999px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    [data-theme="dark"] .objection-launcher {
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text-dark);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+    [data-theme="light"] .objection-launcher {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--text-light);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+
+    .objection-launcher span.icon {
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      .objection-launcher {
+        top: auto;
+        bottom: 16px;
+        right: 16px;
+      }
+    }
+
+    /* ----- Objection Coach Modal ----- */
+
+    .objection-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .objection-modal-card {
+      width: 620px;
+      max-width: 96vw;
+      max-height: 82vh;
+      border-radius: 20px;
+      padding: 14px 14px 12px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    [data-theme="dark"] .objection-modal-card {
+      background: radial-gradient(circle at top, #111827 0, #020617 60%);
+      border: 1px solid rgba(248, 113, 113, 0.8);
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
+      color: var(--text-dark);
+    }
+    [data-theme="light"] .objection-modal-card {
+      background: #f9fafb;
+      border: 1px solid rgba(248, 113, 113, 0.9);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.35);
+      color: var(--text-light);
+    }
+
+    .objection-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .objection-modal-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .objection-modal-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.8;
+    }
+    .objection-modal-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .objection-modal-sub {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .objection-modal-close {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      background: transparent;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .objection-chat-area {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .objection-history {
+      flex: 1 1 auto;
+      min-height: 160px;
+      max-height: 330px;
+      border-radius: 12px;
+      padding: 8px 9px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+    }
+    [data-theme="dark"] .objection-history {
+      background: rgba(15, 23, 42, 0.96);
+    }
+    [data-theme="light"] .objection-history {
+      background: rgba(249, 250, 251, 0.98);
+    }
+
+    .objection-bubble {
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+    .objection-bubble.you-label {
+      font-weight: 600;
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+      padding: 0;
+    }
+    .objection-bubble.coach-label {
+      font-weight: 600;
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+      padding: 0;
+    }
+    [data-theme="dark"] .objection-bubble.you {
+      background: rgba(37, 99, 235, 0.32);
+      border: 1px solid rgba(59, 130, 246, 0.7);
+    }
+    [data-theme="light"] .objection-bubble.you {
+      background: rgba(191, 219, 254, 0.7);
+      border: 1px solid rgba(59, 130, 246, 0.8);
+    }
+    [data-theme="dark"] .objection-bubble.coach {
+      background: rgba(248, 113, 113, 0.22);
+      border: 1px solid rgba(248, 113, 113, 0.8);
+    }
+    [data-theme="light"] .objection-bubble.coach {
+      background: rgba(254, 226, 226, 0.92);
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+
+    .objection-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .objection-input-box {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      font-family: var(--font-main);
+      font-size: 12px;
+      padding: 7px 8px;
+      resize: vertical;
+      min-height: 54px;
+    }
+    [data-theme="dark"] .objection-input-box {
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--text-dark);
+    }
+    [data-theme="light"] .objection-input-box {
+      background: rgba(249, 250, 251, 0.98);
+      color: var(--text-light);
+    }
+
+    .objection-send-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .objection-hint {
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    #objectionSendButton {
+      border-radius: 999px;
+      border: none;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    [data-theme="dark"] #objectionSendButton {
+      background: linear-gradient(135deg, #fb923c, #ef4444);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(248, 113, 113, 0.7);
+    }
+    [data-theme="light"] #objectionSendButton {
+      background: linear-gradient(135deg, #f97316, #dc2626);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(239, 68, 68, 0.6);
+    }
+
+    @media (max-width: 640px) {
+      .objection-modal-card {
+        width: 100%;
+        margin: 0 10px;
+        max-height: 86vh;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <h1><span class="brand">JaySellsCars</span> Listing Booster</h1>
-    <p class="sub">Paste your dealer vehicle URL. We'll prep pro photos, high-converting copy, and a social-ready package.</p>
-
-    <div class="card">
-      <label for="url">Dealer vehicle URL</label>
-      <input id="url" type="text" placeholder="Paste a listing URL from your dealer site" />
-
-      <div class="row">
-        <div class="col">
-          <label for="target">Target buyer (optional)</label>
-          <input id="target" type="text" placeholder="First-time buyer, bad credit, family, etc." />
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="title-group">
+        <div class="logo-circle">
+          <div class="logo-inner">
+            LR
+            <span class="rocket">🚀</span>
+          </div>
         </div>
-        <div class="col">
-          <label for="tone">Tone</label>
-          <input id="tone" type="text" value="High-energy, confident, trustworthy" />
+        <div>
+          <div class="logo-text-main">Lot Rocket</div>
+          <div class="logo-text-sub">Social Media Kit · Prototype for salespeople, not stores</div>
         </div>
       </div>
+      <div class="header-right">
+        <div class="chip">
+          <span class="dot"></span>
+          <span>AI-ASSISTED COPY · BETA</span>
+        </div>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <span id="themeIcon">🌙</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+    </header>
 
-      <button id="processBtn">
-        🚀 Boost This Listing
-      </button>
+    <div class="layout">
+      <!-- Left panel: URL + media -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Step 1 · Dealer URL</div>
+            <div class="card-subtitle">Paste a full vehicle detail page. We’ll pull photos and build the kit.</div>
+          </div>
+          <span class="badge">INPUT</span>
+        </div>
 
-      <div class="status" id="status"></div>
+        <div class="stack-vertical">
+          <div class="field-group">
+            <label class="field-label" for="vehicleUrl">Dealer vehicle URL</label>
+            <input id="vehicleUrl" class="input" placeholder="https://dealer.com/used-YourVehicleHere..." />
+          </div>
+
+          <div class="pill-row">
+            <button id="boostButton" class="button-primary" type="button">
+              <span>🚀 Boost This Listing</span>
+            </button>
+            <span id="statusText" class="status-text">Paste URL, then tap Boost.</span>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="vehicleLabel">Vehicle label (editable)</label>
+            <input id="vehicleLabel" class="input" placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="priceInfo">Price / deal info (editable)</label>
+            <input id="priceInfo" class="input" placeholder="Message for current pricing" />
+          </div>
+        </div>
+
+        <div class="stack-vertical">
+          <div class="section-title-row">
+            <div>
+              <div class="card-title">Media Tools</div>
+              <div class="card-subtitle">We’ll auto-pull photos on Boost and turn them into a simple video plan.</div>
+            </div>
+            <button id="buildVideoButton" class="button-ghost" type="button">
+              <span class="icon">🎬</span><span>Build Video from Photos</span>
+            </button>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Dealer Photos</label>
+            <div id="photosGrid" class="photos-grid"></div>
+            <div id="photosStatus" class="tiny-note">Photos will auto-load after Boost if we can find them.</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="videoPlan">Video From Photos Plan</label>
+            <textarea id="videoPlan" class="textarea shotplan" placeholder="Hit 'Build Video from Photos' after photos load to get a simple shot list for Reels / TikTok." readonly></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right panel: social kit -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Step 2 · Social Kit</div>
+            <div class="card-subtitle">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</div>
+          </div>
+          <span class="badge">OUTPUT</span>
+        </div>
+
+        <div class="stack-vertical">
+          <div class="field-group">
+            <label class="field-label">Listing Summary</label>
+            <div class="pill-row">
+              <span id="summaryLabel" class="pill">No vehicle yet</span>
+              <span id="summaryPrice" class="pill">—</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Social Media Posts</label>
+            <div class="card-subtitle">
+              Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version for that platform.
+            </div>
+          </div>
+
+          <div class="social-grid">
+            <!-- Facebook -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">📘 Facebook</div>
+                <button data-platform="facebook" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="facebookPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- Instagram -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">📸 Instagram</div>
+                <button data-platform="instagram" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="instagramPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- TikTok -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🎵 TikTok</div>
+                <button data-platform="tiktok" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="tiktokPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- LinkedIn -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">💼 LinkedIn</div>
+                <button data-platform="linkedin" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="linkedinPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- X / Twitter -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🐦 X / Twitter</div>
+                <button data-platform="twitter" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="twitterPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- Text / DM -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">💬 Text / DM</div>
+                <button data-platform="text" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Text</span>
+                </button>
+              </div>
+              <textarea id="textBlurb" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- Marketplace -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🛒 Marketplace</div>
+                <button data-platform="marketplace" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="marketplacePost" class="textarea marketplace-box" readonly></textarea>
+            </div>
+
+            <!-- Hashtags -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🏷 Hashtags</div>
+                <button data-platform="hashtags" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Tags</span>
+                </button>
+              </div>
+              <textarea id="hashtags" class="textarea post-box" readonly></textarea>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="section-title-row">
+              <label class="field-label">Video Engine</label>
+              <button id="newScriptButton" class="button-ghost" type="button">
+                <span class="icon">🔁</span><span>New Script</span>
+              </button>
+            </div>
+            <div class="card-subtitle">
+              Script + shot plan you can read on camera and follow for Reels, TikTok, Shorts, or Facebook Reels.
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="videoScript">Viral Video Script</label>
+            <textarea id="videoScript" class="textarea script" readonly></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="shotPlan">Viral Visual Shot Plan</label>
+            <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
+          </div>
+
+          <div class="tiny-note">
+            Prototype for salespeople. Copy, tweak, and make it yours. 🚀
+          </div>
+        </div>
+      </section>
     </div>
+  </div>
 
-    <div class="row">
-      <div class="col">
-        <div class="card">
-          <div class="pill">✨ Generated Copy</div>
-          <div id="copy-output" class="copy-box" style="min-height:120px; margin-top:10px;">
-            Paste a URL and hit "Boost" to generate your ad copy.
-          </div>
-          <button id="copyCopyBtn" style="margin-top:8px; display:none;">📋 Copy Text</button>
-          <div class="small">Copy/paste this into Facebook Marketplace, your CRM, or your website VDP.</div>
-        </div>
-      </div>
+  <!-- Objection Coach launcher (fixed top-right / bottom-right on mobile) -->
+  <button id="objectionLauncher" class="objection-launcher" type="button">
+    <span class="icon">🧠</span>
+    <span>Objection coach</span>
+  </button>
 
-      <div class="col">
-        <div class="card">
-          <div class="pill">🖼 Images & Video</div>
-          <div id="images" class="images-grid"></div>
-          <div id="video" class="video-preview">
-            Video storyboards + trending sound selection will show here as you integrate your video engine.
-          </div>
-          <div class="small">
-            This prototype only simulates editing. Replace backend stubs with your actual
-            image editor (e.g., Cloudinary) and video builder (FFmpeg or a SaaS API).
+  <!-- Objection Coach Modal -->
+  <div id="objectionModal" class="objection-modal-backdrop hidden">
+    <div class="objection-modal-card">
+      <div class="objection-modal-header">
+        <div class="objection-modal-title-group">
+          <div class="objection-modal-tag">OBJECTIONS HANDLED</div>
+          <div class="objection-modal-title">Andy Elliott–style AI coach</div>
+          <div class="objection-modal-sub">
+            Paste a customer objection or ask how to respond. Get word tracks and breakdowns.
           </div>
         </div>
+        <button id="objectionCloseButton" class="objection-modal-close" type="button">✕</button>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="pill">📣 Social Posting (Placeholder)</div>
-      <p class="small">
-        This demo shows what will be posted. Actual auto-posting to Facebook Marketplace and other
-        platforms must follow each platform's current API rules and policies.
-      </p>
-      <div id="social-preview" class="copy-box"></div>
+      <div class="objection-chat-area">
+        <div id="objectionHistory" class="objection-history">
+          <!-- chat bubbles injected here -->
+        </div>
+
+        <div class="objection-input-row">
+          <textarea
+            id="objectionInput"
+            class="objection-input-box"
+            placeholder="Example: &quot;I need to think about it&quot; or &quot;Payment is too high&quot; or ask: &quot;How do I close a be-back?&quot;"
+          ></textarea>
+
+          <div class="objection-send-row">
+            <div class="objection-hint">
+              Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send fast.
+            </div>
+            <button id="objectionSendButton" type="button">
+              <span>🧠 Handle this objection</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-    const processBtn = document.getElementById("processBtn");
-    const statusEl = document.getElementById("status");
-    const copyOutputEl = document.getElementById("copy-output");
-    const imagesEl = document.getElementById("images");
-    const videoEl = document.getElementById("video");
-    const socialPreviewEl = document.getElementById("social-preview");
-    const copyCopyBtn = document.getElementById("copyCopyBtn");
+    const apiBase = '';
 
-    function setStatus(text) {
-      statusEl.innerHTML = text || "";
+    const vehicleUrlInput = document.getElementById('vehicleUrl');
+    const vehicleLabelInput = document.getElementById('vehicleLabel');
+    const priceInfoInput = document.getElementById('priceInfo');
+    const boostButton = document.getElementById('boostButton');
+    const statusText = document.getElementById('statusText');
+
+    const summaryLabel = document.getElementById('summaryLabel');
+    const summaryPrice = document.getElementById('summaryPrice');
+
+    const facebookPost = document.getElementById('facebookPost');
+    const instagramPost = document.getElementById('instagramPost');
+    const tiktokPost = document.getElementById('tiktokPost');
+    const linkedinPost = document.getElementById('linkedinPost');
+    const twitterPost = document.getElementById('twitterPost');
+    const textBlurb = document.getElementById('textBlurb');
+    const marketplacePost = document.getElementById('marketplacePost');
+    const hashtags = document.getElementById('hashtags');
+    const videoScript = document.getElementById('videoScript');
+    const shotPlan = document.getElementById('shotPlan');
+
+    const buildVideoButton = document.getElementById('buildVideoButton');
+    const photosGrid = document.getElementById('photosGrid');
+    const photosStatus = document.getElementById('photosStatus');
+    const videoPlan = document.getElementById('videoPlan');
+
+    const newScriptButton = document.getElementById('newScriptButton');
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeLabel = document.getElementById('themeLabel');
+
+    const objectionLauncher = document.getElementById('objectionLauncher');
+    const objectionModal = document.getElementById('objectionModal');
+    const objectionCloseButton = document.getElementById('objectionCloseButton');
+    const objectionHistory = document.getElementById('objectionHistory');
+    const objectionInput = document.getElementById('objectionInput');
+    const objectionSendButton = document.getElementById('objectionSendButton');
+
+    let currentPhotos = [];
+    let currentUrl = '';
+    let isBoosting = false;
+
+    // chat history for objection coach
+    let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
+
+    // ----- Theme handling -----
+
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      root.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        themeIcon.textContent = '🌙';
+        themeLabel.textContent = 'Dark';
+      } else {
+        themeIcon.textContent = '☀️';
+        themeLabel.textContent = 'Light';
+      }
+      localStorage.setItem('lotRocketTheme', theme);
     }
 
-    processBtn.addEventListener("click", async () => {
-      const url = document.getElementById("url").value.trim();
-      const target = document.getElementById("target").value.trim();
-      const tone = document.getElementById("tone").value.trim();
+    function initTheme() {
+      const saved = localStorage.getItem('lotRocketTheme');
+      if (saved === 'light' || saved === 'dark') {
+        applyTheme(saved);
+      } else {
+        applyTheme('dark');
+      }
+    }
 
-      if (!url) {
-        setStatus("<strong>Missing URL:</strong> paste a dealer listing link first.");
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    });
+
+    initTheme();
+
+    // ----- Helpers -----
+
+    function setStatus(text, isLoading = false) {
+      if (isLoading) {
+        statusText.innerHTML = '<span class="loading-dot"></span>' + text;
+      } else {
+        statusText.textContent = text;
+      }
+    }
+
+    function safeTrim(str) {
+      return (str || '').toString().trim();
+    }
+
+    function updateSummary(label, price) {
+      summaryLabel.textContent = safeTrim(label) || 'Vehicle ready';
+      summaryPrice.textContent = safeTrim(price) || 'Message for current pricing';
+    }
+
+    function fillSocialKit(kit) {
+      facebookPost.value = kit.facebook || '';
+      instagramPost.value = kit.instagram || '';
+      tiktokPost.value = kit.tiktok || '';
+      linkedinPost.value = kit.linkedin || '';
+      twitterPost.value = kit.twitter || '';
+      textBlurb.value = kit.textBlurb || '';
+      marketplacePost.value = kit.marketplace || '';
+      hashtags.value = kit.hashtags || '';
+      videoScript.value = kit.videoScript || '';
+      shotPlan.value = kit.shotPlan || '';
+    }
+
+    function renderPhotosGrid(photos) {
+      photosGrid.innerHTML = '';
+      if (!photos || !photos.length) {
+        photosStatus.textContent = 'No photos found yet.';
+        return;
+      }
+      photos.forEach((url) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'photo-thumb';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Vehicle photo';
+        wrapper.appendChild(img);
+        wrapper.addEventListener('click', () => {
+          window.open(url, '_blank');
+        });
+        photosGrid.appendChild(wrapper);
+      });
+      photosStatus.textContent = photos.length + ' photos found. Click any to open full size.';
+    }
+
+    async function callJson(endpoint, body) {
+      const res = await fetch(apiBase + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error('Request failed: ' + res.status + ' ' + txt);
+      }
+      return res.json();
+    }
+
+    // render objection chat history into modal
+    function renderObjectionChat() {
+      objectionHistory.innerHTML = '';
+      if (!objectionMessages.length) {
+        const empty = document.createElement('div');
+        empty.className = 'objection-bubble';
+        empty.style.opacity = '0.7';
+        empty.textContent =
+          'Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.';
+        objectionHistory.appendChild(empty);
         return;
       }
 
-      processBtn.disabled = true;
-      setStatus("Pulling vehicle details, enhancing images, and writing your copy…");
+      objectionMessages.forEach((m) => {
+        const labelDiv = document.createElement('div');
+        labelDiv.className =
+          'objection-bubble ' + (m.role === 'assistant' ? 'coach-label' : 'you-label');
+        labelDiv.textContent = m.role === 'assistant' ? 'COACH' : 'YOU';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'objection-bubble ' + (m.role === 'assistant' ? 'coach' : 'you');
+        bubble.textContent = m.content || '';
+
+        objectionHistory.appendChild(labelDiv);
+        objectionHistory.appendChild(bubble);
+      });
+
+      objectionHistory.scrollTop = objectionHistory.scrollHeight;
+    }
+
+    // ----- Boost flow -----
+
+    async function handleBoost() {
+      if (isBoosting) return;
+      const url = safeTrim(vehicleUrlInput.value);
+      if (!url) {
+        alert('Paste a dealer vehicle URL first.');
+        return;
+      }
+
+      let label = safeTrim(vehicleLabelInput.value);
+      if (!label) {
+        label = 'This vehicle';
+        vehicleLabelInput.value = label;
+      }
+      let price = safeTrim(priceInfoInput.value);
+      if (!price) {
+        price = 'Message for current pricing';
+        priceInfoInput.value = price;
+      }
+
+      isBoosting = true;
+      boostButton.disabled = true;
+      setStatus('Building social kit with AI…', true);
 
       try {
-        const res = await fetch("/api/process-listing", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, target, tone })
-        });
+        currentUrl = url;
+        const resp = await callJson('/api/social-kit', { url, label, price });
+        if (!resp.success) throw new Error('API returned error');
+        fillSocialKit(resp.kit);
+        updateSummary(label, price);
+        setStatus('Social kit ready. You can spin new posts or scripts anytime.');
 
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || "Server error");
+        // reset objection chat for the new vehicle
+        objectionMessages = [];
+        renderObjectionChat();
+
+        // Auto load photos
+        try {
+          photosStatus.textContent = 'Trying to grab photos from dealer page…';
+          const photoResp = await callJson('/api/grab-photos', { url });
+          if (photoResp.success) {
+            currentPhotos = photoResp.photos || [];
+            renderPhotosGrid(currentPhotos);
+          } else {
+            photosStatus.textContent = 'Could not grab photos.';
+          }
+        } catch (err) {
+          console.error('Auto photo grab failed:', err);
+          photosStatus.textContent = 'Auto photo load failed.';
         }
-
-        const data = await res.json();
-
-        // Update copy
-        copyOutputEl.textContent = data.salesCopy || "No copy generated.";
-        copyCopyBtn.style.display = "inline-flex";
-
-        // Images (fake thumbs)
-        imagesEl.innerHTML = "";
-        (data.images || []).forEach((img, idx) => {
-          const div = document.createElement("div");
-          div.className = "image-thumb";
-          const tag = img.cleaned ? "Cleaned" : "Original";
-          div.innerHTML = \`
-            <img src="\${img.url}" alt="Vehicle image \${idx+1}" />
-            <div class="badge">\${tag}</div>
-          \`;
-          imagesEl.appendChild(div);
-        });
-
-        // Video preview
-        videoEl.innerHTML = \`
-          <strong>Planned Video:</strong><br>
-          Length: \${data.videoPlan.lengthSeconds || 30}s<br>
-          Hook: "\${data.videoPlan.hook}"<br>
-          Structure: \${data.videoPlan.structure.join(" → ")}<br>
-          Music: \${data.videoPlan.musicDescription}
-        \`;
-
-        // Social preview
-        socialPreviewEl.textContent = data.socialPreview || "";
-
-        setStatus("<strong>Done:</strong> Review your copy & assets, then post or plug into your automations.");
       } catch (err) {
         console.error(err);
-        setStatus("<strong>Error:</strong> " + (err.message || "Something went wrong."));
+        setStatus('Something went wrong. Try again or check the URL.');
+        alert('Error building social kit. Check the URL and try again.');
       } finally {
-        processBtn.disabled = false;
+        isBoosting = false;
+        boostButton.disabled = false;
+      }
+    }
+
+    boostButton.addEventListener('click', handleBoost);
+
+    // ----- New post buttons -----
+
+    document.querySelectorAll('.button-new-post').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const platform = btn.getAttribute('data-platform');
+        const url = safeTrim(vehicleUrlInput.value);
+        const label = safeTrim(vehicleLabelInput.value);
+        const price = safeTrim(priceInfoInput.value);
+
+        if (!url || !label) {
+          alert('Please paste a URL and hit Boost at least once before spinning posts.');
+          return;
+        }
+
+        btn.disabled = true;
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
+
+        try {
+          const resp = await callJson('/api/new-post', { platform, url, label, price });
+          if (!resp.success) throw new Error('API returned error');
+          const text = resp.post || '';
+
+          switch (platform) {
+            case 'facebook':
+              facebookPost.value = text;
+              break;
+            case 'instagram':
+              instagramPost.value = text;
+              break;
+            case 'tiktok':
+              tiktokPost.value = text;
+              break;
+            case 'linkedin':
+              linkedinPost.value = text;
+              break;
+            case 'twitter':
+              twitterPost.value = text;
+              break;
+            case 'text':
+              textBlurb.value = text;
+              break;
+            case 'marketplace':
+              marketplacePost.value = text;
+              break;
+            case 'hashtags':
+              hashtags.value = text;
+              break;
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error generating a new post. Try again.');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = oldText;
+        }
+      });
+    });
+
+    // ----- New video script -----
+
+    newScriptButton.addEventListener('click', async () => {
+      const url = safeTrim(vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput.value);
+
+      if (!url || !label) {
+        alert('Please paste a URL and hit Boost at least once before spinning scripts.');
+        return;
+      }
+
+      newScriptButton.disabled = true;
+      const oldText = newScriptButton.innerHTML;
+      newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
+
+      try {
+        const resp = await callJson('/api/new-script', { url, label, price });
+        if (!resp.success) throw new Error('API error');
+        videoScript.value = resp.script || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error generating a new script. Try again.');
+      } finally {
+        newScriptButton.disabled = false;
+        newScriptButton.innerHTML = oldText;
       }
     });
 
-    copyCopyBtn.addEventListener("click", async () => {
+    // ----- Build video plan from photos -----
+
+    buildVideoButton.addEventListener('click', async () => {
+      if (!currentPhotos || !currentPhotos.length) {
+        alert('No photos yet. Boost a listing first so we can grab photos.');
+        return;
+      }
+
+      buildVideoButton.disabled = true;
+      const oldText = buildVideoButton.innerHTML;
+      buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
+
       try {
-        await navigator.clipboard.writeText(copyOutputEl.textContent || "");
-        setStatus("✅ Copy text copied to clipboard.");
-      } catch {
-        setStatus("Could not copy automatically. Please select the text and copy manually.");
+        const label = safeTrim(vehicleLabelInput.value) || 'this vehicle';
+        const resp = await callJson('/api/video-from-photos', {
+          photos: currentPhotos,
+          label,
+        });
+        if (!resp.success) throw new Error('API error');
+        videoPlan.value = resp.plan || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error building video plan. Try again.');
+      } finally {
+        buildVideoButton.disabled = false;
+        buildVideoButton.innerHTML = oldText;
       }
     });
+
+    // ----- Objection Coach modal -----
+
+    function openObjectionModal() {
+      objectionModal.classList.remove('hidden');
+      if (!objectionMessages.length) {
+        renderObjectionChat();
+      }
+      setTimeout(() => {
+        objectionInput.focus();
+      }, 50);
+    }
+
+    function closeObjectionModal() {
+      objectionModal.classList.add('hidden');
+    }
+
+    objectionLauncher.addEventListener('click', openObjectionModal);
+    objectionCloseButton.addEventListener('click', closeObjectionModal);
+
+    objectionModal.addEventListener('click', (e) => {
+      if (e.target === objectionModal) {
+        closeObjectionModal();
+      }
+    });
+
+    function sendObjection() {
+      const text = (objectionInput.value || '').trim();
+      if (!text) {
+        alert('Type the customer’s objection or your question first.');
+        return;
+      }
+
+      const label = safeTrim(vehicleLabelInput.value) || 'this vehicle';
+      const price = safeTrim(priceInfoInput.value) || 'Message for current pricing';
+
+      objectionMessages.push({ role: 'user', content: text });
+      renderObjectionChat();
+      objectionInput.value = '';
+
+      objectionSendButton.disabled = true;
+      const oldText = objectionSendButton.innerHTML;
+      objectionSendButton.innerHTML = '<span>⏳ Coaching…</span>';
+
+      callJson('/api/objection-coach', {
+        messages: objectionMessages,
+        label,
+        price,
+      })
+        .then((resp) => {
+          if (!resp.success) throw new Error('API error');
+          const reply = resp.reply || '';
+          objectionMessages.push({ role: 'assistant', content: reply });
+          renderObjectionChat();
+        })
+        .catch((err) => {
+          console.error(err);
+          alert('Error generating a response. Try again.');
+        })
+        .finally(() => {
+          objectionSendButton.disabled = false;
+          objectionSendButton.innerHTML = oldText;
+        });
+    }
+
+    objectionSendButton.addEventListener('click', sendObjection);
+
+    objectionInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendObjection();
+      }
+    });
+
+    // initial render
+    renderObjectionChat();
   </script>
 </body>
-</html>
-  `);
+</html>`);
 });
 
-// --------- BACKEND LOGIC ----------
+// ---------------- Start server ----------------
 
-// Stub: fetch and parse vehicle details from dealer URL
-async function scrapeVehicle(url) {
-  try {
-    const resp = await fetch(url);
-    const html = await resp.text();
-    const $ = cheerio.load(html);
-
-    // These selectors are EXAMPLES – change based on the dealer site you target.
-    // For your dpapp.autoipacket-style site, inspect the DOM and plug in real selectors.
-    const title =
-      $("h1").first().text().trim() ||
-      $("title").text().trim() ||
-      "Vehicle";
-
-    const priceText =
-      $('[class*="price"]').first().text().trim() ||
-      $('[data-qa="price"]').first().text().trim() ||
-      "";
-
-    const yearMatch = title.match(/(20\\d{2})/);
-    const year = yearMatch ? yearMatch[1] : "";
-
-    const makeModelMatch = title.replace(year, "").trim();
-    const mainImage =
-      $('img[src*="vehicle"], img[src*="inventory"]').first().attr("src") || "";
-
-    // Collect a few images
-    let images = [];
-    $("img").each((_, el) => {
-      const src = $(el).attr("src");
-      if (!src) return;
-      if (src.startsWith("data:")) return; // skip inline
-      if (!src.match(/jpg|jpeg|png|webp/i)) return;
-      if (images.length >= 6) return false;
-      images.push(src);
-    });
-
-    return {
-      title,
-      year,
-      makeModel: makeModelMatch,
-      price: priceText,
-      description: "",
-      images
-    };
-  } catch (e) {
-    console.error("Scrape error:", e);
-    return {
-      title: "Vehicle",
-      year: "",
-      makeModel: "",
-      price: "",
-      description: "",
-      images: []
-    };
-  }
-}
-
-// Stub: "clean" images (in real life, call an image API or run your own editor)
-function cleanImages(imageUrls) {
-  // Placeholder: we just mark them as cleaned and assume a CDN / editor handles this.
-  return imageUrls.map((url) => ({
-    url,          // in real life, return the edited URL
-    cleaned: true // flag so UI can label it
-  }));
-}
-
-// Generate high-converting copy based on scraped data + options
-function generateSalesCopy(vehicle, options = {}) {
-  const { target = "", tone = "" } = options;
-
-  const name = vehicle.title || "this vehicle";
-  const price = vehicle.price || "Ask about our current pricing";
-  const year = vehicle.year ? vehicle.year + " " : "";
-  const mm = vehicle.makeModel || "";
-
-  const audienceLine = target
-    ? `This ${mm || "vehicle"} is a perfect fit for ${target.toLowerCase()}.`
-    : `Whether you're upgrading, downsizing, or buying your first ride, this one deserves a test drive.`;
-
-  const toneLine = tone
-    ? `Tone: ${tone}.`
-    : `Expect a no-pressure, straight-to-the-point experience – just how car buying should be.`;
-
-  return (
-`🔥 ${year}${mm || "Vehicle"} – Available Now!
-
-Looking for a ride that looks sharp, drives smooth, and doesn’t beat up your budget? Check out ${name}.
-
-💰 Price:
-${price}
-
-🚗 Highlights:
-• Clean, well-kept vehicle inside and out  
-• Runs and drives strong – ready for daily use  
-• Great for commuting, road trips, and everything in between  
-
-👥 Who this is great for:
-${audienceLine}
-
-🤝 Why shop with me:
-• I specialize in challenged credit and tough situations  
-• Straight answers, no games, and clear numbers  
-• I work for you to make the deal simple and stress-free  
-
-📲 Next step:
-Send me a message here or text/call me directly and say, “I saw the ${mm || "vehicle"} – let’s talk numbers.” I’ll walk you through payment options, trade-in, and what it takes to get you driving.
-
-${toneLine}
-`
-  );
-}
-
-// Stub: plan a short vertical video
-function planVideo(vehicle, options = {}) {
-  const mm = vehicle.makeModel || "this vehicle";
-  const hook =
-    `“Stop scrolling – this ${mm} might be the deal you've been waiting for.”`;
-
-  return {
-    lengthSeconds: 30,
-    hook,
-    structure: [
-      "Hook: quick exterior shot + price flash",
-      "Walkaround: highlight body, wheels, interior",
-      "Feature hits: tech, mileage, warranties",
-      "Call to action: text/call + credit-friendly message"
-    ],
-    musicDescription:
-      "Use current trending, high-energy, royalty-free track from a TikTok/Reels-safe library. Make sure it's cleared for commercial use."
-  };
-}
-
-// Stub: construct preview for Facebook Marketplace post
-function buildSocialPreview(vehicle, copy) {
-  const line1 = vehicle.title || "Vehicle for sale";
-  const price = vehicle.price || "";
-  const header = price ? `${line1} – ${price}` : line1;
-
-  return `${header}
-
-${copy}
-
-Platform notes:
-• Facebook Marketplace: Use the title, price, mileage, year, make, model, and 3–10 of the cleaned images.
-• Instagram / TikTok: Use the video + shortened version of the copy with a strong call to action.
-• Always follow platform policies and ad guidelines.`;
-}
-
-// API: main pipeline
-app.post("/api/process-listing", async (req, res) => {
-  const { url, target, tone } = req.body || {};
-
-  if (!url || typeof url !== "string") {
-    return res.status(400).send("Missing or invalid 'url'.");
-  }
-
-  try {
-    // 1) Scrape vehicle data
-    const vehicle = await scrapeVehicle(url);
-
-    // 2) Clean images (placeholder)
-    const cleanedImages = cleanImages(vehicle.images || []);
-
-    // 3) Generate high-converting copy
-    const salesCopy = generateSalesCopy(vehicle, { target, tone });
-
-    // 4) Plan video concept
-    const videoPlan = planVideo(vehicle, { target, tone });
-
-    // 5) Social post preview
-    const socialPreview = buildSocialPreview(vehicle, salesCopy);
-
-    res.json({
-      vehicle,
-      images: cleanedImages,
-      salesCopy,
-      videoPlan,
-      socialPreview
-    });
-  } catch (err) {
-    console.error("Pipeline error:", err);
-    res.status(500).send("Failed to process listing.");
-  }
-});
-
-// --------- START SERVER ----------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("JaySellsCars Listing Booster running on http://localhost:" + PORT);
+app.listen(port, () => {
+  console.log(`Lot Rocket server running on port ${port}`);
 });
