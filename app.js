@@ -1,4 +1,4 @@
-// app.js – Lot Rocket Social Media Kit with Objection Coach Modal
+// app.js – Lot Rocket Social Media Kit with Objection Coach + Design Lab
 
 require('dotenv').config();
 const express = require('express');
@@ -216,6 +216,44 @@ You are in a continuous chat with this salesperson. They will paste objections a
 Answer as their personal objection-handling coach.`;
 }
 
+// Design Lab prompt – Canva-style layout ideas
+function buildDesignPrompt({ type, label, price, url }) {
+  return `
+You are helping a car salesperson design a social graphic in a tool like Canva.
+
+Design type: ${type}
+Vehicle: "${label}"
+Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Vehicle URL: ${url}
+
+Give me a Canva-style layout plan that is COPY/PASTE friendly.
+
+Return plain text, with these sections in order:
+
+1) TITLE / MAIN HOOK TEXT
+- Write exactly what the big headline on the graphic should say.
+- Make it bold, scroll-stopping, and short.
+
+2) SUBHEAD / SUPPORT LINE
+- One strong supporting line.
+
+3) BODY TEXT BLOCK
+- 3–6 short bullet-style benefit lines, can include emojis.
+
+4) CTA TEXT
+- Exact line that should go near the bottom as the call-to-action.
+
+5) LAYOUT IDEA
+- Explain where to place the photo(s) and each text part on the canvas
+  (top, bottom, left, right, center, overlay on photo, etc.).
+
+6) COLORS & VIBE
+- Suggest 1–2 background color ideas, 1 accent color, and what kind of vibe
+  (bold, clean, luxury, off-road, family, etc.).
+
+Make it very easy for a salesperson to read and then recreate quickly in Canva. Use line breaks between sections.`;
+}
+
 // ---------------- OpenAI helpers ----------------
 
 async function callOpenAIForJSON(prompt) {
@@ -318,6 +356,22 @@ app.post('/api/objection-coach', async (req, res) => {
   } catch (err) {
     console.error('Error in /api/objection-coach:', err);
     res.status(500).json({ error: 'Failed to generate objection response' });
+  }
+});
+
+// Design Lab – Canva-style layout ideas
+app.post('/api/design-idea', async (req, res) => {
+  try {
+    const { type, label, price, url } = req.body || {};
+    if (!type || !label || !url) {
+      return res.status(400).json({ error: 'Missing type, label, or url' });
+    }
+    const prompt = buildDesignPrompt({ type, label, price, url });
+    const design = await callOpenAIForText(prompt);
+    res.json({ success: true, design: design.trim() });
+  } catch (err) {
+    console.error('Error in /api/design-idea:', err);
+    res.status(500).json({ error: 'Failed to generate design idea' });
   }
 });
 
@@ -851,6 +905,10 @@ app.get('/', (req, res) => {
       min-height: 130px;
     }
 
+    .textarea.design {
+      min-height: 180px;
+    }
+
     .tiny-note {
       font-size: 10px;
       opacity: 0.75;
@@ -1221,7 +1279,7 @@ app.get('/', (req, res) => {
         </div>
       </section>
 
-      <!-- Right panel: social kit -->
+      <!-- Right panel: social kit + video + design lab -->
       <section class="card">
         <div class="card-header">
           <div>
@@ -1359,6 +1417,36 @@ app.get('/', (req, res) => {
             <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
           </div>
 
+          <!-- Design Lab -->
+          <div class="field-group">
+            <div class="section-title-row">
+              <label class="field-label">Design Lab (Canva-style layout)</label>
+              <div class="card-subtitle">Get a ready-to-build graphic layout you can recreate in Canva.</div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="designType">Design Type</label>
+            <div class="pill-row">
+              <select id="designType" class="input" style="max-width: 260px; padding-right: 28px;">
+                <option value="facebook_feed_post">Facebook feed post</option>
+                <option value="instagram_feed_post">Instagram feed post</option>
+                <option value="instagram_story">Instagram Story</option>
+                <option value="reels_cover">Reels / TikTok cover image</option>
+                <option value="tiktok_vertical_graphic">TikTok vertical graphic</option>
+                <option value="youtube_thumbnail">YouTube thumbnail</option>
+              </select>
+              <button id="designButton" class="button-ghost" type="button">
+                <span class="icon">🎨</span><span>Generate Design Idea</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="designOutput">Design Layout Plan</label>
+            <textarea id="designOutput" class="textarea design" placeholder="Choose a design type and hit Generate to get a Canva-style layout you can build in minutes." readonly></textarea>
+          </div>
+
           <div class="tiny-note">
             Prototype for salespeople. Copy, tweak, and make it yours. 🚀
           </div>
@@ -1441,6 +1529,10 @@ app.get('/', (req, res) => {
     const videoPlan = document.getElementById('videoPlan');
 
     const newScriptButton = document.getElementById('newScriptButton');
+
+    const designTypeSelect = document.getElementById('designType');
+    const designButton = document.getElementById('designButton');
+    const designOutput = document.getElementById('designOutput');
 
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
@@ -1765,6 +1857,36 @@ app.get('/', (req, res) => {
       } finally {
         buildVideoButton.disabled = false;
         buildVideoButton.innerHTML = oldText;
+      }
+    });
+
+    // ----- Design Lab -----
+
+    designButton.addEventListener('click', async () => {
+      const type = designTypeSelect.value;
+      const url = safeTrim(vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput.value);
+
+      if (!url || !label) {
+        alert('Please paste a URL and hit Boost at least once before generating design ideas.');
+        return;
+      }
+
+      designButton.disabled = true;
+      const oldText = designButton.innerHTML;
+      designButton.innerHTML = '<span class="icon">⏳</span><span>Designing…</span>';
+
+      try {
+        const resp = await callJson('/api/design-idea', { type, url, label, price });
+        if (!resp.success) throw new Error('API error');
+        designOutput.value = resp.design || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error generating a design idea. Try again.');
+      } finally {
+        designButton.disabled = false;
+        designButton.innerHTML = oldText;
       }
     });
 
