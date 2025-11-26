@@ -1,4 +1,4 @@
-// app.js – Lot Rocket Social Media Kit (with Objection Chat)
+// app.js – Lot Rocket Social Media Kit with Objection Coach Modal
 
 require('dotenv').config();
 const express = require('express');
@@ -186,7 +186,7 @@ Style:
 Return ONLY the script text, nothing else.`;
 }
 
-// Objection chat system prompt (Andy-Elliott style coach)
+// Objection chat system prompt (Andy Elliott–style coach)
 function buildObjectionSystemPrompt({ label, price }) {
   return `
 You are an automotive objections specialist and high-energy sales coach.
@@ -871,113 +871,266 @@ app.get('/', (req, res) => {
       to   { transform: scale(1.4); opacity: 0.3; }
     }
 
-    /* ----- Objection Coach Dock (top-right) ----- */
+    .hidden {
+      display: none !important;
+    }
 
-    .objection-dock {
+    /* ----- Objection Coach Launcher (top-right) ----- */
+
+    .objection-launcher {
       position: fixed;
       top: 18px;
-      right: 18px;
-      width: 320px;
-      max-width: 90vw;
-      z-index: 50;
-      border-radius: 18px;
-      padding: 10px 11px 9px;
-      box-sizing: border-box;
+      right: 20px;
+      z-index: 60;
+      border-radius: 999px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
     }
-    [data-theme="dark"] .objection-dock {
+    [data-theme="dark"] .objection-launcher {
       background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+      color: var(--text-dark);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+    [data-theme="light"] .objection-launcher {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--text-light);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+
+    .objection-launcher span.icon {
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      .objection-launcher {
+        top: auto;
+        bottom: 16px;
+        right: 16px;
+      }
+    }
+
+    /* ----- Objection Coach Modal ----- */
+
+    .objection-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .objection-modal-card {
+      width: 620px;
+      max-width: 96vw;
+      max-height: 82vh;
+      border-radius: 20px;
+      padding: 14px 14px 12px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    [data-theme="dark"] .objection-modal-card {
+      background: radial-gradient(circle at top, #111827 0, #020617 60%);
+      border: 1px solid rgba(248, 113, 113, 0.8);
+      box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
       color: var(--text-dark);
     }
-    [data-theme="light"] .objection-dock {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+    [data-theme="light"] .objection-modal-card {
+      background: #f9fafb;
+      border: 1px solid rgba(248, 113, 113, 0.9);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.35);
       color: var(--text-light);
     }
 
-    .objection-dock-header {
+    .objection-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .objection-modal-title-group {
       display: flex;
       flex-direction: column;
       gap: 2px;
-      margin-bottom: 6px;
     }
-    .objection-dock-tag {
+    .objection-modal-tag {
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      opacity: 0.75;
+      opacity: 0.8;
     }
-    .objection-dock-title {
-      font-size: 12px;
+    .objection-modal-title {
+      font-size: 14px;
       font-weight: 600;
     }
+    .objection-modal-sub {
+      font-size: 11px;
+      opacity: 0.8;
+    }
 
-    .objection-input {
+    .objection-modal-close {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      background: transparent;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .objection-chat-area {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .objection-history {
+      flex: 1 1 auto;
+      min-height: 160px;
+      max-height: 330px;
+      border-radius: 12px;
+      padding: 8px 9px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+    }
+    [data-theme="dark"] .objection-history {
+      background: rgba(15, 23, 42, 0.96);
+    }
+    [data-theme="light"] .objection-history {
+      background: rgba(249, 250, 251, 0.98);
+    }
+
+    .objection-bubble {
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+    .objection-bubble.you-label {
+      font-weight: 600;
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+      padding: 0;
+    }
+    .objection-bubble.coach-label {
+      font-weight: 600;
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+      padding: 0;
+    }
+    [data-theme="dark"] .objection-bubble.you {
+      background: rgba(37, 99, 235, 0.32);
+      border: 1px solid rgba(59, 130, 246, 0.7);
+    }
+    [data-theme="light"] .objection-bubble.you {
+      background: rgba(191, 219, 254, 0.7);
+      border: 1px solid rgba(59, 130, 246, 0.8);
+    }
+    [data-theme="dark"] .objection-bubble.coach {
+      background: rgba(248, 113, 113, 0.22);
+      border: 1px solid rgba(248, 113, 113, 0.8);
+    }
+    [data-theme="light"] .objection-bubble.coach {
+      background: rgba(254, 226, 226, 0.92);
+      border: 1px solid rgba(248, 113, 113, 0.9);
+    }
+
+    .objection-input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .objection-input-box {
       width: 100%;
       box-sizing: border-box;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
       font-family: var(--font-main);
       font-size: 12px;
-      padding: 6px 7px;
+      padding: 7px 8px;
       resize: vertical;
-      min-height: 44px;
+      min-height: 54px;
     }
-    [data-theme="dark"] .objection-input {
+    [data-theme="dark"] .objection-input-box {
       background: rgba(15, 23, 42, 0.98);
       color: var(--text-dark);
     }
-    [data-theme="light"] .objection-input {
+    [data-theme="light"] .objection-input-box {
       background: rgba(249, 250, 251, 0.98);
       color: var(--text-light);
     }
 
-    #objectionOutput {
-      min-height: 110px;
-      margin-top: 5px;
-      font-size: 11px;
-      line-height: 1.4;
+    .objection-send-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .objection-hint {
+      font-size: 10px;
+      opacity: 0.8;
     }
 
-    #objectionButtonDock {
-      margin-top: 5px;
-      width: 100%;
+    #objectionSendButton {
       border-radius: 999px;
       border: none;
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      padding: 6px 10px;
+      padding: 6px 12px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 6px;
     }
-    [data-theme="dark"] #objectionButtonDock {
+    [data-theme="dark"] #objectionSendButton {
       background: linear-gradient(135deg, #fb923c, #ef4444);
       color: #fff;
       box-shadow: 0 10px 22px rgba(248, 113, 113, 0.7);
     }
-    [data-theme="light"] #objectionButtonDock {
+    [data-theme="light"] #objectionSendButton {
       background: linear-gradient(135deg, #f97316, #dc2626);
       color: #fff;
       box-shadow: 0 10px 22px rgba(239, 68, 68, 0.6);
     }
 
-    @media (max-width: 820px) {
-      .objection-dock {
-        position: fixed;
-        bottom: 10px;
-        top: auto;
-        right: 10px;
-        left: 10px;
-        width: auto;
+    @media (max-width: 640px) {
+      .objection-modal-card {
+        width: 100%;
+        margin: 0 10px;
+        max-height: 86vh;
       }
     }
   </style>
@@ -1214,26 +1367,49 @@ app.get('/', (req, res) => {
     </div>
   </div>
 
-  <!-- Objection Coach dock – always visible -->
-  <div class="objection-dock" id="objectionDock">
-    <div class="objection-dock-header">
-      <div class="objection-dock-tag">OBJECTIONS HANDLED</div>
-      <div class="objection-dock-title">Andy Elliott–style AI coach</div>
+  <!-- Objection Coach launcher (fixed top-right / bottom-right on mobile) -->
+  <button id="objectionLauncher" class="objection-launcher" type="button">
+    <span class="icon">🧠</span>
+    <span>Objection coach</span>
+  </button>
+
+  <!-- Objection Coach Modal -->
+  <div id="objectionModal" class="objection-modal-backdrop hidden">
+    <div class="objection-modal-card">
+      <div class="objection-modal-header">
+        <div class="objection-modal-title-group">
+          <div class="objection-modal-tag">OBJECTIONS HANDLED</div>
+          <div class="objection-modal-title">Andy Elliott–style AI coach</div>
+          <div class="objection-modal-sub">
+            Paste a customer objection or ask how to respond. Get word tracks and breakdowns.
+          </div>
+        </div>
+        <button id="objectionCloseButton" class="objection-modal-close" type="button">✕</button>
+      </div>
+
+      <div class="objection-chat-area">
+        <div id="objectionHistory" class="objection-history">
+          <!-- chat bubbles injected here -->
+        </div>
+
+        <div class="objection-input-row">
+          <textarea
+            id="objectionInput"
+            class="objection-input-box"
+            placeholder="Example: &quot;I need to think about it&quot; or &quot;Payment is too high&quot; or ask: &quot;How do I close a be-back?&quot;"
+          ></textarea>
+
+          <div class="objection-send-row">
+            <div class="objection-hint">
+              Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send fast.
+            </div>
+            <button id="objectionSendButton" type="button">
+              <span>🧠 Handle this objection</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-    <textarea
-      id="objectionInput"
-      class="objection-input"
-      placeholder="Type the objection or question, e.g. 'I need to think about it' or 'Payment is too high'..."
-    ></textarea>
-    <button id="objectionButtonDock" type="button">
-      <span>🧠 Handle this objection</span>
-    </button>
-    <textarea
-      id="objectionOutput"
-      class="objection-input"
-      placeholder="Chat history with your objection coach will show up here."
-      readonly
-    ></textarea>
   </div>
 
   <script>
@@ -1270,9 +1446,12 @@ app.get('/', (req, res) => {
     const themeIcon = document.getElementById('themeIcon');
     const themeLabel = document.getElementById('themeLabel');
 
+    const objectionLauncher = document.getElementById('objectionLauncher');
+    const objectionModal = document.getElementById('objectionModal');
+    const objectionCloseButton = document.getElementById('objectionCloseButton');
+    const objectionHistory = document.getElementById('objectionHistory');
     const objectionInput = document.getElementById('objectionInput');
-    const objectionOutput = document.getElementById('objectionOutput');
-    const objectionButtonDock = document.getElementById('objectionButtonDock');
+    const objectionSendButton = document.getElementById('objectionSendButton');
 
     let currentPhotos = [];
     let currentUrl = '';
@@ -1379,18 +1558,34 @@ app.get('/', (req, res) => {
       return res.json();
     }
 
-    // render objection chat history into the dock textarea
+    // render objection chat history into modal
     function renderObjectionChat() {
+      objectionHistory.innerHTML = '';
       if (!objectionMessages.length) {
-        objectionOutput.value = '';
+        const empty = document.createElement('div');
+        empty.className = 'objection-bubble';
+        empty.style.opacity = '0.7';
+        empty.textContent =
+          'Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.';
+        objectionHistory.appendChild(empty);
         return;
       }
-      const lines = objectionMessages.map((m) => {
-        const prefix = m.role === 'assistant' ? 'COACH: ' : 'YOU: ';
-        return prefix + (m.content || '');
+
+      objectionMessages.forEach((m) => {
+        const labelDiv = document.createElement('div');
+        labelDiv.className =
+          'objection-bubble ' + (m.role === 'assistant' ? 'coach-label' : 'you-label');
+        labelDiv.textContent = m.role === 'assistant' ? 'COACH' : 'YOU';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'objection-bubble ' + (m.role === 'assistant' ? 'coach' : 'you');
+        bubble.textContent = m.content || '';
+
+        objectionHistory.appendChild(labelDiv);
+        objectionHistory.appendChild(bubble);
       });
-      objectionOutput.value = lines.join('\\n\\n');
-      objectionOutput.scrollTop = objectionOutput.scrollHeight;
+
+      objectionHistory.scrollTop = objectionHistory.scrollHeight;
     }
 
     // ----- Boost flow -----
@@ -1573,12 +1768,35 @@ app.get('/', (req, res) => {
       }
     });
 
-    // ----- Objection Coach chat -----
+    // ----- Objection Coach modal -----
+
+    function openObjectionModal() {
+      objectionModal.classList.remove('hidden');
+      if (!objectionMessages.length) {
+        renderObjectionChat();
+      }
+      setTimeout(() => {
+        objectionInput.focus();
+      }, 50);
+    }
+
+    function closeObjectionModal() {
+      objectionModal.classList.add('hidden');
+    }
+
+    objectionLauncher.addEventListener('click', openObjectionModal);
+    objectionCloseButton.addEventListener('click', closeObjectionModal);
+
+    objectionModal.addEventListener('click', (e) => {
+      if (e.target === objectionModal) {
+        closeObjectionModal();
+      }
+    });
 
     function sendObjection() {
       const text = (objectionInput.value || '').trim();
       if (!text) {
-        alert('Type in the customer’s objection or your question first.');
+        alert('Type the customer’s objection or your question first.');
         return;
       }
 
@@ -1589,14 +1807,14 @@ app.get('/', (req, res) => {
       renderObjectionChat();
       objectionInput.value = '';
 
-      objectionButtonDock.disabled = true;
-      const oldText = objectionButtonDock.innerHTML;
-      objectionButtonDock.innerHTML = '<span>⏳ Coaching…</span>';
+      objectionSendButton.disabled = true;
+      const oldText = objectionSendButton.innerHTML;
+      objectionSendButton.innerHTML = '<span>⏳ Coaching…</span>';
 
       callJson('/api/objection-coach', {
         messages: objectionMessages,
         label,
-        price
+        price,
       })
         .then((resp) => {
           if (!resp.success) throw new Error('API error');
@@ -1609,20 +1827,22 @@ app.get('/', (req, res) => {
           alert('Error generating a response. Try again.');
         })
         .finally(() => {
-          objectionButtonDock.disabled = false;
-          objectionButtonDock.innerHTML = oldText;
+          objectionSendButton.disabled = false;
+          objectionSendButton.innerHTML = oldText;
         });
     }
 
-    objectionButtonDock.addEventListener('click', sendObjection);
+    objectionSendButton.addEventListener('click', sendObjection);
 
-    // allow Enter+Ctrl or Enter+Cmd to send as well
     objectionInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         sendObjection();
       }
     });
+
+    // initial render
+    renderObjectionChat();
   </script>
 </body>
 </html>`);
