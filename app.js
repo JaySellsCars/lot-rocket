@@ -1767,7 +1767,7 @@ app.get('/', (req, res) => {
     // Floating tool launchers
     const objectionLauncher = document.getElementById('objectionLauncher');
     const paymentLauncher = document.getElementById('paymentLauncher');
-    const incomeLauncher = document.getElementById('incomeLauncher');
+    the incomeLauncher = document.getElementById('incomeLauncher');
     const messageLauncher = document.getElementById('messageLauncher');
 
     // Objection modal elements
