@@ -1,4 +1,4 @@
-// app.js – Lot Rocket Social Media Kit (auto-photos + light/dark mode, clean OpenAI calls)
+// app.js – Lot Rocket Social Media Kit (viral-style posts + auto-photos + light/dark)
 
 require("dotenv").config();
 const express = require("express");
@@ -69,11 +69,11 @@ async function scrapeVehiclePhotos(pageUrl) {
   }
 }
 
-// ---------- Helper: base prompt for social kit ----------
+// ---------- Helper: base prompt for social kit (VIRAL STYLE) ----------
 
 function buildSocialKitPrompt({ label, price, url }) {
   return `
-You are helping a car salesperson create a social media content kit for a single vehicle.
+You are helping a car salesperson create a **viral-style** social media content kit for a single vehicle.
 
 Vehicle label (how we’ll refer to it in the copy):
 "${label}"
@@ -84,8 +84,11 @@ Pricing / deal info as a short phrase:
 Dealer vehicle URL:
 ${url}
 
-Write short, direct, human-sounding copy that a salesperson can copy/paste.
-Avoid sounding like a big corporate dealership. Talk like a confident, honest salesperson.
+Overall goals:
+- Posts should feel like **big “scroll-stopper” boxes**: clear hook line on top, then spaced-out lines that are easy to read.
+- Use emojis to create energy (🚗🔥✨💥👀 etc.) on Facebook, Instagram, TikTok, and Marketplace.
+- Everything must be **copy-and-paste ready**. No [CUT TO] or bracketed stage directions. No instructions to the salesperson inside the post text.
+- Write like a confident, honest salesperson – not a corporate dealership.
 
 Return a JSON object ONLY with these exact keys:
 {
@@ -101,57 +104,118 @@ Return a JSON object ONLY with these exact keys:
   "shotPlan": "..."
 }
 
-Style guide:
-- Keep everything under 900 characters per field.
-- It's okay to be conversational, but no hard-sell cringe.
-- Use the vehicle label in a natural way.
-- Use the price/deal phrase once near the top if it’s useful.
-- Hashtags should be 8–15 tags, simple, mostly lowercase.
-- Do NOT include backticks or the word "JSON" in the output, only the raw JSON object.
+Style guide (IMPORTANT):
+- Keep everything under ~900 characters per field.
+- Use **short lines separated by line breaks** so it looks like a “big box” of text a salesperson can paste.
+- Use the vehicle label naturally 1–3 times.
+- Include the pricing/deal phrase once near the top if it’s useful.
+- NO markdown, NO backticks, NO bullet characters like • unless you write them literally. Plain text only.
 
-For each field:
-- facebook: 1–3 short paragraphs, punchy hook, then simple benefit lines.
-- instagram: similar to facebook, slightly more vibe, include 3–5 short benefit lines.
-- tiktok: short, high-energy, feels like a caption or voiceover.
-- linkedin: slightly more professional tone, but still human.
-- twitter: 1–2 short lines plus hashtags.
-- textBlurb: short SMS/DM style, 1–3 lines max.
-- marketplace: description suitable for Facebook Marketplace (no emojis at the top).
-- hashtags: just a single line of hashtags separated by spaces.
-- videoScript: 30–40 second script someone can read on camera.
-- shotPlan: 5–10 bullet points describing shots to capture for Reels / TikTok.
+Platform-by-platform instructions:
+
+facebook:
+- Start with a big hook like: "🔥 STOP SCROLLING. Look at this [vehicle] in [city] 🔥" or "🚨 DEAL ALERT 🚨".
+- Use 2–4 emoji in the first 2 lines.
+- Then 5–10 short lines calling out benefits (comfort, tech, fuel, space, etc.).
+- End with a strong CTA: comment/DM "INFO", book a test drive, etc.
+- Line breaks between sections so it pastes as a “big readable box”.
+
+instagram:
+- Also start with a hook + emojis.
+- Slightly more “vibe” / lifestyle tone, but still about the actual car.
+- 3–6 short benefit lines.
+- Clear CTA: "DM 'INFO'" or "DM for details".
+- Include the deal phrase where it makes sense.
+
+tiktok:
+- Write like a caption or voiceover text.
+- Hook + emojis at the top.
+- 3–6 short lines that feel like what’s on screen in a vertical video.
+- Clear CTA at the end.
+
+linkedin:
+- Less emojis, more professional, but **not** stiff or corporate.
+- One clear hook line, then 3–6 short lines explaining why this is a smart, practical choice.
+- CTA: connect or message for details.
+
+twitter:
+- 1–2 short lines plus hashtags at the end.
+- Can include 1–2 emojis.
+
+textBlurb:
+- Short SMS/DM style, 1–3 lines max.
+- No emojis required, but allowed.
+- Very direct: what the vehicle is, that it’s available, ask if they want pics/walkaround/pricing.
+
+marketplace:
+- This should feel like a **spicy, scroll-stopping Facebook Marketplace description**, not boring.
+- Start with a strong first line, can include emojis, but the first characters should still read clean if someone skims.
+- Include a short “why this one is worth a serious look” style section.
+- Talk about: looks, daily comfort, tech, space, how it fits real life.
+- End with a clear CTA: message for details, more photos, simple breakdown of numbers, etc.
+
+hashtags:
+- A single line of hashtags separated by spaces.
+- 8–15 tags, mostly lowercase, mix of year/make/model/local (#2024 #kia #suv #plymouthmi #carsforsale etc.).
+- No special characters beyond #.
+
+videoScript:
+- 30–40 second script someone can read straight to camera.
+- No bracketed instructions like [Cut to exterior] or [B-roll].
+- 4–7 short paragraphs/lines.
+- Natural spoken language, feels like a salesperson talking.
+- Clear CTA at the end: DM "INFO", message me, or book a test drive.
+
+shotPlan:
+- 5–10 bullet-style lines describing shots to capture.
+- Each line should describe the shot in plain text (for example, "Front 3/4 exterior walk-around", "Interior tech close-up", etc.).
+- No brackets, no camera directions in square brackets. Just plain text bullet descriptions.
 `;
 }
 
-// ---------- Helper: single-post prompts ----------
+// ---------- Helper: single-post prompts (VIRAL MODE) ----------
 
 function buildSinglePostPrompt({ platform, label, price, url }) {
   return `
-You are writing a fresh social media post for a car salesperson.
+You are writing a **fresh, viral-style** social media post for a car salesperson.
 
 Platform: ${platform}
 Vehicle: "${label}"
 Pricing/deal phrase: "${price || "Message for current pricing"}"
 Vehicle URL: ${url}
 
-Write ONLY the post body text for this platform, no intro or explanation.
+The post must be **copy-and-paste ready**. NO [CUT TO] directions, no script notes.
+Plain text only.
 
 Tone:
-- Confident, honest salesperson
-- Conversational, not corporate
-- No cringe, no fake hype, but still a clear call to action
+- Confident, honest salesperson.
+- Conversational, not corporate.
+- Hooky and scroll-stopping, but not cringe or fake hype.
 
-Length:
-- facebook, instagram, linkedin: 3–8 short lines
-- tiktok: 3–6 lines, feels like caption/voiceover
-- twitter: 1–3 short lines
-- textBlurb: 1–3 very short lines
-- marketplace: short description suitable for Facebook Marketplace.
+Emojis:
+- facebook, instagram, tiktok, marketplace: use emojis in the hook and where they help.
+- twitter: 1–3 emojis maximum.
+- linkedin: emojis optional; keep it more professional.
+- textBlurb: emojis optional; keep it tight and direct.
 
-DO NOT include hashtags. DO NOT include the word "hashtags".
-Just return the post text as plain text.
+Length rules:
+- facebook, instagram, linkedin, marketplace: 3–10 short lines, separated by line breaks, so it looks like a big readable box.
+- tiktok: 3–6 short lines, feels like caption/voiceover.
+- twitter: 1–3 short lines total.
+- textBlurb: 1–3 very short lines.
+
+CTAs:
+- facebook/instagram/tiktok/marketplace: end with a clear CTA like "DM 'INFO' for details", "Message me to schedule a test drive", etc.
+- linkedin: ask them to message or connect for more details.
+- twitter: short CTA or invite to DM.
+- textBlurb: ask if they want photos, a quick walkaround video, or pricing.
+
+DO NOT include hashtags in this response. DO NOT use the word "hashtags".
+Return only the finished post as plain text that’s ready to paste.
 `;
 }
+
+// ---------- Helper: video script prompt (plain narration, no [CUT TO]) ----------
 
 function buildVideoScriptPrompt({ label, price, url }) {
   return `
@@ -164,6 +228,7 @@ Vehicle URL: ${url}
 
 Format:
 - No labels like HOOK or CTA, just the script lines.
+- NO bracketed directions like [Cut to exterior] or [B-roll].
 - Use natural spoken language.
 - 4–7 short paragraphs or line breaks.
 - Clear call-to-action at the end (DM "INFO", message me, book a test drive, etc.).
@@ -182,8 +247,12 @@ async function callOpenAIForJSON(prompt) {
 
   const text = response.output[0].content[0].text;
 
-  // In case the model ever wraps the JSON in backticks, strip them
-  const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
+
   return JSON.parse(cleaned);
 }
 
@@ -198,7 +267,6 @@ async function callOpenAIForText(prompt) {
 
 // ---------- API routes ----------
 
-// Generate full social kit
 app.post("/api/social-kit", async (req, res) => {
   try {
     const { url, label, price } = req.body;
@@ -219,7 +287,6 @@ app.post("/api/social-kit", async (req, res) => {
   }
 });
 
-// New post for a specific platform
 app.post("/api/new-post", async (req, res) => {
   try {
     const { platform, label, price, url } = req.body;
@@ -240,7 +307,6 @@ app.post("/api/new-post", async (req, res) => {
   }
 });
 
-// New video script
 app.post("/api/new-script", async (req, res) => {
   try {
     const { label, price, url } = req.body;
@@ -261,7 +327,6 @@ app.post("/api/new-script", async (req, res) => {
   }
 });
 
-// Grab photos
 app.post("/api/grab-photos", async (req, res) => {
   try {
     const { url } = req.body;
@@ -277,7 +342,6 @@ app.post("/api/grab-photos", async (req, res) => {
   }
 });
 
-// Build video plan from photos (simple template)
 app.post("/api/video-from-photos", async (req, res) => {
   try {
     const { photos, label } = req.body;
@@ -308,7 +372,7 @@ app.post("/api/video-from-photos", async (req, res) => {
   }
 });
 
-// ---------- Front-end HTML ----------
+// ---------- Front-end HTML (unchanged from last working version, except copy tweaks) ----------
 
 app.get("/", (req, res) => {
   res.send(`<!DOCTYPE html>
@@ -1056,8 +1120,6 @@ app.get("/", (req, res) => {
     let currentUrl = "";
     let isBoosting = false;
 
-    // ----- Theme handling -----
-
     function applyTheme(theme) {
       const root = document.documentElement;
       root.setAttribute("data-theme", theme);
@@ -1087,8 +1149,6 @@ app.get("/", (req, res) => {
     });
 
     initTheme();
-
-    // ----- Helpers -----
 
     function setStatus(text, isLoading = false) {
       if (isLoading) {
@@ -1156,8 +1216,6 @@ app.get("/", (req, res) => {
       return res.json();
     }
 
-    // ----- Boost flow -----
-
     async function handleBoost() {
       if (isBoosting) return;
       const url = safeTrim(vehicleUrlInput.value);
@@ -1168,7 +1226,6 @@ app.get("/", (req, res) => {
 
       let label = safeTrim(vehicleLabelInput.value);
       if (!label) {
-        // minimal label default
         label = "This vehicle";
         vehicleLabelInput.value = label;
       }
@@ -1190,7 +1247,6 @@ app.get("/", (req, res) => {
         updateSummary(label, price);
         setStatus("Social kit ready. You can spin new posts or scripts anytime.");
 
-        // Auto-load photos after kit is ready
         try {
           photosStatus.textContent = "Trying to grab photos from dealer page…";
           const photoResp = await callJson("/api/grab-photos", { url });
@@ -1215,8 +1271,6 @@ app.get("/", (req, res) => {
     }
 
     boostButton.addEventListener("click", handleBoost);
-
-    // ----- New post buttons -----
 
     document.querySelectorAll(".button-new-post").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -1275,8 +1329,6 @@ app.get("/", (req, res) => {
       });
     });
 
-    // ----- New video script -----
-
     newScriptButton.addEventListener("click", async () => {
       const url = safeTrim(vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput.value);
@@ -1303,8 +1355,6 @@ app.get("/", (req, res) => {
         newScriptButton.innerHTML = oldText;
       }
     });
-
-    // ----- Build video plan from photos -----
 
     buildVideoButton.addEventListener("click", async () => {
       if (!currentPhotos || !currentPhotos.length) {
