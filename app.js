@@ -1,3 +1,58 @@
+// sales-app.js
+// Unified single-file codebase for your salespeople app.
+// We'll keep ALL backend + scraping + helper logic in this file so it's easy to copy into your environment.
+// As we refine features in chat, this file will be updated instead of flooding the conversation.
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const OpenAI = require('openai');
+const cheerio = require('cheerio');
+const fetch = require('node-fetch');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ---------------- Helper: scrape vehicle photos (placeholder implementation) ----------------
+
+async function scrapeVehiclePhotos(pageUrl) {
+  try {
+    const res = await fetch(pageUrl);
+    if (!res.ok) {
+      console.error('Failed to fetch page for photos:', res.status);
+      return [];
+    }
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const urls = new Set();
+
+    const base = new URL(pageUrl);
+
+    $('img').each((i, el) => {
+      let src = $(el).attr('data-src') || $(el).attr('src');
+      if (!src) return;
+
+      // Resolve relative URLs against the page URL
+      try {
+        const full = new URL(src, base).toString();
+        urls.add(full);
+      } catch (e) {
+        console.warn('Bad image URL, skipping:', src);
+      }
+    });
+
+    return Array.from(urls);
+  } catch (err) {
+    console.error('Error scraping vehicle photo
 // app.js – Lot Rocket Social Media Kit with Objection Coach + Design Lab
 
 require('dotenv').config();
