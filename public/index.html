@@ -1,1 +1,275 @@
-Lot Rocket front-end coming soon
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lot Rocket Toolkit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark">LR</div>
+        <div class="brand-text">
+          <h1>Lot Rocket Toolkit</h1>
+          <p>Turn more leads into “I’ll take it”.</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- LEFT: TOOL LAUNCHERS -->
+      <section class="launcher-panel">
+        <h2 class="section-title">Tools</h2>
+        <p class="section-subtitle">Tap a tool to open it on the right.</p>
+
+        <div class="launcher-grid">
+          <button id="objectionLauncher" class="launcher-btn">
+            <span class="launcher-label">Objection Coach</span>
+            <span class="launcher-tag">Turn “I need to think about it” into “Let’s do it.”</span>
+          </button>
+
+          <button id="paymentLauncher" class="launcher-btn">
+            <span class="launcher-label">Payment Helper</span>
+            <span class="launcher-tag">Structure affordable, comfortable payments.</span>
+          </button>
+
+          <button id="messageLauncher" class="launcher-btn">
+            <span class="launcher-label">Custom Message</span>
+            <span class="launcher-tag">High-converting texts, DMs & follow-ups.</span>
+          </button>
+
+          <button id="incomeLauncher" class="launcher-btn">
+            <span class="launcher-label">Income Builder</span>
+            <span class="launcher-tag">Hit your daily, weekly, monthly income goals.</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT: WORKSPACE -->
+      <section class="workspace-panel">
+        <div id="workspacePlaceholder" class="workspace-placeholder">
+          <h2>Pick a tool to get started</h2>
+          <p>Your selected tool will open here.</p>
+        </div>
+
+        <!-- OBJECTION COACH PANEL -->
+        <div id="panel-objection" class="tool-panel">
+          <h2>Objection Coach</h2>
+          <p>Capture the objection and get a confident, professional response.</p>
+
+          <form id="objectionForm">
+            <label>
+              Customer Name (optional)
+              <input type="text" id="objectionCustomer" placeholder="Ex: Sarah" />
+            </label>
+
+            <label>
+              Objection Type
+              <select id="objectionType">
+                <option value="think">I need to think about it</option>
+                <option value="payment">The payment is too high</option>
+                <option value="trade">I’m not happy with my trade value</option>
+                <option value="spouse">I need to talk to my spouse</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              Exact words they said
+              <textarea id="objectionExact" rows="3" placeholder="Type the customer’s words here..."></textarea>
+            </label>
+
+            <button type="submit">Generate Objection Response</button>
+          </form>
+
+          <div class="output-card" id="objectionOutputWrapper">
+            <div class="output-header">
+              <span>Suggested Response</span>
+              <button type="button" class="secondary-btn" data-copy-target="objectionOutput">
+                Copy
+              </button>
+            </div>
+            <textarea id="objectionOutput" readonly rows="7"></textarea>
+          </div>
+        </div>
+
+        <!-- PAYMENT HELPER PANEL -->
+        <div id="panel-payment" class="tool-panel">
+          <h2>Payment Helper</h2>
+          <p>Quickly play with numbers and find a payment that feels right.</p>
+
+          <form id="paymentForm">
+            <div class="grid-2">
+              <label>
+                Vehicle Price ($)
+                <input type="number" id="price" min="0" step="100" placeholder="25000" />
+              </label>
+
+              <label>
+                Down Payment ($)
+                <input type="number" id="downPayment" min="0" step="100" placeholder="2000" />
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label>
+                Term (months)
+                <input type="number" id="term" min="12" step="12" placeholder="72" />
+              </label>
+
+              <label>
+                APR (%)
+                <input type="number" id="apr" min="0" step="0.1" placeholder="7.9" />
+              </label>
+            </div>
+
+            <button type="submit">Calculate Estimated Payment</button>
+          </form>
+
+          <div class="output-card">
+            <div class="output-header">
+              <span>Estimate</span>
+            </div>
+            <div id="paymentSummary" class="metrics-row">
+              <div class="metric-pill">
+                <span class="metric-label">Estimated Payment</span>
+                <span class="metric-value" id="paymentResult">$0 / mo</span>
+              </div>
+              <div class="metric-pill">
+                <span class="metric-label">Amount Financed</span>
+                <span class="metric-value" id="amountFinanced">$0</span>
+              </div>
+              <div class="metric-pill">
+                <span class="metric-label">Total of Payments</span>
+                <span class="metric-value" id="totalPaid">$0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUSTOM MESSAGE PANEL -->
+        <div id="panel-message" class="tool-panel">
+          <h2>Custom Message Generator</h2>
+          <p>Create professional, high-converting messages for your leads.</p>
+
+          <form id="messageForm">
+            <div class="grid-2">
+              <label>
+                Customer Name
+                <input type="text" id="msgCustomer" placeholder="Ex: Chris" />
+              </label>
+
+              <label>
+                Platform
+                <select id="msgPlatform">
+                  <option value="text">Text message</option>
+                  <option value="facebook">Facebook Messenger</option>
+                  <option value="email">Email</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Vehicle Details
+              <input
+                type="text"
+                id="msgVehicle"
+                placeholder="Ex: 2022 Chevy Equinox LT, low miles, remote start"
+              />
+            </label>
+
+            <label>
+              Goal of the message
+              <select id="msgGoal">
+                <option value="appointment">Get them to book an appointment</option>
+                <option value="trade">Ask for trade info</option>
+                <option value="followup">Follow up after visit</option>
+                <option value="credit">Reassure about challenged credit</option>
+              </select>
+            </label>
+
+            <label>
+              Extra notes (tone, situation, etc.)
+              <textarea id="msgNotes" rows="3" placeholder="Ex: They were worried about payments, very busy schedule..."></textarea>
+            </label>
+
+            <button type="submit">Generate Message</button>
+          </form>
+
+          <div class="output-card" id="messageOutputWrapper">
+            <div class="output-header">
+              <span>Suggested Message</span>
+              <button type="button" class="secondary-btn" data-copy-target="messageOutput">
+                Copy
+              </button>
+            </div>
+            <textarea id="messageOutput" readonly rows="8"></textarea>
+          </div>
+        </div>
+
+        <!-- INCOME BUILDER PANEL -->
+        <div id="panel-income" class="tool-panel">
+          <h2>Income Builder</h2>
+          <p>Reverse-engineer your income goal into daily actions.</p>
+
+          <form id="incomeForm">
+            <div class="grid-2">
+              <label>
+                Monthly Income Goal ($)
+                <input type="number" id="incomeGoal" min="0" step="500" placeholder="8000" />
+              </label>
+
+              <label>
+                Avg Commission per Deal ($)
+                <input type="number" id="commissionPerDeal" min="0" step="50" placeholder="500" />
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label>
+                Working Days / Month
+                <input type="number" id="workDays" min="1" max="31" placeholder="22" />
+              </label>
+
+              <label>
+                Show-to-Sale Conversion (%)
+                <input type="number" id="closeRate" min="1" max="100" placeholder="25" />
+              </label>
+            </div>
+
+            <button type="submit">Calculate Activity Targets</button>
+          </form>
+
+          <div class="output-card">
+            <div class="output-header">
+              <span>Targets</span>
+            </div>
+            <div class="metrics-column">
+              <div class="metric-line">
+                <span class="metric-label">Deals needed / month</span>
+                <span class="metric-value" id="dealsPerMonth">0</span>
+              </div>
+              <div class="metric-line">
+                <span class="metric-label">Deals needed / day</span>
+                <span class="metric-value" id="dealsPerDay">0</span>
+              </div>
+              <div class="metric-line">
+                <span class="metric-label">Appointments needed / day</span>
+                <span class="metric-value" id="appointmentsPerDay">0</span>
+              </div>
+              <div class="metric-line">
+                <span class="metric-label">Shows needed / day</span>
+                <span class="metric-value" id="showsPerDay">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
