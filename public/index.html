@@ -3,52 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <title>Lot Rocket Toolkit</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-shell">
+    <!-- HEADER -->
     <header class="app-header">
-      <div class="brand">
-        <div class="brand-mark">LR</div>
+      <div class="brand-pill">
+        <div class="brand-avatar">LR</div>
         <div class="brand-text">
-          <h1>Lot Rocket Toolkit</h1>
-          <p>Turn more leads into “I’ll take it”.</p>
+          <div class="brand-title">LOT ROCKET TOOLKIT</div>
+          <div class="brand-subtitle">Turn more leads into “I’ll take it”.</div>
         </div>
       </div>
     </header>
 
+    <!-- MAIN LAYOUT -->
     <main class="app-main">
-      <!-- LEFT: TOOL LAUNCHERS -->
-      <section class="launcher-panel">
-        <h2 class="section-title">Tools</h2>
+      <!-- LEFT: TOOL LIST -->
+      <section class="tool-list">
+        <h2 class="section-title">TOOLS</h2>
         <p class="section-subtitle">Tap a tool to open it on the right.</p>
 
-        <div class="launcher-grid">
-          <button id="objectionLauncher" class="launcher-btn">
-            <span class="launcher-label">Objection Coach</span>
-            <span class="launcher-tag">Turn “I need to think about it” into “Let’s do it.”</span>
-          </button>
+        <button id="objectionLauncher" class="tool-card">
+          <div class="tool-card-title">Objection Coach</div>
+          <div class="tool-card-subtitle">
+            Turn “I need to think about it” into “Let’s do it.”
+          </div>
+        </button>
 
-          <button id="paymentLauncher" class="launcher-btn">
-            <span class="launcher-label">Payment Helper</span>
-            <span class="launcher-tag">Structure affordable, comfortable payments.</span>
-          </button>
+        <button id="paymentLauncher" class="tool-card">
+          <div class="tool-card-title">Payment Helper</div>
+          <div class="tool-card-subtitle">
+            Structure affordable, comfortable payments.
+          </div>
+        </button>
 
-          <button id="messageLauncher" class="launcher-btn">
-            <span class="launcher-label">Custom Message</span>
-            <span class="launcher-tag">High-converting texts, DMs & follow-ups.</span>
-          </button>
+        <button id="messageLauncher" class="tool-card">
+          <div class="tool-card-title">Custom Message</div>
+          <div class="tool-card-subtitle">
+            High-converting texts, DMs &amp; follow-ups.
+          </div>
+        </button>
 
-          <button id="incomeLauncher" class="launcher-btn">
-            <span class="launcher-label">Income Builder</span>
-            <span class="launcher-tag">Hit your daily, weekly, monthly income goals.</span>
-          </button>
-        </div>
+        <button id="incomeLauncher" class="tool-card">
+          <div class="tool-card-title">Income Builder</div>
+          <div class="tool-card-subtitle">
+            Hit your daily, weekly, monthly income goals.
+          </div>
+        </button>
       </section>
 
       <!-- RIGHT: WORKSPACE -->
-      <section class="workspace-panel">
+      <section class="workspace">
+        <!-- Placeholder -->
         <div id="workspacePlaceholder" class="workspace-placeholder">
           <h2>Pick a tool to get started</h2>
           <p>Your selected tool will open here.</p>
@@ -57,212 +66,221 @@
         <!-- OBJECTION COACH PANEL -->
         <div id="panel-objection" class="tool-panel">
           <h2>Objection Coach</h2>
-          <p>Capture the objection and get a confident, professional response.</p>
+          <p class="panel-subtitle">
+            Paste the objection, pick a type, and get a word track you can use right now.
+          </p>
 
-          <form id="objectionForm">
-            <label>
-              Customer Name (optional)
-              <input type="text" id="objectionCustomer" placeholder="Ex: Sarah" />
-            </label>
+          <form id="objectionForm" class="panel-form">
+            <div class="field-row">
+              <label for="objectionCustomer">Customer name (optional)</label>
+              <input id="objectionCustomer" type="text" placeholder="e.g. Sarah" />
+            </div>
 
-            <label>
-              Objection Type
+            <div class="field-row">
+              <label for="objectionType">Objection type</label>
               <select id="objectionType">
                 <option value="think">I need to think about it</option>
-                <option value="payment">The payment is too high</option>
-                <option value="trade">I’m not happy with my trade value</option>
-                <option value="spouse">I need to talk to my spouse</option>
-                <option value="other">Other</option>
+                <option value="payment">Payment is too high</option>
+                <option value="trade">Trade value</option>
+                <option value="spouse">Need to talk to spouse</option>
+                <option value="other">Something else</option>
               </select>
-            </label>
+            </div>
 
-            <label>
-              Exact words they said
-              <textarea id="objectionExact" rows="3" placeholder="Type the customer’s words here..."></textarea>
-            </label>
+            <div class="field-row">
+              <label for="objectionExact">Exact objection (optional)</label>
+              <textarea id="objectionExact" rows="3" placeholder="Type what they said word-for-word…"></textarea>
+            </div>
 
-            <button type="submit">Generate Objection Response</button>
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Build word track</button>
+            </div>
           </form>
 
-          <div class="output-card" id="objectionOutputWrapper">
+          <div class="output-block">
             <div class="output-header">
-              <span>Suggested Response</span>
-              <button type="button" class="secondary-btn" data-copy-target="objectionOutput">
-                Copy
+              <span>Suggested response</span>
+              <button
+                class="secondary-btn"
+                type="button"
+                data-copy-target="objectionOutput"
+              >
+                Copy text
               </button>
             </div>
-            <textarea id="objectionOutput" readonly rows="7"></textarea>
+            <textarea
+              id="objectionOutput"
+              class="output-textarea"
+              rows="8"
+              placeholder="Your word track will appear here…"
+            ></textarea>
           </div>
         </div>
 
         <!-- PAYMENT HELPER PANEL -->
         <div id="panel-payment" class="tool-panel">
           <h2>Payment Helper</h2>
-          <p>Quickly play with numbers and find a payment that feels right.</p>
+          <p class="panel-subtitle">
+            Quick payment structure you can share with a customer on the spot.
+          </p>
 
-          <form id="paymentForm">
-            <div class="grid-2">
-              <label>
-                Vehicle Price ($)
-                <input type="number" id="price" min="0" step="100" placeholder="25000" />
-              </label>
-
-              <label>
-                Down Payment ($)
-                <input type="number" id="downPayment" min="0" step="100" placeholder="2000" />
-              </label>
+          <form id="paymentForm" class="panel-form">
+            <div class="field-grid">
+              <div class="field-row">
+                <label for="price">Vehicle price</label>
+                <input id="price" type="number" min="0" step="100" placeholder="e.g. 35000" />
+              </div>
+              <div class="field-row">
+                <label for="downPayment">Down payment</label>
+                <input id="downPayment" type="number" min="0" step="100" placeholder="e.g. 2000" />
+              </div>
+              <div class="field-row">
+                <label for="term">Term (months)</label>
+                <input id="term" type="number" min="12" step="12" placeholder="e.g. 72" />
+              </div>
+              <div class="field-row">
+                <label for="apr">APR %</label>
+                <input id="apr" type="number" min="0" step="0.1" placeholder="e.g. 7.5" />
+              </div>
             </div>
 
-            <div class="grid-2">
-              <label>
-                Term (months)
-                <input type="number" id="term" min="12" step="12" placeholder="72" />
-              </label>
-
-              <label>
-                APR (%)
-                <input type="number" id="apr" min="0" step="0.1" placeholder="7.9" />
-              </label>
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Calculate payment</button>
             </div>
-
-            <button type="submit">Calculate Estimated Payment</button>
           </form>
 
-          <div class="output-card">
-            <div class="output-header">
-              <span>Estimate</span>
+          <div class="payment-results">
+            <div class="result-card">
+              <span class="result-label">Estimated payment</span>
+              <span id="paymentResult" class="result-value">$0.00 / mo</span>
             </div>
-            <div id="paymentSummary" class="metrics-row">
-              <div class="metric-pill">
-                <span class="metric-label">Estimated Payment</span>
-                <span class="metric-value" id="paymentResult">$0 / mo</span>
-              </div>
-              <div class="metric-pill">
-                <span class="metric-label">Amount Financed</span>
-                <span class="metric-value" id="amountFinanced">$0</span>
-              </div>
-              <div class="metric-pill">
-                <span class="metric-label">Total of Payments</span>
-                <span class="metric-value" id="totalPaid">$0</span>
-              </div>
+            <div class="result-card">
+              <span class="result-label">Amount financed</span>
+              <span id="amountFinanced" class="result-value">$0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Total paid over term</span>
+              <span id="totalPaid" class="result-value">$0.00</span>
             </div>
           </div>
         </div>
 
         <!-- CUSTOM MESSAGE PANEL -->
         <div id="panel-message" class="tool-panel">
-          <h2>Custom Message Generator</h2>
-          <p>Create professional, high-converting messages for your leads.</p>
+          <h2>Custom Message</h2>
+          <p class="panel-subtitle">
+            Build a clean, high-converting text / DM you can send in seconds.
+          </p>
 
-          <form id="messageForm">
-            <div class="grid-2">
-              <label>
-                Customer Name
-                <input type="text" id="msgCustomer" placeholder="Ex: Chris" />
-              </label>
-
-              <label>
-                Platform
+          <form id="messageForm" class="panel-form">
+            <div class="field-grid">
+              <div class="field-row">
+                <label for="msgCustomer">Customer name</label>
+                <input id="msgCustomer" type="text" placeholder="e.g. Mike" />
+              </div>
+              <div class="field-row">
+                <label for="msgPlatform">Platform</label>
                 <select id="msgPlatform">
-                  <option value="text">Text message</option>
-                  <option value="facebook">Facebook Messenger</option>
+                  <option value="sms">SMS / Text</option>
+                  <option value="messenger">Messenger / DM</option>
                   <option value="email">Email</option>
                 </select>
-              </label>
+              </div>
             </div>
 
-            <label>
-              Vehicle Details
-              <input
-                type="text"
-                id="msgVehicle"
-                placeholder="Ex: 2022 Chevy Equinox LT, low miles, remote start"
-              />
-            </label>
+            <div class="field-row">
+              <label for="msgVehicle">Vehicle / offer</label>
+              <input id="msgVehicle" type="text" placeholder="e.g. 2021 Silverado LTZ" />
+            </div>
 
-            <label>
-              Goal of the message
+            <div class="field-row">
+              <label for="msgGoal">Main goal</label>
               <select id="msgGoal">
-                <option value="appointment">Get them to book an appointment</option>
-                <option value="trade">Ask for trade info</option>
-                <option value="followup">Follow up after visit</option>
-                <option value="credit">Reassure about challenged credit</option>
+                <option value="appointment">Set appointment</option>
+                <option value="trade">Get trade info</option>
+                <option value="followup">General follow-up</option>
+                <option value="credit">Credit help / approval gameplan</option>
               </select>
-            </label>
+            </div>
 
-            <label>
-              Extra notes (tone, situation, etc.)
-              <textarea id="msgNotes" rows="3" placeholder="Ex: They were worried about payments, very busy schedule..."></textarea>
-            </label>
+            <div class="field-row">
+              <label for="msgNotes">Any extra notes (optional)</label>
+              <textarea id="msgNotes" rows="3" placeholder="Context, hot buttons, situation…"></textarea>
+            </div>
 
-            <button type="submit">Generate Message</button>
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Build message</button>
+            </div>
           </form>
 
-          <div class="output-card" id="messageOutputWrapper">
+          <div class="output-block">
             <div class="output-header">
-              <span>Suggested Message</span>
-              <button type="button" class="secondary-btn" data-copy-target="messageOutput">
-                Copy
+              <span>Message to send</span>
+              <button
+                class="secondary-btn"
+                type="button"
+                data-copy-target="messageOutput"
+              >
+                Copy text
               </button>
             </div>
-            <textarea id="messageOutput" readonly rows="8"></textarea>
+            <textarea
+              id="messageOutput"
+              class="output-textarea"
+              rows="8"
+              placeholder="Your message will appear here…"
+            ></textarea>
           </div>
         </div>
 
         <!-- INCOME BUILDER PANEL -->
         <div id="panel-income" class="tool-panel">
           <h2>Income Builder</h2>
-          <p>Reverse-engineer your income goal into daily actions.</p>
+          <p class="panel-subtitle">
+            Reverse-engineer your income goal into daily activity targets.
+          </p>
 
-          <form id="incomeForm">
-            <div class="grid-2">
-              <label>
-                Monthly Income Goal ($)
-                <input type="number" id="incomeGoal" min="0" step="500" placeholder="8000" />
-              </label>
-
-              <label>
-                Avg Commission per Deal ($)
-                <input type="number" id="commissionPerDeal" min="0" step="50" placeholder="500" />
-              </label>
+          <form id="incomeForm" class="panel-form">
+            <div class="field-grid">
+              <div class="field-row">
+                <label for="incomeGoal">Monthly income goal ($)</label>
+                <input id="incomeGoal" type="number" min="0" step="500" placeholder="e.g. 10000" />
+              </div>
+              <div class="field-row">
+                <label for="commissionPerDeal">Average per deal ($)</label>
+                <input id="commissionPerDeal" type="number" min="0" step="50" placeholder="e.g. 500" />
+              </div>
+              <div class="field-row">
+                <label for="workDays">Work days per month</label>
+                <input id="workDays" type="number" min="10" max="31" step="1" placeholder="e.g. 24" />
+              </div>
+              <div class="field-row">
+                <label for="closeRate">Close rate %</label>
+                <input id="closeRate" type="number" min="1" max="100" step="1" placeholder="e.g. 20" />
+              </div>
             </div>
 
-            <div class="grid-2">
-              <label>
-                Working Days / Month
-                <input type="number" id="workDays" min="1" max="31" placeholder="22" />
-              </label>
-
-              <label>
-                Show-to-Sale Conversion (%)
-                <input type="number" id="closeRate" min="1" max="100" placeholder="25" />
-              </label>
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Calculate plan</button>
             </div>
-
-            <button type="submit">Calculate Activity Targets</button>
           </form>
 
-          <div class="output-card">
-            <div class="output-header">
-              <span>Targets</span>
+          <div class="income-results">
+            <div class="result-card">
+              <span class="result-label">Deals per month</span>
+              <span id="dealsPerMonth" class="result-value">0.0</span>
             </div>
-            <div class="metrics-column">
-              <div class="metric-line">
-                <span class="metric-label">Deals needed / month</span>
-                <span class="metric-value" id="dealsPerMonth">0</span>
-              </div>
-              <div class="metric-line">
-                <span class="metric-label">Deals needed / day</span>
-                <span class="metric-value" id="dealsPerDay">0</span>
-              </div>
-              <div class="metric-line">
-                <span class="metric-label">Appointments needed / day</span>
-                <span class="metric-value" id="appointmentsPerDay">0</span>
-              </div>
-              <div class="metric-line">
-                <span class="metric-label">Shows needed / day</span>
-                <span class="metric-value" id="showsPerDay">0</span>
-              </div>
+            <div class="result-card">
+              <span class="result-label">Deals per day</span>
+              <span id="dealsPerDay" class="result-value">0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Shows per day</span>
+              <span id="showsPerDay" class="result-value">0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Appointments per day</span>
+              <span id="appointmentsPerDay" class="result-value">0.00</span>
             </div>
           </div>
         </div>
