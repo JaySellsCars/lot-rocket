@@ -1,4 +1,4 @@
-// app.js – Lot Rocket Social Media Kit with Objection Coach + Design Lab
+// app.js – Lot Rocket backend (APIs only, frontend served from /public/index.html)
 
 require('dotenv').config();
 const express = require('express');
@@ -6,6 +6,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const OpenAI = require('openai');
 const cheerio = require('cheerio');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,6 +18,9 @@ const client = new OpenAI({
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static frontend from /public
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------------- Helper: scrape vehicle photos ----------------
 
@@ -421,21 +425,10 @@ app.post('/api/video-from-photos', async (req, res) => {
   }
 });
 
-// ---------------- Front-end HTML ----------------
+// --------------- Serve frontend -----------------
 
 app.get('/', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <title>Lot Rocket · Social Media Kit</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- (all the CSS and HTML from your original page goes here – keeping exactly what you had before, including the big <style> and <script> blocks) -->
-</head>
-<body>
-  <!-- FULL original Social Media Kit HTML, same as you pasted before -->
-</body>
-</html>`);
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ---------------- Start server ----------------
