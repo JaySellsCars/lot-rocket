@@ -1,4 +1,4 @@
-// public/app.js – frontend logic for Lot Rocket
+// public/app.js – frontend logic for Lot Rocket Toolkit
 
 document.addEventListener("DOMContentLoaded", () => {
   /* ===============================
@@ -138,4 +138,147 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         const factor =
           (monthlyRate * Math.pow(1 + monthlyRate, term)) /
-          (Math.pow(1 + monthlyRat
+          (Math.pow(1 + monthlyRate, term) - 1);
+        payment = amountFinanced * factor;
+      }
+
+      const totalPaid = payment * term;
+
+      paymentResult.textContent = `$${payment.toFixed(2)} / mo`;
+      amountFinancedEl.textContent = `$${amountFinanced.toFixed(2)}`;
+      totalPaidEl.textContent = `$${totalPaid.toFixed(2)}`;
+    });
+  }
+
+  /* ===============================
+   *  CUSTOM MESSAGE GENERATOR
+   * =============================== */
+
+  const messageForm = document.getElementById("messageForm");
+  const messageOutput = document.getElementById("messageOutput");
+
+  if (messageForm && messageOutput) {
+    messageForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name =
+        document.getElementById("msgCustomer").value.trim() || "there";
+      const platform = document.getElementById("msgPlatform").value;
+      const vehicle = document.getElementById("msgVehicle").value.trim();
+      const goal = document.getElementById("msgGoal").value;
+      const notes = document.getElementById("msgNotes").value.trim();
+
+      const greeting = platform === "email" ? `Hi ${name},` : `Hey ${name},`;
+
+      const vehicleLine = vehicle
+        ? `I’ve got that ${vehicle} ready for you and it looks even better in person.`
+        : `I’ve got a few options here that match what you told me you’re looking for.`;
+
+      let goalLine = "";
+
+      switch (goal) {
+        case "appointment":
+          goalLine =
+            "I’ve got some time available later today and tomorrow. What works better for you – after work today or sometime tomorrow?";
+          break;
+        case "trade":
+          goalLine =
+            "If you can send me a couple pictures and the miles on your current vehicle, I can get you a strong trade estimate before you even show up.";
+          break;
+        case "followup":
+          goalLine =
+            "I just wanted to thank you again for stopping in and make sure you didn’t have any unanswered questions holding you back.";
+          break;
+        case "credit":
+          goalLine =
+            "We work with a lot of people in similar credit situations every single day. The biggest win is usually just getting a real plan in place.";
+          break;
+        default:
+          goalLine = "";
+      }
+
+      const notesLine = notes
+        ? `\n\nQuick note based on what you shared: ${notes}`
+        : "";
+
+      const closing =
+        "\n\nShoot me a quick reply here and I’ll take care of the rest for you.\n\n– Jay";
+
+      messageOutput.value = `${greeting}\n\n${vehicleLine}\n${goalLine}${notesLine}${closing}`;
+    });
+  }
+
+  /* ===============================
+   *  INCOME BUILDER
+   * =============================== */
+
+  const incomeForm = document.getElementById("incomeForm");
+  const dealsPerMonthEl = document.getElementById("dealsPerMonth");
+  const dealsPerDayEl = document.getElementById("dealsPerDay");
+  const appointmentsPerDayEl = document.getElementById("appointmentsPerDay");
+  const showsPerDayEl = document.getElementById("showsPerDay");
+
+  if (
+    incomeForm &&
+    dealsPerMonthEl &&
+    dealsPerDayEl &&
+    appointmentsPerDayEl &&
+    showsPerDayEl
+  ) {
+    incomeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const incomeGoal =
+        Number(document.getElementById("incomeGoal").value) || 0;
+      const commissionPerDeal =
+        Number(document.getElementById("commissionPerDeal").value) || 0;
+      const workDays = Number(document.getElementById("workDays").value) || 0;
+      const closeRate =
+        Number(document.getElementById("closeRate").value) || 0;
+
+      if (!incomeGoal || !commissionPerDeal || !workDays || !closeRate) {
+        dealsPerMonthEl.textContent = "0";
+        dealsPerDayEl.textContent = "0";
+        appointmentsPerDayEl.textContent = "0";
+        showsPerDayEl.textContent = "0";
+        return;
+      }
+
+      const dealsPerMonth = incomeGoal / commissionPerDeal;
+      const dealsPerDay = dealsPerMonth / workDays;
+
+      const closeFraction = closeRate / 100;
+      const showsPerDay = dealsPerDay / (closeFraction || 1);
+      const appointmentsPerDay = showsPerDay; // tweak later if you want a diff ratio
+
+      dealsPerMonthEl.textContent = dealsPerMonth.toFixed(1);
+      dealsPerDayEl.textContent = dealsPerDay.toFixed(2);
+      appointmentsPerDayEl.textContent = appointmentsPerDay.toFixed(2);
+      showsPerDayEl.textContent = showsPerDay.toFixed(2);
+    });
+  }
+
+  /* ===============================
+   *  COPY BUTTONS (shared)
+   * =============================== */
+
+  document
+    .querySelectorAll(".secondary-btn[data-copy-target]")
+    .forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-copy-target");
+        const el = document.getElementById(targetId);
+        if (!el) return;
+
+        el.select();
+        el.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+
+        const original = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => {
+          btn.textContent = original;
+        }, 1500);
+      });
+    });
+});
