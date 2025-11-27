@@ -1,284 +1,542 @@
-// public/app.js – frontend logic for Lot Rocket Toolkit
+// app.js – Lot Rocket backend (APIs only, frontend served from /public/index.html)
 
-document.addEventListener("DOMContentLoaded", () => {
-  /* ===============================
-   *  PANEL SWITCHING (LEFT BUTTONS)
-   * =============================== */
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const OpenAI = require('openai');
+const cheerio = require('cheerio');
+const path = require('path');
 
-  const objectionLauncher = document.getElementById("objectionLauncher");
-  const paymentLauncher = document.getElementById("paymentLauncher");
-  const messageLauncher = document.getElementById("messageLauncher");
-  const incomeLauncher = document.getElementById("incomeLauncher");
+const app = express();
+const port = process.env.PORT || 3000;
 
-  const panels = {
-    objection: document.getElementById("panel-objection"),
-    payment: document.getElementById("panel-payment"),
-    message: document.getElementById("panel-message"),
-    income: document.getElementById("panel-income"),
-  };
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  const placeholder = document.getElementById("workspacePlaceholder");
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 
-  function showPanel(key) {
-    if (placeholder) placeholder.style.display = "none";
+// Serve static frontend from /public
+app.use(express.static(path.join(__dirname, 'public')));
 
-    Object.values(panels).forEach((panel) => {
-      if (panel) panel.classList.remove("is-active");
-    });
+// ---------------- Helper: scrape vehicle photos ----------------
 
-    const active = panels[key];
-    if (active) active.classList.add("is-active");
-  }
+async function scrapeVehiclePhotos(pageUrl) {
+  try {
+    const res = await fetch(pageUrl); // Node 18+ has global fetch (Render uses modern Node)
+    if (!res.ok) {
+      console.error('Failed to fetch page for photos:', res.status);
+      return [];
+    }
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const urls = new Set();
 
-  if (objectionLauncher) {
-    objectionLauncher.addEventListener("click", () => showPanel("objection"));
-  }
-  if (paymentLauncher) {
-    paymentLauncher.addEventListener("click", () => showPanel("payment"));
-  }
-  if (messageLauncher) {
-    messageLauncher.addEventListener("click", () => showPanel("message"));
-  }
-  if (incomeLauncher) {
-    incomeLauncher.addEventListener("click", () => showPanel("income"));
-  }
+    const base = new URL(pageUrl);
 
-  /* ===============================
-   *  OBJECTION COACH
-   * =============================== */
+    $('img').each((i, el) => {
+      let src = $(el).attr('data-src') || $(el).attr('src');
+      if (!src) return;
 
-  const objectionForm = document.getElementById("objectionForm");
-  const objectionOutput = document.getElementById("objectionOutput");
-
-  if (objectionForm && objectionOutput) {
-    objectionForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const name =
-        document.getElementById("objectionCustomer").value.trim() || "you";
-      const type = document.getElementById("objectionType").value;
-      const exact = document.getElementById("objectionExact").value.trim();
-
-      const opener =
-        "I totally understand where you're coming from, and I appreciate you being honest with me.";
-
-      let body = "";
-      let close =
-        `The last thing I want is for ${name} to feel pressured. ` +
-        "If the numbers and the vehicle make sense, the only thing left is for you to feel good about the decision. " +
-        "What questions can I clear up right now so you can feel confident moving forward?";
-
-      switch (type) {
-        case "think":
-          body =
-            "Usually when someone tells me they need to “think about it”, it means there’s one or two specific things that aren’t perfectly clear yet – " +
-            "whether it’s the payment, the vehicle itself, or timing. If we can put our heads together for a minute, " +
-            "we can usually clear those up so you can make the best decision tonight instead of taking this home as extra stress.";
-          break;
-        case "payment":
-          body =
-            "Let’s focus on what feels comfortable instead of what feels tight. We can work backwards from a monthly payment that fits your budget " +
-            "and then structure the term and down payment around that. My job is not to squeeze you into a payment – it’s to make the payment fit you.";
-          break;
-        case "trade":
-          body =
-            "I hear you on the trade value. No one wants to feel like they’re giving their vehicle away. " +
-            "What I can do is walk you through exactly how we arrived at that number – current market, condition, and similar vehicles sold – " +
-            "and if we missed anything on your vehicle’s condition or equipment, we’ll correct it.";
-          break;
-        case "spouse":
-          body =
-            "That makes total sense – this is a big decision and it affects both of you. " +
-            "What we can do is make sure all the numbers, payments, and details are clear and in writing, so when you talk with your spouse, " +
-            "you’re not trying to explain it from memory. If you’d like, we can even give them a quick call together.";
-          break;
-        default:
-          body =
-            "Thank you for sharing that. Let’s slow it down for a second and make sure we dial in what’s most important to you – " +
-            "whether that’s payment, timing, or the vehicle itself – so you don’t feel like you’re settling on anything.";
+      if (src.startsWith('//')) {
+        src = 'https:' + src;
+      } else if (src.startsWith('/')) {
+        src = base.origin + src;
+      } else if (!src.startsWith('http')) {
+        src = base.origin + (src.startsWith('/') ? src : '/' + src);
       }
 
-      const quote = exact ? `\n\nThey said: "${exact}"\n` : "";
-
-      objectionOutput.value = `${opener}\n\n${quote}${body}\n\n${close}`;
-    });
-  }
-
-  /* ===============================
-   *  PAYMENT HELPER
-   * =============================== */
-
-  const paymentForm = document.getElementById("paymentForm");
-  const paymentResult = document.getElementById("paymentResult");
-  const amountFinancedEl = document.getElementById("amountFinanced");
-  const totalPaidEl = document.getElementById("totalPaid");
-
-  if (paymentForm && paymentResult && amountFinancedEl && totalPaidEl) {
-    paymentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const price = Number(document.getElementById("price").value) || 0;
-      const down = Number(document.getElementById("downPayment").value) || 0;
-      const term = Number(document.getElementById("term").value) || 0;
-      const apr = Number(document.getElementById("apr").value) || 0;
-
-      if (!price || !term) {
-        paymentResult.textContent = "Enter price and term.";
-        amountFinancedEl.textContent = "$0";
-        totalPaidEl.textContent = "$0";
+      const lower = src.toLowerCase();
+      if (
+        lower.includes('logo') ||
+        lower.includes('icon') ||
+        lower.includes('badge') ||
+        lower.includes('spinner') ||
+        lower.includes('placeholder')
+      ) {
         return;
       }
 
-      const amountFinanced = Math.max(price - down, 0);
-      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
-
-      let payment = 0;
-      if (monthlyRate === 0) {
-        payment = amountFinanced / term;
-      } else {
-        const factor =
-          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
-          (Math.pow(1 + monthlyRate, term) - 1);
-        payment = amountFinanced * factor;
-      }
-
-      const totalPaid = payment * term;
-
-      paymentResult.textContent = `$${payment.toFixed(2)} / mo`;
-      amountFinancedEl.textContent = `$${amountFinanced.toFixed(2)}`;
-      totalPaidEl.textContent = `$${totalPaid.toFixed(2)}`;
+      urls.add(src);
     });
+
+    return Array.from(urls).slice(0, 40);
+  } catch (err) {
+    console.error('Error scraping photos:', err);
+    return [];
   }
+}
 
-  /* ===============================
-   *  CUSTOM MESSAGE GENERATOR
-   * =============================== */
+// ---------------- Helper: prompts ----------------
 
-  const messageForm = document.getElementById("messageForm");
-  const messageOutput = document.getElementById("messageOutput");
+function buildSocialKitPrompt({ label, price, url }) {
+  return `
+You are helping a car salesperson create a social media content kit for ONE used or new vehicle.
 
-  if (messageForm && messageOutput) {
-    messageForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+Vehicle label (how we’ll refer to it in the copy):
+"${label}"
 
-      const name =
-        document.getElementById("msgCustomer").value.trim() || "there";
-      const platform = document.getElementById("msgPlatform").value;
-      const vehicle = document.getElementById("msgVehicle").value.trim();
-      const goal = document.getElementById("msgGoal").value;
-      const notes = document.getElementById("msgNotes").value.trim();
+Pricing / deal info as a short phrase:
+"${price || 'Message for current pricing'}"
 
-      const greeting = platform === "email" ? `Hi ${name},` : `Hey ${name},`;
+Dealer vehicle URL:
+${url}
 
-      const vehicleLine = vehicle
-        ? `I’ve got that ${vehicle} ready for you and it looks even better in person.`
-        : `I’ve got a few options here that match what you told me you’re looking for.`;
+Goal:
+- Copy-and-paste ready posts that look great on each platform.
+- Strong hooks, scroll-stopping, modern, with emojis where they fit.
+- Talk like a confident, honest salesperson – not a stiff dealership ad.
 
-      let goalLine = "";
+Return a JSON object ONLY with these exact keys:
+{
+  "facebook": "...",
+  "instagram": "...",
+  "tiktok": "...",
+  "linkedin": "...",
+  "twitter": "...",
+  "textBlurb": "...",
+  "marketplace": "...",
+  "hashtags": "...",
+  "videoScript": "...",
+  "shotPlan": "..."
+}
 
-      switch (goal) {
-        case "appointment":
-          goalLine =
-            "I’ve got some time available later today and tomorrow. What works better for you – after work today or sometime tomorrow?";
-          break;
-        case "trade":
-          goalLine =
-            "If you can send me a couple pictures and the miles on your current vehicle, I can get you a strong trade estimate before you even show up.";
-          break;
-        case "followup":
-          goalLine =
-            "I just wanted to thank you again for stopping in and make sure you didn’t have any unanswered questions holding you back.";
-          break;
-        case "credit":
-          goalLine =
-            "We work with a lot of people in similar credit situations every single day. The biggest win is usually just getting a real plan in place.";
-          break;
-        default:
-          goalLine = "";
-      }
+IMPORTANT:
+- Keep everything under ~900 characters per field.
+- No hashtags inside the main posts (except twitter). Hashtags go in "hashtags".
+- No backticks, no code blocks, no explanations. Only the raw JSON object.
 
-      const notesLine = notes
-        ? `\n\nQuick note based on what you shared: ${notes}`
-        : "";
+Platform styles:
+- facebook: 
+  * Big hook line with emojis (ALL CAPS is okay on first line).
+  * 1–2 short paragraphs + 3–6 bullet points with emojis (✅, 🔥, 🚗, etc.).
+  * Clear CTA at the end.
+- instagram:
+  * Similar to facebook but slightly more vibe, fewer bullets.
+  * Emojis welcome.
+- tiktok:
+  * Short caption / voiceover text. High-energy, direct, 3–8 lines.
+- linkedin:
+  * Slightly more professional, but still human and friendly.
+- twitter:
+  * 1–3 concise lines plus a few inline hashtags.
+- textBlurb:
+  * SMS / DM style, 1–3 lines max. No hashtags.
+- marketplace:
+  * Facebook Marketplace description. No emojis at the very top, but you can use them later.
+  * Friendly, clear, focused on benefits + CTA to message for more info.
+- hashtags:
+  * One single line. 8–15 hashtags. Mostly lowercase, simple words, separated by spaces.
+- videoScript:
+  * 30–40 second script they can read on camera.
+  * 4–8 short paragraphs / line breaks.
+  * Clear CTA at the end (DM "INFO", message me, schedule test drive).
+- shotPlan:
+  * 5–10 bullet points describing shots for Reels / TikTok using dealer photos (exterior, interior, features, walk-around, closing shot, etc.).`;
+}
 
-      const closing =
-        "\n\nShoot me a quick reply here and I’ll take care of the rest for you.\n\n– Jay";
+function buildSinglePostPrompt({ platform, label, price, url }) {
+  return `
+You are writing a fresh, scroll-stopping social media post for a car salesperson.
 
-      messageOutput.value = `${greeting}\n\n${vehicleLine}\n${goalLine}${notesLine}${closing}`;
+Platform: ${platform}
+Vehicle: "${label}"
+Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Vehicle URL: ${url}
+
+Write ONLY the post body text for this platform.
+
+Tone:
+- Confident, honest car salesperson.
+- Speaks like a real human, not a corporate script.
+- Strong hooks, emojis allowed (especially for facebook / instagram / tiktok).
+- No cringe or “hard sell”, but high energy and clear CTA.
+
+Length:
+- facebook, instagram, linkedin, marketplace: 3–10 short lines.
+- tiktok: 3–8 high-energy lines.
+- twitter: 1–3 short lines.
+- textBlurb: 1–3 very short lines (SMS style).
+- hashtags: single line of hashtags only.
+
+Rules:
+- Do NOT include the word "hashtags" anywhere.
+- For "hashtags" platform: return ONLY the hashtags line.
+- For all others: no hashtags (except twitter can include a few inline).
+
+Return only the post text, nothing else.`;
+}
+
+function buildVideoScriptPrompt({ label, price, url }) {
+  return `
+Write a 30–40 second vertical video script a car salesperson can read on camera
+for this vehicle.
+
+Vehicle: "${label}"
+Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Vehicle URL: ${url}
+
+Style:
+- Modern car sales trainer vibe: high-energy, confident, positive.
+- Ethical and honest: no pressure, no manipulation.
+- Talks directly to the viewer ("you").
+- 4–8 short paragraphs or line breaks.
+- Strong hook in the first 1–2 lines.
+- Clear CTA at the end (DM "INFO", message me, schedule a quick test drive, etc.).
+
+Return ONLY the script text, nothing else.`;
+}
+
+// Objection chat system prompt (Andy Elliott–style coach)
+function buildObjectionSystemPrompt({ label, price }) {
+  return `
+You are an automotive objections specialist and high-energy sales coach.
+Your style is inspired by trainers like Andy Elliott:
+- Confident, direct, high-energy.
+- Ethical and honest: no lying, no manipulation, no fake scarcity.
+- You help salespeople handle objections, keep control, and move the deal forward.
+
+The salesperson is working a customer on:
+- Vehicle: "${label || 'this vehicle'}"
+- Deal phrase: "${price || 'Message for current pricing'}"
+
+Rules for your replies:
+- Treat everything as part of a live role-play.
+- Always respect the customer and keep things ethical.
+- Use SHORT, punchy sentences that are easy to say out loud.
+- Structure most answers like:
+  1) Acknowledge and agree / align.
+  2) Reframe with logic or emotion.
+  3) Ask 1–2 strong questions that move things forward.
+  4) Give a clear suggested line or word track.
+
+- You are talking to the salesperson (not the customer), so explain what to say and why.
+- When you give word tracks, write them as spoken lines they can say immediately.
+
+You are in a continuous chat with this salesperson. They will paste objections and ask follow-up questions.
+Answer as their personal objection-handling coach.`;
+}
+
+// Design Lab prompt – Canva-style layout ideas
+function buildDesignPrompt({ type, label, price, url }) {
+  return `
+You are helping a car salesperson design a social graphic in a tool like Canva.
+
+Design type: ${type}
+Vehicle: "${label}"
+Pricing/deal phrase: "${price || 'Message for current pricing'}"
+Vehicle URL: ${url}
+
+Give me a Canva-style layout plan that is COPY/PASTE friendly.
+
+Return plain text, with these sections in order:
+
+1) TITLE / MAIN HOOK TEXT
+- Write exactly what the big headline on the graphic should say.
+- Make it bold, scroll-stopping, and short.
+
+2) SUBHEAD / SUPPORT LINE
+- One strong supporting line.
+
+3) BODY TEXT BLOCK
+- 3–6 short bullet-style benefit lines, can include emojis.
+
+4) CTA TEXT
+- Exact line that should go near the bottom as the call-to-action.
+
+5) LAYOUT IDEA
+- Explain where to place the photo(s) and each text part on the canvas
+  (top, bottom, left, right, center, overlay on photo, etc.).
+
+6) COLORS & VIBE
+- Suggest 1–2 background color ideas, 1 accent color, and what kind of vibe
+  (bold, clean, luxury, off-road, family, etc.).
+
+Make it very easy for a salesperson to read and then recreate quickly in Canva. Use line breaks between sections.`;
+}
+
+// ---------------- OpenAI helpers ----------------
+
+async function callOpenAIForJSON(prompt) {
+  const response = await client.responses.create({
+    model: 'gpt-4.1-mini',
+    input: prompt,
+  });
+
+  const content = response.output[0].content[0].text;
+  return JSON.parse(content);
+}
+
+async function callOpenAIForText(prompt) {
+  const response = await client.responses.create({
+    model: 'gpt-4.1-mini',
+    input: prompt,
+  });
+
+  const parts = response.output[0].content;
+  const textPart = parts.find((p) => p.type === 'output_text') || parts[0];
+  return textPart.text;
+}
+
+// ---------------- API routes ----------------
+
+// Full social kit
+app.post('/api/social-kit', async (req, res) => {
+  try {
+    const { url, label, price } = req.body;
+    if (!url || !label) {
+      return res.status(400).json({ error: 'Missing url or label' });
+    }
+    const prompt = buildSocialKitPrompt({ url, label, price });
+    const json = await callOpenAIForJSON(prompt);
+
+    res.json({ success: true, kit: json });
+  } catch (err) {
+    console.error('Error in /api/social-kit:', err);
+    res.status(500).json({ error: 'Failed to generate social kit' });
+  }
+});
+
+// New post for a specific platform
+app.post('/api/new-post', async (req, res) => {
+  try {
+    const { platform, label, price, url } = req.body;
+    if (!platform || !label) {
+      return res.status(400).json({ error: 'Missing platform or label' });
+    }
+    const prompt = buildSinglePostPrompt({ platform, label, price, url });
+    const text = await callOpenAIForText(prompt);
+    res.json({ success: true, post: text.trim() });
+  } catch (err) {
+    console.error('Error in /api/new-post:', err);
+    res.status(500).json({ error: 'Failed to generate new post' });
+  }
+});
+
+// New video script
+app.post('/api/new-script', async (req, res) => {
+  try {
+    const { label, price, url } = req.body;
+    if (!label || !url) {
+      return res.status(400).json({ error: 'Missing label or url' });
+    }
+    const prompt = buildVideoScriptPrompt({ label, price, url });
+    const script = await callOpenAIForText(prompt);
+    res.json({ success: true, script: script.trim() });
+  } catch (err) {
+    console.error('Error in /api/new-script:', err);
+    res.status(500).json({ error: 'Failed to generate video script' });
+  }
+});
+
+// Objection chat (multi-turn)
+app.post('/api/objection-coach', async (req, res) => {
+  try {
+    const { messages, label, price } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Missing messages array' });
+    }
+
+    const systemPrompt = buildObjectionSystemPrompt({ label, price });
+
+    const input = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map((m) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content || '',
+      })),
+    ];
+
+    const response = await client.responses.create({
+      model: 'gpt-4.1-mini',
+      input,
     });
+
+    const reply = response.output[0].content[0].text.trim();
+    res.json({ success: true, reply });
+  } catch (err) {
+    console.error('Error in /api/objection-coach:', err);
+    res.status(500).json({ error: 'Failed to generate objection response' });
   }
+});
 
-  /* ===============================
-   *  INCOME BUILDER
-   * =============================== */
+// Design Lab – Canva-style layout ideas
+app.post('/api/design-idea', async (req, res) => {
+  try {
+    const { type, label, price, url } = req.body || {};
+    if (!type || !label || !url) {
+      return res.status(400).json({ error: 'Missing type, label, or url' });
+    }
+    const prompt = buildDesignPrompt({ type, label, price, url });
+    const design = await callOpenAIForText(prompt);
+    res.json({ success: true, design: design.trim() });
+  } catch (err) {
+    console.error('Error in /api/design-idea:', err);
+    res.status(500).json({ error: 'Failed to generate design idea' });
+  }
+});
 
-  const incomeForm = document.getElementById("incomeForm");
-  const dealsPerMonthEl = document.getElementById("dealsPerMonth");
-  const dealsPerDayEl = document.getElementById("dealsPerDay");
-  const appointmentsPerDayEl = document.getElementById("appointmentsPerDay");
-  const showsPerDayEl = document.getElementById("showsPerDay");
+// Grab photos
+app.post('/api/grab-photos', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'Missing url' });
+    }
+    const photos = await scrapeVehiclePhotos(url);
+    res.json({ success: true, photos });
+  } catch (err) {
+    console.error('Error in /api/grab-photos:', err);
+    res.status(500).json({ error: 'Failed to grab photos' });
+  }
+});
 
-  if (
-    incomeForm &&
-    dealsPerMonthEl &&
-    dealsPerDayEl &&
-    appointmentsPerDayEl &&
-    showsPerDayEl
-  ) {
-    incomeForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+// Video-from-photos plan
+app.post('/api/video-from-photos', async (req, res) => {
+  try {
+    const { photos, label } = req.body;
+    if (!Array.isArray(photos) || photos.length === 0) {
+      return res.status(400).json({ error: 'No photos provided' });
+    }
 
-      const incomeGoal =
-        Number(document.getElementById("incomeGoal").value) || 0;
-      const commissionPerDeal =
-        Number(document.getElementById("commissionPerDeal").value) || 0;
-      const workDays = Number(document.getElementById("workDays").value) || 0;
-      const closeRate =
-        Number(document.getElementById("closeRate").value) || 0;
+    const total = photos.length;
+    const mid = Math.floor(total / 2);
+    const last = total - 1;
 
-      if (!incomeGoal || !commissionPerDeal || !workDays || !closeRate) {
-        dealsPerMonthEl.textContent = "0";
-        dealsPerDayEl.textContent = "0";
-        appointmentsPerDayEl.textContent = "0";
-        showsPerDayEl.textContent = "0";
-        return;
-      }
+    const plan = [
+      `Clip 1 – Photo 1 – 3–4 seconds\nOn-screen text: "${label}"`,
+      total > 4 ? `Clip 2 – Photo 4 – 3 seconds` : '',
+      total > 8 ? `Clip 3 – Photo 8 – 3 seconds` : '',
+      `Clip 4 – Photo ${mid + 1} – 3–4 seconds\nOn-screen text: "Interior & tech"`,
+      total > 6 ? `Clip 5 – Photo ${Math.min(mid + 3, last + 1)} – 3 seconds` : '',
+      `Clip 6 – Photo ${last + 1} – 3 seconds\nOn-screen text: "DM 'INFO' for details"`,
+      `Recommended music: upbeat, confident track that fits Reels / TikTok.`,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
 
-      const dealsPerMonth = incomeGoal / commissionPerDeal;
-      const dealsPerDay = dealsPerMonth / workDays;
+    res.json({ success: true, plan });
+  } catch (err) {
+    console.error('Error in /api/video-from-photos:', err);
+    res.status(500).json({ error: 'Failed to build video plan' });
+  }
+});
 
-      const closeFraction = closeRate / 100;
-      const showsPerDay = dealsPerDay / (closeFraction || 1);
-      const appointmentsPerDay = showsPerDay; // tweak later if you want a diff ratio
+// AI Message & multi-campaign builder
+app.post('/api/ai-message', async (req, res) => {
+  try {
+    let {
+      channel = 'sms',
+      goal,
+      details,
+      audience = 'car buyer',
+      tone = 'friendly',
+      followups = 3,
+      variants = 1,
+    } = req.body || {};
 
-      dealsPerMonthEl.textContent = dealsPerMonth.toFixed(1);
-      dealsPerDayEl.textContent = dealsPerDay.toFixed(2);
-      appointmentsPerDayEl.textContent = appointmentsPerDay.toFixed(2);
-      showsPerDayEl.textContent = showsPerDay.toFixed(2);
+    if (!goal && !details) {
+      return res
+        .status(400)
+        .json({ error: 'Please provide a goal or some details for the message.' });
+    }
+
+    followups = Math.max(1, Math.min(Number(followups) || 3, 10));
+    variants = Math.max(1, Math.min(Number(variants) || 1, 5));
+
+    const prompt = `
+You are an expert automotive sales copywriter and CRM strategist.
+
+Channel: ${channel}
+Audience: ${audience}
+Tone: ${tone}
+Primary goal: ${goal || 'Not specified, infer from context.'}
+Extra details from salesperson: ${details || 'None provided.'}
+Number of follow-up steps for each campaign: ${followups}
+Number of different campaign variants to create: ${variants}
+
+Tasks:
+1. Create ${variants} different high-converting ${
+      channel === 'email' ? 'emails' : 'SMS text messages'
+    } that a car salesperson can send to a real lead. Make each one personalized, clear, and action-driven.
+2. For EACH of those ${variants} options, create a follow-up workflow with ${followups} steps. For each step, include:
+   - Day offset (for example: 0, 2, 5, etc.)
+   - Channel (SMS, email, call, etc.)
+   - Purpose of the step
+   - Full suggested message text.
+
+Return your answer as strict JSON in this exact shape:
+{
+  "variants": [
+    {
+      "primaryMessage": "string",
+      "campaign": [
+        {
+          "dayOffset": number,
+          "channel": "sms | email | phone",
+          "purpose": "string",
+          "message": "string"
+        }
+      ]
+    }
+  ]
+}
+
+Important:
+- Always include exactly ${variants} items in "variants".
+- For each campaign, always include exactly ${followups} steps in "campaign".
+- Only output JSON. Do not include any extra commentary.`;
+
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You write high-converting automotive sales messages and follow-up workflows. Always respond in valid JSON.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.8,
     });
-  }
 
-  /* ===============================
-   *  COPY BUTTONS (shared)
-   * =============================== */
+    const raw = completion.choices?.[0]?.message?.content?.trim();
+    if (!raw) {
+      return res.status(500).json({ error: 'No response from AI.' });
+    }
 
-  document
-    .querySelectorAll(".secondary-btn[data-copy-target]")
-    .forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const targetId = btn.getAttribute("data-copy-target");
-        const el = document.getElementById(targetId);
-        if (!el) return;
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error('Failed to parse AI JSON:', e, raw);
+      return res.status(500).json({ error: 'AI response was not valid JSON.' });
+    }
 
-        el.select();
-        el.setSelectionRange(0, 99999);
-        document.execCommand("copy");
-
-        const original = btn.textContent;
-        btn.textContent = "Copied!";
-        setTimeout(() => {
-          btn.textContent = original;
-        }, 1500);
+    if (!Array.isArray(parsed.variants)) {
+      return res.status(500).json({
+        error: 'AI response JSON missing "variants" array.',
       });
-    });
+    }
+
+    res.json(parsed);
+  } catch (err) {
+    console.error('Error in /api/ai-message:', err);
+    res.status(500).json({ error: 'Failed to generate AI message workflow' });
+  }
+});
+
+// --------------- Serve frontend -----------------
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ---------------- Start server ----------------
+
+app.listen(port, () => {
+  console.log(`Lot Rocket server running on port ${port}`);
 });
