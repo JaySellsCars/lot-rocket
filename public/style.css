@@ -1,770 +1,342 @@
-// public/app.js – Frontend logic for Lot Rocket
-
-document.addEventListener("DOMContentLoaded", () => {
-  const apiBase = "";
-
-  /* =========================
-   * THEME TOGGLE
-   * ========================= */
-
-  const themeToggle = document.getElementById("themeToggle");
-  const themeIcon = document.getElementById("themeIcon");
-  const themeLabel = document.getElementById("themeLabel");
-
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
-    if (theme === "dark") {
-      themeIcon.textContent = "🌙";
-      themeLabel.textContent = "Dark";
-    } else {
-      themeIcon.textContent = "☀️";
-      themeLabel.textContent = "Light";
-    }
-    localStorage.setItem("lotRocketTheme", theme);
-  }
-
-  function initTheme() {
-    const saved = localStorage.getItem("lotRocketTheme");
-    if (saved === "light" || saved === "dark") {
-      applyTheme(saved);
-    } else {
-      applyTheme("dark");
-    }
-  }
-
-  if (themeToggle) {
-    themeToggle.addEventListener("click", () => {
-      const current =
-        document.documentElement.getAttribute("data-theme") || "dark";
-      const next = current === "dark" ? "light" : "dark";
-      applyTheme(next);
-    });
-  }
-
-  initTheme();
-
-  /* =========================
-   * DOM ELEMENTS
-   * ========================= */
-
-  // Step 1 / Step 2
-  const vehicleUrlInput = document.getElementById("vehicleUrl");
-  const vehicleLabelInput = document.getElementById("vehicleLabel");
-  const priceInfoInput = document.getElementById("priceInfo");
-  const boostButton = document.getElementById("boostButton");
-  const statusText = document.getElementById("statusText");
-
-  const summaryLabel = document.getElementById("summaryLabel");
-  const summaryPrice = document.getElementById("summaryPrice");
-
-  const facebookPost = document.getElementById("facebookPost");
-  const instagramPost = document.getElementById("instagramPost");
-  const tiktokPost = document.getElementById("tiktokPost");
-  const linkedinPost = document.getElementById("linkedinPost");
-  const twitterPost = document.getElementById("twitterPost");
-  const textBlurb = document.getElementById("textBlurb");
-  const marketplacePost = document.getElementById("marketplacePost");
-  const hashtags = document.getElementById("hashtags");
-  const videoScript = document.getElementById("videoScript");
-  const shotPlan = document.getElementById("shotPlan");
-
-  const buildVideoButton = document.getElementById("buildVideoButton");
-  const photosGrid = document.getElementById("photosGrid");
-  const photosStatus = document.getElementById("photosStatus");
-  const videoPlan = document.getElementById("videoPlan");
-
-  const newScriptButton = document.getElementById("newScriptButton");
-
-  const designTypeSelect = document.getElementById("designType");
-  const designButton = document.getElementById("designButton");
-  const designOutput = document.getElementById("designOutput");
-
-  // Side tool buttons
-  const objectionLauncher = document.getElementById("objectionLauncher");
-  const calculatorLauncher = document.getElementById("calculatorLauncher");
-
-  // Objection modal
-  const objectionModal = document.getElementById("objectionModal");
-  const objectionCloseButton = document.getElementById("objectionCloseButton");
-  const objectionHistory = document.getElementById("objectionHistory");
-  const objectionInput = document.getElementById("objectionInput");
-  const objectionSendButton = document.getElementById("objectionSendButton");
-
-  // Calculator modal + tabs
-  const calcModal = document.getElementById("calcModal");
-  const calcClose = document.getElementById("calcClose");
-  const calcTabButtons = document.querySelectorAll(".calc-tab");
-  const calcPanels = {
-    payment: document.getElementById("calc-payment"),
-    afford: document.getElementById("calc-afford"),
-    income: document.getElementById("calc-income"),
-  };
-
-  // Forms & result elements for calculators
-  const paymentForm = document.getElementById("paymentForm");
-  const paymentResult = document.getElementById("paymentResult");
-  const amountFinancedEl = document.getElementById("amountFinanced");
-  const totalPaidEl = document.getElementById("totalPaid");
-
-  const affordForm = document.getElementById("affordForm");
-  const maxCarPriceEl = document.getElementById("maxCarPrice");
-
-  const incomeForm = document.getElementById("incomeForm");
-  const dealsPerMonthEl = document.getElementById("dealsPerMonth");
-  const dealsPerDayEl = document.getElementById("dealsPerDay");
-  const showsPerDayEl = document.getElementById("showsPerDay");
-  const appointmentsPerDayEl = document.getElementById("appointmentsPerDay");
-
-  /* =========================
-   * STATE
-   * ========================= */
-
-  let currentPhotos = [];
-  let isBoosting = false;
-  let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
-
-  /* =========================
-   * HELPERS
-   * ========================= */
-
-  function safeTrim(str) {
-    return (str || "").toString().trim();
-  }
-
-  function setStatus(text, isLoading = false) {
-    if (!statusText) return;
-    if (isLoading) {
-      statusText.innerHTML = `<span class="loading-dot"></span>${text}`;
-    } else {
-      statusText.textContent = text;
-    }
-  }
-
-  function updateSummary(label, price) {
-    if (summaryLabel) {
-      summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
-    }
-    if (summaryPrice) {
-      summaryPrice.textContent =
-        safeTrim(price) || "Message for current pricing";
-    }
-  }
-
-  function fillSocialKit(kit) {
-    if (facebookPost) facebookPost.value = kit.facebook || "";
-    if (instagramPost) instagramPost.value = kit.instagram || "";
-    if (tiktokPost) tiktokPost.value = kit.tiktok || "";
-    if (linkedinPost) linkedinPost.value = kit.linkedin || "";
-    if (twitterPost) twitterPost.value = kit.twitter || "";
-    if (textBlurb) textBlurb.value = kit.textBlurb || "";
-    if (marketplacePost) marketplacePost.value = kit.marketplace || "";
-    if (hashtags) hashtags.value = kit.hashtags || "";
-    if (videoScript) videoScript.value = kit.videoScript || "";
-    if (shotPlan) shotPlan.value = kit.shotPlan || "";
-  }
-
-  function renderPhotosGrid(photos) {
-    if (!photosGrid || !photosStatus) return;
-
-    photosGrid.innerHTML = "";
-    if (!photos || !photos.length) {
-      photosStatus.textContent = "No photos found yet.";
-      return;
-    }
-    photos.forEach((url) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "photo-thumb";
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "Vehicle photo";
-      wrapper.appendChild(img);
-      wrapper.addEventListener("click", () => {
-        window.open(url, "_blank");
-      });
-      photosGrid.appendChild(wrapper);
-    });
-    photosStatus.textContent =
-      photos.length + " photos found. Click any to open full size.";
-  }
-
-  async function callJson(endpoint, body) {
-    const res = await fetch(apiBase + endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error("Request failed: " + res.status + " " + txt);
-    }
-    return res.json();
-  }
-
-  /* =========================
-   * OBJECTION COACH – RENDER CHAT
-   * ========================= */
-
-  function renderObjectionChat() {
-    if (!objectionHistory) return;
-    objectionHistory.innerHTML = "";
-
-    if (!objectionMessages.length) {
-      const empty = document.createElement("div");
-      empty.className = "objection-bubble";
-      empty.style.opacity = "0.7";
-      empty.textContent =
-        "Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.";
-      objectionHistory.appendChild(empty);
-      return;
-    }
-
-    objectionMessages.forEach((m) => {
-      const labelDiv = document.createElement("div");
-      labelDiv.className =
-        "objection-bubble " +
-        (m.role === "assistant" ? "coach-label" : "you-label");
-      labelDiv.textContent = m.role === "assistant" ? "COACH" : "YOU";
-
-      const bubble = document.createElement("div");
-      bubble.className =
-        "objection-bubble " + (m.role === "assistant" ? "coach" : "you");
-      bubble.textContent = m.content || "";
-
-      objectionHistory.appendChild(labelDiv);
-      objectionHistory.appendChild(bubble);
-    });
-
-    objectionHistory.scrollTop = objectionHistory.scrollHeight;
-  }
-
-  /* =========================
-   * BOOST FLOW (STEP 1 -> SOCIAL KIT)
-   * ========================= */
-
-  async function handleBoost() {
-    if (isBoosting) return;
-    if (!vehicleUrlInput || !vehicleLabelInput || !priceInfoInput) return;
-
-    const url = safeTrim(vehicleUrlInput.value);
-    if (!url) {
-      alert("Paste a dealer vehicle URL first.");
-      return;
-    }
-
-    let label = safeTrim(vehicleLabelInput.value);
-    if (!label) {
-      label = "This vehicle";
-      vehicleLabelInput.value = label;
-    }
-
-    let price = safeTrim(priceInfoInput.value);
-    if (!price) {
-      price = "Message for current pricing";
-      priceInfoInput.value = price;
-    }
-
-    isBoosting = true;
-    if (boostButton) boostButton.disabled = true;
-    setStatus("Building social kit with AI…", true);
-
-    try {
-      const resp = await callJson("/api/social-kit", { url, label, price });
-      if (!resp.success) throw new Error("API returned error");
-      fillSocialKit(resp.kit || {});
-      updateSummary(label, price);
-      setStatus("Social kit ready. You can spin new posts or scripts anytime.");
-
-      // reset objection chat for new vehicle
-      objectionMessages = [];
-      renderObjectionChat();
-
-      // Auto load photos
-      if (photosStatus) {
-        photosStatus.textContent = "Trying to grab photos from dealer page…";
-      }
-      try {
-        const photoResp = await callJson("/api/grab-photos", { url });
-        if (photoResp.success) {
-          currentPhotos = photoResp.photos || [];
-          renderPhotosGrid(currentPhotos);
-        } else if (photosStatus) {
-          photosStatus.textContent = "Could not grab photos.";
-        }
-      } catch (err) {
-        console.error("Auto photo grab failed:", err);
-        if (photosStatus) photosStatus.textContent = "Auto photo load failed.";
-      }
-    } catch (err) {
-      console.error(err);
-      setStatus("Something went wrong. Try again or check the URL.");
-      alert("Error building social kit. Check the URL and try again.");
-    } finally {
-      isBoosting = false;
-      if (boostButton) boostButton.disabled = false;
-    }
-  }
-
-  if (boostButton) {
-    boostButton.addEventListener("click", handleBoost);
-  }
-
-  /* =========================
-   * NEW POST BUTTONS
-   * ========================= */
-
-  document.querySelectorAll(".button-new-post").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const platform = btn.getAttribute("data-platform");
-      if (!platform) return;
-
-      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-      const price = safeTrim(priceInfoInput && priceInfoInput.value);
-
-      if (!url || !label) {
-        alert(
-          "Please paste a URL and hit Boost at least once before spinning posts."
-        );
-        return;
-      }
-
-      btn.disabled = true;
-      const oldText = btn.innerHTML;
-      btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
-
-      try {
-        const resp = await callJson("/api/new-post", {
-          platform,
-          url,
-          label,
-          price,
-        });
-        if (!resp.success) throw new Error("API returned error");
-        const text = resp.post || "";
-
-        switch (platform) {
-          case "facebook":
-            if (facebookPost) facebookPost.value = text;
-            break;
-          case "instagram":
-            if (instagramPost) instagramPost.value = text;
-            break;
-          case "tiktok":
-            if (tiktokPost) tiktokPost.value = text;
-            break;
-          case "linkedin":
-            if (linkedinPost) linkedinPost.value = text;
-            break;
-          case "twitter":
-            if (twitterPost) twitterPost.value = text;
-            break;
-          case "text":
-            if (textBlurb) textBlurb.value = text;
-            break;
-          case "marketplace":
-            if (marketplacePost) marketplacePost.value = text;
-            break;
-          case "hashtags":
-            if (hashtags) hashtags.value = text;
-            break;
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error generating a new post. Try again.");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = oldText;
-      }
-    });
-  });
-
-  /* =========================
-   * NEW VIDEO SCRIPT
-   * ========================= */
-
-  if (newScriptButton) {
-    newScriptButton.addEventListener("click", async () => {
-      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-      const price = safeTrim(priceInfoInput && priceInfoInput.value);
-
-      if (!url || !label) {
-        alert(
-          "Please paste a URL and hit Boost at least once before spinning scripts."
-        );
-        return;
-      }
-
-      newScriptButton.disabled = true;
-      const oldText = newScriptButton.innerHTML;
-      newScriptButton.innerHTML =
-        '<span class="icon">⏳</span><span>Working…</span>';
-
-      try {
-        const resp = await callJson("/api/new-script", { url, label, price });
-        if (!resp.success) throw new Error("API error");
-        if (videoScript) videoScript.value = resp.script || "";
-      } catch (err) {
-        console.error(err);
-        alert("Error generating a new script. Try again.");
-      } finally {
-        newScriptButton.disabled = false;
-        newScriptButton.innerHTML = oldText;
-      }
-    });
-  }
-
-  /* =========================
-   * BUILD VIDEO PLAN FROM PHOTOS
-   * ========================= */
-
-  if (buildVideoButton) {
-    buildVideoButton.addEventListener("click", async () => {
-      if (!currentPhotos || !currentPhotos.length) {
-        alert("No photos yet. Boost a listing first so we can grab photos.");
-        return;
-      }
-
-      buildVideoButton.disabled = true;
-      const oldText = buildVideoButton.innerHTML;
-      buildVideoButton.innerHTML =
-        '<span class="icon">⏳</span><span>Building…</span>';
-
-      try {
-        const label =
-          safeTrim(vehicleLabelInput && vehicleLabelInput.value) ||
-          "this vehicle";
-        const resp = await callJson("/api/video-from-photos", {
-          photos: currentPhotos,
-          label,
-        });
-        if (!resp.success) throw new Error("API error");
-        if (videoPlan) videoPlan.value = resp.plan || "";
-      } catch (err) {
-        console.error(err);
-        alert("Error building video plan. Try again.");
-      } finally {
-        buildVideoButton.disabled = false;
-        buildVideoButton.innerHTML = oldText;
-      }
-    });
-  }
-
-  /* =========================
-   * DESIGN LAB (OPTIONAL AI ROUTE)
-   * ========================= */
-
-  if (designButton && designTypeSelect) {
-    designButton.addEventListener("click", async () => {
-      const type = designTypeSelect.value;
-      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-      const price = safeTrim(priceInfoInput && priceInfoInput.value);
-
-      if (!url || !label) {
-        alert(
-          "Please paste a URL and hit Boost at least once before generating design ideas."
-        );
-        return;
-      }
-
-      designButton.disabled = true;
-      const oldText = designButton.innerHTML;
-      designButton.innerHTML =
-        '<span class="icon">⏳</span><span>Designing…</span>';
-
-      try {
-        // If you have /api/design-idea on the backend, call it here.
-        // For now we just reuse new-post as a placeholder layout idea.
-        const resp = await callJson("/api/new-post", {
-          platform: "facebook",
-          url,
-          label: `[Design layout] ${label}`,
-          price,
-        });
-        if (!resp.success) throw new Error("API error");
-        if (designOutput) designOutput.value = resp.post || "";
-      } catch (err) {
-        console.error(err);
-        alert("Error generating a design idea. Try again.");
-      } finally {
-        designButton.disabled = false;
-        designButton.innerHTML = oldText;
-      }
-    });
-  }
-
-  /* =========================
-   * OBJECTION COACH MODAL
-   * ========================= */
-
-  function openObjectionModal() {
-    if (!objectionModal) return;
-    objectionModal.classList.remove("hidden");
-    if (!objectionMessages.length) {
-      renderObjectionChat();
-    }
-    setTimeout(() => {
-      if (objectionInput) objectionInput.focus();
-    }, 50);
-  }
-
-  function closeObjectionModal() {
-    if (!objectionModal) return;
-    objectionModal.classList.add("hidden");
-  }
-
-  if (objectionLauncher) {
-    objectionLauncher.addEventListener("click", openObjectionModal);
-  }
-  if (objectionCloseButton) {
-    objectionCloseButton.addEventListener("click", closeObjectionModal);
-  }
-  if (objectionModal) {
-    objectionModal.addEventListener("click", (e) => {
-      if (e.target === objectionModal) {
-        closeObjectionModal();
-      }
-    });
-  }
-
-  function sendObjection() {
-    if (!objectionInput) return;
-
-    const text = (objectionInput.value || "").trim();
-    if (!text) {
-      alert("Type the customer’s objection or your question first.");
-      return;
-    }
-
-    const label =
-      safeTrim(vehicleLabelInput && vehicleLabelInput.value) || "this vehicle";
-    const price =
-      safeTrim(priceInfoInput && priceInfoInput.value) ||
-      "Message for current pricing";
-
-    objectionMessages.push({ role: "user", content: text });
-    renderObjectionChat();
-    objectionInput.value = "";
-
-    if (!objectionSendButton) return;
-    objectionSendButton.disabled = true;
-    const oldText = objectionSendButton.innerHTML;
-    objectionSendButton.innerHTML = "<span>⏳ Coaching…</span>";
-
-    callJson("/api/objection-coach", {
-      messages: objectionMessages,
-      label,
-      price,
-    })
-      .then((resp) => {
-        if (!resp.success) throw new Error("API error");
-        const reply = resp.reply || "";
-        objectionMessages.push({ role: "assistant", content: reply });
-        renderObjectionChat();
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Error generating a response. Try again.");
-      })
-      .finally(() => {
-        objectionSendButton.disabled = false;
-        objectionSendButton.innerHTML = oldText;
-      });
-  }
-
-  if (objectionSendButton) {
-    objectionSendButton.addEventListener("click", sendObjection);
-  }
-
-  if (objectionInput) {
-    objectionInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        sendObjection();
-      }
-    });
-  }
-
-  renderObjectionChat();
-
-  /* =========================
-   * CALCULATORS MODAL + TABS
-   * ========================= */
-
-  function openCalcModal() {
-    if (!calcModal) return;
-    calcModal.classList.remove("hidden");
-  }
-
-  function closeCalcModal() {
-    if (!calcModal) return;
-    calcModal.classList.add("hidden");
-  }
-
-  if (calculatorLauncher) {
-    calculatorLauncher.addEventListener("click", openCalcModal);
-  }
-  if (calcClose) {
-    calcClose.addEventListener("click", closeCalcModal);
-  }
-  if (calcModal) {
-    calcModal.addEventListener("click", (e) => {
-      if (e.target === calcModal) {
-        closeCalcModal();
-      }
-    });
-  }
-
-  function activateCalcTab(key) {
-    calcTabButtons.forEach((btn) => {
-      const tabKey = btn.getAttribute("data-tab");
-      if (tabKey === key) btn.classList.add("is-active");
-      else btn.classList.remove("is-active");
-    });
-
-    Object.entries(calcPanels).forEach(([panelKey, panelEl]) => {
-      if (!panelEl) return;
-      if (panelKey === key) panelEl.classList.add("is-active");
-      else panelEl.classList.remove("is-active");
-    });
-  }
-
-  calcTabButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const key = btn.getAttribute("data-tab");
-      if (!key) return;
-      activateCalcTab(key);
-    });
-  });
-
-  /* =========================
-   * PAYMENT CALCULATOR
-   * ========================= */
-
-  if (
-    paymentForm &&
-    paymentResult &&
-    amountFinancedEl &&
-    totalPaidEl
-  ) {
-    paymentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const price = Number(document.getElementById("price").value) || 0;
-      const down =
-        Number(document.getElementById("downPayment").value) || 0;
-      const term = Number(document.getElementById("term").value) || 0;
-      const apr = Number(document.getElementById("apr").value) || 0;
-
-      if (!price || !term) {
-        paymentResult.textContent = "Enter price and term.";
-        amountFinancedEl.textContent = "$0";
-        totalPaidEl.textContent = "$0";
-        return;
-      }
-
-      const amountFinanced = Math.max(price - down, 0);
-      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
-
-      let payment = 0;
-      if (monthlyRate === 0) {
-        payment = amountFinanced / term;
-      } else {
-        const factor =
-          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
-          (Math.pow(1 + monthlyRate, term) - 1);
-        payment = amountFinanced * factor;
-      }
-
-      const totalPaid = payment * term;
-
-      paymentResult.textContent = `$${payment.toFixed(2)} / mo`;
-      amountFinancedEl.textContent = `$${amountFinanced.toFixed(2)}`;
-      totalPaidEl.textContent = `$${totalPaid.toFixed(2)}`;
-    });
-  }
-
-  /* =========================
-   * AFFORDABILITY CALCULATOR
-   * ========================= */
-
-  if (affordForm && maxCarPriceEl) {
-    affordForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const maxBudget =
-        Number(document.getElementById("maxBudget").value) || 0;
-      const term =
-        Number(document.getElementById("affordTerm").value) || 0;
-      const apr =
-        Number(document.getElementById("affordAPR").value) || 0;
-
-      if (!maxBudget || !term) {
-        maxCarPriceEl.textContent = "$0.00";
-        return;
-      }
-
-      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
-      let price = 0;
-
-      if (monthlyRate === 0) {
-        price = maxBudget * term;
-      } else {
-        const factor =
-          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
-          (Math.pow(1 + monthlyRate, term) - 1);
-        price = maxBudget / factor;
-      }
-
-      maxCarPriceEl.textContent = `$${price.toFixed(2)}`;
-    });
-  }
-
-  /* =========================
-   * INCOME BUILDER CALCULATOR
-   * ========================= */
-
-  if (
-    incomeForm &&
-    dealsPerMonthEl &&
-    dealsPerDayEl &&
-    showsPerDayEl &&
-    appointmentsPerDayEl
-  ) {
-    incomeForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const incomeGoal =
-        Number(document.getElementById("incomeGoal").value) || 0;
-      const commissionPerDeal =
-        Number(document.getElementById("commissionPerDeal").value) || 0;
-      const workDays =
-        Number(document.getElementById("workDays").value) || 0;
-      const closeRate =
-        Number(document.getElementById("closeRate").value) || 0;
-
-      if (!incomeGoal || !commissionPerDeal || !workDays || !closeRate) {
-        dealsPerMonthEl.textContent = "0.0";
-        dealsPerDayEl.textContent = "0.00";
-        showsPerDayEl.textContent = "0.00";
-        appointmentsPerDayEl.textContent = "0.00";
-        return;
-      }
-
-      const dealsPerMonth = incomeGoal / commissionPerDeal;
-      const dealsPerDay = dealsPerMonth / workDays;
-      const closingDecimal = closeRate / 100;
-
-      const showsPerDay =
-        closingDecimal > 0 ? dealsPerDay / closingDecimal : 0;
-      const appointmentsPerDay = showsPerDay * 1.5; // simple assumption
-
-      dealsPerMonthEl.textContent = dealsPerMonth.toFixed(1);
-      dealsPerDayEl.textContent = dealsPerDay.toFixed(2);
-      showsPerDayEl.textContent = showsPerDay.toFixed(2);
-      appointmentsPerDayEl.textContent = appointmentsPerDay.toFixed(2);
-    });
-  }
-});
+/* ---------------------------------------------- */
+/* RESET + BASE */
+/* ---------------------------------------------- */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #070915;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* ---------------------------------------------- */
+/* APP SHELL */
+/* ---------------------------------------------- */
+
+.app-shell {
+  width: 100%;
+  max-width: 1300px;
+  margin: 30px auto;
+  padding: 0 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------------------------------------------- */
+/* HEADER */
+/* ---------------------------------------------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.brand-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-avatar {
+  width: 48px;
+  height: 48px;
+  background: #ff3d55;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.brand-text .brand-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.brand-text .brand-subtitle {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* ---------------------------------------------- */
+/* LAYOUT: LEFT TOOLS + WORKSPACE */
+/* ---------------------------------------------- */
+
+.app-main {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 25px;
+  position: relative;
+}
+
+/* ---------------------------------------------- */
+/* LEFT TOOL LIST */
+/* ---------------------------------------------- */
+
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+.tool-card {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.16s ease;
+}
+
+.tool-card:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.tool-card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tool-card-subtitle {
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------- */
+/* RIGHT MAIN WORKSPACE */
+/* ---------------------------------------------- */
+
+.workspace {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 600px;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace-placeholder {
+  text-align: center;
+  margin-top: 120px;
+  opacity: 0.55;
+}
+
+.workspace-placeholder h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.tool-panel {
+  display: none;
+}
+
+.tool-panel.is-active {
+  display: block;
+}
+
+.panel-subtitle {
+  font-size: 13px;
+  opacity: 0.75;
+  margin-bottom: 16px;
+}
+
+/* ---------------------------------------------- */
+/* PANEL FORMS */
+/* ---------------------------------------------- */
+
+.panel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-row label {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #ff4d70;
+  box-shadow: 0 0 3px #ff4d70;
+}
+
+/* ---------------------------------------------- */
+/* BUTTONS */
+/* ---------------------------------------------- */
+
+.primary-btn {
+  background: linear-gradient(90deg, #ff4d70, #ff2750);
+  border: none;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: 0.15s;
+}
+
+.primary-btn:hover {
+  opacity: 0.88;
+}
+
+.secondary-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------------------------------------------- */
+/* OUTPUT BLOCK */
+/* ---------------------------------------------- */
+
+.output-block {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.output-textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+/* ---------------------------------------------- */
+/* PAYMENT & INCOME RESULT CARDS */
+/* ---------------------------------------------- */
+
+.payment-results,
+.income-results {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.result-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.result-label {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.result-value {
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* ---------------------------------------------- */
+/* RIGHT SIDE FLOATING BUTTONS */
+/* ---------------------------------------------- */
+
+.side-tools {
+  position: absolute;
+  top: 0;
+  right: -190px;
+  width: 165px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.tool-btn {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.15s ease;
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.19);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* ICONS */
+.tool-btn img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
