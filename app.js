@@ -19,7 +19,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 
-// serve the public folder (index.html, style.css, public/app.js, etc.)
+// serve /public as static assets
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------------- Helper: scrape vehicle photos ----------------
@@ -258,7 +258,7 @@ Return plain text, with these sections in order:
 Make it very easy for a salesperson to read and then recreate quickly in Canva. Use line breaks between sections.`;
 }
 
-// ---------------- OpenAI helpers ----------------
+// ---------------- OpenAI helper wrappers ----------------
 
 async function callOpenAIForJSON(prompt) {
   const response = await client.responses.create({
