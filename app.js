@@ -2497,6 +2497,9 @@ app.get('/', (req, res) => {
 });
 
 // ---------------- Start server ----------------
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.listen(port, () => {
   console.log(`Lot Rocket server running on port ${port}`);
