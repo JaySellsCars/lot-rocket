@@ -1,58 +1,90 @@
+/* -------------------------------------------------------
+   LOT ROCKET — ELITE UI THEME
+   Full production CSS for entire app
+------------------------------------------------------- */
+
 /* ---------- Base ---------- */
 
 :root {
   --bg-dark: #05060a;
   --bg-dark-alt: #0c0f17;
+
+  --bg-light: #f5f5f7;
+  --bg-light-alt: #ffffff;
+
   --accent: #ff4b4b;
-  --accent-soft: rgba(255, 75, 75, 0.22);
+  --accent-soft: rgba(255, 75, 75, 0.15);
+
   --border-dark: #252836;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
+  --border-light: #d0d3dd;
+
+  --text-dark: #f9fafb;
+  --text-muted-dark: #9ca3af;
+
+  --text-light: #111827;
+  --text-muted-light: #6b7280;
+
   --card-radius: 18px;
-  --input-radius: 10px;
+  --input-radius: 12px;
+
   --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.4);
-  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    sans-serif;
+  --shadow-soft-light: 0 18px 40px rgba(15, 23, 42, 0.18);
+
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont,
+    "SF Pro Text", sans-serif;
+
+  --transition-fast: 0.18s ease-out;
 }
 
-html,
+[data-theme="dark"] body {
+  background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+  color: var(--text-dark);
+}
+[data-theme="light"] body {
+  background: radial-gradient(circle at top, #e5e7eb 0, #f9fafb 40%, #e5e7eb 100%);
+  color: var(--text-light);
+}
+
 body {
   margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-body {
   min-height: 100vh;
   font-family: var(--font-main);
-  background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
-  color: var(--text-main);
   display: flex;
+  align-items: stretch;
   justify-content: center;
   padding: 24px;
   box-sizing: border-box;
 }
 
-/* ---------- Shell & header ---------- */
+/* ---------- App Shell ---------- */
 
 .app-shell {
   width: 100%;
-  max-width: 1280px;
-  background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
+  max-width: 1240px;
   border-radius: 26px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: var(--shadow-soft);
-  padding: 18px 20px 24px;
-  box-sizing: border-box;
-  position: relative;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
+
+[data-theme="dark"] .app-shell {
+  background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: var(--shadow-soft);
+}
+[data-theme="light"] .app-shell {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: var(--shadow-soft-light);
+}
+
+/* ---------- Header ---------- */
 
 .app-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  align-items: center;
 }
 
 .title-group {
@@ -62,159 +94,435 @@ body {
 }
 
 .logo-circle {
-  width: 62px;
-  height: 62px;
+  width: 70px;
+  height: 70px;
   border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+[data-theme="dark"] .logo-circle {
   border: 2px solid #ef4444;
   color: #ef4444;
-  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.12), transparent 60%);
+  background: radial-gradient(circle at center, rgba(239,68,68,0.08), transparent 60%);
+}
+[data-theme="light"] .logo-circle {
+  border: 2px solid #b91c1c;
+  color: #b91c1c;
+  background: #fff;
 }
 
 .logo-inner {
   font-weight: 800;
-  font-size: 26px;
+  font-size: 30px;
   position: relative;
-  font-family: "Times New Roman", Georgia, serif;
+  font-family: Georgia, serif;
 }
-
 .logo-inner .rocket {
   position: absolute;
-  left: 54%;
-  top: 35%;
-  font-size: 14px;
+  font-size: 16px;
+  left: 52%;
+  top: 32%;
   transform: translateX(-50%);
 }
 
 .logo-text-main {
   font-weight: 700;
   font-size: 18px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-
 .logo-text-sub {
-  font-size: 12px;
-  color: var(--text-muted);
+  opacity: 0.78;
+  font-size: 13px;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-}
-
-.chip {
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  color: var(--text-muted);
-}
-
-.chip .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: #22c55e;
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
-}
+/* ---------- Theme Button ---------- */
 
 .theme-toggle {
   border-radius: 999px;
   padding: 6px 10px;
-  border: none;
   cursor: pointer;
-  font-size: 12px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(15, 23, 42, 0.95);
-  color: var(--text-muted);
-  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
+  font-size: 12px;
+  transition: var(--transition-fast);
 }
 
-/* ---------- Layout ---------- */
+[data-theme="dark"] .theme-toggle {
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-muted-dark);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+}
+[data-theme="light"] .theme-toggle {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-muted-light);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+/* ---------- Layout (Two columns) ---------- */
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.3fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* cards */
+/* ---------- Cards ---------- */
+
 .card {
   border-radius: var(--card-radius);
-  padding: 14px 14px 13px;
-  box-sizing: border-box;
-  background: radial-gradient(circle at top left, #111827 0, #020617 70%);
-  border: 1px solid rgba(51, 65, 85, 0.9);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.card-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+[data-theme="dark"] .card {
+  background: radial-gradient(circle at top left, #111827 0, #020617 60%);
+  border: 1px solid rgba(51, 65, 85, 0.9);
+}
+[data-theme="light"] .card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.6);
 }
 
 .card-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
-
 .card-subtitle {
   font-size: 12px;
-  color: var(--text-muted);
+  opacity: 0.75;
 }
 
-.badge {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(107, 114, 128, 0.9);
-  color: var(--text-muted);
-}
-
-.stack-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* ---------- Inputs & buttons ---------- */
-
-.field-group {
-  margin-bottom: 4px;
-}
-
-.field-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-  display: block;
-}
+/* ---------- Inputs ---------- */
 
 .input,
-.textarea {
+.textarea,
+.tool-input,
+.tool-textarea {
   width: 100%;
-  box
+  border-radius: var(--input-radius);
+  padding: 7px 9px;
+  font-size: 13px;
+  border: 1px solid;
+  transition: var(--transition-fast);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(55, 65, 81, 0.95);
+  color: var(--text-dark);
+}
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  background: rgba(249, 250, 251, 0.96);
+  border-color: rgba(148, 163, 184, 0.9);
+  color: var(--text-light);
+}
+
+/* Focus */
+.input:focus,
+.textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+/* ---------- Primary Buttons ---------- */
+
+.button-primary {
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .button-primary {
+  background: linear-gradient(135deg, #fb923c, #ef4444);
+  color: #fff;
+}
+[data-theme="light"] .button-primary {
+  background: linear-gradient(135deg, #f97316, #dc2626);
+  color: #fff;
+}
+
+/* ---------- Ghost Buttons ---------- */
+
+.button-ghost {
+  border-radius: 999px;
+  padding: 5px 10px;
+  border: 1px solid;
+  font-size: 11px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .button-ghost {
+  border-color: rgba(75, 85, 99, 0.85);
+  color: var(--text-muted-dark);
+}
+[data-theme="light"] .button-ghost {
+  border-color: rgba(148, 163, 184, 0.9);
+  color: var(--text-muted-light);
+}
+
+/* -------------------------------------------------------
+   ELITE FLOATING TOOL BUTTONS
+------------------------------------------------------- */
+
+.tool-launcher-column {
+  position: fixed;
+  top: 26px;
+  right: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+}
+
+.tool-launcher-btn {
+  border-radius: 999px;
+  padding: 7px 16px;
+  border: none;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+
+  min-width: 180px;
+  height: 38px;
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  transition:
+    transform 0.16s ease-out,
+    box-shadow 0.16s ease-out,
+    background 0.16s ease-out,
+    border-color 0.16s ease-out,
+    color 0.16s ease-out;
+}
+
+[data-theme="dark"] .tool-launcher-btn {
+  background: radial-gradient(circle at top left, rgba(15,23,42,0.96), rgba(15,23,42,0.9));
+  color: #e5e7eb;
+  border: 1px solid rgba(148,163,184,0.75);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.9);
+}
+[data-theme="dark"] .tool-launcher-btn:hover {
+  transform: translateY(-1px) scale(1.03);
+  background: radial-gradient(circle at top left, rgba(30,64,175,0.97), rgba(15,23,42,0.96));
+  border-color: rgba(248,113,113,0.95);
+  box-shadow: 0 20px 45px rgba(15,23,42,0.95);
+}
+[data-theme="dark"] .tool-launcher-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+}
+
+[data-theme="light"] .tool-launcher-btn {
+  background: rgba(255,255,255,0.96);
+  color: #111827;
+  border: 1px solid rgba(148,163,184,0.9);
+  box-shadow: 0 14px 30px rgba(15,23,42,0.25);
+}
+[data-theme="light"] .tool-launcher-btn:hover {
+  transform: translateY(-1px) scale(1.03);
+  background: linear-gradient(135deg, #ffffff, #e5e7eb);
+  border-color: rgba(248,113,113,0.9);
+  box-shadow: 0 18px 40px rgba(15,23,42,0.28);
+}
+[data-theme="light"] .tool-launcher-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 8px 22px rgba(15,23,42,0.2);
+}
+
+/* ---------- Social Grid ---------- */
+
+.social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 900px) {
+  .social-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.social-card {
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.75);
+}
+
+[data-theme="dark"] .social-card {
+  background: rgba(15,23,42,0.98);
+}
+[data-theme="light"] .social-card {
+  background: rgba(249,250,251,0.98);
+}
+
+/* ---------- Photos Grid ---------- */
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+}
+.photo-thumb {
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 4/3;
+}
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* -------------------------------------------------------
+   MODALS (Objection Coach, Calculators, Message Builder)
+------------------------------------------------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.78);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+}
+
+.modal-card {
+  width: 620px;
+  max-width: 96vw;
+  max-height: 82vh;
+  padding: 14px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .modal-card {
+  background: radial-gradient(circle at top, #111827 0, #020617 60%);
+  border: 1px solid rgba(248,113,113,0.8);
+  box-shadow: 0 22px 55px rgba(0,0,0,0.9);
+  color: var(--text-dark);
+}
+[data-theme="light"] .modal-card {
+  background: #f9fafb;
+  border: 1px solid rgba(248,113,113,0.9);
+  box-shadow: 0 22px 55px rgba(15,23,42,0.35);
+  color: var(--text-light);
+}
+
+.modal-close {
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  border: 1px solid rgba(148,163,184,0.9);
+}
+
+/* -------------------------------------------------------
+   OBJECTION COACH STYLES
+------------------------------------------------------- */
+
+.objection-history {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.objection-bubble {
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+
+.you-label {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.you {
+  background: rgba(248,113,113,0.18);
+  border: 1px solid rgba(248,113,113,0.35);
+}
+
+.coach-label {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.coach {
+  background: rgba(59,130,246,0.18);
+  border: 1px solid rgba(59,130,246,0.35);
+}
+
+.objection-input-box {
+  width: 100%;
+  min-height: 70px;
+  border-radius: 12px;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid rgba(148,163,184,0.6);
+}
+
+/* -------------------------------------------------------
+   CALCULATORS
+------------------------------------------------------- */
+
+.tool-input {
+  padding: 6px 8px;
+}
+.tool-button-primary {
+  margin-top: 6px;
+}
+
+/* -------------------------------------------------------
+   Utility
+------------------------------------------------------- */
+
+.hidden {
+  display: none !important;
+}
+
+.tiny-note {
+  font-size: 10px;
+  opacity: 0.75;
+}
