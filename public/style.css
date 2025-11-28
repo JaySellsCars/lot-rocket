@@ -1,762 +1,770 @@
-:root {
-  --bg-dark: #05060a;
-  --bg-dark-alt: #0c0f17;
-  --accent: #ff4b4b;
-  --border-dark: #252836;
-  --text-dark: #f9fafb;
-  --text-muted-dark: #9ca3af;
-  --card-radius: 18px;
-  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.4);
-  --input-radius: 12px;
-  --transition-fast: 0.18s ease-out;
-  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-}
+// public/app.js – Frontend logic for Lot Rocket
 
-[data-theme="dark"] body {
-  background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
-  color: var(--text-dark);
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const apiBase = "";
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  font-family: var(--font-main);
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  padding: 24px;
-  box-sizing: border-box;
-}
+  /* =========================
+   * THEME TOGGLE
+   * ========================= */
 
-.app-shell {
-  width: 100%;
-  max-width: 1240px;
-  border-radius: 26px;
-  padding: 20px 22px 22px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  position: relative;
-  overflow: hidden;
-  background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
-  box-shadow: var(--shadow-soft);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-}
+  const themeToggle = document.getElementById("themeToggle");
+  const themeIcon = document.getElementById("themeIcon");
+  const themeLabel = document.getElementById("themeLabel");
 
-/* Header */
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.title-group {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.logo-circle {
-  width: 70px;
-  height: 70px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #ef4444;
-  color: #ef4444;
-  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.08), transparent 60%);
-}
-
-.logo-inner {
-  font-weight: 800;
-  font-size: 30px;
-  line-height: 1;
-  position: relative;
-  font-family: "Times New Roman", Georgia, serif;
-}
-
-.logo-inner .rocket {
-  position: absolute;
-  left: 52%;
-  top: 32%;
-  font-size: 16px;
-  transform: translateX(-50%);
-}
-
-.logo-text-main {
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.logo-text-sub {
-  font-size: 13px;
-  opacity: 0.78;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-}
-
-.chip {
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  color: var(--text-muted-dark);
-}
-
-.chip .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: #22c55e;
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
-}
-
-.theme-toggle {
-  border-radius: 999px;
-  padding: 6px 10px;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.95);
-  color: var(--text-muted-dark);
-  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.45);
-}
-
-/* Main layout: 3 columns */
-.app-main {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.45fr) auto;
-  gap: 16px;
-  align-items: flex-start;
-  margin-top: 6px;
-}
-
-@media (max-width: 980px) {
-  .app-main {
-    grid-template-columns: minmax(0, 1fr);
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
+    if (theme === "dark") {
+      themeIcon.textContent = "🌙";
+      themeLabel.textContent = "Dark";
+    } else {
+      themeIcon.textContent = "☀️";
+      themeLabel.textContent = "Light";
+    }
+    localStorage.setItem("lotRocketTheme", theme);
   }
 
-  .tool-column {
-    flex-direction: row;
-    justify-content: flex-start;
-    margin-top: 12px;
+  function initTheme() {
+    const saved = localStorage.getItem("lotRocketTheme");
+    if (saved === "light" || saved === "dark") {
+      applyTheme(saved);
+    } else {
+      applyTheme("dark");
+    }
   }
 
-  .side-tool-button {
-    width: auto;
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const current =
+        document.documentElement.getAttribute("data-theme") || "dark";
+      const next = current === "dark" ? "light" : "dark";
+      applyTheme(next);
+    });
   }
-}
 
-/* Cards */
-.card {
-  border-radius: var(--card-radius);
-  padding: 14px 14px 13px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: radial-gradient(circle at top left, #111827 0, #020617 60%);
-  border: 1px solid rgba(51, 65, 85, 0.9);
-}
+  initTheme();
 
-.card-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
+  /* =========================
+   * DOM ELEMENTS
+   * ========================= */
 
-.card-title {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  // Step 1 / Step 2
+  const vehicleUrlInput = document.getElementById("vehicleUrl");
+  const vehicleLabelInput = document.getElementById("vehicleLabel");
+  const priceInfoInput = document.getElementById("priceInfo");
+  const boostButton = document.getElementById("boostButton");
+  const statusText = document.getElementById("statusText");
 
-.card-subtitle {
-  font-size: 12px;
-  opacity: 0.75;
-}
+  const summaryLabel = document.getElementById("summaryLabel");
+  const summaryPrice = document.getElementById("summaryPrice");
 
-.badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(107, 114, 128, 0.9);
-  color: var(--text-muted-dark);
-}
+  const facebookPost = document.getElementById("facebookPost");
+  const instagramPost = document.getElementById("instagramPost");
+  const tiktokPost = document.getElementById("tiktokPost");
+  const linkedinPost = document.getElementById("linkedinPost");
+  const twitterPost = document.getElementById("twitterPost");
+  const textBlurb = document.getElementById("textBlurb");
+  const marketplacePost = document.getElementById("marketplacePost");
+  const hashtags = document.getElementById("hashtags");
+  const videoScript = document.getElementById("videoScript");
+  const shotPlan = document.getElementById("shotPlan");
 
-/* Fields / inputs */
-label.field-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.8;
-  margin-bottom: 4px;
-  display: block;
-}
+  const buildVideoButton = document.getElementById("buildVideoButton");
+  const photosGrid = document.getElementById("photosGrid");
+  const photosStatus = document.getElementById("photosStatus");
+  const videoPlan = document.getElementById("videoPlan");
 
-.field-group {
-  margin-bottom: 8px;
-}
+  const newScriptButton = document.getElementById("newScriptButton");
 
-.input,
-.textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border-radius: var(--input-radius);
-  border: 1px solid rgba(55, 65, 81, 0.95);
-  padding: 7px 9px;
-  font-family: var(--font-main);
-  font-size: 13px;
-  resize: vertical;
-  min-height: 34px;
-  outline: none;
-  background: rgba(15, 23, 42, 0.95);
-  color: var(--text-dark);
-}
+  const designTypeSelect = document.getElementById("designType");
+  const designButton = document.getElementById("designButton");
+  const designOutput = document.getElementById("designOutput");
 
-.textarea {
-  white-space: pre-wrap;
-}
+  // Side tool buttons
+  const objectionLauncher = document.getElementById("objectionLauncher");
+  const calculatorLauncher = document.getElementById("calculatorLauncher");
 
-.input:focus,
-.textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.5);
-}
+  // Objection modal
+  const objectionModal = document.getElementById("objectionModal");
+  const objectionCloseButton = document.getElementById("objectionCloseButton");
+  const objectionHistory = document.getElementById("objectionHistory");
+  const objectionInput = document.getElementById("objectionInput");
+  const objectionSendButton = document.getElementById("objectionSendButton");
 
-/* Buttons */
-.button-primary {
-  border-radius: 999px;
-  padding: 7px 16px;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #fb923c, #ef4444);
-  color: #fff;
-  box-shadow: 0 14px 30px rgba(248, 113, 113, 0.7);
-}
+  // Calculator modal + tabs
+  const calcModal = document.getElementById("calcModal");
+  const calcClose = document.getElementById("calcClose");
+  const calcTabButtons = document.querySelectorAll(".calc-tab");
+  const calcPanels = {
+    payment: document.getElementById("calc-payment"),
+    afford: document.getElementById("calc-afford"),
+    income: document.getElementById("calc-income"),
+  };
 
-.button-primary:active {
-  transform: translateY(1px) scale(0.99);
-  box-shadow: none;
-}
+  // Forms & result elements for calculators
+  const paymentForm = document.getElementById("paymentForm");
+  const paymentResult = document.getElementById("paymentResult");
+  const amountFinancedEl = document.getElementById("amountFinanced");
+  const totalPaidEl = document.getElementById("totalPaid");
 
-.button-ghost {
-  border-radius: 999px;
-  padding: 5px 10px;
-  border: 1px solid rgba(75, 85, 99, 0.85);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  color: var(--text-muted-dark);
-}
+  const affordForm = document.getElementById("affordForm");
+  const maxCarPriceEl = document.getElementById("maxCarPrice");
 
-.button-ghost .icon {
-  font-size: 13px;
-}
+  const incomeForm = document.getElementById("incomeForm");
+  const dealsPerMonthEl = document.getElementById("dealsPerMonth");
+  const dealsPerDayEl = document.getElementById("dealsPerDay");
+  const showsPerDayEl = document.getElementById("showsPerDay");
+  const appointmentsPerDayEl = document.getElementById("appointmentsPerDay");
 
-.stack-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+  /* =========================
+   * STATE
+   * ========================= */
 
-.pill-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-}
+  let currentPhotos = [];
+  let isBoosting = false;
+  let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
 
-.pill {
-  border-radius: 999px;
-  padding: 5px 9px;
-  font-size: 11px;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  color: var(--text-muted-dark);
-}
+  /* =========================
+   * HELPERS
+   * ========================= */
 
-/* Photos */
-.photos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 6px;
-}
-
-.photo-thumb {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  aspect-ratio: 4 / 3;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-}
-
-.photo-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.status-text {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.section-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.tiny-note {
-  font-size: 10px;
-  opacity: 0.75;
-  margin-top: 4px;
-}
-
-/* Social grid */
-.social-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-@media (max-width: 900px) {
-  .social-grid {
-    grid-template-columns: minmax(0, 1fr);
+  function safeTrim(str) {
+    return (str || "").toString().trim();
   }
-}
 
-.social-card {
-  border-radius: 16px;
-  padding: 10px 11px 9px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.75);
-  min-height: 200px;
-  background: rgba(15, 23, 42, 0.98);
-}
-
-.social-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.social-platform {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.textarea.post-box {
-  min-height: 210px;
-  max-height: 260px;
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.textarea.marketplace-box {
-  min-height: 230px;
-  max-height: 280px;
-}
-
-.textarea.script {
-  min-height: 160px;
-}
-
-.textarea.shotplan {
-  min-height: 130px;
-}
-
-.textarea.design {
-  min-height: 180px;
-}
-
-/* Right-side tool column */
-.tool-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: stretch;
-}
-
-.side-tool-button {
-  width: 150px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.75);
-  background: rgba(15, 23, 42, 0.96);
-  color: var(--text-dark);
-  padding: 8px 10px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.side-tool-icon {
-  font-size: 14px;
-}
-
-.side-tool-text {
-  white-space: nowrap;
-}
-
-/* Objection coach modal */
-.hidden {
-  display: none !important;
-}
-
-.objection-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 23, 42, 0.78);
-  backdrop-filter: blur(16px);
-}
-
-.objection-modal-card {
-  width: 620px;
-  max-width: 96vw;
-  max-height: 82vh;
-  border-radius: 20px;
-  padding: 14px 14px 12px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: radial-gradient(circle at top, #111827 0, #020617 60%);
-  border: 1px solid rgba(248, 113, 113, 0.8);
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
-  color: var(--text-dark);
-}
-
-.objection-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.objection-modal-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.objection-modal-tag {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.8;
-}
-
-.objection-modal-title {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.objection-modal-sub {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.objection-modal-close {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.9);
-  background: transparent;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.objection-chat-area {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.objection-history {
-  flex: 1 1 auto;
-  min-height: 160px;
-  max-height: 330px;
-  border-radius: 12px;
-  padding: 8px 9px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  font-size: 12px;
-  line-height: 1.4;
-  border: 1px solid rgba(148, 163, 184, 0.8);
-  background: rgba(15, 23, 42, 0.96);
-}
-
-.objection-bubble {
-  margin-bottom: 6px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  white-space: pre-wrap;
-}
-
-.objection-bubble.you-label,
-.objection-bubble.coach-label {
-  font-weight: 600;
-  font-size: 11px;
-  opacity: 0.8;
-  margin-bottom: 2px;
-  padding: 0;
-}
-
-.objection-bubble.you {
-  background: rgba(37, 99, 235, 0.32);
-  border: 1px solid rgba(59, 130, 246, 0.7);
-}
-
-.objection-bubble.coach {
-  background: rgba(248, 113, 113, 0.22);
-  border: 1px solid rgba(248, 113, 113, 0.8);
-}
-
-.objection-input-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: 4px;
-}
-
-.objection-input-box {
-  width: 100%;
-  box-sizing: border-box;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.9);
-  font-family: var(--font-main);
-  font-size: 12px;
-  padding: 7px 8px;
-  resize: vertical;
-  min-height: 54px;
-  background: rgba(15, 23, 42, 0.98);
-  color: var(--text-dark);
-}
-
-.objection-send-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.objection-hint {
-  font-size: 10px;
-  opacity: 0.8;
-}
-
-#objectionSendButton {
-  border-radius: 999px;
-  border: none;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 6px 12px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #fb923c, #ef4444);
-  color: #fff;
-  box-shadow: 0 10px 22px rgba(248, 113, 113, 0.7);
-}
-
-/* Calculators modal */
-.calc-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 23, 42, 0.78);
-  backdrop-filter: blur(16px);
-}
-
-.calc-modal-card {
-  width: 880px;
-  max-width: 96vw;
-  border-radius: 20px;
-  padding: 16px 16px 14px;
-  box-sizing: border-box;
-  background: #0b1120;
-  border: 1px solid rgba(148, 163, 184, 0.9);
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.9);
-  color: var(--text-dark);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.calc-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.calc-title {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.calc-subtitle {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.calc-close {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.9);
-  background: transparent;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--text-dark);
-}
-
-/* Tabs */
-.calc-tabs {
-  display: inline-flex;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  padding: 3px;
-  gap: 4px;
-  border: 1px solid rgba(51, 65, 85, 0.9);
-}
-
-.calc-tab {
-  border-radius: 999px;
-  border: none;
-  padding: 5px 10px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text-muted-dark);
-}
-
-.calc-tab.is-active {
-  background: #f97316;
-  color: #111827;
-}
-
-/* Panels & content */
-.calc-panel {
-  display: none;
-  margin-top: 8px;
-}
-
-.calc-panel.is-active {
-  display: block;
-}
-
-.calc-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
-  gap: 14px;
-}
-
-@media (max-width: 780px) {
-  .calc-grid {
-    grid-template-columns: minmax(0, 1fr);
+  function setStatus(text, isLoading = false) {
+    if (!statusText) return;
+    if (isLoading) {
+      statusText.innerHTML = `<span class="loading-dot"></span>${text}`;
+    } else {
+      statusText.textContent = text;
+    }
   }
-}
 
-.calc-form .field-row {
-  margin-bottom: 8px;
-}
+  function updateSummary(label, price) {
+    if (summaryLabel) {
+      summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
+    }
+    if (summaryPrice) {
+      summaryPrice.textContent =
+        safeTrim(price) || "Message for current pricing";
+    }
+  }
 
-.calc-results {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+  function fillSocialKit(kit) {
+    if (facebookPost) facebookPost.value = kit.facebook || "";
+    if (instagramPost) instagramPost.value = kit.instagram || "";
+    if (tiktokPost) tiktokPost.value = kit.tiktok || "";
+    if (linkedinPost) linkedinPost.value = kit.linkedin || "";
+    if (twitterPost) twitterPost.value = kit.twitter || "";
+    if (textBlurb) textBlurb.value = kit.textBlurb || "";
+    if (marketplacePost) marketplacePost.value = kit.marketplace || "";
+    if (hashtags) hashtags.value = kit.hashtags || "";
+    if (videoScript) videoScript.value = kit.videoScript || "";
+    if (shotPlan) shotPlan.value = kit.shotPlan || "";
+  }
 
-.result-card {
-  border-radius: 14px;
-  padding: 10px;
-  background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(148, 163, 184, 0.8);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+  function renderPhotosGrid(photos) {
+    if (!photosGrid || !photosStatus) return;
 
-.result-label {
-  font-size: 11px;
-  opacity: 0.8;
-}
+    photosGrid.innerHTML = "";
+    if (!photos || !photos.length) {
+      photosStatus.textContent = "No photos found yet.";
+      return;
+    }
+    photos.forEach((url) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "photo-thumb";
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Vehicle photo";
+      wrapper.appendChild(img);
+      wrapper.addEventListener("click", () => {
+        window.open(url, "_blank");
+      });
+      photosGrid.appendChild(wrapper);
+    });
+    photosStatus.textContent =
+      photos.length + " photos found. Click any to open full size.";
+  }
 
-.result-value {
-  font-size: 16px;
-  font-weight: 600;
-}
+  async function callJson(endpoint, body) {
+    const res = await fetch(apiBase + endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error("Request failed: " + res.status + " " + txt);
+    }
+    return res.json();
+  }
+
+  /* =========================
+   * OBJECTION COACH – RENDER CHAT
+   * ========================= */
+
+  function renderObjectionChat() {
+    if (!objectionHistory) return;
+    objectionHistory.innerHTML = "";
+
+    if (!objectionMessages.length) {
+      const empty = document.createElement("div");
+      empty.className = "objection-bubble";
+      empty.style.opacity = "0.7";
+      empty.textContent =
+        "Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.";
+      objectionHistory.appendChild(empty);
+      return;
+    }
+
+    objectionMessages.forEach((m) => {
+      const labelDiv = document.createElement("div");
+      labelDiv.className =
+        "objection-bubble " +
+        (m.role === "assistant" ? "coach-label" : "you-label");
+      labelDiv.textContent = m.role === "assistant" ? "COACH" : "YOU";
+
+      const bubble = document.createElement("div");
+      bubble.className =
+        "objection-bubble " + (m.role === "assistant" ? "coach" : "you");
+      bubble.textContent = m.content || "";
+
+      objectionHistory.appendChild(labelDiv);
+      objectionHistory.appendChild(bubble);
+    });
+
+    objectionHistory.scrollTop = objectionHistory.scrollHeight;
+  }
+
+  /* =========================
+   * BOOST FLOW (STEP 1 -> SOCIAL KIT)
+   * ========================= */
+
+  async function handleBoost() {
+    if (isBoosting) return;
+    if (!vehicleUrlInput || !vehicleLabelInput || !priceInfoInput) return;
+
+    const url = safeTrim(vehicleUrlInput.value);
+    if (!url) {
+      alert("Paste a dealer vehicle URL first.");
+      return;
+    }
+
+    let label = safeTrim(vehicleLabelInput.value);
+    if (!label) {
+      label = "This vehicle";
+      vehicleLabelInput.value = label;
+    }
+
+    let price = safeTrim(priceInfoInput.value);
+    if (!price) {
+      price = "Message for current pricing";
+      priceInfoInput.value = price;
+    }
+
+    isBoosting = true;
+    if (boostButton) boostButton.disabled = true;
+    setStatus("Building social kit with AI…", true);
+
+    try {
+      const resp = await callJson("/api/social-kit", { url, label, price });
+      if (!resp.success) throw new Error("API returned error");
+      fillSocialKit(resp.kit || {});
+      updateSummary(label, price);
+      setStatus("Social kit ready. You can spin new posts or scripts anytime.");
+
+      // reset objection chat for new vehicle
+      objectionMessages = [];
+      renderObjectionChat();
+
+      // Auto load photos
+      if (photosStatus) {
+        photosStatus.textContent = "Trying to grab photos from dealer page…";
+      }
+      try {
+        const photoResp = await callJson("/api/grab-photos", { url });
+        if (photoResp.success) {
+          currentPhotos = photoResp.photos || [];
+          renderPhotosGrid(currentPhotos);
+        } else if (photosStatus) {
+          photosStatus.textContent = "Could not grab photos.";
+        }
+      } catch (err) {
+        console.error("Auto photo grab failed:", err);
+        if (photosStatus) photosStatus.textContent = "Auto photo load failed.";
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus("Something went wrong. Try again or check the URL.");
+      alert("Error building social kit. Check the URL and try again.");
+    } finally {
+      isBoosting = false;
+      if (boostButton) boostButton.disabled = false;
+    }
+  }
+
+  if (boostButton) {
+    boostButton.addEventListener("click", handleBoost);
+  }
+
+  /* =========================
+   * NEW POST BUTTONS
+   * ========================= */
+
+  document.querySelectorAll(".button-new-post").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const platform = btn.getAttribute("data-platform");
+      if (!platform) return;
+
+      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput && priceInfoInput.value);
+
+      if (!url || !label) {
+        alert(
+          "Please paste a URL and hit Boost at least once before spinning posts."
+        );
+        return;
+      }
+
+      btn.disabled = true;
+      const oldText = btn.innerHTML;
+      btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
+
+      try {
+        const resp = await callJson("/api/new-post", {
+          platform,
+          url,
+          label,
+          price,
+        });
+        if (!resp.success) throw new Error("API returned error");
+        const text = resp.post || "";
+
+        switch (platform) {
+          case "facebook":
+            if (facebookPost) facebookPost.value = text;
+            break;
+          case "instagram":
+            if (instagramPost) instagramPost.value = text;
+            break;
+          case "tiktok":
+            if (tiktokPost) tiktokPost.value = text;
+            break;
+          case "linkedin":
+            if (linkedinPost) linkedinPost.value = text;
+            break;
+          case "twitter":
+            if (twitterPost) twitterPost.value = text;
+            break;
+          case "text":
+            if (textBlurb) textBlurb.value = text;
+            break;
+          case "marketplace":
+            if (marketplacePost) marketplacePost.value = text;
+            break;
+          case "hashtags":
+            if (hashtags) hashtags.value = text;
+            break;
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error generating a new post. Try again.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+      }
+    });
+  });
+
+  /* =========================
+   * NEW VIDEO SCRIPT
+   * ========================= */
+
+  if (newScriptButton) {
+    newScriptButton.addEventListener("click", async () => {
+      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput && priceInfoInput.value);
+
+      if (!url || !label) {
+        alert(
+          "Please paste a URL and hit Boost at least once before spinning scripts."
+        );
+        return;
+      }
+
+      newScriptButton.disabled = true;
+      const oldText = newScriptButton.innerHTML;
+      newScriptButton.innerHTML =
+        '<span class="icon">⏳</span><span>Working…</span>';
+
+      try {
+        const resp = await callJson("/api/new-script", { url, label, price });
+        if (!resp.success) throw new Error("API error");
+        if (videoScript) videoScript.value = resp.script || "";
+      } catch (err) {
+        console.error(err);
+        alert("Error generating a new script. Try again.");
+      } finally {
+        newScriptButton.disabled = false;
+        newScriptButton.innerHTML = oldText;
+      }
+    });
+  }
+
+  /* =========================
+   * BUILD VIDEO PLAN FROM PHOTOS
+   * ========================= */
+
+  if (buildVideoButton) {
+    buildVideoButton.addEventListener("click", async () => {
+      if (!currentPhotos || !currentPhotos.length) {
+        alert("No photos yet. Boost a listing first so we can grab photos.");
+        return;
+      }
+
+      buildVideoButton.disabled = true;
+      const oldText = buildVideoButton.innerHTML;
+      buildVideoButton.innerHTML =
+        '<span class="icon">⏳</span><span>Building…</span>';
+
+      try {
+        const label =
+          safeTrim(vehicleLabelInput && vehicleLabelInput.value) ||
+          "this vehicle";
+        const resp = await callJson("/api/video-from-photos", {
+          photos: currentPhotos,
+          label,
+        });
+        if (!resp.success) throw new Error("API error");
+        if (videoPlan) videoPlan.value = resp.plan || "";
+      } catch (err) {
+        console.error(err);
+        alert("Error building video plan. Try again.");
+      } finally {
+        buildVideoButton.disabled = false;
+        buildVideoButton.innerHTML = oldText;
+      }
+    });
+  }
+
+  /* =========================
+   * DESIGN LAB (OPTIONAL AI ROUTE)
+   * ========================= */
+
+  if (designButton && designTypeSelect) {
+    designButton.addEventListener("click", async () => {
+      const type = designTypeSelect.value;
+      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput && priceInfoInput.value);
+
+      if (!url || !label) {
+        alert(
+          "Please paste a URL and hit Boost at least once before generating design ideas."
+        );
+        return;
+      }
+
+      designButton.disabled = true;
+      const oldText = designButton.innerHTML;
+      designButton.innerHTML =
+        '<span class="icon">⏳</span><span>Designing…</span>';
+
+      try {
+        // If you have /api/design-idea on the backend, call it here.
+        // For now we just reuse new-post as a placeholder layout idea.
+        const resp = await callJson("/api/new-post", {
+          platform: "facebook",
+          url,
+          label: `[Design layout] ${label}`,
+          price,
+        });
+        if (!resp.success) throw new Error("API error");
+        if (designOutput) designOutput.value = resp.post || "";
+      } catch (err) {
+        console.error(err);
+        alert("Error generating a design idea. Try again.");
+      } finally {
+        designButton.disabled = false;
+        designButton.innerHTML = oldText;
+      }
+    });
+  }
+
+  /* =========================
+   * OBJECTION COACH MODAL
+   * ========================= */
+
+  function openObjectionModal() {
+    if (!objectionModal) return;
+    objectionModal.classList.remove("hidden");
+    if (!objectionMessages.length) {
+      renderObjectionChat();
+    }
+    setTimeout(() => {
+      if (objectionInput) objectionInput.focus();
+    }, 50);
+  }
+
+  function closeObjectionModal() {
+    if (!objectionModal) return;
+    objectionModal.classList.add("hidden");
+  }
+
+  if (objectionLauncher) {
+    objectionLauncher.addEventListener("click", openObjectionModal);
+  }
+  if (objectionCloseButton) {
+    objectionCloseButton.addEventListener("click", closeObjectionModal);
+  }
+  if (objectionModal) {
+    objectionModal.addEventListener("click", (e) => {
+      if (e.target === objectionModal) {
+        closeObjectionModal();
+      }
+    });
+  }
+
+  function sendObjection() {
+    if (!objectionInput) return;
+
+    const text = (objectionInput.value || "").trim();
+    if (!text) {
+      alert("Type the customer’s objection or your question first.");
+      return;
+    }
+
+    const label =
+      safeTrim(vehicleLabelInput && vehicleLabelInput.value) || "this vehicle";
+    const price =
+      safeTrim(priceInfoInput && priceInfoInput.value) ||
+      "Message for current pricing";
+
+    objectionMessages.push({ role: "user", content: text });
+    renderObjectionChat();
+    objectionInput.value = "";
+
+    if (!objectionSendButton) return;
+    objectionSendButton.disabled = true;
+    const oldText = objectionSendButton.innerHTML;
+    objectionSendButton.innerHTML = "<span>⏳ Coaching…</span>";
+
+    callJson("/api/objection-coach", {
+      messages: objectionMessages,
+      label,
+      price,
+    })
+      .then((resp) => {
+        if (!resp.success) throw new Error("API error");
+        const reply = resp.reply || "";
+        objectionMessages.push({ role: "assistant", content: reply });
+        renderObjectionChat();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Error generating a response. Try again.");
+      })
+      .finally(() => {
+        objectionSendButton.disabled = false;
+        objectionSendButton.innerHTML = oldText;
+      });
+  }
+
+  if (objectionSendButton) {
+    objectionSendButton.addEventListener("click", sendObjection);
+  }
+
+  if (objectionInput) {
+    objectionInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendObjection();
+      }
+    });
+  }
+
+  renderObjectionChat();
+
+  /* =========================
+   * CALCULATORS MODAL + TABS
+   * ========================= */
+
+  function openCalcModal() {
+    if (!calcModal) return;
+    calcModal.classList.remove("hidden");
+  }
+
+  function closeCalcModal() {
+    if (!calcModal) return;
+    calcModal.classList.add("hidden");
+  }
+
+  if (calculatorLauncher) {
+    calculatorLauncher.addEventListener("click", openCalcModal);
+  }
+  if (calcClose) {
+    calcClose.addEventListener("click", closeCalcModal);
+  }
+  if (calcModal) {
+    calcModal.addEventListener("click", (e) => {
+      if (e.target === calcModal) {
+        closeCalcModal();
+      }
+    });
+  }
+
+  function activateCalcTab(key) {
+    calcTabButtons.forEach((btn) => {
+      const tabKey = btn.getAttribute("data-tab");
+      if (tabKey === key) btn.classList.add("is-active");
+      else btn.classList.remove("is-active");
+    });
+
+    Object.entries(calcPanels).forEach(([panelKey, panelEl]) => {
+      if (!panelEl) return;
+      if (panelKey === key) panelEl.classList.add("is-active");
+      else panelEl.classList.remove("is-active");
+    });
+  }
+
+  calcTabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-tab");
+      if (!key) return;
+      activateCalcTab(key);
+    });
+  });
+
+  /* =========================
+   * PAYMENT CALCULATOR
+   * ========================= */
+
+  if (
+    paymentForm &&
+    paymentResult &&
+    amountFinancedEl &&
+    totalPaidEl
+  ) {
+    paymentForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const price = Number(document.getElementById("price").value) || 0;
+      const down =
+        Number(document.getElementById("downPayment").value) || 0;
+      const term = Number(document.getElementById("term").value) || 0;
+      const apr = Number(document.getElementById("apr").value) || 0;
+
+      if (!price || !term) {
+        paymentResult.textContent = "Enter price and term.";
+        amountFinancedEl.textContent = "$0";
+        totalPaidEl.textContent = "$0";
+        return;
+      }
+
+      const amountFinanced = Math.max(price - down, 0);
+      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
+
+      let payment = 0;
+      if (monthlyRate === 0) {
+        payment = amountFinanced / term;
+      } else {
+        const factor =
+          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
+          (Math.pow(1 + monthlyRate, term) - 1);
+        payment = amountFinanced * factor;
+      }
+
+      const totalPaid = payment * term;
+
+      paymentResult.textContent = `$${payment.toFixed(2)} / mo`;
+      amountFinancedEl.textContent = `$${amountFinanced.toFixed(2)}`;
+      totalPaidEl.textContent = `$${totalPaid.toFixed(2)}`;
+    });
+  }
+
+  /* =========================
+   * AFFORDABILITY CALCULATOR
+   * ========================= */
+
+  if (affordForm && maxCarPriceEl) {
+    affordForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const maxBudget =
+        Number(document.getElementById("maxBudget").value) || 0;
+      const term =
+        Number(document.getElementById("affordTerm").value) || 0;
+      const apr =
+        Number(document.getElementById("affordAPR").value) || 0;
+
+      if (!maxBudget || !term) {
+        maxCarPriceEl.textContent = "$0.00";
+        return;
+      }
+
+      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
+      let price = 0;
+
+      if (monthlyRate === 0) {
+        price = maxBudget * term;
+      } else {
+        const factor =
+          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
+          (Math.pow(1 + monthlyRate, term) - 1);
+        price = maxBudget / factor;
+      }
+
+      maxCarPriceEl.textContent = `$${price.toFixed(2)}`;
+    });
+  }
+
+  /* =========================
+   * INCOME BUILDER CALCULATOR
+   * ========================= */
+
+  if (
+    incomeForm &&
+    dealsPerMonthEl &&
+    dealsPerDayEl &&
+    showsPerDayEl &&
+    appointmentsPerDayEl
+  ) {
+    incomeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const incomeGoal =
+        Number(document.getElementById("incomeGoal").value) || 0;
+      const commissionPerDeal =
+        Number(document.getElementById("commissionPerDeal").value) || 0;
+      const workDays =
+        Number(document.getElementById("workDays").value) || 0;
+      const closeRate =
+        Number(document.getElementById("closeRate").value) || 0;
+
+      if (!incomeGoal || !commissionPerDeal || !workDays || !closeRate) {
+        dealsPerMonthEl.textContent = "0.0";
+        dealsPerDayEl.textContent = "0.00";
+        showsPerDayEl.textContent = "0.00";
+        appointmentsPerDayEl.textContent = "0.00";
+        return;
+      }
+
+      const dealsPerMonth = incomeGoal / commissionPerDeal;
+      const dealsPerDay = dealsPerMonth / workDays;
+      const closingDecimal = closeRate / 100;
+
+      const showsPerDay =
+        closingDecimal > 0 ? dealsPerDay / closingDecimal : 0;
+      const appointmentsPerDay = showsPerDay * 1.5; // simple assumption
+
+      dealsPerMonthEl.textContent = dealsPerMonth.toFixed(1);
+      dealsPerDayEl.textContent = dealsPerDay.toFixed(2);
+      showsPerDayEl.textContent = showsPerDay.toFixed(2);
+      appointmentsPerDayEl.textContent = appointmentsPerDay.toFixed(2);
+    });
+  }
+});
