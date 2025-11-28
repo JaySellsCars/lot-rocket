@@ -103,17 +103,26 @@ function applyTheme(theme) {
   const root = document.documentElement;
   root.setAttribute("data-theme", theme);
   if (theme === "dark") {
-    themeIcon.textContent = "🌙";
-    themeLabel.textContent = "Dark";
+    if (themeIcon) themeIcon.textContent = "🌙";
+    if (themeLabel) themeLabel.textContent = "Dark";
   } else {
-    themeIcon.textContent = "☀️";
-    themeLabel.textContent = "Light";
+    if (themeIcon) themeIcon.textContent = "☀️";
+    if (themeLabel) themeLabel.textContent = "Light";
   }
-  localStorage.setItem("lotRocketTheme", theme);
+  try {
+    localStorage.setItem("lotRocketTheme", theme);
+  } catch (e) {
+    // ignore
+  }
 }
 
 function initTheme() {
-  const saved = localStorage.getItem("lotRocketTheme");
+  let saved = null;
+  try {
+    saved = localStorage.getItem("lotRocketTheme");
+  } catch (e) {
+    saved = null;
+  }
   if (saved === "light" || saved === "dark") {
     applyTheme(saved);
   } else {
@@ -121,17 +130,21 @@ function initTheme() {
   }
 }
 
-themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme") || "dark";
-  const next = current === "dark" ? "light" : "dark";
-  applyTheme(next);
-});
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const current =
+      document.documentElement.getAttribute("data-theme") || "dark";
+    const next = current === "dark" ? "light" : "dark";
+    applyTheme(next);
+  });
+}
 
 initTheme();
 
 // ----- Helpers -----
 
 function setStatus(text, isLoading = false) {
+  if (!statusText) return;
   if (isLoading) {
     statusText.innerHTML = '<span class="loading-dot"></span>' + text;
   } else {
@@ -144,25 +157,29 @@ function safeTrim(str) {
 }
 
 function updateSummary(label, price) {
-  summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
-  summaryPrice.textContent =
-    safeTrim(price) || "Message for current pricing";
+  if (summaryLabel)
+    summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
+  if (summaryPrice)
+    summaryPrice.textContent =
+      safeTrim(price) || "Message for current pricing";
 }
 
 function fillSocialKit(kit) {
-  facebookPost.value = kit.facebook || "";
-  instagramPost.value = kit.instagram || "";
-  tiktokPost.value = kit.tiktok || "";
-  linkedinPost.value = kit.linkedin || "";
-  twitterPost.value = kit.twitter || "";
-  textBlurb.value = kit.textBlurb || "";
-  marketplacePost.value = kit.marketplace || "";
-  hashtags.value = kit.hashtags || "";
-  videoScript.value = kit.videoScript || "";
-  shotPlan.value = kit.shotPlan || "";
+  if (facebookPost) facebookPost.value = kit.facebook || "";
+  if (instagramPost) instagramPost.value = kit.instagram || "";
+  if (tiktokPost) tiktokPost.value = kit.tiktok || "";
+  if (linkedinPost) linkedinPost.value = kit.linkedin || "";
+  if (twitterPost) twitterPost.value = kit.twitter || "";
+  if (textBlurb) textBlurb.value = kit.textBlurb || "";
+  if (marketplacePost) marketplacePost.value = kit.marketplace || "";
+  if (hashtags) hashtags.value = kit.hashtags || "";
+  if (videoScript) videoScript.value = kit.videoScript || "";
+  if (shotPlan) shotPlan.value = kit.shotPlan || "";
 }
 
 function renderPhotosGrid(photos) {
+  if (!photosGrid || !photosStatus) return;
+
   photosGrid.innerHTML = "";
   if (!photos || !photos.length) {
     photosStatus.textContent = "No photos found yet.";
@@ -199,6 +216,8 @@ async function callJson(endpoint, body) {
 
 // Render objection chat history
 function renderObjectionChat() {
+  if (!objectionHistory) return;
+
   objectionHistory.innerHTML = "";
   if (!objectionMessages.length) {
     const empty = document.createElement("div");
@@ -233,32 +252,34 @@ function renderObjectionChat() {
 
 async function handleBoost() {
   if (isBoosting) return;
+  if (!vehicleUrlInput) return;
+
   const url = safeTrim(vehicleUrlInput.value);
   if (!url) {
     alert("Paste a dealer vehicle URL first.");
     return;
   }
 
-  let label = safeTrim(vehicleLabelInput.value);
+  let label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
   if (!label) {
     label = "This vehicle";
-    vehicleLabelInput.value = label;
+    if (vehicleLabelInput) vehicleLabelInput.value = label;
   }
-  let price = safeTrim(priceInfoInput.value);
+  let price = safeTrim(priceInfoInput && priceInfoInput.value);
   if (!price) {
     price = "Message for current pricing";
-    priceInfoInput.value = price;
+    if (priceInfoInput) priceInfoInput.value = price;
   }
 
   isBoosting = true;
-  boostButton.disabled = true;
+  if (boostButton) boostButton.disabled = true;
   setStatus("Building social kit with AI…", true);
 
   try {
     currentUrl = url;
     const resp = await callJson("/api/social-kit", { url, label, price });
     if (!resp.success) throw new Error("API returned error");
-    fillSocialKit(resp.kit);
+    fillSocialKit(resp.kit || {});
     updateSummary(label, price);
     setStatus("Social kit ready. You can spin new posts or scripts anytime.");
 
@@ -267,19 +288,21 @@ async function handleBoost() {
     renderObjectionChat();
 
     // Auto load photos
-    try {
+    if (photosStatus) {
       photosStatus.textContent =
         "Trying to grab photos from dealer page…";
+    }
+    try {
       const photoResp = await callJson("/api/grab-photos", { url });
       if (photoResp.success) {
         currentPhotos = photoResp.photos || [];
         renderPhotosGrid(currentPhotos);
-      } else {
+      } else if (photosStatus) {
         photosStatus.textContent = "Could not grab photos.";
       }
     } catch (err) {
       console.error("Auto photo grab failed:", err);
-      photosStatus.textContent = "Auto photo load failed.";
+      if (photosStatus) photosStatus.textContent = "Auto photo load failed.";
     }
   } catch (err) {
     console.error(err);
@@ -287,20 +310,22 @@ async function handleBoost() {
     alert("Error building social kit. Check the URL and try again.");
   } finally {
     isBoosting = false;
-    boostButton.disabled = false;
+    if (boostButton) boostButton.disabled = false;
   }
 }
 
-boostButton.addEventListener("click", handleBoost);
+if (boostButton) {
+  boostButton.addEventListener("click", handleBoost);
+}
 
 // ----- New post buttons -----
 
 document.querySelectorAll(".button-new-post").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const platform = btn.getAttribute("data-platform");
-    const url = safeTrim(vehicleUrlInput.value);
-    const label = safeTrim(vehicleLabelInput.value);
-    const price = safeTrim(priceInfoInput.value);
+    const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
+    const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
+    const price = safeTrim(priceInfoInput && priceInfoInput.value);
 
     if (!url || !label) {
       alert(
@@ -326,28 +351,28 @@ document.querySelectorAll(".button-new-post").forEach((btn) => {
 
       switch (platform) {
         case "facebook":
-          facebookPost.value = text;
+          if (facebookPost) facebookPost.value = text;
           break;
         case "instagram":
-          instagramPost.value = text;
+          if (instagramPost) instagramPost.value = text;
           break;
         case "tiktok":
-          tiktokPost.value = text;
+          if (tiktokPost) tiktokPost.value = text;
           break;
         case "linkedin":
-          linkedinPost.value = text;
+          if (linkedinPost) linkedinPost.value = text;
           break;
         case "twitter":
-          twitterPost.value = text;
+          if (twitterPost) twitterPost.value = text;
           break;
         case "text":
-          textBlurb.value = text;
+          if (textBlurb) textBlurb.value = text;
           break;
         case "marketplace":
-          marketplacePost.value = text;
+          if (marketplacePost) marketplacePost.value = text;
           break;
         case "hashtags":
-          hashtags.value = text;
+          if (hashtags) hashtags.value = text;
           break;
       }
     } catch (err) {
@@ -362,148 +387,164 @@ document.querySelectorAll(".button-new-post").forEach((btn) => {
 
 // ----- New video script -----
 
-newScriptButton.addEventListener("click", async () => {
-  const url = safeTrim(vehicleUrlInput.value);
-  const label = safeTrim(vehicleLabelInput.value);
-  const price = safeTrim(priceInfoInput.value);
+if (newScriptButton) {
+  newScriptButton.addEventListener("click", async () => {
+    const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
+    const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
+    const price = safeTrim(priceInfoInput && priceInfoInput.value);
 
-  if (!url || !label) {
-    alert(
-      "Please paste a URL and hit Boost at least once before spinning scripts."
-    );
-    return;
-  }
+    if (!url || !label) {
+      alert(
+        "Please paste a URL and hit Boost at least once before spinning scripts."
+      );
+      return;
+    }
 
-  newScriptButton.disabled = true;
-  const oldText = newScriptButton.innerHTML;
-  newScriptButton.innerHTML =
-    '<span class="icon">⏳</span><span>Working…</span>';
+    newScriptButton.disabled = true;
+    const oldText = newScriptButton.innerHTML;
+    newScriptButton.innerHTML =
+      '<span class="icon">⏳</span><span>Working…</span>';
 
-  try {
-    const resp = await callJson("/api/new-script", {
-      url,
-      label,
-      price,
-    });
-    if (!resp.success) throw new Error("API error");
-    videoScript.value = resp.script || "";
-  } catch (err) {
-    console.error(err);
-    alert("Error generating a new script. Try again.");
-  } finally {
-    newScriptButton.disabled = false;
-    newScriptButton.innerHTML = oldText;
-  }
-});
+    try {
+      const resp = await callJson("/api/new-script", {
+        url,
+        label,
+        price,
+      });
+      if (!resp.success) throw new Error("API error");
+      if (videoScript) videoScript.value = resp.script || "";
+    } catch (err) {
+      console.error(err);
+      alert("Error generating a new script. Try again.");
+    } finally {
+      newScriptButton.disabled = false;
+      newScriptButton.innerHTML = oldText;
+    }
+  });
+}
 
 // ----- Build video plan from photos -----
 
-buildVideoButton.addEventListener("click", async () => {
-  if (!currentPhotos || !currentPhotos.length) {
-    alert("No photos yet. Boost a listing first so we can grab photos.");
-    return;
-  }
+if (buildVideoButton) {
+  buildVideoButton.addEventListener("click", async () => {
+    if (!currentPhotos || !currentPhotos.length) {
+      alert("No photos yet. Boost a listing first so we can grab photos.");
+      return;
+    }
 
-  buildVideoButton.disabled = true;
-  const oldText = buildVideoButton.innerHTML;
-  buildVideoButton.innerHTML =
-    '<span class="icon">⏳</span><span>Building…</span>';
+    buildVideoButton.disabled = true;
+    const oldText = buildVideoButton.innerHTML;
+    buildVideoButton.innerHTML =
+      '<span class="icon">⏳</span><span>Building…</span>';
 
-  try {
-    const label = safeTrim(vehicleLabelInput.value) || "this vehicle";
-    const resp = await callJson("/api/video-from-photos", {
-      photos: currentPhotos,
-      label,
-    });
-    if (!resp.success) throw new Error("API error");
-    videoPlan.value = resp.plan || "";
-  } catch (err) {
-    console.error(err);
-    alert("Error building video plan. Try again.");
-  } finally {
-    buildVideoButton.disabled = false;
-    buildVideoButton.innerHTML = oldText;
-  }
-});
+    try {
+      const label =
+        safeTrim(vehicleLabelInput && vehicleLabelInput.value) ||
+        "this vehicle";
+      const resp = await callJson("/api/video-from-photos", {
+        photos: currentPhotos,
+        label,
+      });
+      if (!resp.success) throw new Error("API error");
+      if (videoPlan) videoPlan.value = resp.plan || "";
+    } catch (err) {
+      console.error(err);
+      alert("Error building video plan. Try again.");
+    } finally {
+      buildVideoButton.disabled = false;
+      buildVideoButton.innerHTML = oldText;
+    }
+  });
+}
 
 // ----- Design Lab -----
 
-designButton.addEventListener("click", async () => {
-  const type = designTypeSelect.value;
-  const url = safeTrim(vehicleUrlInput.value);
-  const label = safeTrim(vehicleLabelInput.value);
-  const price = safeTrim(priceInfoInput.value);
+if (designButton) {
+  designButton.addEventListener("click", async () => {
+    const type = designTypeSelect ? designTypeSelect.value : "facebook";
+    const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
+    const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
+    const price = safeTrim(priceInfoInput && priceInfoInput.value);
 
-  if (!url || !label) {
-    alert(
-      "Please paste a URL and hit Boost at least once before generating design ideas."
-    );
-    return;
-  }
+    if (!url || !label) {
+      alert(
+        "Please paste a URL and hit Boost at least once before generating design ideas."
+      );
+      return;
+    }
 
-  designButton.disabled = true;
-  const oldText = designButton.innerHTML;
-  designButton.innerHTML =
-    '<span class="icon">⏳</span><span>Designing…</span>';
+    designButton.disabled = true;
+    const oldText = designButton.innerHTML;
+    designButton.innerHTML =
+      '<span class="icon">⏳</span><span>Designing…</span>';
 
-  try {
-    const resp = await callJson("/api/design-idea", {
-      type,
-      url,
-      label,
-      price,
-    });
-    if (!resp.success) throw new Error("API error");
-    designOutput.value = resp.design || "";
-  } catch (err) {
-    console.error(err);
-    alert("Error generating a design idea. Try again.");
-  } finally {
-    designButton.disabled = false;
-    designButton.innerHTML = oldText;
-  }
-});
+    try {
+      const resp = await callJson("/api/design-idea", {
+        type,
+        url,
+        label,
+        price,
+      });
+      if (!resp.success) throw new Error("API error");
+      if (designOutput) designOutput.value = resp.design || "";
+    } catch (err) {
+      console.error(err);
+      alert("Error generating a design idea. Try again.");
+    } finally {
+      designButton.disabled = false;
+      designButton.innerHTML = oldText;
+    }
+  });
+}
 
 // ----- Objection Coach modal -----
 
 function openObjectionModal() {
-  objectionModal.classList.remove("hidden");
+  if (objectionModal) objectionModal.classList.remove("hidden");
   if (!objectionMessages.length) {
     renderObjectionChat();
   }
   setTimeout(() => {
-    objectionInput.focus();
+    if (objectionInput) objectionInput.focus();
   }, 50);
 }
 
 function closeObjectionModal() {
-  objectionModal.classList.add("hidden");
+  if (objectionModal) objectionModal.classList.add("hidden");
 }
 
-objectionLauncher.addEventListener("click", openObjectionModal);
-objectionCloseButton.addEventListener("click", closeObjectionModal);
-
-objectionModal.addEventListener("click", (e) => {
-  if (e.target === objectionModal) {
-    closeObjectionModal();
-  }
-});
+if (objectionLauncher) {
+  objectionLauncher.addEventListener("click", openObjectionModal);
+}
+if (objectionCloseButton) {
+  objectionCloseButton.addEventListener("click", closeObjectionModal);
+}
+if (objectionModal) {
+  objectionModal.addEventListener("click", (e) => {
+    if (e.target === objectionModal) {
+      closeObjectionModal();
+    }
+  });
+}
 
 function sendObjection() {
-  const text = (objectionInput.value || "").trim();
+  const text = safeTrim(objectionInput && objectionInput.value);
   if (!text) {
     alert("Type the customer’s objection or your question first.");
     return;
   }
 
-  const label = safeTrim(vehicleLabelInput.value) || "this vehicle";
+  const label =
+    safeTrim(vehicleLabelInput && vehicleLabelInput.value) || "this vehicle";
   const price =
-    safeTrim(priceInfoInput.value) || "Message for current pricing";
+    safeTrim(priceInfoInput && priceInfoInput.value) ||
+    "Message for current pricing";
 
   objectionMessages.push({ role: "user", content: text });
   renderObjectionChat();
-  objectionInput.value = "";
+  if (objectionInput) objectionInput.value = "";
 
+  if (!objectionSendButton) return;
   objectionSendButton.disabled = true;
   const oldText = objectionSendButton.innerHTML;
   objectionSendButton.innerHTML = "<span>⏳ Coaching…</span>";
@@ -529,41 +570,51 @@ function sendObjection() {
     });
 }
 
-objectionSendButton.addEventListener("click", sendObjection);
-
-objectionInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
-    sendObjection();
-  }
-});
+if (objectionSendButton) {
+  objectionSendButton.addEventListener("click", sendObjection);
+}
+if (objectionInput) {
+  objectionInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      sendObjection();
+    }
+  });
+}
 
 // ----- Payment Calculator modal -----
 
 function openPaymentModal() {
-  paymentModal.classList.remove("hidden");
-  setTimeout(() => payPrice.focus(), 50);
+  if (paymentModal) paymentModal.classList.remove("hidden");
+  setTimeout(() => payPrice && payPrice.focus(), 50);
 }
 function closePaymentModal() {
-  paymentModal.classList.add("hidden");
+  if (paymentModal) paymentModal.classList.add("hidden");
 }
 
-paymentLauncher.addEventListener("click", openPaymentModal);
-paymentCloseButton.addEventListener("click", closePaymentModal);
-paymentModal.addEventListener("click", (e) => {
-  if (e.target === paymentModal) closePaymentModal();
-});
+if (paymentLauncher) {
+  paymentLauncher.addEventListener("click", openPaymentModal);
+}
+if (paymentCloseButton) {
+  paymentCloseButton.addEventListener("click", closePaymentModal);
+}
+if (paymentModal) {
+  paymentModal.addEventListener("click", (e) => {
+    if (e.target === paymentModal) closePaymentModal();
+  });
+}
 
 function calculatePayment() {
-  const price = parseFloat(payPrice.value) || 0;
-  const down = parseFloat(payDown.value) || 0;
-  const apr = parseFloat(payApr.value) || 0;
-  const term = parseInt(payTerm.value, 10) || 0;
+  const price = parseFloat(payPrice && payPrice.value) || 0;
+  const down = parseFloat(payDown && payDown.value) || 0;
+  const apr = parseFloat(payApr && payApr.value) || 0;
+  const term = parseInt(payTerm && payTerm.value, 10) || 0;
 
   const loanAmount = price - down;
   if (loanAmount <= 0 || term <= 0) {
-    paymentResultText.textContent =
-      "Enter a valid price, down payment, and term.";
+    if (paymentResultText)
+      paymentResultText.textContent =
+        "Enter a valid price, down payment, and term.";
     return;
   }
 
@@ -577,85 +628,104 @@ function calculatePayment() {
       (loanAmount * (monthlyRate * pow)) / (pow - 1);
   }
 
-  paymentResultText.textContent =
-    "Estimated Payment: $" +
-    payment.toFixed(2) +
-    " / month (rough estimate, not final finance terms).";
+  if (paymentResultText) {
+    paymentResultText.textContent =
+      "Estimated Payment: $" +
+      payment.toFixed(2) +
+      " / month (rough estimate, not final finance terms).";
+  }
 }
 
-paymentCalcButton.addEventListener("click", calculatePayment);
+if (paymentCalcButton) {
+  paymentCalcButton.addEventListener("click", calculatePayment);
+}
 
 // ----- Income Calculator modal -----
 
 function openIncomeModal() {
-  incomeModal.classList.remove("hidden");
-  setTimeout(() => incHourly.focus(), 50);
+  if (incomeModal) incomeModal.classList.remove("hidden");
+  setTimeout(() => incHourly && incHourly.focus(), 50);
 }
 function closeIncomeModal() {
-  incomeModal.classList.add("hidden");
+  if (incomeModal) incomeModal.classList.add("hidden");
 }
 
-incomeLauncher.addEventListener("click", openIncomeModal);
-incomeCloseButton.addEventListener("click", closeIncomeModal);
-incomeModal.addEventListener("click", (e) => {
-  if (e.target === incomeModal) closeIncomeModal();
-});
+if (incomeLauncher) {
+  incomeLauncher.addEventListener("click", openIncomeModal);
+}
+if (incomeCloseButton) {
+  incomeCloseButton.addEventListener("click", closeIncomeModal);
+}
+if (incomeModal) {
+  incomeModal.addEventListener("click", (e) => {
+    if (e.target === incomeModal) closeIncomeModal();
+  });
+}
 
 function calculateIncome() {
-  const hourly = parseFloat(incHourly.value) || 0;
-  const hoursPerWeek = parseFloat(incHours.value) || 0;
+  const hourly = parseFloat(incHourly && incHourly.value) || 0;
+  const hoursPerWeek = parseFloat(incHours && incHours.value) || 0;
 
   if (hourly <= 0 || hoursPerWeek <= 0) {
-    incomeResultText.textContent =
-      "Enter a valid hourly wage and hours per week.";
+    if (incomeResultText)
+      incomeResultText.textContent =
+        "Enter a valid hourly wage and hours per week.";
     return;
   }
 
   const yearly = hourly * hoursPerWeek * 52;
-  incomeResultText.textContent =
-    "Estimated Yearly Gross Income: $" +
-    yearly.toFixed(2);
+  if (incomeResultText) {
+    incomeResultText.textContent =
+      "Estimated Yearly Gross Income: $" + yearly.toFixed(2);
+  }
 }
 
-incomeCalcButton.addEventListener("click", calculateIncome);
+if (incomeCalcButton) {
+  incomeCalcButton.addEventListener("click", calculateIncome);
+}
 
 // ----- Message Builder modal -----
 
 function openMessageModal() {
-  messageModal.classList.remove("hidden");
-  setTimeout(() => msgGoal.focus(), 50);
+  if (messageModal) messageModal.classList.remove("hidden");
+  setTimeout(() => msgGoal && msgGoal.focus(), 50);
 }
 function closeMessageModal() {
-  messageModal.classList.add("hidden");
+  if (messageModal) messageModal.classList.add("hidden");
 }
 
-messageLauncher.addEventListener("click", openMessageModal);
-messageCloseButton.addEventListener("click", closeMessageModal);
-messageModal.addEventListener("click", (e) => {
-  if (e.target === messageModal) closeMessageModal();
-});
+if (messageLauncher) {
+  messageLauncher.addEventListener("click", openMessageModal);
+}
+if (messageCloseButton) {
+  messageCloseButton.addEventListener("click", closeMessageModal);
+}
+if (messageModal) {
+  messageModal.addEventListener("click", (e) => {
+    if (e.target === messageModal) closeMessageModal();
+  });
+}
 
 async function generateMessages() {
-  const channel = msgChannel.value || "sms";
-  const tone = msgTone.value || "friendly";
-  const followups = parseInt(msgFollowups.value, 10) || 4;
-  const variants = parseInt(msgVariants.value, 10) || 2;
-  const audience = safeTrim(msgAudience.value) || "car buyer";
-  const goal = safeTrim(msgGoal.value);
-  const details = safeTrim(msgDetails.value);
+  const channel = msgChannel ? msgChannel.value : "sms";
+  const tone = msgTone ? msgTone.value : "friendly";
+  const followups = parseInt(msgFollowups && msgFollowups.value, 10) || 4;
+  const variants = parseInt(msgVariants && msgVariants.value, 10) || 2;
+  const audience = safeTrim(msgAudience && msgAudience.value) || "car buyer";
+  const goal = safeTrim(msgGoal && msgGoal.value);
+  const details = safeTrim(msgDetails && msgDetails.value);
 
   if (!goal && !details) {
-    alert(
-      "Tell the AI what you’re trying to accomplish or give some details."
-    );
+    alert("Tell the AI what you’re trying to accomplish or give some details.");
     return;
   }
+
+  if (!messageGenerateButton || !msgResult) return;
 
   messageGenerateButton.disabled = true;
   const oldText = messageGenerateButton.innerHTML;
   messageGenerateButton.innerHTML = "<span>⏳ Building…</span>";
-  msgResult.value =
-    "Thinking up your messages and workflows…";
+  msgResult.value = "Thinking up your messages and workflows…";
 
   try {
     const resp = await callJson("/api/ai-message", {
@@ -672,8 +742,7 @@ async function generateMessages() {
 
     if (Array.isArray(resp.variants)) {
       resp.variants.forEach((variant, idx) => {
-        display +=
-          "=== Campaign Option " + (idx + 1) + " ===\n\n";
+        display += "=== Campaign Option " + (idx + 1) + " ===\n\n";
         if (variant.primaryMessage) {
           display +=
             "Primary Message:\n" +
@@ -715,7 +784,9 @@ async function generateMessages() {
   }
 }
 
-messageGenerateButton.addEventListener("click", generateMessages);
+if (messageGenerateButton) {
+  messageGenerateButton.addEventListener("click", generateMessages);
+}
 
 // ----- Elite improvements: copy buttons + taller boxes -----
 
@@ -799,9 +870,7 @@ messageGenerateButton.addEventListener("click", generateMessages);
         }, 1400);
       } catch (err) {
         console.error(err);
-        alert(
-          "Nothing to copy yet – generate a post first."
-        );
+        alert("Nothing to copy yet – generate a post first.");
       }
     });
 
@@ -818,497 +887,3 @@ messageGenerateButton.addEventListener("click", generateMessages);
 
 // Initial render of objection chat
 renderObjectionChat();
-const apiBase = "";
-
-// Inputs & buttons
-const vehicleUrlInput = document.getElementById("vehicleUrl");
-const vehicleLabelInput = document.getElementById("vehicleLabel");
-const priceInfoInput = document.getElementById("priceInfo");
-const boostButton = document.getElementById("boostButton");
-const statusText = document.getElementById("statusText");
-
-const summaryLabel = document.getElementById("summaryLabel");
-const summaryPrice = document.getElementById("summaryPrice");
-
-// social outputs
-const facebookPost = document.getElementById("facebookPost");
-const instagramPost = document.getElementById("instagramPost");
-const tiktokPost = document.getElementById("tiktokPost");
-const linkedinPost = document.getElementById("linkedinPost");
-const twitterPost = document.getElementById("twitterPost");
-const textBlurb = document.getElementById("textBlurb");
-const marketplacePost = document.getElementById("marketplacePost");
-const hashtags = document.getElementById("hashtags");
-const videoScript = document.getElementById("videoScript");
-const shotPlan = document.getElementById("shotPlan");
-
-// media & design
-const buildVideoButton = document.getElementById("buildVideoButton");
-const photosGrid = document.getElementById("photosGrid");
-const photosStatus = document.getElementById("photosStatus");
-const videoPlan = document.getElementById("videoPlan");
-
-const newScriptButton = document.getElementById("newScriptButton");
-
-const designTypeSelect = document.getElementById("designType");
-const designButton = document.getElementById("designButton");
-const designOutput = document.getElementById("designOutput");
-
-// theme
-const themeToggle = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
-const themeLabel = document.getElementById("themeLabel");
-
-// Floating tool launchers
-const objectionLauncher = document.getElementById("objectionLauncher");
-const paymentLauncher = document.getElementById("paymentLauncher");
-const incomeLauncher = document.getElementById("incomeLauncher");
-const messageLauncher = document.getElementById("messageLauncher");
-
-// Objection modal elements
-const objectionModal = document.getElementById("objectionModal");
-const objectionCloseButton = document.getElementById("objectionCloseButton");
-const objectionHistory = document.getElementById("objectionHistory");
-const objectionInput = document.getElementById("objectionInput");
-const objectionSendButton = document.getElementById("objectionSendButton");
-
-// Payment modal elements
-const paymentModal = document.getElementById("paymentModal");
-const paymentCloseButton = document.getElementById("paymentCloseButton");
-const payPrice = document.getElementById("payPrice");
-const payDown = document.getElementById("payDown");
-const payApr = document.getElementById("payApr");
-const payTerm = document.getElementById("payTerm");
-const paymentCalcButton = document.getElementById("paymentCalcButton");
-const paymentResultText = document.getElementById("paymentResultText");
-
-// Income modal elements
-const incomeModal = document.getElementById("incomeModal");
-const incomeCloseButton = document.getElementById("incomeCloseButton");
-const incHourly = document.getElementById("incHourly");
-const incHours = document.getElementById("incHours");
-const incomeCalcButton = document.getElementById("incomeCalcButton");
-const incomeResultText = document.getElementById("incomeResultText");
-
-// Message modal elements
-const messageModal = document.getElementById("messageModal");
-const messageCloseButton = document.getElementById("messageCloseButton");
-const msgChannel = document.getElementById("msgChannel");
-const msgTone = document.getElementById("msgTone");
-const msgFollowups = document.getElementById("msgFollowups");
-const msgVariants = document.getElementById("msgVariants");
-const msgAudience = document.getElementById("msgAudience");
-const msgGoal = document.getElementById("msgGoal");
-const msgDetails = document.getElementById("msgDetails");
-const messageGenerateButton = document.getElementById("messageGenerateButton");
-const msgResult = document.getElementById("msgResult");
-
-let currentPhotos = [];
-let currentUrl = "";
-let isBoosting = false;
-
-// chat history for objection coach
-let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
-
-// ---------------- THEME HANDLING ----------------
-
-function applyTheme(theme) {
-  const root = document.documentElement;
-  root.setAttribute("data-theme", theme);
-  if (theme === "dark") {
-    themeIcon.textContent = "🌙";
-    themeLabel.textContent = "Dark";
-  } else {
-    themeIcon.textContent = "☀️";
-    themeLabel.textContent = "Light";
-  }
-  localStorage.setItem("lotRocketTheme", theme);
-}
-
-function initTheme() {
-  const saved = localStorage.getItem("lotRocketTheme");
-  if (saved === "light" || saved === "dark") {
-    applyTheme(saved);
-  } else {
-    applyTheme("dark");
-  }
-}
-
-themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme") || "dark";
-  const next = current === "dark" ? "light" : "dark";
-  applyTheme(next);
-});
-
-initTheme();
-
-// ---------------- HELPERS ----------------
-
-function setStatus(text, isLoading = false) {
-  if (isLoading) {
-    statusText.innerHTML = '<span class="loading-dot"></span>' + text;
-  } else {
-    statusText.textContent = text;
-  }
-}
-
-function safeTrim(str) {
-  return (str || "").toString().trim();
-}
-
-function updateSummary(label, price) {
-  summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
-  summaryPrice.textContent =
-    safeTrim(price) || "Message for current pricing";
-}
-
-function fillSocialKit(kit) {
-  facebookPost.value = kit.facebook || "";
-  instagramPost.value = kit.instagram || "";
-  tiktokPost.value = kit.tiktok || "";
-  linkedinPost.value = kit.linkedin || "";
-  twitterPost.value = kit.twitter || "";
-  textBlurb.value = kit.textBlurb || "";
-  marketplacePost.value = kit.marketplace || "";
-  hashtags.value = kit.hashtags || "";
-  videoScript.value = kit.videoScript || "";
-  shotPlan.value = kit.shotPlan || "";
-}
-
-function renderPhotosGrid(photos) {
-  photosGrid.innerHTML = "";
-  if (!photos || !photos.length) {
-    photosStatus.textContent = "No photos found yet.";
-    return;
-  }
-  photos.forEach((url) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "photo-thumb";
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Vehicle photo";
-    wrapper.appendChild(img);
-    wrapper.addEventListener("click", () => {
-      window.open(url, "_blank");
-    });
-    photosGrid.appendChild(wrapper);
-  });
-  photosStatus.textContent =
-    photos.length + " photos found. Click any to open full size.";
-}
-
-async function callJson(endpoint, body) {
-  const res = await fetch(apiBase + endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {}),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error("Request failed: " + res.status + " " + txt);
-  }
-  return res.json();
-}
-
-// render objection chat history into modal
-function renderObjectionChat() {
-  objectionHistory.innerHTML = "";
-  if (!objectionMessages.length) {
-    const empty = document.createElement("div");
-    empty.style.opacity = "0.7";
-    empty.textContent =
-      "Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.";
-    objectionHistory.appendChild(empty);
-    return;
-  }
-
-  objectionMessages.forEach((m) => {
-    const labelDiv = document.createElement("div");
-    labelDiv.style.fontSize = "10px";
-    labelDiv.style.marginTop = "6px";
-    labelDiv.style.opacity = "0.75";
-    labelDiv.textContent = m.role === "assistant" ? "COACH" : "YOU";
-
-    const bubble = document.createElement("div");
-    bubble.style.whiteSpace = "pre-wrap";
-    bubble.style.fontSize = "12px";
-    bubble.style.marginTop = "2px";
-    bubble.textContent = m.content || "";
-
-    objectionHistory.appendChild(labelDiv);
-    objectionHistory.appendChild(bubble);
-  });
-
-  objectionHistory.scrollTop = objectionHistory.scrollHeight;
-}
-
-// ---------------- BOOST FLOW ----------------
-
-async function handleBoost() {
-  if (isBoosting) return;
-  const url = safeTrim(vehicleUrlInput.value);
-  if (!url) {
-    alert("Paste a dealer vehicle URL first.");
-    return;
-  }
-
-  let label = safeTrim(vehicleLabelInput.value);
-  if (!label) {
-    label = "This vehicle";
-    vehicleLabelInput.value = label;
-  }
-  let price = safeTrim(priceInfoInput.value);
-  if (!price) {
-    price = "Message for current pricing";
-    priceInfoInput.value = price;
-  }
-
-  isBoosting = true;
-  boostButton.disabled = true;
-  setStatus("Building social kit with AI…", true);
-
-  try {
-    currentUrl = url;
-    const resp = await callJson("/api/social-kit", { url, label, price });
-    if (!resp.success) throw new Error("API returned error");
-    fillSocialKit(resp.kit);
-    updateSummary(label, price);
-    setStatus("Social kit ready. You can spin new posts or scripts anytime.");
-
-    // reset objection chat for the new vehicle
-    objectionMessages = [];
-    renderObjectionChat();
-
-    // Auto load photos
-    try {
-      photosStatus.textContent = "Trying to grab photos from dealer page…";
-      const photoResp = await callJson("/api/grab-photos", { url });
-      if (photoResp.success) {
-        currentPhotos = photoResp.photos || [];
-        renderPhotosGrid(currentPhotos);
-      } else {
-        photosStatus.textContent = "Could not grab photos.";
-      }
-    } catch (err) {
-      console.error("Auto photo grab failed:", err);
-      photosStatus.textContent = "Auto photo load failed.";
-    }
-  } catch (err) {
-    console.error(err);
-    setStatus("Something went wrong. Try again or check the URL.");
-    alert("Error building social kit. Check the URL and try again.");
-  } finally {
-    isBoosting = false;
-    boostButton.disabled = false;
-  }
-}
-
-boostButton.addEventListener("click", handleBoost);
-
-// ---------------- NEW POST BUTTONS ----------------
-
-document.querySelectorAll(".button-new-post").forEach((btn) => {
-  btn.addEventListener("click", async () => {
-    const platform = btn.getAttribute("data-platform");
-    const url = safeTrim(vehicleUrlInput.value);
-    const label = safeTrim(vehicleLabelInput.value);
-    const price = safeTrim(priceInfoInput.value);
-
-    if (!url || !label) {
-      alert(
-        "Please paste a URL and hit Boost at least once before spinning posts."
-      );
-      return;
-    }
-
-    btn.disabled = true;
-    const oldText = btn.innerHTML;
-    btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
-
-    try {
-      const resp = await callJson("/api/new-post", {
-        platform,
-        url,
-        label,
-        price,
-      });
-      if (!resp.success) throw new Error("API returned error");
-      const text = resp.post || "";
-
-      switch (platform) {
-        case "facebook":
-          facebookPost.value = text;
-          break;
-        case "instagram":
-          instagramPost.value = text;
-          break;
-        case "tiktok":
-          tiktokPost.value = text;
-          break;
-        case "linkedin":
-          linkedinPost.value = text;
-          break;
-        case "twitter":
-          twitterPost.value = text;
-          break;
-        case "text":
-          textBlurb.value = text;
-          break;
-        case "marketplace":
-          marketplacePost.value = text;
-          break;
-        case "hashtags":
-          hashtags.value = text;
-          break;
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error generating a new post. Try again.");
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = oldText;
-    }
-  });
-});
-
-// ---------------- COPY BUTTONS ----------------
-
-function wireCopyButtons() {
-  document.querySelectorAll(".button-copy").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-target");
-      const el = document.getElementById(targetId);
-      if (!el) return;
-
-      const text = el.value || "";
-      const original = btn.innerHTML;
-
-      if (!text.trim()) {
-        btn.classList.remove("copied");
-        btn.classList.add("empty");
-        btn.innerHTML = '<span class="icon">⚠️</span><span>Empty</span>';
-        setTimeout(() => {
-          btn.classList.remove("empty");
-          btn.innerHTML = original;
-        }, 1200);
-        return;
-      }
-
-      navigator.clipboard
-        .writeText(text)
-        .then(() => {
-          btn.classList.remove("empty");
-          btn.classList.add("copied");
-          btn.innerHTML = '<span class="icon">✅</span><span>Copied!</span>';
-          setTimeout(() => {
-            btn.classList.remove("copied");
-            btn.innerHTML = original;
-          }, 1300);
-        })
-        .catch(() => {
-          alert("Could not copy to clipboard. Try selecting and copying.");
-        });
-    });
-  });
-}
-
-wireCopyButtons();
-
-// ---------------- NEW VIDEO SCRIPT ----------------
-
-newScriptButton.addEventListener("click", async () => {
-  const url = safeTrim(vehicleUrlInput.value);
-  const label = safeTrim(vehicleLabelInput.value);
-  const price = safeTrim(priceInfoInput.value);
-
-  if (!url || !label) {
-    alert("Please paste a URL and hit Boost at least once before spinning scripts.");
-    return;
-  }
-
-  newScriptButton.disabled = true;
-  const oldText = newScriptButton.innerHTML;
-  newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
-
-  try {
-    const resp = await callJson("/api/new-script", { url, label, price });
-    if (!resp.success) throw new Error("API error");
-    videoScript.value = resp.script || "";
-  } catch (err) {
-    console.error(err);
-    alert("Error generating a new script. Try again.");
-  } finally {
-    newScriptButton.disabled = false;
-    newScriptButton.innerHTML = oldText;
-  }
-});
-
-// ---------------- BUILD VIDEO PLAN FROM PHOTOS ----------------
-
-buildVideoButton.addEventListener("click", async () => {
-  if (!currentPhotos || !currentPhotos.length) {
-    alert("No photos yet. Boost a listing first so we can grab photos.");
-    return;
-  }
-
-  buildVideoButton.disabled = true;
-  const oldText = buildVideoButton.innerHTML;
-  buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
-
-  try {
-    const label = safeTrim(vehicleLabelInput.value) || "this vehicle";
-    const resp = await callJson("/api/video-from-photos", {
-      photos: currentPhotos,
-      label,
-    });
-    if (!resp.success) throw new Error("API error");
-    videoPlan.value = resp.plan || "";
-  } catch (err) {
-    console.error(err);
-    alert("Error building video plan. Try again.");
-  } finally {
-    buildVideoButton.disabled = false;
-    buildVideoButton.innerHTML = oldText;
-  }
-});
-
-// ---------------- DESIGN LAB ----------------
-
-designButton.addEventListener("click", async () => {
-  const type = designTypeSelect.value;
-  const url = safeTrim(vehicleUrlInput.value);
-  const label = safeTrim(vehicleLabelInput.value);
-  const price = safeTrim(priceInfoInput.value);
-
-  if (!url || !label) {
-    alert(
-      "Please paste a URL and hit Boost at least once before generating design ideas."
-    );
-    return;
-  }
-
-  designButton.disabled = true;
-  const oldText = designButton.innerHTML;
-  designButton.innerHTML = '<span class="icon">⏳</span><span>Designing…</span>';
-
-  try {
-    const resp = await callJson("/api/design-idea", { type, url, label, price });
-    if (!resp.success) throw new Error("API error");
-    designOutput.value = resp.design || "";
-  } catch (err) {
-    console.error(err);
-    alert("Error generating a design idea. Try again.");
-  } finally {
-    designButton.disabled = false;
-    designButton.innerHTML = oldText;
-  }
-});
-
-// ---------------- OBJECTION COACH MODAL ----------------
-
-function openObjectionModal() {
-  objectionModal.classList.remove("hidden");
-  if (!objectionMessages.length) {
-    renderObjectionChat();
-  }
-  setTimeout(() => objectionInput.focus(), 50);
