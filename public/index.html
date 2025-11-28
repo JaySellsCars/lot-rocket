@@ -138,4 +138,352 @@
             <!-- Instagram -->
             <div class="social-card">
               <div class="social-card-header">
-                <div class="soci
+                <div class="social-platform">📸 Instagram</div>
+                <button data-platform="instagram" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="instagramPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- TikTok -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🎵 TikTok</div>
+                <button data-platform="tiktok" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="tiktokPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- LinkedIn -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">💼 LinkedIn</div>
+                <button data-platform="linkedin" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="linkedinPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- X / Twitter -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🐦 X / Twitter</div>
+                <button data-platform="twitter" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="twitterPost" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- Text / DM -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">💬 Text / DM</div>
+                <button data-platform="text" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Text</span>
+                </button>
+              </div>
+              <textarea id="textBlurb" class="textarea post-box" readonly></textarea>
+            </div>
+
+            <!-- Marketplace -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🛒 Marketplace</div>
+                <button data-platform="marketplace" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Post</span>
+                </button>
+              </div>
+              <textarea id="marketplacePost" class="textarea marketplace-box" readonly></textarea>
+            </div>
+
+            <!-- Hashtags -->
+            <div class="social-card">
+              <div class="social-card-header">
+                <div class="social-platform">🏷 Hashtags</div>
+                <button data-platform="hashtags" class="button-ghost button-new-post" type="button">
+                  <span class="icon">🔁</span><span>New Tags</span>
+                </button>
+              </div>
+              <textarea id="hashtags" class="textarea post-box" readonly></textarea>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="section-title-row">
+              <label class="field-label">Video Engine</label>
+              <button id="newScriptButton" class="button-ghost" type="button">
+                <span class="icon">🔁</span><span>New Script</span>
+              </button>
+            </div>
+            <div class="card-subtitle">
+              Script + shot plan you can read on camera and follow for Reels, TikTok, Shorts, or Facebook Reels.
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="videoScript">Viral Video Script</label>
+            <textarea id="videoScript" class="textarea script" readonly></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="shotPlan">Viral Visual Shot Plan</label>
+            <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
+          </div>
+
+          <!-- Design Lab -->
+          <div class="field-group">
+            <div class="section-title-row">
+              <label class="field-label">Design Lab (Canva-style layout)</label>
+              <div class="card-subtitle">Get a ready-to-build graphic layout you can recreate in Canva.</div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="designType">Design Type</label>
+            <div class="pill-row">
+              <select id="designType" class="input" style="max-width: 260px; padding-right: 28px;">
+                <option value="facebook_feed_post">Facebook feed post</option>
+                <option value="instagram_feed_post">Instagram feed post</option>
+                <option value="instagram_story">Instagram Story</option>
+                <option value="reels_cover">Reels / TikTok cover image</option>
+                <option value="tiktok_vertical_graphic">TikTok vertical graphic</option>
+                <option value="youtube_thumbnail">YouTube thumbnail</option>
+              </select>
+              <button id="designButton" class="button-ghost" type="button">
+                <span class="icon">🎨</span><span>Generate Design Idea</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="designOutput">Design Layout Plan</label>
+            <textarea
+              id="designOutput"
+              class="textarea design"
+              placeholder="Choose a design type and hit Generate to get a Canva-style layout you can build in minutes."
+              readonly
+            ></textarea>
+          </div>
+
+          <div class="tiny-note">
+            Prototype for salespeople. Copy, tweak, and make it yours. 🚀
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+  <div class="tool-launcher-column">
+    <button id="objectionLauncher" class="objection-launcher" type="button">
+      <span class="icon">🧠</span>
+      <span>Objection coach</span>
+    </button>
+    <button id="calculatorLauncher" class="calculator-launcher" type="button">
+      <span class="icon">📊</span>
+      <span>Calculators</span>
+    </button>
+  </div>
+
+  <!-- OBJECTION COACH MODAL -->
+  <div id="objectionModal" class="objection-modal-backdrop hidden">
+    <div class="objection-modal-card">
+      <div class="objection-modal-header">
+        <div class="objection-modal-title-group">
+          <div class="objection-modal-tag">OBJECTIONS HANDLED</div>
+          <div class="objection-modal-title">Andy Elliott–style AI coach</div>
+          <div class="objection-modal-sub">
+            Paste a customer objection or ask how to respond. Get word tracks and breakdowns.
+          </div>
+        </div>
+        <button id="objectionCloseButton" class="objection-modal-close" type="button">✕</button>
+      </div>
+
+      <div class="objection-chat-area">
+        <div id="objectionHistory" class="objection-history">
+          <!-- chat bubbles injected here -->
+        </div>
+
+        <div class="objection-input-row">
+          <textarea
+            id="objectionInput"
+            class="objection-input-box"
+            placeholder="Example: &quot;I need to think about it&quot; or &quot;Payment is too high&quot; or ask: &quot;How do I close a be-back?&quot; "
+          ></textarea>
+
+          <div class="objection-send-row">
+            <div class="objection-hint">
+              Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send fast.
+            </div>
+            <button id="objectionSendButton" type="button">
+              <span>🧠 Handle this objection</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULATORS MODAL -->
+  <div id="calculatorModal" class="calculator-modal-backdrop hidden">
+    <div class="calculator-modal-card">
+      <div class="calculator-modal-header">
+        <div>
+          <div class="calculator-modal-tag">MONEY MATH</div>
+          <div class="calculator-modal-title">Payment & Affordability Calculators</div>
+          <div class="calculator-modal-sub">
+            Use these with customers live – fast payment, affordability, and income planning.
+          </div>
+        </div>
+        <button id="calculatorCloseButton" class="calculator-modal-close" type="button">✕</button>
+      </div>
+
+      <div class="calculator-tabs">
+        <button class="calculator-tab is-active" data-calctab="payment">Monthly payment</button>
+        <button class="calculator-tab" data-calctab="affordability">Affordability</button>
+        <button class="calculator-tab" data-calctab="income">Income builder</button>
+      </div>
+
+      <div class="calculator-body">
+        <!-- PAYMENT CALC -->
+        <div id="calc-payment" class="calc-panel is-active">
+          <form id="paymentCalcForm" class="calc-form">
+            <div class="field-grid">
+              <div class="field-row">
+                <label for="loanPrice">Vehicle price ($)</label>
+                <input id="loanPrice" type="number" min="0" step="100" placeholder="e.g. 35000" />
+              </div>
+              <div class="field-row">
+                <label for="loanDown">Down payment ($)</label>
+                <input id="loanDown" type="number" min="0" step="100" placeholder="e.g. 2000" />
+              </div>
+              <div class="field-row">
+                <label for="loanTerm">Term (months)</label>
+                <input id="loanTerm" type="number" min="12" step="12" placeholder="e.g. 72" />
+              </div>
+              <div class="field-row">
+                <label for="loanApr">APR %</label>
+                <input id="loanApr" type="number" min="0" step="0.1" placeholder="e.g. 7.5" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Calculate payment</button>
+            </div>
+          </form>
+
+          <div class="payment-results">
+            <div class="result-card">
+              <span class="result-label">Estimated payment</span>
+              <span id="paymentMonthly" class="result-value">$0.00 / mo</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Total loan amount</span>
+              <span id="paymentTotalLoan" class="result-value">$0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Total interest paid</span>
+              <span id="paymentTotalInterest" class="result-value">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AFFORDABILITY CALC -->
+        <div id="calc-affordability" class="calc-panel">
+          <form id="affordForm" class="calc-form">
+            <div class="field-grid">
+              <div class="field-row">
+                <label for="affordBudget">Max monthly budget ($)</label>
+                <input id="affordBudget" type="number" min="0" step="25" placeholder="e.g. 500" />
+              </div>
+              <div class="field-row">
+                <label for="affordTerm">Term (months)</label>
+                <input id="affordTerm" type="number" min="12" step="12" placeholder="e.g. 72" />
+              </div>
+              <div class="field-row">
+                <label for="affordApr">APR %</label>
+                <input id="affordApr" type="number" min="0" step="0.1" placeholder="e.g. 7.0" />
+              </div>
+              <div class="field-row">
+                <label for="affordDown">Down payment ($, optional)</label>
+                <input id="affordDown" type="number" min="0" step="100" placeholder="e.g. 2000" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Calculate affordability</button>
+            </div>
+          </form>
+
+          <div class="payment-results">
+            <div class="result-card">
+              <span class="result-label">Max vehicle price</span>
+              <span id="affordMaxPrice" class="result-value">$0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Total loan amount</span>
+              <span id="affordTotalLoan" class="result-value">$0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Total interest paid</span>
+              <span id="affordTotalInterest" class="result-value">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- INCOME BUILDER CALC -->
+        <div id="calc-income" class="calc-panel">
+          <form id="incomeForm" class="calc-form">
+            <div class="field-grid">
+              <div class="field-row">
+                <label for="incomeGoal">Monthly income goal ($)</label>
+                <input id="incomeGoal" type="number" min="0" step="500" placeholder="e.g. 10000" />
+              </div>
+              <div class="field-row">
+                <label for="commissionPerDeal">Average per deal ($)</label>
+                <input id="commissionPerDeal" type="number" min="0" step="50" placeholder="e.g. 500" />
+              </div>
+              <div class="field-row">
+                <label for="workDays">Work days per month</label>
+                <input id="workDays" type="number" min="10" max="31" step="1" placeholder="e.g. 24" />
+              </div>
+              <div class="field-row">
+                <label for="closeRate">Close rate % (shows to deals)</label>
+                <input id="closeRate" type="number" min="1" max="100" step="1" placeholder="e.g. 20" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Build activity plan</button>
+            </div>
+          </form>
+
+          <div class="income-results">
+            <div class="result-card">
+              <span class="result-label">Deals per month</span>
+              <span id="dealsPerMonth" class="result-value">0.0</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Deals per day</span>
+              <span id="dealsPerDay" class="result-value">0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Shows per day</span>
+              <span id="showsPerDay" class="result-value">0.00</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Appointments per day</span>
+              <span id="appointmentsPerDay" class="result-value">0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
