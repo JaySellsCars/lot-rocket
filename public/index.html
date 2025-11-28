@@ -42,8 +42,8 @@
             <div>
               <div class="card-title">Step 1 · Dealer URL</div>
               <div class="card-subtitle">
-                Paste a full vehicle detail page. We’ll pull photos and build
-                the kit.
+                Paste a full vehicle detail page. We’ll pull photos and build the
+                kit.
               </div>
             </div>
             <span class="badge">INPUT</span>
@@ -51,7 +51,7 @@
 
           <div class="stack-vertical">
             <div class="field-group">
-              <label class="field-label" for="vehicleUrl">DEALER VEHICLE URL</label>
+              <label class="field-label" for="vehicleUrl">Dealer vehicle URL</label>
               <input
                 id="vehicleUrl"
                 class="input"
@@ -61,17 +61,17 @@
 
             <div class="pill-row">
               <button id="boostButton" class="button-primary" type="button">
-                <span>🚀 BOOST THIS LISTING</span>
+                <span>🚀 Boost This Listing</span>
               </button>
-              <span id="statusText" class="status-text">
-                Paste URL, then tap Boost.
-              </span>
+              <span id="statusText" class="status-text"
+                >Paste URL, then tap Boost.</span
+              >
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="vehicleLabel">
-                VEHICLE LABEL (EDITABLE)
-              </label>
+              <label class="field-label" for="vehicleLabel"
+                >Vehicle label (editable)</label
+              >
               <input
                 id="vehicleLabel"
                 class="input"
@@ -80,9 +80,9 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="priceInfo">
-                PRICE / DEAL INFO (EDITABLE)
-              </label>
+              <label class="field-label" for="priceInfo"
+                >Price / deal info (editable)</label
+              >
               <input
                 id="priceInfo"
                 class="input"
@@ -94,20 +94,19 @@
           <div class="stack-vertical">
             <div class="section-title-row">
               <div>
-                <div class="card-title">MEDIA TOOLS</div>
+                <div class="card-title">Media Tools</div>
                 <div class="card-subtitle">
                   We’ll auto-pull photos on Boost and turn them into a simple
                   video plan.
                 </div>
               </div>
               <button id="buildVideoButton" class="button-ghost" type="button">
-                <span class="icon">🎬</span
-                ><span>Build Video From Photos</span>
+                <span class="icon">🎬</span><span>Build Video from Photos</span>
               </button>
             </div>
 
             <div class="field-group">
-              <label class="field-label">DEALER PHOTOS</label>
+              <label class="field-label">Dealer Photos</label>
               <div id="photosGrid" class="photos-grid"></div>
               <div id="photosStatus" class="tiny-note">
                 Photos will auto-load after Boost if we can find them.
@@ -115,9 +114,9 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="videoPlan">
-                VIDEO FROM PHOTOS PLAN
-              </label>
+              <label class="field-label" for="videoPlan"
+                >Video From Photos Plan</label
+              >
               <textarea
                 id="videoPlan"
                 class="textarea shotplan"
@@ -143,7 +142,7 @@
 
           <div class="stack-vertical">
             <div class="field-group">
-              <label class="field-label">LISTING SUMMARY</label>
+              <label class="field-label">Listing Summary</label>
               <div class="pill-row">
                 <span id="summaryLabel" class="pill">No vehicle yet</span>
                 <span id="summaryPrice" class="pill">—</span>
@@ -151,10 +150,10 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label">SOCIAL MEDIA POSTS</label>
+              <label class="field-label">Social Media Posts</label>
               <div class="card-subtitle">
                 Each box is copy-and-paste ready. Hit “New Post” to spin a fresh
-                version for that platform.
+                version for that platform or use “Copy” to grab it instantly.
               </div>
             </div>
 
@@ -163,13 +162,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">📘 Facebook</div>
-                  <button
-                    data-platform="facebook"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Post</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="facebook"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Post</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="facebookPost"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="facebookPost"
@@ -182,13 +190,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">📸 Instagram</div>
-                  <button
-                    data-platform="instagram"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Post</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="instagram"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Post</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="instagramPost"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="instagramPost"
@@ -201,13 +218,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">🎵 TikTok</div>
-                  <button
-                    data-platform="tiktok"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Post</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="tiktok"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Post</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="tiktokPost"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="tiktokPost"
@@ -220,13 +246,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">💼 LinkedIn</div>
-                  <button
-                    data-platform="linkedin"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Post</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="linkedin"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Post</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="linkedinPost"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="linkedinPost"
@@ -239,13 +274,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">🐦 X / Twitter</div>
-                  <button
-                    data-platform="twitter"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Post</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="twitter"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Post</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="twitterPost"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="twitterPost"
@@ -258,13 +302,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">💬 Text / DM</div>
-                  <button
-                    data-platform="text"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Text</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="text"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Text</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="textBlurb"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="textBlurb"
@@ -277,13 +330,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">🛒 Marketplace</div>
-                  <button
-                    data-platform="marketplace"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Post</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="marketplace"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Post</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="marketplacePost"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="marketplacePost"
@@ -296,13 +358,22 @@
               <div class="social-card">
                 <div class="social-card-header">
                   <div class="social-platform">🏷 Hashtags</div>
-                  <button
-                    data-platform="hashtags"
-                    class="button-ghost button-new-post"
-                    type="button"
-                  >
-                    <span class="icon">🔁</span><span>New Tags</span>
-                  </button>
+                  <div class="social-card-actions">
+                    <button
+                      data-platform="hashtags"
+                      class="button-ghost button-new-post"
+                      type="button"
+                    >
+                      <span class="icon">🔁</span><span>New Tags</span>
+                    </button>
+                    <button
+                      class="button-ghost button-copy"
+                      data-target="hashtags"
+                      type="button"
+                    >
+                      <span class="icon">📋</span><span>Copy</span>
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   id="hashtags"
@@ -314,7 +385,7 @@
 
             <div class="field-group">
               <div class="section-title-row">
-                <label class="field-label">VIDEO ENGINE</label>
+                <label class="field-label">Video Engine</label>
                 <button id="newScriptButton" class="button-ghost" type="button">
                   <span class="icon">🔁</span><span>New Script</span>
                 </button>
@@ -326,9 +397,7 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="videoScript">
-                VIRAL VIDEO SCRIPT
-              </label>
+              <label class="field-label" for="videoScript">Viral Video Script</label>
               <textarea
                 id="videoScript"
                 class="textarea script"
@@ -337,9 +406,9 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="shotPlan">
-                VIRAL VISUAL SHOT PLAN
-              </label>
+              <label class="field-label" for="shotPlan"
+                >Viral Visual Shot Plan</label
+              >
               <textarea
                 id="shotPlan"
                 class="textarea shotplan"
@@ -350,18 +419,15 @@
             <!-- Design Lab -->
             <div class="field-group">
               <div class="section-title-row">
-                <label class="field-label">
-                  DESIGN LAB (CANVA-STYLE LAYOUT)
-                </label>
+                <label class="field-label">Design Lab (Canva-style layout)</label>
                 <div class="card-subtitle">
-                  Get a ready-to-build graphic layout you can recreate in
-                  Canva.
+                  Get a ready-to-build graphic layout you can recreate in Canva.
                 </div>
               </div>
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="designType">DESIGN TYPE</label>
+              <label class="field-label" for="designType">Design Type</label>
               <div class="pill-row">
                 <select
                   id="designType"
@@ -369,17 +435,13 @@
                   style="max-width: 260px; padding-right: 28px"
                 >
                   <option value="facebook_feed_post">Facebook feed post</option>
-                  <option value="instagram_feed_post">
-                    Instagram feed post
-                  </option>
+                  <option value="instagram_feed_post">Instagram feed post</option>
                   <option value="instagram_story">Instagram Story</option>
                   <option value="reels_cover">Reels / TikTok cover image</option>
                   <option value="tiktok_vertical_graphic">
                     TikTok vertical graphic
                   </option>
-                  <option value="youtube_thumbnail">
-                    YouTube thumbnail
-                  </option>
+                  <option value="youtube_thumbnail">YouTube thumbnail</option>
                 </select>
                 <button id="designButton" class="button-ghost" type="button">
                   <span class="icon">🎨</span
@@ -389,9 +451,9 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="designOutput">
-                DESIGN LAYOUT PLAN
-              </label>
+              <label class="field-label" for="designOutput"
+                >Design Layout Plan</label
+              >
               <textarea
                 id="designOutput"
                 class="textarea design"
@@ -450,9 +512,7 @@
         </div>
 
         <div class="modal-body">
-          <div id="objectionHistory" class="objection-history">
-            <!-- chat bubbles injected here -->
-          </div>
+          <div id="objectionHistory" class="objection-history"></div>
 
           <div class="objection-input-row">
             <textarea
@@ -483,8 +543,8 @@
             <div class="modal-tag">PAYMENT TOOL</div>
             <div class="modal-title">Quick Car Payment Calculator</div>
             <div class="modal-sub">
-              Fast ballpark payment you can give on the spot. Not a final
-              finance quote.
+              Fast ballpark payment you can give on the spot. Not a final finance
+              quote.
             </div>
           </div>
           <button id="paymentCloseButton" class="modal-close" type="button">
@@ -689,7 +749,6 @@
       </div>
     </div>
 
-    <!-- Front-end JS -->
-    <script src="app.js" defer></script>
+    <script src="app.js"></script>
   </body>
 </html>
