@@ -1039,15 +1039,15 @@ app.get('/', (req, res) => {
 
 .tool-launcher-column {
   position: fixed;
-  /* Move the buttons down so the first one lines up with the top of the Step 1 / Step 2 cards */
-  top: 120px;       /* ← adjust to 110 / 130 if you want to fine-tune */
+  top: 185px;     /* PERFECT alignment for both Step 1 + Step 2 titles */
   right: 24px;
   z-index: 60;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-end;
 }
+
 
 }
 
