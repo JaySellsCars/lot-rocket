@@ -1,430 +1,695 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <title>Lot Rocket · Social Media Kit</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="app-shell">
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="title-group">
-        <div class="logo-circle">
-          <div class="logo-inner">
-            LR
-            <span class="rocket">🚀</span>
-          </div>
-        </div>
-        <div>
-          <div class="logo-text-main">Lot Rocket</div>
-          <div class="logo-text-sub">
-            Social Media Kit · Prototype for salespeople, not stores
-          </div>
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="chip">
-          <span class="dot"></span>
-          <span>AI-ASSISTED COPY · BETA</span>
-        </div>
-        <button id="themeToggle" class="theme-toggle" type="button">
-          <span id="themeIcon">🌙</span>
-          <span id="themeLabel">Dark</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- SIDE TOOL BUTTONS (OBJECTION + CALCULATORS) -->
-    <div class="side-tools">
-      <button id="objectionLauncher" class="side-tool-btn" type="button">
-        <span class="icon">🧠</span>
-        <span>Objection Coach</span>
-      </button>
-      <button id="calcLauncher" class="side-tool-btn" type="button">
-        <span class="icon">📊</span>
-        <span>Calculators</span>
-      </button>
-    </div>
-
-    <!-- MAIN LAYOUT -->
-    <main class="layout">
-      <!-- STEP 1 -->
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Step 1 · Dealer URL</div>
-            <div class="card-subtitle">
-              Paste a full vehicle detail page. We’ll pull photos and build the kit.
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lot Rocket · Social Media Kit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="title-group">
+          <div class="logo-circle">
+            <div class="logo-inner">
+              LR
+              <span class="rocket">🚀</span>
             </div>
           </div>
-          <span class="badge">INPUT</span>
-        </div>
-
-        <div class="stack-vertical">
-          <div class="field-group">
-            <label class="field-label" for="vehicleUrl">Dealer vehicle URL</label>
-            <input id="vehicleUrl" class="input" placeholder="https://dealer.com/used-YourVehicleHere..." />
-          </div>
-
-          <div class="pill-row">
-            <button id="boostButton" class="button-primary" type="button">
-              <span>🚀 Boost This Listing</span>
-            </button>
-            <span id="statusText" class="status-text">Paste URL, then tap Boost.</span>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label" for="vehicleLabel">Vehicle label (editable)</label>
-            <input id="vehicleLabel" class="input" placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used" />
-          </div>
-
-          <div class="field-group">
-            <label class="field-label" for="priceInfo">Price / deal info (editable)</label>
-            <input id="priceInfo" class="input" placeholder="Message for current pricing" />
+          <div>
+            <div class="logo-text-main">Lot Rocket</div>
+            <div class="logo-text-sub">
+              Social Media Kit · Prototype for salespeople, not stores
+            </div>
           </div>
         </div>
+        <div class="header-right">
+          <div class="chip">
+            <span class="dot"></span>
+            <span>AI-ASSISTED COPY · BETA</span>
+          </div>
+          <button id="themeToggle" class="theme-toggle" type="button">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Dark</span>
+          </button>
+        </div>
+      </header>
 
-        <div class="stack-vertical media-block">
-          <div class="section-title-row">
+      <div class="layout">
+        <!-- Left panel: URL + media -->
+        <section class="card">
+          <div class="card-header">
             <div>
-              <div class="card-title">Media Tools</div>
+              <div class="card-title">Step 1 · Dealer URL</div>
               <div class="card-subtitle">
-                We’ll auto-pull photos on Boost and turn them into a simple video plan.
+                Paste a full vehicle detail page. We’ll pull photos and build
+                the kit.
               </div>
             </div>
-            <button id="buildVideoButton" class="button-ghost" type="button">
-              <span class="icon">🎬</span><span>Build Video from Photos</span>
-            </button>
+            <span class="badge">INPUT</span>
           </div>
 
-          <div class="field-group">
-            <label class="field-label">Dealer Photos</label>
-            <div id="photosGrid" class="photos-grid"></div>
-            <div id="photosStatus" class="tiny-note">
-              Photos will auto-load after Boost if we can find them.
+          <div class="stack-vertical">
+            <div class="field-group">
+              <label class="field-label" for="vehicleUrl">DEALER VEHICLE URL</label>
+              <input
+                id="vehicleUrl"
+                class="input"
+                placeholder="https://dealer.com/used-YourVehicleHere..."
+              />
             </div>
-          </div>
 
-          <div class="field-group">
-            <label class="field-label" for="videoPlan">Video From Photos Plan</label>
-            <textarea
-              id="videoPlan"
-              class="textarea shotplan"
-              placeholder="Hit 'Build Video from Photos' after photos load to get a simple shot list for Reels / TikTok."
-              readonly
-            ></textarea>
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 2 -->
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Step 2 · Social Kit</div>
-            <div class="card-subtitle">
-              Copy, tweak, and paste into each platform. Spin fresh versions anytime.
-            </div>
-          </div>
-          <span class="badge">OUTPUT</span>
-        </div>
-
-        <div class="stack-vertical">
-          <div class="field-group">
-            <label class="field-label">Listing Summary</label>
             <div class="pill-row">
-              <span id="summaryLabel" class="pill">No vehicle yet</span>
-              <span id="summaryPrice" class="pill">—</span>
+              <button id="boostButton" class="button-primary" type="button">
+                <span>🚀 BOOST THIS LISTING</span>
+              </button>
+              <span id="statusText" class="status-text">
+                Paste URL, then tap Boost.
+              </span>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="vehicleLabel">
+                VEHICLE LABEL (EDITABLE)
+              </label>
+              <input
+                id="vehicleLabel"
+                class="input"
+                placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used"
+              />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="priceInfo">
+                PRICE / DEAL INFO (EDITABLE)
+              </label>
+              <input
+                id="priceInfo"
+                class="input"
+                placeholder="Message for current pricing"
+              />
             </div>
           </div>
 
-          <div class="field-group">
-            <label class="field-label">Social Media Posts</label>
-            <div class="card-subtitle">
-              Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version for that platform.
-            </div>
-          </div>
-
-          <div class="social-grid">
-            <!-- Facebook -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">📘 Facebook</div>
-                <button data-platform="facebook" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Post</span>
-                </button>
-              </div>
-              <textarea id="facebookPost" class="textarea post-box" readonly></textarea>
-            </div>
-
-            <!-- Instagram -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">📸 Instagram</div>
-                <button data-platform="instagram" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Post</span>
-                </button>
-              </div>
-              <textarea id="instagramPost" class="textarea post-box" readonly></textarea>
-            </div>
-
-            <!-- TikTok -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">🎵 TikTok</div>
-                <button data-platform="tiktok" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Post</span>
-                </button>
-              </div>
-              <textarea id="tiktokPost" class="textarea post-box" readonly></textarea>
-            </div>
-
-            <!-- LinkedIn -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">💼 LinkedIn</div>
-                <button data-platform="linkedin" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Post</span>
-                </button>
-              </div>
-              <textarea id="linkedinPost" class="textarea post-box" readonly></textarea>
-            </div>
-
-            <!-- X / Twitter -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">🐦 X / Twitter</div>
-                <button data-platform="twitter" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Post</span>
-                </button>
-              </div>
-              <textarea id="twitterPost" class="textarea post-box" readonly></textarea>
-            </div>
-
-            <!-- Text / DM -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">💬 Text / DM</div>
-                <button data-platform="text" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Text</span>
-                </button>
-              </div>
-              <textarea id="textBlurb" class="textarea post-box" readonly></textarea>
-            </div>
-
-            <!-- Marketplace -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">🛒 Marketplace</div>
-                <button data-platform="marketplace" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Post</span>
-                </button>
-              </div>
-              <textarea id="marketplacePost" class="textarea marketplace-box" readonly></textarea>
-            </div>
-
-            <!-- Hashtags -->
-            <div class="social-card">
-              <div class="social-card-header">
-                <div class="social-platform">🏷 Hashtags</div>
-                <button data-platform="hashtags" class="button-ghost button-new-post" type="button">
-                  <span class="icon">🔁</span><span>New Tags</span>
-                </button>
-              </div>
-              <textarea id="hashtags" class="textarea post-box" readonly></textarea>
-            </div>
-          </div>
-
-          <div class="field-group">
+          <div class="stack-vertical">
             <div class="section-title-row">
-              <label class="field-label">Video Engine</label>
-              <button id="newScriptButton" class="button-ghost" type="button">
-                <span class="icon">🔁</span><span>New Script</span>
+              <div>
+                <div class="card-title">MEDIA TOOLS</div>
+                <div class="card-subtitle">
+                  We’ll auto-pull photos on Boost and turn them into a simple
+                  video plan.
+                </div>
+              </div>
+              <button id="buildVideoButton" class="button-ghost" type="button">
+                <span class="icon">🎬</span
+                ><span>Build Video From Photos</span>
               </button>
             </div>
-            <div class="card-subtitle">
-              Script + shot plan you can read on camera and follow for Reels, TikTok, Shorts, or Facebook Reels.
+
+            <div class="field-group">
+              <label class="field-label">DEALER PHOTOS</label>
+              <div id="photosGrid" class="photos-grid"></div>
+              <div id="photosStatus" class="tiny-note">
+                Photos will auto-load after Boost if we can find them.
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="videoPlan">
+                VIDEO FROM PHOTOS PLAN
+              </label>
+              <textarea
+                id="videoPlan"
+                class="textarea shotplan"
+                placeholder="Hit 'Build Video from Photos' after photos load to get a simple shot list for Reels / TikTok."
+                readonly
+              ></textarea>
             </div>
           </div>
+        </section>
 
-          <div class="field-group">
-            <label class="field-label" for="videoScript">Viral Video Script</label>
-            <textarea id="videoScript" class="textarea script" readonly></textarea>
+        <!-- Right panel: social kit + video + design lab -->
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Step 2 · Social Kit</div>
+              <div class="card-subtitle">
+                Copy, tweak, and paste into each platform. Spin fresh versions
+                anytime.
+              </div>
+            </div>
+            <span class="badge">OUTPUT</span>
           </div>
 
-          <div class="field-group">
-            <label class="field-label" for="shotPlan">Viral Visual Shot Plan</label>
-            <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
-          </div>
+          <div class="stack-vertical">
+            <div class="field-group">
+              <label class="field-label">LISTING SUMMARY</label>
+              <div class="pill-row">
+                <span id="summaryLabel" class="pill">No vehicle yet</span>
+                <span id="summaryPrice" class="pill">—</span>
+              </div>
+            </div>
 
-          <!-- Design Lab -->
-          <div class="field-group">
-            <div class="section-title-row">
-              <label class="field-label">Design Lab (Canva-style layout)</label>
-              <div class="card-subtitle">Get a ready-to-build graphic layout you can recreate in Canva.</div>
+            <div class="field-group">
+              <label class="field-label">SOCIAL MEDIA POSTS</label>
+              <div class="card-subtitle">
+                Each box is copy-and-paste ready. Hit “New Post” to spin a fresh
+                version for that platform.
+              </div>
+            </div>
+
+            <div class="social-grid">
+              <!-- Facebook -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">📘 Facebook</div>
+                  <button
+                    data-platform="facebook"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Post</span>
+                  </button>
+                </div>
+                <textarea
+                  id="facebookPost"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- Instagram -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">📸 Instagram</div>
+                  <button
+                    data-platform="instagram"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Post</span>
+                  </button>
+                </div>
+                <textarea
+                  id="instagramPost"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- TikTok -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">🎵 TikTok</div>
+                  <button
+                    data-platform="tiktok"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Post</span>
+                  </button>
+                </div>
+                <textarea
+                  id="tiktokPost"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- LinkedIn -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">💼 LinkedIn</div>
+                  <button
+                    data-platform="linkedin"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Post</span>
+                  </button>
+                </div>
+                <textarea
+                  id="linkedinPost"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- X / Twitter -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">🐦 X / Twitter</div>
+                  <button
+                    data-platform="twitter"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Post</span>
+                  </button>
+                </div>
+                <textarea
+                  id="twitterPost"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- Text / DM -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">💬 Text / DM</div>
+                  <button
+                    data-platform="text"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Text</span>
+                  </button>
+                </div>
+                <textarea
+                  id="textBlurb"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- Marketplace -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">🛒 Marketplace</div>
+                  <button
+                    data-platform="marketplace"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Post</span>
+                  </button>
+                </div>
+                <textarea
+                  id="marketplacePost"
+                  class="textarea marketplace-box"
+                  readonly
+                ></textarea>
+              </div>
+
+              <!-- Hashtags -->
+              <div class="social-card">
+                <div class="social-card-header">
+                  <div class="social-platform">🏷 Hashtags</div>
+                  <button
+                    data-platform="hashtags"
+                    class="button-ghost button-new-post"
+                    type="button"
+                  >
+                    <span class="icon">🔁</span><span>New Tags</span>
+                  </button>
+                </div>
+                <textarea
+                  id="hashtags"
+                  class="textarea post-box"
+                  readonly
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <div class="section-title-row">
+                <label class="field-label">VIDEO ENGINE</label>
+                <button id="newScriptButton" class="button-ghost" type="button">
+                  <span class="icon">🔁</span><span>New Script</span>
+                </button>
+              </div>
+              <div class="card-subtitle">
+                Script + shot plan you can read on camera and follow for Reels,
+                TikTok, Shorts, or Facebook Reels.
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="videoScript">
+                VIRAL VIDEO SCRIPT
+              </label>
+              <textarea
+                id="videoScript"
+                class="textarea script"
+                readonly
+              ></textarea>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="shotPlan">
+                VIRAL VISUAL SHOT PLAN
+              </label>
+              <textarea
+                id="shotPlan"
+                class="textarea shotplan"
+                readonly
+              ></textarea>
+            </div>
+
+            <!-- Design Lab -->
+            <div class="field-group">
+              <div class="section-title-row">
+                <label class="field-label">
+                  DESIGN LAB (CANVA-STYLE LAYOUT)
+                </label>
+                <div class="card-subtitle">
+                  Get a ready-to-build graphic layout you can recreate in
+                  Canva.
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="designType">DESIGN TYPE</label>
+              <div class="pill-row">
+                <select
+                  id="designType"
+                  class="input"
+                  style="max-width: 260px; padding-right: 28px"
+                >
+                  <option value="facebook_feed_post">Facebook feed post</option>
+                  <option value="instagram_feed_post">
+                    Instagram feed post
+                  </option>
+                  <option value="instagram_story">Instagram Story</option>
+                  <option value="reels_cover">Reels / TikTok cover image</option>
+                  <option value="tiktok_vertical_graphic">
+                    TikTok vertical graphic
+                  </option>
+                  <option value="youtube_thumbnail">
+                    YouTube thumbnail
+                  </option>
+                </select>
+                <button id="designButton" class="button-ghost" type="button">
+                  <span class="icon">🎨</span
+                  ><span>Generate Design Idea</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="designOutput">
+                DESIGN LAYOUT PLAN
+              </label>
+              <textarea
+                id="designOutput"
+                class="textarea design"
+                placeholder="Choose a design type and hit Generate to get a Canva-style layout you can build in minutes."
+                readonly
+              ></textarea>
+            </div>
+
+            <div class="tiny-note">
+              Prototype for salespeople. Copy, tweak, and make it yours. 🚀
             </div>
           </div>
+        </section>
+      </div>
+    </div>
 
-          <div class="field-group">
-            <label class="field-label" for="designType">Design Type</label>
-            <div class="pill-row">
-              <select id="designType" class="input design-select">
-                <option value="facebook_feed_post">Facebook feed post</option>
-                <option value="instagram_feed_post">Instagram feed post</option>
-                <option value="instagram_story">Instagram Story</option>
-                <option value="reels_cover">Reels / TikTok cover image</option>
-                <option value="tiktok_vertical_graphic">TikTok vertical graphic</option>
-                <option value="youtube_thumbnail">YouTube thumbnail</option>
+    <!-- Floating tool buttons (right side, stacked) -->
+    <div class="tool-launcher-column">
+      <button id="objectionLauncher" class="tool-launcher-btn" type="button">
+        <span class="icon">🧠</span>
+        <span>Objection coach</span>
+      </button>
+      <button id="paymentLauncher" class="tool-launcher-btn" type="button">
+        <span class="icon">🔢</span>
+        <span>Payment calc</span>
+      </button>
+      <button id="incomeLauncher" class="tool-launcher-btn" type="button">
+        <span class="icon">💵</span>
+        <span>Income calc</span>
+      </button>
+      <button id="messageLauncher" class="tool-launcher-btn" type="button">
+        <span class="icon">✉️</span>
+        <span>AI messages</span>
+      </button>
+    </div>
+
+    <!-- Objection Coach Modal -->
+    <div id="objectionModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-tag">OBJECTIONS HANDLED</div>
+            <div class="modal-title">Andy Elliott–style AI coach</div>
+            <div class="modal-sub">
+              Paste a customer objection or ask how to respond. Get word tracks
+              and breakdowns.
+            </div>
+          </div>
+          <button
+            id="objectionCloseButton"
+            class="modal-close"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div id="objectionHistory" class="objection-history">
+            <!-- chat bubbles injected here -->
+          </div>
+
+          <div class="objection-input-row">
+            <textarea
+              id="objectionInput"
+              class="objection-input-box"
+              placeholder='Example: "I need to think about it" or "Payment is too high" or ask: "How do I close a be-back?"'
+            ></textarea>
+
+            <div class="objection-send-row">
+              <div class="objection-hint">
+                Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send
+                fast.
+              </div>
+              <button id="objectionSendButton" type="button">
+                <span>🧠 Handle this objection</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Calculator Modal -->
+    <div id="paymentModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-tag">PAYMENT TOOL</div>
+            <div class="modal-title">Quick Car Payment Calculator</div>
+            <div class="modal-sub">
+              Fast ballpark payment you can give on the spot. Not a final
+              finance quote.
+            </div>
+          </div>
+          <button id="paymentCloseButton" class="modal-close" type="button">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-row">
+            <div class="modal-half">
+              <label class="field-label">Vehicle Price ($)</label>
+              <input
+                id="payPrice"
+                class="tool-input"
+                type="number"
+                placeholder="30000"
+              />
+            </div>
+            <div class="modal-half">
+              <label class="field-label">Down Payment ($)</label>
+              <input
+                id="payDown"
+                class="tool-input"
+                type="number"
+                placeholder="3000"
+              />
+            </div>
+          </div>
+          <div class="modal-row">
+            <div class="modal-half">
+              <label class="field-label">APR (%)</label>
+              <input
+                id="payApr"
+                class="tool-input"
+                type="number"
+                step="0.01"
+                placeholder="7.99"
+              />
+            </div>
+            <div class="modal-half">
+              <label class="field-label">Term (months)</label>
+              <input
+                id="payTerm"
+                class="tool-input"
+                type="number"
+                placeholder="72"
+              />
+            </div>
+          </div>
+          <button id="paymentCalcButton" class="tool-button-primary" type="button">
+            <span>🔢 Calculate Payment</span>
+          </button>
+          <div id="paymentResultText" class="tool-result-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income Calculator Modal -->
+    <div id="incomeModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-tag">INCOME TOOL</div>
+            <div class="modal-title">Yearly Gross Income Calculator</div>
+            <div class="modal-sub">
+              Turn hourly pay into a quick yearly income estimate.
+            </div>
+          </div>
+          <button id="incomeCloseButton" class="modal-close" type="button">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-row">
+            <div class="modal-half">
+              <label class="field-label">Hourly Wage ($)</label>
+              <input
+                id="incHourly"
+                class="tool-input"
+                type="number"
+                step="0.01"
+                placeholder="20"
+              />
+            </div>
+            <div class="modal-half">
+              <label class="field-label">Hours per Week</label>
+              <input
+                id="incHours"
+                class="tool-input"
+                type="number"
+                placeholder="40"
+              />
+            </div>
+          </div>
+          <button id="incomeCalcButton" class="tool-button-primary" type="button">
+            <span>💵 Calculate Income</span>
+          </button>
+          <div id="incomeResultText" class="tool-result-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Message & Campaign Builder Modal -->
+    <div id="messageModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-tag">FOLLOW-UP ENGINE</div>
+            <div class="modal-title">AI Message & Workflow Builder</div>
+            <div class="modal-sub">
+              Describe what you’re trying to do. Get messages and a multi-step
+              follow-up plan.
+            </div>
+          </div>
+          <button id="messageCloseButton" class="modal-close" type="button">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-row">
+            <div class="modal-half">
+              <label class="field-label">Channel</label>
+              <select id="msgChannel" class="tool-input">
+                <option value="sms">Text Message (SMS)</option>
+                <option value="email">Email</option>
               </select>
-              <button id="designButton" class="button-ghost" type="button">
-                <span class="icon">🎨</span><span>Generate Design Idea</span>
-              </button>
+            </div>
+            <div class="modal-half">
+              <label class="field-label">Tone</label>
+              <select id="msgTone" class="tool-input">
+                <option value="friendly">Friendly & Helpful</option>
+                <option value="professional">Professional</option>
+                <option value="urgent">Urgent / Action-focused</option>
+                <option value="laid back">Laid back</option>
+              </select>
             </div>
           </div>
-
-          <div class="field-group">
-            <label class="field-label" for="designOutput">Design Layout Plan</label>
+          <div class="modal-row">
+            <div class="modal-half">
+              <label class="field-label">Follow-up steps</label>
+              <input
+                id="msgFollowups"
+                class="tool-input"
+                type="number"
+                min="1"
+                max="10"
+                value="4"
+              />
+            </div>
+            <div class="modal-half">
+              <label class="field-label">Campaign options</label>
+              <input
+                id="msgVariants"
+                class="tool-input"
+                type="number"
+                min="1"
+                max="5"
+                value="2"
+              />
+            </div>
+          </div>
+          <div class="modal-row">
+            <div class="modal-half">
+              <label class="field-label">Audience type</label>
+              <input
+                id="msgAudience"
+                class="tool-input"
+                placeholder="Subprime, first-time buyer, repeat, etc."
+              />
+            </div>
+            <div class="modal-half">
+              <label class="field-label">Goal</label>
+              <input
+                id="msgGoal"
+                class="tool-input"
+                placeholder="Example: Re-engage a be-back lead"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Key details</label>
             <textarea
-              id="designOutput"
-              class="textarea design"
-              placeholder="Choose a design type and hit Generate to get a Canva-style layout you can build in minutes."
-              readonly
+              id="msgDetails"
+              class="tool-textarea"
+              placeholder="Name, vehicle, situation, objections, payment target, timeline, etc."
             ></textarea>
           </div>
-
-          <div class="tiny-note">
-            Prototype for salespeople. Copy, tweak, and make it yours. 🚀
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- OBJECTION COACH MODAL -->
-  <div id="objectionModal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <div class="modal-tag">OBJECTIONS HANDLED</div>
-          <div class="modal-title">Andy Elliott–style AI coach</div>
-          <div class="modal-sub">
-            Paste a customer objection or ask how to respond. Get word tracks and breakdowns.
-          </div>
-        </div>
-        <button id="objectionCloseButton" class="modal-close" type="button">✕</button>
-      </div>
-
-      <div class="objection-chat-area">
-        <div id="objectionHistory" class="objection-history"></div>
-
-        <div class="objection-input-row">
+          <button
+            id="messageGenerateButton"
+            class="tool-button-primary"
+            type="button"
+          >
+            <span>✉️ Build Messages & Workflow</span>
+          </button>
           <textarea
-            id="objectionInput"
-            class="objection-input-box"
-            placeholder='Example: "I need to think about it" or "Payment is too high" or ask: "How do I close a be-back?"'
+            id="msgResult"
+            class="tool-textarea"
+            style="margin-top: 6px; min-height: 140px"
+            readonly
+            placeholder="Your message options and follow-up steps will appear here."
           ></textarea>
-
-          <div class="objection-send-row">
-            <div class="objection-hint">
-              Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send fast.
-            </div>
-            <button id="objectionSendButton" type="button" class="objection-send-btn">
-              <span>🧠 Handle this objection</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- CALCULATORS MODAL -->
-  <div id="calcModal" class="modal-backdrop hidden">
-    <div class="modal-card wide">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <div class="modal-tag">DEAL DESK CALCULATORS</div>
-          <div class="modal-title">Quick numbers you can share with a customer on the spot.</div>
-        </div>
-        <button id="calcCloseButton" class="modal-close" type="button">✕</button>
-      </div>
-
-      <div class="calc-grid">
-        <!-- Payment Calculator -->
-        <section class="calc-panel">
-          <h3 class="calc-title">Payment</h3>
-          <form id="calcPayForm" class="calc-form">
-            <label>Vehicle price
-              <input id="calcPayPrice" type="number" min="0" step="100" />
-            </label>
-            <label>Down payment
-              <input id="calcPayDown" type="number" min="0" step="100" />
-            </label>
-            <label>Term (months)
-              <input id="calcPayTerm" type="number" min="12" step="12" />
-            </label>
-            <label>APR %
-              <input id="calcPayApr" type="number" min="0" step="0.1" />
-            </label>
-            <button type="submit" class="calc-btn">Calculate payment</button>
-          </form>
-          <div class="calc-results">
-            <div><span class="result-label">Estimated payment</span> <span id="calcPayResult">$0.00 / mo</span></div>
-            <div><span class="result-label">Amount financed</span> <span id="calcPayFinanced">$0.00</span></div>
-            <div><span class="result-label">Total paid over term</span> <span id="calcPayTotal">$0.00</span></div>
-          </div>
-        </section>
-
-        <!-- Affordability Calculator -->
-        <section class="calc-panel">
-          <h3 class="calc-title">Affordability</h3>
-          <form id="calcAffordForm" class="calc-form">
-            <label>Max monthly budget
-              <input id="calcAffordBudget" type="number" min="0" step="25" />
-            </label>
-            <label>Term (months)
-              <input id="calcAffordTerm" type="number" min="12" step="12" />
-            </label>
-            <label>APR %
-              <input id="calcAffordApr" type="number" min="0" step="0.1" />
-            </label>
-            <button type="submit" class="calc-btn">Estimate car price</button>
-          </form>
-          <div class="calc-results">
-            <div><span class="result-label">Max car price (approx)</span> <span id="calcAffordPrice">$0.00</span></div>
-          </div>
-        </section>
-
-        <!-- Income Builder -->
-        <section class="calc-panel">
-          <h3 class="calc-title">Income Builder</h3>
-          <form id="calcIncomeForm" class="calc-form">
-            <label>Monthly income goal ($)
-              <input id="calcIncomeGoal" type="number" min="0" step="500" />
-            </label>
-            <label>Average per deal ($)
-              <input id="calcIncomePerDeal" type="number" min="0" step="25" />
-            </label>
-            <label>Work days per month
-              <input id="calcIncomeDays" type="number" min="10" max="31" step="1" />
-            </label>
-            <label>Close rate %
-              <input id="calcIncomeClose" type="number" min="1" max="100" step="1" />
-            </label>
-            <button type="submit" class="calc-btn">Build plan</button>
-          </form>
-          <div class="calc-results">
-            <div><span class="result-label">Deals per month</span> <span id="calcIncomeDealsMonth">0.0</span></div>
-            <div><span class="result-label">Deals per day</span> <span id="calcIncomeDealsDay">0.00</span></div>
-            <div><span class="result-label">Shows per day</span> <span id="calcIncomeShowsDay">0.00</span></div>
-            <div><span class="result-label">Appointments per day</span> <span id="calcIncomeApptsDay">0.00</span></div>
-          </div>
-        </section>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
-</body>
+    <!-- Front-end JS -->
+    <script src="app.js" defer></script>
+  </body>
 </html>
