@@ -1,4 +1,4 @@
-// app.js – Lot Rocket Social Media Kit with Objection Coach + Design Lab + Floating Tools
+const path = require('path');
 
 require('dotenv').config();
 const express = require('express');
