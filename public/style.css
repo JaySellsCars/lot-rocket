@@ -16,7 +16,8 @@
   --shadow-soft-light: 0 18px 40px rgba(15, 23, 42, 0.18);
   --input-radius: 12px;
   --transition-fast: 0.18s ease-out;
-  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont,
+    "SF Pro Text", sans-serif;
 }
 
 /* THEME WRAPPERS */
@@ -97,7 +98,11 @@ body {
 [data-theme="dark"] .logo-circle {
   border: 2px solid #ef4444;
   color: #ef4444;
-  background: radial-gradient(circle at center, rgba(239,68,68,0.08), transparent 60%);
+  background: radial-gradient(
+    circle at center,
+    rgba(239, 68, 68, 0.08),
+    transparent 60%
+  );
 }
 [data-theme="light"] .logo-circle {
   border: 2px solid #b91c1c;
@@ -176,7 +181,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast), color var(--transition-fast);
 }
 [data-theme="dark"] .theme-toggle {
   background: rgba(15, 23, 42, 0.95);
@@ -285,7 +291,8 @@ label.field-label {
   resize: vertical;
   min-height: 34px;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast), color var(--transition-fast);
 }
 .textarea {
   white-space: pre-wrap;
@@ -323,7 +330,8 @@ label.field-label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast);
 }
 [data-theme="dark"] .button-primary {
   background: linear-gradient(135deg, #fb923c, #ef4444);
@@ -352,7 +360,8 @@ label.field-label {
   align-items: center;
   gap: 6px;
   background: transparent;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 [data-theme="dark"] .button-ghost {
   border-color: rgba(75, 85, 99, 0.85);
@@ -518,61 +527,21 @@ label.field-label {
   animation: pulse 1s infinite alternate;
 }
 @keyframes pulse {
-  from { transform: scale(1); opacity: 0.8; }
-  to   { transform: scale(1.4); opacity: 0.3; }
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0.3;
+  }
 }
 
 .hidden {
   display: none !important;
 }
 
-/* OBJECTION LAUNCHER BUTTON (TOP-RIGHT) */
-
-.objection-launcher {
-  position: fixed;
-  top: 18px;
-  right: 20px;
-  z-index: 60;
-  border-radius: 999px;
-  padding: 6px 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-[data-theme="dark"] .objection-launcher {
-  background: rgba(15, 23, 42, 0.96);
-  color: var(--text-dark);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(248, 113, 113, 0.9);
-}
-[data-theme="light"] .objection-launcher {
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--text-light);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
-  border: 1px solid rgba(248, 113, 113, 0.9);
-}
-
-.objection-launcher span.icon {
-  font-size: 13px;
-}
-
-@media (max-width: 820px) {
-  .objection-launcher {
-    top: auto;
-    bottom: 16px;
-    right: 16px;
-  }
-}
-
-/* OBJECTION MODAL */
+/* OBJECTION MODAL (full-screen coach) */
 
 .objection-modal-backdrop {
   position: fixed;
@@ -782,5 +751,66 @@ label.field-label {
     width: 100%;
     margin: 0 10px;
     max-height: 86vh;
+  }
+}
+
+/* ===========================
+   SIDE LAUNCHER BUTTONS
+   (Objection + Calculators)
+   =========================== */
+
+.side-launcher-wrapper {
+  position: absolute;
+  /* push down so top aligns with start of Step 2 Social Kit card */
+  top: 110px;       /* tweak this up/down if needed */
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 60;
+}
+
+.side-launcher-btn {
+  min-width: 170px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: rgba(15, 23, 42, 0.96);
+  color: #e5e7eb;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.side-launcher-btn .icon {
+  font-size: 14px;
+}
+
+.side-launcher-btn:hover {
+  border-color: rgba(248, 113, 113, 0.9);
+}
+
+[data-theme="light"] .side-launcher-btn {
+  background: rgba(255, 255, 255, 0.96);
+  color: #111827;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.25);
+}
+
+/* On small screens, move them below cards instead of floating */
+@media (max-width: 1024px) {
+  .side-launcher-wrapper {
+    position: static;
+    margin-top: 10px;
+    flex-direction: row;
+    justify-content: flex-end;
   }
 }
