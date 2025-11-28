@@ -16,7 +16,8 @@
   --shadow-soft-light: 0 18px 40px rgba(15, 23, 42, 0.18);
   --input-radius: 12px;
   --transition-fast: 0.18s ease-out;
-  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    sans-serif;
 }
 
 [data-theme="dark"] body {
@@ -35,8 +36,17 @@ body {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  padding: 24px;
+  /* extra space on the right so the floating buttons sit cleanly
+     beside Step 1 & Step 2, not on top of them */
+  padding: 24px 180px 24px 24px;
   box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  /* On smaller screens, go back to even padding */
+  body {
+    padding: 16px;
+  }
 }
 
 .app-shell {
@@ -89,7 +99,11 @@ body {
 [data-theme="dark"] .logo-circle {
   border: 2px solid #ef4444;
   color: #ef4444;
-  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.08), transparent 60%);
+  background: radial-gradient(
+    circle at center,
+    rgba(239, 68, 68, 0.08),
+    transparent 60%
+  );
 }
 [data-theme="light"] .logo-circle {
   border: 2px solid #b91c1c;
@@ -165,7 +179,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast), color var(--transition-fast);
 }
 [data-theme="dark"] .theme-toggle {
   background: rgba(15, 23, 42, 0.95);
@@ -268,7 +283,8 @@ label.field-label {
   resize: vertical;
   min-height: 34px;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast), color var(--transition-fast);
 }
 .textarea {
   white-space: pre-wrap;
@@ -305,7 +321,8 @@ label.field-label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast);
 }
 [data-theme="dark"] .button-primary {
   background: linear-gradient(135deg, #fb923c, #ef4444);
@@ -334,7 +351,8 @@ label.field-label {
   align-items: center;
   gap: 6px;
   background: transparent;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 [data-theme="dark"] .button-ghost {
   border-color: rgba(75, 85, 99, 0.85);
@@ -788,7 +806,7 @@ label.field-label {
 }
 
 .calculator-modal-card {
-  width: 720px;
+  width: 820px;
   max-width: 96vw;
   max-height: 86vh;
   border-radius: 20px;
@@ -882,19 +900,38 @@ label.field-label {
   flex-direction: column;
 }
 
+/* Make each calculator feel like a true calc:
+   left = inputs, right = big results panel */
 .calc-panel {
-  display: none;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 12px;
+  align-items: flex-start;
 }
 .calc-panel.is-active {
-  display: flex;
+  display: grid;
+}
+
+@media (max-width: 640px) {
+  .calc-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .calc-form {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  border-radius: 14px;
+  padding: 10px 10px 9px;
+}
+[data-theme="dark"] .calc-form {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(75, 85, 99, 0.9);
+}
+[data-theme="light"] .calc-form {
+  background: rgba(249, 250, 251, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.9);
 }
 
 .field-grid {
@@ -916,16 +953,27 @@ label.field-label {
 
 .payment-results,
 .income-results {
+  border-radius: 14px;
+  padding: 10px 10px 9px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  margin-top: 8px;
+}
+[data-theme="dark"] .payment-results,
+[data-theme="dark"] .income-results {
+  background: radial-gradient(circle at top, #1f2937 0, #020617 70%);
+  border: 1px solid rgba(129, 140, 248, 0.75);
+}
+[data-theme="light"] .payment-results,
+[data-theme="light"] .income-results {
+  background: #ffffff;
+  border: 1px solid rgba(129, 140, 248, 0.8);
 }
 
 .result-card {
   border-radius: 12px;
   padding: 8px 9px;
-  border: 1px solid rgba(148, 163, 184, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
   font-size: 12px;
 }
 [data-theme="dark"] .result-card {
@@ -941,6 +989,6 @@ label.field-label {
   margin-bottom: 4px;
 }
 .result-value {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 18px; /* bigger, calculator-style */
 }
