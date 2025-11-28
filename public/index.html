@@ -24,7 +24,6 @@
           </div>
         </div>
       </div>
-
       <div class="header-right">
         <div class="chip">
           <span class="dot"></span>
@@ -37,14 +36,22 @@
       </div>
     </header>
 
-    <!-- MAIN GRID LAYOUT -->
-    <!-- 2 rows, 2 columns:
-         row 1:  [STEP1] [empty]
-         row 2:  [STEP2] [SIDE BUTTONS]
-         so the first side button lines up with the top of STEP 2 -->
-    <div class="layout">
-      <!-- STEP 1 CARD -->
-      <section id="step1Card" class="card step1">
+    <!-- SIDE TOOL BUTTONS (OBJECTION + CALCULATORS) -->
+    <div class="side-tools">
+      <button id="objectionLauncher" class="side-tool-btn" type="button">
+        <span class="icon">🧠</span>
+        <span>Objection Coach</span>
+      </button>
+      <button id="calcLauncher" class="side-tool-btn" type="button">
+        <span class="icon">📊</span>
+        <span>Calculators</span>
+      </button>
+    </div>
+
+    <!-- MAIN LAYOUT -->
+    <main class="layout">
+      <!-- STEP 1 -->
+      <section class="card">
         <div class="card-header">
           <div>
             <div class="card-title">Step 1 · Dealer URL</div>
@@ -58,42 +65,28 @@
         <div class="stack-vertical">
           <div class="field-group">
             <label class="field-label" for="vehicleUrl">Dealer vehicle URL</label>
-            <input
-              id="vehicleUrl"
-              class="input"
-              placeholder="https://dealer.com/used-YourVehicleHere..."
-            />
+            <input id="vehicleUrl" class="input" placeholder="https://dealer.com/used-YourVehicleHere..." />
           </div>
 
           <div class="pill-row">
             <button id="boostButton" class="button-primary" type="button">
               <span>🚀 Boost This Listing</span>
             </button>
-            <span id="statusText" class="status-text">
-              Paste URL, then tap Boost.
-            </span>
+            <span id="statusText" class="status-text">Paste URL, then tap Boost.</span>
           </div>
 
           <div class="field-group">
             <label class="field-label" for="vehicleLabel">Vehicle label (editable)</label>
-            <input
-              id="vehicleLabel"
-              class="input"
-              placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used"
-            />
+            <input id="vehicleLabel" class="input" placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used" />
           </div>
 
           <div class="field-group">
             <label class="field-label" for="priceInfo">Price / deal info (editable)</label>
-            <input
-              id="priceInfo"
-              class="input"
-              placeholder="Message for current pricing"
-            />
+            <input id="priceInfo" class="input" placeholder="Message for current pricing" />
           </div>
         </div>
 
-        <div class="stack-vertical">
+        <div class="stack-vertical media-block">
           <div class="section-title-row">
             <div>
               <div class="card-title">Media Tools</div>
@@ -126,8 +119,8 @@
         </div>
       </section>
 
-      <!-- STEP 2 CARD -->
-      <section id="step2Card" class="card step2">
+      <!-- STEP 2 -->
+      <section class="card">
         <div class="card-header">
           <div>
             <div class="card-title">Step 2 · Social Kit</div>
@@ -139,7 +132,6 @@
         </div>
 
         <div class="stack-vertical">
-          <!-- Listing summary -->
           <div class="field-group">
             <label class="field-label">Listing Summary</label>
             <div class="pill-row">
@@ -148,12 +140,10 @@
             </div>
           </div>
 
-          <!-- Social posts -->
           <div class="field-group">
             <label class="field-label">Social Media Posts</label>
             <div class="card-subtitle">
-              Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version
-              for that platform.
+              Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version for that platform.
             </div>
           </div>
 
@@ -162,156 +152,91 @@
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">📘 Facebook</div>
-                <button
-                  data-platform="facebook"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="facebook" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="facebookPost"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="facebookPost" class="textarea post-box" readonly></textarea>
             </div>
 
             <!-- Instagram -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">📸 Instagram</div>
-                <button
-                  data-platform="instagram"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="instagram" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="instagramPost"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="instagramPost" class="textarea post-box" readonly></textarea>
             </div>
 
             <!-- TikTok -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">🎵 TikTok</div>
-                <button
-                  data-platform="tiktok"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="tiktok" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="tiktokPost"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="tiktokPost" class="textarea post-box" readonly></textarea>
             </div>
 
             <!-- LinkedIn -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">💼 LinkedIn</div>
-                <button
-                  data-platform="linkedin"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="linkedin" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="linkedinPost"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="linkedinPost" class="textarea post-box" readonly></textarea>
             </div>
 
-            <!-- Twitter / X -->
+            <!-- X / Twitter -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">🐦 X / Twitter</div>
-                <button
-                  data-platform="twitter"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="twitter" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="twitterPost"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="twitterPost" class="textarea post-box" readonly></textarea>
             </div>
 
             <!-- Text / DM -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">💬 Text / DM</div>
-                <button
-                  data-platform="text"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="text" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Text</span>
                 </button>
               </div>
-              <textarea
-                id="textBlurb"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="textBlurb" class="textarea post-box" readonly></textarea>
             </div>
 
             <!-- Marketplace -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">🛒 Marketplace</div>
-                <button
-                  data-platform="marketplace"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="marketplace" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="marketplacePost"
-                class="textarea marketplace-box"
-                readonly
-              ></textarea>
+              <textarea id="marketplacePost" class="textarea marketplace-box" readonly></textarea>
             </div>
 
             <!-- Hashtags -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">🏷 Hashtags</div>
-                <button
-                  data-platform="hashtags"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="hashtags" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Tags</span>
                 </button>
               </div>
-              <textarea
-                id="hashtags"
-                class="textarea post-box"
-                readonly
-              ></textarea>
+              <textarea id="hashtags" class="textarea post-box" readonly></textarea>
             </div>
           </div>
 
-          <!-- Video engine -->
           <div class="field-group">
             <div class="section-title-row">
               <label class="field-label">Video Engine</label>
@@ -320,47 +245,32 @@
               </button>
             </div>
             <div class="card-subtitle">
-              Script + shot plan you can read on camera and follow for Reels, TikTok,
-              Shorts, or Facebook Reels.
+              Script + shot plan you can read on camera and follow for Reels, TikTok, Shorts, or Facebook Reels.
             </div>
           </div>
 
           <div class="field-group">
             <label class="field-label" for="videoScript">Viral Video Script</label>
-            <textarea
-              id="videoScript"
-              class="textarea script"
-              readonly
-            ></textarea>
+            <textarea id="videoScript" class="textarea script" readonly></textarea>
           </div>
 
           <div class="field-group">
             <label class="field-label" for="shotPlan">Viral Visual Shot Plan</label>
-            <textarea
-              id="shotPlan"
-              class="textarea shotplan"
-              readonly
-            ></textarea>
+            <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
           </div>
 
           <!-- Design Lab -->
           <div class="field-group">
             <div class="section-title-row">
               <label class="field-label">Design Lab (Canva-style layout)</label>
-              <div class="card-subtitle">
-                Get a ready-to-build graphic layout you can recreate in Canva.
-              </div>
+              <div class="card-subtitle">Get a ready-to-build graphic layout you can recreate in Canva.</div>
             </div>
           </div>
 
           <div class="field-group">
             <label class="field-label" for="designType">Design Type</label>
             <div class="pill-row">
-              <select
-                id="designType"
-                class="input"
-                style="max-width: 260px; padding-right: 28px;"
-              >
+              <select id="designType" class="input design-select">
                 <option value="facebook_feed_post">Facebook feed post</option>
                 <option value="instagram_feed_post">Instagram feed post</option>
                 <option value="instagram_story">Instagram Story</option>
@@ -389,46 +299,25 @@
           </div>
         </div>
       </section>
-
-      <!-- SIDE BUTTON COLUMN (ALIGN WITH STEP 2 TOP) -->
-      <aside class="side-launcher-wrapper">
-        <button id="objectionLauncher" class="side-launcher-btn" type="button">
-          <span class="icon">🧠</span>
-          <span>Objection Coach</span>
-        </button>
-
-        <button id="calculatorLauncher" class="side-launcher-btn" type="button">
-          <span class="icon">📊</span>
-          <span>Calculators</span>
-        </button>
-      </aside>
-    </div>
+    </main>
   </div>
 
   <!-- OBJECTION COACH MODAL -->
-  <div id="objectionModal" class="objection-modal-backdrop hidden">
-    <div class="objection-modal-card">
-      <div class="objection-modal-header">
-        <div class="objection-modal-title-group">
-          <div class="objection-modal-tag">OBJECTIONS HANDLED</div>
-          <div class="objection-modal-title">Andy Elliott–style AI coach</div>
-          <div class="objection-modal-sub">
+  <div id="objectionModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-tag">OBJECTIONS HANDLED</div>
+          <div class="modal-title">Andy Elliott–style AI coach</div>
+          <div class="modal-sub">
             Paste a customer objection or ask how to respond. Get word tracks and breakdowns.
           </div>
         </div>
-        <button
-          id="objectionCloseButton"
-          class="objection-modal-close"
-          type="button"
-        >
-          ✕
-        </button>
+        <button id="objectionCloseButton" class="modal-close" type="button">✕</button>
       </div>
 
       <div class="objection-chat-area">
-        <div id="objectionHistory" class="objection-history">
-          <!-- chat bubbles injected here -->
-        </div>
+        <div id="objectionHistory" class="objection-history"></div>
 
         <div class="objection-input-row">
           <textarea
@@ -441,7 +330,7 @@
             <div class="objection-hint">
               Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send fast.
             </div>
-            <button id="objectionSendButton" type="button">
+            <button id="objectionSendButton" type="button" class="objection-send-btn">
               <span>🧠 Handle this objection</span>
             </button>
           </div>
@@ -451,182 +340,87 @@
   </div>
 
   <!-- CALCULATORS MODAL -->
-  <div id="calcModal" class="calc-modal-backdrop hidden">
-    <div class="calc-modal-card">
-      <div class="calc-modal-header">
-        <div class="calc-modal-title-group">
-          <div class="calc-modal-tag">DEAL DESK CALCULATORS</div>
-          <div class="calc-modal-title">Quick numbers you can share on the spot</div>
-          <div class="calc-modal-sub">
-            Estimate payments, affordability, and income goals without leaving the desk.
-          </div>
+  <div id="calcModal" class="modal-backdrop hidden">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-tag">DEAL DESK CALCULATORS</div>
+          <div class="modal-title">Quick numbers you can share with a customer on the spot.</div>
         </div>
-        <button id="calcCloseButton" class="calc-modal-close" type="button">✕</button>
+        <button id="calcCloseButton" class="modal-close" type="button">✕</button>
       </div>
 
-      <!-- Tabs -->
-      <div class="calc-tabs">
-        <button
-          id="tabPayment"
-          class="calc-tab is-active"
-          data-target="panelPayment"
-          type="button"
-        >
-          Payment
-        </button>
-        <button
-          id="tabAfford"
-          class="calc-tab"
-          data-target="panelAfford"
-          type="button"
-        >
-          Affordability
-        </button>
-        <button
-          id="tabIncome"
-          class="calc-tab"
-          data-target="panelIncome"
-          type="button"
-        >
-          Income Builder
-        </button>
-      </div>
-
-      <!-- Body -->
-      <div class="calc-body">
-        <!-- LEFT: INPUT PANELS -->
-        <div>
-          <!-- Payment panel -->
-          <div id="panelPayment" class="calc-section">
-            <div class="card-subtitle" style="margin-bottom:6px;">
-              Estimate a simple monthly payment.
-            </div>
-            <form id="calcPaymentForm">
-              <div class="calc-row">
-                <label for="calcPrice">Vehicle price</label>
-                <input id="calcPrice" type="number" min="0" step="100" value="35000" />
-              </div>
-              <div class="calc-row">
-                <label for="calcDown">Down payment</label>
-                <input id="calcDown" type="number" min="0" step="100" value="2000" />
-              </div>
-              <div class="calc-row">
-                <label for="calcTerm">Term (months)</label>
-                <input id="calcTerm" type="number" min="12" step="12" value="72" />
-              </div>
-              <div class="calc-row">
-                <label for="calcApr">APR %</label>
-                <input id="calcApr" type="number" min="0" step="0.1" value="7.5" />
-              </div>
-              <button class="button-primary primary-btn" type="submit">
-                Calculate payment
-              </button>
-            </form>
+      <div class="calc-grid">
+        <!-- Payment Calculator -->
+        <section class="calc-panel">
+          <h3 class="calc-title">Payment</h3>
+          <form id="calcPayForm" class="calc-form">
+            <label>Vehicle price
+              <input id="calcPayPrice" type="number" min="0" step="100" />
+            </label>
+            <label>Down payment
+              <input id="calcPayDown" type="number" min="0" step="100" />
+            </label>
+            <label>Term (months)
+              <input id="calcPayTerm" type="number" min="12" step="12" />
+            </label>
+            <label>APR %
+              <input id="calcPayApr" type="number" min="0" step="0.1" />
+            </label>
+            <button type="submit" class="calc-btn">Calculate payment</button>
+          </form>
+          <div class="calc-results">
+            <div><span class="result-label">Estimated payment</span> <span id="calcPayResult">$0.00 / mo</span></div>
+            <div><span class="result-label">Amount financed</span> <span id="calcPayFinanced">$0.00</span></div>
+            <div><span class="result-label">Total paid over term</span> <span id="calcPayTotal">$0.00</span></div>
           </div>
+        </section>
 
-          <!-- Affordability panel -->
-          <div id="panelAfford" class="calc-section hidden">
-            <div class="card-subtitle" style="margin-bottom:6px;">
-              Work backward from a comfortable payment.
-            </div>
-            <form id="calcAffordForm">
-              <div class="calc-row">
-                <label for="calcAffordBudget">Max monthly budget</label>
-                <input id="calcAffordBudget" type="number" min="0" step="10" value="450" />
-              </div>
-              <div class="calc-row">
-                <label for="calcAffordTerm">Term (months)</label>
-                <input id="calcAffordTerm" type="number" min="12" step="12" value="72" />
-              </div>
-              <div class="calc-row">
-                <label for="calcAffordApr">APR %</label>
-                <input id="calcAffordApr" type="number" min="0" step="0.1" value="7.5" />
-              </div>
-              <button class="button-primary primary-btn" type="submit">
-                Estimate car price
-              </button>
-            </form>
+        <!-- Affordability Calculator -->
+        <section class="calc-panel">
+          <h3 class="calc-title">Affordability</h3>
+          <form id="calcAffordForm" class="calc-form">
+            <label>Max monthly budget
+              <input id="calcAffordBudget" type="number" min="0" step="25" />
+            </label>
+            <label>Term (months)
+              <input id="calcAffordTerm" type="number" min="12" step="12" />
+            </label>
+            <label>APR %
+              <input id="calcAffordApr" type="number" min="0" step="0.1" />
+            </label>
+            <button type="submit" class="calc-btn">Estimate car price</button>
+          </form>
+          <div class="calc-results">
+            <div><span class="result-label">Max car price (approx)</span> <span id="calcAffordPrice">$0.00</span></div>
           </div>
+        </section>
 
-          <!-- Income panel -->
-          <div id="panelIncome" class="calc-section hidden">
-            <div class="card-subtitle" style="margin-bottom:6px;">
-              Reverse-engineer your income goal into daily activity.
-            </div>
-            <form id="calcIncomeForm">
-              <div class="calc-row">
-                <label for="calcIncomeGoal">Monthly income goal ($)</label>
-                <input id="calcIncomeGoal" type="number" min="0" step="500" value="10000" />
-              </div>
-              <div class="calc-row">
-                <label for="calcIncomePerDeal">Average per deal ($)</label>
-                <input id="calcIncomePerDeal" type="number" min="0" step="50" value="500" />
-              </div>
-              <div class="calc-row">
-                <label for="calcIncomeDays">Work days per month</label>
-                <input id="calcIncomeDays" type="number" min="10" max="31" step="1" value="24" />
-              </div>
-              <div class="calc-row">
-                <label for="calcIncomeCloseRate">Close rate %</label>
-                <input id="calcIncomeCloseRate" type="number" min="1" max="100" step="1" value="20" />
-              </div>
-              <button class="button-primary primary-btn" type="submit">
-                Build plan
-              </button>
-            </form>
+        <!-- Income Builder -->
+        <section class="calc-panel">
+          <h3 class="calc-title">Income Builder</h3>
+          <form id="calcIncomeForm" class="calc-form">
+            <label>Monthly income goal ($)
+              <input id="calcIncomeGoal" type="number" min="0" step="500" />
+            </label>
+            <label>Average per deal ($)
+              <input id="calcIncomePerDeal" type="number" min="0" step="25" />
+            </label>
+            <label>Work days per month
+              <input id="calcIncomeDays" type="number" min="10" max="31" step="1" />
+            </label>
+            <label>Close rate %
+              <input id="calcIncomeClose" type="number" min="1" max="100" step="1" />
+            </label>
+            <button type="submit" class="calc-btn">Build plan</button>
+          </form>
+          <div class="calc-results">
+            <div><span class="result-label">Deals per month</span> <span id="calcIncomeDealsMonth">0.0</span></div>
+            <div><span class="result-label">Deals per day</span> <span id="calcIncomeDealsDay">0.00</span></div>
+            <div><span class="result-label">Shows per day</span> <span id="calcIncomeShowsDay">0.00</span></div>
+            <div><span class="result-label">Appointments per day</span> <span id="calcIncomeApptsDay">0.00</span></div>
           </div>
-        </div>
-
-        <!-- RIGHT: RESULTS -->
-        <div class="calc-section">
-          <div class="card-subtitle" style="margin-bottom:6px;">
-            Results
-          </div>
-
-          <!-- Payment results -->
-          <div id="resultsPayment" class="calc-results">
-            <div class="calc-result-card">
-              <span class="calc-result-label">Estimated payment</span>
-              <span id="calcPaymentResult" class="calc-result-value">$0.00 / mo</span>
-            </div>
-            <div class="calc-result-card">
-              <span class="calc-result-label">Amount financed</span>
-              <span id="calcAmountFinanced" class="calc-result-value">$0.00</span>
-            </div>
-            <div class="calc-result-card">
-              <span class="calc-result-label">Total paid over term</span>
-              <span id="calcTotalPaid" class="calc-result-value">$0.00</span>
-            </div>
-          </div>
-
-          <!-- Affordability results -->
-          <div id="resultsAfford" class="calc-results hidden">
-            <div class="calc-result-card">
-              <span class="calc-result-label">Max car price (approx)</span>
-              <span id="calcAffordPrice" class="calc-result-value">$0.00</span>
-            </div>
-          </div>
-
-          <!-- Income results -->
-          <div id="resultsIncome" class="calc-results hidden">
-            <div class="calc-result-card">
-              <span class="calc-result-label">Deals per month</span>
-              <span id="calcDealsPerMonth" class="calc-result-value">0.0</span>
-            </div>
-            <div class="calc-result-card">
-              <span class="calc-result-label">Deals per day</span>
-              <span id="calcDealsPerDay" class="calc-result-value">0.00</span>
-            </div>
-            <div class="calc-result-card">
-              <span class="calc-result-label">Shows per day</span>
-              <span id="calcShowsPerDay" class="calc-result-value">0.00</span>
-            </div>
-            <div class="calc-result-card">
-              <span class="calc-result-label">Appointments per day</span>
-              <span id="calcApptsPerDay" class="calc-result-value">0.00</span>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   </div>
