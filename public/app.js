@@ -1,3 +1,818 @@
+// public/app.js – frontend logic for Lot Rocket
+
+document.addEventListener("DOMContentLoaded", () => {
+  const apiBase = "";
+
+  /* ===============================
+   *  ELEMENT HOOKS
+   * =============================== */
+
+  // Core inputs
+  const vehicleUrlInput = document.getElementById("vehicleUrl");
+  const vehicleLabelInput = document.getElementById("vehicleLabel");
+  const priceInfoInput = document.getElementById("priceInfo");
+  const boostButton = document.getElementById("boostButton");
+  const statusText = document.getElementById("statusText");
+
+  // Summary + social kit
+  const summaryLabel = document.getElementById("summaryLabel");
+  const summaryPrice = document.getElementById("summaryPrice");
+
+  const facebookPost = document.getElementById("facebookPost");
+  const instagramPost = document.getElementById("instagramPost");
+  const tiktokPost = document.getElementById("tiktokPost");
+  const linkedinPost = document.getElementById("linkedinPost");
+  const twitterPost = document.getElementById("twitterPost");
+  const textBlurb = document.getElementById("textBlurb");
+  const marketplacePost = document.getElementById("marketplacePost");
+  const hashtags = document.getElementById("hashtags");
+  const videoScript = document.getElementById("videoScript");
+  const shotPlan = document.getElementById("shotPlan");
+
+  // Media tools
+  const buildVideoButton = document.getElementById("buildVideoButton");
+  const photosGrid = document.getElementById("photosGrid");
+  const photosStatus = document.getElementById("photosStatus");
+  const videoPlan = document.getElementById("videoPlan");
+
+  // Design lab
+  const designTypeSelect = document.getElementById("designType");
+  const designButton = document.getElementById("designButton");
+  const designOutput = document.getElementById("designOutput");
+
+  // Theme
+  const themeToggle = document.getElementById("themeToggle");
+  const themeIcon = document.getElementById("themeIcon");
+  const themeLabel = document.getElementById("themeLabel");
+
+  // Side launchers
+  const objectionLauncher = document.getElementById("objectionLauncher");
+  const calculatorLauncher = document.getElementById("calculatorLauncher");
+
+  // Objection modal
+  const objectionModal = document.getElementById("objectionModal");
+  const objectionCloseButton = document.getElementById("objectionCloseButton");
+  const objectionHistory = document.getElementById("objectionHistory");
+  const objectionInput = document.getElementById("objectionInput");
+  const objectionSendButton = document.getElementById("objectionSendButton");
+
+  // Calculator modal
+  const calcModal = document.getElementById("calcModal");
+  const calcCloseButton = document.getElementById("calcCloseButton");
+
+  // Calculator tabs
+  const tabPayment = document.getElementById("tabPayment");
+  const tabAfford = document.getElementById("tabAfford");
+  const tabIncome = document.getElementById("tabIncome");
+
+  // Calculator panels (inputs)
+  const panelPayment = document.getElementById("panelPayment");
+  const panelAfford = document.getElementById("panelAfford");
+  const panelIncome = document.getElementById("panelIncome");
+
+  // Calculator forms
+  const calcPaymentForm = document.getElementById("calcPaymentForm");
+  const calcAffordForm = document.getElementById("calcAffordForm");
+  const calcIncomeForm = document.getElementById("calcIncomeForm");
+
+  // Calculator results
+  const resultsPayment = document.getElementById("resultsPayment");
+  const resultsAfford = document.getElementById("resultsAfford");
+  const resultsIncome = document.getElementById("resultsIncome");
+
+  const calcPaymentResult = document.getElementById("calcPaymentResult");
+  const calcAmountFinanced = document.getElementById("calcAmountFinanced");
+  const calcTotalPaid = document.getElementById("calcTotalPaid");
+
+  const calcAffordPrice = document.getElementById("calcAffordPrice");
+
+  const calcDealsPerMonth = document.getElementById("calcDealsPerMonth");
+  const calcDealsPerDay = document.getElementById("calcDealsPerDay");
+  const calcShowsPerDay = document.getElementById("calcShowsPerDay");
+  const calcApptsPerDay = document.getElementById("calcApptsPerDay");
+
+  /* ===============================
+   *  STATE
+   * =============================== */
+
+  let currentPhotos = [];
+  let currentUrl = "";
+  let isBoosting = false;
+
+  // objection chat history
+  let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
+
+  /* ===============================
+   *  THEME
+   * =============================== */
+
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
+    if (theme === "dark") {
+      themeIcon.textContent = "🌙";
+      themeLabel.textContent = "Dark";
+    } else {
+      themeIcon.textContent = "☀️";
+      themeLabel.textContent = "Light";
+    }
+    localStorage.setItem("lotRocketTheme", theme);
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem("lotRocketTheme");
+    if (saved === "light" || saved === "dark") {
+      applyTheme(saved);
+    } else {
+      applyTheme("dark");
+    }
+  }
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const current =
+        document.documentElement.getAttribute("data-theme") || "dark";
+      const next = current === "dark" ? "light" : "dark";
+      applyTheme(next);
+    });
+  }
+
+  initTheme();
+
+  /* ===============================
+   *  HELPERS
+   * =============================== */
+
+  function setStatus(text, isLoading = false) {
+    if (!statusText) return;
+    if (isLoading) {
+      statusText.innerHTML = '<span class="loading-dot"></span>' + text;
+    } else {
+      statusText.textContent = text;
+    }
+  }
+
+  function safeTrim(str) {
+    return (str || "").toString().trim();
+  }
+
+  function updateSummary(label, price) {
+    if (summaryLabel) {
+      summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
+    }
+    if (summaryPrice) {
+      summaryPrice.textContent =
+        safeTrim(price) || "Message for current pricing";
+    }
+  }
+
+  function fillSocialKit(kit) {
+    if (facebookPost) facebookPost.value = kit.facebook || "";
+    if (instagramPost) instagramPost.value = kit.instagram || "";
+    if (tiktokPost) tiktokPost.value = kit.tiktok || "";
+    if (linkedinPost) linkedinPost.value = kit.linkedin || "";
+    if (twitterPost) twitterPost.value = kit.twitter || "";
+    if (textBlurb) textBlurb.value = kit.textBlurb || "";
+    if (marketplacePost) marketplacePost.value = kit.marketplace || "";
+    if (hashtags) hashtags.value = kit.hashtags || "";
+    if (videoScript) videoScript.value = kit.videoScript || "";
+    if (shotPlan) shotPlan.value = kit.shotPlan || "";
+  }
+
+  function renderPhotosGrid(photos) {
+    if (!photosGrid || !photosStatus) return;
+
+    photosGrid.innerHTML = "";
+    if (!photos || !photos.length) {
+      photosStatus.textContent = "No photos found yet.";
+      return;
+    }
+
+    photos.forEach((url) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "photo-thumb";
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Vehicle photo";
+      wrapper.appendChild(img);
+      wrapper.addEventListener("click", () => {
+        window.open(url, "_blank");
+      });
+      photosGrid.appendChild(wrapper);
+    });
+
+    photosStatus.textContent =
+      photos.length + " photos found. Click any to open full size.";
+  }
+
+  async function callJson(endpoint, body) {
+    const res = await fetch(apiBase + endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error("Request failed: " + res.status + " " + txt);
+    }
+    return res.json();
+  }
+
+  function formatMoney(value) {
+    const n = Number(value) || 0;
+    return n.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  /* ===============================
+   *  BOOST FLOW
+   * =============================== */
+
+  async function handleBoost() {
+    if (isBoosting) return;
+    if (!vehicleUrlInput) return;
+
+    const url = safeTrim(vehicleUrlInput.value);
+    if (!url) {
+      alert("Paste a dealer vehicle URL first.");
+      return;
+    }
+
+    let label = vehicleLabelInput ? safeTrim(vehicleLabelInput.value) : "";
+    if (!label) {
+      label = "This vehicle";
+      if (vehicleLabelInput) vehicleLabelInput.value = label;
+    }
+
+    let price = priceInfoInput ? safeTrim(priceInfoInput.value) : "";
+    if (!price) {
+      price = "Message for current pricing";
+      if (priceInfoInput) priceInfoInput.value = price;
+    }
+
+    isBoosting = true;
+    if (boostButton) boostButton.disabled = true;
+    setStatus("Building social kit with AI…", true);
+
+    try {
+      currentUrl = url;
+      const resp = await callJson("/api/social-kit", { url, label, price });
+      if (!resp.success) throw new Error("API returned error");
+      fillSocialKit(resp.kit);
+      updateSummary(label, price);
+      setStatus("Social kit ready. You can spin new posts or scripts anytime.");
+
+      // reset objection chat context for the new vehicle
+      objectionMessages = [];
+      renderObjectionChat();
+
+      // Auto load photos
+      if (photosStatus) {
+        photosStatus.textContent = "Trying to grab photos from dealer page…";
+      }
+      try {
+        const photoResp = await callJson("/api/grab-photos", { url });
+        if (photoResp.success) {
+          currentPhotos = photoResp.photos || [];
+          renderPhotosGrid(currentPhotos);
+        } else if (photosStatus) {
+          photosStatus.textContent = "Could not grab photos.";
+        }
+      } catch (err) {
+        console.error("Auto photo grab failed:", err);
+        if (photosStatus) photosStatus.textContent = "Auto photo load failed.";
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus("Something went wrong. Try again or check the URL.");
+      alert("Error building social kit. Check the URL and try again.");
+    } finally {
+      isBoosting = false;
+      if (boostButton) boostButton.disabled = false;
+    }
+  }
+
+  if (boostButton) {
+    boostButton.addEventListener("click", handleBoost);
+  }
+
+  /* ===============================
+   *  NEW POST BUTTONS
+   * =============================== */
+
+  document.querySelectorAll(".button-new-post").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const platform = btn.getAttribute("data-platform");
+      if (!platform) return;
+
+      const url = vehicleUrlInput ? safeTrim(vehicleUrlInput.value) : "";
+      const label = vehicleLabelInput ? safeTrim(vehicleLabelInput.value) : "";
+      const price = priceInfoInput ? safeTrim(priceInfoInput.value) : "";
+
+      if (!url || !label) {
+        alert("Please paste a URL and hit Boost at least once before spinning posts.");
+        return;
+      }
+
+      btn.disabled = true;
+      const oldText = btn.innerHTML;
+      btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
+
+      try {
+        const resp = await callJson("/api/new-post", {
+          platform,
+          url,
+          label,
+          price,
+        });
+        if (!resp.success) throw new Error("API returned error");
+        const text = resp.post || "";
+
+        switch (platform) {
+          case "facebook":
+            if (facebookPost) facebookPost.value = text;
+            break;
+          case "instagram":
+            if (instagramPost) instagramPost.value = text;
+            break;
+          case "tiktok":
+            if (tiktokPost) tiktokPost.value = text;
+            break;
+          case "linkedin":
+            if (linkedinPost) linkedinPost.value = text;
+            break;
+          case "twitter":
+            if (twitterPost) twitterPost.value = text;
+            break;
+          case "text":
+            if (textBlurb) textBlurb.value = text;
+            break;
+          case "marketplace":
+            if (marketplacePost) marketplacePost.value = text;
+            break;
+          case "hashtags":
+            if (hashtags) hashtags.value = text;
+            break;
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error generating a new post. Try again.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+      }
+    });
+  });
+
+  /* ===============================
+   *  NEW VIDEO SCRIPT
+   * =============================== */
+
+  const newScriptButton = document.getElementById("newScriptButton");
+
+  if (newScriptButton) {
+    newScriptButton.addEventListener("click", async () => {
+      const url = vehicleUrlInput ? safeTrim(vehicleUrlInput.value) : "";
+      const label = vehicleLabelInput ? safeTrim(vehicleLabelInput.value) : "";
+      const price = priceInfoInput ? safeTrim(priceInfoInput.value) : "";
+
+      if (!url || !label) {
+        alert(
+          "Please paste a URL and hit Boost at least once before spinning scripts."
+        );
+        return;
+      }
+
+      newScriptButton.disabled = true;
+      const oldText = newScriptButton.innerHTML;
+      newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
+
+      try {
+        const resp = await callJson("/api/new-script", { url, label, price });
+        if (!resp.success) throw new Error("API error");
+        if (videoScript) videoScript.value = resp.script || "";
+      } catch (err) {
+        console.error(err);
+        alert("Error generating a new script. Try again.");
+      } finally {
+        newScriptButton.disabled = false;
+        newScriptButton.innerHTML = oldText;
+      }
+    });
+  }
+
+  /* ===============================
+   *  BUILD VIDEO FROM PHOTOS
+   * =============================== */
+
+  if (buildVideoButton) {
+    buildVideoButton.addEventListener("click", async () => {
+      if (!currentPhotos || !currentPhotos.length) {
+        alert("No photos yet. Boost a listing first so we can grab photos.");
+        return;
+      }
+
+      buildVideoButton.disabled = true;
+      const oldText = buildVideoButton.innerHTML;
+      buildVideoButton.innerHTML =
+        '<span class="icon">⏳</span><span>Building…</span>';
+
+      try {
+        const label =
+          (vehicleLabelInput && safeTrim(vehicleLabelInput.value)) ||
+          "this vehicle";
+        const resp = await callJson("/api/video-from-photos", {
+          photos: currentPhotos,
+          label,
+        });
+        if (!resp.success) throw new Error("API error");
+        if (videoPlan) videoPlan.value = resp.plan || "";
+      } catch (err) {
+        console.error(err);
+        alert("Error building video plan. Try again.");
+      } finally {
+        buildVideoButton.disabled = false;
+        buildVideoButton.innerHTML = oldText;
+      }
+    });
+  }
+
+  /* ===============================
+   *  DESIGN LAB
+   * =============================== */
+
+  if (designButton) {
+    designButton.addEventListener("click", async () => {
+      const type = designTypeSelect ? designTypeSelect.value : "facebook_feed_post";
+      const url = vehicleUrlInput ? safeTrim(vehicleUrlInput.value) : "";
+      const label = vehicleLabelInput ? safeTrim(vehicleLabelInput.value) : "";
+      const price = priceInfoInput ? safeTrim(priceInfoInput.value) : "";
+
+      if (!url || !label) {
+        alert(
+          "Please paste a URL and hit Boost at least once before generating design ideas."
+        );
+        return;
+      }
+
+      designButton.disabled = true;
+      const oldText = designButton.innerHTML;
+      designButton.innerHTML =
+        '<span class="icon">⏳</span><span>Designing…</span>';
+
+      try {
+        const resp = await callJson("/api/design-idea", {
+          type,
+          url,
+          label,
+          price,
+        });
+        if (!resp.success) throw new Error("API error");
+        if (designOutput) designOutput.value = resp.design || "";
+      } catch (err) {
+        console.error(err);
+        alert("Error generating a design idea. Try again.");
+      } finally {
+        designButton.disabled = false;
+        designButton.innerHTML = oldText;
+      }
+    });
+  }
+
+  /* ===============================
+   *  OBJECTION COACH MODAL
+   * =============================== */
+
+  function renderObjectionChat() {
+    if (!objectionHistory) return;
+    objectionHistory.innerHTML = "";
+
+    if (!objectionMessages.length) {
+      const empty = document.createElement("div");
+      empty.className = "objection-bubble";
+      empty.style.opacity = "0.7";
+      empty.textContent =
+        "Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.";
+      objectionHistory.appendChild(empty);
+      return;
+    }
+
+    objectionMessages.forEach((m) => {
+      const labelDiv = document.createElement("div");
+      labelDiv.className =
+        "objection-bubble " +
+        (m.role === "assistant" ? "coach-label" : "you-label");
+      labelDiv.textContent = m.role === "assistant" ? "COACH" : "YOU";
+
+      const bubble = document.createElement("div");
+      bubble.className =
+        "objection-bubble " + (m.role === "assistant" ? "coach" : "you");
+      bubble.textContent = m.content || "";
+
+      objectionHistory.appendChild(labelDiv);
+      objectionHistory.appendChild(bubble);
+    });
+
+    objectionHistory.scrollTop = objectionHistory.scrollHeight;
+  }
+
+  function openObjectionModal() {
+    if (!objectionModal) return;
+    objectionModal.classList.remove("hidden");
+    if (!objectionMessages.length) {
+      renderObjectionChat();
+    }
+    setTimeout(() => {
+      if (objectionInput) objectionInput.focus();
+    }, 50);
+  }
+
+  function closeObjectionModal() {
+    if (!objectionModal) return;
+    objectionModal.classList.add("hidden");
+  }
+
+  if (objectionLauncher) {
+    objectionLauncher.addEventListener("click", openObjectionModal);
+  }
+  if (objectionCloseButton) {
+    objectionCloseButton.addEventListener("click", closeObjectionModal);
+  }
+  if (objectionModal) {
+    objectionModal.addEventListener("click", (e) => {
+      if (e.target === objectionModal) closeObjectionModal();
+    });
+  }
+
+  function sendObjection() {
+    if (!objectionInput || !objectionSendButton) return;
+    const text = (objectionInput.value || "").trim();
+    if (!text) {
+      alert("Type the customer’s objection or your question first.");
+      return;
+    }
+
+    const label =
+      (vehicleLabelInput && safeTrim(vehicleLabelInput.value)) ||
+      "this vehicle";
+    const price =
+      (priceInfoInput && safeTrim(priceInfoInput.value)) ||
+      "Message for current pricing";
+
+    objectionMessages.push({ role: "user", content: text });
+    renderObjectionChat();
+    objectionInput.value = "";
+
+    objectionSendButton.disabled = true;
+    const oldText = objectionSendButton.innerHTML;
+    objectionSendButton.innerHTML = "<span>⏳ Coaching…</span>";
+
+    callJson("/api/objection-coach", {
+      messages: objectionMessages,
+      label,
+      price,
+    })
+      .then((resp) => {
+        if (!resp.success) throw new Error("API error");
+        const reply = resp.reply || "";
+        objectionMessages.push({ role: "assistant", content: reply });
+        renderObjectionChat();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Error generating a response. Try again.");
+      })
+      .finally(() => {
+        objectionSendButton.disabled = false;
+        objectionSendButton.innerHTML = oldText;
+      });
+  }
+
+  if (objectionSendButton) {
+    objectionSendButton.addEventListener("click", sendObjection);
+  }
+  if (objectionInput) {
+    objectionInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendObjection();
+      }
+    });
+  }
+
+  renderObjectionChat();
+
+  /* ===============================
+   *  CALCULATOR MODAL + TABS
+   * =============================== */
+
+  function openCalcModal() {
+    if (!calcModal) return;
+    calcModal.classList.remove("hidden");
+  }
+  function closeCalcModal() {
+    if (!calcModal) return;
+    calcModal.classList.add("hidden");
+  }
+
+  if (calculatorLauncher) {
+    calculatorLauncher.addEventListener("click", openCalcModal);
+  }
+  if (calcCloseButton) {
+    calcCloseButton.addEventListener("click", closeCalcModal);
+  }
+  if (calcModal) {
+    calcModal.addEventListener("click", (e) => {
+      if (e.target === calcModal) closeCalcModal();
+    });
+  }
+
+  function setActiveCalcTab(target) {
+    const tabs = [tabPayment, tabAfford, tabIncome];
+    const panels = [panelPayment, panelAfford, panelIncome];
+    const results = [resultsPayment, resultsAfford, resultsIncome];
+
+    tabs.forEach((t) => t && t.classList.remove("is-active"));
+    panels.forEach((p) => p && p.classList.add("hidden"));
+    results.forEach((r) => r && r.classList.add("hidden"));
+
+    if (target === "payment") {
+      if (tabPayment) tabPayment.classList.add("is-active");
+      if (panelPayment) panelPayment.classList.remove("hidden");
+      if (resultsPayment) resultsPayment.classList.remove("hidden");
+    } else if (target === "afford") {
+      if (tabAfford) tabAfford.classList.add("is-active");
+      if (panelAfford) panelAfford.classList.remove("hidden");
+      if (resultsAfford) resultsAfford.classList.remove("hidden");
+    } else if (target === "income") {
+      if (tabIncome) tabIncome.classList.add("is-active");
+      if (panelIncome) panelIncome.classList.remove("hidden");
+      if (resultsIncome) resultsIncome.classList.remove("hidden");
+    }
+  }
+
+  if (tabPayment) {
+    tabPayment.addEventListener("click", () => setActiveCalcTab("payment"));
+  }
+  if (tabAfford) {
+    tabAfford.addEventListener("click", () => setActiveCalcTab("afford"));
+  }
+  if (tabIncome) {
+    tabIncome.addEventListener("click", () => setActiveCalcTab("income"));
+  }
+
+  // Default
+  setActiveCalcTab("payment");
+
+  /* ===============================
+   *  PAYMENT CALCULATOR
+   * =============================== */
+
+  if (calcPaymentForm) {
+    calcPaymentForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const price = Number(
+        document.getElementById("calcPrice").value || 0
+      );
+      const down = Number(
+        document.getElementById("calcDown").value || 0
+      );
+      const term = Number(
+        document.getElementById("calcTerm").value || 0
+      );
+      const apr = Number(
+        document.getElementById("calcApr").value || 0
+      );
+
+      if (!price || !term) {
+        if (calcPaymentResult)
+          calcPaymentResult.textContent = "Enter price and term.";
+        if (calcAmountFinanced)
+          calcAmountFinanced.textContent = "$0.00";
+        if (calcTotalPaid)
+          calcTotalPaid.textContent = "$0.00";
+        return;
+      }
+
+      const amountFinancedVal = Math.max(price - down, 0);
+      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
+
+      let payment = 0;
+      if (monthlyRate === 0) {
+        payment = amountFinancedVal / term;
+      } else {
+        const factor =
+          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
+          (Math.pow(1 + monthlyRate, term) - 1);
+        payment = amountFinancedVal * factor;
+      }
+
+      const totalPaidVal = payment * term;
+
+      if (calcPaymentResult)
+        calcPaymentResult.textContent = formatMoney(payment) + " / mo";
+      if (calcAmountFinanced)
+        calcAmountFinanced.textContent = formatMoney(amountFinancedVal);
+      if (calcTotalPaid)
+        calcTotalPaid.textContent = formatMoney(totalPaidVal);
+    });
+  }
+
+  /* ===============================
+   *  AFFORDABILITY CALCULATOR
+   * =============================== */
+
+  if (calcAffordForm) {
+    calcAffordForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const budget = Number(
+        document.getElementById("calcAffordBudget").value || 0
+      );
+      const term = Number(
+        document.getElementById("calcAffordTerm").value || 0
+      );
+      const apr = Number(
+        document.getElementById("calcAffordApr").value || 0
+      );
+
+      if (!budget || !term) {
+        if (calcAffordPrice)
+          calcAffordPrice.textContent = formatMoney(0);
+        return;
+      }
+
+      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
+      let price = 0;
+
+      if (monthlyRate === 0) {
+        price = budget * term;
+      } else {
+        // standard inverted car loan formula
+        const discount =
+          (Math.pow(1 + monthlyRate, term) - 1) /
+          (monthlyRate * Math.pow(1 + monthlyRate, term));
+        price = budget * discount;
+      }
+
+      if (calcAffordPrice)
+        calcAffordPrice.textContent = formatMoney(price);
+    });
+  }
+
+  /* ===============================
+   *  INCOME BUILDER CALCULATOR
+   * =============================== */
+
+  if (calcIncomeForm) {
+    calcIncomeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const incomeGoal = Number(
+        document.getElementById("calcIncomeGoal").value || 0
+      );
+      const perDeal = Number(
+        document.getElementById("calcIncomePerDeal").value || 0
+      );
+      const workDays = Number(
+        document.getElementById("calcIncomeDays").value || 0
+      );
+      const closeRate = Number(
+        document.getElementById("calcIncomeCloseRate").value || 0
+      );
+
+      if (!incomeGoal || !perDeal || !workDays || !closeRate) {
+        if (calcDealsPerMonth) calcDealsPerMonth.textContent = "0.0";
+        if (calcDealsPerDay) calcDealsPerDay.textContent = "0.00";
+        if (calcShowsPerDay) calcShowsPerDay.textContent = "0.00";
+        if (calcApptsPerDay) calcApptsPerDay.textContent = "0.00";
+        return;
+      }
+
+      const dealsPerMonthVal = incomeGoal / perDeal;
+      const dealsPerDayVal = dealsPerMonthVal / workDays;
+
+      // if closeRate is % of shows that buy:
+      const showsPerDayVal = dealsPerDayVal / (closeRate / 100);
+      // assume ~80% show rate to appointment:
+      const appointmentsPerDayVal = showsPerDayVal / 0.8;
+
+      if (calcDealsPerMonth)
+        calcDealsPerMonth.textContent = dealsPerMonthVal.toFixed(1);
+      if (calcDealsPerDay)
+        calcDealsPerDay.textContent = dealsPerDayVal.toFixed(2);
+      if (calcShowsPerDay)
+        calcShowsPerDay.textContent = showsPerDayVal.toFixed(2);
+      if (calcApptsPerDay)
+        calcApptsPerDay.textContent = appointmentsPerDayVal.toFixed(2);
+    });
+  }
+});
 // public/app.js – Lot Rocket Social Media Kit frontend
 
 document.addEventListener('DOMContentLoaded', () => {
