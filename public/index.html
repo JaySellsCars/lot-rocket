@@ -39,9 +39,7 @@
         <div class="card-header">
           <div>
             <div class="card-title">Step 1 · Dealer URL</div>
-            <div class="card-subtitle">
-              Paste a full vehicle detail page. We’ll pull photos and build the kit.
-            </div>
+            <div class="card-subtitle">Paste a full vehicle detail page. We’ll pull photos and build the kit.</div>
           </div>
           <span class="badge">INPUT</span>
         </div>
@@ -49,11 +47,7 @@
         <div class="stack-vertical">
           <div class="field-group">
             <label class="field-label" for="vehicleUrl">Dealer vehicle URL</label>
-            <input
-              id="vehicleUrl"
-              class="input"
-              placeholder="https://dealer.com/used-YourVehicleHere..."
-            />
+            <input id="vehicleUrl" class="input" placeholder="https://dealer.com/used-YourVehicleHere..." />
           </div>
 
           <div class="pill-row">
@@ -65,11 +59,7 @@
 
           <div class="field-group">
             <label class="field-label" for="vehicleLabel">Vehicle label (editable)</label>
-            <input
-              id="vehicleLabel"
-              class="input"
-              placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used"
-            />
+            <input id="vehicleLabel" class="input" placeholder="2024 Chevrolet Blazer 2LT – Plymouth, MI – Used" />
           </div>
 
           <div class="field-group">
@@ -82,9 +72,7 @@
           <div class="section-title-row">
             <div>
               <div class="card-title">Media Tools</div>
-              <div class="card-subtitle">
-                We’ll auto-pull photos on Boost and turn them into a simple video plan.
-              </div>
+              <div class="card-subtitle">We’ll auto-pull photos on Boost and turn them into a simple video plan.</div>
             </div>
             <button id="buildVideoButton" class="button-ghost" type="button">
               <span class="icon">🎬</span><span>Build Video from Photos</span>
@@ -94,9 +82,7 @@
           <div class="field-group">
             <label class="field-label">Dealer Photos</label>
             <div id="photosGrid" class="photos-grid"></div>
-            <div id="photosStatus" class="tiny-note">
-              Photos will auto-load after Boost if we can find them.
-            </div>
+            <div id="photosStatus" class="tiny-note">Photos will auto-load after Boost if we can find them.</div>
           </div>
 
           <div class="field-group">
@@ -116,9 +102,7 @@
         <div class="card-header">
           <div>
             <div class="card-title">Step 2 · Social Kit</div>
-            <div class="card-subtitle">
-              Copy, tweak, and paste into each platform. Spin fresh versions anytime.
-            </div>
+            <div class="card-subtitle">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</div>
           </div>
           <span class="badge">OUTPUT</span>
         </div>
@@ -135,8 +119,7 @@
           <div class="field-group">
             <label class="field-label">Social Media Posts</label>
             <div class="card-subtitle">
-              Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version for that
-              platform.
+              Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version for that platform.
             </div>
           </div>
 
@@ -211,30 +194,18 @@
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">🛒 Marketplace</div>
-                <button
-                  data-platform="marketplace"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="marketplace" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Post</span>
                 </button>
               </div>
-              <textarea
-                id="marketplacePost"
-                class="textarea marketplace-box"
-                readonly
-              ></textarea>
+              <textarea id="marketplacePost" class="textarea marketplace-box" readonly></textarea>
             </div>
 
             <!-- Hashtags -->
             <div class="social-card">
               <div class="social-card-header">
                 <div class="social-platform">🏷 Hashtags</div>
-                <button
-                  data-platform="hashtags"
-                  class="button-ghost button-new-post"
-                  type="button"
-                >
+                <button data-platform="hashtags" class="button-ghost button-new-post" type="button">
                   <span class="icon">🔁</span><span>New Tags</span>
                 </button>
               </div>
@@ -250,8 +221,7 @@
               </button>
             </div>
             <div class="card-subtitle">
-              Script + shot plan you can read on camera and follow for Reels, TikTok, Shorts, or
-              Facebook Reels.
+              Script + shot plan you can read on camera and follow for Reels, TikTok, Shorts, or Facebook Reels.
             </div>
           </div>
 
@@ -269,20 +239,14 @@
           <div class="field-group">
             <div class="section-title-row">
               <label class="field-label">Design Lab (Canva-style layout)</label>
-              <div class="card-subtitle">
-                Get a ready-to-build graphic layout you can recreate in Canva.
-              </div>
+              <div class="card-subtitle">Get a ready-to-build graphic layout you can recreate in Canva.</div>
             </div>
           </div>
 
           <div class="field-group">
             <label class="field-label" for="designType">Design Type</label>
             <div class="pill-row">
-              <select
-                id="designType"
-                class="input"
-                style="max-width: 260px; padding-right: 28px;"
-              >
+              <select id="designType" class="input" style="max-width: 260px; padding-right: 28px;">
                 <option value="facebook_feed_post">Facebook feed post</option>
                 <option value="instagram_feed_post">Instagram feed post</option>
                 <option value="instagram_story">Instagram Story</option>
@@ -306,17 +270,36 @@
             ></textarea>
           </div>
 
-          <div class="tiny-note">Prototype for salespeople. Copy, tweak, and make it yours. 🚀</div>
+          <div class="tiny-note">
+            Prototype for salespeople. Copy, tweak, and make it yours. 🚀
+          </div>
         </div>
       </section>
     </div>
   </div>
 
-  <!-- Objection Coach launcher (fixed top-right / bottom-right on mobile) -->
-  <button id="objectionLauncher" class="objection-launcher" type="button">
-    <span class="icon">🧠</span>
-    <span>Objection coach</span>
-  </button>
+  <!-- Right-side tool launchers (stacked) -->
+  <div class="tool-launcher-stack">
+    <button id="objectionLauncher" class="tool-launcher" type="button">
+      <span class="tool-launcher-icon">🧠</span>
+      <span class="tool-launcher-label">Objection Coach</span>
+    </button>
+
+    <button id="paymentLauncher" class="tool-launcher" type="button">
+      <span class="tool-launcher-icon">💳</span>
+      <span class="tool-launcher-label">Payment Helper</span>
+    </button>
+
+    <button id="messageLauncher" class="tool-launcher" type="button">
+      <span class="tool-launcher-icon">💬</span>
+      <span class="tool-launcher-label">Custom Message</span>
+    </button>
+
+    <button id="incomeLauncher" class="tool-launcher" type="button">
+      <span class="tool-launcher-icon">📈</span>
+      <span class="tool-launcher-label">Income Builder</span>
+    </button>
+  </div>
 
   <!-- Objection Coach Modal -->
   <div id="objectionModal" class="objection-modal-backdrop hidden">
