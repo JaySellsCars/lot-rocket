@@ -1037,17 +1037,18 @@ app.get('/', (req, res) => {
       display: none !important;
     }
 
-/* ----- Floating Tools Column ----- */
-
 .tool-launcher-column {
   position: fixed;
-  top: 18px;
-  right: 20px;
+  /* Move the buttons down so the first one lines up with the top of the Step 1 / Step 2 cards */
+  top: 120px;       /* ← adjust to 110 / 130 if you want to fine-tune */
+  right: 24px;
   z-index: 60;
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: flex-end;
+}
+
 }
 
 .tool-launcher-btn {
