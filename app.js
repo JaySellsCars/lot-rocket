@@ -1037,52 +1037,75 @@ app.get('/', (req, res) => {
       display: none !important;
     }
 
-    /* ----- Floating Tools Column ----- */
+/* ----- Floating Tools Column ----- */
 
-    .tool-launcher-column {
-      position: fixed;
-      top: 18px;
-      right: 20px;
-      z-index: 60;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: flex-end;
-    }
+.tool-launcher-column {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
 
-    .tool-launcher-btn {
-      border-radius: 999px;
-      padding: 6px 12px;
-      border: none;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-    [data-theme="dark"] .tool-launcher-btn {
-      background: rgba(15, 23, 42, 0.96);
-      color: var(--text-dark);
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
-      border: 1px solid rgba(148, 163, 184, 0.75);
-    }
-    [data-theme="light"] .tool-launcher-btn {
-      background: rgba(255, 255, 255, 0.96);
-      color: var(--text-light);
-      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
-      border: 1px solid rgba(148, 163, 184, 0.9);
-    }
+.tool-launcher-btn {
+  border-radius: 999px;
+  padding: 7px 16px;
+  border: none;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
 
-    .tool-launcher-btn span.icon {
-      font-size: 13px;
-    }
+  /* 🔥 Force all four buttons to match */
+  min-width: 180px;
+  height: 38px;
 
-    @media (max-width: 820px) {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  transition:
+    transform 0.16s ease-out,
+    box-shadow 0.16s ease-out,
+    background 0.16s ease-out,
+    border-color 0.16s ease-out,
+    color 0.16s ease-out;
+}
+
+[data-theme="dark"] .tool-launcher-btn {
+  background: rgba(15, 23, 42, 0.96);
+  color: var(--text-dark);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.75);
+}
+
+[data-theme="light"] .tool-launcher-btn {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text-light);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.9);
+}
+
+.tool-launcher-btn span.icon {
+  font-size: 13px;
+}
+
+@media (max-width: 820px) {
+  .tool-launcher-column {
+    bottom: 16px;
+    top: auto;
+    right: 16px;
+    align-items: flex-end;
+  }
+}
+
       .tool-launcher-column {
         bottom: 16px;
         top: auto;
