@@ -287,36 +287,39 @@ body {
 }
 
 /* -------------------------------------------------------
-   ELITE FLOATING TOOL BUTTONS
+   ELITE FLOATING TOOL BUTTONS — uniform size + top aligned
 ------------------------------------------------------- */
 
 .tool-launcher-column {
   position: fixed;
-  top: 26px;
-  right: 26px;
+  top: 118px;              /* <-- aligns perfectly with the top of Step 1 + Step 2 */
+  right: 28px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  z-index: 50;
+  gap: 12px;
+  z-index: 60;
 }
 
+/* uniform size + elite styling */
 .tool-launcher-btn {
+  width: 190px;            /* ALL BUTTONS SAME WIDTH */
+  height: 46px;            /* ALL BUTTONS SAME HEIGHT */
+
   border-radius: 999px;
-  padding: 7px 16px;
   border: none;
-  font-size: 11px;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  display: inline-flex;
+  padding: 0 16px;
+
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+
   cursor: pointer;
-
-  min-width: 180px;
-  height: 38px;
-
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 
@@ -328,39 +331,52 @@ body {
     color 0.16s ease-out;
 }
 
+/* consistent icon size */
+.tool-launcher-btn .icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* DARK MODE */
 [data-theme="dark"] .tool-launcher-btn {
   background: radial-gradient(circle at top left, rgba(15,23,42,0.96), rgba(15,23,42,0.9));
   color: #e5e7eb;
   border: 1px solid rgba(148,163,184,0.75);
   box-shadow: 0 16px 35px rgba(0, 0, 0, 0.9);
 }
+
 [data-theme="dark"] .tool-launcher-btn:hover {
-  transform: translateY(-1px) scale(1.03);
-  background: radial-gradient(circle at top left, rgba(30,64,175,0.97), rgba(15,23,42,0.96));
+  transform: translateY(-2px) scale(1.03);
+  background: radial-gradient(circle at top left, rgba(30,64,175,0.97), rgba(15,23,42,0.95));
   border-color: rgba(248,113,113,0.95);
-  box-shadow: 0 20px 45px rgba(15,23,42,0.95);
-}
-[data-theme="dark"] .tool-launcher-btn:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+  box-shadow: 0 22px 50px rgba(0,0,0,0.95);
 }
 
+[data-theme="dark"] .tool-launcher-btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.75);
+}
+
+/* LIGHT MODE */
 [data-theme="light"] .tool-launcher-btn {
   background: rgba(255,255,255,0.96);
   color: #111827;
   border: 1px solid rgba(148,163,184,0.9);
   box-shadow: 0 14px 30px rgba(15,23,42,0.25);
 }
+
 [data-theme="light"] .tool-launcher-btn:hover {
-  transform: translateY(-1px) scale(1.03);
+  transform: translateY(-2px) scale(1.03);
   background: linear-gradient(135deg, #ffffff, #e5e7eb);
   border-color: rgba(248,113,113,0.9);
-  box-shadow: 0 18px 40px rgba(15,23,42,0.28);
+  box-shadow: 0 20px 40px rgba(15,23,42,0.28);
 }
+
 [data-theme="light"] .tool-launcher-btn:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 8px 22px rgba(15,23,42,0.2);
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 10px 26px rgba(15,23,42,0.2);
 }
+
 
 /* ---------- Social Grid ---------- */
 
