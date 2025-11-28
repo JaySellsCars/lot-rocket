@@ -165,8 +165,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background var(--transition-fast), transform var(--transition-fast),
-    box-shadow var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast);
 }
 [data-theme="dark"] .theme-toggle {
   background: rgba(15, 23, 42, 0.95);
@@ -269,8 +272,11 @@ label.field-label {
   resize: vertical;
   min-height: 34px;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
-    background var(--transition-fast), color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 .textarea {
   white-space: pre-wrap;
@@ -307,7 +313,9 @@ label.field-label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
     background var(--transition-fast);
 }
 [data-theme="dark"] .button-primary {
@@ -337,7 +345,9 @@ label.field-label {
   align-items: center;
   gap: 6px;
   background: transparent;
-  transition: background var(--transition-fast), border-color var(--transition-fast),
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
     color var(--transition-fast);
 }
 [data-theme="dark"] .button-ghost {
@@ -509,52 +519,6 @@ label.field-label {
 
 .hidden {
   display: none !important;
-}
-
-/* ----- Objection Coach Launcher (top-right) ----- */
-
-.objection-launcher {
-  position: fixed;
-  top: 18px;
-  right: 20px;
-  z-index: 60;
-  border-radius: 999px;
-  padding: 6px 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-[data-theme="dark"] .objection-launcher {
-  background: rgba(15, 23, 42, 0.96);
-  color: var(--text-dark);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(248, 113, 113, 0.9);
-}
-[data-theme="light"] .objection-launcher {
-  background: rgba(255, 255, 255, 0.96);
-  color: var(--text-light);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
-  border: 1px solid rgba(248, 113, 113, 0.9);
-}
-
-.objection-launcher span.icon {
-  font-size: 13px;
-}
-
-@media (max-width: 820px) {
-  .objection-launcher {
-    top: auto;
-    bottom: 16px;
-    right: 16px;
-  }
 }
 
 /* ----- Objection Coach Modal ----- */
@@ -767,5 +731,97 @@ label.field-label {
     width: 100%;
     margin: 0 10px;
     max-height: 86vh;
+  }
+}
+
+/* =========================================
+ * Right-side tool launcher stack
+ * ========================================= */
+.tool-launcher-stack {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 60;
+}
+
+/* Base style for all tool launcher buttons */
+.tool-launcher {
+  min-width: 190px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition:
+    transform 0.18s ease-out,
+    box-shadow 0.18s ease-out,
+    background 0.18s ease-out,
+    border-color 0.18s ease-out,
+    color 0.18s ease-out;
+}
+
+/* Dark theme look */
+[data-theme="dark"] .tool-launcher {
+  background: rgba(15, 23, 42, 0.96);
+  color: var(--text-dark);
+  border-color: rgba(248, 113, 113, 0.7);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
+}
+
+/* Light theme look */
+[data-theme="light"] .tool-launcher {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text-light);
+  border-color: rgba(248, 113, 113, 0.7);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
+}
+
+.tool-launcher-icon {
+  font-size: 14px;
+}
+
+.tool-launcher-label {
+  flex: 1;
+  text-align: left;
+}
+
+/* Hover / active states */
+.tool-launcher:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.8);
+}
+
+.tool-launcher:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Mobile: move to bottom */
+@media (max-width: 820px) {
+  .tool-launcher-stack {
+    top: auto;
+    bottom: 16px;
+    right: 16px;
+    transform: none;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tool-launcher {
+    min-width: 0;
+    width: 100%;
   }
 }
