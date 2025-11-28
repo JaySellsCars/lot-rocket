@@ -38,7 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeIcon = document.getElementById('themeIcon');
   const themeLabel = document.getElementById('themeLabel');
 
+  // Launchers (right side)
   const objectionLauncher = document.getElementById('objectionLauncher');
+  const paymentLauncher = document.getElementById('paymentLauncher');
+  const messageLauncher = document.getElementById('messageLauncher');
+  const incomeLauncher = document.getElementById('incomeLauncher');
+
+  // Objection modal pieces
   const objectionModal = document.getElementById('objectionModal');
   const objectionCloseButton = document.getElementById('objectionCloseButton');
   const objectionHistory = document.getElementById('objectionHistory');
@@ -49,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUrl = '';
   let isBoosting = false;
 
+  // chat history for objection coach
   let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
 
   // ----- Theme handling -----
@@ -75,11 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  themeToggle.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-  });
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    });
+  }
 
   initTheme();
 
@@ -149,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return res.json();
   }
 
+  // render objection chat history into modal
   function renderObjectionChat() {
     objectionHistory.innerHTML = '';
     if (!objectionMessages.length) {
@@ -211,9 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSummary(label, price);
       setStatus('Social kit ready. You can spin new posts or scripts anytime.');
 
+      // reset objection chat for the new vehicle
       objectionMessages = [];
       renderObjectionChat();
 
+      // Auto load photos
       try {
         photosStatus.textContent = 'Trying to grab photos from dealer page…';
         const photoResp = await callJson('/api/grab-photos', { url });
@@ -237,7 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  boostButton.addEventListener('click', handleBoost);
+  if (boostButton) {
+    boostButton.addEventListener('click', handleBoost);
+  }
 
   // ----- New post buttons -----
 
@@ -300,91 +314,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ----- New video script -----
 
-  newScriptButton.addEventListener('click', async () => {
-    const url = safeTrim(vehicleUrlInput.value);
-    const label = safeTrim(vehicleLabelInput.value);
-    const price = safeTrim(priceInfoInput.value);
+  if (newScriptButton) {
+    newScriptButton.addEventListener('click', async () => {
+      const url = safeTrim(vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput.value);
 
-    if (!url || !label) {
-      alert('Please paste a URL and hit Boost at least once before spinning scripts.');
-      return;
-    }
+      if (!url || !label) {
+        alert('Please paste a URL and hit Boost at least once before spinning scripts.');
+        return;
+      }
 
-    newScriptButton.disabled = true;
-    const oldText = newScriptButton.innerHTML;
-    newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
+      newScriptButton.disabled = true;
+      const oldText = newScriptButton.innerHTML;
+      newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
-    try {
-      const resp = await callJson('/api/new-script', { url, label, price });
-      if (!resp.success) throw new Error('API error');
-      videoScript.value = resp.script || '';
-    } catch (err) {
-      console.error(err);
-      alert('Error generating a new script. Try again.');
-    } finally {
-      newScriptButton.disabled = false;
-      newScriptButton.innerHTML = oldText;
-    }
-  });
+      try {
+        const resp = await callJson('/api/new-script', { url, label, price });
+        if (!resp.success) throw new Error('API error');
+        videoScript.value = resp.script || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error generating a new script. Try again.');
+      } finally {
+        newScriptButton.disabled = false;
+        newScriptButton.innerHTML = oldText;
+      }
+    });
+  }
 
   // ----- Build video plan from photos -----
 
-  buildVideoButton.addEventListener('click', async () => {
-    if (!currentPhotos || !currentPhotos.length) {
-      alert('No photos yet. Boost a listing first so we can grab photos.');
-      return;
-    }
+  if (buildVideoButton) {
+    buildVideoButton.addEventListener('click', async () => {
+      if (!currentPhotos || !currentPhotos.length) {
+        alert('No photos yet. Boost a listing first so we can grab photos.');
+        return;
+      }
 
-    buildVideoButton.disabled = true;
-    const oldText = buildVideoButton.innerHTML;
-    buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
+      buildVideoButton.disabled = true;
+      const oldText = buildVideoButton.innerHTML;
+      buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
 
-    try {
-      const label = safeTrim(vehicleLabelInput.value) || 'this vehicle';
-      const resp = await callJson('/api/video-from-photos', {
-        photos: currentPhotos,
-        label,
-      });
-      if (!resp.success) throw new Error('API error');
-      videoPlan.value = resp.plan || '';
-    } catch (err) {
-      console.error(err);
-      alert('Error building video plan. Try again.');
-    } finally {
-      buildVideoButton.disabled = false;
-      buildVideoButton.innerHTML = oldText;
-    }
-  });
+      try {
+        const label = safeTrim(vehicleLabelInput.value) || 'this vehicle';
+        const resp = await callJson('/api/video-from-photos', {
+          photos: currentPhotos,
+          label,
+        });
+        if (!resp.success) throw new Error('API error');
+        videoPlan.value = resp.plan || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error building video plan. Try again.');
+      } finally {
+        buildVideoButton.disabled = false;
+        buildVideoButton.innerHTML = oldText;
+      }
+    });
+  }
 
   // ----- Design Lab -----
 
-  designButton.addEventListener('click', async () => {
-    const type = designTypeSelect.value;
-    const url = safeTrim(vehicleUrlInput.value);
-    const label = safeTrim(vehicleLabelInput.value);
-    const price = safeTrim(priceInfoInput.value);
+  if (designButton) {
+    designButton.addEventListener('click', async () => {
+      const type = designTypeSelect.value;
+      const url = safeTrim(vehicleUrlInput.value);
+      const label = safeTrim(vehicleLabelInput.value);
+      const price = safeTrim(priceInfoInput.value);
 
-    if (!url || !label) {
-      alert('Please paste a URL and hit Boost at least once before generating design ideas.');
-      return;
-    }
+      if (!url || !label) {
+        alert('Please paste a URL and hit Boost at least once before generating design ideas.');
+        return;
+      }
 
-    designButton.disabled = true;
-    const oldText = designButton.innerHTML;
-    designButton.innerHTML = '<span class="icon">⏳</span><span>Designing…</span>';
+      designButton.disabled = true;
+      const oldText = designButton.innerHTML;
+      designButton.innerHTML = '<span class="icon">⏳</span><span>Designing…</span>';
 
-    try {
-      const resp = await callJson('/api/design-idea', { type, url, label, price });
-      if (!resp.success) throw new Error('API error');
-      designOutput.value = resp.design || '';
-    } catch (err) {
-      console.error(err);
-      alert('Error generating a design idea. Try again.');
-    } finally {
-      designButton.disabled = false;
-      designButton.innerHTML = oldText;
-    }
-  });
+      try {
+        const resp = await callJson('/api/design-idea', { type, url, label, price });
+        if (!resp.success) throw new Error('API error');
+        designOutput.value = resp.design || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error generating a design idea. Try again.');
+      } finally {
+        designButton.disabled = false;
+        designButton.innerHTML = oldText;
+      }
+    });
+  }
 
   // ----- Objection Coach modal -----
 
@@ -402,14 +422,20 @@ document.addEventListener('DOMContentLoaded', () => {
     objectionModal.classList.add('hidden');
   }
 
-  objectionLauncher.addEventListener('click', openObjectionModal);
-  objectionCloseButton.addEventListener('click', closeObjectionModal);
+  if (objectionLauncher) {
+    objectionLauncher.addEventListener('click', openObjectionModal);
+  }
+  if (objectionCloseButton) {
+    objectionCloseButton.addEventListener('click', closeObjectionModal);
+  }
 
-  objectionModal.addEventListener('click', (e) => {
-    if (e.target === objectionModal) {
-      closeObjectionModal();
-    }
-  });
+  if (objectionModal) {
+    objectionModal.addEventListener('click', (e) => {
+      if (e.target === objectionModal) {
+        closeObjectionModal();
+      }
+    });
+  }
 
   function sendObjection() {
     const text = (objectionInput.value || '').trim();
@@ -450,14 +476,38 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  objectionSendButton.addEventListener('click', sendObjection);
+  if (objectionSendButton) {
+    objectionSendButton.addEventListener('click', sendObjection);
+  }
 
-  objectionInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      sendObjection();
-    }
-  });
+  if (objectionInput) {
+    objectionInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendObjection();
+      }
+    });
+  }
+
+  // ----- Placeholder actions for other launchers -----
+
+  if (paymentLauncher) {
+    paymentLauncher.addEventListener('click', () => {
+      alert('Payment Helper is coming soon. Button is wired and ready.');
+    });
+  }
+
+  if (messageLauncher) {
+    messageLauncher.addEventListener('click', () => {
+      alert('Custom Message tool is coming soon. Button is wired and ready.');
+    });
+  }
+
+  if (incomeLauncher) {
+    incomeLauncher.addEventListener('click', () => {
+      alert('Income Builder is coming soon. Button is wired and ready.');
+    });
+  }
 
   // initial render
   renderObjectionChat();
