@@ -11,10 +11,12 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ---------- OpenAI client ----------
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ---------- Middleware ----------
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
@@ -190,7 +192,7 @@ Style:
 Return ONLY the script text, nothing else.`;
 }
 
-// Objection chat system prompt (Andy Elliott–style coach)
+// Objection chat system prompt
 function buildObjectionSystemPrompt({ label, price }) {
   return `
 You are an automotive objections specialist and high-energy sales coach.
@@ -425,9 +427,9 @@ app.post('/api/video-from-photos', async (req, res) => {
   }
 });
 
-// --------------- Serve frontend -----------------
+// --------------- Fallback: serve index.html -----------------
 
-app.get('/', (req, res) => {
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
