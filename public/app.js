@@ -1,124 +1,124 @@
-// public/app.js – frontend logic for Lot Rocket Social Kit + side panels
+// public/app.js – frontend logic for Lot Rocket Social Kit + Tools
 
-document.addEventListener("DOMContentLoaded", () => {
-  const apiBase = "";
+const apiBase = '';
 
-  // ---------- ELEMENTS: main inputs ----------
-  const vehicleUrlInput = document.getElementById("vehicleUrl");
-  const vehicleLabelInput = document.getElementById("vehicleLabel");
-  const priceInfoInput = document.getElementById("priceInfo");
-  const boostButton = document.getElementById("boostButton");
-  const statusText = document.getElementById("statusText");
+document.addEventListener('DOMContentLoaded', () => {
+  /* ========================
+   *  DOM REFERENCES
+   * ======================== */
 
-  const summaryLabel = document.getElementById("summaryLabel");
-  const summaryPrice = document.getElementById("summaryPrice");
+  const vehicleUrlInput = document.getElementById('vehicleUrl');
+  const vehicleLabelInput = document.getElementById('vehicleLabel');
+  const priceInfoInput = document.getElementById('priceInfo');
+  const boostButton = document.getElementById('boostButton');
+  const statusText = document.getElementById('statusText');
 
-  const facebookPost = document.getElementById("facebookPost");
-  const instagramPost = document.getElementById("instagramPost");
-  const tiktokPost = document.getElementById("tiktokPost");
-  const linkedinPost = document.getElementById("linkedinPost");
-  const twitterPost = document.getElementById("twitterPost");
-  const textBlurb = document.getElementById("textBlurb");
-  const marketplacePost = document.getElementById("marketplacePost");
-  const hashtags = document.getElementById("hashtags");
-  const videoScript = document.getElementById("videoScript");
-  const shotPlan = document.getElementById("shotPlan");
+  const summaryLabel = document.getElementById('summaryLabel');
+  const summaryPrice = document.getElementById('summaryPrice');
 
-  const buildVideoButton = document.getElementById("buildVideoButton");
-  const photosGrid = document.getElementById("photosGrid");
-  const photosStatus = document.getElementById("photosStatus");
-  const videoPlan = document.getElementById("videoPlan");
+  const facebookPost = document.getElementById('facebookPost');
+  const instagramPost = document.getElementById('instagramPost');
+  const tiktokPost = document.getElementById('tiktokPost');
+  const linkedinPost = document.getElementById('linkedinPost');
+  const twitterPost = document.getElementById('twitterPost');
+  const textBlurb = document.getElementById('textBlurb');
+  const marketplacePost = document.getElementById('marketplacePost');
+  const hashtags = document.getElementById('hashtags');
+  const videoScript = document.getElementById('videoScript');
+  const shotPlan = document.getElementById('shotPlan');
 
-  const newScriptButton = document.getElementById("newScriptButton");
+  const buildVideoButton = document.getElementById('buildVideoButton');
+  const photosGrid = document.getElementById('photosGrid');
+  const photosStatus = document.getElementById('photosStatus');
+  const videoPlan = document.getElementById('videoPlan');
 
-  const designTypeSelect = document.getElementById("designType");
-  const designButton = document.getElementById("designButton");
-  const designOutput = document.getElementById("designOutput");
+  const newScriptButton = document.getElementById('newScriptButton');
 
-  // Theme
-  const themeToggle = document.getElementById("themeToggle");
-  const themeIcon = document.getElementById("themeIcon");
-  const themeLabel = document.getElementById("themeLabel");
+  const designTypeSelect = document.getElementById('designType');
+  const designButton = document.getElementById('designButton');
+  const designOutput = document.getElementById('designOutput');
 
-  // Objection coach modal (AI)
-  const objectionLauncher = document.getElementById("objectionLauncher");
-  const objectionModal = document.getElementById("objectionModal");
-  const objectionCloseButton = document.getElementById("objectionCloseButton");
-  const objectionHistory = document.getElementById("objectionHistory");
-  const objectionInput = document.getElementById("objectionInput");
-  const objectionSendButton = document.getElementById("objectionSendButton");
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
 
-  // Side-panel launchers
-  const paymentLauncher = document.getElementById("paymentLauncher");
-  const messageLauncher = document.getElementById("messageLauncher");
-  const incomeLauncher = document.getElementById("incomeLauncher");
+  // Objection coach DOM
+  const objectionLauncher = document.getElementById('objectionLauncher');
+  const objectionModal = document.getElementById('objectionModal');
+  const objectionCloseButton = document.getElementById('objectionCloseButton');
+  const objectionHistory = document.getElementById('objectionHistory');
+  const objectionInput = document.getElementById('objectionInput');
+  const objectionSendButton = document.getElementById('objectionSendButton');
 
-  // Payment panel
-  const paymentPanel = document.getElementById("paymentPanel");
-  const paymentClose = document.getElementById("paymentClose");
-  const paymentForm = document.getElementById("paymentForm");
-  const paymentResult = document.getElementById("paymentResult");
-  const amountFinancedEl = document.getElementById("amountFinanced");
-  const totalPaidEl = document.getElementById("totalPaid");
+  // Calculator DOM
+  const calculatorLauncher = document.getElementById('calculatorLauncher');
+  const calculatorModal = document.getElementById('calculatorModal');
+  const calculatorCloseButton = document.getElementById('calculatorCloseButton');
+  const calcTabButtons = document.querySelectorAll('[data-calctab]');
+  const calcPanels = document.querySelectorAll('.calc-panel');
 
-  // Message panel
-  const messagePanel = document.getElementById("messagePanel");
-  const messageClose = document.getElementById("messageClose");
-  const messageForm = document.getElementById("messageForm");
-  const messageOutput = document.getElementById("messageOutput");
+  const paymentCalcForm = document.getElementById('paymentCalcForm');
+  const paymentMonthlyEl = document.getElementById('paymentMonthly');
+  const paymentTotalLoanEl = document.getElementById('paymentTotalLoan');
+  const paymentTotalInterestEl = document.getElementById('paymentTotalInterest');
 
-  // Income panel
-  const incomePanel = document.getElementById("incomePanel");
-  const incomeClose = document.getElementById("incomeClose");
-  const incomeForm = document.getElementById("incomeForm");
-  const dealsPerMonthEl = document.getElementById("dealsPerMonth");
-  const dealsPerDayEl = document.getElementById("dealsPerDay");
-  const showsPerDayEl = document.getElementById("showsPerDay");
-  const appointmentsPerDayEl = document.getElementById("appointmentsPerDay");
+  const affordForm = document.getElementById('affordForm');
+  const affordMaxPriceEl = document.getElementById('affordMaxPrice');
+  const affordTotalLoanEl = document.getElementById('affordTotalLoan');
+  const affordTotalInterestEl = document.getElementById('affordTotalInterest');
+
+  const incomeForm = document.getElementById('incomeForm');
+  const dealsPerMonthEl = document.getElementById('dealsPerMonth');
+  const dealsPerDayEl = document.getElementById('dealsPerDay');
+  const showsPerDayEl = document.getElementById('showsPerDay');
+  const apptsPerDayEl = document.getElementById('appointmentsPerDay');
 
   let currentPhotos = [];
-  let currentUrl = "";
+  let currentUrl = '';
   let isBoosting = false;
 
-  // chat history for objection coach
+  // Objection coach chat history
   let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
 
-  // ---------------- THEME ----------------
+  /* ========================
+   *  THEME
+   * ======================== */
 
   function applyTheme(theme) {
     const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
-    if (theme === "dark") {
-      themeIcon.textContent = "🌙";
-      themeLabel.textContent = "Dark";
+    root.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      themeIcon.textContent = '🌙';
+      themeLabel.textContent = 'Dark';
     } else {
-      themeIcon.textContent = "☀️";
-      themeLabel.textContent = "Light";
+      themeIcon.textContent = '☀️';
+      themeLabel.textContent = 'Light';
     }
-    localStorage.setItem("lotRocketTheme", theme);
+    localStorage.setItem('lotRocketTheme', theme);
   }
 
   function initTheme() {
-    const saved = localStorage.getItem("lotRocketTheme");
-    if (saved === "light" || saved === "dark") {
+    const saved = localStorage.getItem('lotRocketTheme');
+    if (saved === 'light' || saved === 'dark') {
       applyTheme(saved);
     } else {
-      applyTheme("dark");
+      applyTheme('dark');
     }
   }
 
   if (themeToggle) {
-    themeToggle.addEventListener("click", () => {
-      const current =
-        document.documentElement.getAttribute("data-theme") || "dark";
-      const next = current === "dark" ? "light" : "dark";
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
       applyTheme(next);
     });
   }
 
   initTheme();
 
-  // ---------------- HELPERS ----------------
+  /* ========================
+   *  HELPERS
+   * ======================== */
 
   function setStatus(text, isLoading = false) {
     if (!statusText) return;
@@ -130,104 +130,88 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function safeTrim(str) {
-    return (str || "").toString().trim();
-  }
-
-  function formatMoney(value) {
-    const n = Number(value) || 0;
-    return n.toLocaleString(undefined, {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return (str || '').toString().trim();
   }
 
   function updateSummary(label, price) {
-    if (summaryLabel) {
-      summaryLabel.textContent = safeTrim(label) || "Vehicle ready";
-    }
-    if (summaryPrice) {
-      summaryPrice.textContent =
-        safeTrim(price) || "Message for current pricing";
-    }
+    if (summaryLabel) summaryLabel.textContent = safeTrim(label) || 'Vehicle ready';
+    if (summaryPrice) summaryPrice.textContent = safeTrim(price) || 'Message for current pricing';
   }
 
   function fillSocialKit(kit) {
-    if (facebookPost) facebookPost.value = kit.facebook || "";
-    if (instagramPost) instagramPost.value = kit.instagram || "";
-    if (tiktokPost) tiktokPost.value = kit.tiktok || "";
-    if (linkedinPost) linkedinPost.value = kit.linkedin || "";
-    if (twitterPost) twitterPost.value = kit.twitter || "";
-    if (textBlurb) textBlurb.value = kit.textBlurb || "";
-    if (marketplacePost) marketplacePost.value = kit.marketplace || "";
-    if (hashtags) hashtags.value = kit.hashtags || "";
-    if (videoScript) videoScript.value = kit.videoScript || "";
-    if (shotPlan) shotPlan.value = kit.shotPlan || "";
+    if (facebookPost) facebookPost.value = kit.facebook || '';
+    if (instagramPost) instagramPost.value = kit.instagram || '';
+    if (tiktokPost) tiktokPost.value = kit.tiktok || '';
+    if (linkedinPost) linkedinPost.value = kit.linkedin || '';
+    if (twitterPost) twitterPost.value = kit.twitter || '';
+    if (textBlurb) textBlurb.value = kit.textBlurb || '';
+    if (marketplacePost) marketplacePost.value = kit.marketplace || '';
+    if (hashtags) hashtags.value = kit.hashtags || '';
+    if (videoScript) videoScript.value = kit.videoScript || '';
+    if (shotPlan) shotPlan.value = kit.shotPlan || '';
   }
 
   function renderPhotosGrid(photos) {
     if (!photosGrid || !photosStatus) return;
-    photosGrid.innerHTML = "";
+    photosGrid.innerHTML = '';
     if (!photos || !photos.length) {
-      photosStatus.textContent = "No photos found yet.";
+      photosStatus.textContent = 'No photos found yet.';
       return;
     }
     photos.forEach((url) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "photo-thumb";
-      const img = document.createElement("img");
+      const wrapper = document.createElement('div');
+      wrapper.className = 'photo-thumb';
+      const img = document.createElement('img');
       img.src = url;
-      img.alt = "Vehicle photo";
+      img.alt = 'Vehicle photo';
       wrapper.appendChild(img);
-      wrapper.addEventListener("click", () => {
-        window.open(url, "_blank");
+      wrapper.addEventListener('click', () => {
+        window.open(url, '_blank');
       });
       photosGrid.appendChild(wrapper);
     });
-    photosStatus.textContent =
-      photos.length + " photos found. Click any to open full size.";
+    photosStatus.textContent = photos.length + ' photos found. Click any to open full size.';
   }
 
   async function callJson(endpoint, body) {
     const res = await fetch(apiBase + endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body || {}),
     });
     if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error("Request failed: " + res.status + " " + txt);
+      const txt = await res.text().catch(() => '');
+      throw new Error('Request failed: ' + res.status + ' ' + txt);
     }
     return res.json();
   }
 
-  // ------------- OBJECTION CHAT RENDER -------------
+  /* ========================
+   *  OBJECTION COACH RENDER
+   * ======================== */
 
   function renderObjectionChat() {
     if (!objectionHistory) return;
-    objectionHistory.innerHTML = "";
+
+    objectionHistory.innerHTML = '';
     if (!objectionMessages.length) {
-      const empty = document.createElement("div");
-      empty.className = "objection-bubble";
-      empty.style.opacity = "0.7";
+      const empty = document.createElement('div');
+      empty.className = 'objection-bubble';
+      empty.style.opacity = '0.7';
       empty.textContent =
-        "Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.";
+        'Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.';
       objectionHistory.appendChild(empty);
       return;
     }
 
     objectionMessages.forEach((m) => {
-      const labelDiv = document.createElement("div");
-      labelDiv.className =
-        "objection-bubble " +
-        (m.role === "assistant" ? "coach-label" : "you-label");
-      labelDiv.textContent = m.role === "assistant" ? "COACH" : "YOU";
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'objection-bubble ' + (m.role === 'assistant' ? 'coach-label' : 'you-label');
+      labelDiv.textContent = m.role === 'assistant' ? 'COACH' : 'YOU';
 
-      const bubble = document.createElement("div");
-      bubble.className =
-        "objection-bubble " + (m.role === "assistant" ? "coach" : "you");
-      bubble.textContent = m.content || "";
+      const bubble = document.createElement('div');
+      bubble.className = 'objection-bubble ' + (m.role === 'assistant' ? 'coach' : 'you');
+      bubble.textContent = m.content || '';
 
       objectionHistory.appendChild(labelDiv);
       objectionHistory.appendChild(bubble);
@@ -236,38 +220,40 @@ document.addEventListener("DOMContentLoaded", () => {
     objectionHistory.scrollTop = objectionHistory.scrollHeight;
   }
 
-  // ------------- BOOST FLOW -------------
+  /* ========================
+   *  BOOST FLOW
+   * ======================== */
 
   async function handleBoost() {
     if (isBoosting) return;
     const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
     if (!url) {
-      alert("Paste a dealer vehicle URL first.");
+      alert('Paste a dealer vehicle URL first.');
       return;
     }
 
     let label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
     if (!label) {
-      label = "This vehicle";
+      label = 'This vehicle';
       if (vehicleLabelInput) vehicleLabelInput.value = label;
     }
     let price = safeTrim(priceInfoInput && priceInfoInput.value);
     if (!price) {
-      price = "Message for current pricing";
+      price = 'Message for current pricing';
       if (priceInfoInput) priceInfoInput.value = price;
     }
 
     isBoosting = true;
     if (boostButton) boostButton.disabled = true;
-    setStatus("Building social kit with AI…", true);
+    setStatus('Building social kit with AI…', true);
 
     try {
       currentUrl = url;
-      const resp = await callJson("/api/social-kit", { url, label, price });
-      if (!resp.success) throw new Error("API returned error");
+      const resp = await callJson('/api/social-kit', { url, label, price });
+      if (!resp.success) throw new Error('API returned error');
       fillSocialKit(resp.kit);
       updateSummary(label, price);
-      setStatus("Social kit ready. You can spin new posts or scripts anytime.");
+      setStatus('Social kit ready. You can spin new posts or scripts anytime.');
 
       // reset objection chat for the new vehicle
       objectionMessages = [];
@@ -275,23 +261,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Auto load photos
       try {
-        if (photosStatus)
-          photosStatus.textContent = "Trying to grab photos from dealer page…";
-        const photoResp = await callJson("/api/grab-photos", { url });
+        if (photosStatus) photosStatus.textContent = 'Trying to grab photos from dealer page…';
+        const photoResp = await callJson('/api/grab-photos', { url });
         if (photoResp.success) {
           currentPhotos = photoResp.photos || [];
           renderPhotosGrid(currentPhotos);
         } else if (photosStatus) {
-          photosStatus.textContent = "Could not grab photos.";
+          photosStatus.textContent = 'Could not grab photos.';
         }
       } catch (err) {
-        console.error("Auto photo grab failed:", err);
-        if (photosStatus) photosStatus.textContent = "Auto photo load failed.";
+        console.error('Auto photo grab failed:', err);
+        if (photosStatus) photosStatus.textContent = 'Auto photo load failed.';
       }
     } catch (err) {
       console.error(err);
-      setStatus("Something went wrong. Try again or check the URL.");
-      alert("Error building social kit. Check the URL and try again.");
+      setStatus('Something went wrong. Try again or check the URL.');
+      alert('Error building social kit. Check the URL and try again.');
     } finally {
       isBoosting = false;
       if (boostButton) boostButton.disabled = false;
@@ -299,22 +284,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (boostButton) {
-    boostButton.addEventListener("click", handleBoost);
+    boostButton.addEventListener('click', handleBoost);
   }
 
-  // ------------- NEW POST BUTTONS -------------
+  /* ========================
+   *  NEW POST BUTTONS
+   * ======================== */
 
-  document.querySelectorAll(".button-new-post").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const platform = btn.getAttribute("data-platform");
+  document.querySelectorAll('.button-new-post').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const platform = btn.getAttribute('data-platform');
       const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
       const price = safeTrim(priceInfoInput && priceInfoInput.value);
 
       if (!url || !label) {
-        alert(
-          "Please paste a URL and hit Boost at least once before spinning posts."
-        );
+        alert('Please paste a URL and hit Boost at least once before spinning posts.');
         return;
       }
 
@@ -323,44 +308,39 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
       try {
-        const resp = await callJson("/api/new-post", {
-          platform,
-          url,
-          label,
-          price,
-        });
-        if (!resp.success) throw new Error("API returned error");
-        const text = resp.post || "";
+        const resp = await callJson('/api/new-post', { platform, url, label, price });
+        if (!resp.success) throw new Error('API returned error');
+        const text = resp.post || '';
 
         switch (platform) {
-          case "facebook":
-            if (facebookPost) facebookPost.value = text;
+          case 'facebook':
+            facebookPost.value = text;
             break;
-          case "instagram":
-            if (instagramPost) instagramPost.value = text;
+          case 'instagram':
+            instagramPost.value = text;
             break;
-          case "tiktok":
-            if (tiktokPost) tiktokPost.value = text;
+          case 'tiktok':
+            tiktokPost.value = text;
             break;
-          case "linkedin":
-            if (linkedinPost) linkedinPost.value = text;
+          case 'linkedin':
+            linkedinPost.value = text;
             break;
-          case "twitter":
-            if (twitterPost) twitterPost.value = text;
+          case 'twitter':
+            twitterPost.value = text;
             break;
-          case "text":
-            if (textBlurb) textBlurb.value = text;
+          case 'text':
+            textBlurb.value = text;
             break;
-          case "marketplace":
-            if (marketplacePost) marketplacePost.value = text;
+          case 'marketplace':
+            marketplacePost.value = text;
             break;
-          case "hashtags":
-            if (hashtags) hashtags.value = text;
+          case 'hashtags':
+            hashtags.value = text;
             break;
         }
       } catch (err) {
         console.error(err);
-        alert("Error generating a new post. Try again.");
+        alert('Error generating a new post. Try again.');
       } finally {
         btn.disabled = false;
         btn.innerHTML = oldText;
@@ -368,33 +348,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ------------- NEW VIDEO SCRIPT -------------
+  /* ========================
+   *  NEW VIDEO SCRIPT
+   * ======================== */
 
   if (newScriptButton) {
-    newScriptButton.addEventListener("click", async () => {
+    newScriptButton.addEventListener('click', async () => {
       const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
       const price = safeTrim(priceInfoInput && priceInfoInput.value);
 
       if (!url || !label) {
-        alert(
-          "Please paste a URL and hit Boost at least once before spinning scripts."
-        );
+        alert('Please paste a URL and hit Boost at least once before spinning scripts.');
         return;
       }
 
       newScriptButton.disabled = true;
       const oldText = newScriptButton.innerHTML;
-      newScriptButton.innerHTML =
-        '<span class="icon">⏳</span><span>Working…</span>';
+      newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
 
       try {
-        const resp = await callJson("/api/new-script", { url, label, price });
-        if (!resp.success) throw new Error("API error");
-        if (videoScript) videoScript.value = resp.script || "";
+        const resp = await callJson('/api/new-script', { url, label, price });
+        if (!resp.success) throw new Error('API error');
+        videoScript.value = resp.script || '';
       } catch (err) {
         console.error(err);
-        alert("Error generating a new script. Try again.");
+        alert('Error generating a new script. Try again.');
       } finally {
         newScriptButton.disabled = false;
         newScriptButton.innerHTML = oldText;
@@ -402,33 +381,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ------------- BUILD VIDEO PLAN FROM PHOTOS -------------
+  /* ========================
+   *  BUILD VIDEO PLAN
+   * ======================== */
 
   if (buildVideoButton) {
-    buildVideoButton.addEventListener("click", async () => {
+    buildVideoButton.addEventListener('click', async () => {
       if (!currentPhotos || !currentPhotos.length) {
-        alert("No photos yet. Boost a listing first so we can grab photos.");
+        alert('No photos yet. Boost a listing first so we can grab photos.');
         return;
       }
 
       buildVideoButton.disabled = true;
       const oldText = buildVideoButton.innerHTML;
-      buildVideoButton.innerHTML =
-        '<span class="icon">⏳</span><span>Building…</span>';
+      buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
 
       try {
-        const label =
-          safeTrim(vehicleLabelInput && vehicleLabelInput.value) ||
-          "this vehicle";
-        const resp = await callJson("/api/video-from-photos", {
+        const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value) || 'this vehicle';
+        const resp = await callJson('/api/video-from-photos', {
           photos: currentPhotos,
           label,
         });
-        if (!resp.success) throw new Error("API error");
-        if (videoPlan) videoPlan.value = resp.plan || "";
+        if (!resp.success) throw new Error('API error');
+        videoPlan.value = resp.plan || '';
       } catch (err) {
         console.error(err);
-        alert("Error building video plan. Try again.");
+        alert('Error building video plan. Try again.');
       } finally {
         buildVideoButton.disabled = false;
         buildVideoButton.innerHTML = oldText;
@@ -436,39 +414,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ------------- DESIGN LAB -------------
+  /* ========================
+   *  DESIGN LAB
+   * ======================== */
 
   if (designButton) {
-    designButton.addEventListener("click", async () => {
-      const type = designTypeSelect && designTypeSelect.value;
+    designButton.addEventListener('click', async () => {
+      const type = designTypeSelect.value;
       const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
       const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
       const price = safeTrim(priceInfoInput && priceInfoInput.value);
 
       if (!url || !label) {
-        alert(
-          "Please paste a URL and hit Boost at least once before generating design ideas."
-        );
+        alert('Please paste a URL and hit Boost at least once before generating design ideas.');
         return;
       }
 
       designButton.disabled = true;
       const oldText = designButton.innerHTML;
-      designButton.innerHTML =
-        '<span class="icon">⏳</span><span>Designing…</span>';
+      designButton.innerHTML = '<span class="icon">⏳</span><span>Designing…</span>';
 
       try {
-        const resp = await callJson("/api/design-idea", {
-          type,
-          url,
-          label,
-          price,
-        });
-        if (!resp.success) throw new Error("API error");
-        if (designOutput) designOutput.value = resp.design || "";
+        const resp = await callJson('/api/design-idea', { type, url, label, price });
+        if (!resp.success) throw new Error('API error');
+        designOutput.value = resp.design || '';
       } catch (err) {
         console.error(err);
-        alert("Error generating a design idea. Try again.");
+        alert('Error generating a design idea. Try again.');
       } finally {
         designButton.disabled = false;
         designButton.innerHTML = oldText;
@@ -476,11 +448,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ------------- OBJECTION COACH MODAL (AI) -------------
+  /* ========================
+   *  OBJECTION COACH MODAL
+   * ======================== */
 
   function openObjectionModal() {
     if (!objectionModal) return;
-    objectionModal.classList.remove("hidden");
+    objectionModal.classList.remove('hidden');
     if (!objectionMessages.length) {
       renderObjectionChat();
     }
@@ -491,17 +465,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeObjectionModal() {
     if (!objectionModal) return;
-    objectionModal.classList.add("hidden");
+    objectionModal.classList.add('hidden');
   }
 
   if (objectionLauncher) {
-    objectionLauncher.addEventListener("click", openObjectionModal);
+    objectionLauncher.addEventListener('click', openObjectionModal);
   }
   if (objectionCloseButton) {
-    objectionCloseButton.addEventListener("click", closeObjectionModal);
+    objectionCloseButton.addEventListener('click', closeObjectionModal);
   }
+
   if (objectionModal) {
-    objectionModal.addEventListener("click", (e) => {
+    objectionModal.addEventListener('click', (e) => {
       if (e.target === objectionModal) {
         closeObjectionModal();
       }
@@ -509,42 +484,38 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function sendObjection() {
-    const text = (objectionInput && objectionInput.value || "").trim();
+    const text = (objectionInput && objectionInput.value || '').trim();
     if (!text) {
-      alert("Type the customer’s objection or your question first.");
+      alert('Type the customer’s objection or your question first.');
       return;
     }
 
-    const label =
-      safeTrim(vehicleLabelInput && vehicleLabelInput.value) ||
-      "this vehicle";
-    const price =
-      safeTrim(priceInfoInput && priceInfoInput.value) ||
-      "Message for current pricing";
+    const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value) || 'this vehicle';
+    const price = safeTrim(priceInfoInput && priceInfoInput.value) || 'Message for current pricing';
 
-    objectionMessages.push({ role: "user", content: text });
+    objectionMessages.push({ role: 'user', content: text });
     renderObjectionChat();
-    if (objectionInput) objectionInput.value = "";
+    if (objectionInput) objectionInput.value = '';
 
     if (!objectionSendButton) return;
     objectionSendButton.disabled = true;
     const oldText = objectionSendButton.innerHTML;
-    objectionSendButton.innerHTML = "<span>⏳ Coaching…</span>";
+    objectionSendButton.innerHTML = '<span>⏳ Coaching…</span>';
 
-    callJson("/api/objection-coach", {
+    callJson('/api/objection-coach', {
       messages: objectionMessages,
       label,
       price,
     })
       .then((resp) => {
-        if (!resp.success) throw new Error("API error");
-        const reply = resp.reply || "";
-        objectionMessages.push({ role: "assistant", content: reply });
+        if (!resp.success) throw new Error('API error');
+        const reply = resp.reply || '';
+        objectionMessages.push({ role: 'assistant', content: reply });
         renderObjectionChat();
       })
       .catch((err) => {
         console.error(err);
-        alert("Error generating a response. Try again.");
+        alert('Error generating a response. Try again.');
       })
       .finally(() => {
         objectionSendButton.disabled = false;
@@ -553,83 +524,82 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (objectionSendButton) {
-    objectionSendButton.addEventListener("click", sendObjection);
+    objectionSendButton.addEventListener('click', sendObjection);
   }
+
   if (objectionInput) {
-    objectionInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    objectionInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         sendObjection();
       }
     });
   }
 
-  // initial render for objection chat
-  renderObjectionChat();
+  /* ========================
+   *  CALCULATORS MODAL
+   * ======================== */
 
-  // ------------- SIDE PANEL HELPERS -------------
-
-  function openPanel(panel) {
-    if (!panel) return;
-    panel.classList.remove("hidden");
-  }
-
-  function closePanel(panel) {
-    if (!panel) return;
-    panel.classList.add("hidden");
+  function openCalculatorModal() {
+    if (!calculatorModal) return;
+    calculatorModal.classList.remove('hidden');
   }
 
-  // Payment panel open/close
-  if (paymentLauncher && paymentPanel) {
-    paymentLauncher.addEventListener("click", () => openPanel(paymentPanel));
-  }
-  if (paymentClose && paymentPanel) {
-    paymentClose.addEventListener("click", () => closePanel(paymentPanel));
+  function closeCalculator() {
+    if (!calculatorModal) return;
+    calculatorModal.classList.add('hidden');
   }
 
-  // Message panel open/close
-  if (messageLauncher && messagePanel) {
-    messageLauncher.addEventListener("click", () => openPanel(messagePanel));
+  if (calculatorLauncher) {
+    calculatorLauncher.addEventListener('click', openCalculatorModal);
   }
-  if (messageClose && messagePanel) {
-    messageClose.addEventListener("click", () => closePanel(messagePanel));
+  if (calculatorCloseButton) {
+    calculatorCloseButton.addEventListener('click', closeCalculator);
   }
-
-  // Income panel open/close
-  if (incomeLauncher && incomePanel) {
-    incomeLauncher.addEventListener("click", () => openPanel(incomePanel));
-  }
-  if (incomeClose && incomePanel) {
-    incomeClose.addEventListener("click", () => closePanel(incomePanel));
+  if (calculatorModal) {
+    calculatorModal.addEventListener('click', (e) => {
+      if (e.target === calculatorModal) closeCalculator();
+    });
   }
 
-  // Click on any backdrop closes respective panel (using data-close-panel)
-  document.querySelectorAll(".side-panel-backdrop").forEach((backdrop) => {
-    backdrop.addEventListener("click", () => {
-      const id = backdrop.getAttribute("data-close-panel");
-      if (!id) return;
-      const panel = document.getElementById(id);
-      closePanel(panel);
+  // Tabs
+  calcTabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-calctab');
+      calcTabButtons.forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      calcPanels.forEach((panel) => {
+        panel.classList.toggle('is-active', panel.id === 'calc-' + key);
+      });
     });
   });
 
-  // ------------- PAYMENT HELPER CALCULATOR -------------
+  // Formatting helpers for calculators
+  function money(v) {
+    if (!isFinite(v)) return '$0.00';
+    return v.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+  }
 
-  if (paymentForm && paymentResult && amountFinancedEl && totalPaidEl) {
-    paymentForm.addEventListener("submit", (e) => {
+  function two(v) {
+    if (!isFinite(v)) return '0.00';
+    return v.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+  }
+
+  /* ----- Payment calculator ----- */
+
+  if (paymentCalcForm) {
+    paymentCalcForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const price =
-        Number(document.getElementById("price").value || "0") || 0;
-      const down =
-        Number(document.getElementById("downPayment").value || "0") || 0;
-      const term = Number(document.getElementById("term").value || "0") || 0;
-      const apr = Number(document.getElementById("apr").value || "0") || 0;
+      const price = Number(document.getElementById('loanPrice').value) || 0;
+      const down = Number(document.getElementById('loanDown').value) || 0;
+      const term = Number(document.getElementById('loanTerm').value) || 0;
+      const apr = Number(document.getElementById('loanApr').value) || 0;
 
       if (!price || !term) {
-        paymentResult.textContent = "Enter price and term.";
-        amountFinancedEl.textContent = "$0.00";
-        totalPaidEl.textContent = "$0.00";
+        paymentMonthlyEl.textContent = '$0.00 / mo';
+        paymentTotalLoanEl.textContent = '$0.00';
+        paymentTotalInterestEl.textContent = '$0.00';
         return;
       }
 
@@ -637,153 +607,102 @@ document.addEventListener("DOMContentLoaded", () => {
       const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
 
       let payment = 0;
+      let totalPaid = 0;
+
       if (monthlyRate === 0) {
         payment = amountFinanced / term;
+        totalPaid = amountFinanced;
       } else {
-        const base = 1 + monthlyRate;
-        const pow = Math.pow(base, term);
-        const factor = (monthlyRate * pow) / (pow - 1);
+        const factor =
+          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
+          (Math.pow(1 + monthlyRate, term) - 1);
         payment = amountFinanced * factor;
+        totalPaid = payment * term;
       }
 
-      const totalPaid = payment * term;
+      const totalInterest = totalPaid - amountFinanced;
 
-      paymentResult.textContent = `${formatMoney(payment)} / mo`;
-      amountFinancedEl.textContent = formatMoney(amountFinanced);
-      totalPaidEl.textContent = formatMoney(totalPaid);
+      paymentMonthlyEl.textContent = money(payment) + ' / mo';
+      paymentTotalLoanEl.textContent = money(amountFinanced);
+      paymentTotalInterestEl.textContent = money(totalInterest);
     });
   }
 
-  // ------------- CUSTOM MESSAGE BUILDER -------------
+  /* ----- Affordability calculator ----- */
 
-  if (messageForm && messageOutput) {
-    messageForm.addEventListener("submit", (e) => {
+  if (affordForm) {
+    affordForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const name =
-        safeTrim(document.getElementById("msgCustomer").value) || "there";
-      const platform =
-        document.getElementById("msgPlatform").value || "sms";
-      const vehicle = safeTrim(
-        document.getElementById("msgVehicle").value
-      );
-      const goal =
-        document.getElementById("msgGoal").value || "appointment";
-      const notes = safeTrim(
-        document.getElementById("msgNotes").value
-      );
+      const budget = Number(document.getElementById('affordBudget').value) || 0;
+      const term = Number(document.getElementById('affordTerm').value) || 0;
+      const apr = Number(document.getElementById('affordApr').value) || 0;
+      const down = Number(document.getElementById('affordDown').value) || 0;
 
-      let opener =
-        platform === "email"
-          ? `Hi ${name},`
-          : `Hey ${name}, it’s ${"your salesperson"} over at the store.`;
-
-      const vehicleLine = vehicle
-        ? `I was looking at the ${vehicle} we talked about and wanted to check in with you.`
-        : `I wanted to check in with you about your vehicle search.`;
-
-      let goalLine = "";
-      switch (goal) {
-        case "appointment":
-          goalLine =
-            "I’d love to set up a quick visit so you can see it in person and make sure it fits what you’re looking for.";
-          break;
-        case "trade":
-          goalLine =
-            "If you send me a couple photos and miles on your trade, I can work up real numbers and save you a ton of time at the store.";
-          break;
-        case "followup":
-          goalLine =
-            "Just wanted to make sure your questions are answered and see what you’d like your next step to be.";
-          break;
-        case "credit":
-          goalLine =
-            "We can put together a simple approval gameplan that keeps the payment comfortable and actually helps your credit long-term.";
-          break;
-      }
-
-      const notesLine = notes ? `\n\nQuick note: ${notes}` : "";
-
-      let closer = "";
-      if (platform === "email") {
-        closer =
-          "\n\nIf you have a minute, hit reply and let me know what works best for you – I’m here to make this easy.";
-      } else {
-        closer =
-          "\n\nWhat works better for you – a quick call or a text to go over options? I’ll move at your pace.";
-      }
-
-      const msg = `${opener}
-
-${vehicleLine}
-${goalLine}${notesLine}${closer}`;
-
-      messageOutput.value = msg.trim();
-    });
-
-    // copy button for message
-    document
-      .querySelectorAll("[data-copy-target]")
-      .forEach((copyBtn) => {
-        copyBtn.addEventListener("click", () => {
-          const targetId = copyBtn.getAttribute("data-copy-target");
-          if (!targetId) return;
-          const el = document.getElementById(targetId);
-          if (!el) return;
-          el.select();
-          document.execCommand("copy");
-        });
-      });
-  }
-
-  // ------------- INCOME BUILDER -------------
-
-  if (
-    incomeForm &&
-    dealsPerMonthEl &&
-    dealsPerDayEl &&
-    showsPerDayEl &&
-    appointmentsPerDayEl
-  ) {
-    incomeForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const incomeGoal =
-        Number(document.getElementById("incomeGoal").value || "0") ||
-        0;
-      const perDeal =
-        Number(
-          document.getElementById("commissionPerDeal").value || "0"
-        ) || 0;
-      const workDays =
-        Number(document.getElementById("workDays").value || "0") || 0;
-      const closeRate =
-        Number(document.getElementById("closeRate").value || "0") || 0;
-
-      if (!incomeGoal || !perDeal || !workDays || !closeRate) {
-        dealsPerMonthEl.textContent = "0.0";
-        dealsPerDayEl.textContent = "0.00";
-        showsPerDayEl.textContent = "0.00";
-        appointmentsPerDayEl.textContent = "0.00";
+      if (!budget || !term) {
+        affordMaxPriceEl.textContent = '$0.00';
+        affordTotalLoanEl.textContent = '$0.00';
+        affordTotalInterestEl.textContent = '$0.00';
         return;
       }
 
-      const dealsPerMonth = incomeGoal / perDeal;
-      const dealsPerDay = dealsPerMonth / workDays;
+      const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
+      let amountFinanced = 0;
 
-      const closeFraction = closeRate / 100;
-      const showsPerDay =
-        closeFraction > 0 ? dealsPerDay / closeFraction : 0;
+      if (monthlyRate === 0) {
+        amountFinanced = budget * term;
+      } else {
+        // solve for principal given payment
+        const factor =
+          (monthlyRate * Math.pow(1 + monthlyRate, term)) /
+          (Math.pow(1 + monthlyRate, term) - 1);
+        amountFinanced = budget / factor;
+      }
 
-      // assume 70% of appointments show
-      const showRate = 0.7;
-      const appointmentsPerDay =
-        showRate > 0 ? showsPerDay / showRate : 0;
+      const price = amountFinanced + down;
+      const totalPaid = budget * term;
+      const totalInterest = totalPaid - amountFinanced;
 
-      dealsPerMonthEl.textContent = dealsPerMonth.toFixed(1);
-      dealsPerDayEl.textContent = dealsPerDay.toFixed(2);
-      showsPerDayEl.textContent = showsPerDay.toFixed(2);
-      appointmentsPerDayEl.textContent = appointmentsPerDay.toFixed(2);
+      affordMaxPriceEl.textContent = money(price);
+      affordTotalLoanEl.textContent = money(amountFinanced);
+      affordTotalInterestEl.textContent = money(totalInterest);
     });
   }
+
+  /* ----- Income builder calculator ----- */
+
+  if (incomeForm) {
+    incomeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const goal = Number(document.getElementById('incomeGoal').value) || 0;
+      const perDeal = Number(document.getElementById('commissionPerDeal').value) || 0;
+      const workDays = Number(document.getElementById('workDays').value) || 0;
+      const closeRate = Number(document.getElementById('closeRate').value) || 0;
+
+      if (!goal || !perDeal || !workDays || !closeRate) {
+        dealsPerMonthEl.textContent = '0.0';
+        dealsPerDayEl.textContent = '0.00';
+        showsPerDayEl.textContent = '0.00';
+        apptsPerDayEl.textContent = '0.00';
+        return;
+      }
+
+      const dealsMonth = goal / perDeal;
+      const dealsDay = dealsMonth / workDays;
+
+      // closeRate = deals / shows
+      const showsDay = dealsDay / (closeRate / 100 || 1);
+      // assume ~60% of appointments show
+      const apptsDay = showsDay / 0.6;
+
+      dealsPerMonthEl.textContent = two(dealsMonth);
+      dealsPerDayEl.textContent = two(dealsDay);
+      showsPerDayEl.textContent = two(showsDay);
+      apptsPerDayEl.textContent = two(apptsDay);
+    });
+  }
+
+  // Initial render for objection chat
+  renderObjectionChat();
 });
