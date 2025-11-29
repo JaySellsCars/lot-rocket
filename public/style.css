@@ -73,13 +73,14 @@ body:not(.dark-theme) .branding p {
 
 .floating-tools {
   position: fixed;
-  top: 72px;
-  right: 20px;
+  top: 96px;          /* sits just under the header */
+  right: 32px;        /* lines up with the right padding */
   display: flex;
   flex-direction: column;
   gap: 6px;
   z-index: 60;
 }
+
 
 
 .column {
