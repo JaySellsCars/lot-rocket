@@ -2,23 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Lot Rocket – Social Media Kit</title>
+    <title>Lot Rocket – AI Social Media Kit</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
-    <!-- HEADER -->
+    <!-- App Shell -->
     <header class="app-header">
       <div class="branding">
         <h1>🚀 Lot Rocket</h1>
-        <p>AI Social Media Kit & Creative Lab for Car Salespeople</p>
+        <p>AI Social Media Kit for Car Sales Pros</p>
       </div>
       <div class="header-controls">
         <button id="themeToggle" class="secondary-btn">Toggle Theme</button>
       </div>
     </header>
 
-    <!-- FLOATING TOOLS -->
+    <!-- Floating tool buttons (right side) -->
     <div class="floating-tools">
       <button id="objectionLauncher" class="tool-button">Objection Coach</button>
       <button id="paymentLauncher" class="tool-button">Payment Estimator</button>
@@ -27,304 +27,343 @@
       <button id="messageLauncher" class="tool-button">AI Message Builder</button>
       <button id="askLauncher" class="tool-button">Ask A.I.</button>
       <button id="carLauncher" class="tool-button">AI Car Expert</button>
-      <!-- NEW BUTTONS -->
       <button id="imageGenLauncher" class="tool-button">AI Image Generation</button>
       <button id="videoGenLauncher" class="tool-button">AI Video Generation</button>
     </div>
 
-    <!-- MAIN LAYOUT -->
+    <!-- Main layout -->
     <main class="layout">
-      <!-- STEP 1 – DEALER URL SCRAPER -->
+      <!-- Column 1 – Step 1: Dealer URL Scraper -->
       <section class="column column-left">
-        <h2>Step 1 – Dealer URL Scraper</h2>
+        <div class="section-card">
+          <h2>Step 1 – Dealer URL Scraper</h2>
 
-        <div class="summary-box">
-          <h3>Vehicle Details</h3>
-
-          <label for="vehicleUrl">Dealer Vehicle URL</label>
+          <label for="vehicleUrl">Vehicle URL</label>
           <input
             type="text"
             id="vehicleUrl"
-            placeholder="Paste the full vehicle URL from the dealer site"
+            placeholder="Paste full dealer listing URL here..."
           />
 
-          <label for="vehicleLabel">Vehicle Label (optional override)</label>
+          <label for="vehicleLabel">Vehicle Label</label>
           <input
             type="text"
             id="vehicleLabel"
-            placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
+            placeholder="Example: 2024 Chevy Silverado RST"
           />
 
-          <label for="priceInfo">Price / Offer (optional override)</label>
+          <label for="priceInfo">Price / Offer</label>
           <input
             type="text"
             id="priceInfo"
-            placeholder="Example: $699/mo or $47,995 + tax"
+            placeholder="Example: $599/mo with $1,999 due at signing"
           />
 
-          <div class="small-note">
-            Lot Rocket will scrape the page and clean up the title, description, and photos.
+          <button id="boostButton" class="primary-btn" style="margin-top: 10px">
+            Boost This Listing
+          </button>
+
+          <div id="statusText" class="status-text" style="margin-top: 6px">
+            Paste a URL and hit Boost to build your kit.
           </div>
 
-          <div class="summary-box" style="margin-top:10px;">
-            <h3>Summary Snapshot</h3>
+          <h3 style="margin-top: 18px">Photos (max 24)</h3>
+          <div id="photoGrid" class="photo-grid"></div>
+        </div>
+      </section>
+
+      <!-- Column 2 – Step 2: Social Kit Generator -->
+      <section class="column column-middle">
+        <!-- Summary Card -->
+        <div class="section-card">
+          <h2>Step 2 – Social Kit Generator</h2>
+          <div>
+            <strong>Summary</strong>
+          </div>
+          <div style="margin-top: 6px">
             <div>Vehicle: <span id="summaryLabel">—</span></div>
             <div>Price: <span id="summaryPrice">—</span></div>
           </div>
-
-          <div class="btn-row">
-            <button id="boostButton" class="primary-btn">Boost This Listing</button>
-          </div>
-          <div id="statusText" class="status-text"></div>
         </div>
 
-        <div class="summary-box">
-          <h3>Photos pulled from dealer site</h3>
-          <div id="photoGrid" class="photo-grid"></div>
-          <p class="small-note">
-            Click “Boost This Listing” to refresh photos. Up to 24 images, logos removed when possible.
-          </p>
-        </div>
-      </section>
-
-      <!-- STEP 2 – SOCIAL KIT -->
-      <section class="column column-middle">
-        <h2>Step 2 – Social Media Kit</h2>
-
-        <div class="platform-card">
-          <h3>Facebook Post</h3>
-          <textarea id="facebookPost" placeholder="Facebook post will appear here"></textarea>
+        <!-- Facebook -->
+        <div class="section-card">
+          <h3>Facebook</h3>
+          <textarea id="facebookPost"></textarea>
           <div class="btn-row">
             <button class="regen-btn" data-platform="facebook">New Post</button>
-            <button class="copy-btn" data-target="facebookPost">Copy</button>
+            <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
           </div>
         </div>
 
-        <div class="platform-card">
-          <h3>Instagram Caption</h3>
-          <textarea id="instagramPost" placeholder="Instagram caption will appear here"></textarea>
+        <!-- Instagram -->
+        <div class="section-card">
+          <h3>Instagram</h3>
+          <textarea id="instagramPost"></textarea>
           <div class="btn-row">
             <button class="regen-btn" data-platform="instagram">New Post</button>
-            <button class="copy-btn" data-target="instagramPost">Copy</button>
+            <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
           </div>
         </div>
 
-        <div class="platform-card">
-          <h3>TikTok Caption</h3>
-          <textarea id="tiktokPost" placeholder="TikTok caption will appear here"></textarea>
+        <!-- TikTok -->
+        <div class="section-card">
+          <h3>TikTok</h3>
+          <textarea id="tiktokPost"></textarea>
           <div class="btn-row">
             <button class="regen-btn" data-platform="tiktok">New Post</button>
-            <button class="copy-btn" data-target="tiktokPost">Copy</button>
+            <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
           </div>
         </div>
 
-        <div class="platform-card">
-          <h3>LinkedIn Post</h3>
-          <textarea id="linkedinPost" placeholder="LinkedIn post will appear here"></textarea>
+        <!-- LinkedIn -->
+        <div class="section-card">
+          <h3>LinkedIn</h3>
+          <textarea id="linkedinPost"></textarea>
           <div class="btn-row">
             <button class="regen-btn" data-platform="linkedin">New Post</button>
-            <button class="copy-btn" data-target="linkedinPost">Copy</button>
+            <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
           </div>
         </div>
 
-        <div class="platform-card">
-          <h3>X / Twitter Post</h3>
-          <textarea id="twitterPost" placeholder="X / Twitter post will appear here"></textarea>
+        <!-- X / Twitter -->
+        <div class="section-card">
+          <h3>X / Twitter</h3>
+          <textarea id="twitterPost"></textarea>
           <div class="btn-row">
             <button class="regen-btn" data-platform="twitter">New Post</button>
-            <button class="copy-btn" data-target="twitterPost">Copy</button>
+            <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
           </div>
         </div>
 
-        <div class="platform-card">
+        <!-- Text / DM -->
+        <div class="section-card">
           <h3>Text / DM Outreach</h3>
-          <textarea id="textBlurb" placeholder="Text/DM outreach script will appear here"></textarea>
+          <textarea id="textBlurb"></textarea>
           <div class="btn-row">
             <button class="regen-btn" data-platform="text">New Text</button>
-            <button class="copy-btn" data-target="textBlurb">Copy</button>
+            <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
           </div>
         </div>
 
-        <div class="platform-card">
-          <h3>Marketplace Listing</h3>
-          <textarea id="marketplacePost" placeholder="Marketplace listing will appear here"></textarea>
+        <!-- Marketplace & Hashtags -->
+        <div class="section-card">
+          <h3>Facebook Marketplace Listing</h3>
+          <textarea id="marketplacePost"></textarea>
           <div class="btn-row">
-            <button class="regen-btn" data-platform="marketplace">New Listing</button>
-            <button class="copy-btn" data-target="marketplacePost">Copy</button>
+            <button
+              class="regen-btn"
+              data-platform="marketplace"
+            >
+              New Listing
+            </button>
+            <button
+              class="copy-btn"
+              data-copy-target="marketplacePost"
+            >
+              Copy
+            </button>
           </div>
         </div>
 
-        <div class="platform-card">
+        <div class="section-card">
           <h3>Hashtags</h3>
-          <textarea id="hashtags" placeholder="Hashtags will appear here"></textarea>
+          <textarea id="hashtags"></textarea>
           <div class="btn-row">
-            <button class="regen-btn" data-platform="hashtags">New Hashtags</button>
-            <button class="copy-btn" data-target="hashtags">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card">
-          <h3>Selfie Video Script</h3>
-          <textarea id="selfieScript" placeholder="Selfie script will appear here"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="selfie">New Script</button>
-            <button class="copy-btn" data-target="selfieScript">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card">
-          <h3>Video Shot Plan</h3>
-          <textarea id="videoPlan" placeholder="Shot plan will appear here"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="videoPlan">New Plan</button>
-            <button class="copy-btn" data-target="videoPlan">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card">
-          <h3>Canva Design Idea</h3>
-          <textarea id="canvaIdea" placeholder="Canva layout idea will appear here"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="canva">New Layout</button>
-            <button class="copy-btn" data-target="canvaIdea">Copy</button>
+            <button class="copy-btn" data-copy-target="hashtags">Copy</button>
           </div>
         </div>
       </section>
 
-      <!-- STEP 3 – CREATIVE LAB -->
+      <!-- Column 3 – Step 3: Creative Lab -->
       <section class="column column-right">
-        <h2>Step 3 – Creative Lab</h2>
-
-        <div class="lab-card">
+        <!-- Quick Sales Video Idea -->
+        <div class="section-card">
+          <h2>Step 3 – Creative Lab</h2>
           <h3>Quick Sales Video Idea</h3>
-          <label for="labVideoVehicle">Vehicle / Offer</label>
+
+          <label for="videoVehicle">Vehicle / Offer</label>
           <input
             type="text"
-            id="labVideoVehicle"
-            placeholder="Example: 2024 Chevy Traverse RS, zero down event"
+            id="videoVehicle"
+            placeholder="Vehicle or promo"
           />
 
-          <label for="labVideoHook">Hook</label>
+          <label for="videoHook">Hook</label>
           <input
             type="text"
-            id="labVideoHook"
-            placeholder="Example: 'Stop scrolling, Plymouth drivers!'"
+            id="videoHook"
+            placeholder="Example: Stop scrolling..."
           />
 
-          <label for="labVideoAspect">Aspect Ratio</label>
-          <select id="labVideoAspect">
-            <option value="9:16">Vertical (9:16)</option>
-            <option value="16:9">Horizontal (16:9)</option>
-          </select>
+          <label for="videoStyle">Style</label>
+          <input
+            type="text"
+            id="videoStyle"
+            placeholder="Energetic, educational, hype"
+          />
 
-          <label for="labVideoStyle">Style</label>
-          <select id="labVideoStyle">
-            <option value="hype">Hype / Energetic</option>
-            <option value="trusted">Trusted Advisor</option>
-            <option value="luxury">Luxury Story</option>
-          </select>
+          <label for="videoAspect">Length / Aspect</label>
+          <input
+            type="text"
+            id="videoAspect"
+            placeholder="Example: 30s vertical 9:16"
+          />
 
-          <label for="labVideoLength">Length (seconds)</label>
-          <input type="number" id="labVideoLength" value="30" min="10" max="90" />
+          <button id="generateVideoIdea" class="primary-btn" style="margin-top: 8px">
+            Generate Video Idea
+          </button>
 
+          <textarea
+            id="videoIdeaOutput"
+            style="margin-top: 10px"
+          ></textarea>
           <div class="btn-row">
-            <button id="generateLabVideo" class="primary-btn">Generate Video Idea</button>
+            <button
+              class="copy-btn"
+              id="copyVideoIdea"
+              data-copy-target="videoIdeaOutput"
+            >
+              Copy
+            </button>
           </div>
-
-          <label for="labVideoOutput">Video Idea & Script</label>
-          <textarea id="labVideoOutput" placeholder="Video idea will appear here"></textarea>
         </div>
 
-        <div class="lab-card">
+        <!-- Canva Layout Planner -->
+        <div class="section-card">
           <h3>Canva Layout Planner</h3>
-          <label for="labDesignType">Creative Type</label>
+
+          <label for="creativeType">Creative Type</label>
           <input
             type="text"
-            id="labDesignType"
-            placeholder="Example: Story post, 1x1 carousel, YouTube thumbnail"
+            id="creativeType"
+            placeholder="Story, feed post, flyer"
           />
 
-          <label for="labDesignHeadline">Headline</label>
+          <label for="creativeHeadline">Headline</label>
           <input
             type="text"
-            id="labDesignHeadline"
-            placeholder="Example: 'Bad Credit? Let's Talk Options.'"
+            id="creativeHeadline"
+            placeholder="Main headline"
           />
 
-          <label for="labDesignCTA">Call To Action</label>
+          <label for="creativeCta">Call To Action</label>
           <input
             type="text"
-            id="labDesignCTA"
-            placeholder="Example: 'DM me the word DEAL for details.'"
+            id="creativeCta"
+            placeholder="CTA text"
           />
 
-          <label for="labDesignVibe">Brand Vibe</label>
+          <label for="creativeVibe">Vibe</label>
           <input
             type="text"
-            id="labDesignVibe"
-            placeholder="Example: bold, trustworthy, community-focused"
+            id="creativeVibe"
+            placeholder="Clean, bold, premium"
           />
 
+          <button
+            id="generateLayoutIdea"
+            class="primary-btn"
+            style="margin-top: 8px"
+          >
+            Generate Layout Idea
+          </button>
+
+          <textarea
+            id="creativeIdeaOutput"
+            style="margin-top: 10px"
+          ></textarea>
           <div class="btn-row">
-            <button id="generateLabDesign" class="primary-btn">Generate Layout Idea</button>
+            <button
+              class="copy-btn"
+              id="copyLayoutIdea"
+              data-copy-target="creativeIdeaOutput"
+            >
+              Copy
+            </button>
           </div>
-
-          <label for="labDesignOutput">Layout Blueprint</label>
-          <textarea id="labDesignOutput" placeholder="Layout plan will appear here"></textarea>
         </div>
 
-        <div class="lab-card">
-          <h3>Photo & Video Quick Editor (Preview Only)</h3>
+        <!-- Photo & Video Quick Editor -->
+        <div class="section-card">
+          <h3>Photo &amp; Video Quick Editor</h3>
 
-          <label for="photoUpload">Upload a photo</label>
+          <label for="photoUpload">Upload Photo</label>
           <input type="file" id="photoUpload" accept="image/*" />
 
-          <div class="photo-preview-wrapper">
-            <img id="photoPreview" alt="Preview will appear here" />
+          <div id="photoPreview" class="photo-preview-wrapper">
+            <span class="small-note">Preview will appear here after upload.</span>
           </div>
 
           <div class="slider-group">
             <label>
               <span>Brightness</span>
-              <input type="range" id="brightnessRange" min="0" max="200" value="100" />
+              <input
+                type="range"
+                id="brightnessSlider"
+                min="-100"
+                max="100"
+                value="0"
+              />
             </label>
             <label>
               <span>Contrast</span>
-              <input type="range" id="contrastRange" min="0" max="200" value="100" />
+              <input
+                type="range"
+                id="contrastSlider"
+                min="-100"
+                max="100"
+                value="0"
+              />
             </label>
             <label>
               <span>Saturation</span>
-              <input type="range" id="saturationRange" min="0" max="200" value="100" />
+              <input
+                type="range"
+                id="saturationSlider"
+                min="-100"
+                max="100"
+                value="0"
+              />
             </label>
           </div>
 
-          <p class="small-note">
-            This preview is just for experimenting. Save by screenshotting or using your device tools.
-          </p>
+          <div class="small-note">
+            Tip: Right-click the edited image and choose “Save image as…” to
+            download it for your post.
+          </div>
         </div>
       </section>
     </main>
 
-    <!-- ============================
-         MODALS
-         ============================ -->
+    <!-- ------------- MODALS ------------- -->
 
     <!-- Objection Coach -->
     <div id="objectionModal" class="modal hidden">
       <div class="modal-content">
         <span id="objectionClose" class="modal-close">&times;</span>
         <h2>Objection Coach</h2>
-        <p>Paste the customer objection and Lot Rocket will help you respond like a pro.</p>
-
+        <p>Paste the customer objection and get a response + coaching tips.</p>
         <label for="objectionInput">Customer Objection</label>
-        <textarea id="objectionInput" rows="4"></textarea>
+        <textarea id="objectionInput"></textarea>
 
+        <label for="objectionHistory">Conversation Context (optional)</label>
+        <textarea id="objectionHistory"></textarea>
+
+        <button id="runObjectionCoach" class="primary-btn" style="margin-top: 8px">
+          Get Coaching
+        </button>
+
+        <h3 style="margin-top: 12px">Suggested Response</h3>
+        <textarea id="objectionOutput"></textarea>
         <div class="btn-row">
-          <button id="sendObjection" class="primary-btn">Coach Me</button>
+          <button
+            class="copy-btn"
+            data-copy-target="objectionOutput"
+          >
+            Copy
+          </button>
         </div>
-
-        <label for="objectionHistory">Conversation / Suggestions</label>
-        <textarea id="objectionHistory" rows="8" readonly></textarea>
       </div>
     </div>
 
@@ -333,29 +372,36 @@
       <div class="modal-content">
         <span id="paymentClose" class="modal-close">&times;</span>
         <h2>Payment Estimator</h2>
-        <p>Rough payment estimates. This is a sales tool, not a binding quote.</p>
 
         <label for="payPrice">Vehicle Price</label>
-        <input type="number" id="payPrice" placeholder="Example: 32995" />
+        <input type="number" id="payPrice" placeholder="30000" />
 
         <label for="payDown">Down Payment</label>
-        <input type="number" id="payDown" placeholder="Example: 2000" />
+        <input type="number" id="payDown" placeholder="4000" />
 
-        <label for="payRate">APR %</label>
-        <input type="number" id="payRate" placeholder="Example: 7.9" />
+        <label for="payRate">Rate Estimate (%)</label>
+        <input type="number" id="payRate" placeholder="7.5" step="0.1" />
 
         <label for="payTerm">Term (months)</label>
-        <input type="number" id="payTerm" placeholder="Example: 72" />
+        <input type="number" id="payTerm" placeholder="72" />
 
-        <label for="payTax">Tax Rate % (optional)</label>
-        <input type="number" id="payTax" placeholder="Example: 6" />
+        <label for="payTax">Tax Rate (%) – optional</label>
+        <input type="number" id="payTax" placeholder="6" step="0.1" />
 
+        <button id="runPaymentHelper" class="primary-btn" style="margin-top: 8px">
+          Estimate Payment
+        </button>
+
+        <h3 style="margin-top: 12px">Estimate</h3>
+        <textarea id="paymentOutput"></textarea>
         <div class="btn-row">
-          <button id="calcPayment" class="primary-btn">Calculate Payment</button>
+          <button
+            class="copy-btn"
+            data-copy-target="paymentOutput"
+          >
+            Copy
+          </button>
         </div>
-
-        <label for="paymentResult">Estimated Payment</label>
-        <textarea id="paymentResult" rows="4" readonly></textarea>
       </div>
     </div>
 
@@ -364,20 +410,27 @@
       <div class="modal-content">
         <span id="incomeClose" class="modal-close">&times;</span>
         <h2>Income Estimator</h2>
-        <p>Rough idea of income needed to support a payment.</p>
 
-        <label for="incomePayment">Target Payment</label>
-        <input type="number" id="incomePayment" placeholder="Example: 550" />
+        <label for="incPayment">Target Payment</label>
+        <input type="number" id="incPayment" placeholder="500" />
 
-        <label for="incomeDTI">Max % of income to payment</label>
-        <input type="number" id="incomeDTI" placeholder="Example: 15" />
+        <label for="incDti">Max % of Income (DTI)</label>
+        <input type="number" id="incDti" placeholder="15" step="0.1" />
 
+        <button id="runIncomeHelper" class="primary-btn" style="margin-top: 8px">
+          Estimate Income
+        </button>
+
+        <h3 style="margin-top: 12px">Estimate</h3>
+        <textarea id="incomeOutput"></textarea>
         <div class="btn-row">
-          <button id="calcIncome" class="primary-btn">Estimate Income</button>
+          <button
+            class="copy-btn"
+            data-copy-target="incomeOutput"
+          >
+            Copy
+          </button>
         </div>
-
-        <label for="incomeResult">Estimated Income Needed</label>
-        <textarea id="incomeResult" rows="4" readonly></textarea>
       </div>
     </div>
 
@@ -386,19 +439,27 @@
       <div class="modal-content">
         <span id="workflowClose" class="modal-close">&times;</span>
         <h2>AI Work Flow Expert</h2>
-        <p>Describe what you’re trying to accomplish. Lot Rocket will map out a workflow or sequence.</p>
+        <p>
+          Describe the situation and we’ll build a step-by-step workflow or
+          playbook.
+        </p>
 
-        <label for="workflowInput">What do you want to build?</label>
-        <textarea id="workflowInput" rows="4"></textarea>
+        <label for="workflowContext">What do you need a workflow for?</label>
+        <textarea id="workflowContext"></textarea>
 
+        <button id="runWorkflowHelper" class="primary-btn" style="margin-top: 8px">
+          Build Workflow
+        </button>
+
+        <h3 style="margin-top: 12px">Suggested Workflow</h3>
+        <textarea id="workflowOutput"></textarea>
         <div class="btn-row">
-          <button id="workflowGenerate" class="primary-btn">Generate Workflow</button>
-        </div>
-
-        <label for="workflowResult">Workflow</label>
-        <textarea id="workflowResult" rows="8" readonly></textarea>
-        <div class="btn-row">
-          <button id="workflowCopy" class="secondary-btn">Copy</button>
+          <button
+            class="copy-btn"
+            data-copy-target="workflowOutput"
+          >
+            Copy
+          </button>
         </div>
       </div>
     </div>
@@ -408,37 +469,41 @@
       <div class="modal-content">
         <span id="messageClose" class="modal-close">&times;</span>
         <h2>AI Message Builder</h2>
-        <p>Tell Lot Rocket who you’re messaging and what you want. It will build a ready-to-send script.</p>
+        <p>
+          Tell Lot Rocket what you need and it will write a high-converting text,
+          email, or social post.
+        </p>
 
-        <label for="messageContext">Context</label>
-        <textarea
-          id="messageContext"
-          rows="4"
-          placeholder="Example: Customer missed appointment, I want to reschedule kindly..."
-        ></textarea>
+        <label for="messageChannel">Channel (text, email, DM, etc.)</label>
+        <input
+          type="text"
+          id="messageChannel"
+          placeholder="Text / SMS, email, Instagram DM..."
+        />
 
-        <label for="messageTone">Tone</label>
-        <select id="messageTone">
-          <option value="friendly">Friendly</option>
-          <option value="professional">Professional</option>
-          <option value="urgent">Urgent but respectful</option>
-        </select>
+        <label for="messageTone">Tone (optional)</label>
+        <input
+          type="text"
+          id="messageTone"
+          placeholder="Friendly, urgent, professional..."
+        />
 
-        <label for="messageChannel">Channel</label>
-        <select id="messageChannel">
-          <option value="text">Text / SMS</option>
-          <option value="email">Email</option>
-          <option value="social">Social DM</option>
-        </select>
+        <label for="messageContext">What’s the goal / context?</label>
+        <textarea id="messageContext"></textarea>
 
+        <button id="runMessageHelper" class="primary-btn" style="margin-top: 8px">
+          Generate Message
+        </button>
+
+        <h3 style="margin-top: 12px">Result</h3>
+        <textarea id="messageOutput"></textarea>
         <div class="btn-row">
-          <button id="messageGenerate" class="primary-btn">Generate Message</button>
-        </div>
-
-        <label for="messageResult">Message</label>
-        <textarea id="messageResult" rows="8" readonly></textarea>
-        <div class="btn-row">
-          <button id="messageCopy" class="secondary-btn">Copy</button>
+          <button
+            class="copy-btn"
+            data-copy-target="messageOutput"
+          >
+            Copy
+          </button>
         </div>
       </div>
     </div>
@@ -448,19 +513,24 @@
       <div class="modal-content">
         <span id="askClose" class="modal-close">&times;</span>
         <h2>Ask A.I.</h2>
-        <p>Ask anything related to sales, customers, scripts, or strategy.</p>
+        <p>Ask anything – sales, business, life, tech, you name it.</p>
 
-        <label for="askInput">Your Question</label>
-        <textarea id="askInput" rows="4"></textarea>
+        <label for="askQuestion">Your Question</label>
+        <textarea id="askQuestion"></textarea>
 
+        <button id="runAskHelper" class="primary-btn" style="margin-top: 8px">
+          Ask
+        </button>
+
+        <h3 style="margin-top: 12px">Answer</h3>
+        <textarea id="askOutput"></textarea>
         <div class="btn-row">
-          <button id="askGenerate" class="primary-btn">Get Answer</button>
-        </div>
-
-        <label for="askResult">Response</label>
-        <textarea id="askResult" rows="8" readonly></textarea>
-        <div class="btn-row">
-          <button id="askCopy" class="secondary-btn">Copy</button>
+          <button
+            class="copy-btn"
+            data-copy-target="askOutput"
+          >
+            Copy
+          </button>
         </div>
       </div>
     </div>
@@ -470,38 +540,54 @@
       <div class="modal-content">
         <span id="carClose" class="modal-close">&times;</span>
         <h2>AI Car Expert</h2>
-        <p>Ask detailed questions about trims, features, or comparisons. Tone will be automotive-focused.</p>
+        <p>
+          Ask anything automotive – trims, features, comparisons, or how to
+          position a vehicle to a customer.
+        </p>
 
-        <label for="carQuestion">Your Question</label>
-        <textarea id="carQuestion" rows="4"></textarea>
+        <label for="carQuestion">Your Automotive Question</label>
+        <textarea id="carQuestion"></textarea>
 
+        <button id="runCarHelper" class="primary-btn" style="margin-top: 8px">
+          Ask Car Expert
+        </button>
+
+        <h3 style="margin-top: 12px">Answer</h3>
+        <textarea id="carOutput"></textarea>
         <div class="btn-row">
-          <button id="carGenerate" class="primary-btn">Get Car Answer</button>
-        </div>
-
-        <label for="carResult">Response</label>
-        <textarea id="carResult" rows="8" readonly></textarea>
-        <div class="btn-row">
-          <button id="carCopy" class="secondary-btn">Copy</button>
+          <button
+            class="copy-btn"
+            data-copy-target="carOutput"
+          >
+            Copy
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- AI Image Generator (placeholder) -->
+    <!-- AI Image Generator (Coming Soon) -->
     <div id="imageGenModal" class="modal hidden">
       <div class="modal-content">
         <span id="imageGenClose" class="modal-close">&times;</span>
-        <h2>AI Image Generator</h2>
-        <p>Image generation is coming soon. This tool will create real images for your listings.</p>
+        <h2>AI Image Generator – Coming Soon</h2>
+        <p>
+          This feature is almost ready. Soon, Lot Rocket will generate real,
+          listing-ready images from your prompts and vehicle details so you can
+          post without touching Photoshop.
+        </p>
       </div>
     </div>
 
-    <!-- AI Video Generator (placeholder) -->
+    <!-- AI Video Generator (Coming Soon) -->
     <div id="videoGenModal" class="modal hidden">
       <div class="modal-content">
         <span id="videoGenClose" class="modal-close">&times;</span>
-        <h2>AI Video Generator</h2>
-        <p>Video generation is coming soon. This tool will create real short-form videos for your vehicles.</p>
+        <h2>AI Video Generator – Coming Soon</h2>
+        <p>
+          Coming soon: fully automatic short-form videos based on your vehicles,
+          hooks, and offers – ready for Reels, TikTok, and Shorts, right from
+          Lot Rocket.
+        </p>
       </div>
     </div>
 
