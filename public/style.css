@@ -30,6 +30,11 @@ body:not(.dark-theme) {
   color: #111827;
 }
 
+/* generic hide helper used by modals & calculator */
+.hidden {
+  display: none !important;
+}
+
 /* ---------- Header ---------- */
 
 .app-header {
@@ -421,6 +426,62 @@ body:not(.dark-theme) .modal-content p {
   float: right;
   font-size: 1.1rem;
   cursor: pointer;
+}
+
+/* --- Simple calculator inside Payment Calculator modal --- */
+.simple-calc {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+body:not(.dark-theme) .simple-calc {
+  background: #f9fafb;
+}
+
+.simple-calc-display {
+  height: 42px;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #020617;
+  color: #f9fafb;
+}
+
+body:not(.dark-theme) .simple-calc-display {
+  background: #ffffff;
+  color: #111827;
+}
+
+.simple-calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.simple-calc-grid button {
+  padding: 8px 0;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  background: #111827;
+  color: #e5e7eb;
+}
+
+body:not(.dark-theme) .simple-calc-grid button {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.simple-calc.hidden {
+  display: none;
 }
 
 /* ---------- Responsive ---------- */
