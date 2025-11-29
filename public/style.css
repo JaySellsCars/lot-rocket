@@ -74,9 +74,9 @@ body:not(.dark-theme) .branding p {
 .layout {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  /* extra space on the right for the floating tools */
-  padding: 20px 220px 40px 32px;
+  gap: 24px;
+  /* extra space on the right for the floating tools rail */
+  padding: 20px 240px 40px 32px;
 }
 
 /* base column */
@@ -84,13 +84,20 @@ body:not(.dark-theme) .branding p {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 1 1 0;
   min-width: 0;
 }
 
-/* make the middle column wider */
+/* give different widths to each column */
+.column-left {
+  flex: 0.9 1 0;
+}
+
 .column-middle {
-  flex: 1.3 1 0;
+  flex: 1.6 1 0; /* widest column (Step 2) */
+}
+
+.column-right {
+  flex: 1 1 0;
 }
 
 .column h2 {
@@ -397,8 +404,10 @@ body:not(.dark-theme) .modal-content p {
     padding: 16px 16px 24px 16px;
   }
 
+  .column-left,
+  .column-middle,
   .column-right {
-    width: 100%;
+    flex: 1 1 auto;
   }
 
   .floating-tools {
