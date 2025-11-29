@@ -71,12 +71,16 @@ body:not(.dark-theme) .branding p {
 
 /* ---------- Layout ---------- */
 
-.layout {
-  display: grid;
-  grid-template-columns: 1.1fr 1.2fr 1fr;
-  gap: 20px;
-  padding: 20px 32px 40px;
+.floating-tools {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 60;
 }
+
 
 .column {
   display: flex;
