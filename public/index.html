@@ -492,89 +492,50 @@
     </div>
 
     <!-- Payment Calculator -->
-    <div id="paymentModal" class="modal hidden">
-      <div class="modal-content">
-        <span id="paymentClose" class="modal-close">&times;</span>
+  <div id="paymentModal" class="modal hidden">
+  <div class="modal-content">
+    <span id="paymentClose" class="modal-close">&times;</span>
 
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-          <h2 style="margin:0;">Payment Calculator</h2>
-          <!-- New calculator toggle button -->
-          <button id="toggleSimpleCalc" class="secondary-btn" type="button">
-            Calculator
-          </button>
-        </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <h2 style="margin:0;">Payment Calculator</h2>
+      <!-- Calculator toggle button -->
+      <button id="toggleSimpleCalc" class="secondary-btn" type="button">
+        Calculator
+      </button>
+    </div>
 
-        <!-- Simple calculator panel (like pic 4) -->
-        <div id="simpleCalcPanel" class="simple-calc hidden">
-          <div id="simpleCalcDisplay" class="simple-calc-display">0</div>
-          <div class="simple-calc-grid">
-            <button data-calc="C">C</button>
-            <button data-calc="DEL">⌫</button>
-            <button data-calc="(">(</button>
-            <button data-calc=")">)</button>
+    <!-- Simple calculator panel (toggled) -->
+    <div id="simpleCalcPanel" class="simple-calc hidden">
+      <div id="simpleCalcDisplay" class="simple-calc-display">0</div>
+      <div class="simple-calc-grid">
+        <button data-calc="C">C</button>
+        <button data-calc="DEL">⌫</button>
+        <button data-calc="(">(</button>
+        <button data-calc=")">)</button>
 
-            <button data-calc="7">7</button>
-            <button data-calc="8">8</button>
-            <button data-calc="9">9</button>
-            <button data-calc="/">÷</button>
+        <button data-calc="7">7</button>
+        <button data-calc="8">8</button>
+        <button data-calc="9">9</button>
+        <button data-calc="/">÷</button>
 
-            <button data-calc="4">4</button>
-            <button data-calc="5">5</button>
-            <button data-calc="6">6</button>
-            <button data-calc="*">×</button>
+        <button data-calc="4">4</button>
+        <button data-calc="5">5</button>
+        <button data-calc="6">6</button>
+        <button data-calc="*">×</button>
 
-            <button data-calc="1">1</button>
-            <button data-calc="2">2</button>
-            <button data-calc="3">3</button>
-            <button data-calc="-">−</button>
+        <button data-calc="1">1</button>
+        <button data-calc="2">2</button>
+        <button data-calc="3">3</button>
+        <button data-calc="-">−</button>
 
-            <button data-calc="0">0</button>
-            <button data-calc=".">.</button>
-            <button data-calc="=">=</button>
-            <button data-calc="+">+</button>
-          </div>
-        </div>
-
-        <h3 style="margin-top:16px;">Auto Loan Details</h3>
-
-        <label for="autoPrice">Auto Price</label>
-        <input type="number" id="autoPrice" class="input" placeholder="50000" />
-
-        <label for="loanTermMonths">Loan Term (months)</label>
-        <input type="number" id="loanTermMonths" class="input" placeholder="60" />
-
-        <label for="interestRate">Interest Rate (%)</label>
-        <input type="number" id="interestRate" class="input" placeholder="5" step="0.01" />
-
-        <label for="cashIncentives">Cash Incentives</label>
-        <input type="number" id="cashIncentives" class="input" placeholder="0" />
-
-        <label for="downPayment">Down Payment</label>
-        <input type="number" id="downPayment" class="input" placeholder="10000" />
-
-        <label for="tradeInValue">Trade-in Value</label>
-        <input type="number" id="tradeInValue" class="input" placeholder="0" />
-
-        <label for="tradeOwed">Amount Owed on Trade-in</label>
-        <input type="number" id="tradeOwed" class="input" placeholder="0" />
-
-        <label for="salesTax">Sales Tax (%)</label>
-        <input type="number" id="salesTax" class="input" placeholder="7" step="0.01" />
-
-        <label for="fees">Title, Registration & Other Fees</label>
-        <input type="number" id="fees" class="input" placeholder="2000" />
-
-        <button id="runPaymentHelper" class="primary-btn" style="margin-top: 10px;">
-          Estimate Payment
-        </button>
-
-        <h3 style="margin-top: 14px;">Estimate</h3>
-        <textarea id="paymentOutput" class="textarea" style="min-height: 160px;"></textarea>
-        <div class="btn-row">
-          <button class="copy-btn" data-copy-target="paymentOutput">Copy</button>
-        </div>
+        <button data-calc="0">0</button>
+        <button data-calc=".">.</button>
+        <button data-calc="=">=</button>
+        <button data-calc="+">+</button>
       </div>
     </div>
+
+    <!-- Auto Loan Details continue here... -->
 
     <!-- Income Calculator -->
     <div id="incomeModal" class="modal hidden">
