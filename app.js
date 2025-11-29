@@ -47,18 +47,17 @@ async function scrapePageText(url) {
       ($('meta[name="description"]').attr('content') || '').trim();
 
     // Grab a bunch of text from likely content areas
-      let chunks = [];
+    let chunks = [];
     $(
       'h1, h2, h3, h4, ' +
-      '.vehicle-title, .vehicle-header, .vehicle-name, ' +
-      '.vehicle-details, .vehicle-detail, .vehicle-specs, .specs, ' +
-      '.price, .payment, .offer, .description, .body-copy, ' +
-      '.feature, .features, .feature-list li'
+        '.vehicle-title, .vehicle-header, .vehicle-name, ' +
+        '.vehicle-details, .vehicle-detail, .vehicle-specs, .specs, ' +
+        '.price, .payment, .offer, .description, .body-copy, ' +
+        '.feature, .features, .feature-list li'
     ).each((_, el) => {
       const t = $(el).text().replace(/\s+/g, ' ').trim();
       if (t && !chunks.includes(t)) chunks.push(t);
     });
-
 
     const combined = chunks.join('\n');
 
@@ -73,7 +72,9 @@ async function scrapePageText(url) {
   }
 }
 
-// Small helper to talk to OpenAI safely
+// ------------------------------------------------------------
+// Helper: talk to OpenAI and expect JSON
+// ------------------------------------------------------------
 async function chatJSON(systemPrompt, userPrompt) {
   const completion = await client.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -86,7 +87,6 @@ async function chatJSON(systemPrompt, userPrompt) {
 
   const raw = completion.choices[0]?.message?.content || '';
 
-  // Try to parse JSON; fall back to a simple object if it fails.
   try {
     return JSON.parse(raw);
   } catch (err) {
@@ -112,7 +112,7 @@ app.post('/api/social-kit', async (req, res) => {
   try {
     const scraped = await scrapePageText(url);
 
-const systemPrompt = `
+    const systemPrompt = `
 You are an elite *retail* car-sales copywriter for individual salespeople
 (not the dealership). You write in a friendly, confident first-person voice
 ("Hey, it's Jason at LaFontaine Chevrolet in Plymouth...").
@@ -142,8 +142,7 @@ Tone rules:
 - Use 2–4 short paragraphs max for social posts, easy to skim on mobile.
 
 Do NOT include any explanation outside the JSON.
-`.trim();
-
+    `.trim();
 
     const userPrompt = `
 Vehicle label: ${label || 'This vehicle'}
@@ -161,7 +160,6 @@ ${scraped.text}
 
     const kit = await chatJSON(systemPrompt, userPrompt);
 
-    // Basic guard: ensure keys exist
     const safeKit = {
       facebook: kit.facebook || kit.raw || '',
       instagram: kit.instagram || '',
@@ -187,13 +185,15 @@ ${scraped.text}
 });
 
 // ------------------------------------------------------------
-// POST /api/new-post  (spin a fresh post for a platform)
+// POST /api/new-post – spin a fresh post for a platform
 // ------------------------------------------------------------
 app.post('/api/new-post', async (req, res) => {
   const { platform, url, label, price } = req.body || {};
 
   if (!platform || !url) {
-    return res.status(400).json({ success: false, error: 'Missing platform or url' });
+    return res
+      .status(400)
+      .json({ success: false, error: 'Missing platform or url' });
   }
 
   try {
@@ -204,9 +204,8 @@ app.post('/api/new-post', async (req, res) => {
       temperature: 0.8,
       messages: [
         {
-{
-  role: 'system',
-  content: `
+          role: 'system',
+          content: `
 You are a high-converting social media copywriter for car *salespeople*.
 Write ONE finished post for the given platform, in a first-person, friendly tone.
 
@@ -217,9 +216,27 @@ Rules:
 - Use short lines and spacing that look good on mobile.
 - NO hashtags here (those are handled separately).
 Return ONLY the finished post text. No extra commentary.
-  `.trim(),
-},
+          `.trim(),
+        },
+        {
+          role: 'user',
+          content: `
+Platform: ${platform}
+Vehicle: ${label || 'This vehicle'}
+Deal info: ${price || 'Message for current pricing'}
 
+Scraped title:
+${scraped.title}
+
+Scraped description:
+${scraped.description}
+
+Scraped text:
+${scraped.text}
+          `.trim(),
+        },
+      ],
+    });
 
     const post = completion.choices[0]?.message?.content || '';
     res.json({ success: true, post });
@@ -278,7 +295,7 @@ ${scraped.text}
 });
 
 // ------------------------------------------------------------
-// POST /api/grab-photos – very simple image URL scraper
+// POST /api/grab-photos – image URL scraper (less picky)
 // ------------------------------------------------------------
 app.post('/api/grab-photos', async (req, res) => {
   const { url } = req.body || {};
@@ -302,7 +319,6 @@ app.post('/api/grab-photos', async (req, res) => {
       let src = $(el).attr('data-src') || $(el).attr('src');
       if (!src) return;
 
-      // Skip obvious UI junk
       const lower = src.toLowerCase();
       if (
         lower.includes('logo') ||
@@ -314,28 +330,23 @@ app.post('/api/grab-photos', async (req, res) => {
         return;
       }
 
-      // Make relative URLs absolute
       try {
         const u = new URL(src, url);
         src = u.toString();
       } catch (_) {
-        // if it's not a valid URL, skip it
         return;
       }
 
       if (!photos.includes(src)) photos.push(src);
     });
 
-    // Keep a reasonable max but more than 2
     const limited = photos.slice(0, 24);
-
     res.json({ success: true, photos: limited });
   } catch (err) {
     console.error('Error in /api/grab-photos:', err);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
-
 
 // ------------------------------------------------------------
 // POST /api/video-from-photos – quick shot plan from photo list
@@ -474,8 +485,7 @@ Respond with how the salesperson should reply.
 });
 
 // ------------------------------------------------------------
-// (Optional) simple helpers for payment / income / messages
-// If your frontend calls them, they’ll be available.
+// Optional helpers: payment / income / messages
 // ------------------------------------------------------------
 app.post('/api/payment-helper', async (req, res) => {
   const { price, termMonths, rateApr } = req.body || {};
