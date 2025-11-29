@@ -8,6 +8,7 @@
   </head>
   <body>
     <div class="app-shell">
+      <!-- HEADER ---------------------------------------------------->
       <header class="app-header">
         <div class="title-group">
           <div class="logo-circle">
@@ -23,6 +24,7 @@
             </div>
           </div>
         </div>
+
         <div class="header-right">
           <div class="chip">
             <span class="dot"></span>
@@ -35,21 +37,22 @@
         </div>
       </header>
 
+      <!-- MAIN LAYOUT ------------------------------------------------>
       <div class="layout">
-        <!-- Left panel: URL + media -->
+        <!-- LEFT PANEL: STEP 1 -------------------------------------->
         <section class="card">
           <div class="card-header">
             <div>
               <div class="card-title">Step 1 · Dealer URL</div>
               <div class="card-subtitle">
-                Paste a full vehicle detail page. We’ll pull photos and build the
-                kit.
+                Paste a full vehicle detail page. We’ll pull photos and build the kit.
               </div>
             </div>
             <span class="badge">INPUT</span>
           </div>
 
           <div class="stack-vertical">
+            <!-- Dealer URL -->
             <div class="field-group">
               <label class="field-label" for="vehicleUrl">Dealer vehicle URL</label>
               <input
@@ -59,19 +62,11 @@
               />
             </div>
 
-            <div class="pill-row">
-              <button id="boostButton" class="button-primary" type="button">
-                <span>🚀 Boost This Listing</span>
-              </button>
-              <span id="statusText" class="status-text"
-                >Paste URL, then tap Boost.</span
-              >
-            </div>
-
+            <!-- Vehicle label -->
             <div class="field-group">
-              <label class="field-label" for="vehicleLabel"
-                >Vehicle label (editable)</label
-              >
+              <label class="field-label" for="vehicleLabel">
+                Vehicle label (editable)
+              </label>
               <input
                 id="vehicleLabel"
                 class="input"
@@ -79,31 +74,50 @@
               />
             </div>
 
+            <!-- Price / deal info -->
             <div class="field-group">
-              <label class="field-label" for="priceInfo"
-                >Price / deal info (editable)</label
-              >
+              <label class="field-label" for="priceInfo">
+                Price / deal info (editable)
+              </label>
               <input
                 id="priceInfo"
                 class="input"
                 placeholder="Message for current pricing"
               />
             </div>
+
+            <!-- Boost button + status -->
+            <div class="pill-row">
+              <button id="boostButton" type="button" class="button-primary">
+                <span class="icon">🚀</span>
+                <span>Boost This Listing</span>
+              </button>
+              <span id="statusText" class="status-text">
+                Paste URL, then tap Boost.
+              </span>
+            </div>
+          </div>
+
+          <!-- MEDIA TOOLS ------------------------------------------->
+          <div class="card-header" style="margin-top: 10px;">
+            <div>
+              <div class="card-title">Media Tools</div>
+              <div class="card-subtitle">
+                We’ll auto-pull photos on Boost and turn them into a simple video plan.
+              </div>
+            </div>
           </div>
 
           <div class="stack-vertical">
-            <div class="section-title-row">
-              <div>
-                <div class="card-title">Media Tools</div>
-                <div class="card-subtitle">
-                  We’ll auto-pull photos on Boost and turn them into a simple
-                  video plan.
-                </div>
-              </div>
-              <button id="buildVideoButton" class="button-ghost" type="button">
-                <span class="icon">🎬</span><span>Build Video from Photos</span>
-              </button>
-            </div>
+            <button
+              id="buildVideoButton"
+              type="button"
+              class="button-ghost"
+              style="align-self:flex-start;"
+            >
+              <span class="icon">🎬</span>
+              <span>Build Video from Photos</span>
+            </button>
 
             <div class="field-group">
               <label class="field-label">Dealer Photos</label>
@@ -114,44 +128,49 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="videoPlan">Video From Photos Plan</label>
+              <label class="field-label" for="videoPlan">
+                Video From Photos Plan
+              </label>
               <textarea
                 id="videoPlan"
-                class="textarea shotplan"
+                class="textarea"
                 placeholder="Hit 'Build Video from Photos' after photos load to get a simple shot list for Reels / TikTok."
-                readonly
               ></textarea>
             </div>
           </div>
         </section>
 
-        <!-- Right panel: social kit + video + design lab -->
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Step 2 · Social Kit</div>
-              <div class="card-subtitle">
-                Copy, tweak, and paste into each platform. Spin fresh versions
-                anytime.
+        <!-- RIGHT PANEL: STEP 2 + STEP 3 ---------------------------->
+        <section class="stack-vertical">
+          <!-- STEP 2 · SOCIAL KIT ----------------------------------->
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Step 2 · Social Kit</div>
+                <div class="card-subtitle">
+                  Copy, tweak, and paste into each platform. Spin fresh versions anytime.
+                </div>
               </div>
+              <span class="badge">OUTPUT</span>
             </div>
-            <span class="badge">OUTPUT</span>
-          </div>
 
-          <div class="stack-vertical">
+            <!-- Listing summary -->
             <div class="field-group">
               <label class="field-label">Listing Summary</label>
-              <div class="pill-row">
-                <span id="summaryLabel" class="pill">No vehicle yet</span>
-                <span id="summaryPrice" class="pill">—</span>
+              <div class="stack-vertical">
+                <div id="summaryLabel" class="status-text">
+                  No vehicle yet
+                </div>
+                <div id="summaryPrice" class="status-text">—</div>
               </div>
             </div>
 
+            <!-- Social grid -->
             <div class="field-group">
               <label class="field-label">Social Media Posts</label>
-              <div class="card-subtitle">
-                Each box is copy-and-paste ready. Hit “New Post” to spin a fresh
-                version for that platform or use “Copy” to grab it instantly.
+              <div class="tiny-note">
+                Each box is copy-and-paste ready. Hit “New Post” to spin a fresh version
+                for that platform or use “Copy” to grab it instantly.
               </div>
             </div>
 
@@ -159,239 +178,285 @@
               <!-- Facebook -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">📘 Facebook</div>
+                  <div class="social-platform">
+                    <span>📘</span>
+                    <span>Facebook</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="facebook"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="facebook"
                     >
-                      <span class="icon">🔁</span><span>New Post</span>
+                      <span class="icon">🔁</span>
+                      <span>New Post</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="facebookPost"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="facebookPost"
                   class="textarea post-box"
-                  readonly
+                  placeholder="Your Facebook post will appear here after Boost."
                 ></textarea>
               </div>
 
               <!-- Instagram -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">📸 Instagram</div>
+                  <div class="social-platform">
+                    <span>📸</span>
+                    <span>Instagram</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="instagram"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="instagram"
                     >
-                      <span class="icon">🔁</span><span>New Post</span>
+                      <span class="icon">🔁</span>
+                      <span>New Post</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="instagramPost"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="instagramPost"
                   class="textarea post-box"
-                  readonly
+                  placeholder="Your Instagram post will appear here after Boost."
                 ></textarea>
               </div>
 
               <!-- TikTok -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">🎵 TikTok</div>
+                  <div class="social-platform">
+                    <span>🎵</span>
+                    <span>TikTok</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="tiktok"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="tiktok"
                     >
-                      <span class="icon">🔁</span><span>New Post</span>
+                      <span class="icon">🔁</span>
+                      <span>New Post</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="tiktokPost"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="tiktokPost"
                   class="textarea post-box"
-                  readonly
+                  placeholder="Your TikTok caption + hook will appear here."
                 ></textarea>
               </div>
 
               <!-- LinkedIn -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">💼 LinkedIn</div>
+                  <div class="social-platform">
+                    <span>💼</span>
+                    <span>LinkedIn</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="linkedin"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="linkedin"
                     >
-                      <span class="icon">🔁</span><span>New Post</span>
+                      <span class="icon">🔁</span>
+                      <span>New Post</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="linkedinPost"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="linkedinPost"
                   class="textarea post-box"
-                  readonly
+                  placeholder="Your LinkedIn post will appear here."
                 ></textarea>
               </div>
 
               <!-- X / Twitter -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">🐦 X / Twitter</div>
+                  <div class="social-platform">
+                    <span>🐦</span>
+                    <span>X / Twitter</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="twitter"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="twitter"
                     >
-                      <span class="icon">🔁</span><span>New Post</span>
+                      <span class="icon">🔁</span>
+                      <span>New Post</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="twitterPost"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="twitterPost"
                   class="textarea post-box"
-                  readonly
+                  placeholder="Your X / Twitter post will appear here."
                 ></textarea>
               </div>
 
               <!-- Text / DM -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">💬 Text / DM</div>
+                  <div class="social-platform">
+                    <span>💬</span>
+                    <span>Text / DM</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="text"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="text"
                     >
-                      <span class="icon">🔁</span><span>New Text</span>
+                      <span class="icon">🔁</span>
+                      <span>New Text</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="textBlurb"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="textBlurb"
                   class="textarea post-box"
-                  readonly
+                  placeholder="A short, high-converting text / DM will appear here."
                 ></textarea>
               </div>
 
               <!-- Marketplace -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">🛒 Marketplace</div>
+                  <div class="social-platform">
+                    <span>🛒</span>
+                    <span>Marketplace</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="marketplace"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="marketplace"
                     >
-                      <span class="icon">🔁</span><span>New Post</span>
+                      <span class="icon">🔁</span>
+                      <span>New Post</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="marketplacePost"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="marketplacePost"
                   class="textarea marketplace-box"
-                  readonly
+                  placeholder="Your full Marketplace description will appear here."
                 ></textarea>
               </div>
 
               <!-- Hashtags -->
               <div class="social-card">
                 <div class="social-card-header">
-                  <div class="social-platform">🏷 Hashtags</div>
+                  <div class="social-platform">
+                    <span>🏷</span>
+                    <span>Hashtags</span>
+                  </div>
                   <div class="social-card-actions">
                     <button
-                      data-platform="hashtags"
-                      class="button-ghost button-new-post"
                       type="button"
+                      class="button-ghost button-new-post"
+                      data-platform="hashtags"
                     >
-                      <span class="icon">🔁</span><span>New Tags</span>
+                      <span class="icon">🔁</span>
+                      <span>New Tags</span>
                     </button>
                     <button
+                      type="button"
                       class="button-ghost button-copy"
                       data-target="hashtags"
-                      type="button"
                     >
-                      <span class="icon">📋</span><span>Copy</span>
+                      <span class="icon">📋</span>
+                      <span>Copy</span>
                     </button>
                   </div>
                 </div>
                 <textarea
                   id="hashtags"
                   class="textarea post-box"
-                  readonly
+                  placeholder="#chevy #traverse #newride ..."
                 ></textarea>
               </div>
             </div>
 
-            <div class="field-group">
-              <div class="section-title-row">
-                <label class="field-label">Video Engine</label>
-                <button id="newScriptButton" class="button-ghost" type="button">
-                  <span class="icon">🔁</span><span>New Script</span>
-                </button>
+            <!-- VIDEO ENGINE (script + shot plan) ------------------->
+            <div class="card-header" style="margin-top: 10px;">
+              <div>
+                <div class="card-title">Video Engine</div>
+                <div class="card-subtitle">
+                  Script + shot plan you can read on camera and follow for Reels, TikTok,
+                  Shorts, or Facebook Reels.
+                </div>
               </div>
-              <div class="card-subtitle">
-                Script + shot plan you can read on camera and follow for Reels,
-                TikTok, Shorts, or Facebook Reels.
-              </div>
+              <button
+                id="newScriptButton"
+                type="button"
+                class="button-ghost"
+              >
+                <span class="icon">🔁</span>
+                <span>New Script</span>
+              </button>
             </div>
 
             <div class="field-group">
@@ -399,322 +464,690 @@
               <textarea
                 id="videoScript"
                 class="textarea script"
-                readonly
+                placeholder="Your viral-style script will appear here."
               ></textarea>
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="shotPlan"
-                >Viral Visual Shot Plan</label
-              >
-              <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
+              <label class="field-label" for="shotPlan">Viral Visual Shot Plan</label>
+              <textarea
+                id="shotPlan"
+                class="textarea shotplan"
+                placeholder="Your shot-by-shot plan will appear here."
+              ></textarea>
             </div>
 
-            <div class="field-group">
-              <div class="section-title-row">
-                <label class="field-label">Design Lab (Canva-style layout)</label>
+            <!-- DESIGN LAB (Canva-style layout) --------------------->
+            <div class="card-header" style="margin-top: 10px;">
+              <div>
+                <div class="card-title">Design Lab (Canva-style layout)</div>
                 <div class="card-subtitle">
                   Get a ready-to-build graphic layout you can recreate in Canva.
                 </div>
               </div>
             </div>
 
-            <div class="field-group">
-              <label class="field-label" for="designType">Design Type</label>
-              <div class="pill-row">
-                <select
-                  id="designType"
-                  class="input"
-                  style="max-width: 260px; padding-right: 28px"
-                >
-                  <option value="facebook_feed_post">Facebook feed post</option>
-                  <option value="instagram_feed_post">Instagram feed post</option>
-                  <option value="instagram_story">Instagram Story</option>
-                  <option value="reels_cover">Reels / TikTok cover image</option>
-                  <option value="tiktok_vertical_graphic">
-                    TikTok vertical graphic
-                  </option>
-                  <option value="youtube_thumbnail">YouTube thumbnail</option>
-                </select>
-                <button id="designButton" class="button-ghost" type="button">
-                  <span class="icon">🎨</span><span>Generate Design Idea</span>
-                </button>
+            <div class="stack-vertical">
+              <div class="modal-row">
+                <div class="modal-half">
+                  <label class="field-label" for="designType">Design Type</label>
+                  <select id="designType" class="input">
+                    <option value="feed">Facebook feed post</option>
+                    <option value="story">Story / Reels cover</option>
+                    <option value="thumbnail">YouTube / video thumbnail</option>
+                    <option value="flyer">Print-style flyer</option>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <div class="field-group">
-              <label class="field-label" for="designOutput">Design Layout Plan</label>
-              <textarea
-                id="designOutput"
-                class="textarea design"
-                placeholder="Choose a design type and hit Generate to get a Canva-style layout you can build in minutes."
-                readonly
-              ></textarea>
+              <button
+                id="designButton"
+                type="button"
+                class="button-primary"
+                style="align-self:flex-start;"
+              >
+                <span class="icon">🎨</span>
+                <span>Generate Design Idea</span>
+              </button>
+
+              <div class="field-group">
+                <label class="field-label" for="designOutput">Design Layout Plan</label>
+                <textarea
+                  id="designOutput"
+                  class="textarea design"
+                  placeholder="Choose a design type and hit Generate to get a Canva-style layout you can build in minutes."
+                ></textarea>
+              </div>
             </div>
 
             <div class="tiny-note">
               Prototype for salespeople. Copy, tweak, and make it yours. 🚀
             </div>
-          </div>
+          </section>
+
+          <!-- STEP 3 · CREATIVE LAB --------------------------------->
+          <section class="card creative-card" id="creativeLabCard">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Step 3 · Creative Lab</div>
+                <div class="card-subtitle">
+                  Turn this listing into short videos, scroll-stopping graphics, and quick
+                  edits.
+                </div>
+              </div>
+              <span class="badge">CREATIVE</span>
+            </div>
+
+            <div class="creative-grid-main">
+              <!-- Quick Sales Video -->
+              <div class="creative-module" id="creativeVideoModule">
+                <div class="section-title-row">
+                  <span class="creative-module-title">Quick Sales Video</span>
+                  <span class="pill pill-soft">Draft idea</span>
+                </div>
+                <p class="creative-module-desc">
+                  Get a simple shot plan and on-screen text idea you can record in under a
+                  minute.
+                </p>
+
+                <div class="modal-row creative-controls">
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeVideoVehicle">
+                      Vehicle / offer
+                    </label>
+                    <input
+                      id="creativeVideoVehicle"
+                      class="input"
+                      placeholder="2025 Chevy Traverse Z71 – zero down, low miles"
+                    />
+                  </div>
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeVideoHook">
+                      Main hook
+                    </label>
+                    <input
+                      id="creativeVideoHook"
+                      class="input"
+                      placeholder="Family-ready, third-row, adventure SUV"
+                    />
+                  </div>
+                </div>
+
+                <div class="modal-row creative-controls">
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeVideoAspect">
+                      Aspect ratio
+                    </label>
+                    <select
+                      id="creativeVideoAspect"
+                      class="input creative-select"
+                    >
+                      <option value="9:16">9:16 – Vertical (Reels / TikTok)</option>
+                      <option value="1:1">1:1 – Square feed</option>
+                      <option value="16:9">16:9 – Wide (YouTube / Facebook)</option>
+                    </select>
+                  </div>
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeVideoLength">
+                      Length
+                    </label>
+                    <select
+                      id="creativeVideoLength"
+                      class="input creative-select"
+                    >
+                      <option value="15">~15 seconds</option>
+                      <option value="30">~30 seconds</option>
+                      <option value="45">~45 seconds</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="modal-row creative-controls">
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeVideoStyle">
+                      Style
+                    </label>
+                    <select
+                      id="creativeVideoStyle"
+                      class="input creative-select"
+                    >
+                      <option value="hype">Hype / energetic</option>
+                      <option value="family">Family / lifestyle</option>
+                      <option value="luxury">Luxury / premium</option>
+                      <option value="budget">Payment / budget focused</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  id="generateVideoPlanBtn"
+                  type="button"
+                  class="tool-button-primary creative-generate-btn"
+                >
+                  🎬 Generate video idea
+                </button>
+
+                <label class="field-label" for="creativeVideoOutput">
+                  Video idea & scenes
+                </label>
+                <textarea
+                  id="creativeVideoOutput"
+                  class="textarea creative-output"
+                  readonly
+                ></textarea>
+                <div class="tiny-note">
+                  Use this as your shot list and on-screen text while recording on your
+                  phone.
+                </div>
+              </div>
+
+              <!-- Canva-style Layout Planner -->
+              <div class="creative-module" id="creativeLayoutModule">
+                <div class="section-title-row">
+                  <span class="creative-module-title">Canva-style Layout Planner</span>
+                  <span class="pill pill-soft">Graphic idea</span>
+                </div>
+                <p class="creative-module-desc">
+                  Get a quick layout blueprint you can rebuild in Canva in a few minutes.
+                </p>
+
+                <div class="modal-row creative-controls">
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeLayoutType">
+                      Creative type
+                    </label>
+                    <select
+                      id="creativeLayoutType"
+                      class="input creative-select"
+                    >
+                      <option value="feed">
+                        Facebook / Instagram feed post
+                      </option>
+                      <option value="story">Story / Reels cover</option>
+                      <option value="thumbnail">YouTube / video thumbnail</option>
+                      <option value="flyer">Print-style flyer</option>
+                    </select>
+                  </div>
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeLayoutHeadline">
+                      Headline
+                    </label>
+                    <input
+                      id="creativeLayoutHeadline"
+                      class="input"
+                      placeholder="Drive home this 2025 Traverse Z71 today"
+                    />
+                  </div>
+                </div>
+
+                <div class="modal-row creative-controls">
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeLayoutCta">
+                      Call to action
+                    </label>
+                    <input
+                      id="creativeLayoutCta"
+                      class="input"
+                      placeholder="Message me for a VIP test drive"
+                    />
+                  </div>
+                  <div class="modal-half">
+                    <label class="field-label" for="creativeLayoutBrand">
+                      Brand colors / vibe
+                    </label>
+                    <input
+                      id="creativeLayoutBrand"
+                      class="input"
+                      placeholder="Red + dark navy · bold, confident"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  id="generateLayoutPlanBtn"
+                  type="button"
+                  class="tool-button-primary creative-generate-btn"
+                >
+                  🎨 Generate layout idea
+                </button>
+
+                <label class="field-label" for="creativeLayoutOutput">
+                  Layout plan
+                </label>
+                <textarea
+                  id="creativeLayoutOutput"
+                  class="textarea creative-output"
+                  readonly
+                ></textarea>
+                <div class="tiny-note">
+                  Follow this as a checklist when you drop photos and text into Canva.
+                </div>
+              </div>
+
+              <!-- Photo & Video Quick Editor -->
+              <div
+                class="creative-module creative-editor-module"
+                id="creativeEditorModule"
+              >
+                <div class="section-title-row">
+                  <span class="creative-module-title">
+                    Photo &amp; Video Quick Editor
+                  </span>
+                  <span class="pill pill-soft">Live preview</span>
+                </div>
+                <p class="creative-module-desc">
+                  Drop in a photo, tweak the vibe, and export it ready for your posts.
+                </p>
+
+                <div class="editor-upload-row">
+                  <label class="field-label" for="creativeEditorFile">
+                    Upload a photo
+                  </label>
+                  <input
+                    id="creativeEditorFile"
+                    type="file"
+                    accept="image/*"
+                  />
+                </div>
+
+                <div class="editor-preview-shell">
+                  <div class="editor-preview">
+                    <span
+                      class="editor-placeholder"
+                      id="creativeEditorPlaceholder"
+                    >
+                      Your photo preview will appear here.
+                    </span>
+                    <img
+                      id="creativeEditorImage"
+                      alt="Preview"
+                      class="editor-image hidden"
+                    />
+                  </div>
+
+                  <div class="editor-sliders">
+                    <div class="editor-slider-row">
+                      <label for="creativeEditorBrightness">Brightness</label>
+                      <input
+                        id="creativeEditorBrightness"
+                        type="range"
+                        min="60"
+                        max="140"
+                        value="100"
+                      />
+                    </div>
+                    <div class="editor-slider-row">
+                      <label for="creativeEditorContrast">Contrast</label>
+                      <input
+                        id="creativeEditorContrast"
+                        type="range"
+                        min="70"
+                        max="160"
+                        value="100"
+                      />
+                    </div>
+                    <div class="editor-slider-row">
+                      <label for="creativeEditorSaturation">Saturation</label>
+                      <input
+                        id="creativeEditorSaturation"
+                        type="range"
+                        min="70"
+                        max="160"
+                        value="110"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tiny-note">
+                  This is a lightweight preview editor. When you’re happy, save the
+                  image from your browser or recreate the look in your favorite editing
+                  app.
+                </div>
+              </div>
+            </div>
+          </section>
         </section>
       </div>
 
-      <!-- STEP 3 · CREATIVE LAB --------------------------------------- -->
-      <section class="card creative-card" id="creativeLabCard">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Step 3 · Creative Lab</div>
-            <div class="card-subtitle">
-              Turn this listing into short videos, scroll-stopping graphics, and quick
-              edits.
-            </div>
-          </div>
-          <span class="badge">Creative</span>
-        </div>
+      <!-- FLOATING TOOL LAUNCHERS (we'll refine later) ------------->
+      <div class="tool-launcher-column">
+        <button
+          id="objectionLauncher"
+          type="button"
+          class="tool-launcher-btn"
+        >
+          💬 Objection Coach
+        </button>
+        <button
+          id="paymentLauncher"
+          type="button"
+          class="tool-launcher-btn"
+        >
+          💳 Payment Estimator
+        </button>
+        <button
+          id="incomeLauncher"
+          type="button"
+          class="tool-launcher-btn"
+        >
+          📈 Income Estimator
+        </button>
+        <button
+          id="messageLauncher"
+          type="button"
+          class="tool-launcher-btn"
+        >
+          ✉️ AI Message Builder
+        </button>
+      </div>
 
-        <div class="creative-grid-main">
-          <!-- Quick Sales Video -->
-          <div class="creative-module" id="creativeVideoModule">
-            <div class="section-title-row">
-              <span class="creative-module-title">Quick Sales Video</span>
-              <span class="pill pill-soft">Draft idea</span>
-            </div>
-            <p class="creative-module-desc">
-              Get a simple shot plan and on-screen text idea you can record in under a
-              minute.
-            </p>
+      <!-- MODALS ---------------------------------------------------->
 
-            <div class="modal-row creative-controls">
-              <div class="modal-half">
-                <label class="field-label" for="creativeVideoVehicle">
-                  Vehicle / offer
-                </label>
-                <input
-                  id="creativeVideoVehicle"
-                  class="input"
-                  placeholder="2025 Chevy Traverse Z71 – zero down, low miles"
-                />
-              </div>
-              <div class="modal-half">
-                <label class="field-label" for="creativeVideoHook">
-                  Main hook
-                </label>
-                <input
-                  id="creativeVideoHook"
-                  class="input"
-                  placeholder="Family-ready, third-row, adventure SUV"
-                />
-              </div>
+      <!-- OBJECTION COACH MODAL -->
+      <div id="objectionModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div class="modal-title-group">
+              <span class="modal-tag">Tool</span>
+              <span class="modal-title">Objection Coach</span>
+              <span class="modal-sub">
+                Paste the customer objection. Get word tracks and breakdowns.
+              </span>
             </div>
-
-            <div class="modal-row creative-controls">
-              <div class="modal-half">
-                <label class="field-label" for="creativeVideoAspect">
-                  Aspect ratio
-                </label>
-                <select id="creativeVideoAspect" class="input creative-select">
-                  <option value="9:16">9:16 – Vertical (Reels / TikTok)</option>
-                  <option value="1:1">1:1 – Square feed</option>
-                  <option value="16:9">16:9 – Wide (YouTube / Facebook)</option>
-                </select>
-              </div>
-              <div class="modal-half">
-                <label class="field-label" for="creativeVideoLength">
-                  Length
-                </label>
-                <select id="creativeVideoLength" class="input creative-select">
-                  <option value="15">~15 seconds</option>
-                  <option value="30">~30 seconds</option>
-                  <option value="45">~45 seconds</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="modal-row creative-controls">
-              <div class="modal-half">
-                <label class="field-label" for="creativeVideoStyle">
-                  Style
-                </label>
-                <select id="creativeVideoStyle" class="input creative-select">
-                  <option value="hype">Hype / energetic</option>
-                  <option value="family">Family / lifestyle</option>
-                  <option value="luxury">Luxury / premium</option>
-                  <option value="budget">Payment / budget focused</option>
-                </select>
-              </div>
-            </div>
-
             <button
-              id="generateVideoPlanBtn"
+              id="objectionCloseButton"
               type="button"
-              class="tool-button-primary creative-generate-btn"
+              class="modal-close"
             >
-              🎬 Generate video idea
+              ✕
             </button>
-
-            <label class="field-label" for="creativeVideoOutput">
-              Video idea & scenes
-            </label>
-            <textarea
-              id="creativeVideoOutput"
-              class="textarea creative-output"
-              readonly
-            ></textarea>
-            <div class="tiny-note">
-              Use this as your shot list and on-screen text while recording on your
-              phone.
-            </div>
           </div>
 
-          <!-- Canva-style Layout Planner -->
-          <div class="creative-module" id="creativeLayoutModule">
-            <div class="section-title-row">
-              <span class="creative-module-title">Canva-style Layout Planner</span>
-              <span class="pill pill-soft">Graphic idea</span>
-            </div>
-            <p class="creative-module-desc">
-              Get a quick layout blueprint you can rebuild in Canva in a few minutes.
-            </p>
+          <div class="modal-body">
+            <div id="objectionHistory" class="objection-history"></div>
 
-            <div class="modal-row creative-controls">
-              <div class="modal-half">
-                <label class="field-label" for="creativeLayoutType">
-                  Creative type
-                </label>
-                <select id="creativeLayoutType" class="input creative-select">
-                  <option value="feed">Facebook / Instagram feed post</option>
-                  <option value="story">Story / Reels cover</option>
-                  <option value="thumbnail">YouTube / video thumbnail</option>
-                  <option value="flyer">Print-style flyer</option>
-                </select>
-              </div>
-              <div class="modal-half">
-                <label class="field-label" for="creativeLayoutHeadline">
-                  Headline
-                </label>
-                <input
-                  id="creativeLayoutHeadline"
-                  class="input"
-                  placeholder="Drive home this 2025 Traverse Z71 today"
-                />
-              </div>
-            </div>
-
-            <div class="modal-row creative-controls">
-              <div class="modal-half">
-                <label class="field-label" for="creativeLayoutCta">
-                  Call to action
-                </label>
-                <input
-                  id="creativeLayoutCta"
-                  class="input"
-                  placeholder="Message me for a VIP test drive"
-                />
-              </div>
-              <div class="modal-half">
-                <label class="field-label" for="creativeLayoutBrand">
-                  Brand colors / vibe
-                </label>
-                <input
-                  id="creativeLayoutBrand"
-                  class="input"
-                  placeholder="Red + dark navy · bold, confident"
-                />
-              </div>
-            </div>
-
-            <button
-              id="generateLayoutPlanBtn"
-              type="button"
-              class="tool-button-primary creative-generate-btn"
-            >
-              🎨 Generate layout idea
-            </button>
-
-            <label class="field-label" for="creativeLayoutOutput">
-              Layout plan
-            </label>
-            <textarea
-              id="creativeLayoutOutput"
-              class="textarea creative-output"
-              readonly
-            ></textarea>
-            <div class="tiny-note">
-              Follow this as a checklist when you drop photos and text into Canva.
-            </div>
-          </div>
-
-          <!-- Photo & Video Quick Editor -->
-          <div class="creative-module creative-editor-module" id="creativeEditorModule">
-            <div class="section-title-row">
-              <span class="creative-module-title">Photo & Video Quick Editor</span>
-              <span class="pill pill-soft">Live preview</span>
-            </div>
-            <p class="creative-module-desc">
-              Drop in a photo, tweak the vibe, and export it ready for your posts.
-            </p>
-
-            <div class="editor-upload-row">
-              <label class="field-label" for="creativeEditorFile">
-                Upload a photo
-              </label>
-              <input id="creativeEditorFile" type="file" accept="image/*" />
-            </div>
-
-            <div class="editor-preview-shell">
-              <div class="editor-preview">
-                <span
-                  class="editor-placeholder"
-                  id="creativeEditorPlaceholder"
+            <div class="objection-input-row">
+              <textarea
+                id="objectionInput"
+                class="objection-input-box"
+                placeholder="Example: 'Payment is too high' or 'I need to think about it.'"
+              ></textarea>
+              <div class="objection-send-row">
+                <button
+                  id="objectionSendButton"
+                  type="button"
+                  class="tool-button-primary"
                 >
-                  Your photo preview will appear here.
+                  Send to Coach
+                </button>
+                <span class="objection-hint">
+                  Tip: Press ⌘+Enter (Mac) or Ctrl+Enter (PC) to send quickly.
                 </span>
-                <img
-                  id="creativeEditorImage"
-                  alt="Preview"
-                  class="editor-image hidden"
-                />
               </div>
-
-              <div class="editor-sliders">
-                <div class="editor-slider-row">
-                  <label for="creativeEditorBrightness">Brightness</label>
-                  <input
-                    id="creativeEditorBrightness"
-                    type="range"
-                    min="60"
-                    max="140"
-                    value="100"
-                  />
-                </div>
-                <div class="editor-slider-row">
-                  <label for="creativeEditorContrast">Contrast</label>
-                  <input
-                    id="creativeEditorContrast"
-                    type="range"
-                    min="70"
-                    max="160"
-                    value="100"
-                  />
-                </div>
-                <div class="editor-slider-row">
-                  <label for="creativeEditorSaturation">Saturation</label>
-                  <input
-                    id="creativeEditorSaturation"
-                    type="range"
-                    min="70"
-                    max="160"
-                    value="110"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="tiny-note">
-              This is a lightweight preview editor. When you’re happy, save the
-              image from your browser or recreate the look in your favorite editing
-              app.
             </div>
           </div>
         </div>
-      </section>
+      </div>
+
+      <!-- PAYMENT MODAL -->
+      <div id="paymentModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div class="modal-title-group">
+              <span class="modal-tag">Tool</span>
+              <span class="modal-title">Payment Estimator</span>
+              <span class="modal-sub">
+                Rough monthly payment based on price, down, APR, and term.
+              </span>
+            </div>
+            <button
+              id="paymentCloseButton"
+              type="button"
+              class="modal-close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-row">
+              <div class="modal-half">
+                <label class="field-label" for="payPrice">Price / amount</label>
+                <input
+                  id="payPrice"
+                  class="tool-input"
+                  placeholder="35000"
+                  type="number"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="payDown">Down payment</label>
+                <input
+                  id="payDown"
+                  class="tool-input"
+                  placeholder="2000"
+                  type="number"
+                />
+              </div>
+            </div>
+
+            <div class="modal-row">
+              <div class="modal-half">
+                <label class="field-label" for="payApr">APR (%)</label>
+                <input
+                  id="payApr"
+                  class="tool-input"
+                  placeholder="7.5"
+                  type="number"
+                  step="0.01"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="payTerm">Term (months)</label>
+                <input
+                  id="payTerm"
+                  class="tool-input"
+                  placeholder="72"
+                  type="number"
+                />
+              </div>
+            </div>
+
+            <button
+              id="paymentCalcButton"
+              type="button"
+              class="tool-button-primary"
+            >
+              Calculate
+            </button>
+
+            <div id="paymentResultText" class="tool-result-text">
+              Enter details and tap Calculate.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INCOME MODAL -->
+      <div id="incomeModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div class="modal-title-group">
+              <span class="modal-tag">Tool</span>
+              <span class="modal-title">Income Estimator</span>
+              <span class="modal-sub">
+                Quick yearly gross income from hourly rate and hours per week.
+              </span>
+            </div>
+            <button
+              id="incomeCloseButton"
+              type="button"
+              class="modal-close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-row">
+              <div class="modal-half">
+                <label class="field-label" for="incHourly">Hourly wage</label>
+                <input
+                  id="incHourly"
+                  class="tool-input"
+                  placeholder="20"
+                  type="number"
+                  step="0.01"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="incHours">Hours per week</label>
+                <input
+                  id="incHours"
+                  class="tool-input"
+                  placeholder="40"
+                  type="number"
+                />
+              </div>
+            </div>
+
+            <button
+              id="incomeCalcButton"
+              type="button"
+              class="tool-button-primary"
+            >
+              Estimate
+            </button>
+
+            <div id="incomeResultText" class="tool-result-text">
+              Enter hourly + hours per week and tap Estimate.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MESSAGE BUILDER MODAL -->
+      <div id="messageModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div class="modal-title-group">
+              <span class="modal-tag">Tool</span>
+              <span class="modal-title">AI Message Builder</span>
+              <span class="modal-sub">
+                Build a small campaign of follow-up messages for this listing.
+              </span>
+            </div>
+            <button
+              id="messageCloseButton"
+              type="button"
+              class="modal-close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-row">
+              <div class="modal-half">
+                <label class="field-label" for="msgChannel">Channel</label>
+                <select id="msgChannel" class="tool-input">
+                  <option value="sms">SMS / text</option>
+                  <option value="messenger">Messenger / DM</option>
+                  <option value="email">Email</option>
+                </select>
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="msgTone">Tone</label>
+                <select id="msgTone" class="tool-input">
+                  <option value="friendly">Friendly</option>
+                  <option value="direct">Direct / to the point</option>
+                  <option value="hype">High energy</option>
+                  <option value="professional">Professional</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="modal-row">
+              <div class="modal-half">
+                <label class="field-label" for="msgFollowups">
+                  Follow-up steps
+                </label>
+                <input
+                  id="msgFollowups"
+                  class="tool-input"
+                  type="number"
+                  min="1"
+                  max="8"
+                  value="4"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="msgVariants">
+                  Variants
+                </label>
+                <input
+                  id="msgVariants"
+                  class="tool-input"
+                  type="number"
+                  min="1"
+                  max="4"
+                  value="2"
+                />
+              </div>
+            </div>
+
+            <div class="modal-row">
+              <div class="modal-half">
+                <label class="field-label" for="msgAudience">
+                  Who are you talking to?
+                </label>
+                <input
+                  id="msgAudience"
+                  class="tool-input"
+                  placeholder="Example: payment-conscious family shopper"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="msgGoal">Main goal</label>
+                <input
+                  id="msgGoal"
+                  class="tool-input"
+                  placeholder="Example: Set an appointment this week"
+                />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="msgDetails">
+                Extra details (optional)
+              </label>
+              <textarea
+                id="msgDetails"
+                class="tool-textarea"
+                placeholder="Anything specific about this vehicle, pricing, or current conversation you want the AI to include."
+              ></textarea>
+            </div>
+
+            <button
+              id="messageGenerateButton"
+              type="button"
+              class="tool-button-primary"
+            >
+              Build Campaign
+            </button>
+
+            <textarea
+              id="msgResult"
+              class="tool-textarea"
+              readonly
+              placeholder="Your AI-built message workflow will appear here."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
