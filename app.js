@@ -1,4 +1,4 @@
-// app.js – Lot Rocket Social Media Kit backend
+// app.js – Lot Rocket Social Media Kit backend (Render-safe)
 
 require('dotenv').config();
 const express = require('express');
@@ -8,9 +8,13 @@ const path = require('path');
 const cheerio = require('cheerio');
 const OpenAI = require('openai');
 
-// Node fetch shim (works on Render / Node 16+)
-const fetch = (...args) =>
-  import('node-fetch').then(({ default: fetch }) => fetch(...args));
+// Use global fetch if available (Node 18+/22+). Fallback to node-fetch only if needed.
+let fetchFn = global.fetch;
+if (!fetchFn) {
+  fetchFn = (...args) =>
+    import('node-fetch').then(({ default: fetch }) => fetch(...args));
+}
+const fetch = (...args) => fetchFn(...args);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,7 +40,7 @@ async function scrapeVehiclePage(pageUrl) {
   try {
     const res = await fetch(pageUrl);
     if (!res.ok) {
-      console.error('Failed to fetch page:', res.status, res.statusText);
+      console.error('SCRAPE ERROR: bad status', res.status, res.statusText);
       return {
         title: '',
         priceText: '',
@@ -47,7 +51,6 @@ async function scrapeVehiclePage(pageUrl) {
 
     const html = await res.text();
     const $ = cheerio.load(html);
-
     const base = new URL(pageUrl);
 
     // title & price guesses
@@ -88,7 +91,7 @@ async function scrapeVehiclePage(pageUrl) {
       try {
         const url = new URL(src, base.origin);
         const urlStr = url.toString();
-        // skip obvious UI sprites/icons
+
         if (
           urlStr.match(/logo|icon|sprite|badge|favicon/i) ||
           urlStr.match(/320x50|tracking|pixel/i)
@@ -108,7 +111,7 @@ async function scrapeVehiclePage(pageUrl) {
       photos: Array.from(photoSet),
     };
   } catch (err) {
-    console.error('Error scraping page:', err);
+    console.error('SCRAPE ERROR:', err);
     return {
       title: '',
       priceText: '',
@@ -123,8 +126,10 @@ async function scrapeVehiclePage(pageUrl) {
 app.post('/boost', async (req, res) => {
   try {
     const { dealerUrl, vehicleLabel, priceInfo } = req.body || {};
+    console.log('BOOST HIT with URL:', dealerUrl);
 
     if (!dealerUrl || typeof dealerUrl !== 'string') {
+      console.error('BOOST ERROR: missing dealerUrl');
       return res.status(400).json({ error: 'Missing or invalid dealerUrl.' });
     }
 
@@ -194,22 +199,22 @@ Preferred price/deal note on the front-end:
 Now generate the JSON object described in the instructions.
     `.trim();
 
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-    });
-
-    const raw = completion.choices[0]?.message?.content || '{}';
-    let parsed;
+    let parsed = {};
     try {
+      const completion = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+      });
+
+      const raw = completion.choices[0]?.message?.content || '{}';
       parsed = JSON.parse(raw);
-    } catch (e) {
-      console.error('JSON parse error from OpenAI:', e, raw);
+    } catch (modelErr) {
+      console.error('OPENAI /boost ERROR:', modelErr);
       parsed = {};
     }
 
@@ -233,7 +238,7 @@ Now generate the JSON object described in the instructions.
 
     res.json(payload);
   } catch (err) {
-    console.error('Error in /boost:', err);
+    console.error('BOOST FATAL ERROR:', err);
     res.status(500).json({
       error: 'Something went wrong boosting this listing. Try again in a moment.',
     });
@@ -284,7 +289,7 @@ Give me a short objection-handling playbook the salesperson can use right now.
     `.trim();
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -295,7 +300,7 @@ Give me a short objection-handling playbook the salesperson can use right now.
     const reply = completion.choices[0]?.message?.content || '';
     res.json({ reply });
   } catch (err) {
-    console.error('Error in /api/objection-coach:', err);
+    console.error('OBJECTION ERROR:', err);
     res.status(500).json({ error: 'Error generating objection response.' });
   }
 });
@@ -336,7 +341,7 @@ Give me a brief talk track + bullets I can use to discuss payments safely and cl
     `.trim();
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -347,7 +352,7 @@ Give me a brief talk track + bullets I can use to discuss payments safely and cl
     const text = completion.choices[0]?.message?.content || '';
     res.json({ text });
   } catch (err) {
-    console.error('Error in /api/payment-helper:', err);
+    console.error('PAYMENT HELPER ERROR:', err);
     res.status(500).json({ error: 'Error generating payment helper text.' });
   }
 });
@@ -381,7 +386,7 @@ Give me language I can use to talk about a comfortable payment range in general 
     `.trim();
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -392,7 +397,7 @@ Give me language I can use to talk about a comfortable payment range in general 
     const text = completion.choices[0]?.message?.content || '';
     res.json({ text });
   } catch (err) {
-    console.error('Error in /api/income-helper:', err);
+    console.error('INCOME HELPER ERROR:', err);
     res.status(500).json({ error: 'Error generating income helper text.' });
   }
 });
@@ -436,7 +441,7 @@ Write ONE message I can copy-paste and send.
     `.trim();
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -447,7 +452,7 @@ Write ONE message I can copy-paste and send.
     const text = completion.choices[0]?.message?.content || '';
     res.json({ text });
   } catch (err) {
-    console.error('Error in /api/message-helper:', err);
+    console.error('MESSAGE HELPER ERROR:', err);
     res.status(500).json({ error: 'Error generating message helper text.' });
   }
 });
