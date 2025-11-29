@@ -605,13 +605,15 @@ label.field-label {
 /* --------------- FLOATING TOOL BUTTONS --------------- */
 
 .tool-launcher-column {
-  position: fixed;          /* stay put when scrolling */
-  top: 110px;               /* tweak this to line up with Step 2 header */
+  position: absolute;       /* anchor to the app shell, not the viewport */
+  top: 110px;               /* tweak this so top button lines up with Step 2 header */
   right: 26px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   z-index: 60;
+}
+
 }
 
 .tool-launcher-btn {
