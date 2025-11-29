@@ -7,640 +7,784 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
-    <!-- Header -->
+    <!-- HEADER -->
     <header class="app-header">
       <div class="branding">
         <h1>🚀 Lot Rocket</h1>
-        <p>AI Social Media Kit & Creative Lab for Car Salespeople</p>
+        <p>AI Social Media Kit &amp; Creative Lab for Car Sales Pros</p>
       </div>
+
       <div class="header-controls">
-        <button id="themeToggle" class="secondary-btn">Toggle Theme</button>
+        <!-- Light / Dark toggle switch -->
+        <div class="theme-toggle-wrapper">
+          <span class="theme-label">Light</span>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle" />
+            <span class="slider"></span>
+          </label>
+          <span class="theme-label">Dark</span>
+        </div>
       </div>
     </header>
 
-    <!-- Floating AI tools on the right -->
-    <div class="floating-tools">
-      <button id="objectionLauncher" class="tool-button">Objection Coach</button>
-      <button id="paymentLauncher" class="tool-button">Payment Calculator</button>
-      <button id="incomeLauncher" class="tool-button">Income Calculator</button>
-      <button id="workflowLauncher" class="tool-button">AI Work Flow Expert</button>
-      <button id="messageLauncher" class="tool-button">AI Message Builder</button>
-      <button id="askLauncher" class="tool-button">Ask A.I.</button>
-      <button id="carLauncher" class="tool-button">AI Car Expert</button>
-      <button id="imageGenLauncher" class="tool-button">AI Image Generation</button>
-      <button id="videoGenLauncher" class="tool-button">AI Video Generation</button>
-    </div>
+    <!-- MAIN LAYOUT -->
+    <main class="layout">
+      <!-- STEP 1 – DEALER URL SCRAPER -->
+      <section class="column column-left">
+        <h2>Step 1 – Dealer URL Scraper</h2>
 
-    <!-- Main two-column layout: Step 1 + Step 2 -->
-    <main>
-      <div class="layout">
-        <!-- STEP 1: Dealer URL Scraper -->
-        <section class="column column-left">
-          <h2>Step 1 – Dealer URL Scraper</h2>
+        <!-- Vehicle Details card -->
+        <div class="summary-box">
+          <h3>Vehicle Details</h3>
 
-          <!-- Vehicle Details card -->
-          <div class="section-card">
-            <h3>Vehicle Details</h3>
+          <label for="vehicleUrl">Dealer Vehicle URL</label>
+          <input
+            type="text"
+            id="vehicleUrl"
+            placeholder="Paste full dealer listing URL here..."
+          />
 
-            <label for="vehicleUrl">Dealer Vehicle URL</label>
-            <input
-              type="text"
-              id="vehicleUrl"
-              placeholder="https://www.lafontainechevroletplymouth.com/used-Plymouth..."
-            />
+          <label for="vehicleLabel">Vehicle Label (optional override)</label>
+          <input
+            type="text"
+            id="vehicleLabel"
+            placeholder="Example: 2024 Chevy Silverado RST"
+          />
 
-            <label for="vehicleLabel">Vehicle Label (optional override)</label>
-            <input
-              type="text"
-              id="vehicleLabel"
-              placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
-            />
+          <label for="priceInfo"
+            >Price / Offer (optional override)</label
+          >
+          <input
+            type="text"
+            id="priceInfo"
+            placeholder="Example: $699/mo or $47,995 + tax"
+          />
 
-            <label for="priceInfo">Price / Offer (optional override)</label>
-            <input
-              type="text"
-              id="priceInfo"
-              placeholder="Example: $699/mo or $47,995 + tax"
-            />
-
-            <p class="small-note" style="margin-top: 6px">
-              Lot Rocket will scrape the page and clean up the title, description,
-              and photos.
+          <!-- Summary snapshot lives in Step 1 under Price, above Boost -->
+          <div
+            style="
+              margin-top: 12px;
+              padding: 10px;
+              border-radius: 8px;
+              border: 1px solid rgba(148, 163, 184, 0.35);
+              background: rgba(15, 23, 42, 0.9);
+            "
+          >
+            <h3 style="margin-top: 0; font-size: 0.95rem;">Summary Snapshot</h3>
+            <p style="margin: 0.25rem 0;">
+              <strong>Vehicle:</strong>
+              <span id="summaryLabel">—</span>
             </p>
-
-            <!-- Summary Snapshot inside Step 1 -->
-            <div class="section-card" style="margin-top: 14px">
-              <h4>Summary Snapshot</h4>
-              <p>Vehicle: <span id="summaryLabel">—</span></p>
-              <p>Price: <span id="summaryPrice">—</span></p>
-
-              <button
-                id="boostButton"
-                class="primary-btn"
-                style="margin-top: 10px"
-              >
-                Boost This Listing
-              </button>
-
-              <div
-                id="statusText"
-                class="status-text"
-                style="margin-top: 6px"
-              >
-                Paste a URL and hit Boost to build your kit.
-              </div>
-            </div>
-          </div>
-
-          <!-- Photos card -->
-          <div class="section-card" style="margin-top: 16px">
-            <h3>Photos pulled from dealer site</h3>
-            <p class="small-note">
-              Click “Boost This Listing” to refresh photos. Up to 24 images, logos
-              removed when possible.
+            <p style="margin: 0.25rem 0;">
+              <strong>Price:</strong>
+              <span id="summaryPrice">—</span>
             </p>
-            <div id="photoGrid" class="photo-grid"></div>
-          </div>
-        </section>
-
-        <!-- STEP 2: Social Media Kit -->
-        <section class="column column-middle">
-          <h2>Step 2 – Social Media Kit</h2>
-
-          <!-- Facebook -->
-          <div class="section-card">
-            <h3>Facebook Post</h3>
-            <textarea
-              id="facebookPost"
-              placeholder="Facebook post will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="facebook"
-              >
-                New Post
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="facebookPost"
-              >
-                Copy
-              </button>
-            </div>
           </div>
 
-          <!-- Instagram -->
-          <div class="section-card">
-            <h3>Instagram Caption</h3>
-            <textarea
-              id="instagramPost"
-              placeholder="Instagram caption will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="instagram"
-              >
-                New Post
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="instagramPost"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
+          <button
+            id="boostButton"
+            class="primary-btn"
+            style="margin-top: 12px;"
+          >
+            Boost This Listing
+          </button>
+          <div id="statusText" class="status-text"></div>
+        </div>
 
-          <!-- TikTok -->
-          <div class="section-card">
-            <h3>TikTok Caption</h3>
-            <textarea
-              id="tiktokPost"
-              placeholder="TikTok caption will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="tiktok"
-              >
-                New Post
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="tiktokPost"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
+        <!-- Photos card -->
+        <div class="summary-box" style="margin-top: 16px;">
+          <h3>Photos pulled from dealer site</h3>
+          <p style="font-size: 0.8rem; margin-top: 0;">
+            Click "Boost This Listing" to refresh photos. Up to 24 images, logos
+            removed when possible.
+          </p>
+          <div id="photosGrid" class="photo-grid"></div>
+        </div>
+      </section>
 
-          <!-- LinkedIn -->
-          <div class="section-card">
-            <h3>LinkedIn Post</h3>
-            <textarea
-              id="linkedinPost"
-              placeholder="LinkedIn post will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="linkedin"
-              >
-                New Post
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="linkedinPost"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
+      <!-- STEP 2 – SOCIAL MEDIA KIT -->
+      <section class="column column-middle">
+        <!-- Listing summary spans both columns inside Step 2 -->
+        <div class="summary-box">
+          <h3>Step 2 – Social Media Kit</h3>
+          <p style="font-size: 0.8rem; margin-top: 0;">
+            Copy, tweak, and paste into each platform. Use "New Post" to spin a
+            fresh version for that platform, or "Copy" to grab it instantly.
+          </p>
+        </div>
 
-          <!-- X / Twitter -->
-          <div class="section-card">
-            <h3>X / Twitter Post</h3>
-            <textarea
-              id="twitterPost"
-              placeholder="X / Twitter post will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="twitter"
-              >
-                New Post
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="twitterPost"
-              >
-                Copy
-              </button>
-            </div>
+        <!-- Facebook -->
+        <div class="platform-card">
+          <h3>Facebook Post</h3>
+          <textarea
+            id="facebookPost"
+            class="textarea post-box"
+            placeholder="Facebook post will appear here after Boost."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="facebook"
+              type="button"
+            >
+              New Post
+            </button>
+            <button class="copy-btn" data-copy-target="facebookPost">
+              Copy
+            </button>
           </div>
+        </div>
 
-          <!-- Text / DM -->
-          <div class="section-card">
-            <h3>Text / DM Outreach</h3>
-            <textarea
-              id="textBlurb"
-              placeholder="A short, high-converting text / DM will appear here."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="text"
-              >
-                New Text
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="textBlurb"
-              >
-                Copy
-              </button>
-            </div>
+        <!-- Instagram -->
+        <div class="platform-card">
+          <h3>Instagram Caption</h3>
+          <textarea
+            id="instagramPost"
+            class="textarea post-box"
+            placeholder="Instagram caption will appear here after Boost."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="instagram"
+              type="button"
+            >
+              New Post
+            </button>
+            <button class="copy-btn" data-copy-target="instagramPost">
+              Copy
+            </button>
           </div>
+        </div>
 
-          <!-- Marketplace -->
-          <div class="section-card">
-            <h3>Facebook Marketplace Listing</h3>
-            <textarea
-              id="marketplacePost"
-              placeholder="Marketplace listing will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="regen-btn"
-                data-platform="marketplace"
-              >
-                New Listing
-              </button>
-              <button
-                class="copy-btn"
-                data-copy-target="marketplacePost"
-              >
-                Copy
-              </button>
-            </div>
+        <!-- TikTok -->
+        <div class="platform-card">
+          <h3>TikTok Caption</h3>
+          <textarea
+            id="tiktokPost"
+            class="textarea post-box"
+            placeholder="TikTok caption + hook will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="tiktok"
+              type="button"
+            >
+              New Post
+            </button>
+            <button class="copy-btn" data-copy-target="tiktokPost">
+              Copy
+            </button>
           </div>
+        </div>
 
-          <!-- Hashtags -->
-          <div class="section-card">
-            <h3>Hashtags</h3>
-            <textarea
-              id="hashtags"
-              placeholder="Hashtags will appear here after Boost."
-            ></textarea>
-            <div class="btn-row">
-              <button
-                class="copy-btn"
-                data-copy-target="hashtags"
-              >
-                Copy
-              </button>
-            </div>
+        <!-- LinkedIn -->
+        <div class="platform-card">
+          <h3>LinkedIn Post</h3>
+          <textarea
+            id="linkedinPost"
+            class="textarea post-box"
+            placeholder="LinkedIn post will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="linkedin"
+              type="button"
+            >
+              New Post
+            </button>
+            <button class="copy-btn" data-copy-target="linkedinPost">
+              Copy
+            </button>
           </div>
-        </section>
-      </div>
+        </div>
 
-      <!-- STEP 3: Creative Lab – full-width row under Steps 1 & 2 -->
-      <section class="creative-row" style="padding: 0 32px 40px 32px; margin-top: 10px">
+        <!-- X / Twitter -->
+        <div class="platform-card">
+          <h3>X / Twitter Post</h3>
+          <textarea
+            id="twitterPost"
+            class="textarea post-box"
+            placeholder="X / Twitter post will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="twitter"
+              type="button"
+            >
+              New Post
+            </button>
+            <button class="copy-btn" data-copy-target="twitterPost">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Text / DM blurb -->
+        <div class="platform-card">
+          <h3>Text / DM Outreach</h3>
+          <textarea
+            id="textBlurb"
+            class="textarea post-box"
+            placeholder="Short, high-converting text / DM will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="text"
+              type="button"
+            >
+              New Text
+            </button>
+            <button class="copy-btn" data-copy-target="textBlurb">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Marketplace listing -->
+        <div class="platform-card">
+          <h3>Marketplace Listing</h3>
+          <textarea
+            id="marketplacePost"
+            class="textarea marketplace-box"
+            placeholder="Facebook Marketplace style listing copy."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="marketplace"
+              type="button"
+            >
+              New Post
+            </button>
+            <button class="copy-btn" data-copy-target="marketplacePost">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Hashtags -->
+        <div class="platform-card">
+          <h3>Hashtags</h3>
+          <textarea
+            id="hashtags"
+            class="textarea"
+            style="min-height: 120px;"
+            placeholder="Hashtags will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              class="regen-btn"
+              data-platform="hashtags"
+              type="button"
+            >
+              New Set
+            </button>
+            <button class="copy-btn" data-copy-target="hashtags">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Selfie script -->
+        <div class="platform-card">
+          <h3>Selfie Video Script</h3>
+          <textarea
+            id="selfieScript"
+            class="textarea script"
+            placeholder="Short selfie video script."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              id="regenSelfieScript"
+              class="regen-btn"
+              type="button"
+            >
+              New Script
+            </button>
+            <button class="copy-btn" data-copy-target="selfieScript">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Shot plan -->
+        <div class="platform-card">
+          <h3>Video Shot Plan</h3>
+          <textarea
+            id="shotPlan"
+            class="textarea shotplan"
+            placeholder="Shot-by-shot plan from your photos."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              id="regenShotPlan"
+              class="regen-btn"
+              type="button"
+            >
+              New Plan
+            </button>
+            <button class="copy-btn" data-copy-target="shotPlan">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Canva design idea -->
+        <div class="platform-card">
+          <h3>Canva Design Idea</h3>
+          <textarea
+            id="designIdea"
+            class="textarea design"
+            placeholder="Layout checklist for a Canva post."
+          ></textarea>
+          <div class="btn-row">
+            <button
+              id="regenDesignIdea"
+              class="regen-btn"
+              type="button"
+            >
+              New Idea
+            </button>
+            <button class="copy-btn" data-copy-target="designIdea">
+              Copy
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3 – CREATIVE LAB (FULL WIDTH UNDER 1 & 2) -->
+      <section class="column column-right">
         <h2>Step 3 – Creative Lab</h2>
 
-        <div class="layout" style="padding: 0; gap: 20px">
-          <!-- Quick Sales Video Idea -->
-          <div class="column">
-            <div class="section-card">
-              <h3>Quick Sales Video Idea</h3>
+        <!-- Quick Sales Video Idea -->
+        <div class="lab-card">
+          <h3>Quick Sales Video Idea</h3>
+          <label for="videoVehicle">Vehicle / Offer</label>
+          <input
+            type="text"
+            id="videoVehicle"
+            placeholder="Vehicle or promo"
+          />
 
-              <label for="videoVehicle">Vehicle / Offer</label>
-              <input
-                type="text"
-                id="videoVehicle"
-                placeholder="Vehicle or promo"
-              />
+          <label for="videoHook">Hook</label>
+          <input
+            type="text"
+            id="videoHook"
+            placeholder="Example: Stop scrolling..."
+          />
 
-              <label for="videoHook">Hook</label>
-              <input
-                type="text"
-                id="videoHook"
-                placeholder="Example: Stop scrolling..."
-              />
+          <label for="videoStyle">Style</label>
+          <input
+            type="text"
+            id="videoStyle"
+            placeholder="Energetic, educational, hype"
+          />
 
-              <label for="videoStyle">Style</label>
-              <input
-                type="text"
-                id="videoStyle"
-                placeholder="Energetic, educational, hype"
-              />
+          <label for="videoLength">Length / Aspect</label>
+          <input
+            type="text"
+            id="videoLength"
+            placeholder="Example: 30s vertical 9:16"
+          />
 
-              <label for="videoAspect">Length / Aspect</label>
-              <input
-                type="text"
-                id="videoAspect"
-                placeholder="Example: 30s vertical 9:16"
-              />
+          <button
+            id="generateVideoIdea"
+            class="primary-btn"
+            style="margin-top: 8px;"
+          >
+            Generate Video Idea
+          </button>
 
-              <button
-                id="generateVideoIdea"
-                class="primary-btn"
-                style="margin-top: 8px"
-              >
-                Generate Video Idea
-              </button>
+          <textarea
+            id="videoIdeaOutput"
+            class="textarea creative-output"
+            placeholder="Video idea will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button class="copy-btn" data-copy-target="videoIdeaOutput">
+              Copy
+            </button>
+          </div>
+        </div>
 
-              <textarea
-                id="videoIdeaOutput"
-                style="margin-top: 10px"
-              ></textarea>
-              <div class="btn-row">
-                <button
-                  class="copy-btn"
-                  id="copyVideoIdea"
-                  data-copy-target="videoIdeaOutput"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
+        <!-- Canva Layout Planner -->
+        <div class="lab-card">
+          <h3>Canva Layout Planner</h3>
+          <label for="layoutType">Creative Type</label>
+          <input
+            type="text"
+            id="layoutType"
+            placeholder="Story, feed post, flyer"
+          />
 
-            <div class="section-card">
-              <h3>Canva Layout Planner</h3>
+          <label for="layoutHeadline">Headline</label>
+          <input
+            type="text"
+            id="layoutHeadline"
+            placeholder="Main headline"
+          />
 
-              <label for="creativeType">Creative Type</label>
-              <input
-                type="text"
-                id="creativeType"
-                placeholder="Story, feed post, flyer"
-              />
+          <label for="layoutCTA">Call To Action</label>
+          <input
+            type="text"
+            id="layoutCTA"
+            placeholder="CTA text"
+          />
 
-              <label for="creativeHeadline">Headline</label>
-              <input
-                type="text"
-                id="creativeHeadline"
-                placeholder="Main headline"
-              />
+          <label for="layoutVibe">Vibe</label>
+          <input
+            type="text"
+            id="layoutVibe"
+            placeholder="Clean, bold, premium"
+          />
 
-              <label for="creativeCta">Call To Action</label>
-              <input
-                type="text"
-                id="creativeCta"
-                placeholder="CTA text"
-              />
+          <button
+            id="generateLayoutIdea"
+            class="primary-btn"
+            style="margin-top: 8px;"
+          >
+            Generate Layout Idea
+          </button>
 
-              <label for="creativeVibe">Vibe</label>
-              <input
-                type="text"
-                id="creativeVibe"
-                placeholder="Clean, bold, premium"
-              />
+          <textarea
+            id="layoutIdeaOutput"
+            class="textarea creative-output"
+            placeholder="Layout blueprint will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button class="copy-btn" data-copy-target="layoutIdeaOutput">
+              Copy
+            </button>
+          </div>
+        </div>
 
-              <button
-                id="generateLayoutIdea"
-                class="primary-btn"
-                style="margin-top: 8px"
-              >
-                Generate Layout Idea
-              </button>
+        <!-- Photo & Video Quick Editor -->
+        <div class="lab-card">
+          <h3>Photo &amp; Video Quick Editor</h3>
+          <label for="photoUpload">Upload photo</label>
+          <input type="file" id="photoUpload" accept="image/*" />
 
-              <textarea
-                id="creativeIdeaOutput"
-                style="margin-top: 10px"
-              ></textarea>
-              <div class="btn-row">
-                <button
-                  class="copy-btn"
-                  id="copyLayoutIdea"
-                  data-copy-target="creativeIdeaOutput"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
+          <div class="photo-preview-wrapper">
+            <img
+              id="photoPreview"
+              alt="Preview"
+              style="display: none;"
+            />
+            <span id="photoPlaceholder" class="small-note">
+              Your uploaded photo will appear here.
+            </span>
           </div>
 
-          <!-- Photo & Video Quick Editor -->
-          <div class="column">
-            <div class="section-card">
-              <h3>Photo &amp; Video Quick Editor</h3>
-
-              <label for="photoUpload">Upload Photo</label>
-              <input type="file" id="photoUpload" accept="image/*" />
-
-              <div id="photoPreview" class="photo-preview-wrapper">
-                <span class="small-note">
-                  Preview will appear here after upload.
-                </span>
-              </div>
-
-              <div class="slider-group">
-                <label>
-                  <span>Brightness</span>
-                  <input
-                    type="range"
-                    id="brightnessSlider"
-                    min="-100"
-                    max="100"
-                    value="0"
-                  />
-                </label>
-                <label>
-                  <span>Contrast</span>
-                  <input
-                    type="range"
-                    id="contrastSlider"
-                    min="-100"
-                    max="100"
-                    value="0"
-                  />
-                </label>
-                <label>
-                  <span>Saturation</span>
-                  <input
-                    type="range"
-                    id="saturationSlider"
-                    min="-100"
-                    max="100"
-                    value="0"
-                  />
-                </label>
-              </div>
-
-              <div class="small-note" style="margin-top: 6px">
-                Tip: Right-click the edited image and choose “Save image as…” to
-                download it for your post.
-              </div>
-            </div>
+          <div class="slider-group">
+            <label>
+              <span>Brightness</span>
+              <input
+                type="range"
+                id="brightnessRange"
+                min="0"
+                max="200"
+                value="100"
+              />
+            </label>
+            <label>
+              <span>Contrast</span>
+              <input
+                type="range"
+                id="contrastRange"
+                min="0"
+                max="200"
+                value="100"
+              />
+            </label>
+            <label>
+              <span>Saturation</span>
+              <input
+                type="range"
+                id="saturationRange"
+                min="0"
+                max="200"
+                value="100"
+              />
+            </label>
           </div>
+
+          <p class="small-note">
+            Adjust sliders, then screenshot / save the image for quick
+            enhancements.
+          </p>
         </div>
       </section>
     </main>
 
-    <!-- ---------------- MODALS ---------------- -->
+    <!-- FLOATING TOOL BUTTONS -->
+    <aside class="floating-tools">
+      <button id="objectionLauncher" class="tool-button">
+        Objection Coach
+      </button>
+      <button id="paymentLauncher" class="tool-button">
+        Payment Calculator
+      </button>
+      <button id="incomeLauncher" class="tool-button">
+        Income Calculator
+      </button>
+      <button id="workflowLauncher" class="tool-button">
+        AI Work Flow Expert
+      </button>
+      <button id="messageLauncher" class="tool-button">
+        AI Message Builder
+      </button>
+      <button id="askLauncher" class="tool-button">
+        Ask A.I.
+      </button>
+      <button id="carLauncher" class="tool-button">
+        AI Car Expert
+      </button>
+      <button id="imageLauncher" class="tool-button">
+        AI Image Generation
+      </button>
+      <button id="videoLauncher" class="tool-button">
+        AI Video Generation
+      </button>
+    </aside>
+
+    <!-- ------------- MODALS ------------- -->
 
     <!-- Objection Coach -->
     <div id="objectionModal" class="modal hidden">
       <div class="modal-content">
         <span id="objectionClose" class="modal-close">&times;</span>
         <h2>Objection Coach</h2>
-        <p>Paste the customer objection and get a response + coaching tips.</p>
+        <p>
+          Paste the customer's objection and Lot Rocket will suggest a friendly,
+          professional response.
+        </p>
+
         <label for="objectionInput">Customer Objection</label>
-        <textarea id="objectionInput"></textarea>
+        <textarea
+          id="objectionInput"
+          class="textarea"
+          placeholder="Example: I need to think about it..."
+        ></textarea>
 
-        <label for="objectionHistory">Conversation Context (optional)</label>
-        <textarea id="objectionHistory"></textarea>
-
-        <button id="runObjectionCoach" class="primary-btn" style="margin-top: 8px">
+        <button
+          id="runObjectionCoach"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
           Get Coaching
         </button>
 
-        <h3 style="margin-top: 12px">Suggested Response</h3>
-        <textarea id="objectionOutput"></textarea>
+        <h3 style="margin-top: 12px;">Response Ideas</h3>
+        <textarea
+          id="objectionOutput"
+          class="textarea"
+          style="min-height: 140px;"
+        ></textarea>
         <div class="btn-row">
-          <button
-            class="copy-btn"
-            data-copy-target="objectionOutput"
-          >
+          <button class="copy-btn" data-copy-target="objectionOutput">
             Copy
           </button>
         </div>
       </div>
     </div>
 
-<!-- Payment Calculator -->
-<div id="paymentModal" class="modal hidden">
-  <div class="modal-content">
-    <span id="paymentClose" class="modal-close">&times;</span>
+    <!-- Payment Calculator (with mini calculator) -->
+    <div id="paymentModal" class="modal hidden">
+      <div class="modal-content">
+        <span id="paymentClose" class="modal-close">&times;</span>
 
-    <!-- Header row with Calculator toggle button -->
-    <div
-      style="
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 6px;
-      "
-    >
-      <h2 style="margin: 0;">Payment Calculator</h2>
-      <button id="toggleSimpleCalc" class="secondary-btn" type="button">
-        Calculator
-      </button>
-    </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+          "
+        >
+          <h2 style="margin: 0;">Payment Calculator</h2>
+          <button id="toggleSimpleCalc" class="secondary-btn" type="button">
+            Calculator
+          </button>
+        </div>
 
-    <!-- Simple calculator panel (hidden by default) -->
-    <div id="simpleCalcPanel" class="simple-calc hidden">
-      <div id="simpleCalcDisplay" class="simple-calc-display">0</div>
-      <div class="simple-calc-grid">
-        <button data-calc="C">C</button>
-        <button data-calc="DEL">⌫</button>
-        <button data-calc="(">(</button>
-        <button data-calc=")">)</button>
+        <!-- Simple in-modal calculator -->
+        <div id="simpleCalcPanel" class="simple-calc hidden">
+          <div id="simpleCalcDisplay" class="simple-calc-display">0</div>
+          <div class="simple-calc-grid">
+            <button data-calc="C">C</button>
+            <button data-calc="DEL">⌫</button>
+            <button data-calc="(">(</button>
+            <button data-calc=")">)</button>
 
-        <button data-calc="7">7</button>
-        <button data-calc="8">8</button>
-        <button data-calc="9">9</button>
-        <button data-calc="/">÷</button>
+            <button data-calc="7">7</button>
+            <button data-calc="8">8</button>
+            <button data-calc="9">9</button>
+            <button data-calc="/">÷</button>
 
-        <button data-calc="4">4</button>
-        <button data-calc="5">5</button>
-        <button data-calc="6">6</button>
-        <button data-calc="*">×</button>
+            <button data-calc="4">4</button>
+            <button data-calc="5">5</button>
+            <button data-calc="6">6</button>
+            <button data-calc="*">×</button>
 
-        <button data-calc="1">1</button>
-        <button data-calc="2">2</button>
-        <button data-calc="3">3</button>
-        <button data-calc="-">−</button>
+            <button data-calc="1">1</button>
+            <button data-calc="2">2</button>
+            <button data-calc="3">3</button>
+            <button data-calc="-">−</button>
 
-        <button data-calc="0">0</button>
-        <button data-calc=".">.</button>
-        <button data-calc="=">=</button>
-        <button data-calc="+">+</button>
+            <button data-calc="0">0</button>
+            <button data-calc=".">.</button>
+            <button data-calc="=">=</button>
+            <button data-calc="+">+</button>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 16px;">Auto Loan Details</h3>
+
+        <label for="autoPrice">Auto Price</label>
+        <input
+          type="number"
+          id="autoPrice"
+          class="input"
+          placeholder="50000"
+        />
+
+        <label for="loanTermMonths">Loan Term (months)</label>
+        <input
+          type="number"
+          id="loanTermMonths"
+          class="input"
+          placeholder="60"
+        />
+
+        <label for="interestRate">Interest Rate (%)</label>
+        <input
+          type="number"
+          id="interestRate"
+          class="input"
+          placeholder="5"
+          step="0.01"
+        />
+
+        <label for="cashIncentives">Cash Incentives</label>
+        <input
+          type="number"
+          id="cashIncentives"
+          class="input"
+          placeholder="0"
+        />
+
+        <label for="downPayment">Down Payment</label>
+        <input
+          type="number"
+          id="downPayment"
+          class="input"
+          placeholder="10000"
+        />
+
+        <label for="tradeInValue">Trade-in Value</label>
+        <input
+          type="number"
+          id="tradeInValue"
+          class="input"
+          placeholder="0"
+        />
+
+        <label for="tradeOwed">Amount Owed on Trade-in</label>
+        <input
+          type="number"
+          id="tradeOwed"
+          class="input"
+          placeholder="0"
+        />
+
+        <label for="salesTax">Sales Tax (%)</label>
+        <input
+          type="number"
+          id="salesTax"
+          class="input"
+          placeholder="7"
+          step="0.01"
+        />
+
+        <label for="fees">Title, Registration &amp; Other Fees</label>
+        <input
+          type="number"
+          id="fees"
+          class="input"
+          placeholder="2000"
+        />
+
+        <button
+          id="runPaymentHelper"
+          class="primary-btn"
+          style="margin-top: 10px;"
+        >
+          Estimate Payment
+        </button>
+
+        <h3 style="margin-top: 14px;">Estimate</h3>
+        <textarea
+          id="paymentOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="paymentOutput">Copy</button>
+        </div>
       </div>
     </div>
 
-    <!-- Auto loan form -->
-    <h3 style="margin-top: 16px;">Auto Loan Details</h3>
+    <!-- Income Calculator -->
+    <div id="incomeModal" class="modal hidden">
+      <div class="modal-content">
+        <span id="incomeClose" class="modal-close">&times;</span>
 
-    <label for="autoPrice">Auto Price</label>
-    <input
-      type="number"
-      id="autoPrice"
-      class="input"
-      placeholder="50000"
-    />
+        <h2 style="margin: 0 0 10px;">Income Calculator</h2>
+        <p>
+          Enter Year-to-Date income, hire date, and check date. Lot Rocket will
+          estimate monthly income based on how long you've worked.
+        </p>
 
-    <label for="loanTermMonths">Loan Term (months)</label>
-    <input
-      type="number"
-      id="loanTermMonths"
-      class="input"
-      placeholder="60"
-    />
+        <label for="ytdIncome">Year to Date Income</label>
+        <input
+          type="number"
+          id="ytdIncome"
+          class="input"
+          placeholder="50000"
+          step="0.01"
+        />
 
-    <label for="interestRate">Interest Rate (%)</label>
-    <input
-      type="number"
-      id="interestRate"
-      class="input"
-      placeholder="5"
-      step="0.01"
-    />
+        <label for="hireDate">Hire Date</label>
+        <input type="date" id="hireDate" class="input" />
 
-    <label for="cashIncentives">Cash Incentives</label>
-    <input
-      type="number"
-      id="cashIncentives"
-      class="input"
-      placeholder="0"
-    />
+        <label for="checkDate">Check Date</label>
+        <input type="date" id="checkDate" class="input" />
 
-    <label for="downPayment">Down Payment</label>
-    <input
-      type="number"
-      id="downPayment"
-      class="input"
-      placeholder="10000"
-    />
+        <button
+          id="runIncomeHelper"
+          class="primary-btn"
+          style="margin-top: 10px;"
+        >
+          Estimate Monthly Income
+        </button>
 
-    <label for="tradeInValue">Trade-in Value</label>
-    <input
-      type="number"
-      id="tradeInValue"
-      class="input"
-      placeholder="0"
-    />
-
-    <label for="tradeOwed">Amount Owed on Trade-in</label>
-    <input
-      type="number"
-      id="tradeOwed"
-      class="input"
-      placeholder="0"
-    />
-
-    <label for="salesTax">Sales Tax (%)</label>
-    <input
-      type="number"
-      id="salesTax"
-      class="input"
-      placeholder="7"
-      step="0.01"
-    />
-
-    <label for="fees">Title, Registration &amp; Other Fees</label>
-    <input
-      type="number"
-      id="fees"
-      class="input"
-      placeholder="2000"
-    />
-
-    <button
-      id="runPaymentHelper"
-      class="primary-btn"
-      style="margin-top: 10px;"
-    >
-      Estimate Payment
-    </button>
-
-    <h3 style="margin-top: 14px;">Estimate</h3>
-    <textarea
-      id="paymentOutput"
-      class="textarea"
-      style="min-height: 160px;"
-    ></textarea>
-    <div class="btn-row">
-      <button class="copy-btn" data-copy-target="paymentOutput">Copy</button>
+        <h3 style="margin-top: 14px;">Monthly Income</h3>
+        <textarea
+          id="incomeOutput"
+          class="textarea"
+          style="min-height: 120px;"
+        ></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="incomeOutput">Copy</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
-
 
     <!-- AI Work Flow Expert -->
     <div id="workflowModal" class="modal hidden">
@@ -648,24 +792,33 @@
         <span id="workflowClose" class="modal-close">&times;</span>
         <h2>AI Work Flow Expert</h2>
         <p>
-          Describe the situation and we’ll build a step-by-step workflow or
-          playbook.
+          Tell Lot Rocket what you need an entire workflow for: follow-up
+          sequence, social plan, lead nurture, etc.
         </p>
 
-        <label for="workflowContext">What do you need a workflow for?</label>
-        <textarea id="workflowContext"></textarea>
+        <label for="workflowSituation">Customer Situation / Context</label>
+        <textarea
+          id="workflowSituation"
+          class="textarea"
+          placeholder="Vehicle, situation, urgency, tone, etc."
+        ></textarea>
 
-        <button id="runWorkflowHelper" class="primary-btn" style="margin-top: 8px">
+        <button
+          id="runWorkflowHelper"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
           Build Workflow
         </button>
 
-        <h3 style="margin-top: 12px">Suggested Workflow</h3>
-        <textarea id="workflowOutput"></textarea>
+        <h3 style="margin-top: 12px;">Suggested Workflow</h3>
+        <textarea
+          id="workflowOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
         <div class="btn-row">
-          <button
-            class="copy-btn"
-            data-copy-target="workflowOutput"
-          >
+          <button class="copy-btn" data-copy-target="workflowOutput">
             Copy
           </button>
         </div>
@@ -678,38 +831,49 @@
         <span id="messageClose" class="modal-close">&times;</span>
         <h2>AI Message Builder</h2>
         <p>
-          Tell Lot Rocket what you need and it will write a high-converting text,
-          email, or social post.
+          Tell Lot Rocket what you need and it will write a high-converting
+          text, email, or social post.
         </p>
 
-        <label for="messageChannel">Channel (text, email, DM, etc.)</label>
+        <label for="messageType">What are you creating?</label>
         <input
           type="text"
-          id="messageChannel"
-          placeholder="Text / SMS, email, Instagram DM..."
+          id="messageType"
+          class="input"
+          placeholder="Text / SMS, email, Facebook post, etc."
         />
 
-        <label for="messageTone">Tone (optional)</label>
+        <label for="messageGoal">What's the goal?</label>
         <input
           type="text"
-          id="messageTone"
-          placeholder="Friendly, urgent, professional..."
+          id="messageGoal"
+          class="input"
+          placeholder="Get them to book a test drive..."
         />
 
-        <label for="messageContext">What’s the goal / context?</label>
-        <textarea id="messageContext"></textarea>
+        <label for="messageDetails">Details / Context</label>
+        <textarea
+          id="messageDetails"
+          class="textarea"
+          placeholder="Vehicle, situation, urgency, tone, etc."
+        ></textarea>
 
-        <button id="runMessageHelper" class="primary-btn" style="margin-top: 8px">
+        <button
+          id="runMessageHelper"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
           Generate Message
         </button>
 
-        <h3 style="margin-top: 12px">Result</h3>
-        <textarea id="messageOutput"></textarea>
+        <h3 style="margin-top: 12px;">Result</h3>
+        <textarea
+          id="messageOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
         <div class="btn-row">
-          <button
-            class="copy-btn"
-            data-copy-target="messageOutput"
-          >
+          <button class="copy-btn" data-copy-target="messageOutput">
             Copy
           </button>
         </div>
@@ -721,24 +885,31 @@
       <div class="modal-content">
         <span id="askClose" class="modal-close">&times;</span>
         <h2>Ask A.I.</h2>
-        <p>Ask anything – sales, business, life, tech, you name it.</p>
+        <p>Ask anything — sales, business, life, tech, you name it.</p>
 
         <label for="askQuestion">Your Question</label>
-        <textarea id="askQuestion"></textarea>
+        <textarea
+          id="askQuestion"
+          class="textarea"
+          placeholder="Type your question here..."
+        ></textarea>
 
-        <button id="runAskHelper" class="primary-btn" style="margin-top: 8px">
+        <button
+          id="runAskHelper"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
           Ask
         </button>
 
-        <h3 style="margin-top: 12px">Answer</h3>
-        <textarea id="askOutput"></textarea>
+        <h3 style="margin-top: 12px;">Answer</h3>
+        <textarea
+          id="askOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
         <div class="btn-row">
-          <button
-            class="copy-btn"
-            data-copy-target="askOutput"
-          >
-            Copy
-          </button>
+          <button class="copy-btn" data-copy-target="askOutput">Copy</button>
         </div>
       </div>
     </div>
@@ -749,53 +920,114 @@
         <span id="carClose" class="modal-close">&times;</span>
         <h2>AI Car Expert</h2>
         <p>
-          Ask anything automotive – trims, features, comparisons, or how to
-          position a vehicle to a customer.
+          Ask anything about vehicles, trims, features, comparisons, or
+          automotive advice.
         </p>
 
-        <label for="carQuestion">Your Automotive Question</label>
-        <textarea id="carQuestion"></textarea>
+        <label for="carQuestion">Your automotive question</label>
+        <textarea
+          id="carQuestion"
+          class="textarea"
+          placeholder="Example: Compare 2025 Traverse RS vs. Tahoe LS for a family of 4..."
+        ></textarea>
 
-        <button id="runCarHelper" class="primary-btn" style="margin-top: 8px">
+        <button
+          id="runCarHelper"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
           Ask Car Expert
         </button>
 
-        <h3 style="margin-top: 12px">Answer</h3>
-        <textarea id="carOutput"></textarea>
+        <h3 style="margin-top: 12px;">Answer</h3>
+        <textarea
+          id="carOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
         <div class="btn-row">
-          <button
-            class="copy-btn"
-            data-copy-target="carOutput"
-          >
+          <button class="copy-btn" data-copy-target="carOutput">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Image Generation -->
+    <div id="imageModal" class="modal hidden">
+      <div class="modal-content">
+        <span id="imageClose" class="modal-close">&times;</span>
+        <h2>AI Image Generation</h2>
+        <p>
+          Describe the image you want for your post (vehicle, background, vibe,
+          etc.). For now this will generate a detailed image prompt that we can
+          later send to your chosen image service.
+        </p>
+
+        <label for="imagePrompt">Image description</label>
+        <textarea
+          id="imagePrompt"
+          class="textarea"
+          placeholder="Example: Red 2025 Chevy Traverse on a dealership lot at golden hour..."
+        ></textarea>
+
+        <button
+          id="runImageHelper"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
+          Build Image Prompt
+        </button>
+
+        <h3 style="margin-top: 12px;">Prompt (ready for Midjourney / DALL·E etc.)</h3>
+        <textarea
+          id="imageOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="imageOutput">
             Copy
           </button>
         </div>
       </div>
     </div>
 
-    <!-- AI Image Generator (Coming Soon) -->
-    <div id="imageGenModal" class="modal hidden">
+    <!-- AI Video Generation (Coming Soon note) -->
+    <div id="videoModal" class="modal hidden">
       <div class="modal-content">
-        <span id="imageGenClose" class="modal-close">&times;</span>
-        <h2>AI Image Generator – Coming Soon</h2>
+        <span id="videoClose" class="modal-close">&times;</span>
+        <h2>AI Video Generation</h2>
         <p>
-          This feature is almost ready. Soon, Lot Rocket will generate
-          listing-ready images from your prompts and vehicle details so you can
-          post without touching Photoshop.
+          Coming soon: direct AI video generation. For now, Lot Rocket will
+          build a detailed video brief you can use with your preferred video
+          tool.
         </p>
-      </div>
-    </div>
 
-    <!-- AI Video Generator (Coming Soon) -->
-    <div id="videoGenModal" class="modal hidden">
-      <div class="modal-content">
-        <span id="videoGenClose" class="modal-close">&times;</span>
-        <h2>AI Video Generator – Coming Soon</h2>
-        <p>
-          Coming soon: fully automatic short-form videos based on your vehicles,
-          hooks, and offers – ready for Reels, TikTok, and Shorts, right from
-          Lot Rocket.
-        </p>
+        <label for="videoGenPrompt">What kind of video?</label>
+        <textarea
+          id="videoGenPrompt"
+          class="textarea"
+          placeholder="Vehicle, style, length, platform, and any special shots."
+        ></textarea>
+
+        <button
+          id="runVideoHelper"
+          class="primary-btn"
+          style="margin-top: 8px;"
+        >
+          Build Video Brief
+        </button>
+
+        <h3 style="margin-top: 12px;">Video Brief</h3>
+        <textarea
+          id="videoGenOutput"
+          class="textarea"
+          style="min-height: 160px;"
+        ></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="videoGenOutput">
+            Copy
+          </button>
+        </div>
       </div>
     </div>
 
