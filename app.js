@@ -1,574 +1,518 @@
-// app.js – Lot Rocket backend (Express + OpenAI + scraping)
+// app.js – Lot Rocket backend with AI tools
 
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
-const OpenAI = require('openai');
-const cheerio = require('cheerio');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const cheerio = require("cheerio");
+const OpenAI = require("openai");
+const fetch = require("node-fetch");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- OpenAI client ---
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- Middleware ---
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
-// Serve static frontend from /public
-app.use(express.static(path.join(__dirname, 'public')));
+// ---------------- Helper: scrape page text ----------------
 
-// Root route -> index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+async function scrapePage(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch URL: ${res.status}`);
+  }
+  const html = await res.text();
+  const $ = cheerio.load(html);
 
-// ------------------------------------------------------------
-// Helper: scrape useful text from dealer URL
-// ------------------------------------------------------------
-async function scrapePageText(url) {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error('Scrape failed: status', res.status);
-      return { title: '', description: '', text: '' };
-    }
+  // Title + meta
+  const title = $("title").first().text().trim();
+  const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-    const html = await res.text();
-    const $ = cheerio.load(html);
-
-    const title = ($('title').text() || '').trim();
-    const description =
-      ($('meta[name="description"]').attr('content') || '').trim();
-
-    // Grab a bunch of text from likely content areas
-    let chunks = [];
-    $(
-      'h1, h2, h3, h4, ' +
-        '.vehicle-title, .vehicle-header, .vehicle-name, ' +
-        '.vehicle-details, .vehicle-detail, .vehicle-specs, .specs, ' +
-        '.price, .payment, .offer, .description, .body-copy, ' +
-        '.feature, .features, .feature-list li'
-    ).each((_, el) => {
-      const t = $(el).text().replace(/\s+/g, ' ').trim();
-      if (t && !chunks.includes(t)) chunks.push(t);
+  // Visible text chunks (simple)
+  let visibleText = "";
+  $("body *")
+    .not("script, style, noscript")
+    .each((_, el) => {
+      const text = $(el).text().replace(/\s+/g, " ").trim();
+      if (text.length > 40 && text.length < 500) {
+        visibleText += text + "\n";
+      }
     });
 
-    const combined = chunks.join('\n');
-
-    return {
-      title,
-      description,
-      text: combined.slice(0, 6000), // keep it reasonable
-    };
-  } catch (err) {
-    console.error('Error scraping page:', err);
-    return { title: '', description: '', text: '' };
-  }
+  return { title, metaDesc, visibleText, $ };
 }
 
-// ------------------------------------------------------------
-// Helper: talk to OpenAI and expect JSON
-// ------------------------------------------------------------
-async function chatJSON(systemPrompt, userPrompt) {
-  const completion = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 0.7,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
+// ---------------- Helper: scrape vehicle photos ----------------
+
+function scrapeVehiclePhotosFromCheerio($, baseUrl) {
+  const urls = new Set();
+  const base = new URL(baseUrl);
+
+  $("img").each((_, el) => {
+    let src = $(el).attr("data-src") || $(el).attr("src");
+    if (!src) return;
+    src = src.trim();
+
+    // crude filter
+    const lower = src.toLowerCase();
+    if (
+      lower.includes("logo") ||
+      lower.includes("icon") ||
+      lower.includes("sprite") ||
+      lower.endsWith(".svg")
+    ) {
+      return;
+    }
+
+    // make absolute
+    try {
+      const abs = new URL(src, base).href;
+      urls.add(abs);
+    } catch (e) {
+      // ignore bad urls
+    }
   });
 
-  const raw = completion.choices[0]?.message?.content || '';
-
-  try {
-    return JSON.parse(raw);
-  } catch (err) {
-    console.warn('JSON parse failed, returning raw text instead.');
-    return { raw };
-  }
+  return Array.from(urls);
 }
 
-// ------------------------------------------------------------
-// POST /api/social-kit
-// Builds the initial full kit (all platforms, script, design, etc.)
-// ------------------------------------------------------------
-app.post('/api/social-kit', async (req, res) => {
-  const { url, label, price } = req.body || {};
+// ---------------- Helper: call GPT for structured social kit ----------------
 
-  if (!url) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing url',
-    });
-  }
+async function buildSocialKit({
+  pageInfo,
+  labelOverride,
+  priceOverride,
+  photos,
+}) {
+  const { title, metaDesc, visibleText } = pageInfo;
 
-  try {
-    const scraped = await scrapePageText(url);
+  const system = `
+You are Lot Rocket, an elite automotive social media copywriter for car salespeople.
+You must produce high-converting content for multiple platforms.
+Return JSON only, no extra text.
+  `.trim();
 
-    const systemPrompt = `
-You are an elite *retail* car-sales copywriter for individual salespeople
-(not the dealership). You write in a friendly, confident first-person voice
-("Hey, it's Jason at LaFontaine Chevrolet in Plymouth...").
+  const user = `
+Dealer page data:
+TITLE: ${title}
+META: ${metaDesc}
+TEXT SNIPPET:
+${visibleText.slice(0, 3000)}
 
-You MUST respond with valid JSON ONLY.
+Optional custom label: ${labelOverride || "none"}
+Optional custom price: ${priceOverride || "none"}
 
-JSON shape:
-{
-  "facebook": "...",
-  "instagram": "...",
-  "tiktok": "...",
-  "linkedin": "...",
-  "twitter": "...",
-  "text": "...",          // 1–3 short lines, SMS/DM style
-  "marketplace": "...",   // Facebook Marketplace style: title, price line, features, CTA
-  "hashtags": "...",      // one line of relevant hashtags (no more than 12)
-  "videoScript": "...",   // 30–45s selfie script, first-person, with hook + CTA
-  "videoShotPlan": "...", // bullet list of 6–10 shots for Reels/TikTok
-  "designIdea": "..."     // Canva layout checklist
+If label/price overrides are provided, prefer those in the copy.
+Create persuasive, trustworthy, and high-energy copy.
+Include emojis where appropriate but don't overdo it.
+  `.trim();
+
+  const response = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: [
+      {
+        role: "system",
+        content: system,
+      },
+      {
+        role: "user",
+        content: user,
+      },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "lot_rocket_social_kit",
+        schema: {
+          type: "object",
+          properties: {
+            label: { type: "string" },
+            price: { type: "string" },
+            facebook: { type: "string" },
+            instagram: { type: "string" },
+            tiktok: { type: "string" },
+            linkedin: { type: "string" },
+            twitter: { type: "string" },
+            text: { type: "string" },
+            marketplace: { type: "string" },
+            hashtags: { type: "string" },
+            selfieScript: { type: "string" },
+            videoPlan: { type: "string" },
+            canvaIdea: { type: "string" },
+          },
+          required: [
+            "label",
+            "price",
+            "facebook",
+            "instagram",
+            "tiktok",
+            "linkedin",
+            "twitter",
+            "text",
+            "marketplace",
+            "hashtags",
+            "selfieScript",
+            "videoPlan",
+            "canvaIdea",
+          ],
+          additionalProperties: false,
+        },
+      },
+    },
+  });
+
+  const toolContent = response.output[0]?.content[0]?.json || {};
+  const kit = toolContent || {};
+
+  // Prefer overrides if present
+  if (labelOverride) kit.label = labelOverride;
+  if (priceOverride) kit.price = priceOverride;
+
+  // attach photos we scraped
+  kit.photos = photos || [];
+
+  return kit;
 }
 
-Tone rules:
-- Talk like a real salesperson, NOT a corporate brand.
-- Use "I" and "me", and invite people to message or text you.
-- Mention the deal / payment focus if provided.
-- Make the copy specific to this exact vehicle (trim, year, key features).
-- Use 2–4 short paragraphs max for social posts, easy to skim on mobile.
+// ---------------- ROUTES ----------------
 
-Do NOT include any explanation outside the JSON.
-    `.trim();
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true });
+});
 
-    const userPrompt = `
-Vehicle label: ${label || 'This vehicle'}
-Deal info: ${price || 'Message for current pricing'}
+// Full social kit from dealer URL
+app.post("/api/social-kit", async (req, res) => {
+  try {
+    const { url, labelOverride, priceOverride } = req.body;
+    if (!url) return res.status(400).json({ error: "Missing URL" });
 
-Scraped page title:
-${scraped.title}
+    const pageInfo = await scrapePage(url);
+    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, url);
 
-Scraped description:
-${scraped.description}
-
-Scraped text:
-${scraped.text}
-    `.trim();
-
-    const kit = await chatJSON(systemPrompt, userPrompt);
-
-    const safeKit = {
-      facebook: kit.facebook || kit.raw || '',
-      instagram: kit.instagram || '',
-      tiktok: kit.tiktok || '',
-      linkedin: kit.linkedin || '',
-      twitter: kit.twitter || '',
-      text: kit.text || '',
-      marketplace: kit.marketplace || '',
-      hashtags: kit.hashtags || '',
-      videoScript: kit.videoScript || '',
-      videoShotPlan: kit.videoShotPlan || '',
-      designIdea: kit.designIdea || '',
-    };
-
-    res.json({ success: true, kit: safeKit });
-  } catch (err) {
-    console.error('Error in /api/social-kit:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Server error building social kit',
+    const kit = await buildSocialKit({
+      pageInfo,
+      labelOverride,
+      priceOverride,
+      photos,
     });
+
+    res.json(kit);
+  } catch (err) {
+    console.error("social-kit error", err);
+    res.status(500).json({ error: "Failed to build social kit" });
   }
 });
 
-// ------------------------------------------------------------
-// POST /api/new-post – spin a fresh post for a platform
-// ------------------------------------------------------------
-app.post('/api/new-post', async (req, res) => {
-  const { platform, url, label, price } = req.body || {};
-
-  if (!platform || !url) {
-    return res
-      .status(400)
-      .json({ success: false, error: 'Missing platform or url' });
-  }
-
+// New content for a single platform
+app.post("/api/new-post", async (req, res) => {
   try {
-    const scraped = await scrapePageText(url);
-
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.8,
-      messages: [
-        {
-          role: 'system',
-          content: `
-You are a high-converting social media copywriter for car *salespeople*.
-Write ONE finished post for the given platform, in a first-person, friendly tone.
-
-Rules:
-- Talk like a real salesperson ("Hey, it's Jason at LaFontaine Chevrolet in Plymouth...").
-- Call out the year, make, model, and at least 3 strong features.
-- Include a clear CTA to message or text you directly.
-- Use short lines and spacing that look good on mobile.
-- NO hashtags here (those are handled separately).
-Return ONLY the finished post text. No extra commentary.
-          `.trim(),
-        },
-        {
-          role: 'user',
-          content: `
-Platform: ${platform}
-Vehicle: ${label || 'This vehicle'}
-Deal info: ${price || 'Message for current pricing'}
-
-Scraped title:
-${scraped.title}
-
-Scraped description:
-${scraped.description}
-
-Scraped text:
-${scraped.text}
-          `.trim(),
-        },
-      ],
-    });
-
-    const post = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, post });
-  } catch (err) {
-    console.error('Error in /api/new-post:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
-  }
-});
-
-
-// ------------------------------------------------------------
-// POST /api/new-script – generate a fresh selfie video script
-// ------------------------------------------------------------
-app.post('/api/new-script', async (req, res) => {
-  const { url, label, price } = req.body || {};
-
-  if (!url) {
-    return res.status(400).json({ success: false, error: 'Missing url' });
-  }
-
-  try {
-    const scraped = await scrapePageText(url);
-
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'system',
-          content: `
-You write tight 30–45 second selfie video scripts for car salespeople.
-Use a strong hook, 3–4 punchy points, and a clear CTA to message or call.
-Return ONLY the script, no extra commentary.
-          `.trim(),
-        },
-        {
-          role: 'user',
-          content: `
-Vehicle: ${label || 'This vehicle'}
-Deal info: ${price || 'Message for current pricing'}
-
-Details:
-${scraped.title}
-${scraped.description}
-${scraped.text}
-          `.trim(),
-        },
-      ],
-    });
-
-    const script = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, script });
-  } catch (err) {
-    console.error('Error in /api/new-script:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
-  }
-});
-
-// ------------------------------------------------------------
-// POST /api/grab-photos – image URL scraper (less picky)
-// ------------------------------------------------------------
-app.post('/api/grab-photos', async (req, res) => {
-  const { url } = req.body || {};
-  if (!url) {
-    return res.status(400).json({ success: false, error: 'Missing url' });
-  }
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      return res
-        .status(500)
-        .json({ success: false, error: 'Failed to fetch dealer page' });
+    const { url, platform, labelOverride, priceOverride } = req.body;
+    if (!url || !platform) {
+      return res.status(400).json({ error: "Missing url or platform" });
     }
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const photos = [];
+    const pageInfo = await scrapePage(url);
+    const { title, metaDesc, visibleText } = pageInfo;
 
-    $('img').each((_, el) => {
-      let src = $(el).attr('data-src') || $(el).attr('src');
-      if (!src) return;
+    const system = `
+You are Lot Rocket, an elite automotive copywriter.
+Return ONLY the copy for the requested platform, no labels, no JSON.
+  `.trim();
 
-      const lower = src.toLowerCase();
-      if (
-        lower.includes('logo') ||
-        lower.includes('icon') ||
-        lower.includes('sprite') ||
-        lower.includes('placeholder') ||
-        lower.endsWith('.svg')
-      ) {
-        return;
-      }
+    const user = `
+Dealer page:
+TITLE: ${title}
+META: ${metaDesc}
+TEXT:
+${visibleText.slice(0, 3000)}
 
-      try {
-        const u = new URL(src, url);
-        src = u.toString();
-      } catch (_) {
-        return;
-      }
+Platform: ${platform}
+Optional custom label: ${labelOverride || "none"}
+Optional custom price: ${priceOverride || "none"}
 
-      if (!photos.includes(src)) photos.push(src);
-    });
+Write a single best-performing piece of content for this platform.
+Include call-to-action to DM or message the salesperson.
+    `.trim();
 
-    const limited = photos.slice(0, 24);
-    res.json({ success: true, photos: limited });
-  } catch (err) {
-    console.error('Error in /api/grab-photos:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
-  }
-});
-
-// ------------------------------------------------------------
-// POST /api/video-from-photos – quick shot plan from photo list
-// ------------------------------------------------------------
-app.post('/api/video-from-photos', async (req, res) => {
-  const { photos, label } = req.body || {};
-
-  if (!photos || !Array.isArray(photos) || photos.length === 0) {
-    return res.status(400).json({ success: false, error: 'No photos provided' });
-  }
-
-  try {
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.8,
-      messages: [
-        {
-          role: 'system',
-          content: `
-You help car salespeople turn a batch of photos into a simple vertical video shot plan
-for Reels/TikTok. Output a numbered list: which photos to show in what order,
-what motion (pan/zoom), and on-screen text ideas.
-          `.trim(),
-        },
-        {
-          role: 'user',
-          content: `
-Vehicle: ${label || 'This vehicle'}
-There are ${photos.length} photos available.
-
-Give me a short, step-by-step shot plan.
-          `.trim(),
-        },
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     });
 
-    const plan = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, plan });
+    const content = completion.output[0]?.content[0]?.text || "";
+    res.json({ content });
   } catch (err) {
-    console.error('Error in /api/video-from-photos:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error("new-post error", err);
+    res.status(500).json({ error: "Failed to regenerate post" });
   }
 });
 
-// ------------------------------------------------------------
-// POST /api/design-idea – Canva layout checklist
-// ------------------------------------------------------------
-app.post('/api/design-idea', async (req, res) => {
-  const { type, url, label, price } = req.body || {};
-
-  if (!url) {
-    return res.status(400).json({ success: false, error: 'Missing url' });
-  }
-
+// New video script for Creative Lab quick video
+app.post("/api/new-script", async (req, res) => {
   try {
-    const scraped = await scrapePageText(url);
+    const { vehicle, hook, aspect, style, length } = req.body;
 
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'system',
-          content: `
-You are a Canva layout planner for automotive creatives.
-Return a bullet/checklist style plan: where to put headline, photo,
-badges, price, CTA, and any overlays or accents.
-          `.trim(),
-        },
-        {
-          role: 'user',
-          content: `
-Creative type: ${type || 'Facebook / Instagram feed post'}
-Vehicle: ${label || 'This vehicle'}
-Deal info: ${price || 'Message for current pricing'}
+    const system = `
+You are Lot Rocket, an expert short-form car video script writer.
+Write scripts that feel natural for Reels / TikTok / Shorts.
+  `.trim();
 
-Details:
-${scraped.title}
-${scraped.description}
-${scraped.text}
-          `.trim(),
-        },
+    const user = `
+Vehicle / Offer: ${vehicle}
+Hook (optional): ${hook || "none"}
+Aspect: ${aspect || "9:16"}
+Style: ${style || "hype"}
+Length: about ${length || 30} seconds
+
+Write:
+- A hook line
+- 3–6 short bullet points (spoken lines)
+- A closing CTA that invites viewers to DM or message the salesperson
+Return plain text only.
+  `.trim();
+
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     });
 
-    const design = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, design });
+    const script = completion.output[0]?.content[0]?.text || "";
+    res.json({ script });
   } catch (err) {
-    console.error('Error in /api/design-idea:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error("new-script error", err);
+    res.status(500).json({ error: "Failed to create script" });
   }
 });
 
-// ------------------------------------------------------------
-// POST /api/objection-coach – objection handling chat
-// ------------------------------------------------------------
-app.post('/api/objection-coach', async (req, res) => {
-  const { messages, label, price } = req.body || {};
-  const history = Array.isArray(messages) ? messages : [];
-
+// Canva-style layout idea
+app.post("/api/design-idea", async (req, res) => {
   try {
-    const chatMessages = [
-      {
-        role: 'system',
-        content: `
-You are an objection-handling coach for a car salesperson.
-Be concise, positive, and honest. Use plain language.
-Treat "user" messages as the salesperson describing the customer's objection.
-Respond with how the salesperson should reply.
-        `.trim(),
-      },
-      ...history.map((m) => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content || '',
-      })),
-      {
-        role: 'system',
-        content: `Vehicle: ${label || 'This vehicle'} | Deal info: ${
-          price || 'Message for current pricing'
-        }`,
-      },
-    ];
+    const { creativeType, headline, cta, vibe } = req.body;
 
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.7,
-      messages: chatMessages,
-    });
+    const system = `
+You are Lot Rocket, a senior marketing designer.
+You output clear bullet-point layout blueprints for Canva or similar tools.
+  `.trim();
 
-    const reply = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, reply });
-  } catch (err) {
-    console.error('Error in /api/objection-coach:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
-  }
-});
+    const user = `
+Creative type: ${creativeType}
+Headline: ${headline || "(you decide a strong one)"}
+CTA: ${cta || "(you decide a strong one)"}
+Brand vibe: ${vibe || "bold, trustworthy"}
 
-// ------------------------------------------------------------
-// Optional helpers: payment / income / messages
-// ------------------------------------------------------------
-app.post('/api/payment-helper', async (req, res) => {
-  const { price, termMonths, rateApr } = req.body || {};
-  try {
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.3,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You help estimate car payments. Be concise. Return a short explanation and approximate monthly payment.',
-        },
-        {
-          role: 'user',
-          content: `Price: ${price}, Term: ${termMonths} months, APR: ${rateApr}%`,
-        },
+Describe:
+- Overall layout (top / middle / bottom)
+- Where the vehicle photo(s) should go
+- Where headline & CTA sit
+- Any supporting text or badges
+- Suggested color / style notes
+
+Return plain text in bullet format.
+  `.trim();
+
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     });
-    const result = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, result });
+
+    const idea = completion.output[0]?.content[0]?.text || "";
+    res.json({ idea });
   } catch (err) {
-    console.error('Error in /api/payment-helper:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error("design-idea error", err);
+    res.status(500).json({ error: "Failed to generate design idea" });
   }
 });
 
-app.post('/api/income-helper', async (req, res) => {
-  const { targetPayment } = req.body || {};
+// Objection Coach
+app.post("/api/objection-coach", async (req, res) => {
   try {
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.3,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You help estimate what income might be needed for a target car payment. Be clear that this is a rough rule-of-thumb, not financial advice.',
-        },
-        {
-          role: 'user',
-          content: `Target payment: ${targetPayment} per month`,
-        },
+    const { objection, history } = req.body;
+
+    const system = `
+You are Lot Rocket's Objection Coach, helping a car salesperson respond to customer objections.
+Be empathetic, honest, and sales-savvy.
+  `.trim();
+
+    const user = `
+Conversation history (if any):
+${history || "(none)"}
+
+New customer objection:
+${objection}
+
+Write a suggested response the salesperson can send, plus 1-2 coaching tips in brackets.
+  `.trim();
+
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     });
-    const result = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, result });
+
+    const reply = completion.output[0]?.content[0]?.text || "";
+    res.json({ reply });
   } catch (err) {
-    console.error('Error in /api/income-helper:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error("objection-coach error", err);
+    res.status(500).json({ error: "Failed to coach objection" });
   }
 });
 
-app.post('/api/message-helper', async (req, res) => {
-  const { context } = req.body || {};
+// Payment Estimator (math, no AI needed)
+app.post("/api/payment-helper", (req, res) => {
   try {
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You draft short, friendly follow-up messages for car shoppers. Respond with just the message text.',
-        },
-        {
-          role: 'user',
-          content: context || 'Follow up with a shopper who inquired yesterday.',
-        },
+    const price = Number(req.body.price || 0);
+    const down = Number(req.body.down || 0);
+    const rate = Number(req.body.rate || 0) / 100 / 12;
+    const term = Number(req.body.term || 0);
+    const taxRate = Number(req.body.tax || 0) / 100;
+
+    if (!price || !term) {
+      return res
+        .status(400)
+        .json({ error: "Price and term are required for payment." });
+    }
+
+    const taxedPrice = taxRate ? price * (1 + taxRate) : price;
+    const amountFinanced = Math.max(taxedPrice - down, 0);
+
+    let payment;
+    if (!rate) {
+      payment = amountFinanced / term;
+    } else {
+      payment =
+        (amountFinanced * rate * Math.pow(1 + rate, term)) /
+        (Math.pow(1 + rate, term) - 1);
+    }
+
+    const result = `~$${payment.toFixed(
+      2
+    )} per month (rough estimate only, not a binding quote).`;
+
+    res.json({ result });
+  } catch (err) {
+    console.error("payment-helper error", err);
+    res.status(500).json({ error: "Failed to estimate payment" });
+  }
+});
+
+// Income Estimator (math, no AI needed)
+app.post("/api/income-helper", (req, res) => {
+  try {
+    const payment = Number(req.body.payment || 0);
+    const dti = Number(req.body.dti || 0); // percent of income
+
+    if (!payment || !dti) {
+      return res
+        .status(400)
+        .json({ error: "Payment and DTI are required for income." });
+    }
+
+    const incomeMonthly = payment / (dti / 100);
+    const incomeYearly = incomeMonthly * 12;
+
+    const result = `
+To keep this payment at about ${dti}% of gross income,
+the customer would need roughly:
+
+- ~${incomeMonthly.toFixed(0)} per month
+- ~${incomeYearly.toFixed(0)} per year
+
+This is a very rough guideline, not financial advice.
+    `.trim();
+
+    res.json({ result });
+  } catch (err) {
+    console.error("income-helper error", err);
+    res.status(500).json({ error: "Failed to estimate income" });
+  }
+});
+
+// Message Helper: workflow, message, ask, car
+app.post("/api/message-helper", async (req, res) => {
+  try {
+    const { mode, context, tone, channel } = req.body;
+
+    let system;
+    switch (mode) {
+      case "workflow":
+        system = `
+You are Lot Rocket's Workflow Architect.
+You design step-by-step workflows and playbooks for car salespeople.
+Return clear numbered steps and optional templates.
+        `.trim();
+        break;
+      case "message":
+        system = `
+You are Lot Rocket's AI Message Builder.
+Write ready-to-send messages for car shoppers via text, email, or social DM.
+        `.trim();
+        break;
+      case "ask":
+        system = `
+You are Lot Rocket, a helpful sales and business assistant.
+Answer clearly and practically. Use examples where helpful.
+        `.trim();
+        break;
+      case "car":
+        system = `
+You are Lot Rocket's automotive product expert.
+Explain trims, features, comparisons, and recommendations like a pro salesperson.
+Avoid made-up technical specs; keep it realistic.
+        `.trim();
+        break;
+      default:
+        system = `
+You are Lot Rocket, a helpful assistant for car salespeople.
+        `.trim();
+    }
+
+    const extra = [];
+    if (tone) extra.push(`Tone: ${tone}`);
+    if (channel) extra.push(`Channel: ${channel}`);
+
+    const user = `
+Context / Question:
+${context || "(none)"}
+
+${extra.join("\n")}
+    `.trim();
+
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
       ],
     });
-    const result = completion.choices[0]?.message?.content || '';
-    res.json({ success: true, result });
+
+    const result = completion.output[0]?.content[0]?.text || "";
+    res.json({ result });
   } catch (err) {
-    console.error('Error in /api/message-helper:', err);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error("message-helper error", err);
+    res.status(500).json({ error: "Failed to generate message" });
   }
 });
 
-// ------------------------------------------------------------
-// Start server
-// ------------------------------------------------------------
+// ---------------- Start server ----------------
+
 app.listen(port, () => {
   console.log(`Lot Rocket backend running on port ${port}`);
 });
