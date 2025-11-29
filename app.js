@@ -47,12 +47,18 @@ async function scrapePageText(url) {
       ($('meta[name="description"]').attr('content') || '').trim();
 
     // Grab a bunch of text from likely content areas
-    let chunks = [];
-    $('h1, h2, h3, .vehicle-title, .vehicle-details, .price, .description, .specs')
-      .each((_, el) => {
-        const t = $(el).text().replace(/\s+/g, ' ').trim();
-        if (t && !chunks.includes(t)) chunks.push(t);
-      });
+      let chunks = [];
+    $(
+      'h1, h2, h3, h4, ' +
+      '.vehicle-title, .vehicle-header, .vehicle-name, ' +
+      '.vehicle-details, .vehicle-detail, .vehicle-specs, .specs, ' +
+      '.price, .payment, .offer, .description, .body-copy, ' +
+      '.feature, .features, .feature-list li'
+    ).each((_, el) => {
+      const t = $(el).text().replace(/\s+/g, ' ').trim();
+      if (t && !chunks.includes(t)) chunks.push(t);
+    });
+
 
     const combined = chunks.join('\n');
 
