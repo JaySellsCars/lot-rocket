@@ -1,811 +1,703 @@
-// public/app.js – Lot Rocket frontend logic
-
-document.addEventListener("DOMContentLoaded", () => {
-  const apiBase = "";
-
-  // ---------- THEME TOGGLE ----------
-  const themeToggleInput = document.getElementById("themeToggle");
-
-  if (themeToggleInput) {
-    const applyTheme = (isDark) => {
-      if (isDark) {
-        document.body.classList.add("dark-theme");
-      } else {
-        document.body.classList.remove("dark-theme");
-      }
-      themeToggleInput.checked = isDark;
-    };
-
-    // default: dark
-    applyTheme(true);
-
-    themeToggleInput.addEventListener("change", () => {
-      applyTheme(themeToggleInput.checked);
-    });
-  }
-
-  // ---------- STEP 1: BOOST WORKFLOW ----------
-
-  const vehicleUrlInput = document.getElementById("vehicleUrl");
-  const vehicleLabelInput = document.getElementById("vehicleLabel");
-  const priceInfoInput = document.getElementById("priceInfo");
-  const boostButton = document.getElementById("boostButton");
-  const statusText = document.getElementById("statusText");
-  const summaryLabel = document.getElementById("summaryLabel");
-  const summaryPrice = document.getElementById("summaryPrice");
-  const photosGrid = document.getElementById("photosGrid");
-
-  const facebookPost = document.getElementById("facebookPost");
-  const instagramPost = document.getElementById("instagramPost");
-  const tiktokPost = document.getElementById("tiktokPost");
-  const linkedinPost = document.getElementById("linkedinPost");
-  const twitterPost = document.getElementById("twitterPost");
-  const textBlurb = document.getElementById("textBlurb");
-  const marketplacePost = document.getElementById("marketplacePost");
-  const hashtags = document.getElementById("hashtags");
-  const selfieScript = document.getElementById("selfieScript");
-  const shotPlan = document.getElementById("shotPlan");
-  const designIdea = document.getElementById("designIdea");
-
-  async function handleBoost() {
-    const url = (vehicleUrlInput?.value || "").trim();
-    if (!url) {
-      statusText.textContent = "Please paste a dealer vehicle URL first.";
-      statusText.classList.add("error");
-      return;
-    }
-    statusText.classList.remove("error");
-    statusText.textContent = "Building social kit... 🚀";
-
-    try {
-      const body = {
-        url,
-        labelOverride: vehicleLabelInput?.value || "",
-        priceOverride: priceInfoInput?.value || "",
-      };
-
-      const res = await fetch(apiBase + "/api/social-kit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      // Summary
-      if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
-      if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
-
-      // Posts
-      if (facebookPost) facebookPost.value = data.facebook || "";
-      if (instagramPost) instagramPost.value = data.instagram || "";
-      if (tiktokPost) tiktokPost.value = data.tiktok || "";
-      if (linkedinPost) linkedinPost.value = data.linkedin || "";
-      if (twitterPost) twitterPost.value = data.twitter || "";
-      if (textBlurb) textBlurb.value = data.text || "";
-      if (marketplacePost) marketplacePost.value = data.marketplace || "";
-      if (hashtags) hashtags.value = data.hashtags || "";
-      if (selfieScript) selfieScript.value = data.selfieScript || "";
-      if (shotPlan) shotPlan.value = data.shotPlan || "";
-      if (designIdea) designIdea.value = data.designIdea || "";
-
-      // Photos
-      if (photosGrid) {
-        photosGrid.innerHTML = "";
-        const photos = Array.isArray(data.photos) ? data.photos : [];
-        photos.slice(0, 24).forEach((url) => {
-          const img = document.createElement("img");
-          img.src = url;
-          img.alt = "Vehicle photo";
-          img.className = "photo-thumb";
-          photosGrid.appendChild(img);
-        });
-      }
-
-      statusText.textContent = "Social kit ready! 🎯";
-    } catch (err) {
-      console.error(err);
-      statusText.textContent = "Error building social kit. Check URL or try again.";
-      statusText.classList.add("error");
-    }
-  }
-
-  if (boostButton) {
-    boostButton.addEventListener("click", handleBoost);
-  }
-
-  // ---------- COPY BUTTONS ----------
-  function wireCopyButtons() {
-    const copyButtons = document.querySelectorAll(".copy-btn[data-copy-target]");
-    copyButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const targetId = btn.getAttribute("data-copy-target");
-        const target = document.getElementById(targetId);
-        if (!target) return;
-
-        const value = target.value || target.textContent || "";
-        if (!value.trim()) {
-          btn.classList.add("empty");
-          btn.textContent = "Empty";
-          setTimeout(() => {
-            btn.classList.remove("empty");
-            btn.textContent = "Copy";
-          }, 1000);
-          return;
-        }
-
-        navigator.clipboard
-          .writeText(value)
-          .then(() => {
-            btn.classList.add("copied");
-            btn.textContent = "Copied!";
-            setTimeout(() => {
-              btn.classList.remove("copied");
-              btn.textContent = "Copy";
-            }, 1200);
-          })
-          .catch(() => {
-            btn.textContent = "Oops";
-            setTimeout(() => (btn.textContent = "Copy"), 1200);
-          });
-      });
-    });
-  }
-  wireCopyButtons();
-
-  // ---------- REGEN BUTTONS (SOCIAL KIT) ----------
-
-  const regenButtons = document.querySelectorAll(".regen-btn[data-platform]");
-
-  regenButtons.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const platform = btn.getAttribute("data-platform");
-      if (!platform) return;
-
-      const url = (vehicleUrlInput?.value || "").trim();
-      const label = summaryLabel?.textContent || "";
-      const price = summaryPrice?.textContent || "";
-
-      try {
-        btn.disabled = true;
-        btn.textContent = "Spinning...";
-
-        const res = await fetch(apiBase + "/api/new-post", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform, url, label, price }),
-        });
-
-        if (!res.ok) throw new Error(`Server ${res.status}`);
-        const data = await res.json();
-
-        const map = {
-          facebook: facebookPost,
-          instagram: instagramPost,
-          tiktok: tiktokPost,
-          linkedin: linkedinPost,
-          twitter: twitterPost,
-          marketplace: marketplacePost,
-          text: textBlurb,
-          hashtags,
-        };
-
-        const target = map[platform];
-        if (target && data.text) {
-          target.value = data.text;
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        btn.disabled = false;
-        btn.textContent =
-          platform === "text"
-            ? "New Text"
-            : platform === "hashtags"
-            ? "New Set"
-            : "New Post";
-      }
-    });
-  });
-
-  // Selfie script / shot plan / design idea regen (creative support endpoints)
-  const regenSelfieScriptBtn = document.getElementById("regenSelfieScript");
-  const regenShotPlanBtn = document.getElementById("regenShotPlan");
-  const regenDesignIdeaBtn = document.getElementById("regenDesignIdea");
-
-  if (regenSelfieScriptBtn && selfieScript) {
-    regenSelfieScriptBtn.addEventListener("click", async () => {
-      const url = (vehicleUrlInput?.value || "").trim();
-      try {
-        regenSelfieScriptBtn.disabled = true;
-        regenSelfieScriptBtn.textContent = "Spinning...";
-        const res = await fetch(apiBase + "/api/new-script", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, kind: "selfie" }),
-        });
-        const data = await res.json();
-        selfieScript.value = data.script || "";
-      } catch (err) {
-        console.error(err);
-      } finally {
-        regenSelfieScriptBtn.disabled = false;
-        regenSelfieScriptBtn.textContent = "New Script";
-      }
-    });
-  }
-
-  if (regenShotPlanBtn && shotPlan) {
-    regenShotPlanBtn.addEventListener("click", async () => {
-      const url = (vehicleUrlInput?.value || "").trim();
-      try {
-        regenShotPlanBtn.disabled = true;
-        regenShotPlanBtn.textContent = "Spinning...";
-        const res = await fetch(apiBase + "/api/video-from-photos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
-        });
-        const data = await res.json();
-        shotPlan.value = data.plan || "";
-      } catch (err) {
-        console.error(err);
-      } finally {
-        regenShotPlanBtn.disabled = false;
-        regenShotPlanBtn.textContent = "New Plan";
-      }
-    });
-  }
-
-  if (regenDesignIdeaBtn && designIdea) {
-    regenDesignIdeaBtn.addEventListener("click", async () => {
-      const label = summaryLabel?.textContent || "";
-      try {
-        regenDesignIdeaBtn.disabled = true;
-        regenDesignIdeaBtn.textContent = "Spinning...";
-        const res = await fetch(apiBase + "/api/design-idea", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ label }),
-        });
-        const data = await res.json();
-        designIdea.value = data.idea || "";
-      } catch (err) {
-        console.error(err);
-      } finally {
-        regenDesignIdeaBtn.disabled = false;
-        regenDesignIdeaBtn.textContent = "New Idea";
-      }
-    });
-  }
-
-  // ---------- CREATIVE LAB: VIDEO IDEA & LAYOUT ----------
-
-  const videoVehicle = document.getElementById("videoVehicle");
-  const videoHook = document.getElementById("videoHook");
-  const videoStyle = document.getElementById("videoStyle");
-  const videoLength = document.getElementById("videoLength");
-  const videoIdeaOutput = document.getElementById("videoIdeaOutput");
-  const generateVideoIdeaBtn = document.getElementById("generateVideoIdea");
-
-  if (generateVideoIdeaBtn) {
-    generateVideoIdeaBtn.addEventListener("click", async () => {
-      try {
-        generateVideoIdeaBtn.disabled = true;
-        generateVideoIdeaBtn.textContent = "Thinking...";
-
-        const res = await fetch(apiBase + "/api/new-script", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            kind: "idea",
-            vehicle: videoVehicle.value,
-            hook: videoHook.value,
-            style: videoStyle.value,
-            length: videoLength.value,
-          }),
-        });
-
-        const data = await res.json();
-        videoIdeaOutput.value = data.script || "";
-      } catch (err) {
-        console.error(err);
-        videoIdeaOutput.value = "Error generating video idea.";
-      } finally {
-        generateVideoIdeaBtn.disabled = false;
-        generateVideoIdeaBtn.textContent = "Generate Video Idea";
-      }
-    });
-  }
-
-  const layoutType = document.getElementById("layoutType");
-  const layoutHeadline = document.getElementById("layoutHeadline");
-  const layoutCTA = document.getElementById("layoutCTA");
-  const layoutVibe = document.getElementById("layoutVibe");
-  const layoutIdeaOutput = document.getElementById("layoutIdeaOutput");
-  const generateLayoutIdeaBtn = document.getElementById("generateLayoutIdea");
-
-  if (generateLayoutIdeaBtn) {
-    generateLayoutIdeaBtn.addEventListener("click", async () => {
-      try {
-        generateLayoutIdeaBtn.disabled = true;
-        generateLayoutIdeaBtn.textContent = "Thinking...";
-
-        const res = await fetch(apiBase + "/api/design-idea", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: layoutType.value,
-            headline: layoutHeadline.value,
-            cta: layoutCTA.value,
-            vibe: layoutVibe.value,
-          }),
-        });
-
-        const data = await res.json();
-        layoutIdeaOutput.value = data.idea || "";
-      } catch (err) {
-        console.error(err);
-        layoutIdeaOutput.value = "Error generating layout idea.";
-      } finally {
-        generateLayoutIdeaBtn.disabled = false;
-        generateLayoutIdeaBtn.textContent = "Generate Layout Idea";
-      }
-    });
-  }
-
-  // ---------- PHOTO EDITOR ----------
-  const photoUpload = document.getElementById("photoUpload");
-  const photoPreview = document.getElementById("photoPreview");
-  const photoPlaceholder = document.getElementById("photoPlaceholder");
-  const brightnessRange = document.getElementById("brightnessRange");
-  const contrastRange = document.getElementById("contrastRange");
-  const saturationRange = document.getElementById("saturationRange");
-
-  function updatePhotoFilters() {
-    if (!photoPreview) return;
-    const b = brightnessRange ? brightnessRange.value : 100;
-    const c = contrastRange ? contrastRange.value : 100;
-    const s = saturationRange ? saturationRange.value : 100;
-    photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
-  }
-
-  if (photoUpload && photoPreview) {
-    photoUpload.addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        photoPreview.src = ev.target.result;
-        photoPreview.style.display = "block";
-        if (photoPlaceholder) photoPlaceholder.style.display = "none";
-        updatePhotoFilters();
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  [brightnessRange, contrastRange, saturationRange].forEach((slider) => {
-    if (!slider) return;
-    slider.addEventListener("input", updatePhotoFilters);
-  });
-
-  // ---------- COMMON MONEY HELPER ----------
-
-  function formatMoney(value) {
-    if (isNaN(value)) return "$0.00";
-    const rounded = Math.round(value * 100) / 100;
-    return (
-      "$" +
-      rounded
-        .toFixed(2)
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    );
-  }
-
-  // ---------- PAYMENT CALCULATOR MATH ----------
-
-  const autoPriceInput = document.getElementById("autoPrice");
-  const loanTermInput = document.getElementById("loanTermMonths");
-  const interestRateInput = document.getElementById("interestRate");
-  const cashIncentivesInput = document.getElementById("cashIncentives");
-  const downPaymentInput = document.getElementById("downPayment");
-  const tradeInValueInput = document.getElementById("tradeInValue");
-  const tradeOwedInput = document.getElementById("tradeOwed");
-  const salesTaxInput = document.getElementById("salesTax");
-  const feesInput = document.getElementById("fees");
-  const paymentOutput = document.getElementById("paymentOutput");
-  const runPaymentHelperBtn = document.getElementById("runPaymentHelper");
-
-  if (runPaymentHelperBtn) {
-    runPaymentHelperBtn.addEventListener("click", () => {
-      const price = parseFloat(autoPriceInput.value || "0");
-      const termMonths = parseInt(loanTermInput.value || "0", 10);
-      const rateAnnual = parseFloat(interestRateInput.value || "0");
-      const incentives = parseFloat(cashIncentivesInput.value || "0");
-      const down = parseFloat(downPaymentInput.value || "0");
-      const tradeValue = parseFloat(tradeInValueInput.value || "0");
-      const tradeOwed = parseFloat(tradeOwedInput.value || "0");
-      const salesTaxPct = parseFloat(salesTaxInput.value || "0");
-      const fees = parseFloat(feesInput.value || "0");
-
-      if (!price || !termMonths) {
-        paymentOutput.value =
-          "Please enter at least Auto Price and Loan Term to estimate a payment.";
-        return;
-      }
-
-      const priceAfterIncentives = Math.max(price - incentives, 0);
-      const netTrade = tradeValue - tradeOwed;
-      const taxableAmount = priceAfterIncentives;
-      const taxAmount = taxableAmount * (salesTaxPct / 100);
-      const amountFinanced =
-        priceAfterIncentives - down - netTrade + taxAmount + fees;
-
-      const monthlyRate = rateAnnual / 100 / 12;
-      let monthlyPayment;
-
-      if (!rateAnnual || !monthlyRate) {
-        monthlyPayment = amountFinanced / termMonths;
-      } else {
-        const factor = Math.pow(1 + monthlyRate, -termMonths);
-        monthlyPayment = (amountFinanced * monthlyRate) / (1 - factor);
-      }
-
-      const totalPayments = monthlyPayment * termMonths;
-      const totalInterest = totalPayments - amountFinanced;
-      const upfront = down + fees;
-
-      paymentOutput.value =
-        `Monthly Payment: ${formatMoney(monthlyPayment)}\n\n` +
-        `Total Loan Amount (amount financed): ${formatMoney(amountFinanced)}\n` +
-        `Sales Tax: ${formatMoney(taxAmount)}\n` +
-        `Upfront Payment (down + fees): ${formatMoney(upfront)}\n\n` +
-        `Total of ${termMonths} Payments: ${formatMoney(totalPayments)}\n` +
-        `Total Loan Interest: ${formatMoney(totalInterest)}\n` +
-        `Estimated Total Cost (vehicle, tax, fees, interest): ${formatMoney(
-          totalPayments + upfront
-        )}`;
-    });
-  }
-
-  // ---------- SIMPLE CALCULATOR IN PAYMENT MODAL ----------
-
-  const simpleCalcPanel = document.getElementById("simpleCalcPanel");
-  const simpleCalcDisplay = document.getElementById("simpleCalcDisplay");
-  const toggleSimpleCalcBtn = document.getElementById("toggleSimpleCalc");
-
-  if (toggleSimpleCalcBtn && simpleCalcPanel && simpleCalcDisplay) {
-    let calcExpression = "0";
-
-    const updateDisplay = () => {
-      simpleCalcDisplay.textContent = calcExpression || "0";
-    };
-
-    toggleSimpleCalcBtn.addEventListener("click", () => {
-      simpleCalcPanel.classList.toggle("hidden");
-    });
-
-    simpleCalcPanel.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-calc]");
-      if (!btn) return;
-      const value = btn.getAttribute("data-calc");
-
-      if (value === "C") {
-        calcExpression = "0";
-        updateDisplay();
-        return;
-      }
-
-      if (value === "DEL") {
-        calcExpression = calcExpression.slice(0, -1) || "0";
-        updateDisplay();
-        return;
-      }
-
-      if (value === "=") {
-        try {
-          if (!/^[0-9+\-*/().\s]+$/.test(calcExpression)) {
-            throw new Error("Invalid expression");
-          }
-          const result = Function(`"use strict"; return (${calcExpression})`)();
-          calcExpression = String(result);
-        } catch {
-          calcExpression = "Error";
-        }
-        updateDisplay();
-        return;
-      }
-
-      if (calcExpression === "0" && /[0-9.]/.test(value)) {
-        calcExpression = value;
-      } else if (calcExpression === "Error") {
-        calcExpression = value;
-      } else {
-        calcExpression += value;
-      }
-
-      updateDisplay();
-    });
-
-    updateDisplay();
-  }
-
-  // ---------- INCOME CALCULATOR ----------
-
-  const ytdIncomeInput = document.getElementById("ytdIncome");
-  const hireDateInput = document.getElementById("hireDate");
-  const checkDateInput = document.getElementById("checkDate");
-  const incomeOutput = document.getElementById("incomeOutput");
-  const runIncomeHelperBtn = document.getElementById("runIncomeHelper");
-
-  if (runIncomeHelperBtn) {
-    runIncomeHelperBtn.addEventListener("click", () => {
-      const ytd = parseFloat(ytdIncomeInput.value || "0");
-      const hireVal = hireDateInput.value;
-      const checkVal = checkDateInput.value;
-
-      if (!ytd || !hireVal || !checkVal) {
-        incomeOutput.value =
-          "Please enter Year to Date income, hire date, and check date.";
-        return;
-      }
-
-      const hire = new Date(hireVal);
-      const check = new Date(checkVal);
-
-      if (!(hire instanceof Date) || !(check instanceof Date) || hire >= check) {
-        incomeOutput.value =
-          "Check date must be after hire date. Please double-check your dates.";
-        return;
-      }
-
-      const msPerDay = 1000 * 60 * 60 * 24;
-      const daysWorked = Math.max(
-        1,
-        Math.round((check.getTime() - hire.getTime()) / msPerDay)
-      );
-
-      const dailyIncome = ytd / daysWorked;
-      const annualIncome = dailyIncome * 365;
-      const monthlyIncome = annualIncome / 12;
-
-      incomeOutput.value =
-        `Estimated Monthly Income: ${formatMoney(monthlyIncome)}\n\n` +
-        `Based on:\n` +
-        `Year-to-Date Income: ${formatMoney(ytd)}\n` +
-        `Days Worked: ${daysWorked}\n` +
-        `Estimated Annual Income: ${formatMoney(annualIncome)}`;
-    });
-  }
-
-  // ---------- AI TOOL HELPERS (BACKEND ENDPOINTS) ----------
-
-  async function callHelper(endpoint, payload) {
-    const res = await fetch(apiBase + endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(`Server ${res.status}`);
-    return res.json();
-  }
-
-  // Objection coach
-  const objectionInput = document.getElementById("objectionInput");
-  const objectionOutput = document.getElementById("objectionOutput");
-  const runObjectionCoachBtn = document.getElementById("runObjectionCoach");
-
-  if (runObjectionCoachBtn) {
-    runObjectionCoachBtn.addEventListener("click", async () => {
-      try {
-        runObjectionCoachBtn.disabled = true;
-        runObjectionCoachBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/objection-coach", {
-          objection: objectionInput.value,
-        });
-        objectionOutput.value = data.answer || "";
-      } catch (err) {
-        console.error(err);
-        objectionOutput.value = "Error generating coaching response.";
-      } finally {
-        runObjectionCoachBtn.disabled = false;
-        runObjectionCoachBtn.textContent = "Get Coaching";
-      }
-    });
-  }
-
-  // Workflow expert
-  const workflowSituation = document.getElementById("workflowSituation");
-  const workflowOutput = document.getElementById("workflowOutput");
-  const runWorkflowHelperBtn = document.getElementById("runWorkflowHelper");
-
-  if (runWorkflowHelperBtn) {
-    runWorkflowHelperBtn.addEventListener("click", async () => {
-      try {
-        runWorkflowHelperBtn.disabled = true;
-        runWorkflowHelperBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/message-helper", {
-          mode: "workflow",
-          prompt: workflowSituation.value,
-        });
-        workflowOutput.value = data.text || "";
-      } catch (err) {
-        console.error(err);
-        workflowOutput.value = "Error generating workflow.";
-      } finally {
-        runWorkflowHelperBtn.disabled = false;
-        runWorkflowHelperBtn.textContent = "Build Workflow";
-      }
-    });
-  }
-
-  // Message builder
-  const messageType = document.getElementById("messageType");
-  const messageGoal = document.getElementById("messageGoal");
-  const messageDetails = document.getElementById("messageDetails");
-  const messageOutput = document.getElementById("messageOutput");
-  const runMessageHelperBtn = document.getElementById("runMessageHelper");
-
-  if (runMessageHelperBtn) {
-    runMessageHelperBtn.addEventListener("click", async () => {
-      try {
-        runMessageHelperBtn.disabled = true;
-        runMessageHelperBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/message-helper", {
-          mode: "message",
-          type: messageType.value,
-          goal: messageGoal.value,
-          details: messageDetails.value,
-        });
-        messageOutput.value = data.text || "";
-      } catch (err) {
-        console.error(err);
-        messageOutput.value = "Error generating message.";
-      } finally {
-        runMessageHelperBtn.disabled = false;
-        runMessageHelperBtn.textContent = "Generate Message";
-      }
-    });
-  }
-
-  // Ask AI
-  const askQuestion = document.getElementById("askQuestion");
-  const askOutput = document.getElementById("askOutput");
-  const runAskHelperBtn = document.getElementById("runAskHelper");
-
-  if (runAskHelperBtn) {
-    runAskHelperBtn.addEventListener("click", async () => {
-      try {
-        runAskHelperBtn.disabled = true;
-        runAskHelperBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/message-helper", {
-          mode: "ask",
-          question: askQuestion.value,
-        });
-        askOutput.value = data.text || "";
-      } catch (err) {
-        console.error(err);
-        askOutput.value = "Error answering question.";
-      } finally {
-        runAskHelperBtn.disabled = false;
-        runAskHelperBtn.textContent = "Ask";
-      }
-    });
-  }
-
-  // Car expert
-  const carQuestion = document.getElementById("carQuestion");
-  const carOutput = document.getElementById("carOutput");
-  const runCarHelperBtn = document.getElementById("runCarHelper");
-
-  if (runCarHelperBtn) {
-    runCarHelperBtn.addEventListener("click", async () => {
-      try {
-        runCarHelperBtn.disabled = true;
-        runCarHelperBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/message-helper", {
-          mode: "car",
-          question: carQuestion.value,
-        });
-        carOutput.value = data.text || "";
-      } catch (err) {
-        console.error(err);
-        carOutput.value = "Error answering car question.";
-      } finally {
-        runCarHelperBtn.disabled = false;
-        runCarHelperBtn.textContent = "Ask Car Expert";
-      }
-    });
-  }
-
-  // Image generation prompt
-  const imagePrompt = document.getElementById("imagePrompt");
-  const imageOutput = document.getElementById("imageOutput");
-  const runImageHelperBtn = document.getElementById("runImageHelper");
-
-  if (runImageHelperBtn) {
-    runImageHelperBtn.addEventListener("click", async () => {
-      try {
-        runImageHelperBtn.disabled = true;
-        runImageHelperBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/message-helper", {
-          mode: "image-brief",
-          prompt: imagePrompt.value,
-        });
-        imageOutput.value =
-          data.text ||
-          "Describe your image in detail (vehicle, background, lighting, angle, style).";
-      } catch (err) {
-        console.error(err);
-        imageOutput.value = "Error generating image prompt.";
-      } finally {
-        runImageHelperBtn.disabled = false;
-        runImageHelperBtn.textContent = "Build Image Prompt";
-      }
-    });
-  }
-
-  // Video generation brief
-  const videoGenPrompt = document.getElementById("videoGenPrompt");
-  const videoGenOutput = document.getElementById("videoGenOutput");
-  const runVideoHelperBtn = document.getElementById("runVideoHelper");
-
-  if (runVideoHelperBtn) {
-    runVideoHelperBtn.addEventListener("click", async () => {
-      try {
-        runVideoHelperBtn.disabled = true;
-        runVideoHelperBtn.textContent = "Thinking...";
-        const data = await callHelper("/api/message-helper", {
-          mode: "video-brief",
-          prompt: videoGenPrompt.value,
-        });
-        videoGenOutput.value = data.text || "";
-      } catch (err) {
-        console.error(err);
-        videoGenOutput.value = "Error generating video brief.";
-      } finally {
-        runVideoHelperBtn.disabled = false;
-        runVideoHelperBtn.textContent = "Build Video Brief";
-      }
-    });
-  }
-
-  // ---------- MODAL OPEN/CLOSE WIRING ----------
-
-  function wireModal(triggerId, modalId, closeId) {
-    const trigger = document.getElementById(triggerId);
-    const modal = document.getElementById(modalId);
-    const close = document.getElementById(closeId);
-
-    if (!trigger || !modal || !close) return;
-
-    trigger.addEventListener("click", () => {
-      modal.classList.remove("hidden");
-    });
-
-    close.addEventListener("click", () => {
-      modal.classList.add("hidden");
-    });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-      }
-    });
-  }
-
-  wireModal("objectionLauncher", "objectionModal", "objectionClose");
-  wireModal("paymentLauncher", "paymentModal", "paymentClose");
-  wireModal("incomeLauncher", "incomeModal", "incomeClose");
-  wireModal("workflowLauncher", "workflowModal", "workflowClose");
-  wireModal("messageLauncher", "messageModal", "messageClose");
-  wireModal("askLauncher", "askModal", "askClose");
-  wireModal("carLauncher", "carModal", "carClose");
-  wireModal("imageLauncher", "imageModal", "imageClose");
-  wireModal("videoLauncher", "videoModal", "videoClose");
-});
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lot Rocket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="branding">
+      <h1>🚀 Lot Rocket</h1>
+      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+    </div>
+
+    <div class="header-controls">
+      <label class="theme-switch">
+        <span>Dark</span>
+        <input type="checkbox" id="themeToggle" checked />
+        <span class="slider"></span>
+        <span>Light</span>
+      </label>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main class="layout">
+    <!-- STEP 1 – Dealer URL Scraper (LEFT) -->
+    <section class="column-left column">
+      <h2>Step 1 – Dealer URL Scraper</h2>
+
+      <div class="summary-box">
+        <h3>Vehicle Details</h3>
+
+        <label>
+          Dealer Vehicle URL
+          <input
+            type="text"
+            id="vehicleUrl"
+            placeholder="Paste full dealer listing URL here..."
+          />
+        </label>
+
+        <label>
+          Vehicle Label (optional override)
+          <input
+            type="text"
+            id="vehicleLabel"
+            placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
+          />
+        </label>
+
+        <label>
+          Price / Offer (optional override)
+          <input
+            type="text"
+            id="priceInfo"
+            placeholder="Example: $699/mo or $47,995 + tax"
+          />
+        </label>
+
+        <p class="small-note">
+          Lot Rocket will scrape the page and clean up the title, description, and photos.
+        </p>
+
+        <div class="summary-box" style="margin-top: 8px;">
+          <h3>Summary Snapshot</h3>
+          <p>Vehicle: <span id="summaryLabel">—</span></p>
+          <p>Price: <span id="summaryPrice">—</span></p>
+        </div>
+
+        <button id="boostButton" class="primary-btn" style="margin-top: 8px;">
+          Boost This Listing
+        </button>
+        <div id="statusText" class="status-text"></div>
+      </div>
+
+      <div class="summary-box">
+        <h3>Photos pulled from dealer site</h3>
+        <p class="small-note">
+          Click "Boost This Listing" to refresh photos. Up to 24 images, logos removed when possible.
+        </p>
+        <div id="photosGrid" class="photo-grid"></div>
+      </div>
+    </section>
+
+    <!-- STEP 2 – Social Media Kit (MIDDLE) -->
+    <section class="column-middle">
+      <!-- Listing summary inside Step 2 is optional; we already have it in Step 1.
+           You can keep this empty or repurpose later. -->
+      <div class="summary-box">
+        <h3>Step 2 – Social Media Kit</h3>
+        <p class="small-note">
+          Copy, tweak, and paste into each platform. Spin fresh versions anytime.
+        </p>
+      </div>
+
+      <!-- Facebook -->
+      <div class="platform-card">
+        <h3>Facebook Post</h3>
+        <textarea
+          id="facebookPost"
+          placeholder="Facebook post will appear here after Boost."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="facebook">New Post</button>
+          <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- Instagram -->
+      <div class="platform-card">
+        <h3>Instagram Caption</h3>
+        <textarea
+          id="instagramPost"
+          placeholder="Instagram caption will appear here after Boost."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="instagram">New Post</button>
+          <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- TikTok -->
+      <div class="platform-card">
+        <h3>TikTok Caption</h3>
+        <textarea
+          id="tiktokPost"
+          placeholder="TikTok caption + hook will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="tiktok">New Post</button>
+          <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- LinkedIn -->
+      <div class="platform-card">
+        <h3>LinkedIn Post</h3>
+        <textarea
+          id="linkedinPost"
+          placeholder="LinkedIn post will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="linkedin">New Post</button>
+          <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- X / Twitter -->
+      <div class="platform-card">
+        <h3>X / Twitter Post</h3>
+        <textarea
+          id="twitterPost"
+          placeholder="X / Twitter post will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="twitter">New Post</button>
+          <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- Text / DM -->
+      <div class="platform-card">
+        <h3>Text / DM</h3>
+        <textarea
+          id="textBlurb"
+          placeholder="Short, high-converting text / DM will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="text">New Text</button>
+          <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
+        </div>
+      </div>
+
+      <!-- Marketplace -->
+      <div class="platform-card">
+        <h3>Marketplace Listing</h3>
+        <textarea
+          id="marketplacePost"
+          placeholder="Marketplace description will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="marketplace">New Post</button>
+          <button class="copy-btn" data-copy-target="marketplacePost">Copy</button>
+        </div>
+      </div>
+
+      <!-- Hashtags -->
+      <div class="platform-card">
+        <h3>Hashtag Set</h3>
+        <textarea
+          id="hashtags"
+          placeholder="Hashtag set will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="hashtags">New Set</button>
+          <button class="copy-btn" data-copy-target="hashtags">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3 – Creative Lab (BOTTOM, full width) -->
+    <section class="column-right column">
+      <h2>Step 3 – Creative Lab</h2>
+
+      <!-- Quick Sales Video Idea -->
+      <div class="lab-card">
+        <h3>Quick Sales Video Idea</h3>
+        <div class="column">
+          <label>
+            Vehicle / Offer
+            <input
+              type="text"
+              id="videoVehicle"
+              placeholder="Vehicle or promo"
+            />
+          </label>
+
+          <label>
+            Hook
+            <input
+              type="text"
+              id="videoHook"
+              placeholder="Example: Stop scrolling..."
+            />
+          </label>
+
+          <label>
+            Style
+            <input
+              type="text"
+              id="videoStyle"
+              placeholder="Energetic, educational, hype"
+            />
+          </label>
+
+          <label>
+            Length / Aspect
+            <input
+              type="text"
+              id="videoLength"
+              placeholder="Example: 30s vertical 9:16"
+            />
+          </label>
+
+          <button id="generateVideoIdea" class="primary-btn">
+            Generate Video Idea
+          </button>
+
+          <textarea
+            id="videoIdeaOutput"
+            placeholder="Video script / beats will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button class="copy-btn" data-copy-target="videoIdeaOutput">
+              Copy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canva Layout Planner -->
+      <div class="lab-card">
+        <h3>Canva Layout Planner</h3>
+        <label>
+          Creative Type
+          <input
+            type="text"
+            id="layoutType"
+            placeholder="Story, feed post, flyer"
+          />
+        </label>
+        <label>
+          Headline
+          <input
+            type="text"
+            id="layoutHeadline"
+            placeholder="Main headline"
+          />
+        </label>
+        <label>
+          Call To Action
+          <input
+            type="text"
+            id="layoutCTA"
+            placeholder="CTA text"
+          />
+        </label>
+        <label>
+          Vibe
+          <input
+            type="text"
+            id="layoutVibe"
+            placeholder="Clean, bold, premium"
+          />
+        </label>
+        <button id="generateLayoutIdea" class="primary-btn">
+          Generate Layout Idea
+        </button>
+        <textarea
+          id="layoutIdeaOutput"
+          placeholder="Layout idea / text content will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="layoutIdeaOutput">
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Simple Photo Tweaker -->
+      <div class="lab-card">
+        <h3>Photo Quick Tuner</h3>
+        <input type="file" id="photoUpload" accept="image/*" />
+
+        <div class="photo-preview-wrapper">
+          <img id="photoPreview" style="display: none;" />
+          <div id="photoPlaceholder" class="small-note">
+            Upload a photo to tweak brightness, contrast, and saturation.
+          </div>
+        </div>
+
+        <div class="slider-group">
+          <label>
+            Brightness
+            <input
+              type="range"
+              id="brightnessRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
+          <label>
+            Contrast
+            <input
+              type="range"
+              id="contrastRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
+          <label>
+            Saturation
+            <input
+              type="range"
+              id="saturationRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FLOATING TOOL BUTTONS -->
+  <aside class="floating-tools">
+    <button id="objectionLauncher" class="tool-button">
+      Objection Coach
+    </button>
+    <button id="calcLauncher" class="tool-button">
+      Calculator
+    </button>
+    <button id="paymentLauncher" class="tool-button">
+      Payment Calculator
+    </button>
+    <button id="incomeLauncher" class="tool-button">
+      Income Calculator
+    </button>
+    <button id="workflowLauncher" class="tool-button">
+      AI Work Flow Expert
+    </button>
+    <button id="messageLauncher" class="tool-button">
+      AI Message Builder
+    </button>
+    <button id="askLauncher" class="tool-button">
+      Ask A.I.
+    </button>
+    <button id="carLauncher" class="tool-button">
+      AI Car Expert
+    </button>
+    <button id="imageLauncher" class="tool-button">
+      AI Image Generation
+    </button>
+    <button id="videoLauncher" class="tool-button">
+      AI Video Generation
+    </button>
+  </aside>
+
+  <!-- ############ MODALS ############ -->
+
+  <!-- Objection Coach -->
+  <div id="objectionModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="objectionClose" class="modal-close">&times;</span>
+      <h2>Objection Coach</h2>
+      <p>Drop in a customer objection and we’ll coach you through it.</p>
+      <textarea
+        id="objectionInput"
+        placeholder="Example: I need to talk to my spouse..."
+      ></textarea>
+      <button id="runObjectionCoach" class="primary-btn">
+        Get Coaching
+      </button>
+      <textarea
+        id="objectionOutput"
+        placeholder="Coaching response will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Standalone Calculator -->
+  <div id="calcModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="calcClose" class="modal-close">&times;</span>
+      <h2>Calculator</h2>
+
+      <div id="basicCalcPanel" class="simple-calc">
+        <div id="basicCalcDisplay" class="simple-calc-display">0</div>
+        <div class="simple-calc-grid">
+          <button data-calc="C">C</button>
+          <button data-calc="DEL">⌫</button>
+          <button data-calc="(">(</button>
+          <button data-calc=")">)</button>
+
+          <button data-calc="7">7</button>
+          <button data-calc="8">8</button>
+          <button data-calc="9">9</button>
+          <button data-calc="/">÷</button>
+
+          <button data-calc="4">4</button>
+          <button data-calc="5">5</button>
+          <button data-calc="6">6</button>
+          <button data-calc="*">×</button>
+
+          <button data-calc="1">1</button>
+          <button data-calc="2">2</button>
+          <button data-calc="3">3</button>
+          <button data-calc="-">−</button>
+
+          <button data-calc="0">0</button>
+          <button data-calc=".">.</button>
+          <button data-calc="=">=</button>
+          <button data-calc="+">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Calculator -->
+  <div id="paymentModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="paymentClose" class="modal-close">&times;</span>
+      <h2>Payment Calculator</h2>
+
+      <div class="summary-box">
+        <h3>Auto Loan Details</h3>
+
+        <label>
+          Auto Price
+          <input type="number" id="autoPrice" value="50000" />
+        </label>
+
+        <label>
+          Loan Term (months)
+          <input type="number" id="loanTermMonths" value="60" />
+        </label>
+
+        <label>
+          Interest Rate (%)
+          <input type="number" id="interestRate" value="5" />
+        </label>
+
+        <label>
+          Cash Incentives
+          <input type="number" id="cashIncentives" value="0" />
+        </label>
+
+        <label>
+          Down Payment
+          <input type="number" id="downPayment" value="10000" />
+        </label>
+
+        <label>
+          Trade-in Value
+          <input type="number" id="tradeInValue" value="0" />
+        </label>
+
+        <label>
+          Amount Owed on Trade-in
+          <input type="number" id="tradeOwed" value="0" />
+        </label>
+
+        <label>
+          Sales Tax (%)
+          <input type="number" id="salesTax" value="7" />
+        </label>
+
+        <label>
+          Title, Registration &amp; Other Fees
+          <input type="number" id="fees" value="2000" />
+        </label>
+
+        <button id="runPaymentHelper" class="primary-btn">
+          Estimate Payment
+        </button>
+      </div>
+
+      <div class="summary-box">
+        <h3>Estimate</h3>
+        <textarea
+          id="paymentOutput"
+          placeholder="Payment breakdown will appear here."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Calculator -->
+  <div id="incomeModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="incomeClose" class="modal-close">&times;</span>
+      <h2>Income Calculator</h2>
+
+      <div class="summary-box">
+        <h3>Inputs</h3>
+        <label>
+          Year to Date Income
+          <input type="number" id="ytdIncome" placeholder="50000" />
+        </label>
+        <label>
+          Hire Date
+          <input type="date" id="hireDate" />
+        </label>
+        <label>
+          Check Date
+          <input type="date" id="checkDate" />
+        </label>
+        <button id="runIncomeHelper" class="primary-btn">
+          Estimate Income
+        </button>
+      </div>
+
+      <div class="summary-box">
+        <h3>Estimate</h3>
+        <textarea
+          id="incomeOutput"
+          placeholder="Monthly income estimate will appear here."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow Expert -->
+  <div id="workflowModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="workflowClose" class="modal-close">&times;</span>
+      <h2>AI Work Flow Expert</h2>
+      <textarea
+        id="workflowSituation"
+        placeholder="Explain your sales situation and what result you want."
+      ></textarea>
+      <button id="runWorkflowHelper" class="primary-btn">
+        Build Workflow
+      </button>
+      <textarea
+        id="workflowOutput"
+        placeholder="Suggested workflow will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Message Builder -->
+  <div id="messageModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="messageClose" class="modal-close">&times;</span>
+      <h2>AI Message Builder</h2>
+
+      <label>
+        What are you creating?
+        <select id="messageType">
+          <option value="text">Text / SMS</option>
+          <option value="email">Email</option>
+          <option value="social">Social Post</option>
+        </select>
+      </label>
+
+      <label>
+        What's the goal?
+        <input
+          type="text"
+          id="messageGoal"
+          placeholder="Get them to book a test drive..."
+        />
+      </label>
+
+      <label>
+        Details / Context
+        <textarea
+          id="messageDetails"
+          placeholder="Vehicle, situation, urgency, tone, etc."
+        ></textarea>
+      </label>
+
+      <button id="runMessageHelper" class="primary-btn">
+        Generate Message
+      </button>
+
+      <textarea
+        id="messageOutput"
+        placeholder="Finished message will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Ask A.I. -->
+  <div id="askModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="askClose" class="modal-close">&times;</span>
+      <h2>Ask A.I.</h2>
+      <textarea
+        id="askQuestion"
+        placeholder="Ask anything — sales, business, life, tech, you name it."
+      ></textarea>
+      <button id="runAskHelper" class="primary-btn">Ask</button>
+      <textarea
+        id="askOutput"
+        placeholder="Answer will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- AI Car Expert -->
+  <div id="carModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="carClose" class="modal-close">&times;</span>
+      <h2>AI Car Expert</h2>
+      <textarea
+        id="carQuestion"
+        placeholder="Ask anything about vehicles, trims, features, comparisons, or automotive advice."
+      ></textarea>
+      <button id="runCarHelper" class="primary-btn">
+        Ask Car Expert
+      </button>
+      <textarea
+        id="carOutput"
+        placeholder="Car expert answer will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- AI Image Generation Helper -->
+  <div id="imageModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="imageClose" class="modal-close">&times;</span>
+      <h2>AI Image Generation</h2>
+      <p class="small-note">
+        Coming soon: direct image generation. For now, this builds a high-quality prompt you can paste into an image tool.
+      </p>
+      <textarea
+        id="imagePrompt"
+        placeholder="Describe the image you want (vehicle, background, lighting, style, etc.)"
+      ></textarea>
+      <button id="runImageHelper" class="primary-btn">
+        Build Image Prompt
+      </button>
+      <textarea
+        id="imageOutput"
+        placeholder="Image prompt will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- AI Video Generation Helper -->
+  <div id="videoModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="videoClose" class="modal-close">&times;</span>
+      <h2>AI Video Generation</h2>
+      <p class="small-note">
+        Coming soon: direct video generation. For now, this builds a detailed brief you can paste into a video tool.
+      </p>
+      <textarea
+        id="videoGenPrompt"
+        placeholder="Describe the video you want to create."
+      ></textarea>
+      <button id="runVideoHelper" class="primary-btn">
+        Build Video Brief
+      </button>
+      <textarea
+        id="videoGenOutput"
+        placeholder="Video brief will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
