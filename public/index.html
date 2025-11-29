@@ -114,9 +114,7 @@
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="videoPlan"
-                >Video From Photos Plan</label
-              >
+              <label class="field-label" for="videoPlan">Video From Photos Plan</label>
               <textarea
                 id="videoPlan"
                 class="textarea shotplan"
@@ -409,14 +407,9 @@
               <label class="field-label" for="shotPlan"
                 >Viral Visual Shot Plan</label
               >
-              <textarea
-                id="shotPlan"
-                class="textarea shotplan"
-                readonly
-              ></textarea>
+              <textarea id="shotPlan" class="textarea shotplan" readonly></textarea>
             </div>
 
-            <!-- Design Lab -->
             <div class="field-group">
               <div class="section-title-row">
                 <label class="field-label">Design Lab (Canva-style layout)</label>
@@ -444,16 +437,13 @@
                   <option value="youtube_thumbnail">YouTube thumbnail</option>
                 </select>
                 <button id="designButton" class="button-ghost" type="button">
-                  <span class="icon">🎨</span
-                  ><span>Generate Design Idea</span>
+                  <span class="icon">🎨</span><span>Generate Design Idea</span>
                 </button>
               </div>
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="designOutput"
-                >Design Layout Plan</label
-              >
+              <label class="field-label" for="designOutput">Design Layout Plan</label>
               <textarea
                 id="designOutput"
                 class="textarea design"
@@ -468,287 +458,263 @@
           </div>
         </section>
       </div>
-    </div>
 
-    <!-- Floating tool buttons (right side, stacked) -->
-    <div class="tool-launcher-column">
-      <button id="objectionLauncher" class="tool-launcher-btn" type="button">
-        <span class="icon">🧠</span>
-        <span>Objection coach</span>
-      </button>
-      <button id="paymentLauncher" class="tool-launcher-btn" type="button">
-        <span class="icon">🔢</span>
-        <span>Payment calc</span>
-      </button>
-      <button id="incomeLauncher" class="tool-launcher-btn" type="button">
-        <span class="icon">💵</span>
-        <span>Income calc</span>
-      </button>
-      <button id="messageLauncher" class="tool-launcher-btn" type="button">
-        <span class="icon">✉️</span>
-        <span>AI messages</span>
-      </button>
-    </div>
-
-    <!-- Objection Coach Modal -->
-    <div id="objectionModal" class="modal-backdrop hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-tag">OBJECTIONS HANDLED</div>
-            <div class="modal-title">Andy Elliott–style AI coach</div>
-            <div class="modal-sub">
-              Paste a customer objection or ask how to respond. Get word tracks
-              and breakdowns.
-            </div>
-          </div>
-          <button
-            id="objectionCloseButton"
-            class="modal-close"
-            type="button"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div id="objectionHistory" class="objection-history"></div>
-
-          <div class="objection-input-row">
-            <textarea
-              id="objectionInput"
-              class="objection-input-box"
-              placeholder='Example: "I need to think about it" or "Payment is too high" or ask: "How do I close a be-back?"'
-            ></textarea>
-
-            <div class="objection-send-row">
-              <div class="objection-hint">
-                Tip: Enter to make a new line. Ctrl+Enter / Cmd+Enter to send
-                fast.
-              </div>
-              <button id="objectionSendButton" type="button">
-                <span>🧠 Handle this objection</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Payment Calculator Modal -->
-    <div id="paymentModal" class="modal-backdrop hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-tag">PAYMENT TOOL</div>
-            <div class="modal-title">Quick Car Payment Calculator</div>
-            <div class="modal-sub">
-              Fast ballpark payment you can give on the spot. Not a final finance
-              quote.
-            </div>
-          </div>
-          <button id="paymentCloseButton" class="modal-close" type="button">
-            ✕
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-row">
-            <div class="modal-half">
-              <label class="field-label">Vehicle Price ($)</label>
-              <input
-                id="payPrice"
-                class="tool-input"
-                type="number"
-                placeholder="30000"
-              />
-            </div>
-            <div class="modal-half">
-              <label class="field-label">Down Payment ($)</label>
-              <input
-                id="payDown"
-                class="tool-input"
-                type="number"
-                placeholder="3000"
-              />
-            </div>
-          </div>
-          <div class="modal-row">
-            <div class="modal-half">
-              <label class="field-label">APR (%)</label>
-              <input
-                id="payApr"
-                class="tool-input"
-                type="number"
-                step="0.01"
-                placeholder="7.99"
-              />
-            </div>
-            <div class="modal-half">
-              <label class="field-label">Term (months)</label>
-              <input
-                id="payTerm"
-                class="tool-input"
-                type="number"
-                placeholder="72"
-              />
-            </div>
-          </div>
-          <button id="paymentCalcButton" class="tool-button-primary" type="button">
-            <span>🔢 Calculate Payment</span>
-          </button>
-          <div id="paymentResultText" class="tool-result-text"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Income Calculator Modal -->
-    <div id="incomeModal" class="modal-backdrop hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-tag">INCOME TOOL</div>
-            <div class="modal-title">Yearly Gross Income Calculator</div>
-            <div class="modal-sub">
-              Turn hourly pay into a quick yearly income estimate.
-            </div>
-          </div>
-          <button id="incomeCloseButton" class="modal-close" type="button">
-            ✕
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-row">
-            <div class="modal-half">
-              <label class="field-label">Hourly Wage ($)</label>
-              <input
-                id="incHourly"
-                class="tool-input"
-                type="number"
-                step="0.01"
-                placeholder="20"
-              />
-            </div>
-            <div class="modal-half">
-              <label class="field-label">Hours per Week</label>
-              <input
-                id="incHours"
-                class="tool-input"
-                type="number"
-                placeholder="40"
-              />
-            </div>
-          </div>
-          <button id="incomeCalcButton" class="tool-button-primary" type="button">
-            <span>💵 Calculate Income</span>
-          </button>
-          <div id="incomeResultText" class="tool-result-text"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- AI Message & Campaign Builder Modal -->
-    <div id="messageModal" class="modal-backdrop hidden">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <div class="modal-tag">FOLLOW-UP ENGINE</div>
-            <div class="modal-title">AI Message & Workflow Builder</div>
-            <div class="modal-sub">
-              Describe what you’re trying to do. Get messages and a multi-step
-              follow-up plan.
-            </div>
-          </div>
-          <button id="messageCloseButton" class="modal-close" type="button">
-            ✕
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-row">
-            <div class="modal-half">
-              <label class="field-label">Channel</label>
-              <select id="msgChannel" class="tool-input">
-                <option value="sms">Text Message (SMS)</option>
-                <option value="email">Email</option>
-              </select>
-            </div>
-            <div class="modal-half">
-              <label class="field-label">Tone</label>
-              <select id="msgTone" class="tool-input">
-                <option value="friendly">Friendly & Helpful</option>
-                <option value="professional">Professional</option>
-                <option value="urgent">Urgent / Action-focused</option>
-                <option value="laid back">Laid back</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-row">
-            <div class="modal-half">
-              <label class="field-label">Follow-up steps</label>
-              <input
-                id="msgFollowups"
-                class="tool-input"
-                type="number"
-                min="1"
-                max="10"
-                value="4"
-              />
-            </div>
-            <div class="modal-half">
-              <label class="field-label">Campaign options</label>
-              <input
-                id="msgVariants"
-                class="tool-input"
-                type="number"
-                min="1"
-                max="5"
-                value="2"
-              />
-            </div>
-          </div>
-          <div class="modal-row">
-            <div class="modal-half">
-              <label class="field-label">Audience type</label>
-              <input
-                id="msgAudience"
-                class="tool-input"
-                placeholder="Subprime, first-time buyer, repeat, etc."
-              />
-            </div>
-            <div class="modal-half">
-              <label class="field-label">Goal</label>
-              <input
-                id="msgGoal"
-                class="tool-input"
-                placeholder="Example: Re-engage a be-back lead"
-              />
-            </div>
-          </div>
+      <!-- STEP 3 · CREATIVE LAB --------------------------------------- -->
+      <section class="card creative-card" id="creativeLabCard">
+        <div class="card-header">
           <div>
-            <label class="field-label">Key details</label>
-            <textarea
-              id="msgDetails"
-              class="tool-textarea"
-              placeholder="Name, vehicle, situation, objections, payment target, timeline, etc."
-            ></textarea>
+            <div class="card-title">Step 3 · Creative Lab</div>
+            <div class="card-subtitle">
+              Turn this listing into short videos, scroll-stopping graphics, and quick
+              edits.
+            </div>
           </div>
-          <button
-            id="messageGenerateButton"
-            class="tool-button-primary"
-            type="button"
-          >
-            <span>✉️ Build Messages & Workflow</span>
-          </button>
-          <textarea
-            id="msgResult"
-            class="tool-textarea"
-            style="margin-top: 6px; min-height: 140px"
-            readonly
-            placeholder="Your message options and follow-up steps will appear here."
-          ></textarea>
+          <span class="badge">Creative</span>
         </div>
-      </div>
-    </div>
 
-    <script src="app.js"></script>
-  </body>
-</html>
+        <div class="creative-grid-main">
+          <!-- Quick Sales Video -->
+          <div class="creative-module" id="creativeVideoModule">
+            <div class="section-title-row">
+              <span class="creative-module-title">Quick Sales Video</span>
+              <span class="pill pill-soft">Draft idea</span>
+            </div>
+            <p class="creative-module-desc">
+              Get a simple shot plan and on-screen text idea you can record in under a
+              minute.
+            </p>
+
+            <div class="modal-row creative-controls">
+              <div class="modal-half">
+                <label class="field-label" for="creativeVideoVehicle">
+                  Vehicle / offer
+                </label>
+                <input
+                  id="creativeVideoVehicle"
+                  class="input"
+                  placeholder="2025 Chevy Traverse Z71 – zero down, low miles"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="creativeVideoHook">
+                  Main hook
+                </label>
+                <input
+                  id="creativeVideoHook"
+                  class="input"
+                  placeholder="Family-ready, third-row, adventure SUV"
+                />
+              </div>
+            </div>
+
+            <div class="modal-row creative-controls">
+              <div class="modal-half">
+                <label class="field-label" for="creativeVideoAspect">
+                  Aspect ratio
+                </label>
+                <select id="creativeVideoAspect" class="input creative-select">
+                  <option value="9:16">9:16 – Vertical (Reels / TikTok)</option>
+                  <option value="1:1">1:1 – Square feed</option>
+                  <option value="16:9">16:9 – Wide (YouTube / Facebook)</option>
+                </select>
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="creativeVideoLength">
+                  Length
+                </label>
+                <select id="creativeVideoLength" class="input creative-select">
+                  <option value="15">~15 seconds</option>
+                  <option value="30">~30 seconds</option>
+                  <option value="45">~45 seconds</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="modal-row creative-controls">
+              <div class="modal-half">
+                <label class="field-label" for="creativeVideoStyle">
+                  Style
+                </label>
+                <select id="creativeVideoStyle" class="input creative-select">
+                  <option value="hype">Hype / energetic</option>
+                  <option value="family">Family / lifestyle</option>
+                  <option value="luxury">Luxury / premium</option>
+                  <option value="budget">Payment / budget focused</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              id="generateVideoPlanBtn"
+              type="button"
+              class="tool-button-primary creative-generate-btn"
+            >
+              🎬 Generate video idea
+            </button>
+
+            <label class="field-label" for="creativeVideoOutput">
+              Video idea & scenes
+            </label>
+            <textarea
+              id="creativeVideoOutput"
+              class="textarea creative-output"
+              readonly
+            ></textarea>
+            <div class="tiny-note">
+              Use this as your shot list and on-screen text while recording on your
+              phone.
+            </div>
+          </div>
+
+          <!-- Canva-style Layout Planner -->
+          <div class="creative-module" id="creativeLayoutModule">
+            <div class="section-title-row">
+              <span class="creative-module-title">Canva-style Layout Planner</span>
+              <span class="pill pill-soft">Graphic idea</span>
+            </div>
+            <p class="creative-module-desc">
+              Get a quick layout blueprint you can rebuild in Canva in a few minutes.
+            </p>
+
+            <div class="modal-row creative-controls">
+              <div class="modal-half">
+                <label class="field-label" for="creativeLayoutType">
+                  Creative type
+                </label>
+                <select id="creativeLayoutType" class="input creative-select">
+                  <option value="feed">Facebook / Instagram feed post</option>
+                  <option value="story">Story / Reels cover</option>
+                  <option value="thumbnail">YouTube / video thumbnail</option>
+                  <option value="flyer">Print-style flyer</option>
+                </select>
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="creativeLayoutHeadline">
+                  Headline
+                </label>
+                <input
+                  id="creativeLayoutHeadline"
+                  class="input"
+                  placeholder="Drive home this 2025 Traverse Z71 today"
+                />
+              </div>
+            </div>
+
+            <div class="modal-row creative-controls">
+              <div class="modal-half">
+                <label class="field-label" for="creativeLayoutCta">
+                  Call to action
+                </label>
+                <input
+                  id="creativeLayoutCta"
+                  class="input"
+                  placeholder="Message me for a VIP test drive"
+                />
+              </div>
+              <div class="modal-half">
+                <label class="field-label" for="creativeLayoutBrand">
+                  Brand colors / vibe
+                </label>
+                <input
+                  id="creativeLayoutBrand"
+                  class="input"
+                  placeholder="Red + dark navy · bold, confident"
+                />
+              </div>
+            </div>
+
+            <button
+              id="generateLayoutPlanBtn"
+              type="button"
+              class="tool-button-primary creative-generate-btn"
+            >
+              🎨 Generate layout idea
+            </button>
+
+            <label class="field-label" for="creativeLayoutOutput">
+              Layout plan
+            </label>
+            <textarea
+              id="creativeLayoutOutput"
+              class="textarea creative-output"
+              readonly
+            ></textarea>
+            <div class="tiny-note">
+              Follow this as a checklist when you drop photos and text into Canva.
+            </div>
+          </div>
+
+          <!-- Photo & Video Quick Editor -->
+          <div class="creative-module creative-editor-module" id="creativeEditorModule">
+            <div class="section-title-row">
+              <span class="creative-module-title">Photo & Video Quick Editor</span>
+              <span class="pill pill-soft">Live preview</span>
+            </div>
+            <p class="creative-module-desc">
+              Drop in a photo, tweak the vibe, and export it ready for your posts.
+            </p>
+
+            <div class="editor-upload-row">
+              <label class="field-label" for="creativeEditorFile">
+                Upload a photo
+              </label>
+              <input id="creativeEditorFile" type="file" accept="image/*" />
+            </div>
+
+            <div class="editor-preview-shell">
+              <div class="editor-preview">
+                <span
+                  class="editor-placeholder"
+                  id="creativeEditorPlaceholder"
+                >
+                  Your photo preview will appear here.
+                </span>
+                <img
+                  id="creativeEditorImage"
+                  alt="Preview"
+                  class="editor-image hidden"
+                />
+              </div>
+
+              <div class="editor-sliders">
+                <div class="editor-slider-row">
+                  <label for="creativeEditorBrightness">Brightness</label>
+                  <input
+                    id="creativeEditorBrightness"
+                    type="range"
+                    min="60"
+                    max="140"
+                    value="100"
+                  />
+                </div>
+                <div class="editor-slider-row">
+                  <label for="creativeEditorContrast">Contrast</label>
+                  <input
+                    id="creativeEditorContrast"
+                    type="range"
+                    min="70"
+                    max="160"
+                    value="100"
+                  />
+                </div>
+                <div class="editor-slider-row">
+                  <label for="creativeEditorSaturation">Saturation</label>
+                  <input
+                    id="creativeEditorSaturation"
+                    type="range"
+                    min="70"
+                    max="160"
+                    value="110"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="tiny-note">
+              This is a lightweight preview editor. When you’re happy, save the
+              image from your browser or recreate the look in your favorite editing
+              app.
+            </div>
+          </div>
+        </div>
+      </section>
