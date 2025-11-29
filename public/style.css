@@ -1,4 +1,4 @@
-/* public/style.css – Lot Rocket V2 dark, three-column layout */
+/* public/style.css – Lot Rocket V2, styled like original card layout */
 
 /* ---------- Base ---------- */
 
@@ -17,7 +17,7 @@ body {
 }
 
 body {
-  background: #050509;
+  background: radial-gradient(circle at top left, #020617, #02010b 60%);
   color: #f5f5f7;
 }
 
@@ -30,15 +30,16 @@ body:not(.dark-theme) {
 /* ---------- Header ---------- */
 
 .app-header {
+  max-width: 1300px;
+  margin: 16px auto 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-  background: linear-gradient(90deg, #050509, #111827);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  padding: 12px 22px;
+  border-radius: 18px 18px 0 0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-bottom: none;
+  background: linear-gradient(120deg, #050814, #020617);
 }
 
 body:not(.dark-theme) .app-header {
@@ -47,15 +48,15 @@ body:not(.dark-theme) .app-header {
 
 .branding h1 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .branding p {
   margin: 4px 0 0;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: #9ca3af;
 }
 
@@ -69,14 +70,20 @@ body:not(.dark-theme) .branding p {
   gap: 8px;
 }
 
-/* ---------- Layout (3-column flex version) ---------- */
+/* ---------- Layout (outer card) ---------- */
 
 .layout {
+  max-width: 1300px;
+  margin: 0 auto 40px;
+  margin-top: 0;
+  padding: 20px 230px 28px 22px; /* extra right padding for tool rail */
+  border-radius: 0 0 24px 24px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: radial-gradient(circle at top left, #050816, #020617 65%);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.85);
   display: flex;
   align-items: flex-start;
-  gap: 24px;
-  /* extra space on the right for the floating tools rail */
-  padding: 20px 240px 40px 32px;
+  gap: 20px;
 }
 
 /* base column */
@@ -87,32 +94,33 @@ body:not(.dark-theme) .branding p {
   min-width: 0;
 }
 
-/* give different widths to each column */
+/* column weights: middle widest */
 .column-left {
-  flex: 0.9 1 0;
+  flex: 0.95 1 0;
 }
 
 .column-middle {
-  flex: 1.6 1 0; /* widest column (Step 2) */
+  flex: 1.7 1 0;
 }
 
 .column-right {
-  flex: 1 1 0;
+  flex: 1.05 1 0;
 }
 
 .column h2 {
   margin-top: 0;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
 }
 
 /* cards inside columns */
 .summary-box,
 .platform-card,
 .lab-card {
-  background: #0b0f19;
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 18px;
   padding: 12px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 body:not(.dark-theme) .summary-box,
@@ -126,13 +134,13 @@ body:not(.dark-theme) .lab-card {
 .platform-card h3,
 .lab-card h3 {
   margin: 0 0 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 /* ---------- Inputs & Textareas ---------- */
 
 label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   display: block;
   margin-bottom: 4px;
@@ -144,23 +152,24 @@ input[type="file"],
 textarea,
 select {
   width: 100%;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 7px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
   background: #050713;
   color: #e5e7eb;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   outline: none;
+}
+
+textarea {
+  border-radius: 14px;
+  min-height: 70px;
+  resize: vertical;
 }
 
 input[type="file"] {
   padding: 4px;
   background: transparent;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 60px;
 }
 
 body:not(.dark-theme) input[type="text"],
@@ -182,17 +191,17 @@ body:not(.dark-theme) select {
 button {
   cursor: pointer;
   border: none;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
 }
 
 .primary-btn {
   background: linear-gradient(135deg, #f97316, #e11d48);
   color: #f9fafb;
-  padding: 7px 14px;
+  padding: 8px 18px;
   border-radius: 999px;
   font-weight: 600;
   border: none;
-  box-shadow: 0 8px 20px rgba(248, 113, 113, 0.35);
+  box-shadow: 0 12px 28px rgba(248, 113, 113, 0.35);
 }
 
 .primary-btn:disabled {
@@ -216,16 +225,16 @@ body:not(.dark-theme) .secondary-btn {
 .btn-row {
   display: flex;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .copy-btn,
 .regen-btn {
-  background: #111827;
+  background: #020617;
   color: #e5e7eb;
   border-radius: 999px;
-  padding: 5px 10px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
+  padding: 5px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
 }
 
 body:not(.dark-theme) .copy-btn,
@@ -238,7 +247,7 @@ body:not(.dark-theme) .regen-btn {
 
 .status-text {
   margin-top: 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #9ca3af;
 }
 
@@ -259,17 +268,17 @@ body:not(.dark-theme) .regen-btn {
   width: 100%;
   height: 60px;
   object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
 }
 
 /* ---------- Photo editor ---------- */
 
 .photo-preview-wrapper {
   margin-top: 8px;
-  border-radius: 10px;
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.6);
   min-height: 120px;
   display: flex;
   align-items: center;
@@ -306,15 +315,16 @@ body:not(.dark-theme) .regen-btn {
   color: #9ca3af;
 }
 
-/* ---------- Floating Tools ---------- */
+/* ---------- Floating Tools (right rail) ---------- */
 
 .floating-tools {
   position: fixed;
-  top: 96px;
-  right: 32px;
+  top: 110px;
+  right: calc((100vw - 1300px) / 2 + 18px);
+  /* lines with card’s right edge on big screens */
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   z-index: 60;
 }
 
@@ -322,8 +332,8 @@ body:not(.dark-theme) .regen-btn {
   background: #020617;
   color: #e5e7eb;
   border-radius: 999px;
-  padding: 5px 12px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 6px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
   font-size: 0.8rem;
   text-align: left;
 }
@@ -359,7 +369,7 @@ body:not(.dark-theme) .tool-button {
   overflow: auto;
   background: #020617;
   color: #e5e7eb;
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 16px 18px 18px;
   border: 1px solid rgba(148, 163, 184, 0.6);
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
@@ -398,10 +408,20 @@ body:not(.dark-theme) .modal-content p {
 
 /* ---------- Responsive ---------- */
 
+@media (max-width: 1200px) {
+  .layout {
+    padding-right: 24px;
+  }
+
+  .floating-tools {
+    right: 24px;
+  }
+}
+
 @media (max-width: 1024px) {
   .layout {
     flex-direction: column;
-    padding: 16px 16px 24px 16px;
+    padding: 18px 16px 22px 16px;
   }
 
   .column-left,
