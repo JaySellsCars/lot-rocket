@@ -1,464 +1,540 @@
-// app.js – Lot Rocket Social Media Kit backend (Render-safe)
+// app.js – Lot Rocket backend (Express + OpenAI + scraping)
 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const cheerio = require('cheerio');
 const OpenAI = require('openai');
-
-// Use global fetch if available (Node 18+/22+). Fallback to node-fetch only if needed.
-let fetchFn = global.fetch;
-if (!fetchFn) {
-  fetchFn = (...args) =>
-    import('node-fetch').then(({ default: fetch }) => fetch(...args));
-}
-const fetch = (...args) => fetchFn(...args);
+const cheerio = require('cheerio');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// --- OpenAI client ---
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// --- Middleware ---
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Serve static app from /public
+// Serve static frontend from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Root route -> index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ---------------- Helper: scrape vehicle page ----------------
-
-async function scrapeVehiclePage(pageUrl) {
+// ------------------------------------------------------------
+// Helper: scrape useful text from dealer URL
+// ------------------------------------------------------------
+async function scrapePageText(url) {
   try {
-    const res = await fetch(pageUrl);
+    const res = await fetch(url);
     if (!res.ok) {
-      console.error('SCRAPE ERROR: bad status', res.status, res.statusText);
-      return {
-        title: '',
-        priceText: '',
-        textBlob: '',
-        photos: [],
-      };
+      console.error('Scrape failed: status', res.status);
+      return { title: '', description: '', text: '' };
     }
 
     const html = await res.text();
     const $ = cheerio.load(html);
-    const base = new URL(pageUrl);
 
-    // title & price guesses
-    let title =
-      $('meta[property="og:title"]').attr('content') ||
-      $('title').first().text() ||
-      '';
-    title = title.trim();
+    const title = ($('title').text() || '').trim();
+    const description =
+      ($('meta[name="description"]').attr('content') || '').trim();
 
-    let priceText =
-      $('[class*="price"], [id*="price"]')
-        .first()
-        .text()
-        .replace(/\s+/g, ' ')
-        .trim() || '';
-
-    // text blob for context
-    let textPieces = [];
-    $('body')
-      .find('p, li, h1, h2, h3, h4')
+    // Grab a bunch of text from likely content areas
+    let chunks = [];
+    $('h1, h2, h3, .vehicle-title, .vehicle-details, .price, .description, .specs')
       .each((_, el) => {
         const t = $(el).text().replace(/\s+/g, ' ').trim();
-        if (t.length > 40 && t.length < 400) {
-          textPieces.push(t);
-        }
+        if (t && !chunks.includes(t)) chunks.push(t);
       });
-    const textBlob = textPieces.slice(0, 20).join('\n');
 
-    // grab images
-    const photoSet = new Set();
+    const combined = chunks.join('\n');
+
+    return {
+      title,
+      description,
+      text: combined.slice(0, 6000), // keep it reasonable
+    };
+  } catch (err) {
+    console.error('Error scraping page:', err);
+    return { title: '', description: '', text: '' };
+  }
+}
+
+// Small helper to talk to OpenAI safely
+async function chatJSON(systemPrompt, userPrompt) {
+  const completion = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.7,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+  });
+
+  const raw = completion.choices[0]?.message?.content || '';
+
+  // Try to parse JSON; fall back to a simple object if it fails.
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('JSON parse failed, returning raw text instead.');
+    return { raw };
+  }
+}
+
+// ------------------------------------------------------------
+// POST /api/social-kit
+// Builds the initial full kit (all platforms, script, design, etc.)
+// ------------------------------------------------------------
+app.post('/api/social-kit', async (req, res) => {
+  const { url, label, price } = req.body || {};
+
+  if (!url) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing url',
+    });
+  }
+
+  try {
+    const scraped = await scrapePageText(url);
+
+    const systemPrompt = `
+You are an elite automotive copywriter who writes high-converting social media copy
+for car salespeople (not dealerships). You MUST respond with valid JSON only.
+
+JSON shape:
+{
+  "facebook": "...",
+  "instagram": "...",
+  "tiktok": "...",
+  "linkedin": "...",
+  "twitter": "...",
+  "text": "...",           // short SMS / DM follow-up
+  "marketplace": "...",    // FB Marketplace style listing
+  "hashtags": "...",       // line of hashtags
+  "videoScript": "...",    // 30-45s selfie-style script
+  "videoShotPlan": "...",  // bullet list of shots for reels/TikTok
+  "designIdea": "..."      // Canva layout checklist
+}
+Keep language friendly, confident and easy to paste directly into social posts.
+Do not include explanations outside the JSON.
+    `.trim();
+
+    const userPrompt = `
+Vehicle label: ${label || 'This vehicle'}
+Deal info: ${price || 'Message for current pricing'}
+
+Scraped page title:
+${scraped.title}
+
+Scraped description:
+${scraped.description}
+
+Scraped text:
+${scraped.text}
+    `.trim();
+
+    const kit = await chatJSON(systemPrompt, userPrompt);
+
+    // Basic guard: ensure keys exist
+    const safeKit = {
+      facebook: kit.facebook || kit.raw || '',
+      instagram: kit.instagram || '',
+      tiktok: kit.tiktok || '',
+      linkedin: kit.linkedin || '',
+      twitter: kit.twitter || '',
+      text: kit.text || '',
+      marketplace: kit.marketplace || '',
+      hashtags: kit.hashtags || '',
+      videoScript: kit.videoScript || '',
+      videoShotPlan: kit.videoShotPlan || '',
+      designIdea: kit.designIdea || '',
+    };
+
+    res.json({ success: true, kit: safeKit });
+  } catch (err) {
+    console.error('Error in /api/social-kit:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Server error building social kit',
+    });
+  }
+});
+
+// ------------------------------------------------------------
+// POST /api/new-post  (spin a fresh post for a platform)
+// ------------------------------------------------------------
+app.post('/api/new-post', async (req, res) => {
+  const { platform, url, label, price } = req.body || {};
+
+  if (!platform || !url) {
+    return res.status(400).json({ success: false, error: 'Missing platform or url' });
+  }
+
+  try {
+    const scraped = await scrapePageText(url);
+
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.8,
+      messages: [
+        {
+          role: 'system',
+          content: `
+You are a high-converting social media copywriter for car salespeople.
+Write one post tailored for the given platform. No intro, no explanation.
+Just the finished post text the salesperson can paste.
+          `.trim(),
+        },
+        {
+          role: 'user',
+          content: `
+Platform: ${platform}
+Vehicle: ${label || 'This vehicle'}
+Deal info: ${price || 'Message for current pricing'}
+
+Scraped details:
+${scraped.title}
+${scraped.description}
+${scraped.text}
+          `.trim(),
+        },
+      ],
+    });
+
+    const post = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, post });
+  } catch (err) {
+    console.error('Error in /api/new-post:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// ------------------------------------------------------------
+// POST /api/new-script – generate a fresh selfie video script
+// ------------------------------------------------------------
+app.post('/api/new-script', async (req, res) => {
+  const { url, label, price } = req.body || {};
+
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'Missing url' });
+  }
+
+  try {
+    const scraped = await scrapePageText(url);
+
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'system',
+          content: `
+You write tight 30–45 second selfie video scripts for car salespeople.
+Use a strong hook, 3–4 punchy points, and a clear CTA to message or call.
+Return ONLY the script, no extra commentary.
+          `.trim(),
+        },
+        {
+          role: 'user',
+          content: `
+Vehicle: ${label || 'This vehicle'}
+Deal info: ${price || 'Message for current pricing'}
+
+Details:
+${scraped.title}
+${scraped.description}
+${scraped.text}
+          `.trim(),
+        },
+      ],
+    });
+
+    const script = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, script });
+  } catch (err) {
+    console.error('Error in /api/new-script:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// ------------------------------------------------------------
+// POST /api/grab-photos – very simple image URL scraper
+// ------------------------------------------------------------
+app.post('/api/grab-photos', async (req, res) => {
+  const { url } = req.body || {};
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'Missing url' });
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch dealer page' });
+    }
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const photos = [];
+
     $('img').each((_, el) => {
       let src = $(el).attr('data-src') || $(el).attr('src');
       if (!src) return;
 
-      src = src.trim();
-      if (!src) return;
-
+      // absolute-ize relative URLs
       try {
-        const url = new URL(src, base.origin);
-        const urlStr = url.toString();
-
-        if (
-          urlStr.match(/logo|icon|sprite|badge|favicon/i) ||
-          urlStr.match(/320x50|tracking|pixel/i)
-        ) {
-          return;
-        }
-        photoSet.add(urlStr);
-      } catch {
-        // ignore malformed URLs
+        const u = new URL(src, url);
+        src = u.toString();
+      } catch (_) {
+        // ignore bad URLs
       }
+
+      // basic filter to avoid tiny icons etc.
+      const width = parseInt($(el).attr('width') || '0', 10);
+      const height = parseInt($(el).attr('height') || '0', 10);
+      if (width < 200 && height < 200) return;
+
+      if (!photos.includes(src)) photos.push(src);
     });
 
-    return {
-      title,
-      priceText,
-      textBlob,
-      photos: Array.from(photoSet),
-    };
+    res.json({ success: true, photos });
   } catch (err) {
-    console.error('SCRAPE ERROR:', err);
-    return {
-      title: '',
-      priceText: '',
-      textBlob: '',
-      photos: [],
-    };
-  }
-}
-
-// ---------------- /boost – main Social Kit engine ----------------
-
-app.post('/boost', async (req, res) => {
-  try {
-    const { dealerUrl, vehicleLabel, priceInfo } = req.body || {};
-    console.log('BOOST HIT with URL:', dealerUrl);
-
-    if (!dealerUrl || typeof dealerUrl !== 'string') {
-      console.error('BOOST ERROR: missing dealerUrl');
-      return res.status(400).json({ error: 'Missing or invalid dealerUrl.' });
-    }
-
-    const safeVehicleLabel =
-      (vehicleLabel && String(vehicleLabel).trim()) || 'this vehicle';
-    const safePriceInfo =
-      (priceInfo && String(priceInfo).trim()) || 'Message for current pricing';
-
-    const scraped = await scrapeVehiclePage(dealerUrl);
-    const {
-      title: scrapedTitle,
-      priceText: scrapedPriceText,
-      textBlob,
-      photos,
-    } = scraped;
-
-    const contextSummary = `
-Dealer URL: ${dealerUrl}
-Front-end label: ${safeVehicleLabel}
-Front-end price note: ${safePriceInfo}
-
-Scraped page title: ${scrapedTitle || '(none)'}
-Scraped price text: ${scrapedPriceText || '(none)'}
-Scraped text blob (snippets):
-${textBlob || '(none)'}
-    `.trim();
-
-    const systemPrompt = `
-You are Lot Rocket, an elite automotive social media copywriter.
-You create concise, high-converting copy for car salespeople (NOT the store itself).
-
-Return ONLY valid JSON with no explanation or Markdown. Use this exact JSON shape:
-
-{
-  "listingSummary": "short 2–4 sentence summary of the vehicle and its key selling points",
-  "facebookPost": "high-converting FB post with hook, emojis optional, clear CTA to message salesperson",
-  "instagramPost": "IG caption vibe, short hook, a few emojis, CTA to DM or comment",
-  "tiktokPost": "TikTok-style caption with energy + emojis, CTA to comment or DM, 1–2 hooks",
-  "linkedinPost": "More professional tone, focused on value, trust, and service",
-  "twitterPost": "Short snappy X/Twitter post, under 240 characters",
-  "textMessage": "SMS-style, friendly but direct, invites reply. No more than 2–3 sentences.",
-  "marketplacePost": "Description suitable for Facebook Marketplace, mentions condition, mileage (if given), payment/contact angle",
-  "hashtags": "a compact line of relevant hashtags, tuned for this specific vehicle (NOT generic junk)",
-  "videoScript": "Short vertical video script the salesperson can read on camera in ~25–35 seconds",
-  "shotPlan": "Bullet-style shot list for a 20–30 second vertical video using typical dealer photos",
-  "designLayout": "A simple Canva-style layout plan in 4–7 bullet points for a single static graphic"
-}
-
-Guidelines:
-- Assume the salesperson will tweak details like price/miles if missing or approximate.
-- Speak as the salesperson, first person singular ("I", "me") where appropriate.
-- Do NOT mention scraping or AI.
-- Strong but honest – no unrealistic claims.
-    `.trim();
-
-    const userPrompt = `
-Use this context about the vehicle and dealer page:
-
-${contextSummary}
-
-Vehicle label the salesperson is using:
-"${safeVehicleLabel}"
-
-Preferred price/deal note on the front-end:
-"${safePriceInfo}"
-
-Now generate the JSON object described in the instructions.
-    `.trim();
-
-    let parsed = {};
-    try {
-      const completion = await client.chat.completions.create({
-        model: 'gpt-4o-mini',
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.7,
-      });
-
-      const raw = completion.choices[0]?.message?.content || '{}';
-      parsed = JSON.parse(raw);
-    } catch (modelErr) {
-      console.error('OPENAI /boost ERROR:', modelErr);
-      parsed = {};
-    }
-
-    const payload = {
-      listingSummary: parsed.listingSummary || '',
-      facebookPost: parsed.facebookPost || '',
-      instagramPost: parsed.instagramPost || '',
-      tiktokPost: parsed.tiktokPost || '',
-      linkedinPost: parsed.linkedinPost || '',
-      twitterPost: parsed.twitterPost || '',
-      textMessage: parsed.textMessage || '',
-      marketplacePost: parsed.marketplacePost || '',
-      hashtags: parsed.hashtags || '',
-      videoScript: parsed.videoScript || '',
-      shotPlan: parsed.shotPlan || '',
-      designLayout: parsed.designLayout || '',
-      photos,
-      scrapedTitle,
-      scrapedPriceText,
-    };
-
-    res.json(payload);
-  } catch (err) {
-    console.error('BOOST FATAL ERROR:', err);
-    res.status(500).json({
-      error: 'Something went wrong boosting this listing. Try again in a moment.',
-    });
+    console.error('Error in /api/grab-photos:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-// ---------------- Objection Coach ----------------
+// ------------------------------------------------------------
+// POST /api/video-from-photos – quick shot plan from photo list
+// ------------------------------------------------------------
+app.post('/api/video-from-photos', async (req, res) => {
+  const { photos, label } = req.body || {};
 
-app.post('/api/objection-coach', async (req, res) => {
+  if (!photos || !Array.isArray(photos) || photos.length === 0) {
+    return res.status(400).json({ success: false, error: 'No photos provided' });
+  }
+
   try {
-    const { history, objection, vehicleLabel } = req.body || {};
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.8,
+      messages: [
+        {
+          role: 'system',
+          content: `
+You help car salespeople turn a batch of photos into a simple vertical video shot plan
+for Reels/TikTok. Output a numbered list: which photos to show in what order,
+what motion (pan/zoom), and on-screen text ideas.
+          `.trim(),
+        },
+        {
+          role: 'user',
+          content: `
+Vehicle: ${label || 'This vehicle'}
+There are ${photos.length} photos available.
 
-    const safeHistory = Array.isArray(history) ? history : [];
-    const safeObjection = (objection || '').toString().trim();
-    const safeVehicle = (vehicleLabel || 'this vehicle').toString().trim();
+Give me a short, step-by-step shot plan.
+          `.trim(),
+        },
+      ],
+    });
 
-    if (!safeObjection) {
-      return res.status(400).json({ error: 'Missing objection text.' });
-    }
+    const plan = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, plan });
+  } catch (err) {
+    console.error('Error in /api/video-from-photos:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
 
-    const historyText = safeHistory
-      .map((item, idx) => `#${idx + 1} ${item}`)
-      .join('\n');
+// ------------------------------------------------------------
+// POST /api/design-idea – Canva layout checklist
+// ------------------------------------------------------------
+app.post('/api/design-idea', async (req, res) => {
+  const { type, url, label, price } = req.body || {};
 
-    const systemPrompt = `
-You are an elite automotive objection-handling coach.
-You help a car salesperson respond calmly and confidently.
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'Missing url' });
+  }
 
-Return a SHORT playbook:
-- 1–2 sentences acknowledging the objection.
-- 3–5 bullet points: how to respond and what to say.
-- Optional closing line calling them to next step (visit, test drive, or call).
-
-Tone: confident, kind, no pressure, very human.
-Do NOT mention AI or that this is "coaching".
-    `.trim();
-
-    const userPrompt = `
-Vehicle: ${safeVehicle}
-
-Latest customer objection:
-"${safeObjection}"
-
-Recent conversation history (if any):
-${historyText || '(none given)'}
-
-Give me a short objection-handling playbook the salesperson can use right now.
-    `.trim();
+  try {
+    const scraped = await scrapePageText(url);
 
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
       temperature: 0.7,
+      messages: [
+        {
+          role: 'system',
+          content: `
+You are a Canva layout planner for automotive creatives.
+Return a bullet/checklist style plan: where to put headline, photo,
+badges, price, CTA, and any overlays or accents.
+          `.trim(),
+        },
+        {
+          role: 'user',
+          content: `
+Creative type: ${type || 'Facebook / Instagram feed post'}
+Vehicle: ${label || 'This vehicle'}
+Deal info: ${price || 'Message for current pricing'}
+
+Details:
+${scraped.title}
+${scraped.description}
+${scraped.text}
+          `.trim(),
+        },
+      ],
+    });
+
+    const design = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, design });
+  } catch (err) {
+    console.error('Error in /api/design-idea:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// ------------------------------------------------------------
+// POST /api/objection-coach – objection handling chat
+// ------------------------------------------------------------
+app.post('/api/objection-coach', async (req, res) => {
+  const { messages, label, price } = req.body || {};
+  const history = Array.isArray(messages) ? messages : [];
+
+  try {
+    const chatMessages = [
+      {
+        role: 'system',
+        content: `
+You are an objection-handling coach for a car salesperson.
+Be concise, positive, and honest. Use plain language.
+Treat "user" messages as the salesperson describing the customer's objection.
+Respond with how the salesperson should reply.
+        `.trim(),
+      },
+      ...history.map((m) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content || '',
+      })),
+      {
+        role: 'system',
+        content: `Vehicle: ${label || 'This vehicle'} | Deal info: ${
+          price || 'Message for current pricing'
+        }`,
+      },
+    ];
+
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      messages: chatMessages,
     });
 
     const reply = completion.choices[0]?.message?.content || '';
-    res.json({ reply });
+    res.json({ success: true, reply });
   } catch (err) {
-    console.error('OBJECTION ERROR:', err);
-    res.status(500).json({ error: 'Error generating objection response.' });
+    console.error('Error in /api/objection-coach:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-// ---------------- Payment Helper ----------------
-
+// ------------------------------------------------------------
+// (Optional) simple helpers for payment / income / messages
+// If your frontend calls them, they’ll be available.
+// ------------------------------------------------------------
 app.post('/api/payment-helper', async (req, res) => {
+  const { price, termMonths, rateApr } = req.body || {};
   try {
-    const {
-      vehicleLabel,
-      priceInfo,
-      creditProfile,
-      targetPayment,
-    } = req.body || {};
-
-    const safeVehicle = (vehicleLabel || 'this vehicle').toString().trim();
-    const safePrice = (priceInfo || '').toString().trim();
-    const safeProfile = (creditProfile || '').toString().trim();
-    const safeTarget = (targetPayment || '').toString().trim();
-
-    const systemPrompt = `
-You help car salespeople talk about payments in a clear, honest way.
-You are NOT giving financial advice. You are giving talk tracks.
-
-Return:
-1) A short script (3–6 sentences) the salesperson can say.
-2) 3–5 bullet points with ways to position the deal (terms, down payment, trade, etc.).
-Keep everything high-level with disclaimers; no specific financial guarantees.
-    `.trim();
-
-    const userPrompt = `
-Vehicle: ${safeVehicle}
-Price / deal info: ${safePrice || '(none given)'}
-Customer credit or situation: ${safeProfile || '(not specified)'}
-Target payment mentioned: ${safeTarget || '(not specified)'}
-
-Give me a brief talk track + bullets I can use to discuss payments safely and clearly.
-    `.trim();
-
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0.3,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        {
+          role: 'system',
+          content:
+            'You help estimate car payments. Be concise. Return a short explanation and approximate monthly payment.',
+        },
+        {
+          role: 'user',
+          content: `Price: ${price}, Term: ${termMonths} months, APR: ${rateApr}%`,
+        },
       ],
-      temperature: 0.7,
     });
-
-    const text = completion.choices[0]?.message?.content || '';
-    res.json({ text });
+    const result = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, result });
   } catch (err) {
-    console.error('PAYMENT HELPER ERROR:', err);
-    res.status(500).json({ error: 'Error generating payment helper text.' });
+    console.error('Error in /api/payment-helper:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
-
-// ---------------- Income Helper ----------------
 
 app.post('/api/income-helper', async (req, res) => {
+  const { targetPayment } = req.body || {};
   try {
-    const { vehicleLabel, householdIncome, otherDebts } = req.body || {};
-
-    const safeVehicle = (vehicleLabel || 'this vehicle').toString().trim();
-    const safeIncome = (householdIncome || '').toString().trim();
-    const safeDebts = (otherDebts || '').toString().trim();
-
-    const systemPrompt = `
-You help car salespeople talk about "comfortable" payment ranges
-in a general, educational way. You are NOT giving formal financial advice.
-
-Return:
-- 2–3 sentences explaining how people can think about a comfortable payment range.
-- 3–4 bullet points on questions to ask and how to guide them.
-Include a gentle disclaimer that final decisions should be based on the customer's budget and any lender guidelines.
-    `.trim();
-
-    const userPrompt = `
-Vehicle: ${safeVehicle}
-Customer household income mentioned: ${safeIncome || '(not specified)'}
-Other debts or obligations mentioned: ${safeDebts || '(not specified)'}
-
-Give me language I can use to talk about a comfortable payment range in general terms.
-    `.trim();
-
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0.3,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        {
+          role: 'system',
+          content:
+            'You help estimate what income might be needed for a target car payment. Be clear that this is a rough rule-of-thumb, not financial advice.',
+        },
+        {
+          role: 'user',
+          content: `Target payment: ${targetPayment} per month`,
+        },
       ],
-      temperature: 0.7,
     });
-
-    const text = completion.choices[0]?.message?.content || '';
-    res.json({ text });
+    const result = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, result });
   } catch (err) {
-    console.error('INCOME HELPER ERROR:', err);
-    res.status(500).json({ error: 'Error generating income helper text.' });
+    console.error('Error in /api/income-helper:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
-
-// ---------------- Message Helper ----------------
 
 app.post('/api/message-helper', async (req, res) => {
+  const { context } = req.body || {};
   try {
-    const {
-      channel,
-      vibe,
-      context,
-      vehicleLabel,
-      customerName,
-    } = req.body || {};
-
-    const safeChannel = (channel || 'text').toString().trim();
-    const safeVibe = (vibe || 'friendly, confident').toString().trim();
-    const safeContext = (context || '').toString().trim();
-    const safeVehicle = (vehicleLabel || 'this vehicle').toString().trim();
-    const safeName = (customerName || '').toString().trim();
-
-    const systemPrompt = `
-You write short, highly usable outreach messages for car salespeople.
-
-Requirements:
-- 1–3 sentences max; super tight.
-- Sound like a real human, not a template robot.
-- Include a clear but low-pressure call to action.
-- Adapt tone for the channel: text, DM, email, etc.
-    `.trim();
-
-    const userPrompt = `
-Channel: ${safeChannel}
-Tone / vibe: ${safeVibe}
-Customer name (if any): ${safeName || '(none given)'}
-Vehicle: ${safeVehicle}
-Context: ${safeContext || '(no extra context)'}
-
-Write ONE message I can copy-paste and send.
-    `.trim();
-
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0.7,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        {
+          role: 'system',
+          content:
+            'You draft short, friendly follow-up messages for car shoppers. Respond with just the message text.',
+        },
+        {
+          role: 'user',
+          content: context || 'Follow up with a shopper who inquired yesterday.',
+        },
       ],
-      temperature: 0.8,
     });
-
-    const text = completion.choices[0]?.message?.content || '';
-    res.json({ text });
+    const result = completion.choices[0]?.message?.content || '';
+    res.json({ success: true, result });
   } catch (err) {
-    console.error('MESSAGE HELPER ERROR:', err);
-    res.status(500).json({ error: 'Error generating message helper text.' });
+    console.error('Error in /api/message-helper:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-// ---------------- Start server ----------------
-
+// ------------------------------------------------------------
+// Start server
+// ------------------------------------------------------------
 app.listen(port, () => {
   console.log(`Lot Rocket backend running on port ${port}`);
 });
