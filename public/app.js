@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- THEME TOGGLE ----------
   const themeToggleInput = document.getElementById("themeToggle");
-
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
       if (isDark) {
@@ -25,14 +24,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------- STEP 1: BOOST WORKFLOW ----------
-
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
   const priceInfoInput = document.getElementById("priceInfo");
   const boostButton = document.getElementById("boostButton");
   const statusText = document.getElementById("statusText");
+
   const summaryLabel = document.getElementById("summaryLabel");
   const summaryPrice = document.getElementById("summaryPrice");
+
   const photosGrid = document.getElementById("photosGrid");
 
   const facebookPost = document.getElementById("facebookPost");
@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const textBlurb = document.getElementById("textBlurb");
   const marketplacePost = document.getElementById("marketplacePost");
   const hashtags = document.getElementById("hashtags");
+
   const selfieScript = document.getElementById("selfieScript");
   const shotPlan = document.getElementById("shotPlan");
   const designIdea = document.getElementById("designIdea");
@@ -54,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
       statusText.classList.add("error");
       return;
     }
+
     statusText.classList.remove("error");
     statusText.textContent = "Building social kit... 🚀";
 
@@ -70,9 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
       const data = await res.json();
 
@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (textBlurb) textBlurb.value = data.text || "";
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
+
       if (selfieScript) selfieScript.value = data.selfieScript || "";
       if (shotPlan) shotPlan.value = data.shotPlan || "";
       if (designIdea) designIdea.value = data.designIdea || "";
@@ -109,7 +110,8 @@ document.addEventListener("DOMContentLoaded", () => {
       statusText.textContent = "Social kit ready! 🎯";
     } catch (err) {
       console.error(err);
-      statusText.textContent = "Error building social kit. Check URL or try again.";
+      statusText.textContent =
+        "Error building social kit. Check URL or try again.";
       statusText.classList.add("error");
     }
   }
@@ -158,9 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
   wireCopyButtons();
 
   // ---------- REGEN BUTTONS (SOCIAL KIT) ----------
-
   const regenButtons = document.querySelectorAll(".regen-btn[data-platform]");
-
   regenButtons.forEach((btn) => {
     btn.addEventListener("click", async () => {
       const platform = btn.getAttribute("data-platform");
@@ -181,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (!res.ok) throw new Error(`Server ${res.status}`);
+
         const data = await res.json();
 
         const map = {
@@ -212,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Selfie script / shot plan / design idea regen
+  // Selfie script / shot plan / design idea regen (if you wire those later)
   const regenSelfieScriptBtn = document.getElementById("regenSelfieScript");
   const regenShotPlanBtn = document.getElementById("regenShotPlan");
   const regenDesignIdeaBtn = document.getElementById("regenDesignIdea");
@@ -284,7 +285,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------- CREATIVE LAB: VIDEO IDEA & LAYOUT ----------
-
   const videoVehicle = document.getElementById("videoVehicle");
   const videoHook = document.getElementById("videoHook");
   const videoStyle = document.getElementById("videoStyle");
@@ -395,20 +395,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ---------- COMMON MONEY HELPER ----------
-
   function formatMoney(value) {
     if (isNaN(value)) return "$0.00";
     const rounded = Math.round(value * 100) / 100;
     return (
-      "$" +
-      rounded
-        .toFixed(2)
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+      "$" + rounded.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
     );
   }
 
   // ---------- PAYMENT CALCULATOR MATH ----------
-
   const autoPriceInput = document.getElementById("autoPrice");
   const loanTermInput = document.getElementById("loanTermMonths");
   const interestRateInput = document.getElementById("interestRate");
@@ -445,10 +440,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const taxAmount = taxableAmount * (salesTaxPct / 100);
       const amountFinanced =
         priceAfterIncentives - down - netTrade + taxAmount + fees;
-
       const monthlyRate = rateAnnual / 100 / 12;
-      let monthlyPayment;
 
+      let monthlyPayment;
       if (!rateAnnual || !monthlyRate) {
         monthlyPayment = amountFinanced / termMonths;
       } else {
@@ -462,7 +456,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       paymentOutput.value =
         `Monthly Payment: ${formatMoney(monthlyPayment)}\n\n` +
-        `Total Loan Amount (amount financed): ${formatMoney(amountFinanced)}\n` +
+        `Total Loan Amount (amount financed): ${formatMoney(
+          amountFinanced
+        )}\n` +
         `Sales Tax: ${formatMoney(taxAmount)}\n` +
         `Upfront Payment (down + fees): ${formatMoney(upfront)}\n\n` +
         `Total of ${termMonths} Payments: ${formatMoney(totalPayments)}\n` +
@@ -474,7 +470,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------- STANDALONE BASIC CALCULATOR ----------
-
   const basicCalcPanel = document.getElementById("basicCalcPanel");
   const basicCalcDisplay = document.getElementById("basicCalcDisplay");
 
@@ -531,7 +526,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------- INCOME CALCULATOR ----------
-
   const ytdIncomeInput = document.getElementById("ytdIncome");
   const hireDateInput = document.getElementById("hireDate");
   const checkDateInput = document.getElementById("checkDate");
@@ -564,7 +558,6 @@ document.addEventListener("DOMContentLoaded", () => {
         1,
         Math.round((check.getTime() - hire.getTime()) / msPerDay)
       );
-
       const dailyIncome = ytd / daysWorked;
       const annualIncome = dailyIncome * 365;
       const monthlyIncome = annualIncome / 12;
@@ -579,7 +572,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------- AI TOOL HELPERS (BACKEND ENDPOINTS) ----------
-
   async function callHelper(endpoint, payload) {
     const res = await fetch(apiBase + endpoint, {
       method: "POST",
@@ -600,9 +592,11 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runObjectionCoachBtn.disabled = true;
         runObjectionCoachBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/objection-coach", {
           objection: objectionInput.value,
         });
+
         objectionOutput.value = data.answer || "";
       } catch (err) {
         console.error(err);
@@ -624,10 +618,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runWorkflowHelperBtn.disabled = true;
         runWorkflowHelperBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/message-helper", {
           mode: "workflow",
           prompt: workflowSituation.value,
         });
+
         workflowOutput.value = data.text || "";
       } catch (err) {
         console.error(err);
@@ -651,12 +647,14 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runMessageHelperBtn.disabled = true;
         runMessageHelperBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/message-helper", {
           mode: "message",
           type: messageType.value,
           goal: messageGoal.value,
           details: messageDetails.value,
         });
+
         messageOutput.value = data.text || "";
       } catch (err) {
         console.error(err);
@@ -678,10 +676,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runAskHelperBtn.disabled = true;
         runAskHelperBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/message-helper", {
           mode: "ask",
           question: askQuestion.value,
         });
+
         askOutput.value = data.text || "";
       } catch (err) {
         console.error(err);
@@ -703,10 +703,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runCarHelperBtn.disabled = true;
         runCarHelperBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/message-helper", {
           mode: "car",
           question: carQuestion.value,
         });
+
         carOutput.value = data.text || "";
       } catch (err) {
         console.error(err);
@@ -718,7 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Image generation prompt
+  // Image generation prompt (brief)
   const imagePrompt = document.getElementById("imagePrompt");
   const imageOutput = document.getElementById("imageOutput");
   const runImageHelperBtn = document.getElementById("runImageHelper");
@@ -728,10 +730,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runImageHelperBtn.disabled = true;
         runImageHelperBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/message-helper", {
           mode: "image-brief",
           prompt: imagePrompt.value,
         });
+
         imageOutput.value =
           data.text ||
           "Describe your image in detail (vehicle, background, lighting, angle, style).";
@@ -755,10 +759,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         runVideoHelperBtn.disabled = true;
         runVideoHelperBtn.textContent = "Thinking...";
+
         const data = await callHelper("/api/message-helper", {
           mode: "video-brief",
           prompt: videoGenPrompt.value,
         });
+
         videoGenOutput.value = data.text || "";
       } catch (err) {
         console.error(err);
@@ -771,7 +777,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
-
   function wireModal(triggerId, modalId, closeId) {
     const trigger = document.getElementById(triggerId);
     const modal = document.getElementById(modalId);
