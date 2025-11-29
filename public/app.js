@@ -828,13 +828,136 @@ copyButtons.forEach((btn) => {
 });
 
 // ------------------------------------------------------------
-// STEP 3 · CREATIVE LAB WIRES
+// STEP 3 · CREATIVE LAB — FULL ENGINE
 // ------------------------------------------------------------
 
 function initCreativeLab() {
-  // ... all the Quick Sales Video / Layout Planner / Editor code ...
+  // -------------------------------
+  // 1) Quick Sales Video Generator
+  // -------------------------------
+
+  const videoBtn = document.getElementById("generateVideoIdea");
+  const videoOutput = document.getElementById("videoIdeaOutput");
+
+  if (videoBtn && videoOutput) {
+    videoBtn.addEventListener("click", async () => {
+      const vehicle = document.getElementById("creativeVehicle")?.value || "";
+      const hook = document.getElementById("creativeHook")?.value || "";
+      const ratio = document.getElementById("creativeRatio")?.value || "";
+      const length = document.getElementById("creativeLength")?.value || "";
+      const style = document.getElementById("creativeStyle")?.value || "";
+
+      const prompt = `
+Create a short-form video idea for a car salesperson.
+Vehicle: ${vehicle}
+Hook: ${hook}
+Aspect ratio: ${ratio}
+Length: ${length}
+Style/Vibe: ${style}
+
+Return:
+• A 1–2 sentence hook
+• A shot-by-shot plan (5–7 shots)
+• Example on-screen text for each shot
+Keep it punchy and high-converting.
+`;
+
+      videoOutput.value = "✨ generating...";
+      const idea = await askOpenAI(prompt);
+      videoOutput.value = idea || "Unable to generate idea.";
+    });
+  }
+
+  // --------------------------------------
+  // 2) Canva-style Layout Blueprint Planner
+  // --------------------------------------
+
+  const layoutBtn = document.getElementById("generateLayoutIdea");
+  const layoutOutput = document.getElementById("layoutPlanOutput");
+
+  if (layoutBtn && layoutOutput) {
+    layoutBtn.addEventListener("click", async () => {
+      const creativeType =
+        document.getElementById("creativeType")?.value || "";
+      const headline =
+        document.getElementById("creativeHeadline")?.value || "";
+      const cta = document.getElementById("creativeCTA")?.value || "";
+      const colors =
+        document.getElementById("creativeBrandColors")?.value || "";
+
+      const prompt = `
+Create a Canva-style graphic layout for an automotive social media creative.
+Type: ${creativeType}
+Headline: ${headline}
+Call to action: ${cta}
+Brand colors / vibe: ${colors}
+
+Return:
+• Overall layout concept
+• Suggested photo placement
+• Font recommendations
+• Accent elements
+• Ratio suggestion
+• Suggested color palette (hex)
+`;
+
+      layoutOutput.value = "✨ generating...";
+      const plan = await askOpenAI(prompt);
+      layoutOutput.value = plan || "Could not generate layout.";
+    });
+  }
+
+  // -------------------------
+  // 3) Photo / Video Editor
+  // -------------------------
+
+  const uploadPhoto = document.getElementById("creativePhotoUpload");
+  const preview = document.getElementById("creativePhotoPreview");
+  const bright = document.getElementById("creativeBrightness");
+  const contrast = document.getElementById("creativeContrast");
+  const saturate = document.getElementById("creativeSaturation");
+
+  if (uploadPhoto && preview) {
+    uploadPhoto.addEventListener("change", () => {
+      const file = uploadPhoto.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const applyFilters = () => {
+    if (!preview) return;
+    preview.style.filter = `
+      brightness(${bright.value}%)
+      contrast(${contrast.value}%)
+      saturate(${saturate.value}%)
+    `;
+  };
+
+  if (bright) bright.addEventListener("input", applyFilters);
+  if (contrast) contrast.addEventListener("input", applyFilters);
+  if (saturate) saturate.addEventListener("input", applyFilters);
+
+  // -------------------------
+  // Helper: Ask OpenAI
+  // -------------------------
+
+  async function askOpenAI(prompt) {
+    try {
+      const res = await fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      return data.result || "";
+    } catch (err) {
+      console.error("AI Error:", err);
+      return "";
+    }
+  }
 }
-
-// Make sure it runs once the DOM is ready
-window.addEventListener("DOMContentLoaded", initCreativeLab);
-
