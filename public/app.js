@@ -1,477 +1,353 @@
 // public/app.js – Lot Rocket V2 frontend
 
-document.addEventListener('DOMContentLoaded', () => {
-  const apiBase = '';
+document.addEventListener("DOMContentLoaded", () => {
+  const apiBase = ""; // same origin
 
-  // ---------- Elements ----------
-
-  const vehicleUrlInput = document.getElementById('vehicleUrl');
-  const vehicleLabelInput = document.getElementById('vehicleLabel');
-  const priceInfoInput = document.getElementById('priceInfo');
-  const boostButton = document.getElementById('boostButton');
-  const statusText = document.getElementById('statusText');
-
-  const photoGrid = document.getElementById('photoGrid');
-
-  const summaryLabel = document.getElementById('summaryLabel');
-  const summaryPrice = document.getElementById('summaryPrice');
-
-  const facebookPost = document.getElementById('facebookPost');
-  const instagramPost = document.getElementById('instagramPost');
-  const tiktokPost = document.getElementById('tiktokPost');
-  const linkedinPost = document.getElementById('linkedinPost');
-  const twitterPost = document.getElementById('twitterPost');
-  const textBlurb = document.getElementById('textBlurb');
-  const marketplacePost = document.getElementById('marketplacePost');
-  const hashtags = document.getElementById('hashtags');
-  const selfieScript = document.getElementById('selfieScript');
-  const shotPlan = document.getElementById('shotPlan');
-  const canvaIdea = document.getElementById('canvaIdea');
-
-  const newPostButtons = document.querySelectorAll('.new-post-btn');
-  const newSelfieScriptBtn = document.getElementById('newSelfieScript');
-  const copyButtons = document.querySelectorAll('.copy-btn');
-
-  // Creative Lab
-  const videoVehicle = document.getElementById('videoVehicle');
-  const videoHook = document.getElementById('videoHook');
-  const videoStyle = document.getElementById('videoStyle');
-  const videoLength = document.getElementById('videoLength');
-  const generateVideoIdea = document.getElementById('generateVideoIdea');
-  const videoIdeaOutput = document.getElementById('videoIdeaOutput');
-
-  const layoutType = document.getElementById('layoutType');
-  const layoutHeadline = document.getElementById('layoutHeadline');
-  const layoutCta = document.getElementById('layoutCta');
-  const layoutVibe = document.getElementById('layoutVibe');
-  const generateLayoutIdea = document.getElementById('generateLayoutIdea');
-  const layoutOutput = document.getElementById('layoutOutput');
-
-  const photoUpload = document.getElementById('photoUpload');
-  const brightnessSlider = document.getElementById('brightnessSlider');
-  const contrastSlider = document.getElementById('contrastSlider');
-  const saturationSlider = document.getElementById('saturationSlider');
-  const photoPreview = document.getElementById('photoPreview');
-
-  const themeToggle = document.getElementById('themeToggle');
-
-  // Floating tools
-  const objectionLauncher = document.getElementById('objectionLauncher');
-  const paymentLauncher = document.getElementById('paymentLauncher');
-  const incomeLauncher = document.getElementById('incomeLauncher');
-  const messageLauncher = document.getElementById('messageLauncher'); // AI Work Flow Expert
-
-  const messageBuilderLauncher = document.getElementById('messageBuilderLauncher');
-  const askAiLauncher = document.getElementById('askAiLauncher');
-  const carExpertLauncher = document.getElementById('carExpertLauncher');
-
-  // Modals
-  const objectionModal = document.getElementById('objectionModal');
-  const objectionClose = document.getElementById('objectionClose');
-  const objectionText = document.getElementById('objectionText');
-  const objectionContext = document.getElementById('objectionContext');
-  const objectionSubmit = document.getElementById('objectionSubmit');
-  const objectionOutput = document.getElementById('objectionOutput');
-
-  const paymentModal = document.getElementById('paymentModal');
-  const paymentClose = document.getElementById('paymentClose');
-  const payPrice = document.getElementById('payPrice');
-  const payDown = document.getElementById('payDown');
-  const payTerm = document.getElementById('payTerm');
-  const payRate = document.getElementById('payRate');
-  const paymentSubmit = document.getElementById('paymentSubmit');
-  const paymentOutput = document.getElementById('paymentOutput');
-
-  const incomeModal = document.getElementById('incomeModal');
-  const incomeClose = document.getElementById('incomeClose');
-  const incomeTarget = document.getElementById('incomeTarget');
-  const incomeDebts = document.getElementById('incomeDebts');
-  const incomeTerm = document.getElementById('incomeTerm');
-  const incomeRate = document.getElementById('incomeRate');
-  const incomeSubmit = document.getElementById('incomeSubmit');
-  const incomeOutput = document.getElementById('incomeOutput');
-
-  const messageModal = document.getElementById('messageModal');
-  const messageClose = document.getElementById('messageClose');
-  const workflowSituation = document.getElementById('workflowSituation');
-  const workflowType = document.getElementById('workflowType');
-  const workflowSubmit = document.getElementById('workflowSubmit');
-  const workflowOutput = document.getElementById('workflowOutput');
-
-  // New modals
-  const messageBuilderModal = document.getElementById('messageBuilderModal');
-  const messageBuilderClose = document.getElementById('messageBuilderClose');
-  const messageBuilderType = document.getElementById('messageBuilderType');
-  const messageBuilderGoal = document.getElementById('messageBuilderGoal');
-  const messageBuilderDetails = document.getElementById('messageBuilderDetails');
-  const messageBuilderGenerate = document.getElementById('messageBuilderGenerate');
-  const messageBuilderOutput = document.getElementById('messageBuilderOutput');
-  const messageBuilderCopy = document.getElementById('messageBuilderCopy');
-
-  const askAiModal = document.getElementById('askAiModal');
-  const askAiClose = document.getElementById('askAiClose');
-  const askAiQuestion = document.getElementById('askAiQuestion');
-  const askAiSubmit = document.getElementById('askAiSubmit');
-  const askAiAnswer = document.getElementById('askAiAnswer');
-  const askAiCopy = document.getElementById('askAiCopy');
-
-  const carExpertModal = document.getElementById('carExpertModal');
-  const carExpertClose = document.getElementById('carExpertClose');
-  const carExpertQuestion = document.getElementById('carExpertQuestion');
-  const carExpertSubmit = document.getElementById('carExpertSubmit');
-  const carExpertAnswer = document.getElementById('carExpertAnswer');
-  const carExpertCopy = document.getElementById('carExpertCopy');
-
-  // ---------- Helpers ----------
-
+  // ---------- Basic helpers ----------
   function setStatus(msg, isError = false) {
-    if (!statusText) return;
-    statusText.textContent = msg;
-    statusText.classList.toggle('error', !!isError);
+    const statusEl = document.getElementById("statusText");
+    if (!statusEl) return;
+    statusEl.textContent = msg || "";
+    statusEl.classList.toggle("error", !!isError);
   }
 
-  function openModal(modal) {
-    if (modal) modal.classList.remove('hidden');
-  }
-
-  function closeModal(modal) {
-    if (modal) modal.classList.add('hidden');
-  }
-
-  async function copyToClipboard(text) {
-    if (!text) return;
+  async function safeJson(res) {
     try {
-      await navigator.clipboard.writeText(text);
-    } catch (err) {
-      console.error('Clipboard error', err);
+      return await res.json();
+    } catch (e) {
+      return null;
     }
   }
 
-  function applyPhotoFilters() {
-    if (!photoPreview) return;
-    const b = parseInt(brightnessSlider.value || '0', 10);
-    const c = parseInt(contrastSlider.value || '0', 10);
-    const s = parseInt(saturationSlider.value || '0', 10);
-
-    const brightness = 100 + b;
-    const contrast = 100 + c;
-    const saturation = 100 + s;
-
-    photoPreview.style.filter = `
-      brightness(${brightness}%)
-      contrast(${contrast}%)
-      saturate(${saturation}%)
-    `;
-  }
-
-  function renderPhotoGrid(photos) {
-    if (!photoGrid) return;
-    photoGrid.innerHTML = '';
-    if (!Array.isArray(photos) || photos.length === 0) return;
-
-    photos.forEach((url) => {
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'Vehicle photo';
-      img.className = 'photo-thumb';
-      photoGrid.appendChild(img);
-    });
-  }
-
   // ---------- Theme toggle ----------
+  const themeToggle = document.getElementById("themeToggle");
   if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-theme');
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark-theme");
     });
   }
 
-  // ---------- Step 1 + Step 2: Boost workflow ----------
+  // ---------- Elements: Step 1 ----------
+  const vehicleUrlInput = document.getElementById("vehicleUrl");
+  const vehicleLabelInput = document.getElementById("vehicleLabel");
+  const priceInfoInput = document.getElementById("priceInfo");
+  const boostButton = document.getElementById("boostButton");
+  const summaryLabel = document.getElementById("summaryLabel");
+  const summaryPrice = document.getElementById("summaryPrice");
+  const photoGrid = document.getElementById("photoGrid");
 
+  // ---------- Elements: Step 2 ----------
+  const facebookPost = document.getElementById("facebookPost");
+  const instagramPost = document.getElementById("instagramPost");
+  const tiktokPost = document.getElementById("tiktokPost");
+  const linkedinPost = document.getElementById("linkedinPost");
+  const twitterPost = document.getElementById("twitterPost");
+  const textBlurb = document.getElementById("textBlurb");
+  const marketplacePost = document.getElementById("marketplacePost");
+  const hashtags = document.getElementById("hashtags");
+  const selfieScript = document.getElementById("selfieScript");
+  const videoPlan = document.getElementById("videoPlan");
+  const canvaIdea = document.getElementById("canvaIdea");
+
+  // ---------- Elements: Step 3 (Creative Lab) ----------
+  const labVideoVehicle = document.getElementById("labVideoVehicle");
+  const labVideoHook = document.getElementById("labVideoHook");
+  const labVideoAspect = document.getElementById("labVideoAspect");
+  const labVideoStyle = document.getElementById("labVideoStyle");
+  const labVideoLength = document.getElementById("labVideoLength");
+  const generateLabVideo = document.getElementById("generateLabVideo");
+  const labVideoOutput = document.getElementById("labVideoOutput");
+
+  const labDesignType = document.getElementById("labDesignType");
+  const labDesignHeadline = document.getElementById("labDesignHeadline");
+  const labDesignCTA = document.getElementById("labDesignCTA");
+  const labDesignVibe = document.getElementById("labDesignVibe");
+  const generateLabDesign = document.getElementById("generateLabDesign");
+  const labDesignOutput = document.getElementById("labDesignOutput");
+
+  const photoUpload = document.getElementById("photoUpload");
+  const photoPreview = document.getElementById("photoPreview");
+  const brightnessRange = document.getElementById("brightnessRange");
+  const contrastRange = document.getElementById("contrastRange");
+  const saturationRange = document.getElementById("saturationRange");
+
+  // ---------- Step 1: Boost This Listing ----------
   if (boostButton) {
-    boostButton.addEventListener('click', async () => {
-      const url = (vehicleUrlInput.value || '').trim();
-      const label = (vehicleLabelInput.value || '').trim();
-      const price = (priceInfoInput.value || '').trim();
-
+    boostButton.addEventListener("click", async () => {
+      const url = (vehicleUrlInput?.value || "").trim();
       if (!url) {
-        setStatus('Please paste a dealer listing URL.', true);
+        setStatus("Please paste a dealer vehicle URL first.", true);
         return;
       }
 
-      setStatus('Scraping and generating social kit...');
+      setStatus("Scraping dealer page and generating social kit...");
+      boostButton.disabled = true;
 
       try {
-        // grab photos
-        const photosRes = await fetch(`${apiBase}/api/grab-photos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        });
-        if (photosRes.ok) {
-          const photosData = await photosRes.json();
-          renderPhotoGrid(photosData.photos || []);
-        }
+        const body = {
+          url,
+          labelOverride: (vehicleLabelInput?.value || "").trim() || null,
+          priceOverride: (priceInfoInput?.value || "").trim() || null,
+        };
 
-        // full social kit
         const res = await fetch(`${apiBase}/api/social-kit`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, label, price }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         });
 
         if (!res.ok) {
-          setStatus('Error generating kit. Try again.', true);
+          setStatus("Error building social kit. Check URL or try again.", true);
+          boostButton.disabled = false;
           return;
         }
 
-        const data = await res.json();
+        const data = await safeJson(res);
+        if (!data) {
+          setStatus("Unexpected response from server.", true);
+          boostButton.disabled = false;
+          return;
+        }
 
-        const kit = data.kit || {};
-        const meta = data.meta || {};
-        const photos = data.photos || [];
+        // Summary
+        if (summaryLabel) summaryLabel.textContent = data.label || body.labelOverride || "—";
+        if (summaryPrice) summaryPrice.textContent = data.price || body.priceOverride || "—";
 
-        renderPhotoGrid(photos);
+        // Posts
+        if (facebookPost) facebookPost.value = data.facebook || "";
+        if (instagramPost) instagramPost.value = data.instagram || "";
+        if (tiktokPost) tiktokPost.value = data.tiktok || "";
+        if (linkedinPost) linkedinPost.value = data.linkedin || "";
+        if (twitterPost) twitterPost.value = data.twitter || "";
+        if (textBlurb) textBlurb.value = data.text || "";
+        if (marketplacePost) marketplacePost.value = data.marketplace || "";
+        if (hashtags) hashtags.value = data.hashtags || "";
+        if (selfieScript) selfieScript.value = data.selfieScript || "";
+        if (videoPlan) videoPlan.value = data.videoPlan || "";
+        if (canvaIdea) canvaIdea.value = data.canvaIdea || "";
 
-        summaryLabel.textContent = meta.label || label || '—';
-        summaryPrice.textContent = meta.price || price || '—';
+        // Photos
+        if (photoGrid) {
+          photoGrid.innerHTML = "";
+          const photos = Array.isArray(data.photos) ? data.photos : [];
+          photos.slice(0, 24).forEach((src) => {
+            const img = document.createElement("img");
+            img.src = src;
+            img.className = "photo-thumb";
+            img.alt = "Vehicle photo";
+            photoGrid.appendChild(img);
+          });
+        }
 
-        facebookPost.value = kit.facebook || '';
-        instagramPost.value = kit.instagram || '';
-        tiktokPost.value = kit.tiktok || '';
-        linkedinPost.value = kit.linkedin || '';
-        twitterPost.value = kit.twitter || '';
-        textBlurb.value = kit.sms || '';
-        marketplacePost.value = kit.marketplace || '';
-        hashtags.value = kit.hashtags || '';
-        selfieScript.value = kit.selfie_script || '';
-        shotPlan.value = kit.shot_plan || '';
-        canvaIdea.value = kit.canva_idea || '';
-
-        setStatus('Social kit ready! 🎯');
+        setStatus("Social kit generated. You can fine-tune and copy any section.");
       } catch (err) {
         console.error(err);
-        setStatus('Something went wrong. Check your URL and try again.', true);
+        setStatus("Error building social kit. Please try again.", true);
+      } finally {
+        boostButton.disabled = false;
       }
     });
   }
 
-  // ---------- Regenerate single platform posts ----------
+  // ---------- Copy Buttons (all platforms) ----------
+  function attachCopyButtons() {
+    const copyButtons = document.querySelectorAll(".copy-btn[data-target]");
+    copyButtons.forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const targetId = btn.getAttribute("data-target");
+        if (!targetId) return;
+        const field = document.getElementById(targetId);
+        if (!field || !field.value.trim()) return;
 
-  if (newPostButtons && newPostButtons.length) {
-    newPostButtons.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const platform = btn.getAttribute('data-platform');
-        if (!platform) return;
+        try {
+          await navigator.clipboard.writeText(field.value);
+          const original = btn.textContent;
+          btn.textContent = "Copied!";
+          setTimeout(() => {
+            btn.textContent = original;
+          }, 1000);
+        } catch (err) {
+          console.error("Copy failed", err);
+        }
+      });
+    });
+  }
 
-        const url = (vehicleUrlInput.value || '').trim();
-        const label = (vehicleLabelInput.value || '').trim();
-        const price = (priceInfoInput.value || '').trim();
+  attachCopyButtons();
 
-        const context = `
-URL: ${url}
-Label: ${label}
-Price: ${price}
-Current content:
-Facebook: ${facebookPost.value}
-Instagram: ${instagramPost.value}
-TikTok: ${tiktokPost.value}
-LinkedIn: ${linkedinPost.value}
-Twitter: ${twitterPost.value}
-        `;
+  // ---------- Regeneration per platform ----------
+  function attachRegenButtons() {
+    const regenButtons = document.querySelectorAll(".regen-btn[data-platform]");
+    regenButtons.forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const platform = btn.getAttribute("data-platform");
+        const url = (vehicleUrlInput?.value || "").trim();
+        if (!platform || !url) {
+          alert("You need a dealer URL and to hit Boost at least once first.");
+          return;
+        }
+
+        const labelOverride = (vehicleLabelInput?.value || "").trim() || null;
+        const priceOverride = (priceInfoInput?.value || "").trim() || null;
 
         btn.disabled = true;
-        btn.textContent = 'Thinking...';
+        const original = btn.textContent;
+        btn.textContent = "Thinking...";
 
         try {
           const res = await fetch(`${apiBase}/api/new-post`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ platform, context }),
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url,
+              platform,
+              labelOverride,
+              priceOverride,
+            }),
           });
 
-          if (!res.ok) {
-            alert('Error generating new post.');
-            return;
-          }
+          if (!res.ok) throw new Error("Failed to regenerate post");
 
-          const data = await res.json();
-          const post = data.post || '';
+          const data = await safeJson(res);
+          const text = data?.content || data?.post || "";
 
-          switch (platform) {
-            case 'facebook':
-              facebookPost.value = post;
-              break;
-            case 'instagram':
-              instagramPost.value = post;
-              break;
-            case 'tiktok':
-              tiktokPost.value = post;
-              break;
-            case 'linkedin':
-              linkedinPost.value = post;
-              break;
-            case 'twitter':
-              twitterPost.value = post;
-              break;
+          const targetMap = {
+            facebook: "facebookPost",
+            instagram: "instagramPost",
+            tiktok: "tiktokPost",
+            linkedin: "linkedinPost",
+            twitter: "twitterPost",
+            text: "textBlurb",
+            marketplace: "marketplacePost",
+            hashtags: "hashtags",
+            selfie: "selfieScript",
+            videoPlan: "videoPlan",
+            canva: "canvaIdea",
+          };
+
+          const targetId = targetMap[platform];
+          if (targetId) {
+            const field = document.getElementById(targetId);
+            if (field) field.value = text;
           }
         } catch (err) {
           console.error(err);
-          alert('Error generating new post.');
+          alert("Error regenerating post. Please try again.");
         } finally {
           btn.disabled = false;
-          btn.textContent = 'New Post';
+          btn.textContent = original;
         }
       });
     });
   }
 
-  // ---------- New selfie script from context ----------
-  if (newSelfieScriptBtn) {
-    newSelfieScriptBtn.addEventListener('click', async () => {
-      const url = (vehicleUrlInput.value || '').trim();
-      const label = (vehicleLabelInput.value || '').trim();
-      const price = (priceInfoInput.value || '').trim();
+  attachRegenButtons();
 
-      const context = `
-URL: ${url}
-Label: ${label}
-Price: ${price}
-Current script:
-${selfieScript.value}
-      `;
+  // ---------- Creative Lab: Video Idea ----------
+  if (generateLabVideo && labVideoOutput) {
+    generateLabVideo.addEventListener("click", async () => {
+      const vehicle = (labVideoVehicle?.value || "").trim();
+      const hook = (labVideoHook?.value || "").trim();
+      const aspect = (labVideoAspect?.value || "9:16").trim();
+      const style = (labVideoStyle?.value || "hype").trim();
+      const length = parseInt(labVideoLength?.value || "30", 10);
 
-      newSelfieScriptBtn.disabled = true;
-      newSelfieScriptBtn.textContent = 'Thinking...';
+      if (!vehicle) {
+        labVideoOutput.value = "Add a vehicle or offer first.";
+        return;
+      }
+
+      generateLabVideo.disabled = true;
+      const originalText = generateLabVideo.textContent;
+      generateLabVideo.textContent = "Thinking...";
 
       try {
         const res = await fetch(`${apiBase}/api/new-script`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ context }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            vehicle,
+            hook,
+            aspect,
+            style,
+            length,
+          }),
         });
 
-        if (!res.ok) {
-          alert('Error generating new script.');
-          return;
-        }
-
-        const data = await res.json();
-        selfieScript.value = data.script || '';
+        if (!res.ok) throw new Error("Video script failed");
+        const data = await safeJson(res);
+        labVideoOutput.value =
+          data?.script ||
+          data?.content ||
+          "No script returned. Try again with more detail.";
       } catch (err) {
         console.error(err);
-        alert('Error generating new script.');
+        labVideoOutput.value = "Error generating video idea. Please try again.";
       } finally {
-        newSelfieScriptBtn.disabled = false;
-        newSelfieScriptBtn.textContent = 'New Script';
+        generateLabVideo.disabled = false;
+        generateLabVideo.textContent = originalText;
       }
     });
   }
 
-  // ---------- Universal copy buttons ----------
-  if (copyButtons && copyButtons.length) {
-    copyButtons.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const targetId = btn.getAttribute('data-target');
-        if (!targetId) return;
-        const el = document.getElementById(targetId);
-        if (!el) return;
+  // ---------- Creative Lab: Canva Layout ----------
+  if (generateLabDesign && labDesignOutput) {
+    generateLabDesign.addEventListener("click", async () => {
+      const creativeType = (labDesignType?.value || "").trim();
+      const headline = (labDesignHeadline?.value || "").trim();
+      const cta = (labDesignCTA?.value || "").trim();
+      const vibe = (labDesignVibe?.value || "").trim();
 
-        const text = el.value || el.textContent || '';
-        if (!text.trim()) return;
-
-        try {
-          await navigator.clipboard.writeText(text.trim());
-          const original = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => {
-            btn.textContent = original;
-          }, 1200);
-        } catch (err) {
-          console.error('Copy failed', err);
-        }
-      });
-    });
-  }
-
-  // ---------- Creative Lab: video idea ----------
-  if (generateVideoIdea) {
-    generateVideoIdea.addEventListener('click', async () => {
-      const payload = {
-        vehicle: videoVehicle.value,
-        hook: videoHook.value,
-        style: videoStyle.value,
-        length: videoLength.value,
-      };
-
-      videoIdeaOutput.value = 'Generating video idea...';
-
-      const context = `
-Vehicle: ${payload.vehicle}
-Hook: ${payload.hook}
-Style: ${payload.style}
-Length/aspect: ${payload.length}
-`;
-
-      try {
-        const res = await fetch(`${apiBase}/api/new-script`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ context }),
-        });
-
-        if (!res.ok) {
-          videoIdeaOutput.value = 'Error generating video idea.';
-          return;
-        }
-
-        const data = await res.json();
-        videoIdeaOutput.value = data.script || 'No idea returned.';
-      } catch (err) {
-        console.error(err);
-        videoIdeaOutput.value = 'Error generating video idea.';
+      if (!creativeType) {
+        labDesignOutput.value = "Add a creative type first.";
+        return;
       }
-    });
-  }
 
-  // ---------- Creative Lab: layout idea ----------
-  if (generateLayoutIdea) {
-    generateLayoutIdea.addEventListener('click', async () => {
-      const payload = {
-        creativeType: layoutType.value,
-        headline: layoutHeadline.value,
-        cta: layoutCta.value,
-        vibe: layoutVibe.value,
-      };
-
-      layoutOutput.value = 'Generating layout idea...';
+      generateLabDesign.disabled = true;
+      const originalText = generateLabDesign.textContent;
+      generateLabDesign.textContent = "Thinking...";
 
       try {
         const res = await fetch(`${apiBase}/api/design-idea`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            creativeType,
+            headline,
+            cta,
+            vibe,
+          }),
         });
 
-        if (!res.ok) {
-          layoutOutput.value = 'Error generating layout idea.';
-          return;
-        }
-
-        const data = await res.json();
-        layoutOutput.value = data.layout || 'No layout idea returned.';
+        if (!res.ok) throw new Error("Design idea failed");
+        const data = await safeJson(res);
+        labDesignOutput.value =
+          data?.idea ||
+          data?.content ||
+          "No layout idea returned. Try again with more detail.";
       } catch (err) {
         console.error(err);
-        layoutOutput.value = 'Error generating layout idea.';
+        labDesignOutput.value = "Error generating layout idea. Please try again.";
+      } finally {
+        generateLabDesign.disabled = false;
+        generateLabDesign.textContent = originalText;
       }
     });
   }
 
-  // ---------- Photo quick editor ----------
-  if (photoUpload) {
-    photoUpload.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  // ---------- Photo Editor (preview only) ----------
+  function applyPhotoFilters() {
+    if (!photoPreview) return;
+    const b = Number(brightnessRange?.value || 100);
+    const c = Number(contrastRange?.value || 100);
+    const s = Number(saturationRange?.value || 100);
+    photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  }
 
+  if (photoUpload && photoPreview) {
+    photoUpload.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
       const reader = new FileReader();
       reader.onload = (evt) => {
         photoPreview.src = evt.target.result;
@@ -481,359 +357,286 @@ Length/aspect: ${payload.length}
     });
   }
 
-  [brightnessSlider, contrastSlider, saturationSlider].forEach((slider) => {
+  [brightnessRange, contrastRange, saturationRange].forEach((slider) => {
     if (!slider) return;
-    slider.addEventListener('input', applyPhotoFilters);
+    slider.addEventListener("input", applyPhotoFilters);
   });
 
-  // ---------- Floating tools: open/close modals ----------
-
-  if (objectionLauncher) {
-    objectionLauncher.addEventListener('click', () =>
-      openModal(objectionModal)
-    );
+  // ---------- Modal helpers ----------
+  function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("hidden");
   }
-  if (paymentLauncher) {
-    paymentLauncher.addEventListener('click', () => openModal(paymentModal));
-  }
-  if (incomeLauncher) {
-    incomeLauncher.addEventListener('click', () => openModal(incomeModal));
-  }
-  if (messageLauncher) {
-    messageLauncher.addEventListener('click', () => openModal(messageModal));
-  }
-  if (messageBuilderLauncher) {
-    messageBuilderLauncher.addEventListener('click', () =>
-      openModal(messageBuilderModal)
-    );
-  }
-  if (askAiLauncher) {
-    askAiLauncher.addEventListener('click', () => openModal(askAiModal));
-  }
-  if (carExpertLauncher) {
-    carExpertLauncher.addEventListener('click', () =>
-      openModal(carExpertModal)
-    );
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
   }
 
-  if (objectionClose) {
-    objectionClose.addEventListener('click', () =>
-      closeModal(objectionModal)
-    );
-  }
-  if (paymentClose) {
-    paymentClose.addEventListener('click', () => closeModal(paymentModal));
-  }
-  if (incomeClose) {
-    incomeClose.addEventListener('click', () => closeModal(incomeModal));
-  }
-  if (messageClose) {
-    messageClose.addEventListener('click', () => closeModal(messageModal));
-  }
-  if (messageBuilderClose) {
-    messageBuilderClose.addEventListener('click', () =>
-      closeModal(messageBuilderModal)
-    );
-  }
-  if (askAiClose) {
-    askAiClose.addEventListener('click', () => closeModal(askAiModal));
-  }
-  if (carExpertClose) {
-    carExpertClose.addEventListener('click', () =>
-      closeModal(carExpertModal)
-    );
-  }
+  // ---------- Objection Coach ----------
+  const objectionLauncher = document.getElementById("objectionLauncher");
+  const objectionClose = document.getElementById("objectionClose");
+  const objectionInput = document.getElementById("objectionInput");
+  const objectionHistory = document.getElementById("objectionHistory");
+  const sendObjection = document.getElementById("sendObjection");
 
-  // ---------- Tool API calls ----------
+  objectionLauncher?.addEventListener("click", () => openModal("objectionModal"));
+  objectionClose?.addEventListener("click", () => closeModal("objectionModal"));
 
-  // Objection coach
-  if (objectionSubmit) {
-    objectionSubmit.addEventListener('click', async () => {
-      const objection = objectionText.value.trim();
-      const context = objectionContext.value.trim();
+  sendObjection?.addEventListener("click", async () => {
+    const text = (objectionInput?.value || "").trim();
+    if (!text) return;
 
-      if (!objection) {
-        objectionOutput.value = 'Please enter a customer objection.';
-        return;
-      }
-
-      objectionOutput.value = 'Coaching...';
-
-      try {
-        const res = await fetch(`${apiBase}/api/objection-coach`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ objection, context }),
-        });
-
-        if (!res.ok) {
-          objectionOutput.value = 'Error generating coaching.';
-          return;
-        }
-
-        const data = await res.json();
-        objectionOutput.value = data.advice || 'No coaching returned.';
-      } catch (err) {
-        console.error(err);
-        objectionOutput.value = 'Error generating coaching.';
-      }
+    sendObjection.disabled = true;
+    const res = await fetch(`${apiBase}/api/objection-coach`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ objection: text, history: objectionHistory?.value || "" }),
     });
-  }
 
-  // Payment helper
-  if (paymentSubmit) {
-    paymentSubmit.addEventListener('click', async () => {
-      const payload = {
-        price: payPrice.value,
-        down: payDown.value,
-        termMonths: payTerm.value,
-        rate: payRate.value,
-      };
+    const data = await safeJson(res);
+    const reply = data?.reply || data?.content || "No response.";
+    if (objectionHistory) {
+      objectionHistory.value +=
+        (objectionHistory.value ? "\n\n" : "") + "Customer: " + text + "\nYou: " + reply;
+    }
+    sendObjection.disabled = false;
+  });
 
-      paymentOutput.value = 'Estimating payment...';
+  // ---------- Payment Estimator ----------
+  const paymentLauncher = document.getElementById("paymentLauncher");
+  const paymentClose = document.getElementById("paymentClose");
+  const payPrice = document.getElementById("payPrice");
+  const payDown = document.getElementById("payDown");
+  const payRate = document.getElementById("payRate");
+  const payTerm = document.getElementById("payTerm");
+  const payTax = document.getElementById("payTax");
+  const calcPayment = document.getElementById("calcPayment");
+  const paymentResult = document.getElementById("paymentResult");
 
-      try {
-        const res = await fetch(`${apiBase}/api/payment-helper`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+  paymentLauncher?.addEventListener("click", () => openModal("paymentModal"));
+  paymentClose?.addEventListener("click", () => closeModal("paymentModal"));
 
-        if (!res.ok) {
-          paymentOutput.value = 'Error estimating payment.';
-          return;
-        }
+  calcPayment?.addEventListener("click", async () => {
+    const body = {
+      price: Number(payPrice?.value || 0),
+      down: Number(payDown?.value || 0),
+      rate: Number(payRate?.value || 0),
+      term: Number(payTerm?.value || 0),
+      tax: Number(payTax?.value || 0),
+    };
 
-        const data = await res.json();
-        paymentOutput.value = data.paymentHelp || 'No estimate returned.';
-      } catch (err) {
-        console.error(err);
-        paymentOutput.value = 'Error estimating payment.';
-      }
+    const res = await fetch(`${apiBase}/api/payment-helper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-  }
 
-  // Income helper
-  if (incomeSubmit) {
-    incomeSubmit.addEventListener('click', async () => {
-      const payload = {
-        paymentTarget: incomeTarget.value,
-        otherDebts: incomeDebts.value,
-        termMonths: incomeTerm.value,
-        rate: incomeRate.value,
-      };
+    const data = await safeJson(res);
+    paymentResult.value = data?.result || data?.text || "No estimate returned.";
+  });
 
-      incomeOutput.value = 'Estimating income...';
+  // ---------- Income Estimator ----------
+  const incomeLauncher = document.getElementById("incomeLauncher");
+  const incomeClose = document.getElementById("incomeClose");
+  const incomePayment = document.getElementById("incomePayment");
+  const incomeDTI = document.getElementById("incomeDTI");
+  const calcIncome = document.getElementById("calcIncome");
+  const incomeResult = document.getElementById("incomeResult");
 
-      try {
-        const res = await fetch(`${apiBase}/api/income-helper`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+  incomeLauncher?.addEventListener("click", () => openModal("incomeModal"));
+  incomeClose?.addEventListener("click", () => closeModal("incomeModal"));
 
-        if (!res.ok) {
-          incomeOutput.value = 'Error estimating income.';
-          return;
-        }
+  calcIncome?.addEventListener("click", async () => {
+    const body = {
+      payment: Number(incomePayment?.value || 0),
+      dti: Number(incomeDTI?.value || 0),
+    };
 
-        const data = await res.json();
-        incomeOutput.value = data.incomeHelp || 'No estimate returned.';
-      } catch (err) {
-        console.error(err);
-        incomeOutput.value = 'Error estimating income.';
-      }
+    const res = await fetch(`${apiBase}/api/income-helper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-  }
 
-  // AI Work Flow Expert
-  if (workflowSubmit) {
-    workflowSubmit.addEventListener('click', async () => {
-      const situation = workflowSituation.value.trim();
-      const customerType = workflowType.value.trim();
+    const data = await safeJson(res);
+    incomeResult.value = data?.result || data?.text || "No estimate returned.";
+  });
 
-      if (!situation) {
-        workflowOutput.value =
-          'Describe the customer situation to build a workflow.';
-        return;
-      }
+  // ---------- AI Work Flow Expert ----------
+  const workflowLauncher = document.getElementById("workflowLauncher");
+  const workflowClose = document.getElementById("workflowClose");
+  const workflowInput = document.getElementById("workflowInput");
+  const workflowGenerate = document.getElementById("workflowGenerate");
+  const workflowResult = document.getElementById("workflowResult");
+  const workflowCopy = document.getElementById("workflowCopy");
 
-      workflowOutput.value = 'Building workflow...';
+  workflowLauncher?.addEventListener("click", () => openModal("workflowModal"));
+  workflowClose?.addEventListener("click", () => closeModal("workflowModal"));
 
-      try {
-        const res = await fetch(`${apiBase}/api/message-helper`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ situation, customerType }),
-        });
+  workflowGenerate?.addEventListener("click", async () => {
+    const text = (workflowInput?.value || "").trim();
+    if (!text) return;
 
-        if (!res.ok) {
-          workflowOutput.value = 'Error generating workflow.';
-          return;
-        }
-
-        const data = await res.json();
-        workflowOutput.value = data.workflow || 'No workflow returned.';
-      } catch (err) {
-        console.error(err);
-        workflowOutput.value = 'Error generating workflow.';
-      }
+    workflowGenerate.disabled = true;
+    const res = await fetch(`${apiBase}/api/message-helper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "workflow", context: text }),
     });
-  }
 
-  // AI Message Builder
-  if (messageBuilderGenerate) {
-    messageBuilderGenerate.addEventListener('click', async () => {
-      const type = messageBuilderType.value;
-      const goal = messageBuilderGoal.value.trim();
-      const details = messageBuilderDetails.value.trim();
+    const data = await safeJson(res);
+    workflowResult.value =
+      data?.result || data?.content || "No workflow returned. Try with more detail.";
+    workflowGenerate.disabled = false;
+  });
 
-      if (!goal && !details) {
-        messageBuilderOutput.value =
-          'Please describe what you want the message to do.';
-        return;
-      }
+  workflowCopy?.addEventListener("click", async () => {
+    if (!workflowResult?.value.trim()) return;
+    await navigator.clipboard.writeText(workflowResult.value);
+    const original = workflowCopy.textContent;
+    workflowCopy.textContent = "Copied!";
+    setTimeout(() => (workflowCopy.textContent = original), 1000);
+  });
 
-      messageBuilderOutput.value = 'Generating message...';
+  // ---------- AI Message Builder ----------
+  const messageLauncher = document.getElementById("messageLauncher");
+  const messageClose = document.getElementById("messageClose");
+  const messageContext = document.getElementById("messageContext");
+  const messageTone = document.getElementById("messageTone");
+  const messageChannel = document.getElementById("messageChannel");
+  const messageGenerate = document.getElementById("messageGenerate");
+  const messageResult = document.getElementById("messageResult");
+  const messageCopy = document.getElementById("messageCopy");
 
-      try {
-        const res = await fetch(`${apiBase}/api/message-builder`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, goal, details }),
-        });
+  messageLauncher?.addEventListener("click", () => openModal("messageModal"));
+  messageClose?.addEventListener("click", () => closeModal("messageModal"));
 
-        if (!res.ok) {
-          messageBuilderOutput.value =
-            'Error: Unable to generate message.';
-          return;
-        }
+  messageGenerate?.addEventListener("click", async () => {
+    const context = (messageContext?.value || "").trim();
+    if (!context) return;
 
-        const data = await res.json();
-        messageBuilderOutput.value =
-          data.message || 'No response text returned.';
-      } catch (err) {
-        console.error(err);
-        messageBuilderOutput.value = 'Error: Something went wrong.';
-      }
+    const tone = messageTone?.value || "friendly";
+    const channel = messageChannel?.value || "text";
+
+    messageGenerate.disabled = true;
+
+    const res = await fetch(`${apiBase}/api/message-helper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "message", context, tone, channel }),
     });
-  }
 
-  if (messageBuilderCopy) {
-    messageBuilderCopy.addEventListener('click', async () => {
-      const text = messageBuilderOutput.value.trim();
-      if (!text) return;
+    const data = await safeJson(res);
+    messageResult.value = data?.result || data?.content || "No message returned.";
+    messageGenerate.disabled = false;
+  });
 
-      try {
-        await navigator.clipboard.writeText(text);
-        const original = messageBuilderCopy.textContent;
-        messageBuilderCopy.textContent = 'Copied!';
-        setTimeout(() => {
-          messageBuilderCopy.textContent = original;
-        }, 1200);
-      } catch (err) {
-        console.error('Copy failed', err);
-      }
+  messageCopy?.addEventListener("click", async () => {
+    if (!messageResult?.value.trim()) return;
+    await navigator.clipboard.writeText(messageResult.value);
+    const original = messageCopy.textContent;
+    messageCopy.textContent = "Copied!";
+    setTimeout(() => (messageCopy.textContent = original), 1000);
+  });
+
+  // ---------- Ask A.I. ----------
+  const askLauncher = document.getElementById("askLauncher");
+  const askClose = document.getElementById("askClose");
+  const askInput = document.getElementById("askInput");
+  const askGenerate = document.getElementById("askGenerate");
+  const askResult = document.getElementById("askResult");
+  const askCopy = document.getElementById("askCopy");
+
+  askLauncher?.addEventListener("click", () => openModal("askModal"));
+  askClose?.addEventListener("click", () => closeModal("askModal"));
+
+  askGenerate?.addEventListener("click", async () => {
+    const question = (askInput?.value || "").trim();
+    if (!question) return;
+
+    askGenerate.disabled = true;
+
+    const res = await fetch(`${apiBase}/api/message-helper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "ask", context: question }),
     });
-  }
 
-  // Ask AI
-  if (askAiSubmit) {
-    askAiSubmit.addEventListener('click', async () => {
-      const question = askAiQuestion.value.trim();
-      if (!question) {
-        askAiAnswer.value = 'Please enter a question.';
-        return;
-      }
+    const data = await safeJson(res);
+    askResult.value = data?.result || data?.content || "No answer returned.";
+    askGenerate.disabled = false;
+  });
 
-      askAiAnswer.value = 'Thinking...';
+  askCopy?.addEventListener("click", async () => {
+    if (!askResult?.value.trim()) return;
+    await navigator.clipboard.writeText(askResult.value);
+    const original = askCopy.textContent;
+    askCopy.textContent = "Copied!";
+    setTimeout(() => (askCopy.textContent = original), 1000);
+  });
 
-      try {
-        const res = await fetch(`${apiBase}/api/ask-ai`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question }),
-        });
+  // ---------- AI Car Expert ----------
+  const carLauncher = document.getElementById("carLauncher");
+  const carClose = document.getElementById("carClose");
+  const carQuestion = document.getElementById("carQuestion");
+  const carGenerate = document.getElementById("carGenerate");
+  const carResult = document.getElementById("carResult");
+  const carCopy = document.getElementById("carCopy");
 
-        if (!res.ok) {
-          askAiAnswer.value = 'Error: Unable to get answer.';
-          return;
-        }
+  carLauncher?.addEventListener("click", () => openModal("carModal"));
+  carClose?.addEventListener("click", () => closeModal("carModal"));
 
-        const data = await res.json();
-        askAiAnswer.value = data.answer || 'No answer was returned.';
-      } catch (err) {
-        console.error(err);
-        askAiAnswer.value = 'Error: Something went wrong.';
-      }
+  carGenerate?.addEventListener("click", async () => {
+    const question = (carQuestion?.value || "").trim();
+    if (!question) return;
+
+    carGenerate.disabled = true;
+
+    const res = await fetch(`${apiBase}/api/message-helper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "car", context: question }),
     });
-  }
 
-  if (askAiCopy) {
-    askAiCopy.addEventListener('click', async () => {
-      const text = askAiAnswer.value.trim();
-      if (!text) return;
+    const data = await safeJson(res);
+    carResult.value = data?.result || data?.content || "No answer returned.";
+    carGenerate.disabled = false;
+  });
 
-      try {
-        await navigator.clipboard.writeText(text);
-        const original = askAiCopy.textContent;
-        askAiCopy.textContent = 'Copied!';
-        setTimeout(() => {
-          askAiCopy.textContent = original;
-        }, 1200);
-      } catch (err) {
-        console.error('Copy failed', err);
-      }
-    });
-  }
+  carCopy?.addEventListener("click", async () => {
+    if (!carResult?.value.trim()) return;
+    await navigator.clipboard.writeText(carResult.value);
+    const original = carCopy.textContent;
+    carCopy.textContent = "Copied!";
+    setTimeout(() => (carCopy.textContent = original), 1000);
+  });
 
-  // AI Car Expert
-  if (carExpertSubmit) {
-    carExpertSubmit.addEventListener('click', async () => {
-      const question = carExpertQuestion.value.trim();
-      if (!question) {
-        carExpertAnswer.value = 'Please enter an automotive question.';
-        return;
-      }
+  // ---------- NEW: AI Image & Video Generation (placeholders only) ----------
+  const imageGenLauncher = document.getElementById("imageGenLauncher");
+  const imageGenModal = document.getElementById("imageGenModal");
+  const imageGenClose = document.getElementById("imageGenClose");
 
-      carExpertAnswer.value = 'Revving up an answer...';
+  imageGenLauncher?.addEventListener("click", () => {
+    imageGenModal?.classList.remove("hidden");
+  });
+  imageGenClose?.addEventListener("click", () => {
+    imageGenModal?.classList.add("hidden");
+  });
+  imageGenModal?.addEventListener("click", (e) => {
+    if (e.target === imageGenModal) imageGenModal.classList.add("hidden");
+  });
 
-      try {
-        const res = await fetch(`${apiBase}/api/car-expert`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question }),
-        });
+  const videoGenLauncher = document.getElementById("videoGenLauncher");
+  const videoGenModal = document.getElementById("videoGenModal");
+  const videoGenClose = document.getElementById("videoGenClose");
 
-        if (!res.ok) {
-          carExpertAnswer.value = 'Error: Unable to get answer.';
-          return;
-        }
-
-        const data = await res.json();
-        carExpertAnswer.value = data.answer || 'No answer was returned.';
-      } catch (err) {
-        console.error(err);
-        carExpertAnswer.value = 'Error: Something went wrong.';
-      }
-    });
-  }
-
-  if (carExpertCopy) {
-    carExpertCopy.addEventListener('click', async () => {
-      const text = carExpertAnswer.value.trim();
-      if (!text) return;
-
-      try {
-        await navigator.clipboard.writeText(text);
-        const original = carExpertCopy.textContent;
-        carExpertCopy.textContent = 'Copied!';
-        setTimeout(() => {
-          carExpertCopy.textContent = original;
-        }, 1200);
-      } catch (err) {
-        console.error('Copy failed', err);
-      }
-    });
-  }
+  videoGenLauncher?.addEventListener("click", () => {
+    videoGenModal?.classList.remove("hidden");
+  });
+  videoGenClose?.addEventListener("click", () => {
+    videoGenModal?.classList.add("hidden");
+  });
+  videoGenModal?.addEventListener("click", (e) => {
+    if (e.target === videoGenModal) videoGenModal.classList.add("hidden");
+  });
 });
