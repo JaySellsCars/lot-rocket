@@ -7,18 +7,18 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
-    <!-- App Shell -->
+    <!-- Header -->
     <header class="app-header">
       <div class="branding">
         <h1>🚀 Lot Rocket</h1>
-        <p>AI Social Media Kit for Car Sales Pros</p>
+        <p>AI Social Media Kit & Creative Lab for Car Salespeople</p>
       </div>
       <div class="header-controls">
         <button id="themeToggle" class="secondary-btn">Toggle Theme</button>
       </div>
     </header>
 
-    <!-- Floating tool buttons (right side) -->
+    <!-- Floating AI tools on the right -->
     <div class="floating-tools">
       <button id="objectionLauncher" class="tool-button">Objection Coach</button>
       <button id="paymentLauncher" class="tool-button">Payment Estimator</button>
@@ -31,312 +31,436 @@
       <button id="videoGenLauncher" class="tool-button">AI Video Generation</button>
     </div>
 
-    <!-- Main layout -->
-    <main class="layout">
-      <!-- Column 1 – Step 1: Dealer URL Scraper -->
-      <section class="column column-left">
-        <div class="section-card">
+    <!-- Main two-column layout: Step 1 + Step 2 -->
+    <main>
+      <div class="layout">
+        <!-- STEP 1: Dealer URL Scraper -->
+        <section class="column column-left">
           <h2>Step 1 – Dealer URL Scraper</h2>
 
-          <label for="vehicleUrl">Vehicle URL</label>
-          <input
-            type="text"
-            id="vehicleUrl"
-            placeholder="Paste full dealer listing URL here..."
-          />
+          <!-- Vehicle Details card -->
+          <div class="section-card">
+            <h3>Vehicle Details</h3>
 
-          <label for="vehicleLabel">Vehicle Label</label>
-          <input
-            type="text"
-            id="vehicleLabel"
-            placeholder="Example: 2024 Chevy Silverado RST"
-          />
+            <label for="vehicleUrl">Dealer Vehicle URL</label>
+            <input
+              type="text"
+              id="vehicleUrl"
+              placeholder="https://www.lafontainechevroletplymouth.com/used-Plymouth..."
+            />
 
-          <label for="priceInfo">Price / Offer</label>
-          <input
-            type="text"
-            id="priceInfo"
-            placeholder="Example: $599/mo with $1,999 due at signing"
-          />
+            <label for="vehicleLabel">Vehicle Label (optional override)</label>
+            <input
+              type="text"
+              id="vehicleLabel"
+              placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
+            />
 
-          <button id="boostButton" class="primary-btn" style="margin-top: 10px">
-            Boost This Listing
-          </button>
+            <label for="priceInfo">Price / Offer (optional override)</label>
+            <input
+              type="text"
+              id="priceInfo"
+              placeholder="Example: $699/mo or $47,995 + tax"
+            />
 
-          <div id="statusText" class="status-text" style="margin-top: 6px">
-            Paste a URL and hit Boost to build your kit.
+            <p class="small-note" style="margin-top: 6px">
+              Lot Rocket will scrape the page and clean up the title, description,
+              and photos.
+            </p>
+
+            <!-- Summary Snapshot inside Step 1 -->
+            <div class="section-card" style="margin-top: 14px">
+              <h4>Summary Snapshot</h4>
+              <p>Vehicle: <span id="summaryLabel">—</span></p>
+              <p>Price: <span id="summaryPrice">—</span></p>
+
+              <button
+                id="boostButton"
+                class="primary-btn"
+                style="margin-top: 10px"
+              >
+                Boost This Listing
+              </button>
+
+              <div
+                id="statusText"
+                class="status-text"
+                style="margin-top: 6px"
+              >
+                Paste a URL and hit Boost to build your kit.
+              </div>
+            </div>
           </div>
 
-          <h3 style="margin-top: 18px">Photos (max 24)</h3>
-          <div id="photoGrid" class="photo-grid"></div>
-        </div>
-      </section>
-
-      <!-- Column 2 – Step 2: Social Kit Generator -->
-      <section class="column column-middle">
-        <!-- Summary Card -->
-        <div class="section-card">
-          <h2>Step 2 – Social Kit Generator</h2>
-          <div>
-            <strong>Summary</strong>
+          <!-- Photos card -->
+          <div class="section-card" style="margin-top: 16px">
+            <h3>Photos pulled from dealer site</h3>
+            <p class="small-note">
+              Click “Boost This Listing” to refresh photos. Up to 24 images, logos
+              removed when possible.
+            </p>
+            <div id="photoGrid" class="photo-grid"></div>
           </div>
-          <div style="margin-top: 6px">
-            <div>Vehicle: <span id="summaryLabel">—</span></div>
-            <div>Price: <span id="summaryPrice">—</span></div>
-          </div>
-        </div>
+        </section>
 
-        <!-- Facebook -->
-        <div class="section-card">
-          <h3>Facebook</h3>
-          <textarea id="facebookPost"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="facebook">New Post</button>
-            <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
-          </div>
-        </div>
+        <!-- STEP 2: Social Media Kit -->
+        <section class="column column-middle">
+          <h2>Step 2 – Social Media Kit</h2>
 
-        <!-- Instagram -->
-        <div class="section-card">
-          <h3>Instagram</h3>
-          <textarea id="instagramPost"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="instagram">New Post</button>
-            <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
-          </div>
-        </div>
-
-        <!-- TikTok -->
-        <div class="section-card">
-          <h3>TikTok</h3>
-          <textarea id="tiktokPost"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="tiktok">New Post</button>
-            <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
-          </div>
-        </div>
-
-        <!-- LinkedIn -->
-        <div class="section-card">
-          <h3>LinkedIn</h3>
-          <textarea id="linkedinPost"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="linkedin">New Post</button>
-            <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
-          </div>
-        </div>
-
-        <!-- X / Twitter -->
-        <div class="section-card">
-          <h3>X / Twitter</h3>
-          <textarea id="twitterPost"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="twitter">New Post</button>
-            <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
-          </div>
-        </div>
-
-        <!-- Text / DM -->
-        <div class="section-card">
-          <h3>Text / DM Outreach</h3>
-          <textarea id="textBlurb"></textarea>
-          <div class="btn-row">
-            <button class="regen-btn" data-platform="text">New Text</button>
-            <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
-          </div>
-        </div>
-
-        <!-- Marketplace & Hashtags -->
-        <div class="section-card">
-          <h3>Facebook Marketplace Listing</h3>
-          <textarea id="marketplacePost"></textarea>
-          <div class="btn-row">
-            <button
-              class="regen-btn"
-              data-platform="marketplace"
-            >
-              New Listing
-            </button>
-            <button
-              class="copy-btn"
-              data-copy-target="marketplacePost"
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <h3>Hashtags</h3>
-          <textarea id="hashtags"></textarea>
-          <div class="btn-row">
-            <button class="copy-btn" data-copy-target="hashtags">Copy</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Column 3 – Step 3: Creative Lab -->
-      <section class="column column-right">
-        <!-- Quick Sales Video Idea -->
-        <div class="section-card">
-          <h2>Step 3 – Creative Lab</h2>
-          <h3>Quick Sales Video Idea</h3>
-
-          <label for="videoVehicle">Vehicle / Offer</label>
-          <input
-            type="text"
-            id="videoVehicle"
-            placeholder="Vehicle or promo"
-          />
-
-          <label for="videoHook">Hook</label>
-          <input
-            type="text"
-            id="videoHook"
-            placeholder="Example: Stop scrolling..."
-          />
-
-          <label for="videoStyle">Style</label>
-          <input
-            type="text"
-            id="videoStyle"
-            placeholder="Energetic, educational, hype"
-          />
-
-          <label for="videoAspect">Length / Aspect</label>
-          <input
-            type="text"
-            id="videoAspect"
-            placeholder="Example: 30s vertical 9:16"
-          />
-
-          <button id="generateVideoIdea" class="primary-btn" style="margin-top: 8px">
-            Generate Video Idea
-          </button>
-
-          <textarea
-            id="videoIdeaOutput"
-            style="margin-top: 10px"
-          ></textarea>
-          <div class="btn-row">
-            <button
-              class="copy-btn"
-              id="copyVideoIdea"
-              data-copy-target="videoIdeaOutput"
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        <!-- Canva Layout Planner -->
-        <div class="section-card">
-          <h3>Canva Layout Planner</h3>
-
-          <label for="creativeType">Creative Type</label>
-          <input
-            type="text"
-            id="creativeType"
-            placeholder="Story, feed post, flyer"
-          />
-
-          <label for="creativeHeadline">Headline</label>
-          <input
-            type="text"
-            id="creativeHeadline"
-            placeholder="Main headline"
-          />
-
-          <label for="creativeCta">Call To Action</label>
-          <input
-            type="text"
-            id="creativeCta"
-            placeholder="CTA text"
-          />
-
-          <label for="creativeVibe">Vibe</label>
-          <input
-            type="text"
-            id="creativeVibe"
-            placeholder="Clean, bold, premium"
-          />
-
-          <button
-            id="generateLayoutIdea"
-            class="primary-btn"
-            style="margin-top: 8px"
-          >
-            Generate Layout Idea
-          </button>
-
-          <textarea
-            id="creativeIdeaOutput"
-            style="margin-top: 10px"
-          ></textarea>
-          <div class="btn-row">
-            <button
-              class="copy-btn"
-              id="copyLayoutIdea"
-              data-copy-target="creativeIdeaOutput"
-            >
-              Copy
-            </button>
-          </div>
-        </div>
-
-        <!-- Photo & Video Quick Editor -->
-        <div class="section-card">
-          <h3>Photo &amp; Video Quick Editor</h3>
-
-          <label for="photoUpload">Upload Photo</label>
-          <input type="file" id="photoUpload" accept="image/*" />
-
-          <div id="photoPreview" class="photo-preview-wrapper">
-            <span class="small-note">Preview will appear here after upload.</span>
+          <!-- Facebook -->
+          <div class="section-card">
+            <h3>Facebook Post</h3>
+            <textarea
+              id="facebookPost"
+              placeholder="Facebook post will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="facebook"
+              >
+                New Post
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="facebookPost"
+              >
+                Copy
+              </button>
+            </div>
           </div>
 
-          <div class="slider-group">
-            <label>
-              <span>Brightness</span>
+          <!-- Instagram -->
+          <div class="section-card">
+            <h3>Instagram Caption</h3>
+            <textarea
+              id="instagramPost"
+              placeholder="Instagram caption will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="instagram"
+              >
+                New Post
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="instagramPost"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- TikTok -->
+          <div class="section-card">
+            <h3>TikTok Caption</h3>
+            <textarea
+              id="tiktokPost"
+              placeholder="TikTok caption will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="tiktok"
+              >
+                New Post
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="tiktokPost"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- LinkedIn -->
+          <div class="section-card">
+            <h3>LinkedIn Post</h3>
+            <textarea
+              id="linkedinPost"
+              placeholder="LinkedIn post will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="linkedin"
+              >
+                New Post
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="linkedinPost"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- X / Twitter -->
+          <div class="section-card">
+            <h3>X / Twitter Post</h3>
+            <textarea
+              id="twitterPost"
+              placeholder="X / Twitter post will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="twitter"
+              >
+                New Post
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="twitterPost"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- Text / DM -->
+          <div class="section-card">
+            <h3>Text / DM Outreach</h3>
+            <textarea
+              id="textBlurb"
+              placeholder="A short, high-converting text / DM will appear here."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="text"
+              >
+                New Text
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="textBlurb"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- Marketplace -->
+          <div class="section-card">
+            <h3>Facebook Marketplace Listing</h3>
+            <textarea
+              id="marketplacePost"
+              placeholder="Marketplace listing will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="regen-btn"
+                data-platform="marketplace"
+              >
+                New Listing
+              </button>
+              <button
+                class="copy-btn"
+                data-copy-target="marketplacePost"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- Hashtags -->
+          <div class="section-card">
+            <h3>Hashtags</h3>
+            <textarea
+              id="hashtags"
+              placeholder="Hashtags will appear here after Boost."
+            ></textarea>
+            <div class="btn-row">
+              <button
+                class="copy-btn"
+                data-copy-target="hashtags"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- STEP 3: Creative Lab – full-width row under Steps 1 & 2 -->
+      <section class="creative-row" style="padding: 0 32px 40px 32px; margin-top: 10px">
+        <h2>Step 3 – Creative Lab</h2>
+
+        <div class="layout" style="padding: 0; gap: 20px">
+          <!-- Quick Sales Video Idea -->
+          <div class="column">
+            <div class="section-card">
+              <h3>Quick Sales Video Idea</h3>
+
+              <label for="videoVehicle">Vehicle / Offer</label>
               <input
-                type="range"
-                id="brightnessSlider"
-                min="-100"
-                max="100"
-                value="0"
+                type="text"
+                id="videoVehicle"
+                placeholder="Vehicle or promo"
               />
-            </label>
-            <label>
-              <span>Contrast</span>
+
+              <label for="videoHook">Hook</label>
               <input
-                type="range"
-                id="contrastSlider"
-                min="-100"
-                max="100"
-                value="0"
+                type="text"
+                id="videoHook"
+                placeholder="Example: Stop scrolling..."
               />
-            </label>
-            <label>
-              <span>Saturation</span>
+
+              <label for="videoStyle">Style</label>
               <input
-                type="range"
-                id="saturationSlider"
-                min="-100"
-                max="100"
-                value="0"
+                type="text"
+                id="videoStyle"
+                placeholder="Energetic, educational, hype"
               />
-            </label>
+
+              <label for="videoAspect">Length / Aspect</label>
+              <input
+                type="text"
+                id="videoAspect"
+                placeholder="Example: 30s vertical 9:16"
+              />
+
+              <button
+                id="generateVideoIdea"
+                class="primary-btn"
+                style="margin-top: 8px"
+              >
+                Generate Video Idea
+              </button>
+
+              <textarea
+                id="videoIdeaOutput"
+                style="margin-top: 10px"
+              ></textarea>
+              <div class="btn-row">
+                <button
+                  class="copy-btn"
+                  id="copyVideoIdea"
+                  data-copy-target="videoIdeaOutput"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <h3>Canva Layout Planner</h3>
+
+              <label for="creativeType">Creative Type</label>
+              <input
+                type="text"
+                id="creativeType"
+                placeholder="Story, feed post, flyer"
+              />
+
+              <label for="creativeHeadline">Headline</label>
+              <input
+                type="text"
+                id="creativeHeadline"
+                placeholder="Main headline"
+              />
+
+              <label for="creativeCta">Call To Action</label>
+              <input
+                type="text"
+                id="creativeCta"
+                placeholder="CTA text"
+              />
+
+              <label for="creativeVibe">Vibe</label>
+              <input
+                type="text"
+                id="creativeVibe"
+                placeholder="Clean, bold, premium"
+              />
+
+              <button
+                id="generateLayoutIdea"
+                class="primary-btn"
+                style="margin-top: 8px"
+              >
+                Generate Layout Idea
+              </button>
+
+              <textarea
+                id="creativeIdeaOutput"
+                style="margin-top: 10px"
+              ></textarea>
+              <div class="btn-row">
+                <button
+                  class="copy-btn"
+                  id="copyLayoutIdea"
+                  data-copy-target="creativeIdeaOutput"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="small-note">
-            Tip: Right-click the edited image and choose “Save image as…” to
-            download it for your post.
+          <!-- Photo & Video Quick Editor -->
+          <div class="column">
+            <div class="section-card">
+              <h3>Photo &amp; Video Quick Editor</h3>
+
+              <label for="photoUpload">Upload Photo</label>
+              <input type="file" id="photoUpload" accept="image/*" />
+
+              <div id="photoPreview" class="photo-preview-wrapper">
+                <span class="small-note">
+                  Preview will appear here after upload.
+                </span>
+              </div>
+
+              <div class="slider-group">
+                <label>
+                  <span>Brightness</span>
+                  <input
+                    type="range"
+                    id="brightnessSlider"
+                    min="-100"
+                    max="100"
+                    value="0"
+                  />
+                </label>
+                <label>
+                  <span>Contrast</span>
+                  <input
+                    type="range"
+                    id="contrastSlider"
+                    min="-100"
+                    max="100"
+                    value="0"
+                  />
+                </label>
+                <label>
+                  <span>Saturation</span>
+                  <input
+                    type="range"
+                    id="saturationSlider"
+                    min="-100"
+                    max="100"
+                    value="0"
+                  />
+                </label>
+              </div>
+
+              <div class="small-note" style="margin-top: 6px">
+                Tip: Right-click the edited image and choose “Save image as…” to
+                download it for your post.
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- ------------- MODALS ------------- -->
+    <!-- ---------------- MODALS ---------------- -->
 
     <!-- Objection Coach -->
     <div id="objectionModal" class="modal hidden">
@@ -571,7 +695,7 @@
         <span id="imageGenClose" class="modal-close">&times;</span>
         <h2>AI Image Generator – Coming Soon</h2>
         <p>
-          This feature is almost ready. Soon, Lot Rocket will generate real,
+          This feature is almost ready. Soon, Lot Rocket will generate
           listing-ready images from your prompts and vehicle details so you can
           post without touching Photoshop.
         </p>
