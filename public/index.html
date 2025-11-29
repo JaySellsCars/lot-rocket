@@ -491,20 +491,28 @@
       </div>
     </div>
 
-    <!-- Payment Calculator -->
-  <div id="paymentModal" class="modal hidden">
+<!-- Payment Calculator -->
+<div id="paymentModal" class="modal hidden">
   <div class="modal-content">
     <span id="paymentClose" class="modal-close">&times;</span>
 
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <h2 style="margin:0;">Payment Calculator</h2>
-      <!-- Calculator toggle button -->
+    <!-- Header row with Calculator toggle button -->
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      "
+    >
+      <h2 style="margin: 0;">Payment Calculator</h2>
       <button id="toggleSimpleCalc" class="secondary-btn" type="button">
         Calculator
       </button>
     </div>
 
-    <!-- Simple calculator panel (toggled) -->
+    <!-- Simple calculator panel (hidden by default) -->
     <div id="simpleCalcPanel" class="simple-calc hidden">
       <div id="simpleCalcDisplay" class="simple-calc-display">0</div>
       <div class="simple-calc-grid">
@@ -535,50 +543,103 @@
       </div>
     </div>
 
-    <!-- Auto Loan Details continue here... -->
+    <!-- Auto loan form (like pic #2) -->
+    <h3 style="margin-top: 16px;">Auto Loan Details</h3>
 
-    <!-- Income Calculator -->
-    <div id="incomeModal" class="modal hidden">
-      <div class="modal-content">
-        <span id="incomeClose" class="modal-close">&times;</span>
-        <h2>Income Calculator</h2>
-        <p>Get a quick picture of your estimated monthly income.</p>
+    <label for="autoPrice">Auto Price</label>
+    <input
+      type="number"
+      id="autoPrice"
+      class="input"
+      placeholder="50000"
+    />
 
-        <label for="ytdIncome">Year-to-Date Income</label>
-        <input
-          type="number"
-          id="ytdIncome"
-          class="input"
-          placeholder="50000.00"
-          step="0.01"
-        />
+    <label for="loanTermMonths">Loan Term (months)</label>
+    <input
+      type="number"
+      id="loanTermMonths"
+      class="input"
+      placeholder="60"
+    />
 
-        <label for="hireDate">Hire Date</label>
-        <input type="date" id="hireDate" class="input" />
+    <label for="interestRate">Interest Rate (%)</label>
+    <input
+      type="number"
+      id="interestRate"
+      class="input"
+      placeholder="5"
+      step="0.01"
+    />
 
-        <label for="checkDate">Check Date</label>
-        <input type="date" id="checkDate" class="input" />
+    <label for="cashIncentives">Cash Incentives</label>
+    <input
+      type="number"
+      id="cashIncentives"
+      class="input"
+      placeholder="0"
+    />
 
-        <button id="runIncomeHelper" class="primary-btn" style="margin-top: 10px;">
-          Calculate Monthly Income
-        </button>
+    <label for="downPayment">Down Payment</label>
+    <input
+      type="number"
+      id="downPayment"
+      class="input"
+      placeholder="10000"
+    />
 
-        <h3 style="margin-top: 14px;">Monthly Income</h3>
-        <textarea
-          id="incomeOutput"
-          class="textarea"
-          style="min-height: 120px;"
-        ></textarea>
-        <div class="btn-row">
-          <button class="copy-btn" data-copy-target="incomeOutput">Copy</button>
-        </div>
+    <label for="tradeInValue">Trade-in Value</label>
+    <input
+      type="number"
+      id="tradeInValue"
+      class="input"
+      placeholder="0"
+    />
 
-        <p class="small-note" style="margin-top: 6px;">
-          *Calculated figures are for reference only. Always verify income with
-          actual paystubs and lender requirements.
-        </p>
-      </div>
+    <label for="tradeOwed">Amount Owed on Trade-in</label>
+    <input
+      type="number"
+      id="tradeOwed"
+      class="input"
+      placeholder="0"
+    />
+
+    <label for="salesTax">Sales Tax (%)</label>
+    <input
+      type="number"
+      id="salesTax"
+      class="input"
+      placeholder="7"
+      step="0.01"
+    />
+
+    <label for="fees">Title, Registration &amp; Other Fees</label>
+    <input
+      type="number"
+      id="fees"
+      class="input"
+      placeholder="2000"
+    />
+
+    <button
+      id="runPaymentHelper"
+      class="primary-btn"
+      style="margin-top: 10px;"
+    >
+      Estimate Payment
+    </button>
+
+    <h3 style="margin-top: 14px;">Estimate</h3>
+    <textarea
+      id="paymentOutput"
+      class="textarea"
+      style="min-height: 160px;"
+    ></textarea>
+    <div class="btn-row">
+      <button class="copy-btn" data-copy-target="paymentOutput">Copy</button>
     </div>
+  </div>
+</div>
+
 
     <!-- AI Work Flow Expert -->
     <div id="workflowModal" class="modal hidden">
