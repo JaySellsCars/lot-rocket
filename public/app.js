@@ -243,18 +243,40 @@ document.addEventListener('DOMContentLoaded', () => {
     photosStatus.textContent = photos.length + ' photos found. Click any to open full size.';
   }
 
-  async function callJson(endpoint, body) {
-    const res = await fetch(apiBase + endpoint, {
+ // Helper to call our JSON APIs and log status for debugging
+async function callJson(endpoint, body) {
+  try {
+    console.log('➡️ callJson →', endpoint, body);
+
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {}),
+      body: JSON.stringify(body || {})
     });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      throw new Error('Request failed: ' + res.status + ' ' + txt);
+
+    console.log('⬅️ Response from', endpoint, 'status:', res.status);
+
+    const text = await res.text();
+    let json;
+
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      console.error('Failed to parse JSON from', endpoint, 'raw:', text);
+      throw new Error('Bad JSON from server: ' + parseErr.message);
     }
-    return res.json();
+
+    if (!res.ok) {
+      console.error('Non-OK HTTP status for', endpoint, res.status, json);
+      throw new Error('Request failed: ' + res.status);
+    }
+
+    return json;
+  } catch (err) {
+    console.error('callJson error for', endpoint, err);
+    throw err;
   }
+}
 
   // -----------------------------
   // OBJECTION CHAT RENDER
