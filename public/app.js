@@ -1,1047 +1,600 @@
-// public/app.js
+// app.js – Lot Rocket V2 backend with new AI tools
 
-document.addEventListener('DOMContentLoaded', () => {
-  const apiBase = '';
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const cheerio = require('cheerio');
+const OpenAI = require('openai');
 
-  // -----------------------------
-  // DOM ELEMENTS – STEP 1 & 2
-  // -----------------------------
+const app = express();
+const port = process.env.PORT || 3000;
 
-  const vehicleUrlInput = document.getElementById('vehicleUrl');
-  const vehicleLabelInput = document.getElementById('vehicleLabel');
-  const priceInfoInput = document.getElementById('priceInfo');
-  const boostButton = document.getElementById('boostButton');
-  const statusText = document.getElementById('statusText');
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  const summaryLabel = document.getElementById('summaryLabel');
-  const summaryPrice = document.getElementById('summaryPrice');
+// ---------- Middleware ----------
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-  const facebookPost = document.getElementById('facebookPost');
-  const instagramPost = document.getElementById('instagramPost');
-  const tiktokPost = document.getElementById('tiktokPost');
-  const linkedinPost = document.getElementById('linkedinPost');
-  const twitterPost = document.getElementById('twitterPost');
-  const textBlurb = document.getElementById('textBlurb');
-  const marketplacePost = document.getElementById('marketplacePost');
-  const hashtags = document.getElementById('hashtags');
-  const videoScript = document.getElementById('videoScript');
-  const shotPlan = document.getElementById('shotPlan');
+// ---------- Helpers ----------
 
-  const buildVideoButton = document.getElementById('buildVideoButton');
-  const photosGrid = document.getElementById('photosGrid');
-  const photosStatus = document.getElementById('photosStatus');
-  const videoPlan = document.getElementById('videoPlan');
+async function fetchHtml(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch URL: ${res.status}`);
+  }
+  return await res.text();
+}
 
-  const newScriptButton = document.getElementById('newScriptButton');
+function extractMainText(html, pageUrl) {
+  const $ = cheerio.load(html);
 
-  const designTypeSelect = document.getElementById('designType');
-  const designButton = document.getElementById('designButton');
-  const designOutput = document.getElementById('designOutput');
+  const title = $('title').first().text().trim();
+  const metaDesc = $('meta[name="description"]').attr('content') || '';
 
-  const themeToggle = document.getElementById('themeToggle');
-  const themeIcon = document.getElementById('themeIcon');
-  const themeLabel = document.getElementById('themeLabel');
-
-  const newPostButtons = document.querySelectorAll('.button-new-post');
-  const copyButtons = document.querySelectorAll('.button-copy');
-
-  // -----------------------------
-  // FLOATING TOOL LAUNCHERS
-  // -----------------------------
-  const objectionLauncher = document.getElementById('objectionLauncher');
-  const paymentLauncher = document.getElementById('paymentLauncher');
-  const incomeLauncher = document.getElementById('incomeLauncher');
-  const messageLauncher = document.getElementById('messageLauncher');
-
-  // -----------------------------
-  // OBJECTION MODAL
-  // -----------------------------
-  const objectionModal = document.getElementById('objectionModal');
-  const objectionCloseButton = document.getElementById('objectionCloseButton');
-  const objectionHistory = document.getElementById('objectionHistory');
-  const objectionInput = document.getElementById('objectionInput');
-  const objectionSendButton = document.getElementById('objectionSendButton');
-
-  // -----------------------------
-  // PAYMENT MODAL
-  // -----------------------------
-  const paymentModal = document.getElementById('paymentModal');
-  const paymentCloseButton = document.getElementById('paymentCloseButton');
-  const payPrice = document.getElementById('payPrice');
-  const payDown = document.getElementById('payDown');
-  const payApr = document.getElementById('payApr');
-  const payTerm = document.getElementById('payTerm');
-  const paymentCalcButton = document.getElementById('paymentCalcButton');
-  const paymentResultText = document.getElementById('paymentResultText');
-
-  // -----------------------------
-  // INCOME MODAL
-  // -----------------------------
-  const incomeModal = document.getElementById('incomeModal');
-  const incomeCloseButton = document.getElementById('incomeCloseButton');
-  const incHourly = document.getElementById('incHourly');
-  const incHours = document.getElementById('incHours');
-  const incomeCalcButton = document.getElementById('incomeCalcButton');
-  const incomeResultText = document.getElementById('incomeResultText');
-
-  // -----------------------------
-  // MESSAGE BUILDER MODAL
-  // -----------------------------
-  const messageModal = document.getElementById('messageModal');
-  const messageCloseButton = document.getElementById('messageCloseButton');
-  const msgChannel = document.getElementById('msgChannel');
-  const msgTone = document.getElementById('msgTone');
-  const msgFollowups = document.getElementById('msgFollowups');
-  const msgVariants = document.getElementById('msgVariants');
-  const msgAudience = document.getElementById('msgAudience');
-  const msgGoal = document.getElementById('msgGoal');
-  const msgDetails = document.getElementById('msgDetails');
-  const messageGenerateButton = document.getElementById('messageGenerateButton');
-  const msgResult = document.getElementById('msgResult');
-
-  // -----------------------------
-  // STEP 3 · CREATIVE LAB ELEMENTS
-  // -----------------------------
-
-  // Quick Sales Video
-  const creativeVideoVehicle = document.getElementById('creativeVideoVehicle');
-  const creativeVideoHook = document.getElementById('creativeVideoHook');
-  const creativeVideoAspect = document.getElementById('creativeVideoAspect');
-  const creativeVideoLength = document.getElementById('creativeVideoLength');
-  const creativeVideoStyle = document.getElementById('creativeVideoStyle');
-  const generateVideoPlanBtn = document.getElementById('generateVideoPlanBtn');
-  const creativeVideoOutput = document.getElementById('creativeVideoOutput');
-
-  // Canva-style Layout Planner
-  const creativeLayoutType = document.getElementById('creativeLayoutType');
-  const creativeLayoutHeadline = document.getElementById('creativeLayoutHeadline');
-  const creativeLayoutCta = document.getElementById('creativeLayoutCta');
-  const creativeLayoutBrand = document.getElementById('creativeLayoutBrand');
-  const generateLayoutPlanBtn = document.getElementById('generateLayoutPlanBtn');
-  const creativeLayoutOutput = document.getElementById('creativeLayoutOutput');
-
-  // Photo & Video Quick Editor
-  const creativeEditorFile = document.getElementById('creativeEditorFile');
-  const creativeEditorPlaceholder = document.getElementById('creativeEditorPlaceholder');
-  const creativeEditorImage = document.getElementById('creativeEditorImage');
-  const creativeEditorBrightness = document.getElementById('creativeEditorBrightness');
-  const creativeEditorContrast = document.getElementById('creativeEditorContrast');
-  const creativeEditorSaturation = document.getElementById('creativeEditorSaturation');
-
-  // -----------------------------
-  // STATE
-  // -----------------------------
-
-  let currentPhotos = [];
-  let currentUrl = '';
-  let isBoosting = false;
-  let objectionMessages = []; // { role: 'user' | 'assistant', content: string }
-
-  // -----------------------------
-  // THEME
-  // -----------------------------
-
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    root.setAttribute('data-theme', theme);
-    if (theme === 'dark') {
-      if (themeIcon) themeIcon.textContent = '🌙';
-      if (themeLabel) themeLabel.textContent = 'Dark';
-    } else {
-      if (themeIcon) themeIcon.textContent = '☀️';
-      if (themeLabel) themeLabel.textContent = 'Light';
+  let textChunks = [];
+  $('p, h1, h2, h3, li').each((_, el) => {
+    const t = $(el).text().replace(/\s+/g, ' ').trim();
+    if (t.length > 30 && t.length < 600) {
+      textChunks.push(t);
     }
+  });
+
+  const bodyText = textChunks.join('\n');
+
+  return {
+    title,
+    metaDesc,
+    bodyText,
+    pageUrl,
+  };
+}
+
+function extractPhotos(html, pageUrl) {
+  const $ = cheerio.load(html);
+  const base = new URL(pageUrl);
+
+  const urls = new Set();
+
+  $('img').each((_, el) => {
+    let src =
+      $(el).attr('data-src') ||
+      $(el).attr('data-lazy-src') ||
+      $(el).attr('src');
+
+    if (!src) return;
+
+    if (/logo|icon|sprite|placeholder|spacer/i.test(src)) return;
+    if (src.startsWith('data:')) return;
+
     try {
-      localStorage.setItem('lotRocketTheme', theme);
-    } catch (e) {
-      console.warn('Theme save error:', e);
+      const abs = new URL(src, base).href;
+      urls.add(abs);
+    } catch {
+      // ignore
     }
-  }
+  });
 
-  function initTheme() {
-    let saved = null;
-    try {
-      saved = localStorage.getItem('lotRocketTheme');
-    } catch (e) {
-      saved = null;
-    }
-    if (saved === 'light' || saved === 'dark') {
-      applyTheme(saved);
-    } else {
-      applyTheme('dark');
-    }
-  }
+  // TODO: future: scan <script> JSON blobs for image URLs
 
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-    });
-  }
+  return Array.from(urls).slice(0, 24);
+}
 
-  initTheme();
-
-  // -----------------------------
-  // HELPERS
-  // -----------------------------
-
-  function safeTrim(str) {
-    return (str || '').toString().trim();
-  }
-
-  function setStatus(text, isLoading = false) {
-    if (!statusText) return;
-    if (isLoading) {
-      statusText.innerHTML = '<span class="loading-dot"></span>' + text;
-    } else {
-      statusText.textContent = text;
-    }
-  }
-
-  function updateSummary(label, price) {
-    if (summaryLabel) {
-      summaryLabel.textContent = safeTrim(label) || 'Vehicle ready';
-    }
-    if (summaryPrice) {
-      summaryPrice.textContent = safeTrim(price) || 'Message for current pricing';
-    }
-  }
-
-  function fillSocialKit(kit) {
-    if (facebookPost) facebookPost.value = kit.facebook || '';
-    if (instagramPost) instagramPost.value = kit.instagram || '';
-    if (tiktokPost) tiktokPost.value = kit.tiktok || '';
-    if (linkedinPost) linkedinPost.value = kit.linkedin || '';
-    if (twitterPost) twitterPost.value = kit.twitter || '';
-    if (textBlurb) textBlurb.value = kit.textBlurb || '';
-    if (marketplacePost) marketplacePost.value = kit.marketplace || '';
-    if (hashtags) hashtags.value = kit.hashtags || '';
-    if (videoScript) videoScript.value = kit.videoScript || '';
-    if (shotPlan) shotPlan.value = kit.shotPlan || '';
-  }
-
-  function renderPhotosGrid(photos) {
-    if (!photosGrid || !photosStatus) return;
-    photosGrid.innerHTML = '';
-    if (!photos || !photos.length) {
-      photosStatus.textContent = 'No photos found yet.';
-      return;
-    }
-    photos.forEach((url) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'photo-thumb';
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'Vehicle photo';
-      wrapper.appendChild(img);
-      wrapper.addEventListener('click', () => {
-        window.open(url, '_blank');
-      });
-      photosGrid.appendChild(wrapper);
-    });
-    photosStatus.textContent = photos.length + ' photos found. Click any to open full size.';
-  }
-
- // Helper to call our JSON APIs and log status for debugging
-async function callJson(endpoint, body) {
+function safeFirstTextFromResponse(result, fallback) {
   try {
-    console.log('➡️ callJson →', endpoint, body);
-
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {})
-    });
-
-    console.log('⬅️ Response from', endpoint, 'status:', res.status);
-
-    const text = await res.text();
-    let json;
-
-    try {
-      json = text ? JSON.parse(text) : {};
-    } catch (parseErr) {
-      console.error('Failed to parse JSON from', endpoint, 'raw:', text);
-      throw new Error('Bad JSON from server: ' + parseErr.message);
-    }
-
-    if (!res.ok) {
-      console.error('Non-OK HTTP status for', endpoint, res.status, json);
-      throw new Error('Request failed: ' + res.status);
-    }
-
-    return json;
-  } catch (err) {
-    console.error('callJson error for', endpoint, err);
-    throw err;
+    const c = result.output?.[0]?.content?.[0];
+    if (!c) return fallback;
+    if (typeof c.text === 'string') return c.text.trim() || fallback;
+    if (typeof c === 'string') return c.trim() || fallback;
+    return fallback;
+  } catch {
+    return fallback;
   }
 }
 
-  // -----------------------------
-  // OBJECTION CHAT RENDER
-  // -----------------------------
+// ---------- Routes ----------
 
-  function renderObjectionChat() {
-    if (!objectionHistory) return;
-    objectionHistory.innerHTML = '';
-    if (!objectionMessages.length) {
-      const empty = document.createElement('div');
-      empty.className = 'objection-bubble';
-      empty.style.opacity = '0.7';
-      empty.textContent =
-        'Paste the customer objection (or ask a question) and your Andy Elliott–style coach will give you word tracks and breakdowns.';
-      objectionHistory.appendChild(empty);
-      return;
-    }
+// Root – serve app
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-    objectionMessages.forEach((m) => {
-      const labelDiv = document.createElement('div');
-      labelDiv.className =
-        'objection-bubble ' + (m.role === 'assistant' ? 'coach-label' : 'you-label');
-      labelDiv.textContent = m.role === 'assistant' ? 'COACH' : 'YOU';
+// ---- Scraper: full social kit ----
+app.post('/api/social-kit', async (req, res) => {
+  const { url, label, price } = req.body || {};
 
-      const bubble = document.createElement('div');
-      bubble.className = 'objection-bubble ' + (m.role === 'assistant' ? 'coach' : 'you');
-      bubble.textContent = m.content || '';
-
-      objectionHistory.appendChild(labelDiv);
-      objectionHistory.appendChild(bubble);
-    });
-
-    objectionHistory.scrollTop = objectionHistory.scrollHeight;
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required.' });
   }
 
-  // -----------------------------
-  // STEP 1: BOOST FLOW
-  // -----------------------------
-
-  async function handleBoost() {
-    if (isBoosting) return;
-    if (!boostButton) return;
-
-    const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-    if (!url) {
-      alert('Paste a dealer vehicle URL first.');
-      return;
-    }
-
-    let label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-    if (!label) {
-      label = 'This vehicle';
-      if (vehicleLabelInput) vehicleLabelInput.value = label;
-    }
-    let price = safeTrim(priceInfoInput && priceInfoInput.value);
-    if (!price) {
-      price = 'Message for current pricing';
-      if (priceInfoInput) priceInfoInput.value = price;
-    }
-
-    isBoosting = true;
-    boostButton.disabled = true;
-    setStatus('Building social kit with AI…', true);
-
-    try {
-      currentUrl = url;
-      const resp = await callJson('/api/social-kit', { url, label, price });
-      if (!resp.success) throw new Error('API returned error');
-      fillSocialKit(resp.kit || {});
-      updateSummary(label, price);
-      setStatus('Social kit ready. You can spin new posts or scripts anytime.');
-
-      // reset objection chat for new vehicle
-      objectionMessages = [];
-      renderObjectionChat();
-
-      // Auto-load photos
-      if (photosStatus) photosStatus.textContent = 'Trying to grab photos from dealer page…';
-      try {
-        const photoResp = await callJson('/api/grab-photos', { url });
-        if (photoResp.success) {
-          currentPhotos = photoResp.photos || [];
-          renderPhotosGrid(currentPhotos);
-        } else if (photosStatus) {
-          photosStatus.textContent = 'Could not grab photos.';
-        }
-      } catch (err) {
-        console.error('Auto photo grab failed:', err);
-        if (photosStatus) photosStatus.textContent = 'Auto photo load failed.';
-      }
-    } catch (err) {
-      console.error(err);
-      setStatus('Something went wrong. Try again or check the URL.');
-      alert('Error building social kit. Check the URL and try again.');
-    } finally {
-      isBoosting = false;
-      boostButton.disabled = false;
-    }
-  }
-
-  if (boostButton) {
-    boostButton.addEventListener('click', handleBoost);
-  }
-
-  // -----------------------------
-  // STEP 2: NEW POST BUTTONS
-  // -----------------------------
-
-  if (newPostButtons && newPostButtons.length) {
-    newPostButtons.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const platform = btn.getAttribute('data-platform');
-        const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-        const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-        const price = safeTrim(priceInfoInput && priceInfoInput.value);
-
-        if (!url || !label) {
-          alert('Please paste a URL and hit Boost at least once before spinning posts.');
-          return;
-        }
-
-        btn.disabled = true;
-        const oldText = btn.innerHTML;
-        btn.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
-
-        try {
-          const resp = await callJson('/api/new-post', { platform, url, label, price });
-          if (!resp.success) throw new Error('API returned error');
-          const text = resp.post || '';
-
-          switch (platform) {
-            case 'facebook':
-              if (facebookPost) facebookPost.value = text;
-              break;
-            case 'instagram':
-              if (instagramPost) instagramPost.value = text;
-              break;
-            case 'tiktok':
-              if (tiktokPost) tiktokPost.value = text;
-              break;
-            case 'linkedin':
-              if (linkedinPost) linkedinPost.value = text;
-              break;
-            case 'twitter':
-              if (twitterPost) twitterPost.value = text;
-              break;
-            case 'text':
-              if (textBlurb) textBlurb.value = text;
-              break;
-            case 'marketplace':
-              if (marketplacePost) marketplacePost.value = text;
-              break;
-            case 'hashtags':
-              if (hashtags) hashtags.value = text;
-              break;
-          }
-        } catch (err) {
-          console.error(err);
-          alert('Error generating a new post. Try again.');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = oldText;
-        }
-      });
-    });
-  }
-
-  // -----------------------------
-  // STEP 2: NEW VIDEO SCRIPT
-  // -----------------------------
-
-  if (newScriptButton) {
-    newScriptButton.addEventListener('click', async () => {
-      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-      const price = safeTrim(priceInfoInput && priceInfoInput.value);
-
-      if (!url || !label) {
-        alert('Please paste a URL and hit Boost at least once before spinning scripts.');
-        return;
-      }
-
-      newScriptButton.disabled = true;
-      const oldText = newScriptButton.innerHTML;
-      newScriptButton.innerHTML = '<span class="icon">⏳</span><span>Working…</span>';
-
-      try {
-        const resp = await callJson('/api/new-script', { url, label, price });
-        if (!resp.success) throw new Error('API error');
-        if (videoScript) videoScript.value = resp.script || '';
-      } catch (err) {
-        console.error(err);
-        alert('Error generating a new script. Try again.');
-      } finally {
-        newScriptButton.disabled = false;
-        newScriptButton.innerHTML = oldText;
-      }
-    });
-  }
-
-  // -----------------------------
-  // STEP 2: BUILD VIDEO FROM PHOTOS
-  // -----------------------------
-
-  if (buildVideoButton) {
-    buildVideoButton.addEventListener('click', async () => {
-      if (!currentPhotos || !currentPhotos.length) {
-        alert('No photos yet. Boost a listing first so we can grab photos.');
-        return;
-      }
-
-      buildVideoButton.disabled = true;
-      const oldText = buildVideoButton.innerHTML;
-      buildVideoButton.innerHTML = '<span class="icon">⏳</span><span>Building…</span>';
-
-      try {
-        const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value) || 'this vehicle';
-        const resp = await callJson('/api/video-from-photos', {
-          photos: currentPhotos,
-          label,
-        });
-        if (!resp.success) throw new Error('API error');
-        if (videoPlan) videoPlan.value = resp.plan || '';
-      } catch (err) {
-        console.error(err);
-        alert('Error building video plan. Try again.');
-      } finally {
-        buildVideoButton.disabled = false;
-        buildVideoButton.innerHTML = oldText;
-      }
-    });
-  }
-
-  // -----------------------------
-  // STEP 2: DESIGN LAB
-  // -----------------------------
-
-  if (designButton) {
-    designButton.addEventListener('click', async () => {
-      const type = designTypeSelect && designTypeSelect.value;
-      const url = safeTrim(vehicleUrlInput && vehicleUrlInput.value);
-      const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value);
-      const price = safeTrim(priceInfoInput && priceInfoInput.value);
-
-      if (!url || !label) {
-        alert('Please paste a URL and hit Boost at least once before generating design ideas.');
-        return;
-      }
-
-      designButton.disabled = true;
-      const oldText = designButton.innerHTML;
-      designButton.innerHTML = '<span class="icon">⏳</span><span>Designing…</span>';
-
-      try {
-        const resp = await callJson('/api/design-idea', { type, url, label, price });
-        if (!resp.success) throw new Error('API error');
-        if (designOutput) designOutput.value = resp.design || '';
-      } catch (err) {
-        console.error(err);
-        alert('Error generating a design idea. Try again.');
-      } finally {
-        designButton.disabled = false;
-        designButton.innerHTML = oldText;
-      }
-    });
-  }
-
-  // -----------------------------
-  // COPY BUTTONS (STEP 2)
-  // -----------------------------
-
-  if (copyButtons && copyButtons.length) {
-    copyButtons.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const targetId = btn.getAttribute('data-target');
-        if (!targetId) return;
-
-        const field = document.getElementById(targetId);
-        if (!field) {
-          alert('Could not find field to copy from.');
-          return;
-        }
-
-        const value = field.value || field.textContent || '';
-        if (!value.trim()) {
-          alert('Nothing to copy yet.');
-          return;
-        }
-
-        try {
-          await navigator.clipboard.writeText(value);
-          const old = btn.innerHTML;
-          btn.innerHTML = '<span class="icon">✅</span><span>Copied</span>';
-          setTimeout(() => {
-            btn.innerHTML = old;
-          }, 1100);
-        } catch (err) {
-          console.error('Clipboard error:', err);
-          alert('Could not copy to clipboard. You can still select and copy manually.');
-        }
-      });
-    });
-  }
-
-  // -----------------------------
-  // OBJECTION COACH MODAL LOGIC
-  // -----------------------------
-
-  function openObjectionModal() {
-    if (!objectionModal) return;
-    objectionModal.classList.remove('hidden');
-    if (!objectionMessages.length) {
-      renderObjectionChat();
-    }
-    setTimeout(() => {
-      if (objectionInput) objectionInput.focus();
-    }, 50);
-  }
-
-  function closeObjectionModal() {
-    if (!objectionModal) return;
-    objectionModal.classList.add('hidden');
-  }
-
-  if (objectionLauncher) {
-    objectionLauncher.addEventListener('click', openObjectionModal);
-  }
-  if (objectionCloseButton) {
-    objectionCloseButton.addEventListener('click', closeObjectionModal);
-  }
-  if (objectionModal) {
-    objectionModal.addEventListener('click', (e) => {
-      if (e.target === objectionModal) {
-        closeObjectionModal();
-      }
-    });
-  }
-
-  function sendObjection() {
-    if (!objectionInput || !objectionSendButton) return;
-    const text = (objectionInput.value || '').trim();
-    if (!text) {
-      alert('Type the customer’s objection or your question first.');
-      return;
-    }
-
-    const label = safeTrim(vehicleLabelInput && vehicleLabelInput.value) || 'this vehicle';
-    const price = safeTrim(priceInfoInput && priceInfoInput.value) || 'Message for current pricing';
-
-    objectionMessages.push({ role: 'user', content: text });
-    renderObjectionChat();
-    objectionInput.value = '';
-
-    objectionSendButton.disabled = true;
-    const oldText = objectionSendButton.innerHTML;
-    objectionSendButton.innerHTML = '<span>⏳ Coaching…</span>';
-
-    callJson('/api/objection-coach', {
-      messages: objectionMessages,
-      label,
-      price,
-    })
-      .then((resp) => {
-        if (!resp.success) throw new Error('API error');
-        const reply = resp.reply || '';
-        objectionMessages.push({ role: 'assistant', content: reply });
-        renderObjectionChat();
-      })
-      .catch((err) => {
-        console.error(err);
-        alert('Error generating a response. Try again.');
-      })
-      .finally(() => {
-        objectionSendButton.disabled = false;
-        objectionSendButton.innerHTML = oldText;
-      });
-  }
-
-  if (objectionSendButton) {
-    objectionSendButton.addEventListener('click', sendObjection);
-  }
-  if (objectionInput) {
-    objectionInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        sendObjection();
-      }
-    });
-  }
-
-  // -----------------------------
-  // PAYMENT MODAL LOGIC
-  // -----------------------------
-
-  function openPaymentModal() {
-    if (!paymentModal) return;
-    paymentModal.classList.remove('hidden');
-    setTimeout(() => payPrice && payPrice.focus(), 50);
-  }
-  function closePaymentModal() {
-    if (!paymentModal) return;
-    paymentModal.classList.add('hidden');
-  }
-
-  if (paymentLauncher) {
-    paymentLauncher.addEventListener('click', openPaymentModal);
-  }
-  if (paymentCloseButton) {
-    paymentCloseButton.addEventListener('click', closePaymentModal);
-  }
-  if (paymentModal) {
-    paymentModal.addEventListener('click', (e) => {
-      if (e.target === paymentModal) closePaymentModal();
-    });
-  }
-
-  function calculatePayment() {
-    if (!paymentResultText) return;
-    const price = parseFloat(payPrice && payPrice.value) || 0;
-    const down = parseFloat(payDown && payDown.value) || 0;
-    const apr = parseFloat(payApr && payApr.value) || 0;
-    const term = parseInt(payTerm && payTerm.value, 10) || 0;
-
-    const loanAmount = price - down;
-    if (loanAmount <= 0 || term <= 0) {
-      paymentResultText.textContent = 'Enter a valid price, down payment, and term.';
-      return;
-    }
-
-    const monthlyRate = apr > 0 ? apr / 100 / 12 : 0;
-    let payment;
-    if (monthlyRate === 0) {
-      payment = loanAmount / term;
-    } else {
-      const pow = Math.pow(1 + monthlyRate, term);
-      payment = (loanAmount * (monthlyRate * pow)) / (pow - 1);
-    }
-
-    paymentResultText.textContent =
-      'Estimated Payment: $' +
-      payment.toFixed(2) +
-      ' / month (rough estimate, not final finance terms).';
-  }
-
-  if (paymentCalcButton) {
-    paymentCalcButton.addEventListener('click', calculatePayment);
-  }
-
-  // -----------------------------
-  // INCOME MODAL LOGIC
-  // -----------------------------
-
-  function openIncomeModal() {
-    if (!incomeModal) return;
-    incomeModal.classList.remove('hidden');
-    setTimeout(() => incHourly && incHourly.focus(), 50);
-  }
-  function closeIncomeModal() {
-    if (!incomeModal) return;
-    incomeModal.classList.add('hidden');
-  }
-
-  if (incomeLauncher) {
-    incomeLauncher.addEventListener('click', openIncomeModal);
-  }
-  if (incomeCloseButton) {
-    incomeCloseButton.addEventListener('click', closeIncomeModal);
-  }
-  if (incomeModal) {
-    incomeModal.addEventListener('click', (e) => {
-      if (e.target === incomeModal) closeIncomeModal();
-    });
-  }
-
-  function calculateIncome() {
-    if (!incomeResultText) return;
-    const hourly = parseFloat(incHourly && incHourly.value) || 0;
-    const hoursPerWeek = parseFloat(incHours && incHours.value) || 0;
-
-    if (hourly <= 0 || hoursPerWeek <= 0) {
-      incomeResultText.textContent = 'Enter a valid hourly wage and hours per week.';
-      return;
-    }
-
-    const yearly = hourly * hoursPerWeek * 52;
-    incomeResultText.textContent =
-      'Estimated Yearly Gross Income: $' + yearly.toFixed(2);
-  }
-
-  if (incomeCalcButton) {
-    incomeCalcButton.addEventListener('click', calculateIncome);
-  }
-
-  // -----------------------------
-  // MESSAGE BUILDER MODAL LOGIC
-  // -----------------------------
-
-  function openMessageModal() {
-    if (!messageModal) return;
-    messageModal.classList.remove('hidden');
-    setTimeout(() => msgGoal && msgGoal.focus(), 50);
-  }
-  function closeMessageModal() {
-    if (!messageModal) return;
-    messageModal.classList.add('hidden');
-  }
-
-  if (messageLauncher) {
-    messageLauncher.addEventListener('click', openMessageModal);
-  }
-  if (messageCloseButton) {
-    messageCloseButton.addEventListener('click', closeMessageModal);
-  }
-  if (messageModal) {
-    messageModal.addEventListener('click', (e) => {
-      if (e.target === messageModal) closeMessageModal();
-    });
-  }
-
-  async function generateMessages() {
-    if (!messageGenerateButton || !msgResult) return;
-
-    const channel = (msgChannel && msgChannel.value) || 'sms';
-    const tone = (msgTone && msgTone.value) || 'friendly';
-    const followups = parseInt(msgFollowups && msgFollowups.value, 10) || 4;
-    const variants = parseInt(msgVariants && msgVariants.value, 10) || 2;
-    const audience = safeTrim(msgAudience && msgAudience.value) || 'car buyer';
-    const goal = safeTrim(msgGoal && msgGoal.value);
-    const details = safeTrim(msgDetails && msgDetails.value);
-
-    if (!goal && !details) {
-      alert('Tell the AI what you’re trying to accomplish or give some details.');
-      return;
-    }
-
-    messageGenerateButton.disabled = true;
-    const oldText = messageGenerateButton.innerHTML;
-    messageGenerateButton.innerHTML = '<span>⏳ Building…</span>';
-    msgResult.value = 'Thinking up your messages and workflows…';
-
-    try {
-      const resp = await callJson('/api/ai-message', {
-        channel,
-        goal,
-        details,
-        audience,
-        tone,
-        followups,
-        variants,
-      });
-
-      let display = '';
-
-      if (Array.isArray(resp.variants)) {
-        resp.variants.forEach((variant, idx) => {
-          display += '=== Campaign Option ' + (idx + 1) + ' ===\n\n';
-          if (variant.primaryMessage) {
-            display += 'Primary Message:\n' + variant.primaryMessage + '\n\n';
-          }
-          if (Array.isArray(variant.campaign)) {
-            display += 'Follow-up Workflow:\n';
-            variant.campaign.forEach((step, sIdx) => {
-              display +=
-                '\nStep ' +
-                (sIdx + 1) +
-                ' - Day ' +
-                (step.dayOffset ?? '?') +
-                ' (' +
-                (step.channel || 'sms') +
-                ')';
-              if (step.purpose) display += '\nPurpose: ' + step.purpose;
-              if (step.message) display += '\nMessage: ' + step.message;
-              display += '\n';
-            });
-          }
-          display += '\n';
-        });
-      } else {
-        display = 'No variants data returned from AI.';
-      }
-
-      msgResult.value = display || 'No data returned.';
-    } catch (err) {
-      console.error(err);
-      msgResult.value = 'Error generating AI message workflow. Try again.';
-    } finally {
-      messageGenerateButton.disabled = false;
-      messageGenerateButton.innerHTML = oldText;
-    }
-  }
-
-  if (messageGenerateButton) {
-    messageGenerateButton.addEventListener('click', generateMessages);
-  }
-
-  // ------------------------------------------------------------
-  // STEP 3 · CREATIVE LAB – FRONT-END ONLY
-  // ------------------------------------------------------------
-
-  function generateQuickVideoIdea() {
-    if (!creativeVideoOutput) return;
-
-    const vehicle =
-      safeTrim(creativeVideoVehicle && creativeVideoVehicle.value) ||
-      safeTrim(vehicleLabelInput && vehicleLabelInput.value) ||
-      'this vehicle';
-
-    const hook =
-      safeTrim(creativeVideoHook && creativeVideoHook.value) ||
-      'A quick walk-around that feels like a VIP appointment.';
-
-    const aspect = (creativeVideoAspect && creativeVideoAspect.value) || '9:16';
-    const length = (creativeVideoLength && creativeVideoLength.value) || '30';
-    const style = (creativeVideoStyle && creativeVideoStyle.value) || 'hype';
-
-    const styleLineMap = {
-      hype: 'Fast cuts, punchy on-screen text, and upbeat music.',
-      family: 'Warm, steady shots with close-ups on space, comfort, and safety.',
-      luxury: 'Smooth, slow pans with focus on details, stitching, and tech.',
-      budget: 'Payment-focused, clear text callouts, and simple, honest framing.',
+  try {
+    const html = await fetchHtml(url);
+    const scraped = extractMainText(html, url);
+    const photos = extractPhotos(html, url);
+
+    const payload = {
+      vehicleLabel: label || scraped.title || '',
+      priceInfo: price || '',
+      metaDescription: scraped.metaDesc || '',
+      mainText: scraped.bodyText || '',
+      photos,
+      sourceUrl: url,
     };
 
-    const styleLine = styleLineMap[style] || styleLineMap.hype;
+    const promptUser = `
+You are Lot Rocket, an elite AI for automotive social media content.
 
-    const text = `
-VIDEO BLUEPRINT – ${vehicle}
-Aspect: ${aspect} · Length: ~${length} seconds
-Style: ${style.toUpperCase()}
+You will receive scraped listing data for a single vehicle. 
+Return ONLY JSON with fields:
 
-1) HOOK (0–3s)
-- Shot: Close-up of the front end, then step back to reveal the full vehicle.
-- On-screen text: "${hook}"
-- Voiceover: "If you've been hunting for something like this, pause for 30 seconds."
+{
+  "facebook": "...",
+  "instagram": "...",
+  "tiktok": "...",
+  "linkedin": "...",
+  "twitter": "...",
+  "sms": "...",
+  "marketplace": "...",
+  "hashtags": "...",
+  "selfie_script": "...",
+  "shot_plan": "...",
+  "canva_idea": "..."
+}
 
-2) WALK-AROUND (3–15s)
-- Shot: Slow walk around the vehicle – front, side, rear.
-- On-screen text: Quick callouts: "Low miles · Clean history · Ready today"
-- Tip: Move the camera slowly, keep horizon level.
+- Write like a top-performing car salesperson.
+- Strong hooks and CTAs.
+- Assume the salesperson is honest, friendly, and high-energy.
+- DO NOT include explanations, backticks, or any extra keys.
+- "hashtags" should be a single string with hashtags separated by spaces.
+- "shot_plan" should be a short multi-step list in plain text.
 
-3) INTERIOR / FEATURES (15–25s)
-- Shot: Open the door, show the dash, steering wheel, and main screens.
-- On-screen text: Payment or key benefit: "Keep it around your payment goal."
+SCRAPED DATA:
+${JSON.stringify(payload, null, 2)}
+`;
 
-4) FINAL HOOK & CTA (25–${length}s)
-- Shot: You in frame next to ${vehicle}.
-- Voiceover: "DM me 'INFO' and I'll send you a quick payment estimate and availability."
-- On-screen text: "DM 'INFO' for payment + availability."
-
-EXTRA NOTES
-- ${styleLine}
-- Keep clips short and steady. Re-record any shot that feels shaky.
-`.trim();
-
-    creativeVideoOutput.value = text;
-  }
-
-  function generateLayoutPlan() {
-    if (!creativeLayoutOutput) return;
-
-    const type = (creativeLayoutType && creativeLayoutType.value) || 'feed';
-    const headline =
-      safeTrim(creativeLayoutHeadline && creativeLayoutHeadline.value) ||
-      'Drive home this ride today';
-    const cta =
-      safeTrim(creativeLayoutCta && creativeLayoutCta.value) ||
-      'Message me for a VIP test drive';
-    const brand =
-      safeTrim(creativeLayoutBrand && creativeLayoutBrand.value) ||
-      'Red + dark navy · bold, confident';
-
-    let canvasLabel = 'Feed post';
-    if (type === 'story') canvasLabel = 'Story / Reels cover';
-    if (type === 'thumbnail') canvasLabel = 'Thumbnail';
-    if (type === 'flyer') canvasLabel = 'Print-style flyer';
-
-    const text = `
-CANVA LAYOUT BLUEPRINT – ${canvasLabel}
-
-1) TITLE / MAIN HOOK TEXT
-"${headline}"
-
-2) SUBHEAD / SUPPORT LINE
-"Limited availability – lock in your VIP test drive."
-
-3) BODY TEXT BLOCK (3–6 bullets)
-- ✅ Clean history, ready to go
-- ✅ Payment options to fit real budgets
-- ✅ Fast trade-in appraisal
-- ✅ VIP one-on-one appointment
-
-4) CTA TEXT
-"${cta}"
-
-5) LAYOUT IDEA
-- Top: Big bold headline centered, overlapping the upper part of the main vehicle photo.
-- Middle: Large photo of the vehicle, edge-to-edge. Use a subtle gradient at the bottom so white text stays readable.
-- Bottom-left: Bullet list in a rounded box (slight shadow).
-- Bottom-right: CTA button-style box: "DM me 'INFO'" or "Tap to message".
-- Corner: Small logo or "Lot Rocket" style badge in the top-left or top-right.
-
-6) COLORS & VIBE
-- Brand guideline: ${brand}
-- Background: Soft gradient or solid that contrasts with the vehicle color.
-- Accent: Use the accent color for the CTA box border and small underline under the headline.
-- Vibe: Clean, high-confidence, minimal clutter. Everything should be easy to read at a glance on a phone screen.
-`.trim();
-
-    creativeLayoutOutput.value = text;
-  }
-
-  function updateCreativeEditorFilters() {
-    if (!creativeEditorImage) return;
-    const b = parseInt(creativeEditorBrightness && creativeEditorBrightness.value, 10) || 100;
-    const c = parseInt(creativeEditorContrast && creativeEditorContrast.value, 10) || 100;
-    const s = parseInt(creativeEditorSaturation && creativeEditorSaturation.value, 10) || 110;
-
-    creativeEditorImage.style.filter =
-      'brightness(' + b + '%) contrast(' + c + '%) saturate(' + s + '%)';
-  }
-
-  function initCreativeEditor() {
-    if (!creativeEditorFile || !creativeEditorImage || !creativeEditorPlaceholder) return;
-
-    creativeEditorFile.addEventListener('change', () => {
-      const file = creativeEditorFile.files && creativeEditorFile.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        creativeEditorImage.src = e.target.result;
-        creativeEditorImage.classList.remove('hidden');
-        creativeEditorPlaceholder.classList.add('hidden');
-        updateCreativeEditorFilters();
-      };
-      reader.readAsDataURL(file);
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        {
+          role: 'system',
+          content:
+            'You output STRICT JSON for an automotive social kit. No commentary.',
+        },
+        { role: 'user', content: promptUser },
+      ],
+      response_format: { type: 'json' },
     });
 
-    if (creativeEditorBrightness) {
-      creativeEditorBrightness.addEventListener('input', updateCreativeEditorFilters);
+    let parsed;
+    try {
+      const raw = safeFirstTextFromResponse(result, '{}');
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      console.error('JSON parse error /api/social-kit', err);
+      return res.status(500).json({ error: 'Failed to parse AI JSON.' });
     }
-    if (creativeEditorContrast) {
-      creativeEditorContrast.addEventListener('input', updateCreativeEditorFilters);
-    }
-    if (creativeEditorSaturation) {
-      creativeEditorSaturation.addEventListener('input', updateCreativeEditorFilters);
-    }
+
+    res.json({
+      kit: parsed,
+      photos,
+      meta: {
+        label: payload.vehicleLabel,
+        price: payload.priceInfo,
+        url,
+      },
+    });
+  } catch (err) {
+    console.error('Error /api/social-kit:', err);
+    res.status(500).json({ error: 'Failed to generate social kit.' });
+  }
+});
+
+// ---- Scraper: photos only ----
+app.post('/api/grab-photos', async (req, res) => {
+  const { url } = req.body || {};
+  if (!url) return res.status(400).json({ error: 'URL is required.' });
+
+  try {
+    const html = await fetchHtml(url);
+    const photos = extractPhotos(html, url);
+    res.json({ photos });
+  } catch (err) {
+    console.error('Error /api/grab-photos:', err);
+    res.status(500).json({ error: 'Failed to grab photos.' });
+  }
+});
+
+// ---- Regenerate a single platform post ----
+app.post('/api/new-post', async (req, res) => {
+  const { platform, context } = req.body || {};
+  if (!platform) {
+    return res.status(400).json({ error: 'platform is required.' });
   }
 
-  function initCreativeLab() {
-    // Quick Sales Video
-    if (generateVideoPlanBtn && creativeVideoOutput) {
-      generateVideoPlanBtn.addEventListener('click', generateQuickVideoIdea);
-    }
+  const ctx = context || '';
 
-    // Canva-style Layout Planner
-    if (generateLayoutPlanBtn && creativeLayoutOutput) {
-      generateLayoutPlanBtn.addEventListener('click', generateLayoutPlan);
-    }
+  const sysPrompt =
+    'You are Lot Rocket, writing high-converting posts for car salespeople. Keep it punchy, persuasive, honest, and platform-aware.';
+  const userPrompt = `
+Platform: ${platform}
+Context:
+${ctx}
 
-    // Photo & Video Quick Editor
-    initCreativeEditor();
+Write a new post for this platform only. No hashtags unless it is Instagram or TikTok.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sysPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No post generated. Try again.'
+    );
+    res.json({ post: text });
+  } catch (err) {
+    console.error('Error /api/new-post:', err);
+    res.status(500).json({ error: 'Failed to generate new post.' });
+  }
+});
+
+// ---- New script (selfie video etc.) ----
+app.post('/api/new-script', async (req, res) => {
+  const { context } = req.body || {};
+  const sys =
+    'You are a charismatic car sales video script writer. You write short, punchy scripts designed to be recorded selfie-style on a phone.';
+  const user = `
+Context for the vehicle / offer / situation:
+${context || ''}
+
+Write a short, 30-60 second selfie video script in first person POV from the salesperson.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No script generated. Try again.'
+    );
+    res.json({ script: text });
+  } catch (err) {
+    console.error('Error /api/new-script:', err);
+    res.status(500).json({ error: 'Failed to generate script.' });
+  }
+});
+
+// ---- Video shot plan from photos ----
+app.post('/api/video-from-photos', async (req, res) => {
+  const { photoUrls, vehicleLabel } = req.body || {};
+  const sys =
+    'You are a video storyboard planner for social media car sales content.';
+  const user = `
+You will receive photo URLs and a vehicle label.
+Suggest a short vertical video shot plan using those angles.
+
+Vehicle: ${vehicleLabel || ''}
+
+Photos:
+${JSON.stringify(photoUrls || [], null, 2)}
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No shot plan generated. Try again.'
+    );
+    res.json({ shotPlan: text });
+  } catch (err) {
+    console.error('Error /api/video-from-photos:', err);
+    res.status(500).json({ error: 'Failed to generate shot plan.' });
+  }
+});
+
+// ---- Canva layout idea ----
+app.post('/api/design-idea', async (req, res) => {
+  const { creativeType, headline, cta, vibe } = req.body || {};
+  const sys =
+    'You are a marketing designer describing simple Canva layout ideas for car sales graphics.';
+  const user = `
+Creative type: ${creativeType || 'social graphic'}
+Headline: ${headline || ''}
+CTA: ${cta || ''}
+Vibe: ${vibe || ''}
+
+Describe a simple layout in bullet points that someone could build in Canva.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No layout idea generated. Try again.'
+    );
+    res.json({ layout: text });
+  } catch (err) {
+    console.error('Error /api/design-idea:', err);
+    res.status(500).json({ error: 'Failed to generate layout idea.' });
+  }
+});
+
+// ---- Objection coach ----
+app.post('/api/objection-coach', async (req, res) => {
+  const { objection, context } = req.body || {};
+  const sys =
+    'You are an automotive sales trainer coaching a salesperson on how to respond to objections. You speak in script form.';
+  const user = `
+Customer objection:
+${objection || ''}
+
+Context:
+${context || ''}
+
+Give the salesperson 2-3 different word-for-word ways to respond.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No coaching script generated.'
+    );
+    res.json({ advice: text });
+  } catch (err) {
+    console.error('Error /api/objection-coach:', err);
+    res.status(500).json({ error: 'Failed to coach objection.' });
+  }
+});
+
+// ---- Payment helper ----
+app.post('/api/payment-helper', async (req, res) => {
+  const { price, down, termMonths, rate } = req.body || {};
+
+  const sys =
+    'You are a car payment explainer. You help salespeople estimate payments and explain options. Do not give legal or binding finance advice.';
+  const user = `
+Vehicle price: ${price || ''}
+Down payment: ${down || ''}
+Term months: ${termMonths || ''}
+Interest rate guess: ${rate || ''}
+
+1) Give a rough estimated monthly payment.
+2) Offer 2-3 alternative structures (more down, shorter term, etc.).
+3) Write a short text message the salesperson can send to the customer.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No payment help generated.'
+    );
+    res.json({ paymentHelp: text });
+  } catch (err) {
+    console.error('Error /api/payment-helper:', err);
+    res.status(500).json({ error: 'Failed to generate payment help.' });
+  }
+});
+
+// ---- Income helper ----
+app.post('/api/income-helper', async (req, res) => {
+  const { paymentTarget, otherDebts, termMonths, rate } = req.body || {};
+
+  const sys =
+    'You are a car income explainer. You help estimate how much income a person might need for a target car payment. You are approximate and conservative.';
+  const user = `
+Target payment: ${paymentTarget || ''}
+Other monthly debts: ${otherDebts || ''}
+Term months: ${termMonths || ''}
+Interest rate guess: ${rate || ''}
+
+1) Roughly estimate income needed to comfortably handle this payment.
+2) Explain in simple language.
+3) Write a short text message the salesperson can send to the customer.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No income help generated.'
+    );
+    res.json({ incomeHelp: text });
+  } catch (err) {
+    console.error('Error /api/income-helper:', err);
+    res.status(500).json({ error: 'Failed to generate income help.' });
+  }
+});
+
+// ---- Message helper (old AI message expert / workflow-ish) ----
+app.post('/api/message-helper', async (req, res) => {
+  const { situation, customerType } = req.body || {};
+
+  const sys =
+    'You are a follow-up messaging coach for car salespeople. You help them decide how to structure their outreach.';
+  const user = `
+Customer situation:
+${situation || ''}
+
+Customer type:
+${customerType || ''}
+
+1) Suggest a basic follow-up workflow (how many touches, in what order).
+2) Give examples of what to say in each step.
+`;
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        { role: 'system', content: sys },
+        { role: 'user', content: user },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No workflow generated.'
+    );
+    res.json({ workflow: text });
+  } catch (err) {
+    console.error('Error /api/message-helper:', err);
+    res.status(500).json({ error: 'Failed to generate workflow.' });
+  }
+});
+
+// ---- NEW: AI Message Builder (pure copy expert) ----
+app.post('/api/message-builder', async (req, res) => {
+  const { type, goal, details } = req.body || {};
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        {
+          role: 'system',
+          content:
+            'You are an elite automotive sales copywriter. You write short, high-converting messages. Be clear, friendly, confident, and persuasive.',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            type: type || 'text',
+            goal: goal || '',
+            details: details || '',
+          }),
+        },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No message was generated. Try again with more details.'
+    );
+    res.json({ message: text });
+  } catch (err) {
+    console.error('Error /api/message-builder:', err);
+    res.status(500).json({ error: 'Failed to generate message.' });
+  }
+});
+
+// ---- NEW: Ask A.I. (general brain) ----
+app.post('/api/ask-ai', async (req, res) => {
+  const { question } = req.body || {};
+
+  if (!question) {
+    return res.status(400).json({ error: 'Question is required.' });
   }
 
-  initCreativeLab();
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        {
+          role: 'system',
+          content:
+            'You are a helpful, general-purpose AI assistant built into a tool called Lot Rocket. Answer clearly and helpfully.',
+        },
+        { role: 'user', content: question },
+      ],
+    });
 
-  // initial render for objection history
-  renderObjectionChat();
+    const text = safeFirstTextFromResponse(
+      result,
+      'No answer generated. Try rephrasing your question.'
+    );
+    res.json({ answer: text });
+  } catch (err) {
+    console.error('Error /api/ask-ai:', err);
+    res.status(500).json({ error: 'Failed to answer question.' });
+  }
+});
+
+// ---- NEW: AI Car Expert ----
+app.post('/api/car-expert', async (req, res) => {
+  const { question } = req.body || {};
+
+  if (!question) {
+    return res.status(400).json({ error: 'Question is required.' });
+  }
+
+  try {
+    const result = await client.responses.create({
+      model: 'gpt-4o-mini',
+      input: [
+        {
+          role: 'system',
+          content:
+            'You are an automotive product specialist and sales trainer. You know trims, features, warranties, financing, leasing, and how to explain vehicles to normal people. Speak like a friendly, confident car expert. Avoid made-up hard numbers.',
+        },
+        { role: 'user', content: question },
+      ],
+    });
+
+    const text = safeFirstTextFromResponse(
+      result,
+      'No automotive answer generated.'
+    );
+    res.json({ answer: text });
+  } catch (err) {
+    console.error('Error /api/car-expert:', err);
+    res.status(500).json({ error: 'Failed to answer automotive question.' });
+  }
+});
+
+// ---------- Start server ----------
+app.listen(port, () => {
+  console.log(`Lot Rocket server running on port ${port}`);
 });
