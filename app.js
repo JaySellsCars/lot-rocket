@@ -198,28 +198,22 @@ app.post('/api/new-post', async (req, res) => {
       temperature: 0.8,
       messages: [
         {
-          role: 'system',
-          content: `
-You are a high-converting social media copywriter for car salespeople.
-Write one post tailored for the given platform. No intro, no explanation.
-Just the finished post text the salesperson can paste.
-          `.trim(),
-        },
-        {
-          role: 'user',
-          content: `
-Platform: ${platform}
-Vehicle: ${label || 'This vehicle'}
-Deal info: ${price || 'Message for current pricing'}
+{
+  role: 'system',
+  content: `
+You are a high-converting social media copywriter for car *salespeople*.
+Write ONE finished post for the given platform, in a first-person, friendly tone.
 
-Scraped details:
-${scraped.title}
-${scraped.description}
-${scraped.text}
-          `.trim(),
-        },
-      ],
-    });
+Rules:
+- Talk like a real salesperson ("Hey, it's Jason at LaFontaine Chevrolet in Plymouth...").
+- Call out the year, make, model, and at least 3 strong features.
+- Include a clear CTA to message or text you directly.
+- Use short lines and spacing that look good on mobile.
+- NO hashtags here (those are handled separately).
+Return ONLY the finished post text. No extra commentary.
+  `.trim(),
+},
+
 
     const post = completion.choices[0]?.message?.content || '';
     res.json({ success: true, post });
