@@ -827,27 +827,14 @@ copyButtons.forEach((btn) => {
   });
 });
 
-// ---------- CREATIVE LAB (OPTIONAL, SAFE) ----------
+// ------------------------------------------------------------
+// STEP 3 · CREATIVE LAB WIRES
+// ------------------------------------------------------------
 
-// Example: simple random short-form video idea generator based on existing shots.
-// Only runs if IDs exist in the HTML.
-if (creativeGenerateVideoButton && creativeVideoIdeas) {
-  creativeGenerateVideoButton.addEventListener('click', () => {
-    const label =
-      safeTrim(vehicleLabelInput && vehicleLabelInput.value) || 'this vehicle';
-
-    const ideas = [
-      `Hook with a quick walk up to ${label}, punch in on the front grille, then snap cut to the interior with on-screen text: “Is this your next ride?”`,
-      `Start with a door close shot of ${label}, then a fast montage of 3–4 interior clips synced to a beat. Overlay big text: “Payments less than your phone bill?”`,
-      `Do a POV test-drive style video in ${label}, filming from the driver’s seat. Emphasize tech, comfort, and how it feels when you first drive it off the lot.`,
-      `Film a 360° walk-around of ${label} in under 10 seconds, then punch in on your favorite feature (sunroof / screen / wheels) with “DM ‘INFO’ for a private walk-through.”`,
-      `Start with you tossing the keys in the air next to ${label}, then hard cut to the dash, backup camera, and rear seat space. End with “Who needs this?” and a pointing arrow.`,
-    ];
-
-    const idea = ideas[Math.floor(Math.random() * ideas.length)];
-    creativeVideoIdeas.value = idea;
-  });
+function initCreativeLab() {
+  // ... all the Quick Sales Video / Layout Planner / Editor code ...
 }
 
-// initial render of objection chat (blank message)
-renderObjectionChat();
+// Make sure it runs once the DOM is ready
+window.addEventListener("DOMContentLoaded", initCreativeLab);
+
