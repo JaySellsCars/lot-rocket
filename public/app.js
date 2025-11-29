@@ -1,600 +1,839 @@
-// app.js – Lot Rocket V2 backend with new AI tools
+// public/app.js – Lot Rocket V2 frontend
 
-require('dotenv').config();
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const cheerio = require('cheerio');
-const OpenAI = require('openai');
+document.addEventListener('DOMContentLoaded', () => {
+  const apiBase = '';
 
-const app = express();
-const port = process.env.PORT || 3000;
+  // ---------- Elements ----------
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+  const vehicleUrlInput = document.getElementById('vehicleUrl');
+  const vehicleLabelInput = document.getElementById('vehicleLabel');
+  const priceInfoInput = document.getElementById('priceInfo');
+  const boostButton = document.getElementById('boostButton');
+  const statusText = document.getElementById('statusText');
 
-// ---------- Middleware ----------
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+  const photoGrid = document.getElementById('photoGrid');
 
-// ---------- Helpers ----------
+  const summaryLabel = document.getElementById('summaryLabel');
+  const summaryPrice = document.getElementById('summaryPrice');
 
-async function fetchHtml(url) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch URL: ${res.status}`);
+  const facebookPost = document.getElementById('facebookPost');
+  const instagramPost = document.getElementById('instagramPost');
+  const tiktokPost = document.getElementById('tiktokPost');
+  const linkedinPost = document.getElementById('linkedinPost');
+  const twitterPost = document.getElementById('twitterPost');
+  const textBlurb = document.getElementById('textBlurb');
+  const marketplacePost = document.getElementById('marketplacePost');
+  const hashtags = document.getElementById('hashtags');
+  const selfieScript = document.getElementById('selfieScript');
+  const shotPlan = document.getElementById('shotPlan');
+  const canvaIdea = document.getElementById('canvaIdea');
+
+  const newPostButtons = document.querySelectorAll('.new-post-btn');
+  const newSelfieScriptBtn = document.getElementById('newSelfieScript');
+  const copyButtons = document.querySelectorAll('.copy-btn');
+
+  // Creative Lab
+  const videoVehicle = document.getElementById('videoVehicle');
+  const videoHook = document.getElementById('videoHook');
+  const videoStyle = document.getElementById('videoStyle');
+  const videoLength = document.getElementById('videoLength');
+  const generateVideoIdea = document.getElementById('generateVideoIdea');
+  const videoIdeaOutput = document.getElementById('videoIdeaOutput');
+
+  const layoutType = document.getElementById('layoutType');
+  const layoutHeadline = document.getElementById('layoutHeadline');
+  const layoutCta = document.getElementById('layoutCta');
+  const layoutVibe = document.getElementById('layoutVibe');
+  const generateLayoutIdea = document.getElementById('generateLayoutIdea');
+  const layoutOutput = document.getElementById('layoutOutput');
+
+  const photoUpload = document.getElementById('photoUpload');
+  const brightnessSlider = document.getElementById('brightnessSlider');
+  const contrastSlider = document.getElementById('contrastSlider');
+  const saturationSlider = document.getElementById('saturationSlider');
+  const photoPreview = document.getElementById('photoPreview');
+
+  const themeToggle = document.getElementById('themeToggle');
+
+  // Floating tools
+  const objectionLauncher = document.getElementById('objectionLauncher');
+  const paymentLauncher = document.getElementById('paymentLauncher');
+  const incomeLauncher = document.getElementById('incomeLauncher');
+  const messageLauncher = document.getElementById('messageLauncher'); // AI Work Flow Expert
+
+  const messageBuilderLauncher = document.getElementById('messageBuilderLauncher');
+  const askAiLauncher = document.getElementById('askAiLauncher');
+  const carExpertLauncher = document.getElementById('carExpertLauncher');
+
+  // Modals
+  const objectionModal = document.getElementById('objectionModal');
+  const objectionClose = document.getElementById('objectionClose');
+  const objectionText = document.getElementById('objectionText');
+  const objectionContext = document.getElementById('objectionContext');
+  const objectionSubmit = document.getElementById('objectionSubmit');
+  const objectionOutput = document.getElementById('objectionOutput');
+
+  const paymentModal = document.getElementById('paymentModal');
+  const paymentClose = document.getElementById('paymentClose');
+  const payPrice = document.getElementById('payPrice');
+  const payDown = document.getElementById('payDown');
+  const payTerm = document.getElementById('payTerm');
+  const payRate = document.getElementById('payRate');
+  const paymentSubmit = document.getElementById('paymentSubmit');
+  const paymentOutput = document.getElementById('paymentOutput');
+
+  const incomeModal = document.getElementById('incomeModal');
+  const incomeClose = document.getElementById('incomeClose');
+  const incomeTarget = document.getElementById('incomeTarget');
+  const incomeDebts = document.getElementById('incomeDebts');
+  const incomeTerm = document.getElementById('incomeTerm');
+  const incomeRate = document.getElementById('incomeRate');
+  const incomeSubmit = document.getElementById('incomeSubmit');
+  const incomeOutput = document.getElementById('incomeOutput');
+
+  const messageModal = document.getElementById('messageModal');
+  const messageClose = document.getElementById('messageClose');
+  const workflowSituation = document.getElementById('workflowSituation');
+  const workflowType = document.getElementById('workflowType');
+  const workflowSubmit = document.getElementById('workflowSubmit');
+  const workflowOutput = document.getElementById('workflowOutput');
+
+  // New modals
+  const messageBuilderModal = document.getElementById('messageBuilderModal');
+  const messageBuilderClose = document.getElementById('messageBuilderClose');
+  const messageBuilderType = document.getElementById('messageBuilderType');
+  const messageBuilderGoal = document.getElementById('messageBuilderGoal');
+  const messageBuilderDetails = document.getElementById('messageBuilderDetails');
+  const messageBuilderGenerate = document.getElementById('messageBuilderGenerate');
+  const messageBuilderOutput = document.getElementById('messageBuilderOutput');
+  const messageBuilderCopy = document.getElementById('messageBuilderCopy');
+
+  const askAiModal = document.getElementById('askAiModal');
+  const askAiClose = document.getElementById('askAiClose');
+  const askAiQuestion = document.getElementById('askAiQuestion');
+  const askAiSubmit = document.getElementById('askAiSubmit');
+  const askAiAnswer = document.getElementById('askAiAnswer');
+  const askAiCopy = document.getElementById('askAiCopy');
+
+  const carExpertModal = document.getElementById('carExpertModal');
+  const carExpertClose = document.getElementById('carExpertClose');
+  const carExpertQuestion = document.getElementById('carExpertQuestion');
+  const carExpertSubmit = document.getElementById('carExpertSubmit');
+  const carExpertAnswer = document.getElementById('carExpertAnswer');
+  const carExpertCopy = document.getElementById('carExpertCopy');
+
+  // ---------- Helpers ----------
+
+  function setStatus(msg, isError = false) {
+    if (!statusText) return;
+    statusText.textContent = msg;
+    statusText.classList.toggle('error', !!isError);
   }
-  return await res.text();
-}
 
-function extractMainText(html, pageUrl) {
-  const $ = cheerio.load(html);
+  function openModal(modal) {
+    if (modal) modal.classList.remove('hidden');
+  }
 
-  const title = $('title').first().text().trim();
-  const metaDesc = $('meta[name="description"]').attr('content') || '';
+  function closeModal(modal) {
+    if (modal) modal.classList.add('hidden');
+  }
 
-  let textChunks = [];
-  $('p, h1, h2, h3, li').each((_, el) => {
-    const t = $(el).text().replace(/\s+/g, ' ').trim();
-    if (t.length > 30 && t.length < 600) {
-      textChunks.push(t);
-    }
-  });
-
-  const bodyText = textChunks.join('\n');
-
-  return {
-    title,
-    metaDesc,
-    bodyText,
-    pageUrl,
-  };
-}
-
-function extractPhotos(html, pageUrl) {
-  const $ = cheerio.load(html);
-  const base = new URL(pageUrl);
-
-  const urls = new Set();
-
-  $('img').each((_, el) => {
-    let src =
-      $(el).attr('data-src') ||
-      $(el).attr('data-lazy-src') ||
-      $(el).attr('src');
-
-    if (!src) return;
-
-    if (/logo|icon|sprite|placeholder|spacer/i.test(src)) return;
-    if (src.startsWith('data:')) return;
-
+  async function copyToClipboard(text) {
+    if (!text) return;
     try {
-      const abs = new URL(src, base).href;
-      urls.add(abs);
-    } catch {
-      // ignore
-    }
-  });
-
-  // TODO: future: scan <script> JSON blobs for image URLs
-
-  return Array.from(urls).slice(0, 24);
-}
-
-function safeFirstTextFromResponse(result, fallback) {
-  try {
-    const c = result.output?.[0]?.content?.[0];
-    if (!c) return fallback;
-    if (typeof c.text === 'string') return c.text.trim() || fallback;
-    if (typeof c === 'string') return c.trim() || fallback;
-    return fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-// ---------- Routes ----------
-
-// Root – serve app
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ---- Scraper: full social kit ----
-app.post('/api/social-kit', async (req, res) => {
-  const { url, label, price } = req.body || {};
-
-  if (!url) {
-    return res.status(400).json({ error: 'URL is required.' });
-  }
-
-  try {
-    const html = await fetchHtml(url);
-    const scraped = extractMainText(html, url);
-    const photos = extractPhotos(html, url);
-
-    const payload = {
-      vehicleLabel: label || scraped.title || '',
-      priceInfo: price || '',
-      metaDescription: scraped.metaDesc || '',
-      mainText: scraped.bodyText || '',
-      photos,
-      sourceUrl: url,
-    };
-
-    const promptUser = `
-You are Lot Rocket, an elite AI for automotive social media content.
-
-You will receive scraped listing data for a single vehicle. 
-Return ONLY JSON with fields:
-
-{
-  "facebook": "...",
-  "instagram": "...",
-  "tiktok": "...",
-  "linkedin": "...",
-  "twitter": "...",
-  "sms": "...",
-  "marketplace": "...",
-  "hashtags": "...",
-  "selfie_script": "...",
-  "shot_plan": "...",
-  "canva_idea": "..."
-}
-
-- Write like a top-performing car salesperson.
-- Strong hooks and CTAs.
-- Assume the salesperson is honest, friendly, and high-energy.
-- DO NOT include explanations, backticks, or any extra keys.
-- "hashtags" should be a single string with hashtags separated by spaces.
-- "shot_plan" should be a short multi-step list in plain text.
-
-SCRAPED DATA:
-${JSON.stringify(payload, null, 2)}
-`;
-
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        {
-          role: 'system',
-          content:
-            'You output STRICT JSON for an automotive social kit. No commentary.',
-        },
-        { role: 'user', content: promptUser },
-      ],
-      response_format: { type: 'json' },
-    });
-
-    let parsed;
-    try {
-      const raw = safeFirstTextFromResponse(result, '{}');
-      parsed = JSON.parse(raw);
+      await navigator.clipboard.writeText(text);
     } catch (err) {
-      console.error('JSON parse error /api/social-kit', err);
-      return res.status(500).json({ error: 'Failed to parse AI JSON.' });
+      console.error('Clipboard error', err);
     }
+  }
 
-    res.json({
-      kit: parsed,
-      photos,
-      meta: {
-        label: payload.vehicleLabel,
-        price: payload.priceInfo,
-        url,
-      },
+  function applyPhotoFilters() {
+    if (!photoPreview) return;
+    const b = parseInt(brightnessSlider.value || '0', 10);
+    const c = parseInt(contrastSlider.value || '0', 10);
+    const s = parseInt(saturationSlider.value || '0', 10);
+
+    const brightness = 100 + b;
+    const contrast = 100 + c;
+    const saturation = 100 + s;
+
+    photoPreview.style.filter = `
+      brightness(${brightness}%)
+      contrast(${contrast}%)
+      saturate(${saturation}%)
+    `;
+  }
+
+  function renderPhotoGrid(photos) {
+    if (!photoGrid) return;
+    photoGrid.innerHTML = '';
+    if (!Array.isArray(photos) || photos.length === 0) return;
+
+    photos.forEach((url) => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Vehicle photo';
+      img.className = 'photo-thumb';
+      photoGrid.appendChild(img);
     });
-  } catch (err) {
-    console.error('Error /api/social-kit:', err);
-    res.status(500).json({ error: 'Failed to generate social kit.' });
-  }
-});
-
-// ---- Scraper: photos only ----
-app.post('/api/grab-photos', async (req, res) => {
-  const { url } = req.body || {};
-  if (!url) return res.status(400).json({ error: 'URL is required.' });
-
-  try {
-    const html = await fetchHtml(url);
-    const photos = extractPhotos(html, url);
-    res.json({ photos });
-  } catch (err) {
-    console.error('Error /api/grab-photos:', err);
-    res.status(500).json({ error: 'Failed to grab photos.' });
-  }
-});
-
-// ---- Regenerate a single platform post ----
-app.post('/api/new-post', async (req, res) => {
-  const { platform, context } = req.body || {};
-  if (!platform) {
-    return res.status(400).json({ error: 'platform is required.' });
   }
 
-  const ctx = context || '';
+  // ---------- Theme toggle ----------
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+    });
+  }
 
-  const sysPrompt =
-    'You are Lot Rocket, writing high-converting posts for car salespeople. Keep it punchy, persuasive, honest, and platform-aware.';
-  const userPrompt = `
-Platform: ${platform}
-Context:
-${ctx}
+  // ---------- Step 1 + Step 2: Boost workflow ----------
 
-Write a new post for this platform only. No hashtags unless it is Instagram or TikTok.
+  if (boostButton) {
+    boostButton.addEventListener('click', async () => {
+      const url = (vehicleUrlInput.value || '').trim();
+      const label = (vehicleLabelInput.value || '').trim();
+      const price = (priceInfoInput.value || '').trim();
+
+      if (!url) {
+        setStatus('Please paste a dealer listing URL.', true);
+        return;
+      }
+
+      setStatus('Scraping and generating social kit...');
+
+      try {
+        // grab photos
+        const photosRes = await fetch(`${apiBase}/api/grab-photos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        if (photosRes.ok) {
+          const photosData = await photosRes.json();
+          renderPhotoGrid(photosData.photos || []);
+        }
+
+        // full social kit
+        const res = await fetch(`${apiBase}/api/social-kit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, label, price }),
+        });
+
+        if (!res.ok) {
+          setStatus('Error generating kit. Try again.', true);
+          return;
+        }
+
+        const data = await res.json();
+
+        const kit = data.kit || {};
+        const meta = data.meta || {};
+        const photos = data.photos || [];
+
+        renderPhotoGrid(photos);
+
+        summaryLabel.textContent = meta.label || label || '—';
+        summaryPrice.textContent = meta.price || price || '—';
+
+        facebookPost.value = kit.facebook || '';
+        instagramPost.value = kit.instagram || '';
+        tiktokPost.value = kit.tiktok || '';
+        linkedinPost.value = kit.linkedin || '';
+        twitterPost.value = kit.twitter || '';
+        textBlurb.value = kit.sms || '';
+        marketplacePost.value = kit.marketplace || '';
+        hashtags.value = kit.hashtags || '';
+        selfieScript.value = kit.selfie_script || '';
+        shotPlan.value = kit.shot_plan || '';
+        canvaIdea.value = kit.canva_idea || '';
+
+        setStatus('Social kit ready! 🎯');
+      } catch (err) {
+        console.error(err);
+        setStatus('Something went wrong. Check your URL and try again.', true);
+      }
+    });
+  }
+
+  // ---------- Regenerate single platform posts ----------
+
+  if (newPostButtons && newPostButtons.length) {
+    newPostButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const platform = btn.getAttribute('data-platform');
+        if (!platform) return;
+
+        const url = (vehicleUrlInput.value || '').trim();
+        const label = (vehicleLabelInput.value || '').trim();
+        const price = (priceInfoInput.value || '').trim();
+
+        const context = `
+URL: ${url}
+Label: ${label}
+Price: ${price}
+Current content:
+Facebook: ${facebookPost.value}
+Instagram: ${instagramPost.value}
+TikTok: ${tiktokPost.value}
+LinkedIn: ${linkedinPost.value}
+Twitter: ${twitterPost.value}
+        `;
+
+        btn.disabled = true;
+        btn.textContent = 'Thinking...';
+
+        try {
+          const res = await fetch(`${apiBase}/api/new-post`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform, context }),
+          });
+
+          if (!res.ok) {
+            alert('Error generating new post.');
+            return;
+          }
+
+          const data = await res.json();
+          const post = data.post || '';
+
+          switch (platform) {
+            case 'facebook':
+              facebookPost.value = post;
+              break;
+            case 'instagram':
+              instagramPost.value = post;
+              break;
+            case 'tiktok':
+              tiktokPost.value = post;
+              break;
+            case 'linkedin':
+              linkedinPost.value = post;
+              break;
+            case 'twitter':
+              twitterPost.value = post;
+              break;
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error generating new post.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'New Post';
+        }
+      });
+    });
+  }
+
+  // ---------- New selfie script from context ----------
+  if (newSelfieScriptBtn) {
+    newSelfieScriptBtn.addEventListener('click', async () => {
+      const url = (vehicleUrlInput.value || '').trim();
+      const label = (vehicleLabelInput.value || '').trim();
+      const price = (priceInfoInput.value || '').trim();
+
+      const context = `
+URL: ${url}
+Label: ${label}
+Price: ${price}
+Current script:
+${selfieScript.value}
+      `;
+
+      newSelfieScriptBtn.disabled = true;
+      newSelfieScriptBtn.textContent = 'Thinking...';
+
+      try {
+        const res = await fetch(`${apiBase}/api/new-script`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context }),
+        });
+
+        if (!res.ok) {
+          alert('Error generating new script.');
+          return;
+        }
+
+        const data = await res.json();
+        selfieScript.value = data.script || '';
+      } catch (err) {
+        console.error(err);
+        alert('Error generating new script.');
+      } finally {
+        newSelfieScriptBtn.disabled = false;
+        newSelfieScriptBtn.textContent = 'New Script';
+      }
+    });
+  }
+
+  // ---------- Universal copy buttons ----------
+  if (copyButtons && copyButtons.length) {
+    copyButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const targetId = btn.getAttribute('data-target');
+        if (!targetId) return;
+        const el = document.getElementById(targetId);
+        if (!el) return;
+
+        const text = el.value || el.textContent || '';
+        if (!text.trim()) return;
+
+        try {
+          await navigator.clipboard.writeText(text.trim());
+          const original = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => {
+            btn.textContent = original;
+          }, 1200);
+        } catch (err) {
+          console.error('Copy failed', err);
+        }
+      });
+    });
+  }
+
+  // ---------- Creative Lab: video idea ----------
+  if (generateVideoIdea) {
+    generateVideoIdea.addEventListener('click', async () => {
+      const payload = {
+        vehicle: videoVehicle.value,
+        hook: videoHook.value,
+        style: videoStyle.value,
+        length: videoLength.value,
+      };
+
+      videoIdeaOutput.value = 'Generating video idea...';
+
+      const context = `
+Vehicle: ${payload.vehicle}
+Hook: ${payload.hook}
+Style: ${payload.style}
+Length/aspect: ${payload.length}
 `;
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sysPrompt },
-        { role: 'user', content: userPrompt },
-      ],
+      try {
+        const res = await fetch(`${apiBase}/api/new-script`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context }),
+        });
+
+        if (!res.ok) {
+          videoIdeaOutput.value = 'Error generating video idea.';
+          return;
+        }
+
+        const data = await res.json();
+        videoIdeaOutput.value = data.script || 'No idea returned.';
+      } catch (err) {
+        console.error(err);
+        videoIdeaOutput.value = 'Error generating video idea.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No post generated. Try again.'
-    );
-    res.json({ post: text });
-  } catch (err) {
-    console.error('Error /api/new-post:', err);
-    res.status(500).json({ error: 'Failed to generate new post.' });
   }
-});
 
-// ---- New script (selfie video etc.) ----
-app.post('/api/new-script', async (req, res) => {
-  const { context } = req.body || {};
-  const sys =
-    'You are a charismatic car sales video script writer. You write short, punchy scripts designed to be recorded selfie-style on a phone.';
-  const user = `
-Context for the vehicle / offer / situation:
-${context || ''}
+  // ---------- Creative Lab: layout idea ----------
+  if (generateLayoutIdea) {
+    generateLayoutIdea.addEventListener('click', async () => {
+      const payload = {
+        creativeType: layoutType.value,
+        headline: layoutHeadline.value,
+        cta: layoutCta.value,
+        vibe: layoutVibe.value,
+      };
 
-Write a short, 30-60 second selfie video script in first person POV from the salesperson.
-`;
+      layoutOutput.value = 'Generating layout idea...';
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+      try {
+        const res = await fetch(`${apiBase}/api/design-idea`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          layoutOutput.value = 'Error generating layout idea.';
+          return;
+        }
+
+        const data = await res.json();
+        layoutOutput.value = data.layout || 'No layout idea returned.';
+      } catch (err) {
+        console.error(err);
+        layoutOutput.value = 'Error generating layout idea.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No script generated. Try again.'
-    );
-    res.json({ script: text });
-  } catch (err) {
-    console.error('Error /api/new-script:', err);
-    res.status(500).json({ error: 'Failed to generate script.' });
   }
-});
 
-// ---- Video shot plan from photos ----
-app.post('/api/video-from-photos', async (req, res) => {
-  const { photoUrls, vehicleLabel } = req.body || {};
-  const sys =
-    'You are a video storyboard planner for social media car sales content.';
-  const user = `
-You will receive photo URLs and a vehicle label.
-Suggest a short vertical video shot plan using those angles.
+  // ---------- Photo quick editor ----------
+  if (photoUpload) {
+    photoUpload.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-Vehicle: ${vehicleLabel || ''}
-
-Photos:
-${JSON.stringify(photoUrls || [], null, 2)}
-`;
-
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        photoPreview.src = evt.target.result;
+        applyPhotoFilters();
+      };
+      reader.readAsDataURL(file);
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No shot plan generated. Try again.'
-    );
-    res.json({ shotPlan: text });
-  } catch (err) {
-    console.error('Error /api/video-from-photos:', err);
-    res.status(500).json({ error: 'Failed to generate shot plan.' });
   }
-});
 
-// ---- Canva layout idea ----
-app.post('/api/design-idea', async (req, res) => {
-  const { creativeType, headline, cta, vibe } = req.body || {};
-  const sys =
-    'You are a marketing designer describing simple Canva layout ideas for car sales graphics.';
-  const user = `
-Creative type: ${creativeType || 'social graphic'}
-Headline: ${headline || ''}
-CTA: ${cta || ''}
-Vibe: ${vibe || ''}
+  [brightnessSlider, contrastSlider, saturationSlider].forEach((slider) => {
+    if (!slider) return;
+    slider.addEventListener('input', applyPhotoFilters);
+  });
 
-Describe a simple layout in bullet points that someone could build in Canva.
-`;
+  // ---------- Floating tools: open/close modals ----------
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+  if (objectionLauncher) {
+    objectionLauncher.addEventListener('click', () =>
+      openModal(objectionModal)
+    );
+  }
+  if (paymentLauncher) {
+    paymentLauncher.addEventListener('click', () => openModal(paymentModal));
+  }
+  if (incomeLauncher) {
+    incomeLauncher.addEventListener('click', () => openModal(incomeModal));
+  }
+  if (messageLauncher) {
+    messageLauncher.addEventListener('click', () => openModal(messageModal));
+  }
+  if (messageBuilderLauncher) {
+    messageBuilderLauncher.addEventListener('click', () =>
+      openModal(messageBuilderModal)
+    );
+  }
+  if (askAiLauncher) {
+    askAiLauncher.addEventListener('click', () => openModal(askAiModal));
+  }
+  if (carExpertLauncher) {
+    carExpertLauncher.addEventListener('click', () =>
+      openModal(carExpertModal)
+    );
+  }
+
+  if (objectionClose) {
+    objectionClose.addEventListener('click', () =>
+      closeModal(objectionModal)
+    );
+  }
+  if (paymentClose) {
+    paymentClose.addEventListener('click', () => closeModal(paymentModal));
+  }
+  if (incomeClose) {
+    incomeClose.addEventListener('click', () => closeModal(incomeModal));
+  }
+  if (messageClose) {
+    messageClose.addEventListener('click', () => closeModal(messageModal));
+  }
+  if (messageBuilderClose) {
+    messageBuilderClose.addEventListener('click', () =>
+      closeModal(messageBuilderModal)
+    );
+  }
+  if (askAiClose) {
+    askAiClose.addEventListener('click', () => closeModal(askAiModal));
+  }
+  if (carExpertClose) {
+    carExpertClose.addEventListener('click', () =>
+      closeModal(carExpertModal)
+    );
+  }
+
+  // ---------- Tool API calls ----------
+
+  // Objection coach
+  if (objectionSubmit) {
+    objectionSubmit.addEventListener('click', async () => {
+      const objection = objectionText.value.trim();
+      const context = objectionContext.value.trim();
+
+      if (!objection) {
+        objectionOutput.value = 'Please enter a customer objection.';
+        return;
+      }
+
+      objectionOutput.value = 'Coaching...';
+
+      try {
+        const res = await fetch(`${apiBase}/api/objection-coach`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ objection, context }),
+        });
+
+        if (!res.ok) {
+          objectionOutput.value = 'Error generating coaching.';
+          return;
+        }
+
+        const data = await res.json();
+        objectionOutput.value = data.advice || 'No coaching returned.';
+      } catch (err) {
+        console.error(err);
+        objectionOutput.value = 'Error generating coaching.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No layout idea generated. Try again.'
-    );
-    res.json({ layout: text });
-  } catch (err) {
-    console.error('Error /api/design-idea:', err);
-    res.status(500).json({ error: 'Failed to generate layout idea.' });
   }
-});
 
-// ---- Objection coach ----
-app.post('/api/objection-coach', async (req, res) => {
-  const { objection, context } = req.body || {};
-  const sys =
-    'You are an automotive sales trainer coaching a salesperson on how to respond to objections. You speak in script form.';
-  const user = `
-Customer objection:
-${objection || ''}
+  // Payment helper
+  if (paymentSubmit) {
+    paymentSubmit.addEventListener('click', async () => {
+      const payload = {
+        price: payPrice.value,
+        down: payDown.value,
+        termMonths: payTerm.value,
+        rate: payRate.value,
+      };
 
-Context:
-${context || ''}
+      paymentOutput.value = 'Estimating payment...';
 
-Give the salesperson 2-3 different word-for-word ways to respond.
-`;
+      try {
+        const res = await fetch(`${apiBase}/api/payment-helper`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+        if (!res.ok) {
+          paymentOutput.value = 'Error estimating payment.';
+          return;
+        }
+
+        const data = await res.json();
+        paymentOutput.value = data.paymentHelp || 'No estimate returned.';
+      } catch (err) {
+        console.error(err);
+        paymentOutput.value = 'Error estimating payment.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No coaching script generated.'
-    );
-    res.json({ advice: text });
-  } catch (err) {
-    console.error('Error /api/objection-coach:', err);
-    res.status(500).json({ error: 'Failed to coach objection.' });
   }
-});
 
-// ---- Payment helper ----
-app.post('/api/payment-helper', async (req, res) => {
-  const { price, down, termMonths, rate } = req.body || {};
+  // Income helper
+  if (incomeSubmit) {
+    incomeSubmit.addEventListener('click', async () => {
+      const payload = {
+        paymentTarget: incomeTarget.value,
+        otherDebts: incomeDebts.value,
+        termMonths: incomeTerm.value,
+        rate: incomeRate.value,
+      };
 
-  const sys =
-    'You are a car payment explainer. You help salespeople estimate payments and explain options. Do not give legal or binding finance advice.';
-  const user = `
-Vehicle price: ${price || ''}
-Down payment: ${down || ''}
-Term months: ${termMonths || ''}
-Interest rate guess: ${rate || ''}
+      incomeOutput.value = 'Estimating income...';
 
-1) Give a rough estimated monthly payment.
-2) Offer 2-3 alternative structures (more down, shorter term, etc.).
-3) Write a short text message the salesperson can send to the customer.
-`;
+      try {
+        const res = await fetch(`${apiBase}/api/income-helper`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+        if (!res.ok) {
+          incomeOutput.value = 'Error estimating income.';
+          return;
+        }
+
+        const data = await res.json();
+        incomeOutput.value = data.incomeHelp || 'No estimate returned.';
+      } catch (err) {
+        console.error(err);
+        incomeOutput.value = 'Error estimating income.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No payment help generated.'
-    );
-    res.json({ paymentHelp: text });
-  } catch (err) {
-    console.error('Error /api/payment-helper:', err);
-    res.status(500).json({ error: 'Failed to generate payment help.' });
   }
-});
 
-// ---- Income helper ----
-app.post('/api/income-helper', async (req, res) => {
-  const { paymentTarget, otherDebts, termMonths, rate } = req.body || {};
+  // AI Work Flow Expert
+  if (workflowSubmit) {
+    workflowSubmit.addEventListener('click', async () => {
+      const situation = workflowSituation.value.trim();
+      const customerType = workflowType.value.trim();
 
-  const sys =
-    'You are a car income explainer. You help estimate how much income a person might need for a target car payment. You are approximate and conservative.';
-  const user = `
-Target payment: ${paymentTarget || ''}
-Other monthly debts: ${otherDebts || ''}
-Term months: ${termMonths || ''}
-Interest rate guess: ${rate || ''}
+      if (!situation) {
+        workflowOutput.value =
+          'Describe the customer situation to build a workflow.';
+        return;
+      }
 
-1) Roughly estimate income needed to comfortably handle this payment.
-2) Explain in simple language.
-3) Write a short text message the salesperson can send to the customer.
-`;
+      workflowOutput.value = 'Building workflow...';
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+      try {
+        const res = await fetch(`${apiBase}/api/message-helper`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ situation, customerType }),
+        });
+
+        if (!res.ok) {
+          workflowOutput.value = 'Error generating workflow.';
+          return;
+        }
+
+        const data = await res.json();
+        workflowOutput.value = data.workflow || 'No workflow returned.';
+      } catch (err) {
+        console.error(err);
+        workflowOutput.value = 'Error generating workflow.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No income help generated.'
-    );
-    res.json({ incomeHelp: text });
-  } catch (err) {
-    console.error('Error /api/income-helper:', err);
-    res.status(500).json({ error: 'Failed to generate income help.' });
   }
-});
 
-// ---- Message helper (old AI message expert / workflow-ish) ----
-app.post('/api/message-helper', async (req, res) => {
-  const { situation, customerType } = req.body || {};
+  // AI Message Builder
+  if (messageBuilderGenerate) {
+    messageBuilderGenerate.addEventListener('click', async () => {
+      const type = messageBuilderType.value;
+      const goal = messageBuilderGoal.value.trim();
+      const details = messageBuilderDetails.value.trim();
 
-  const sys =
-    'You are a follow-up messaging coach for car salespeople. You help them decide how to structure their outreach.';
-  const user = `
-Customer situation:
-${situation || ''}
+      if (!goal && !details) {
+        messageBuilderOutput.value =
+          'Please describe what you want the message to do.';
+        return;
+      }
 
-Customer type:
-${customerType || ''}
+      messageBuilderOutput.value = 'Generating message...';
 
-1) Suggest a basic follow-up workflow (how many touches, in what order).
-2) Give examples of what to say in each step.
-`;
+      try {
+        const res = await fetch(`${apiBase}/api/message-builder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, goal, details }),
+        });
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        { role: 'system', content: sys },
-        { role: 'user', content: user },
-      ],
+        if (!res.ok) {
+          messageBuilderOutput.value =
+            'Error: Unable to generate message.';
+          return;
+        }
+
+        const data = await res.json();
+        messageBuilderOutput.value =
+          data.message || 'No response text returned.';
+      } catch (err) {
+        console.error(err);
+        messageBuilderOutput.value = 'Error: Something went wrong.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No workflow generated.'
-    );
-    res.json({ workflow: text });
-  } catch (err) {
-    console.error('Error /api/message-helper:', err);
-    res.status(500).json({ error: 'Failed to generate workflow.' });
   }
-});
 
-// ---- NEW: AI Message Builder (pure copy expert) ----
-app.post('/api/message-builder', async (req, res) => {
-  const { type, goal, details } = req.body || {};
+  if (messageBuilderCopy) {
+    messageBuilderCopy.addEventListener('click', async () => {
+      const text = messageBuilderOutput.value.trim();
+      if (!text) return;
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        {
-          role: 'system',
-          content:
-            'You are an elite automotive sales copywriter. You write short, high-converting messages. Be clear, friendly, confident, and persuasive.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            type: type || 'text',
-            goal: goal || '',
-            details: details || '',
-          }),
-        },
-      ],
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = messageBuilderCopy.textContent;
+        messageBuilderCopy.textContent = 'Copied!';
+        setTimeout(() => {
+          messageBuilderCopy.textContent = original;
+        }, 1200);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No message was generated. Try again with more details.'
-    );
-    res.json({ message: text });
-  } catch (err) {
-    console.error('Error /api/message-builder:', err);
-    res.status(500).json({ error: 'Failed to generate message.' });
-  }
-});
-
-// ---- NEW: Ask A.I. (general brain) ----
-app.post('/api/ask-ai', async (req, res) => {
-  const { question } = req.body || {};
-
-  if (!question) {
-    return res.status(400).json({ error: 'Question is required.' });
   }
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        {
-          role: 'system',
-          content:
-            'You are a helpful, general-purpose AI assistant built into a tool called Lot Rocket. Answer clearly and helpfully.',
-        },
-        { role: 'user', content: question },
-      ],
+  // Ask AI
+  if (askAiSubmit) {
+    askAiSubmit.addEventListener('click', async () => {
+      const question = askAiQuestion.value.trim();
+      if (!question) {
+        askAiAnswer.value = 'Please enter a question.';
+        return;
+      }
+
+      askAiAnswer.value = 'Thinking...';
+
+      try {
+        const res = await fetch(`${apiBase}/api/ask-ai`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+
+        if (!res.ok) {
+          askAiAnswer.value = 'Error: Unable to get answer.';
+          return;
+        }
+
+        const data = await res.json();
+        askAiAnswer.value = data.answer || 'No answer was returned.';
+      } catch (err) {
+        console.error(err);
+        askAiAnswer.value = 'Error: Something went wrong.';
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No answer generated. Try rephrasing your question.'
-    );
-    res.json({ answer: text });
-  } catch (err) {
-    console.error('Error /api/ask-ai:', err);
-    res.status(500).json({ error: 'Failed to answer question.' });
-  }
-});
-
-// ---- NEW: AI Car Expert ----
-app.post('/api/car-expert', async (req, res) => {
-  const { question } = req.body || {};
-
-  if (!question) {
-    return res.status(400).json({ error: 'Question is required.' });
   }
 
-  try {
-    const result = await client.responses.create({
-      model: 'gpt-4o-mini',
-      input: [
-        {
-          role: 'system',
-          content:
-            'You are an automotive product specialist and sales trainer. You know trims, features, warranties, financing, leasing, and how to explain vehicles to normal people. Speak like a friendly, confident car expert. Avoid made-up hard numbers.',
-        },
-        { role: 'user', content: question },
-      ],
+  if (askAiCopy) {
+    askAiCopy.addEventListener('click', async () => {
+      const text = askAiAnswer.value.trim();
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = askAiCopy.textContent;
+        askAiCopy.textContent = 'Copied!';
+        setTimeout(() => {
+          askAiCopy.textContent = original;
+        }, 1200);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
     });
-
-    const text = safeFirstTextFromResponse(
-      result,
-      'No automotive answer generated.'
-    );
-    res.json({ answer: text });
-  } catch (err) {
-    console.error('Error /api/car-expert:', err);
-    res.status(500).json({ error: 'Failed to answer automotive question.' });
   }
-});
 
-// ---------- Start server ----------
-app.listen(port, () => {
-  console.log(`Lot Rocket server running on port ${port}`);
+  // AI Car Expert
+  if (carExpertSubmit) {
+    carExpertSubmit.addEventListener('click', async () => {
+      const question = carExpertQuestion.value.trim();
+      if (!question) {
+        carExpertAnswer.value = 'Please enter an automotive question.';
+        return;
+      }
+
+      carExpertAnswer.value = 'Revving up an answer...';
+
+      try {
+        const res = await fetch(`${apiBase}/api/car-expert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+
+        if (!res.ok) {
+          carExpertAnswer.value = 'Error: Unable to get answer.';
+          return;
+        }
+
+        const data = await res.json();
+        carExpertAnswer.value = data.answer || 'No answer was returned.';
+      } catch (err) {
+        console.error(err);
+        carExpertAnswer.value = 'Error: Something went wrong.';
+      }
+    });
+  }
+
+  if (carExpertCopy) {
+    carExpertCopy.addEventListener('click', async () => {
+      const text = carExpertAnswer.value.trim();
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = carExpertCopy.textContent;
+        carExpertCopy.textContent = 'Copied!';
+        setTimeout(() => {
+          carExpertCopy.textContent = original;
+        }, 1200);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+    });
+  }
 });
