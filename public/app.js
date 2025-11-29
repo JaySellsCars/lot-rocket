@@ -212,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Selfie script / shot plan / design idea regen (creative support endpoints)
+  // Selfie script / shot plan / design idea regen
   const regenSelfieScriptBtn = document.getElementById("regenSelfieScript");
   const regenShotPlanBtn = document.getElementById("regenShotPlan");
   const regenDesignIdeaBtn = document.getElementById("regenDesignIdea");
@@ -473,24 +473,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- SIMPLE CALCULATOR IN PAYMENT MODAL ----------
+  // ---------- STANDALONE BASIC CALCULATOR ----------
 
-  const simpleCalcPanel = document.getElementById("simpleCalcPanel");
-  const simpleCalcDisplay = document.getElementById("simpleCalcDisplay");
-  const toggleSimpleCalcBtn = document.getElementById("toggleSimpleCalc");
+  const basicCalcPanel = document.getElementById("basicCalcPanel");
+  const basicCalcDisplay = document.getElementById("basicCalcDisplay");
 
-  if (toggleSimpleCalcBtn && simpleCalcPanel && simpleCalcDisplay) {
+  if (basicCalcPanel && basicCalcDisplay) {
     let calcExpression = "0";
 
     const updateDisplay = () => {
-      simpleCalcDisplay.textContent = calcExpression || "0";
+      basicCalcDisplay.textContent = calcExpression || "0";
     };
 
-    toggleSimpleCalcBtn.addEventListener("click", () => {
-      simpleCalcPanel.classList.toggle("hidden");
-    });
-
-    simpleCalcPanel.addEventListener("click", (e) => {
+    basicCalcPanel.addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-calc]");
       if (!btn) return;
       const value = btn.getAttribute("data-calc");
@@ -800,6 +795,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   wireModal("objectionLauncher", "objectionModal", "objectionClose");
+  wireModal("calcLauncher", "calcModal", "calcClose");
   wireModal("paymentLauncher", "paymentModal", "paymentClose");
   wireModal("incomeLauncher", "incomeModal", "incomeClose");
   wireModal("workflowLauncher", "workflowModal", "workflowClose");
