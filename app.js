@@ -8,6 +8,10 @@ const path = require('path');
 const cheerio = require('cheerio');
 const OpenAI = require('openai');
 
+// Node fetch shim (works on Render / Node 16+)
+const fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -19,7 +23,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve the React-style static app from /public
+// Serve static app from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -46,7 +50,7 @@ async function scrapeVehiclePage(pageUrl) {
 
     const base = new URL(pageUrl);
 
-    // naive title & price guesses
+    // title & price guesses
     let title =
       $('meta[property="og:title"]').attr('content') ||
       $('title').first().text() ||
@@ -93,7 +97,7 @@ async function scrapeVehiclePage(pageUrl) {
         }
         photoSet.add(urlStr);
       } catch {
-        // ignore bad URLs
+        // ignore malformed URLs
       }
     });
 
@@ -318,7 +322,7 @@ You are NOT giving financial advice. You are giving talk tracks.
 
 Return:
 1) A short script (3–6 sentences) the salesperson can say.
-2) 3–4 bullet points with ways to position the deal (terms, down payment, trade, etc.).
+2) 3–5 bullet points with ways to position the deal (terms, down payment, trade, etc.).
 Keep everything high-level with disclaimers; no specific financial guarantees.
     `.trim();
 
