@@ -296,28 +296,40 @@ app.post('/api/grab-photos', async (req, res) => {
       let src = $(el).attr('data-src') || $(el).attr('src');
       if (!src) return;
 
-      // absolute-ize relative URLs
+      // Skip obvious UI junk
+      const lower = src.toLowerCase();
+      if (
+        lower.includes('logo') ||
+        lower.includes('icon') ||
+        lower.includes('sprite') ||
+        lower.includes('placeholder') ||
+        lower.endsWith('.svg')
+      ) {
+        return;
+      }
+
+      // Make relative URLs absolute
       try {
         const u = new URL(src, url);
         src = u.toString();
       } catch (_) {
-        // ignore bad URLs
+        // if it's not a valid URL, skip it
+        return;
       }
-
-      // basic filter to avoid tiny icons etc.
-      const width = parseInt($(el).attr('width') || '0', 10);
-      const height = parseInt($(el).attr('height') || '0', 10);
-      if (width < 200 && height < 200) return;
 
       if (!photos.includes(src)) photos.push(src);
     });
 
-    res.json({ success: true, photos });
+    // Keep a reasonable max but more than 2
+    const limited = photos.slice(0, 24);
+
+    res.json({ success: true, photos: limited });
   } catch (err) {
     console.error('Error in /api/grab-photos:', err);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
+
 
 // ------------------------------------------------------------
 // POST /api/video-from-photos – quick shot plan from photo list
