@@ -680,15 +680,16 @@ label.field-label {
   box-shadow: 0 8px 22px rgba(15,23,42,0.2);
 }
 
-/* Mobile: dock them bottom-right */
 @media (max-width: 820px) {
   .tool-launcher-column {
+    position: fixed;       /* on mobile, pin to screen */
     bottom: 16px;
     top: auto;
     right: 16px;
     align-items: flex-end;
   }
 }
+
 
 
 /* ----------------- MODALS ----------------- */
