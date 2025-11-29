@@ -1,4 +1,7 @@
-/* public/style.css – Lot Rocket V2, styled like original card layout */
+/* public/style.css – Lot Rocket V2, original layout:
+   - Step 1 + Step 2 side-by-side
+   - Step 3 full-width below
+*/
 
 /* ---------- Base ---------- */
 
@@ -70,23 +73,25 @@ body:not(.dark-theme) .branding p {
   gap: 8px;
 }
 
-/* ---------- Layout (outer card) ---------- */
+/* ---------- Layout (card with grid) ---------- */
 
 .layout {
   max-width: 1300px;
   margin: 0 auto 40px;
-  margin-top: 0;
   padding: 20px 230px 28px 22px; /* extra right padding for tool rail */
   border-radius: 0 0 24px 24px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: radial-gradient(circle at top left, #050816, #020617 65%);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.85);
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
+
+  /* 2-column grid on top, rows below */
+  display: grid;
+  grid-template-columns: 0.95fr 1.7fr; /* Step 2 is wider */
+  grid-auto-rows: auto;
+  column-gap: 20px;
+  row-gap: 18px;
 }
 
-/* base column */
 .column {
   display: flex;
   flex-direction: column;
@@ -94,17 +99,19 @@ body:not(.dark-theme) .branding p {
   min-width: 0;
 }
 
-/* column weights: middle widest */
+/* Step 1 column */
 .column-left {
-  flex: 0.95 1 0;
+  grid-column: 1;
 }
 
+/* Step 2 column */
 .column-middle {
-  flex: 1.7 1 0;
+  grid-column: 2;
 }
 
+/* Step 3 – Creative Lab: full width, below */
 .column-right {
-  flex: 1.05 1 0;
+  grid-column: 1 / span 2;
 }
 
 .column h2 {
@@ -321,7 +328,6 @@ body:not(.dark-theme) .regen-btn {
   position: fixed;
   top: 110px;
   right: calc((100vw - 1300px) / 2 + 18px);
-  /* lines with card’s right edge on big screens */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -420,14 +426,14 @@ body:not(.dark-theme) .modal-content p {
 
 @media (max-width: 1024px) {
   .layout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     padding: 18px 16px 22px 16px;
   }
 
   .column-left,
   .column-middle,
   .column-right {
-    flex: 1 1 auto;
+    grid-column: 1;
   }
 
   .floating-tools {
@@ -442,7 +448,7 @@ body:not(.dark-theme) .modal-content p {
 
 @media (max-width: 768px) {
   .layout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .floating-tools {
