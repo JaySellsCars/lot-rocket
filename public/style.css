@@ -365,11 +365,12 @@ body:not(.dark-theme) .modal-content p {
 
 @media (max-width: 1024px) {
   .layout {
-    grid-template-columns: 1fr 1fr;
+    flex-direction: column;
+    padding: 16px 16px 24px 16px;
   }
 
   .column-right {
-    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .floating-tools {
