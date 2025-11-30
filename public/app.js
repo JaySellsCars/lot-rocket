@@ -34,6 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const summaryPrice = document.getElementById("summaryPrice");
 
   const photosGrid = document.getElementById("photosGrid");
+const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+
+// this will hold the last batch of photos from Boost
+let latestPhotoUrls = [];
 
   const facebookPost = document.getElementById("facebookPost");
   const instagramPost = document.getElementById("instagramPost");
