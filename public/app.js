@@ -793,6 +793,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
   // =====================================================
   //     CREATIVE STUDIO – SIMPLE OPEN/CLOSE
   // =====================================================
