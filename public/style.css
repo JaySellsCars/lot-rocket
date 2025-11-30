@@ -918,4 +918,177 @@ body:not(.dark-theme) .simple-calc-grid button {
     flex: 0 0 auto;
   }
 }
+/* =========================================================
+   FORCE-HIDE ANYTHING WITH .hidden
+   ========================================================= */
+.hidden {
+  display: none !important;
+}
+
+/* =========================================================
+   CREATIVE STUDIO OVERLAY LAYER
+   ========================================================= */
+.creative-overlay {
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* above everything else */
+}
+
+/* The actual modal box */
+.creative-modal {
+  background: #050711;
+  border-radius: 16px;
+  width: min(1200px, 95vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
+  border: 1px solid #2b2b4a;
+}
+
+/* Header row inside overlay */
+.creative-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #222438;
+}
+
+.creative-header h2 {
+  margin: 0;
+}
+
+/* Close button */
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Top bar: preset + actions */
+.creative-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #222438;
+  background: #080b12;
+}
+
+.preset-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.creative-actions button {
+  margin-left: 6px;
+}
+
+/* Main 3-column layout inside modal */
+.creative-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 260px;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  overflow: hidden;
+  background: #050711;
+}
+
+/* LEFT: tools */
+.creative-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.tool-btn {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #33334d;
+  background: #101323;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tool-btn-active {
+  border-color: #ff4b2b;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+}
+
+/* Hidden file input */
+.hidden-input {
+  display: none;
+}
+
+/* CENTER: canvas area */
+.creative-canvas-wrap {
+  background: #080b12;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+#creativeCanvas {
+  background: #050711;
+}
+
+/* RIGHT: properties */
+.creative-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.prop-group {
+  padding: 8px;
+  border-radius: 8px;
+  background: #090c18;
+  border: 1px solid #222438;
+}
+
+.prop-group h4 {
+  margin: 0 0 6px;
+}
+
+.prop-group label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.prop-group input,
+.prop-group select {
+  width: 100%;
+}
+
+/* Make overlay layout stack on smaller screens */
+@media (max-width: 900px) {
+  .creative-body {
+    grid-template-columns: 1fr;
+  }
+
+  .creative-tools,
+  .creative-properties {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
 
