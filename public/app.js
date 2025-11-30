@@ -793,14 +793,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  <!-- Fabric.js for the Creative Studio canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  // =====================================================
+  //     CREATIVE STUDIO – FABRIC.JS CANVAS WIRING
+  // =====================================================
 
-  <!-- Your main frontend logic -->
-  <script src="app.js"></script>
-</body>
-</html>
-
+  // (your Creative Studio JS lives here OR further down)
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
   function wireModal(triggerId, modalId, closeId) {
@@ -836,3 +833,5 @@ document.addEventListener("DOMContentLoaded", () => {
   wireModal("imageLauncher", "imageModal", "imageClose");
   wireModal("videoLauncher", "videoModal", "videoClose");
 }); // <--- end of DOMContentLoaded
+
+
