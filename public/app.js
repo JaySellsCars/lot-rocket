@@ -1241,6 +1241,7 @@ if (creativeOverlay && openCreativeStudioBtn && window.fabric) {
       }
     });
   }
+} // <-- closes the Creative Studio wrapper
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
   function wireModal(triggerId, modalId, closeId) {
