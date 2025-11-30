@@ -818,7 +818,7 @@ body:not(.dark-theme) .simple-calc-grid button {
   border-color: transparent;
 }
 
-/* Hidden input for photo upload */
+/* Hidden file input for photo upload */
 .hidden-input {
   display: none;
 }
@@ -870,6 +870,7 @@ body:not(.dark-theme) .simple-calc-grid button {
   color: #ffffff;
   font-size: 0.8rem;
 }
+
 
 
 /* ================================
