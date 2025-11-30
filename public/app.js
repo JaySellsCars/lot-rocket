@@ -861,15 +861,26 @@ if (creativeOverlay && openCreativeStudioBtn) {
       restoreFromJson(next);
     }
 
-    function initCreativeCanvas() {
-      const canvasEl = document.getElementById("creativeCanvas");
-      if (!canvasEl) return;
+  function initCreativeCanvas() {
 
-      creativeCanvas = new fabric.Canvas("creativeCanvas", {
-        preserveObjectStacking: true,
-        selection: true,
-        backgroundColor: "#0b0b12",
-      });
+  // Safety check – make sure Fabric.js loaded
+  if (typeof fabric === "undefined") {
+    console.warn("Fabric.js not loaded – Creative Studio disabled.");
+    return;
+  }
+
+  const canvasEl = document.getElementById("creativeCanvas");
+  if (!canvasEl) return;
+
+  creativeCanvas = new fabric.Canvas("creativeCanvas", {
+    preserveObjectStacking: true,
+    selection: true,
+    backgroundColor: "#0b0b12",
+  });
+
+  // ...rest of your code...
+}
+
 
       // Initial preset size
       applyCanvasPreset();
