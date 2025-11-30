@@ -38,6 +38,27 @@ const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
 
 // this will hold the last batch of photos from Boost
 let latestPhotoUrls = [];
+// Photos
+if (photosGrid) {
+  photosGrid.innerHTML = "";
+  const photos = Array.isArray(data.photos) ? data.photos : [];
+
+  // Save the recent photos so Creative Studio can use them
+  latestPhotoUrls = photos.slice(0, 8); // top 8, adjust if you want
+
+  latestPhotoUrls.forEach((url) => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Vehicle photo";
+    img.className = "photo-thumb";
+    photosGrid.appendChild(img);
+  });
+
+  // Enable the button only when photos exist
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = latestPhotoUrls.length === 0;
+  }
+}
 
   const facebookPost = document.getElementById("facebookPost");
   const instagramPost = document.getElementById("instagramPost");
