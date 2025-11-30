@@ -793,13 +793,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // =====================================================
-  //     CREATIVE STUDIO – FABRIC.JS CANVAS WIRING
-  // =====================================================
+// ===============================================
+// CREATIVE STUDIO – FABRIC.JS CANVAS WIRING
+// ===============================================
 
-  const creativeOverlay = document.getElementById("creativeStudioOverlay");
-  const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
-if (creativeOverlay && openCreativeStudioBtn) {
+const creativeOverlay = document.getElementById("creativeStudioOverlay");
+const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
+
+if (creativeOverlay && openCreativeStudioBtn && window.fabric) {
+
 
     const closeCreativeStudioBtn = document.getElementById("creativeClose");
     const exportPngBtn = document.getElementById("creativeExportPng");
