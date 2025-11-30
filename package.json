@@ -1,16 +1,22 @@
 {
   "name": "lot-rocket",
   "version": "1.0.0",
+  "description": "Lot Rocket social media kit backend",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
   },
-"dependencies": {
-  "body-parser": "^1.20.2",
-  "cheerio": "^1.0.0",
-  "cors": "^2.8.5",
-  "dotenv": "^16.4.5",
-  "express": "^4.19.2",
-  "openai": "^4.58.1",
-  "node-fetch": "^2.7.0"
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "openai": "^4.58.1"
+  }
 }
+
