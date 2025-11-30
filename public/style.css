@@ -674,250 +674,6 @@ body:not(.dark-theme) .simple-calc-grid button {
   );
 }
 
-/* ===== Creative Studio Overlay ===== */
-
-.hidden {
-  display: none !important;
-}
-
-.creative-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(3, 6, 16, 0.94);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.creative-modal {
-  background: #050712;
-  border-radius: 16px;
-  border: 1px solid #262338;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
-  width: 95%;
-  max-width: 1200px;
-  height: 90%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header */
-.creative-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #262338;
-}
-
-.creative-header h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.modal-close-btn {
-  border: none;
-  background: transparent;
-  color: #ffffff;
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-/* Top bar */
-.creative-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 16px;
-  border-bottom: 1px solid #262338;
-  font-size: 0.85rem;
-}
-
-.preset-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.preset-label span {
-  opacity: 0.8;
-}
-
-.preset-label select {
-  background: #080b12;
-  border-radius: 999px;
-  border: 1px solid #2e2a45;
-  padding: 4px 10px;
-  color: #ffffff;
-  font-size: 0.8rem;
-}
-
-.creative-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.creative-actions button {
-  border-radius: 999px;
-  border: 1px solid #2e2a45;
-  background: #080b12;
-  padding: 4px 10px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  color: #ffffff;
-}
-
-/* Body layout: tools | canvas | props */
-.creative-body {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 260px;
-  gap: 16px;
-  padding: 16px;
-  min-height: 0;
-}
-
-/* Left + Right columns */
-.creative-tools,
-.creative-properties {
-  background: #060815;
-  border-radius: 12px;
-  border: 1px solid #262338;
-  padding: 10px 12px;
-  font-size: 0.85rem;
-  overflow: auto;
-}
-
-.creative-tools h3,
-.creative-properties h3 {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.8;
-  margin-bottom: 8px;
-}
-
-/* Tool buttons */
-.tool-btn {
-  width: 100%;
-  text-align: left;
-  border-radius: 999px;
-  border: 1px solid #2e2a45;
-  background: #080b12;
-  color: #ffffff;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  margin-bottom: 6px;
-  cursor: pointer;
-}
-
-.tool-btn-active {
-  background: linear-gradient(135deg, #ff4b2b, #ff416c);
-  border-color: transparent;
-}
-
-/* Hidden file input for photo upload */
-.hidden-input {
-  display: none;
-}
-
-/* Canvas column */
-.creative-canvas-wrap {
-  background: #080b12;
-  border-radius: 12px;
-  border: 1px solid #262338;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-
-#creativeCanvas {
-  max-width: 100%;
-  max-height: 100%;
-  background: #050712;
-}
-
-/* Properties fields */
-.prop-group {
-  margin-bottom: 12px;
-}
-
-.prop-group h4 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.8;
-  margin-bottom: 6px;
-}
-
-.prop-group label {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
-}
-
-.prop-group input,
-.prop-group select {
-  background: #050712;
-  border-radius: 6px;
-  border: 1px solid #262338;
-  padding: 4px 8px;
-  color: #ffffff;
-  font-size: 0.8rem;
-}
-
-
-
-
-/* ================================
-   RESPONSIVE BEHAVIOR
-   ================================ */
-
-@media (max-width: 1024px) {
-  .creative-body {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-
-  .creative-tools,
-  .creative-properties {
-    order: 1;
-  }
-
-  .creative-canvas-wrap {
-    order: 0;
-    min-height: 260px;
-  }
-}
-
-@media (max-width: 640px) {
-  .creative-modal {
-    width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .creative-top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .creative-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .creative-actions button {
-    flex: 0 0 auto;
-  }
-}
 /* =========================================================
    FORCE-HIDE ANYTHING WITH .hidden
    ========================================================= */
@@ -991,8 +747,15 @@ body:not(.dark-theme) .simple-calc-grid button {
   font-size: 14px;
 }
 
+.creative-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .creative-actions button {
-  margin-left: 6px;
+  margin-left: 0;
 }
 
 /* Main 3-column layout inside modal */
@@ -1090,5 +853,20 @@ body:not(.dark-theme) .simple-calc-grid button {
     flex-direction: row;
     flex-wrap: wrap;
   }
+
+  .creative-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .creative-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .creative-actions button {
+    flex: 0 0 auto;
+  }
 }
+
 
