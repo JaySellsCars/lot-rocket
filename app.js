@@ -125,7 +125,7 @@ Include emojis where appropriate but don't overdo it.
         content: user,
       },
     ],
-    response_format: {
+    
       type: "json_schema",
       json_schema: {
         name: "lot_rocket_social_kit",
