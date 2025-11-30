@@ -23,6 +23,116 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+// ---------- STEP 1: BOOST WORKFLOW ----------
+const vehicleUrlInput = document.getElementById("vehicleUrl");
+const vehicleLabelInput = document.getElementById("vehicleLabel");
+const priceInfoInput = document.getElementById("priceInfo");
+const boostButton = document.getElementById("boostButton");
+const statusText = document.getElementById("statusText");
+
+const summaryLabel = document.getElementById("summaryLabel");
+const summaryPrice = document.getElementById("summaryPrice");
+
+const photosGrid = document.getElementById("photosGrid");
+const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+
+// will hold the last batch of photos from Boost
+let latestPhotoUrls = [];
+
+const facebookPost = document.getElementById("facebookPost");
+const instagramPost = document.getElementById("instagramPost");
+const tiktokPost = document.getElementById("tiktokPost");
+const linkedinPost = document.getElementById("linkedinPost");
+const twitterPost = document.getElementById("twitterPost");
+const textBlurb = document.getElementById("textBlurb");
+const marketplacePost = document.getElementById("marketplacePost");
+const hashtags = document.getElementById("hashtags");
+
+const selfieScript = document.getElementById("selfieScript");
+const shotPlan = document.getElementById("shotPlan");
+const designIdea = document.getElementById("designIdea");
+
+async function handleBoost() {
+  const url = (vehicleUrlInput?.value || "").trim();
+  if (!url) {
+    statusText.textContent = "Please paste a dealer vehicle URL first.";
+    statusText.classList.add("error");
+    return;
+  }
+
+  statusText.classList.remove("error");
+  statusText.textContent = "Building social kit... 🚀";
+
+  try {
+    const body = {
+      url,
+      labelOverride: vehicleLabelInput?.value || "",
+      priceOverride: priceInfoInput?.value || "",
+    };
+
+    const res = await fetch(apiBase + "/api/social-kit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+    const data = await res.json();
+
+    // Summary
+    if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
+    if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
+
+    // Posts
+    if (facebookPost) facebookPost.value = data.facebook || "";
+    if (instagramPost) instagramPost.value = data.instagram || "";
+    if (tiktokPost) tiktokPost.value = data.tiktok || "";
+    if (linkedinPost) linkedinPost.value = data.linkedin || "";
+    if (twitterPost) twitterPost.value = data.twitter || "";
+    if (textBlurb) textBlurb.value = data.text || "";
+    if (marketplacePost) marketplacePost.value = data.marketplace || "";
+    if (hashtags) hashtags.value = data.hashtags || "";
+
+    if (selfieScript) selfieScript.value = data.selfieScript || "";
+    if (shotPlan) shotPlan.value = data.shotPlan || "";
+    if (designIdea) designIdea.value = data.designIdea || "";
+
+    // ---------- PHOTOS ----------
+    if (photosGrid) {
+      photosGrid.innerHTML = "";
+
+      const photos = Array.isArray(data.photos) ? data.photos : [];
+
+      // Save the recent photos so Creative Studio can use them
+      latestPhotoUrls = photos.slice(0, 8); // top 8 (you can change this)
+
+      latestPhotoUrls.forEach((url) => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Vehicle photo";
+        img.className = "photo-thumb";
+        photosGrid.appendChild(img);
+      });
+
+      // Enable the button only when photos exist
+      if (sendPhotosToStudioBtn) {
+        sendPhotosToStudioBtn.disabled = latestPhotoUrls.length === 0;
+      }
+    }
+
+    statusText.textContent = "Social kit ready! 🎯";
+  } catch (err) {
+    console.error(err);
+    statusText.textContent =
+      "Error building social kit. Check URL or try again.";
+    statusText.classList.add("error");
+  }
+}
+
+if (boostButton) {
+  boostButton.addEventListener("click", handleBoost);
+}
   // ---------- STEP 1: BOOST WORKFLOW ----------
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
