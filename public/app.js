@@ -58,13 +58,17 @@ document.addEventListener("DOMContentLoaded", () => {
   async function handleBoost() {
     const url = (vehicleUrlInput?.value || "").trim();
     if (!url) {
-      statusText.textContent = "Please paste a dealer vehicle URL first.";
-      statusText.classList.add("error");
+      if (statusText) {
+        statusText.textContent = "Please paste a dealer vehicle URL first.";
+        statusText.classList.add("error");
+      }
       return;
     }
 
-    statusText.classList.remove("error");
-    statusText.textContent = "Building social kit... 🚀";
+    if (statusText) {
+      statusText.classList.remove("error");
+      statusText.textContent = "Building social kit... 🚀";
+    }
 
     try {
       const body = {
@@ -124,12 +128,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      statusText.textContent = "Social kit ready! 🎯";
+      if (statusText) {
+        statusText.textContent = "Social kit ready! 🎯";
+      }
     } catch (err) {
       console.error(err);
-      statusText.textContent =
-        "Error building social kit. Check URL or try again.";
-      statusText.classList.add("error");
+      if (statusText) {
+        statusText.textContent =
+          "Error building social kit. Check URL or try again.";
+        statusText.classList.add("error");
+      }
     }
   }
 
@@ -387,7 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!photoPreview) return;
     const b = brightnessRange ? brightnessRange.value : 100;
     const c = contrastRange ? contrastRange.value : 100;
-    a const s = saturationRange ? saturationRange.value : 100;
+    const s = saturationRange ? saturationRange.value : 100;
     photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
@@ -1007,7 +1015,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Undo / Redo / Delete ---
     if (undoBtn) undoBtn.addEventListener("click", handleUndo);
-    if (redoBtn) redoBtn.addEventListener("click", handleRedo);
+    if (redoBtn) undoBtn && redoBtn.addEventListener("click", handleRedo);
     if (deleteBtn) {
       deleteBtn.addEventListener("click", () => {
         if (!creativeCanvas) return;
