@@ -715,53 +715,127 @@
     </div>
   </div>
 
-<!-- ==================================================================
-     CREATIVE STUDIO OVERLAY
-     ================================================================== -->
-<div id="creativeStudioOverlay" class="creative-overlay hidden">
-  <div class="creative-modal">
-    
-    <!-- HEADER -->
-    <div class="creative-header">
-      <h2>Creative Studio</h2>
-      <button id="creativeClose" class="modal-close-btn">✕</button>
-    </div>
-
-    <!-- PRESET + GLOBAL ACTIONS -->
-    <div class="creative-top-bar">
-      <div class="preset-label">
-        <span>Canvas preset</span>
-        <select id="creativeCanvasPreset">
-          <option value="1080x1080">Square – 1080 x 1080</option>
-          <option value="1080x1920">Story / Reel – 1080 x 1920</option>
-          <option value="1920x1080">Landscape – 1920 x 1080</option>
-        </select>
+  <!-- ==================================================================
+       CREATIVE STUDIO OVERLAY
+       ================================================================== -->
+  <div id="creativeStudioOverlay" class="creative-overlay hidden">
+    <div class="creative-modal">
+      <!-- HEADER -->
+      <div class="creative-header">
+        <h2>Creative Studio</h2>
+        <button id="creativeClose" class="modal-close-btn">✕</button>
       </div>
 
-      <div class="creative-actions">
-        <button id="creativeUndo">Undo</button>
-        <button id="creativeRedo">Redo</button>
-        <button id="creativeDelete">Delete</button>
-        <button id="creativeExportPng">Export PNG</button>
+      <!-- PRESET + GLOBAL ACTIONS -->
+      <div class="creative-top-bar">
+        <div class="preset-label">
+          <span>Canvas preset</span>
+          <select id="creativeCanvasPreset">
+            <option value="1080x1080">Square – 1080 x 1080</option>
+            <option value="1080x1920">Story / Reel – 1080 x 1920</option>
+            <option value="1920x1080">Landscape – 1920 x 1080</option>
+          </select>
+        </div>
+
+        <div class="creative-actions">
+          <button id="creativeUndo">Undo</button>
+          <button id="creativeRedo">Redo</button>
+          <button id="creativeDelete">Delete</button>
+          <button id="creativeExportPng">Export PNG</button>
+        </div>
       </div>
-    </div>
 
-    <!-- 3-COLUMN GRID -->
-    <div class="creative-body">
+      <!-- 3-COLUMN GRID -->
+      <div class="creative-body">
+        <!-- LEFT SIDEBAR TOOLS -->
+        <aside class="creative-tools">
+          <h3>Tools</h3>
 
-      <!-- LEFT SIDEBAR TOOLS -->
-      <aside class="creative-tools">
-        <h3>Tools</h3>
+          <button class="tool-btn tool-btn-active" data-tool="select">
+            Select / Move
+          </button>
 
-        <button class="tool-btn tool-btn-active" data-tool="select">
-          Select / Move
-        </button>
+          <button class="tool-btn" data-tool="uploadImage">
+            Add Photo
+          </button>
 
-        <button class="tool-btn" data-tool="uploadImage">
-          Add Photo
-        </button>
+          <button class="tool-btn" data-tool="addText">
+            Add Text
+          </button>
 
+          <button class="tool-btn" data-tool="addRect">
+            Banner Bar
+          </button>
 
+          <button class="tool-btn" data-tool="addBadge">
+            Price Badge
+          </button>
+
+          <!-- Hidden upload input -->
+          <input
+            id="creativeImageInput"
+            type="file"
+            accept="image/*"
+            class="hidden-input"
+          />
+        </aside>
+
+        <!-- CENTER: CANVAS -->
+        <section class="creative-canvas-wrap">
+          <canvas id="creativeCanvas"></canvas>
+        </section>
+
+        <!-- RIGHT: PROPERTIES -->
+        <aside class="creative-properties">
+          <h3>Properties</h3>
+
+          <div class="prop-group">
+            <h4>Fill &amp; Stroke</h4>
+            <label>
+              <span>Fill color</span>
+              <input id="propFillColor" type="color" value="#ffffff" />
+            </label>
+            <label>
+              <span>Stroke color</span>
+              <input id="propStrokeColor" type="color" value="#000000" />
+            </label>
+            <label>
+              <span>Stroke width</span>
+              <input
+                id="propStrokeWidth"
+                type="number"
+                min="0"
+                max="40"
+                value="2"
+              />
+            </label>
+          </div>
+
+          <div id="textOptions" class="prop-group" style="display: none;">
+            <h4>Text</h4>
+            <label>
+              <span>Font size</span>
+              <input
+                id="propFontSize"
+                type="number"
+                value="40"
+                min="8"
+                max="120"
+              />
+            </label>
+            <label>
+              <span>Alignment</span>
+              <select id="propTextAlign">
+                <option value="left">Left</option>
+                <option value="center" selected>Center</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+          </div>
+        </aside>
+      </div> <!-- end creative-body -->
+    </div> <!-- end creative-modal -->
+  </div> <!-- end creativeStudioOverlay -->
 
   <!-- Fabric.js for Creative Studio -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
