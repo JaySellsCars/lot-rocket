@@ -1,4 +1,4 @@
-// app.js – Lot Rocket backend with AI tools (fixed URL handling)
+// app.js – Lot Rocket backend with AI tools (normalized URLs)
 
 require("dotenv").config();
 const express = require("express");
@@ -6,12 +6,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
-
-// Use Node's built-in fetch if available; fall back to node-fetch dynamically
-const fetchFn =
-  global.fetch ||
-  ((...args) =>
-    import("node-fetch").then(({ default: fetch }) => fetch(...args)));
+const fetch = require("node-fetch"); // if you want to use global fetch instead, remove this
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,10 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 /**
- * Normalize whatever the frontend sends into a real absolute URL
- * - trims
- * - adds https:// if user pasted without protocol
- * - returns null if still invalid
+ * Normalize whatever the user pasted into a *real* absolute URL.
+ * - adds https:// if missing
+ * - returns null if it's still not a valid URL
  */
 function normalizeUrl(raw) {
   if (!raw) return null;
@@ -51,16 +45,18 @@ function normalizeUrl(raw) {
 // ---------------- Helper: scrape page text ----------------
 
 async function scrapePage(url) {
-  const res = await fetchFn(url);
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch URL: ${res.status}`);
   }
   const html = await res.text();
   const $ = cheerio.load(html);
 
+  // Title + meta
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
+  // Visible text chunks (simple)
   let visibleText = "";
   $("body *")
     .not("script, style, noscript")
@@ -187,6 +183,7 @@ Remember: output MUST be strict JSON for the keys listed above.
 
 // ---------------- ROUTES ----------------
 
+// Health check
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
@@ -194,22 +191,23 @@ app.get("/api/health", (req, res) => {
 // Full social kit from dealer URL
 app.post("/api/social-kit", async (req, res) => {
   try {
-    const rawUrl = req.body?.url;
-    const pageUrl = normalizeUrl(rawUrl);
+    const pageUrl = normalizeUrl(req.body?.url);
+    const labelOverride = req.body?.labelOverride || "";
+    const priceOverride = req.body?.priceOverride || "";
 
     if (!pageUrl) {
-      return res.status(400).json({ error: "Invalid or missing URL" });
+      return res
+        .status(400)
+        .json({ error: "Invalid or missing URL. Please paste a full dealer link." });
     }
-
-    console.log("social-kit for URL:", pageUrl);
 
     const pageInfo = await scrapePage(pageUrl);
     const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
 
     const kit = await buildSocialKit({
       pageInfo,
-      labelOverride: req.body.labelOverride,
-      priceOverride: req.body.priceOverride,
+      labelOverride,
+      priceOverride,
       photos,
     });
 
@@ -223,11 +221,15 @@ app.post("/api/social-kit", async (req, res) => {
 // New content for a single platform (regen buttons)
 app.post("/api/new-post", async (req, res) => {
   try {
-    const { url, platform, label, price, labelOverride, priceOverride } = req.body;
-    const pageUrl = normalizeUrl(url);
+    const platform = req.body?.platform;
+    const pageUrl = normalizeUrl(req.body?.url);
+    const label = req.body?.label || req.body?.labelOverride || "";
+    const price = req.body?.price || req.body?.priceOverride || "";
 
-    if (!pageUrl || !platform) {
-      return res.status(400).json({ error: "Missing or invalid url or platform" });
+    if (!platform || !pageUrl) {
+      return res
+        .status(400)
+        .json({ error: "Missing platform or URL for new post." });
     }
 
     const pageInfo = await scrapePage(pageUrl);
@@ -246,8 +248,8 @@ TEXT:
 ${visibleText.slice(0, 3000)}
 
 Platform: ${platform}
-Optional custom label: ${label || labelOverride || "none"}
-Optional custom price: ${price || priceOverride || "none"}
+Optional custom label: ${label || "none"}
+Optional custom price: ${price || "none"}
 
 Write ONE high-performing piece of content for this platform.
 Include a call-to-action to DM or message the salesperson.
@@ -269,7 +271,7 @@ Include a call-to-action to DM or message the salesperson.
   }
 });
 
-// New video script
+// New video script for selfie or idea
 app.post("/api/new-script", async (req, res) => {
   try {
     const { kind, url, vehicle, hook, style, length } = req.body;
@@ -277,10 +279,10 @@ app.post("/api/new-script", async (req, res) => {
     let system;
     let user;
 
-    if (kind === "selfie" && url) {
+    if (kind === "selfie") {
       const pageUrl = normalizeUrl(url);
       if (!pageUrl) {
-        return res.status(400).json({ error: "Invalid URL for selfie script" });
+        return res.status(400).json({ error: "Invalid or missing URL for selfie script." });
       }
 
       const pageInfo = await scrapePage(pageUrl);
@@ -303,6 +305,7 @@ Use short, spoken lines and a clear CTA to DM or message.
 Return plain text only.
 `.trim();
     } else {
+      // Creative Lab idea mode
       system = `
 You are Lot Rocket, an expert short-form car video script writer.
 Write scripts that feel natural for Reels / TikTok / Shorts.
@@ -339,11 +342,13 @@ Return plain text only.
   }
 });
 
-// Shot plan using photos
+// Shot plan from URL
 app.post("/api/video-from-photos", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
-    if (!pageUrl) return res.status(400).json({ error: "Invalid url" });
+    if (!pageUrl) {
+      return res.status(400).json({ error: "Invalid or missing URL" });
+    }
 
     const pageInfo = await scrapePage(pageUrl);
     const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
@@ -458,11 +463,205 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
   }
 });
 
-// Payment & income helpers stay as you had them
-// (I won’t rewrite here for length – your existing versions are fine)
+// Payment Estimator (math only)
+app.post("/api/payment-helper", (req, res) => {
+  try {
+    const price = Number(req.body.price || 0);
+    const down = Number(req.body.down || 0);
+    const rate = Number(req.body.rate || 0) / 100 / 12;
+    const term = Number(req.body.term || 0);
+    const taxRate = Number(req.body.tax || 0) / 100;
 
-// Message Helper (workflow, message, ask, car, image-brief, video-brief)
-// ... keep your existing implementation here unchanged ...
+    if (!price || !term) {
+      return res
+        .status(400)
+        .json({ error: "Price and term are required for payment." });
+    }
+
+    const taxedPrice = taxRate ? price * (1 + taxRate) : price;
+    const amountFinanced = Math.max(taxedPrice - down, 0);
+
+    let payment;
+    if (!rate) {
+      payment = amountFinanced / term;
+    } else {
+      payment =
+        (amountFinanced * rate * Math.pow(1 + rate, term)) /
+        (Math.pow(1 + rate, term) - 1);
+    }
+
+    const result = `~$${payment.toFixed(
+      2
+    )} per month (rough estimate only, not a binding quote).`;
+
+    res.json({ result });
+  } catch (err) {
+    console.error("payment-helper error", err);
+    res.status(500).json({ error: "Failed to estimate payment" });
+  }
+});
+
+// Income Estimator (math only)
+app.post("/api/income-helper", (req, res) => {
+  try {
+    const payment = Number(req.body.payment || 0);
+    const dti = Number(req.body.dti || 0);
+
+    if (!payment || !dti) {
+      return res
+        .status(400)
+        .json({ error: "Payment and DTI are required for income." });
+    }
+
+    const incomeMonthly = payment / (dti / 100);
+    const incomeYearly = incomeMonthly * 12;
+
+    const result = `
+To keep this payment at about ${dti}% of gross income,
+the customer would need roughly:
+
+- ~${incomeMonthly.toFixed(0)} per month
+- ~${incomeYearly.toFixed(0)} per year
+
+This is a very rough guideline, not financial advice.
+`.trim();
+
+    res.json({ result });
+  } catch (err) {
+    console.error("income-helper error", err);
+    res.status(500).json({ error: "Failed to estimate income" });
+  }
+});
+
+// Generic message helper (workflow, message, ask, car, image-brief, video-brief)
+app.post("/api/message-helper", async (req, res) => {
+  try {
+    const {
+      mode,
+      prompt,
+      type,
+      goal,
+      details,
+      question,
+      tone,
+      channel,
+    } = req.body;
+
+    let system;
+    let user;
+
+    switch (mode) {
+      case "workflow":
+        system = `
+You are Lot Rocket's Workflow Architect.
+You design step-by-step workflows and playbooks for car salespeople.
+Return clear numbered steps and optional templates.
+`.trim();
+
+        user = `
+Situation:
+${prompt || "(none)"}
+`.trim();
+        break;
+
+      case "message":
+        system = `
+You are Lot Rocket's AI Message Builder.
+Write ready-to-send messages for car shoppers via text, email, or social DM.
+`.trim();
+
+        user = `
+Message type: ${type || "(not specified)"}
+Goal: ${goal || "(not specified)"}
+Details / context:
+${details || "(none)"}
+
+Tone: ${tone || "friendly, professional"}
+Channel: ${channel || "text / DM"}
+`.trim();
+        break;
+
+      case "ask":
+        system = `
+You are Lot Rocket, a helpful sales and business assistant for car salespeople.
+Answer clearly and practically. Use examples where helpful.
+`.trim();
+
+        user = `
+Question:
+${question || prompt || "(none)"}
+`.trim();
+        break;
+
+      case "car":
+        system = `
+You are Lot Rocket's automotive product expert.
+Explain trims, features, comparisons, and recommendations like a pro salesperson.
+Avoid made-up technical specs; keep it realistic.
+`.trim();
+
+        user = `
+Car-related question:
+${question || prompt || "(none)"}
+`.trim();
+        break;
+
+      case "image-brief":
+        system = `
+You are Lot Rocket's image prompt helper.
+You write detailed prompts for AI image generators to create car marketing images.
+`.trim();
+
+        user = `
+Raw idea from user:
+${prompt || "(none)"}
+
+Write a single, detailed prompt suitable for an AI image generator
+(e.g., composition, lighting, angle, style, background, mood).
+`.trim();
+        break;
+
+      case "video-brief":
+        system = `
+You are Lot Rocket's video brief helper.
+You write detailed briefs for AI video tools to create car marketing videos.
+`.trim();
+
+        user = `
+Raw idea from user:
+${prompt || "(none)"}
+
+Write a detailed video brief: scenes, pacing, visual style, on-screen text,
+and music/energy suggestions.
+`.trim();
+        break;
+
+      default:
+        system = `
+You are Lot Rocket, a helpful assistant for car salespeople.
+`.trim();
+
+        user = `
+Context:
+${prompt || "(none)"}
+`.trim();
+    }
+
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const text = completion.output?.[0]?.content?.[0]?.text || "";
+    res.json({ text });
+  } catch (err) {
+    console.error("message-helper error", err);
+    res.status(500).json({ error: "Failed to generate message" });
+  }
+});
 
 // ---------------- Start server ----------------
 
