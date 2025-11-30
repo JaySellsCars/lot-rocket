@@ -715,6 +715,13 @@
     </div>
   </div>
 
+  <!-- AI Video Generation Helper -->
+  <div id="videoModal" class="modal hidden">
+    <div class="modal-content">
+      ...
+    </div>
+  </div>
+
   <!-- ==================================================================
        CREATIVE STUDIO OVERLAY
        ================================================================== -->
@@ -747,84 +754,75 @@
 
       <!-- 3-COLUMN GRID -->
       <div class="creative-body">
-        <!-- LEFT SIDEBAR TOOLS -->
+        <!-- LEFT: tools -->
         <aside class="creative-tools">
           <h3>Tools</h3>
-
           <button class="tool-btn tool-btn-active" data-tool="select">
             Select / Move
           </button>
-
           <button class="tool-btn" data-tool="uploadImage">
             Add Photo
           </button>
-
           <button class="tool-btn" data-tool="addText">
             Add Text
           </button>
-
           <button class="tool-btn" data-tool="addRect">
             Banner Bar
           </button>
-
           <button class="tool-btn" data-tool="addBadge">
             Price Badge
           </button>
-
-          <!-- Hidden upload input -->
           <input
-            id="creativeImageInput"
             type="file"
-            accept="image/*"
+            id="creativeImageInput"
             class="hidden-input"
+            accept="image/*"
           />
         </aside>
 
-        <!-- CENTER: CANVAS -->
-        <section class="creative-canvas-wrap">
-          <canvas id="creativeCanvas"></canvas>
-        </section>
+        <!-- CENTER: canvas -->
+        <div class="creative-canvas-wrap">
+          <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
+        </div>
 
-        <!-- RIGHT: PROPERTIES -->
+        <!-- RIGHT: properties -->
         <aside class="creative-properties">
-          <h3>Properties</h3>
-
           <div class="prop-group">
-            <h4>Fill &amp; Stroke</h4>
+            <h4>Shape / Image</h4>
             <label>
-              <span>Fill color</span>
-              <input id="propFillColor" type="color" value="#ffffff" />
+              Fill color
+              <input type="color" id="propFillColor" value="#ffffff" />
             </label>
             <label>
-              <span>Stroke color</span>
-              <input id="propStrokeColor" type="color" value="#000000" />
+              Stroke color
+              <input type="color" id="propStrokeColor" value="#000000" />
             </label>
             <label>
-              <span>Stroke width</span>
+              Stroke width
               <input
-                id="propStrokeWidth"
                 type="number"
+                id="propStrokeWidth"
+                value="0"
                 min="0"
-                max="40"
-                value="2"
+                max="20"
               />
             </label>
           </div>
 
-          <div id="textOptions" class="prop-group" style="display: none;">
+          <div class="prop-group" id="textOptions" style="display: none;">
             <h4>Text</h4>
             <label>
-              <span>Font size</span>
+              Font size
               <input
-                id="propFontSize"
                 type="number"
-                value="40"
-                min="8"
+                id="propFontSize"
+                value="48"
+                min="10"
                 max="120"
               />
             </label>
             <label>
-              <span>Alignment</span>
+              Align
               <select id="propTextAlign">
                 <option value="left">Left</option>
                 <option value="center" selected>Center</option>
@@ -833,14 +831,12 @@
             </label>
           </div>
         </aside>
-      </div> <!-- end creative-body -->
-    </div> <!-- end creative-modal -->
-  </div> <!-- end creativeStudioOverlay -->
+      </div>
+    </div>
+  </div>
 
   <!-- Fabric.js for Creative Studio -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-
-  <!-- Your main frontend logic -->
   <script src="app.js"></script>
 </body>
 </html>
