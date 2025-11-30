@@ -792,40 +792,376 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
-
   // =====================================================
-  //     CREATIVE STUDIO – SIMPLE OPEN/CLOSE
+  //     CREATIVE STUDIO – FABRIC.JS CANVAS WIRING
   // =====================================================
+
   const creativeOverlay = document.getElementById("creativeStudioOverlay");
   const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
-  const creativeCloseBtn = document.getElementById("creativeClose");
 
-  if (creativeOverlay && openCreativeStudioBtn && creativeCloseBtn) {
-    // Open when button is clicked
-    openCreativeStudioBtn.addEventListener("click", () => {
-      creativeOverlay.classList.remove("hidden");
-    });
+  if (creativeOverlay && openCreativeStudioBtn) {
+    // If Fabric isn't loaded, just disable Creative Studio
+    if (typeof fabric === "undefined") {
+      console.warn("Fabric.js not loaded – Creative Studio disabled.");
+    } else {
+      const closeCreativeStudioBtn = document.getElementById("creativeClose");
+      const exportPngBtn = document.getElementById("creativeExportPng");
+      const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
+      const imageInput = document.getElementById("creativeImageInput");
 
-    // Close when X is clicked
-    creativeCloseBtn.addEventListener("click", () => {
-      creativeOverlay.classList.add("hidden");
-    });
+      const undoBtn = document.getElementById("creativeUndo");
+      const redoBtn = document.getElementById("creativeRedo");
+      const deleteBtn = document.getElementById("creativeDelete");
+      const toolButtons = document.querySelectorAll(".tool-btn[data-tool]");
 
-    // Close when clicking the overlay background
-    creativeOverlay.addEventListener("click", (e) => {
-      if (e.target === creativeOverlay) {
+      const propFillColor = document.getElementById("propFillColor");
+      const propStrokeColor = document.getElementById("propStrokeColor");
+      const propStrokeWidth = document.getElementById("propStrokeWidth");
+      const textOptions = document.getElementById("textOptions");
+      const propFontSize = document.getElementById("propFontSize");
+      const propTextAlign = document.getElementById("propTextAlign");
+
+      let creativeCanvas = null;
+      let activeTool = "select";
+
+      // Simple undo/redo stacks
+      const historyStack = [];
+      let historyIndex = -1;
+      let isRestoringHistory = false;
+
+      function pushHistory() {
+        if (!creativeCanvas || isRestoringHistory) return;
+        const json = creativeCanvas.toJSON();
+        historyStack.splice(historyIndex + 1);
+        historyStack.push(json);
+        historyIndex = historyStack.length - 1;
+      }
+
+      function restoreHistory(index) {
+        if (!creativeCanvas) return;
+        if (index < 0 || index >= historyStack.length) return;
+        isRestoringHistory = true;
+        creativeCanvas.loadFromJSON(historyStack[index], () => {
+          creativeCanvas.renderAll();
+          isRestoringHistory = false;
+        });
+      }
+
+      function handleUndo() {
+        if (historyIndex > 0) {
+          historyIndex--;
+          restoreHistory(historyIndex);
+        }
+      }
+
+      function handleRedo() {
+        if (historyIndex < historyStack.length - 1) {
+          historyIndex++;
+          restoreHistory(historyIndex);
+        }
+      }
+
+      function applyCanvasPreset() {
+        if (!creativeCanvas || !canvasPresetSelect) return;
+        const value = canvasPresetSelect.value || "1080x1080";
+        const [w, h] = value.split("x").map(Number);
+        creativeCanvas.setWidth(w);
+        creativeCanvas.setHeight(h);
+        creativeCanvas.calcOffset();
+        creativeCanvas.requestRenderAll();
+      }
+
+      function updatePropertyPanel() {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+
+        if (!active) {
+          if (textOptions) textOptions.style.display = "none";
+          return;
+        }
+
+        if (propFillColor && active.fill) {
+          propFillColor.value = active.fill;
+        }
+        if (propStrokeColor && active.stroke) {
+          propStrokeColor.value = active.stroke;
+        }
+        if (propStrokeWidth && typeof active.strokeWidth === "number") {
+          propStrokeWidth.value = active.strokeWidth;
+        }
+
+        if (active.type === "textbox" || active.type === "text") {
+          if (textOptions) textOptions.style.display = "block";
+          if (propFontSize && active.fontSize) {
+            propFontSize.value = active.fontSize;
+          }
+          if (propTextAlign && active.textAlign) {
+            propTextAlign.value = active.textAlign;
+          }
+        } else {
+          if (textOptions) textOptions.style.display = "none";
+        }
+      }
+
+      function initCreativeCanvas() {
+        const canvasEl = document.getElementById("creativeCanvas");
+        if (!canvasEl) return;
+
+        creativeCanvas = new fabric.Canvas("creativeCanvas", {
+          preserveObjectStacking: true,
+          selection: true,
+          backgroundColor: "#080b12",
+        });
+
+        applyCanvasPreset();
+
+        // History tracking
+        creativeCanvas.on("object:added", pushHistory);
+        creativeCanvas.on("object:modified", pushHistory);
+        creativeCanvas.on("object:removed", pushHistory);
+
+        // Selection → properties panel
+        creativeCanvas.on("selection:created", updatePropertyPanel);
+        creativeCanvas.on("selection:updated", updatePropertyPanel);
+        creativeCanvas.on("selection:cleared", updatePropertyPanel);
+
+        // Seed initial empty state
+        pushHistory();
+      }
+
+      function openCreativeStudio(withPhotos = false) {
+        creativeOverlay.classList.remove("hidden");
+        if (!creativeCanvas) {
+          initCreativeCanvas();
+        } else {
+          creativeCanvas.calcOffset();
+          creativeCanvas.requestRenderAll();
+        }
+
+        // Optionally drop in top dealer photos
+        if (withPhotos && latestPhotoUrls && latestPhotoUrls.length && creativeCanvas) {
+          latestPhotoUrls.slice(0, 3).forEach((url, index) => {
+            fabric.Image.fromURL(url, (img) => {
+              img.set({
+                left: 60 + index * 40,
+                top: 60 + index * 40,
+                originX: "center",
+                originY: "center",
+                scaleX: 0.4,
+                scaleY: 0.4,
+              });
+              creativeCanvas.add(img);
+              creativeCanvas.requestRenderAll();
+            });
+          });
+        }
+      }
+
+      function closeCreativeStudio() {
         creativeOverlay.classList.add("hidden");
       }
-    });
 
-    // Optional: close on Escape key
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !creativeOverlay.classList.contains("hidden")) {
-        creativeOverlay.classList.add("hidden");
+      // --- Buttons: open / close / send photos ---
+      openCreativeStudioBtn.addEventListener("click", () => {
+        openCreativeStudio(false);
+      });
+
+      if (sendPhotosToStudioBtn) {
+        sendPhotosToStudioBtn.addEventListener("click", () => {
+          if (!latestPhotoUrls || !latestPhotoUrls.length) return;
+          openCreativeStudio(true);
+        });
       }
-    });
+
+      if (closeCreativeStudioBtn) {
+        closeCreativeStudioBtn.addEventListener("click", closeCreativeStudio);
+      }
+
+      creativeOverlay.addEventListener("click", (e) => {
+        if (e.target === creativeOverlay) {
+          closeCreativeStudio();
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !creativeOverlay.classList.contains("hidden")) {
+          closeCreativeStudio();
+        }
+      });
+
+      // --- Undo / Redo / Delete ---
+      if (undoBtn) undoBtn.addEventListener("click", handleUndo);
+      if (redoBtn) redoBtn.addEventListener("click", handleRedo);
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => {
+          if (!creativeCanvas) return;
+          const active = creativeCanvas.getActiveObject();
+          if (active) {
+            creativeCanvas.remove(active);
+            creativeCanvas.discardActiveObject();
+            creativeCanvas.requestRenderAll();
+          }
+        });
+      }
+
+      // --- Canvas preset dropdown ---
+      if (canvasPresetSelect) {
+        canvasPresetSelect.addEventListener("change", applyCanvasPreset);
+      }
+
+      // --- Property controls ---
+      if (propFillColor) {
+        propFillColor.addEventListener("input", () => {
+          if (!creativeCanvas) return;
+          const active = creativeCanvas.getActiveObject();
+          if (!active) return;
+          active.set("fill", propFillColor.value);
+          creativeCanvas.requestRenderAll();
+          pushHistory();
+        });
+      }
+
+      if (propStrokeColor) {
+        propStrokeColor.addEventListener("input", () => {
+          if (!creativeCanvas) return;
+          const active = creativeCanvas.getActiveObject();
+          if (!active) return;
+          active.set("stroke", propStrokeColor.value);
+          creativeCanvas.requestRenderAll();
+          pushHistory();
+        });
+      }
+
+      if (propStrokeWidth) {
+        propStrokeWidth.addEventListener("input", () => {
+          if (!creativeCanvas) return;
+          const active = creativeCanvas.getActiveObject();
+          if (!active) return;
+          active.set("strokeWidth", Number(propStrokeWidth.value) || 0);
+          creativeCanvas.requestRenderAll();
+          pushHistory();
+        });
+      }
+
+      if (propFontSize) {
+        propFontSize.addEventListener("input", () => {
+          if (!creativeCanvas) return;
+          const active = creativeCanvas.getActiveObject();
+          if (!active || !active.set) return;
+          active.set("fontSize", Number(propFontSize.value) || 40);
+          creativeCanvas.requestRenderAll();
+          pushHistory();
+        });
+      }
+
+      if (propTextAlign) {
+        propTextAlign.addEventListener("change", () => {
+          if (!creativeCanvas) return;
+          const active = creativeCanvas.getActiveObject();
+          if (!active || !active.set) return;
+          active.set("textAlign", propTextAlign.value);
+          creativeCanvas.requestRenderAll();
+          pushHistory();
+        });
+      }
+
+      // --- Tool buttons (select, add text, add shapes, upload image) ---
+      toolButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tool = btn.getAttribute("data-tool");
+          if (!tool) return;
+          activeTool = tool;
+
+          toolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
+          btn.classList.add("tool-btn-active");
+
+          if (!creativeCanvas) return;
+
+          if (tool === "uploadImage" && imageInput) {
+            imageInput.click();
+          } else if (tool === "addText") {
+            const tb = new fabric.Textbox("New text", {
+              left: creativeCanvas.getWidth() / 2,
+              top: creativeCanvas.getHeight() / 2,
+              originX: "center",
+              originY: "center",
+              fill: "#ffffff",
+              fontSize: 48,
+              textAlign: "center",
+            });
+            creativeCanvas.add(tb);
+            creativeCanvas.setActiveObject(tb);
+            creativeCanvas.requestRenderAll();
+          } else if (tool === "addRect") {
+            const rect = new fabric.Rect({
+              left: creativeCanvas.getWidth() / 2,
+              top: creativeCanvas.getHeight() - 120,
+              originX: "center",
+              originY: "center",
+              width: creativeCanvas.getWidth() * 0.9,
+              height: 160,
+              fill: "#ff4b2b",
+              rx: 12,
+              ry: 12,
+            });
+            creativeCanvas.add(rect);
+            creativeCanvas.setActiveObject(rect);
+            creativeCanvas.requestRenderAll();
+          } else if (tool === "addBadge") {
+            const circle = new fabric.Circle({
+              left: creativeCanvas.getWidth() - 120,
+              top: 120,
+              radius: 80,
+              fill: "#ffcc00",
+              stroke: "#000000",
+              strokeWidth: 4,
+              originX: "center",
+              originY: "center",
+            });
+            creativeCanvas.add(circle);
+            creativeCanvas.setActiveObject(circle);
+            creativeCanvas.requestRenderAll();
+          }
+        });
+      });
+
+      // --- Hidden file input for images ---
+      if (imageInput) {
+        imageInput.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file || !creativeCanvas) return;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            fabric.Image.fromURL(evt.target.result, (img) => {
+              img.set({
+                left: creativeCanvas.getWidth() / 2,
+                top: creativeCanvas.getHeight() / 2,
+                originX: "center",
+                originY: "center",
+              });
+              creativeCanvas.add(img);
+              creativeCanvas.setActiveObject(img);
+              creativeCanvas.requestRenderAll();
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // --- Export PNG ---
+      if (exportPngBtn) {
+        exportPngBtn.addEventListener("click", () => {
+          if (!creativeCanvas) return;
+          const dataUrl = creativeCanvas.toDataURL({ format: "png", quality: 1.0 });
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = "lot-rocket-creative.png";
+          link.click();
+        });
+      }
+    }
   }
+
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
   function wireModal(triggerId, modalId, closeId) {
