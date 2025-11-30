@@ -803,6 +803,7 @@ const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
 if (creativeOverlay && openCreativeStudioBtn && window.fabric) {
 
 
+
     const closeCreativeStudioBtn = document.getElementById("creativeClose");
     const exportPngBtn = document.getElementById("creativeExportPng");
     const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
