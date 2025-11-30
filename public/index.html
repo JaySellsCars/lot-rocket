@@ -1,653 +1,284 @@
-/* =========================================================
-   GLOBAL BASE
-   ========================================================= */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-}
-
-/* Dark theme is the default state the JS applies */
-body.dark-theme {
-  background: radial-gradient(circle at top, #111633 0, #050711 60%);
-  color: #f5f5ff;
-}
-
-body:not(.dark-theme) {
-  background: #f4f4f7;
-  color: #111;
-}
-
-/* Links (just in case) */
-a {
-  color: #ff4b2b;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(5, 7, 17, 0.95);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.branding h1 {
-  margin: 0;
-  font-size: 24px;
-}
-
-.branding p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  opacity: 0.8;
-}
-
-/* Theme switcher */
-.theme-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.theme-switch input {
-  display: none;
-}
-
-.theme-switch .slider {
-  width: 50px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid #444;
-  position: relative;
-  margin: 0 4px;
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-}
-
-.theme-switch .slider::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.2s ease;
-}
-
-/* When unchecked (light), move dot right.
-   JS sets checked state on load. */
-#themeToggle:not(:checked) + .slider::before,
-.theme-switch input:not(:checked) + .slider::before {
-  transform: translateX(24px);
-}
-
-/* =========================================================
-   MAIN LAYOUT
-   ========================================================= */
-
-.layout {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 16px 80px;
-  display: grid;
-  grid-template-columns: 1.15fr 1.25fr 1.1fr;
-  gap: 16px;
-}
-
-.column h2 {
-  margin-top: 0;
-}
-
-/* Cards / boxes */
-.summary-box,
-.platform-card,
-.lab-card,
-.modal-content {
-  background: rgba(5, 7, 17, 0.96);
-  border-radius: 12px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-}
-
-body:not(.dark-theme) .summary-box,
-body:not(.dark-theme) .platform-card,
-body:not(.dark-theme) .lab-card,
-body:not(.dark-theme) .modal-content {
-  background: #ffffff;
-  border-color: #ddd;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-}
-
-.summary-box h3,
-.platform-card h3,
-.lab-card h3 {
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-/* Inputs */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-textarea,
-select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(4, 6, 18, 0.95);
-  color: #f5f5ff;
-  font-size: 13px;
-}
-
-body:not(.dark-theme) input[type="text"],
-body:not(.dark-theme) input[type="number"],
-body:not(.dark-theme) input[type="date"],
-body:not(.dark-theme) textarea,
-body:not(.dark-theme) select {
-  background: #fafafa;
-  border-color: #ccc;
-  color: #111;
-}
-
-label {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-label input,
-label textarea,
-label select {
-  margin-top: 4px;
-}
-
-/* Textareas */
-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-/* small note text */
-.small-note {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-.primary-btn {
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  border-radius: 999px;
-  border: none;
-  color: #fff;
-  padding: 8px 18px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.primary-btn:hover {
-  filter: brightness(1.05);
-}
-
-.secondary-btn {
-  background: transparent;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 14px;
-  font-size: 12px;
-  color: inherit;
-  cursor: pointer;
-}
-
-.btn-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.copy-btn,
-.regen-btn {
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  padding: 5px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  color: inherit;
-}
-
-.copy-btn.copied {
-  border-color: #25d366;
-  color: #25d366;
-}
-
-.copy-btn.empty {
-  border-color: #ff4b2b;
-  color: #ff4b2b;
-}
-
-/* Status text under Boost button */
-.status-text {
-  margin-top: 6px;
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.status-text.error {
-  color: #ff6b6b;
-}
-
-/* =========================================================
-   PHOTOS GRID (STEP 1)
-   ========================================================= */
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.photo-thumb {
-  width: 100%;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* =========================================================
-   FLOATING TOOLBAR
-   ========================================================= */
-
-.floating-tools {
-  position: fixed;
-  right: 16px;
-  top: 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 40;
-}
-
-.tool-button {
-  background: #0a0d1c;
-  color: #ffffff;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 14px;
-  font-size: 11px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.tool-button:hover {
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  border-color: transparent;
-}
-
-/* =========================================================
-   PHOTO QUICK TUNER
-   ========================================================= */
-
-.photo-preview-wrapper {
-  margin: 10px 0;
-  min-height: 140px;
-  border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: rgba(4, 6, 18, 0.9);
-}
-
-#photoPreview {
-  max-width: 100%;
-  max-height: 220px;
-  object-fit: contain;
-}
-
-.slider-group label {
-  font-size: 12px;
-}
-
-.slider-group input[type="range"] {
-  width: 100%;
-}
-
-/* =========================================================
-   MODALS (TOOLS)
-   ========================================================= */
-
-/* .hidden is applied in JS to hide modals/overlay */
-.hidden {
-  display: none !important;
-}
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.78);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9000;
-}
-
-.modal-content {
-  max-width: 640px;
-  width: 95vw;
-  max-height: 90vh;
-  overflow: auto;
-  position: relative;
-}
-
-.modal-close {
-  position: absolute;
-  right: 12px;
-  top: 8px;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-/* Simple calculator styling */
-.simple-calc {
-  margin-top: 8px;
-}
-
-.simple-calc-display {
-  background: #050711;
-  border-radius: 8px;
-  padding: 10px;
-  text-align: right;
-  font-size: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.simple-calc-grid {
-  margin-top: 8px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-.simple-calc-grid button {
-  padding: 8px 0;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: #101323;
-  color: #fff;
-  cursor: pointer;
-}
-
-/* =========================================================
-   CREATIVE STUDIO OVERLAY
-   ========================================================= */
-
-/* Fullscreen dark overlay */
-.creative-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-/* The actual modal box */
-.creative-modal {
-  background: #050711;
-  border-radius: 16px;
-  width: min(1200px, 95vw);
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
-  border: 1px solid #2b2b4a;
-}
-
-/* Header row inside overlay */
-.creative-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #222438;
-}
-
-.creative-header h2 {
-  margin: 0;
-}
-
-/* Close button */
-.modal-close-btn {
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-/* Top bar: preset + actions */
-.creative-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 16px;
-  border-bottom: 1px solid #222438;
-  background: #080b12;
-}
-
-.preset-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.preset-label select {
-  background: #050711;
-  border-radius: 6px;
-  border: 1px solid #33334d;
-  color: #ffffff;
-  padding: 4px 8px;
-}
-
-/* Buttons in header */
-.creative-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.creative-actions button {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #33334d;
-  background: #101323;
-  color: #ffffff;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-/* Main 3-column layout inside modal */
-.creative-body {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 260px;
-  gap: 10px;
-  padding: 12px 16px 16px;
-  overflow: hidden;
-  background: #050711;
-}
-
-/* LEFT: tools */
-.creative-tools {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.creative-tools h3 {
-  margin: 0 0 8px;
-}
-
-.tool-btn {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #33334d;
-  background: #101323;
-  color: #fff;
-  cursor: pointer;
-  text-align: left;
-  font-size: 13px;
-}
-
-.tool-btn-active {
-  border-color: #ff4b2b;
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-}
-
-/* Hidden file input for image upload */
-.hidden-input {
-  display: none;
-}
-
-/* CENTER: canvas area */
-.creative-canvas-wrap {
-  background: #080b12;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-
-#creativeCanvas {
-  background: #050711;
-}
-
-/* RIGHT: properties */
-.creative-properties {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 14px;
-}
-
-.prop-group {
-  padding: 8px;
-  border-radius: 8px;
-  background: #090c18;
-  border: 1px solid #222438;
-}
-
-.prop-group h4 {
-  margin: 0 0 6px;
-}
-
-.prop-group label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-
-.prop-group input,
-.prop-group select {
-  width: 100%;
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid #33334d;
-  background: #050711;
-  color: #ffffff;
-  font-size: 13px;
-}
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 0 16px 24px;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 900px) {
-  .creative-modal {
-    width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .creative-body {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    overflow: auto;
-  }
-
-  .creative-tools,
-  .creative-properties {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .tool-btn {
-    width: auto;
-  }
-
-  .creative-top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .creative-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lot Rocket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="branding">
+      <h1>🚀 Lot Rocket</h1>
+      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+    </div>
+
+    <div class="header-controls">
+      <label class="theme-switch">
+        <span>Dark</span>
+        <input type="checkbox" id="themeToggle" checked />
+        <span class="slider"></span>
+        <span>Light</span>
+      </label>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main class="layout">
+
+    <!-- STEP 1 – URL SCRAPER -->
+    <section class="column-left column">
+      <h2>Step 1 – Dealer URL Scraper</h2>
+
+      <div class="summary-box">
+        <h3>Vehicle Details</h3>
+
+        <label>
+          Dealer Vehicle URL
+          <input type="text" id="vehicleUrl" placeholder="Paste full dealer listing URL here...">
+        </label>
+
+        <label>
+          Vehicle Label (optional)
+          <input type="text" id="vehicleLabel" placeholder="Example: 2024 Chevy Silverado LTZ 4x4">
+        </label>
+
+        <label>
+          Price / Offer (optional)
+          <input type="text" id="priceInfo" placeholder="Example: $699/mo or $47,995 + tax">
+        </label>
+
+        <p class="small-note">Lot Rocket will scrape the page and clean up the title, description, and photos.</p>
+
+        <div class="summary-box">
+          <h3>Summary Snapshot</h3>
+          <p>Vehicle: <span id="summaryLabel">—</span></p>
+          <p>Price: <span id="summaryPrice">—</span></p>
+        </div>
+
+        <button id="boostButton" class="primary-btn" style="margin-top: 8px;">Boost This Listing</button>
+        <div id="statusText" class="status-text"></div>
+      </div>
+
+      <div class="summary-box">
+        <h3>Photos pulled from dealer site</h3>
+
+        <p class="small-note">Click "Boost This Listing" to refresh photos.</p>
+
+        <button id="sendPhotosToStudio" class="secondary-btn" disabled>
+          Send top photos to Creative Studio
+        </button>
+
+        <div id="photosGrid" class="photo-grid"></div>
+      </div>
+    </section>
+
+    <!-- STEP 2 – SOCIAL KIT -->
+    <section class="column-middle">
+      <div class="summary-box">
+        <h3>Step 2 – Social Media Kit</h3>
+        <p class="small-note">Copy, tweak, and paste. Spin fresh versions anytime.</p>
+      </div>
+
+      <!-- FACEBOOK -->
+      <div class="platform-card">
+        <h3>Facebook Post</h3>
+        <textarea id="facebookPost"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="facebook">New Post</button>
+          <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- INSTAGRAM -->
+      <div class="platform-card">
+        <h3>Instagram Caption</h3>
+        <textarea id="instagramPost"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="instagram">New Post</button>
+          <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- TIKTOK -->
+      <div class="platform-card">
+        <h3>TikTok Caption</h3>
+        <textarea id="tiktokPost"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="tiktok">New Post</button>
+          <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- LINKEDIN -->
+      <div class="platform-card">
+        <h3>LinkedIn Post</h3>
+        <textarea id="linkedinPost"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="linkedin">New Post</button>
+          <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- TWITTER -->
+      <div class="platform-card">
+        <h3>X / Twitter Post</h3>
+        <textarea id="twitterPost"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="twitter">New Post</button>
+          <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
+        </div>
+      </div>
+
+      <!-- TEXT -->
+      <div class="platform-card">
+        <h3>Text / DM</h3>
+        <textarea id="textBlurb"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="text">New Text</button>
+          <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
+        </div>
+      </div>
+
+      <!-- MARKETPLACE -->
+      <div class="platform-card">
+        <h3>Marketplace Listing</h3>
+        <textarea id="marketplacePost"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="marketplace">New Post</button>
+          <button class="copy-btn" data-copy-target="marketplacePost">Copy</button>
+        </div>
+      </div>
+
+      <!-- HASHTAGS -->
+      <div class="platform-card">
+        <h3>Hashtags</h3>
+        <textarea id="hashtags"></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="hashtags">New Set</button>
+          <button class="copy-btn" data-copy-target="hashtags">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3 – CREATIVE LAB -->
+    <section class="column-right column">
+      <h2>Step 3 – Creative Lab</h2>
+
+      <button id="openCreativeStudio" class="primary-btn" style="width:100%;margin-bottom:16px;">
+        ✨ Open Creative Studio
+      </button>
+
+      <div class="lab-card">
+        <h3>Quick Sales Video Idea</h3>
+        <label>Vehicle / Offer<input id="videoVehicle"></label>
+        <label>Hook<input id="videoHook"></label>
+        <label>Style<input id="videoStyle"></label>
+        <label>Length / Aspect<input id="videoLength"></label>
+        <button id="generateVideoIdea" class="primary-btn">Generate Video Idea</button>
+        <textarea id="videoIdeaOutput"></textarea>
+        <button class="copy-btn" data-copy-target="videoIdeaOutput">Copy</button>
+      </div>
+
+      <div class="lab-card">
+        <h3>Canva Layout Planner</h3>
+        <label>Creative Type<input id="layoutType"></label>
+        <label>Headline<input id="layoutHeadline"></label>
+        <label>Call To Action<input id="layoutCTA"></label>
+        <label>Vibe<input id="layoutVibe"></label>
+        <button id="generateLayoutIdea" class="primary-btn">Generate Layout Idea</button>
+        <textarea id="layoutIdeaOutput"></textarea>
+        <button class="copy-btn" data-copy-target="layoutIdeaOutput">Copy</button>
+      </div>
+
+      <div class="lab-card">
+        <h3>Photo Quick Tuner</h3>
+        <input type="file" id="photoUpload" accept="image/*">
+        <div class="photo-preview-wrapper">
+          <img id="photoPreview" style="display:none;">
+          <div id="photoPlaceholder" class="small-note">
+            Upload a photo to adjust brightness/contrast/saturation.
+          </div>
+        </div>
+        <label>Brightness<input type="range" id="brightnessRange" min="50" max="150" value="100"></label>
+        <label>Contrast<input type="range" id="contrastRange" min="50" max="150" value="100"></label>
+        <label>Saturation<input type="range" id="saturationRange" min="50" max="150" value="100"></label>
+      </div>
+    </section>
+  </main>
+
+  <!-- =============================== -->
+  <!-- CREATIVE STUDIO OVERLAY        -->
+  <!-- =============================== -->
+  <div id="creativeStudioOverlay" class="creative-overlay hidden">
+    <div class="creative-modal">
+
+      <div class="creative-header">
+        <h2>Creative Studio</h2>
+        <button id="creativeClose" class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="creative-top-bar">
+        <div class="preset-label">
+          <span>Canvas preset</span>
+          <select id="creativeCanvasPreset">
+            <option value="1080x1080">Square – 1080x1080</option>
+            <option value="1080x1920">Story / Reel – 1080x1920</option>
+            <option value="1920x1080">Landscape – 1920x1080</option>
+          </select>
+        </div>
+        <div class="creative-actions">
+          <button id="creativeUndo">Undo</button>
+          <button id="creativeRedo">Redo</button>
+          <button id="creativeDelete">Delete</button>
+          <button id="creativeExportPng">Export PNG</button>
+        </div>
+      </div>
+
+      <div class="creative-body">
+        <aside class="creative-tools">
+          <h3>Tools</h3>
+          <button class="tool-btn tool-btn-active" data-tool="select">Select / Move</button>
+          <button class="tool-btn" data-tool="uploadImage">Add Photo</button>
+          <button class="tool-btn" data-tool="addText">Add Text</button>
+          <button class="tool-btn" data-tool="addRect">Banner Bar</button>
+          <button class="tool-btn" data-tool="addBadge">Price Badge</button>
+          <input type="file" id="creativeImageInput" class="hidden-input" accept="image/*">
+        </aside>
+
+        <div class="creative-canvas-wrap">
+          <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
+        </div>
+
+        <aside class="creative-properties">
+          <div class="prop-group">
+            <h4>Shape / Image</h4>
+            <label>Fill <input type="color" id="propFillColor" value="#ffffff"></label>
+            <label>Stroke <input type="color" id="propStrokeColor" value="#000000"></label>
+            <label>Stroke Width <input type="number" id="propStrokeWidth" min="0" max="20" value="0"></label>
+          </div>
+
+          <div class="prop-group" id="textOptions" style="display:none;">
+            <h4>Text</h4>
+            <label>Font Size<input type="number" id="propFontSize" min="10" max="120" value="48"></label>
+            <label>Align
+              <select id="propTextAlign">
+                <option value="left">Left</option>
+                <option value="center" selected>Center</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Fabric.js + App Logic -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
