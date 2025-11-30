@@ -674,175 +674,203 @@ body:not(.dark-theme) .simple-calc-grid button {
   );
 }
 
-/* ================================
-   CREATIVE STUDIO – MAIN BODY GRID
-   ================================ */
+/* ===== Creative Studio Overlay ===== */
 
+.hidden {
+  display: none !important;
+}
+
+.creative-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 16, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.creative-modal {
+  background: #050712;
+  border-radius: 16px;
+  border: 1px solid #262338;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  width: 95%;
+  max-width: 1200px;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.creative-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #262338;
+}
+
+.creative-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* Top bar */
+.creative-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #262338;
+  font-size: 0.85rem;
+}
+
+.preset-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-label span {
+  opacity: 0.8;
+}
+
+.preset-label select {
+  background: #080b12;
+  border-radius: 999px;
+  border: 1px solid #2e2a45;
+  padding: 4px 10px;
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.creative-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.creative-actions button {
+  border-radius: 999px;
+  border: 1px solid #2e2a45;
+  background: #080b12;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+/* Body layout: tools | canvas | props */
 .creative-body {
+  flex: 1;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 260px;
   gap: 16px;
-  padding: 16px 20px 20px;
-  align-items: stretch;
+  padding: 16px;
+  min-height: 0;
 }
 
-/* Left panel – tools */
-
-.creative-tools {
-  background: radial-gradient(circle at top, #020617 0%, #020617 40%, #000000 100%);
-  border-radius: 14px;
-  border: 1px solid rgba(30, 64, 175, 0.5);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.creative-tools h3 {
+/* Left + Right columns */
+.creative-tools,
+.creative-properties {
+  background: #060815;
+  border-radius: 12px;
+  border: 1px solid #262338;
+  padding: 10px 12px;
   font-size: 0.85rem;
+  overflow: auto;
+}
+
+.creative-tools h3,
+.creative-properties h3 {
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #9ca3af;
-  margin-bottom: 4px;
+  opacity: 0.8;
+  margin-bottom: 8px;
 }
 
 /* Tool buttons */
-
 .tool-btn {
   width: 100%;
-  border-radius: 999px;
-  border: 1px solid rgba(75, 85, 99, 0.8);
-  background: radial-gradient(circle at top left, #111827 0%, #020617 60%);
-  color: #e5e7eb;
-  font-size: 0.8rem;
-  padding: 7px 10px;
   text-align: left;
+  border-radius: 999px;
+  border: 1px solid #2e2a45;
+  background: #080b12;
+  color: #ffffff;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.08s ease,
-    box-shadow 0.12s ease;
-}
-
-.tool-btn:hover {
-  border-color: rgba(96, 165, 250, 0.9);
-  background: radial-gradient(circle at top left, #0f172a 0%, #020617 60%);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.5);
-  transform: translateY(-1px);
 }
 
 .tool-btn-active {
-  border-color: rgba(248, 113, 113, 1);
-  background: radial-gradient(circle at top left, #7f1d1d 0%, #111827 55%);
-  box-shadow:
-    0 0 0 1px rgba(248, 113, 113, 0.7),
-    0 10px 25px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(135deg, #ff4b2b, #ff416c);
+  border-color: transparent;
 }
 
-/* Hide native file input for Add Photo */
-
+/* Hidden input for photo upload */
 .hidden-input {
   display: none;
 }
 
-/* Center – canvas wrapper */
-
+/* Canvas column */
 .creative-canvas-wrap {
-  background: radial-gradient(circle at center, #020617 0%, #000000 65%);
-  border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.9);
-  padding: 12px;
+  background: #080b12;
+  border-radius: 12px;
+  border: 1px solid #262338;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  position: relative;
+  overflow: auto;
 }
 
 #creativeCanvas {
-  display: block;
   max-width: 100%;
   max-height: 100%;
-  background: #020617;
-  box-shadow:
-    0 0 0 1px rgba(15, 23, 42, 1),
-    0 18px 45px rgba(0, 0, 0, 0.9);
+  background: #050712;
 }
 
-/* Right panel – properties */
-
-.creative-properties {
-  background: radial-gradient(circle at top, #020617 0%, #020617 40%, #000000 100%);
-  border-radius: 14px;
-  border: 1px solid rgba(30, 64, 175, 0.5);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.creative-properties h3 {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #9ca3af;
-}
-
+/* Properties fields */
 .prop-group {
-  border-radius: 12px;
-  border: 1px solid rgba(55, 65, 81, 0.9);
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: rgba(15, 23, 42, 0.95);
+  margin-bottom: 12px;
 }
 
 .prop-group h4 {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #9ca3af;
-  margin-bottom: 4px;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+  margin-bottom: 6px;
 }
 
 .prop-group label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  margin-bottom: 6px;
   font-size: 0.8rem;
-  color: #e5e7eb;
 }
 
 .prop-group input,
 .prop-group select {
-  background: #020617;
-  border-radius: 8px;
-  border: 1px solid rgba(75, 85, 99, 0.9);
-  color: #e5e7eb;
+  background: #050712;
+  border-radius: 6px;
+  border: 1px solid #262338;
+  padding: 4px 8px;
+  color: #ffffff;
   font-size: 0.8rem;
-  padding: 5px 8px;
-  outline: none;
 }
 
-.prop-group input:focus,
-.prop-group select:focus {
-  border-color: rgba(248, 113, 113, 0.9);
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.7);
-}
-
-/* Color inputs tighter */
-
-.prop-group input[type="color"] {
-  padding: 0;
-  height: 30px;
-  width: 100%;
-  cursor: pointer;
-}
 
 /* ================================
    RESPONSIVE BEHAVIOR
