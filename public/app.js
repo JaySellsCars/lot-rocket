@@ -387,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!photoPreview) return;
     const b = brightnessRange ? brightnessRange.value : 100;
     const c = contrastRange ? contrastRange.value : 100;
-    const s = saturationRange ? saturationRange.value : 100;
+    a const s = saturationRange ? saturationRange.value : 100;
     photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
@@ -415,9 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatMoney(value) {
     if (isNaN(value)) return "$0.00";
     const rounded = Math.round(value * 100) / 100;
-    return (
-      "$" + rounded.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    );
+    return "$" + rounded.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
   // ---------- PAYMENT CALCULATOR MATH ----------
@@ -794,383 +792,392 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  //     CREATIVE STUDIO – FABRIC.JS CANVAS WIRING
+  //     CREATIVE STUDIO – OVERLAY + FABRIC CANVAS
   // =====================================================
 
   const creativeOverlay = document.getElementById("creativeStudioOverlay");
   const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
-  const closeCreativeStudioBtn = document.getElementById("creativeClose");
 
-  const exportPngBtn = document.getElementById("creativeExportPng");
-  const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
-  const imageInput = document.getElementById("creativeImageInput");
+  if (creativeOverlay && openCreativeStudioBtn) {
+    // ---------- Overlay show / hide ----------
+    const closeCreativeStudioBtn = document.getElementById("creativeClose");
 
-  const undoBtn = document.getElementById("creativeUndo");
-  const redoBtn = document.getElementById("creativeRedo");
-  const deleteBtn = document.getElementById("creativeDelete");
-  const toolButtons = document.querySelectorAll(".tool-btn[data-tool]");
+    function showOverlay() {
+      creativeOverlay.classList.remove("hidden");
+    }
 
-  const propFillColor = document.getElementById("propFillColor");
-  const propStrokeColor = document.getElementById("propStrokeColor");
-  const propStrokeWidth = document.getElementById("propStrokeWidth");
-  const textOptions = document.getElementById("textOptions");
-  const propFontSize = document.getElementById("propFontSize");
-  const propTextAlign = document.getElementById("propTextAlign");
+    function hideOverlay() {
+      creativeOverlay.classList.add("hidden");
+    }
 
-  let creativeCanvas = null;
-  let activeTool = "select";
-
-  const historyStack = [];
-  let historyIndex = -1;
-  let isRestoringHistory = false;
-
-  function pushHistory() {
-    if (!creativeCanvas || isRestoringHistory) return;
-    const json = creativeCanvas.toJSON();
-    historyStack.splice(historyIndex + 1);
-    historyStack.push(json);
-    historyIndex = historyStack.length - 1;
-  }
-
-  function restoreHistory(index) {
-    if (!creativeCanvas) return;
-    if (index < 0 || index >= historyStack.length) return;
-    isRestoringHistory = true;
-    creativeCanvas.loadFromJSON(historyStack[index], () => {
-      creativeCanvas.renderAll();
-      isRestoringHistory = false;
+    openCreativeStudioBtn.addEventListener("click", () => {
+      showOverlay();
+      if (typeof fabric !== "undefined") {
+        ensureCreativeCanvas(false);
+      } else {
+        console.warn("Fabric.js not loaded – Creative Studio canvas disabled.");
+      }
     });
-  }
 
-  function handleUndo() {
-    if (historyIndex > 0) {
-      historyIndex--;
-      restoreHistory(historyIndex);
-    }
-  }
-
-  function handleRedo() {
-    if (historyIndex < historyStack.length - 1) {
-      historyIndex++;
-      restoreHistory(historyIndex);
-    }
-  }
-
-  function applyCanvasPreset() {
-    if (!creativeCanvas || !canvasPresetSelect) return;
-    const value = canvasPresetSelect.value || "1080x1080";
-    const [w, h] = value.split("x").map(Number);
-    creativeCanvas.setWidth(w);
-    creativeCanvas.setHeight(h);
-    creativeCanvas.calcOffset();
-    creativeCanvas.requestRenderAll();
-  }
-
-  function updatePropertyPanel() {
-    if (!creativeCanvas) return;
-    const active = creativeCanvas.getActiveObject();
-
-    if (!active) {
-      if (textOptions) textOptions.style.display = "none";
-      return;
+    if (sendPhotosToStudioBtn) {
+      sendPhotosToStudioBtn.addEventListener("click", () => {
+        if (!latestPhotoUrls || !latestPhotoUrls.length) return;
+        showOverlay();
+        if (typeof fabric !== "undefined") {
+          ensureCreativeCanvas(true);
+        } else {
+          console.warn("Fabric.js not loaded – Creative Studio canvas disabled.");
+        }
+      });
     }
 
-    if (propFillColor && active.fill) {
-      propFillColor.value = active.fill;
-    }
-    if (propStrokeColor && active.stroke) {
-      propStrokeColor.value = active.stroke;
-    }
-    if (propStrokeWidth && typeof active.strokeWidth === "number") {
-      propStrokeWidth.value = active.strokeWidth;
+    if (closeCreativeStudioBtn) {
+      closeCreativeStudioBtn.addEventListener("click", hideOverlay);
     }
 
-    if (active.type === "textbox" || active.type === "text") {
-      if (textOptions) textOptions.style.display = "block";
-      if (propFontSize && active.fontSize) {
-        propFontSize.value = active.fontSize;
+    creativeOverlay.addEventListener("click", (e) => {
+      if (e.target === creativeOverlay) {
+        hideOverlay();
       }
-      if (propTextAlign && active.textAlign) {
-        propTextAlign.value = active.textAlign;
-      }
-    } else {
-      if (textOptions) textOptions.style.display = "none";
-    }
-  }
+    });
 
-  function initCreativeCanvas() {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !creativeOverlay.classList.contains("hidden")) {
+        hideOverlay();
+      }
+    });
+
+    // Stop here if Fabric isn’t loaded – overlay still works, just no canvas.
     if (typeof fabric === "undefined") {
-      console.warn("Fabric.js not loaded – Creative Studio canvas disabled.");
       return;
     }
-    const canvasEl = document.getElementById("creativeCanvas");
-    if (!canvasEl) return;
 
-    creativeCanvas = new fabric.Canvas("creativeCanvas", {
-      preserveObjectStacking: true,
-      selection: true,
-      backgroundColor: "#080b12",
-    });
+    // ---------- Fabric.js wiring ----------
+    const exportPngBtn = document.getElementById("creativeExportPng");
+    const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
+    const imageInput = document.getElementById("creativeImageInput");
 
-    applyCanvasPreset();
+    const undoBtn = document.getElementById("creativeUndo");
+    const redoBtn = document.getElementById("creativeRedo");
+    const deleteBtn = document.getElementById("creativeDelete");
+    const toolButtons = document.querySelectorAll(".tool-btn[data-tool]");
 
-    creativeCanvas.on("object:added", pushHistory);
-    creativeCanvas.on("object:modified", pushHistory);
-    creativeCanvas.on("object:removed", pushHistory);
+    const propFillColor = document.getElementById("propFillColor");
+    const propStrokeColor = document.getElementById("propStrokeColor");
+    const propStrokeWidth = document.getElementById("propStrokeWidth");
+    const textOptions = document.getElementById("textOptions");
+    const propFontSize = document.getElementById("propFontSize");
+    const propTextAlign = document.getElementById("propTextAlign");
 
-    creativeCanvas.on("selection:created", updatePropertyPanel);
-    creativeCanvas.on("selection:updated", updatePropertyPanel);
-    creativeCanvas.on("selection:cleared", updatePropertyPanel);
+    let creativeCanvas = null;
+    let activeTool = "select";
 
-    pushHistory();
-  }
+    // Simple undo/redo stacks
+    const historyStack = [];
+    let historyIndex = -1;
+    let isRestoringHistory = false;
 
-  function ensureCreativeCanvas(withPhotos) {
-    if (!creativeCanvas) {
-      initCreativeCanvas();
-    } else if (creativeCanvas) {
+    function pushHistory() {
+      if (!creativeCanvas || isRestoringHistory) return;
+      const json = creativeCanvas.toJSON();
+      historyStack.splice(historyIndex + 1);
+      historyStack.push(json);
+      historyIndex = historyStack.length - 1;
+    }
+
+    function restoreHistory(index) {
+      if (!creativeCanvas) return;
+      if (index < 0 || index >= historyStack.length) return;
+      isRestoringHistory = true;
+      creativeCanvas.loadFromJSON(historyStack[index], () => {
+        creativeCanvas.renderAll();
+        isRestoringHistory = false;
+      });
+    }
+
+    function handleUndo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        restoreHistory(historyIndex);
+      }
+    }
+
+    function handleRedo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        restoreHistory(historyIndex);
+      }
+    }
+
+    function applyCanvasPreset() {
+      if (!creativeCanvas || !canvasPresetSelect) return;
+      const value = canvasPresetSelect.value || "1080x1080";
+      const [w, h] = value.split("x").map(Number);
+      creativeCanvas.setWidth(w);
+      creativeCanvas.setHeight(h);
       creativeCanvas.calcOffset();
       creativeCanvas.requestRenderAll();
     }
 
-    if (
-      withPhotos &&
-      creativeCanvas &&
-      Array.isArray(latestPhotoUrls) &&
-      latestPhotoUrls.length
-    ) {
-      latestPhotoUrls.slice(0, 3).forEach((url, index) => {
-        fabric.Image.fromURL(url, (img) => {
-          img.set({
-            left: 60 + index * 40,
-            top: 60 + index * 40,
-            originX: "center",
-            originY: "center",
-            scaleX: 0.4,
-            scaleY: 0.4,
+    function updatePropertyPanel() {
+      if (!creativeCanvas) return;
+      const active = creativeCanvas.getActiveObject();
+
+      if (!active) {
+        if (textOptions) textOptions.style.display = "none";
+        return;
+      }
+
+      if (propFillColor && active.fill) {
+        propFillColor.value = active.fill;
+      }
+      if (propStrokeColor && active.stroke) {
+        propStrokeColor.value = active.stroke;
+      }
+      if (propStrokeWidth && typeof active.strokeWidth === "number") {
+        propStrokeWidth.value = active.strokeWidth;
+      }
+
+      if (active.type === "textbox" || active.type === "text") {
+        if (textOptions) textOptions.style.display = "block";
+        if (propFontSize && active.fontSize) {
+          propFontSize.value = active.fontSize;
+        }
+        if (propTextAlign && active.textAlign) {
+          propTextAlign.value = active.textAlign;
+        }
+      } else {
+        if (textOptions) textOptions.style.display = "none";
+      }
+    }
+
+    function initCreativeCanvas() {
+      const canvasEl = document.getElementById("creativeCanvas");
+      if (!canvasEl) return;
+
+      creativeCanvas = new fabric.Canvas("creativeCanvas", {
+        preserveObjectStacking: true,
+        selection: true,
+        backgroundColor: "#080b12",
+      });
+
+      applyCanvasPreset();
+
+      creativeCanvas.on("object:added", pushHistory);
+      creativeCanvas.on("object:modified", pushHistory);
+      creativeCanvas.on("object:removed", pushHistory);
+
+      creativeCanvas.on("selection:created", updatePropertyPanel);
+      creativeCanvas.on("selection:updated", updatePropertyPanel);
+      creativeCanvas.on("selection:cleared", updatePropertyPanel);
+
+      pushHistory(); // seed empty state
+    }
+
+    function ensureCreativeCanvas(withPhotos) {
+      if (!creativeCanvas) {
+        initCreativeCanvas();
+      } else {
+        creativeCanvas.calcOffset();
+        creativeCanvas.requestRenderAll();
+      }
+
+      if (
+        withPhotos &&
+        latestPhotoUrls &&
+        latestPhotoUrls.length &&
+        creativeCanvas
+      ) {
+        latestPhotoUrls.slice(0, 3).forEach((url, index) => {
+          fabric.Image.fromURL(url, (img) => {
+            img.set({
+              left: 60 + index * 40,
+              top: 60 + index * 40,
+              originX: "center",
+              originY: "center",
+              scaleX: 0.4,
+              scaleY: 0.4,
+            });
+            creativeCanvas.add(img);
+            creativeCanvas.requestRenderAll();
           });
-          creativeCanvas.add(img);
-          creativeCanvas.requestRenderAll();
         });
+      }
+    }
+
+    // --- Undo / Redo / Delete ---
+    if (undoBtn) undoBtn.addEventListener("click", handleUndo);
+    if (redoBtn) redoBtn.addEventListener("click", handleRedo);
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", () => {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+        if (active) {
+          creativeCanvas.remove(active);
+          creativeCanvas.discardActiveObject();
+          creativeCanvas.requestRenderAll();
+        }
       });
     }
-  }
 
-  function showCreativeOverlay(withPhotos = false) {
-    if (!creativeOverlay) {
-      console.warn("creativeStudioOverlay element not found.");
-      return;
+    // --- Canvas preset dropdown ---
+    if (canvasPresetSelect) {
+      canvasPresetSelect.addEventListener("change", applyCanvasPreset);
     }
-    creativeOverlay.classList.remove("hidden");
-    ensureCreativeCanvas(withPhotos);
-  }
 
-  function hideCreativeOverlay() {
-    if (!creativeOverlay) return;
-    creativeOverlay.classList.add("hidden");
-  }
-
-  // Open / close wiring
-  if (openCreativeStudioBtn) {
-    openCreativeStudioBtn.addEventListener("click", () => {
-      console.log("Open Creative Studio clicked");
-      showCreativeOverlay(false);
-    });
-  }
-
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!latestPhotoUrls || !latestPhotoUrls.length) return;
-      console.log("Send photos to Creative Studio clicked");
-      showCreativeOverlay(true);
-    });
-  }
-
-  if (closeCreativeStudioBtn) {
-    closeCreativeStudioBtn.addEventListener("click", hideCreativeOverlay);
-  }
-
-  if (creativeOverlay) {
-    creativeOverlay.addEventListener("click", (e) => {
-      if (e.target === creativeOverlay) {
-        hideCreativeOverlay();
-      }
-    });
-  }
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && creativeOverlay && !creativeOverlay.classList.contains("hidden")) {
-      hideCreativeOverlay();
+    // --- Property controls ---
+    if (propFillColor) {
+      propFillColor.addEventListener("input", () => {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+        if (!active) return;
+        active.set("fill", propFillColor.value);
+        creativeCanvas.requestRenderAll();
+        pushHistory();
+      });
     }
-  });
 
-  // Undo / Redo / Delete
-  if (undoBtn) undoBtn.addEventListener("click", handleUndo);
-  if (redoBtn) redoBtn.addEventListener("click", handleRedo);
-  if (deleteBtn) {
-    deleteBtn.addEventListener("click", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (active) {
-        creativeCanvas.remove(active);
-        creativeCanvas.discardActiveObject();
+    if (propStrokeColor) {
+      propStrokeColor.addEventListener("input", () => {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+        if (!active) return;
+        active.set("stroke", propStrokeColor.value);
         creativeCanvas.requestRenderAll();
-      }
-    });
-  }
+        pushHistory();
+      });
+    }
 
-  // Canvas preset
-  if (canvasPresetSelect) {
-    canvasPresetSelect.addEventListener("change", applyCanvasPreset);
-  }
-
-  // Property controls
-  if (propFillColor) {
-    propFillColor.addEventListener("input", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active) return;
-      active.set("fill", propFillColor.value);
-      creativeCanvas.requestRenderAll();
-      pushHistory();
-    });
-  }
-
-  if (propStrokeColor) {
-    propStrokeColor.addEventListener("input", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active) return;
-      active.set("stroke", propStrokeColor.value);
-      creativeCanvas.requestRenderAll();
-      pushHistory();
-    });
-  }
-
-  if (propStrokeWidth) {
-    propStrokeWidth.addEventListener("input", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active) return;
-      active.set("strokeWidth", Number(propStrokeWidth.value) || 0);
-      creativeCanvas.requestRenderAll();
-      pushHistory();
-    });
-  }
-
-  if (propFontSize) {
-    propFontSize.addEventListener("input", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active || !active.set) return;
-      active.set("fontSize", Number(propFontSize.value) || 40);
-      creativeCanvas.requestRenderAll();
-      pushHistory();
-    });
-  }
-
-  if (propTextAlign) {
-    propTextAlign.addEventListener("change", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active || !active.set) return;
-      active.set("textAlign", propTextAlign.value);
-      creativeCanvas.requestRenderAll();
-      pushHistory();
-    });
-  }
-
-  // Tool buttons
-  toolButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const tool = btn.getAttribute("data-tool");
-      if (!tool || !creativeCanvas) return;
-
-      activeTool = tool;
-      toolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
-      btn.classList.add("tool-btn-active");
-
-      if (tool === "uploadImage" && imageInput) {
-        imageInput.click();
-      } else if (tool === "addText") {
-        const tb = new fabric.Textbox("New text", {
-          left: creativeCanvas.getWidth() / 2,
-          top: creativeCanvas.getHeight() / 2,
-          originX: "center",
-          originY: "center",
-          fill: "#ffffff",
-          fontSize: 48,
-          textAlign: "center",
-        });
-        creativeCanvas.add(tb);
-        creativeCanvas.setActiveObject(tb);
+    if (propStrokeWidth) {
+      propStrokeWidth.addEventListener("input", () => {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+        if (!active) return;
+        active.set("strokeWidth", Number(propStrokeWidth.value) || 0);
         creativeCanvas.requestRenderAll();
-      } else if (tool === "addRect") {
-        const rect = new fabric.Rect({
-          left: creativeCanvas.getWidth() / 2,
-          top: creativeCanvas.getHeight() - 120,
-          originX: "center",
-          originY: "center",
-          width: creativeCanvas.getWidth() * 0.9,
-          height: 160,
-          fill: "#ff4b2b",
-          rx: 12,
-          ry: 12,
-        });
-        creativeCanvas.add(rect);
-        creativeCanvas.setActiveObject(rect);
-        creativeCanvas.requestRenderAll();
-      } else if (tool === "addBadge") {
-        const circle = new fabric.Circle({
-          left: creativeCanvas.getWidth() - 120,
-          top: 120,
-          radius: 80,
-          fill: "#ffcc00",
-          stroke: "#000000",
-          strokeWidth: 4,
-          originX: "center",
-          originY: "center",
-        });
-        creativeCanvas.add(circle);
-        creativeCanvas.setActiveObject(circle);
-        creativeCanvas.requestRenderAll();
-      }
-    });
-  });
+        pushHistory();
+      });
+    }
 
-  // Image upload
-  if (imageInput) {
-    imageInput.addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file || !creativeCanvas) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        fabric.Image.fromURL(evt.target.result, (img) => {
-          img.set({
+    if (propFontSize) {
+      propFontSize.addEventListener("input", () => {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+        if (!active || !active.set) return;
+        active.set("fontSize", Number(propFontSize.value) || 40);
+        creativeCanvas.requestRenderAll();
+        pushHistory();
+      });
+    }
+
+    if (propTextAlign) {
+      propTextAlign.addEventListener("change", () => {
+        if (!creativeCanvas) return;
+        const active = creativeCanvas.getActiveObject();
+        if (!active || !active.set) return;
+        active.set("textAlign", propTextAlign.value);
+        creativeCanvas.requestRenderAll();
+        pushHistory();
+      });
+    }
+
+    // --- Tool buttons (select, add text, add shapes, upload image) ---
+    toolButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tool = btn.getAttribute("data-tool");
+        if (!tool) return;
+        activeTool = tool;
+
+        toolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
+        btn.classList.add("tool-btn-active");
+
+        if (!creativeCanvas) return;
+
+        if (tool === "uploadImage" && imageInput) {
+          imageInput.click();
+        } else if (tool === "addText") {
+          const tb = new fabric.Textbox("New text", {
             left: creativeCanvas.getWidth() / 2,
             top: creativeCanvas.getHeight() / 2,
             originX: "center",
             originY: "center",
+            fill: "#ffffff",
+            fontSize: 48,
+            textAlign: "center",
           });
-          creativeCanvas.add(img);
-          creativeCanvas.setActiveObject(img);
+          creativeCanvas.add(tb);
+          creativeCanvas.setActiveObject(tb);
           creativeCanvas.requestRenderAll();
-        });
-      };
-      reader.readAsDataURL(file);
+        } else if (tool === "addRect") {
+          const rect = new fabric.Rect({
+            left: creativeCanvas.getWidth() / 2,
+            top: creativeCanvas.getHeight() - 120,
+            originX: "center",
+            originY: "center",
+            width: creativeCanvas.getWidth() * 0.9,
+            height: 160,
+            fill: "#ff4b2b",
+            rx: 12,
+            ry: 12,
+          });
+          creativeCanvas.add(rect);
+          creativeCanvas.setActiveObject(rect);
+          creativeCanvas.requestRenderAll();
+        } else if (tool === "addBadge") {
+          const circle = new fabric.Circle({
+            left: creativeCanvas.getWidth() - 120,
+            top: 120,
+            radius: 80,
+            fill: "#ffcc00",
+            stroke: "#000000",
+            strokeWidth: 4,
+            originX: "center",
+            originY: "center",
+          });
+          creativeCanvas.add(circle);
+          creativeCanvas.setActiveObject(circle);
+          creativeCanvas.requestRenderAll();
+        }
+      });
     });
-  }
 
-  // Export PNG
-  if (exportPngBtn) {
-    exportPngBtn.addEventListener("click", () => {
-      if (!creativeCanvas) return;
-      const dataUrl = creativeCanvas.toDataURL({ format: "png", quality: 1.0 });
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = "lot-rocket-creative.png";
-      link.click();
-    });
+    // --- Hidden file input for images ---
+    if (imageInput) {
+      imageInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !creativeCanvas) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          fabric.Image.fromURL(evt.target.result, (img) => {
+            img.set({
+              left: creativeCanvas.getWidth() / 2,
+              top: creativeCanvas.getHeight() / 2,
+              originX: "center",
+              originY: "center",
+            });
+            creativeCanvas.add(img);
+            creativeCanvas.setActiveObject(img);
+            creativeCanvas.requestRenderAll();
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // --- Export PNG ---
+    if (exportPngBtn) {
+      exportPngBtn.addEventListener("click", () => {
+        if (!creativeCanvas) return;
+        const dataUrl = creativeCanvas.toDataURL({
+          format: "png",
+          quality: 1.0,
+        });
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = "lot-rocket-creative.png";
+        link.click();
+      });
+    }
   }
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
@@ -1206,4 +1213,4 @@ document.addEventListener("DOMContentLoaded", () => {
   wireModal("carLauncher", "carModal", "carClose");
   wireModal("imageLauncher", "imageModal", "imageClose");
   wireModal("videoLauncher", "videoModal", "videoClose");
-}); // <--- end of DOMContentLoaded
+});
