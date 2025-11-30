@@ -771,36 +771,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const videoGenOutput = document.getElementById("videoGenOutput");
   const runVideoHelperBtn = document.getElementById("runVideoHelper");
 
+// ... videoGen stuff up here ...
+
   if (runVideoHelperBtn) {
     runVideoHelperBtn.addEventListener("click", async () => {
-      try {
-        runVideoHelperBtn.disabled = true;
-        runVideoHelperBtn.textContent = "Thinking...";
-
-        const data = await callHelper("/api/message-helper", {
-          mode: "video-brief",
-          prompt: videoGenPrompt.value,
-        });
-
-        videoGenOutput.value = data.text || "";
-      } catch (err) {
-        console.error(err);
-        videoGenOutput.value = "Error generating video brief.";
-      } finally {
-        runVideoHelperBtn.disabled = false;
-        runVideoHelperBtn.textContent = "Build Video Brief";
-      }
+      // ...
     });
   }
 
-  // =====================================================
-  //     CREATIVE STUDIO – FABRIC.JS CANVAS WIRING
-  // =====================================================
-
-  // (your Creative Studio JS lives here OR further down)
+  // (no Creative Studio code here yet)
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
   function wireModal(triggerId, modalId, closeId) {
+    // ...
+  }
+
+
+
+
     const trigger = document.getElementById(triggerId);
     const modal = document.getElementById(modalId);
     const close = document.getElementById(closeId);
