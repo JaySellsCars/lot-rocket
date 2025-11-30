@@ -771,24 +771,63 @@ document.addEventListener("DOMContentLoaded", () => {
   const videoGenOutput = document.getElementById("videoGenOutput");
   const runVideoHelperBtn = document.getElementById("runVideoHelper");
 
-// ... videoGen stuff up here ...
-
   if (runVideoHelperBtn) {
     runVideoHelperBtn.addEventListener("click", async () => {
-      // ...
+      try {
+        runVideoHelperBtn.disabled = true;
+        runVideoHelperBtn.textContent = "Thinking...";
+
+        const data = await callHelper("/api/message-helper", {
+          mode: "video-brief",
+          prompt: videoGenPrompt.value,
+        });
+
+        videoGenOutput.value = data.text || "";
+      } catch (err) {
+        console.error(err);
+        videoGenOutput.value = "Error generating video brief.";
+      } finally {
+        runVideoHelperBtn.disabled = false;
+        runVideoHelperBtn.textContent = "Build Video Brief";
+      }
     });
   }
 
-  // (no Creative Studio code here yet)
+  // =====================================================
+  //     CREATIVE STUDIO – SIMPLE OPEN/CLOSE
+  // =====================================================
+  const creativeOverlay = document.getElementById("creativeStudioOverlay");
+  const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
+  const creativeCloseBtn = document.getElementById("creativeClose");
+
+  if (creativeOverlay && openCreativeStudioBtn && creativeCloseBtn) {
+    // Open when button is clicked
+    openCreativeStudioBtn.addEventListener("click", () => {
+      creativeOverlay.classList.remove("hidden");
+    });
+
+    // Close when X is clicked
+    creativeCloseBtn.addEventListener("click", () => {
+      creativeOverlay.classList.add("hidden");
+    });
+
+    // Close when clicking the overlay background
+    creativeOverlay.addEventListener("click", (e) => {
+      if (e.target === creativeOverlay) {
+        creativeOverlay.classList.add("hidden");
+      }
+    });
+
+    // Optional: close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !creativeOverlay.classList.contains("hidden")) {
+        creativeOverlay.classList.add("hidden");
+      }
+    });
+  }
 
   // ---------- MODAL OPEN/CLOSE WIRING ----------
   function wireModal(triggerId, modalId, closeId) {
-    // ...
-  }
-
-
-
-
     const trigger = document.getElementById(triggerId);
     const modal = document.getElementById(modalId);
     const close = document.getElementById(closeId);
