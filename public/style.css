@@ -1,679 +1,3 @@
-/* Lot Rocket layout:
-   - Step 1 (left) + Step 2 (right) in 2 columns
-   - Step 3 spans full width UNDER them
-   - Step 2’s platforms = 2-column grid
-*/
-
-/* ---------- Base ---------- */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-}
-
-body {
-  background: #050509;
-  color: #f5f5f7;
-}
-
-body:not(.dark-theme) {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-/* generic hide helper used by modals & calculator */
-.hidden {
-  display: none !important;
-}
-
-/* ---------- Header ---------- */
-
-.app-header {
-  max-width: 1300px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 32px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-  background: linear-gradient(90deg, #050509, #111827);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-body:not(.dark-theme) .app-header {
-  background: #ffffff;
-}
-
-.branding h1 {
-  margin: 0;
-  font-size: 1.6rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.branding p {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: #9ca3af;
-}
-
-body:not(.dark-theme) .branding p {
-  color: #6b7280;
-}
-
-.header-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ---------- Main Layout ---------- */
-
-/* 2-column grid: Step 1 (left), Step 2 (right),
-   with Step 3 full-width on row below */
-.layout {
-  max-width: 1300px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
-  column-gap: 20px;
-  row-gap: 20px;
-  padding: 20px 220px 40px 32px; /* space on right for tools */
-}
-
-/* Step 1 column */
-.column-left {
-  grid-column: 1;
-}
-
-/* Step 2 column */
-.column-middle {
-  grid-column: 2;
-
-  /* inner grid: summary full width, platforms in 2 columns */
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: auto;
-  gap: 12px;
-}
-
-/* make Summary span both columns inside Step 2 IF you leave it there */
-.summary-box {
-  grid-column: 1 / span 2;
-}
-
-/* every platform card naturally falls into the 2-column grid */
-.platform-card {
-  /* card styling added below */
-}
-
-/* Step 3 – Creative Lab: full width below 1 & 2 */
-.column-right {
-  grid-column: 1 / span 2;
-}
-
-/* generic column container (for spacing) */
-.column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.column h2 {
-  margin-top: 0;
-  font-size: 1.2rem;
-}
-
-/* ---------- Cards ---------- */
-
-.summary-box,
-.platform-card,
-.lab-card {
-  background: #0b0f19;
-  border-radius: 10px;
-  padding: 12px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-}
-
-body:not(.dark-theme) .summary-box,
-body:not(.dark-theme) .platform-card,
-body:not(.dark-theme) .lab-card {
-  background: #ffffff;
-  border-color: #e5e7eb;
-}
-
-.summary-box h3,
-.platform-card h3,
-.lab-card h3 {
-  margin: 0 0 8px;
-  font-size: 1rem;
-}
-
-/* ---------- Inputs & Textareas ---------- */
-
-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  display: block;
-  margin-bottom: 4px;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="file"],
-textarea,
-select {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: #050713;
-  color: #e5e7eb;
-  font-size: 0.9rem;
-  outline: none;
-}
-
-input[type="file"] {
-  padding: 4px;
-  background: transparent;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 60px;
-}
-
-body:not(.dark-theme) input[type="text"],
-body:not(.dark-theme) input[type="number"],
-body:not(.dark-theme) textarea,
-body:not(.dark-theme) select {
-  background: #ffffff;
-  color: #111827;
-  border-color: #d1d5db;
-}
-
-::placeholder {
-  color: #6b7280;
-}
-
-/* ---------- Buttons ---------- */
-
-button {
-  cursor: pointer;
-  border: none;
-  font-size: 0.85rem;
-}
-
-.primary-btn {
-  background: linear-gradient(135deg, #f97316, #e11d48);
-  color: #f9fafb;
-  padding: 7px 14px;
-  border-radius: 999px;
-  font-weight: 600;
-  border: none;
-  box-shadow: 0 8px 20px rgba(248, 113, 113, 0.35);
-}
-
-.primary-btn:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
-
-.secondary-btn {
-  background: transparent;
-  color: #e5e7eb;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  padding: 6px 12px;
-}
-
-body:not(.dark-theme) .secondary-btn {
-  color: #111827;
-  border-color: #9ca3af;
-}
-
-.btn-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.copy-btn,
-.regen-btn {
-  background: #111827;
-  color: #e5e7eb;
-  border-radius: 999px;
-  padding: 5px 10px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-}
-
-body:not(.dark-theme) .copy-btn,
-body:not(.dark-theme) .regen-btn {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-/* ---------- Status ---------- */
-
-.status-text {
-  margin-top: 6px;
-  font-size: 0.8rem;
-  color: #9ca3af;
-}
-
-.status-text.error {
-  color: #f97373;
-}
-
-/* ---------- Photos ---------- */
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.photo-thumb {
-  width: 100%;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-}
-
-/* ---------- Photo editor ---------- */
-
-.photo-preview-wrapper {
-  margin-top: 8px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at top left, #1f2937, #020617);
-}
-
-.photo-preview-wrapper img {
-  max-width: 100%;
-  display: block;
-}
-
-.slider-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.slider-group label {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-}
-
-.slider-group input[type="range"] {
-  flex: 1;
-}
-
-.small-note {
-  font-size: 0.75rem;
-  margin-top: 4px;
-  color: #9ca3af;
-}
-
-/* ---------- Floating Tools ---------- */
-
-.floating-tools {
-  position: fixed;
-  top: 96px;
-  right: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 60;
-}
-
-.tool-button {
-  background: #020617;
-  color: #e5e7eb;
-  border-radius: 999px;
-  padding: 5px 12px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  font-size: 0.8rem;
-  text-align: left;
-}
-
-body:not(.dark-theme) .tool-button {
-  background: #ffffff;
-  color: #111827;
-}
-
-.tool-button:hover {
-  border-color: #f97316;
-}
-
-/* ---------- Modals ---------- */
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal.hidden {
-  display: none;
-}
-
-.modal-content {
-  width: min(480px, 92%);
-  max-height: 90vh;
-  overflow: auto;
-  background: #020617;
-  color: #e5e7eb;
-  border-radius: 14px;
-  padding: 16px 18px 18px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
-}
-
-body:not(.dark-theme) .modal-content {
-  background: #ffffff;
-  color: #111827;
-}
-
-.modal-content h2 {
-  margin: 0 0 8px;
-  font-size: 1.1rem;
-}
-
-.modal-content h3 {
-  margin: 12px 0 6px;
-  font-size: 0.95rem;
-}
-
-.modal-content p {
-  margin: 0 0 8px;
-  font-size: 0.85rem;
-  color: #9ca3af;
-}
-
-body:not(.dark-theme) .modal-content p {
-  color: #6b7280;
-}
-
-.modal-close {
-  float: right;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-/* --- Simple calculator inside Payment Calculator modal --- */
-.simple-calc {
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.95);
-}
-
-body:not(.dark-theme) .simple-calc {
-  background: #f9fafb;
-}
-
-.simple-calc-display {
-  height: 42px;
-  border-radius: 8px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  font-size: 1.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  background: #020617;
-  color: #f9fafb;
-}
-
-body:not(.dark-theme) .simple-calc-display {
-  background: #ffffff;
-  color: #111827;
-}
-
-.simple-calc-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.simple-calc-grid button {
-  padding: 8px 0;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  background: #111827;
-  color: #e5e7eb;
-}
-
-body:not(.dark-theme) .simple-calc-grid button {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-.simple-calc.hidden {
-  display: none;
-}
-
-/* ---------- Responsive ---------- */
-
-@media (max-width: 1024px) {
-  .layout {
-    grid-template-columns: 1fr;
-    padding: 16px 16px 24px 16px;
-  }
-
-  .column-left,
-  .column-middle,
-  .column-right {
-    grid-column: 1 / span 1;
-  }
-
-  .floating-tools {
-    top: auto;
-    bottom: 16px;
-    right: 16px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .column-middle {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .summary-box {
-    grid-column: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-/* ================================
-   CREATIVE STUDIO – OVERLAY + SHELL
-   ================================ */
-
-.creative-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.creative-overlay.hidden {
-  display: none;
-}
-
-.creative-modal {
-  background: radial-gradient(circle at top left, #111827 0%, #020617 45%, #000000 100%);
-  color: #e5e7eb;
-  width: min(1200px, 96vw);
-  max-height: 92vh;
-  border-radius: 18px;
-  border: 1px solid rgba(248, 113, 113, 0.35); /* soft red edge */
-  box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Header */
-
-.creative-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.creative-header h2 {
-  font-size: 1.1rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #f9fafb;
-}
-
-/* Close button (X) */
-
-.modal-close-btn {
-  border: none;
-  background: transparent;
-  color: #9ca3af;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 999px;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
-}
-
-.modal-close-btn:hover {
-  background: rgba(248, 113, 113, 0.12);
-  color: #fecaca;
-  transform: translateY(-1px);
-}
-
-/* Top bar (preset + actions) */
-
-.creative-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 20px;
-  border-bottom: 1px solid rgba(30, 64, 175, 0.45);
-  background: linear-gradient(
-    90deg,
-    rgba(15, 23, 42, 0.95),
-    rgba(30, 64, 175, 0.6),
-    rgba(15, 23, 42, 0.95)
-  );
-}
-
-.preset-label {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.8rem;
-  color: #e5e7eb;
-  gap: 4px;
-}
-
-.preset-label select {
-  background: rgba(15, 23, 42, 0.95);
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  color: #e5e7eb;
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.preset-label select:focus {
-  border-color: rgba(248, 113, 113, 0.9);
-  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.5);
-}
-
-.creative-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.creative-actions button {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
-}
-
-.creative-actions button:hover {
-  background: rgba(30, 64, 175, 0.8);
-  border-color: rgba(191, 219, 254, 0.9);
-  transform: translateY(-1px);
-}
-
-.creative-actions #creativeExportPng {
-  border-color: rgba(248, 113, 113, 0.9);
-  background: linear-gradient(
-    135deg,
-    rgba(248, 113, 113, 0.95),
-    rgba(239, 68, 68, 1)
-  );
-  color: #111827;
-  font-weight: 600;
-}
-
-.creative-actions #creativeExportPng:hover {
-  border-color: #fecaca;
-  background: linear-gradient(
-    135deg,
-    rgba(252, 165, 165, 1),
-    rgba(248, 113, 113, 1)
-  );
-}
-
 /* =========================================================
    FORCE-HIDE ANYTHING WITH .hidden
    ========================================================= */
@@ -684,6 +8,8 @@ body:not(.dark-theme) .simple-calc-grid button {
 /* =========================================================
    CREATIVE STUDIO OVERLAY LAYER
    ========================================================= */
+
+/* Fullscreen dark overlay */
 .creative-overlay {
   position: fixed;
   inset: 0; /* top:0; right:0; bottom:0; left:0 */
@@ -747,15 +73,28 @@ body:not(.dark-theme) .simple-calc-grid button {
   font-size: 14px;
 }
 
+.preset-label select {
+  background: #050711;
+  border-radius: 6px;
+  border: 1px solid #33334d;
+  color: #ffffff;
+  padding: 4px 8px;
+}
+
 .creative-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .creative-actions button {
-  margin-left: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #33334d;
+  background: #101323;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
 }
 
 /* Main 3-column layout inside modal */
@@ -776,6 +115,10 @@ body:not(.dark-theme) .simple-calc-grid button {
   font-size: 14px;
 }
 
+.creative-tools h3 {
+  margin: 0 0 8px;
+}
+
 .tool-btn {
   width: 100%;
   padding: 6px 8px;
@@ -785,6 +128,7 @@ body:not(.dark-theme) .simple-calc-grid button {
   color: #fff;
   cursor: pointer;
   text-align: left;
+  font-size: 13px;
 }
 
 .tool-btn-active {
@@ -840,18 +184,37 @@ body:not(.dark-theme) .simple-calc-grid button {
 .prop-group input,
 .prop-group select {
   width: 100%;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #33334d;
+  background: #050711;
+  color: #ffffff;
+  font-size: 13px;
 }
 
 /* Make overlay layout stack on smaller screens */
 @media (max-width: 900px) {
+  .creative-modal {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
   .creative-body {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    overflow: auto;
   }
 
   .creative-tools,
   .creative-properties {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .tool-btn {
+    width: auto;
   }
 
   .creative-top-bar {
@@ -862,11 +225,6 @@ body:not(.dark-theme) .simple-calc-grid button {
   .creative-actions {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .creative-actions button {
-    flex: 0 0 auto;
+    flex-wrap: wrap;
   }
 }
-
-
