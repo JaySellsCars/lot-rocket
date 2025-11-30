@@ -1,23 +1,428 @@
 /* =========================================================
-   FORCE-HIDE ANYTHING WITH .hidden
+   GLOBAL BASE
    ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+/* Dark theme is the default state the JS applies */
+body.dark-theme {
+  background: radial-gradient(circle at top, #111633 0, #050711 60%);
+  color: #f5f5ff;
+}
+
+body:not(.dark-theme) {
+  background: #f4f4f7;
+  color: #111;
+}
+
+/* Links (just in case) */
+a {
+  color: #ff4b2b;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 7, 17, 0.95);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.branding h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.branding p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* Theme switcher */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.theme-switch input {
+  display: none;
+}
+
+.theme-switch .slider {
+  width: 50px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #444;
+  position: relative;
+  margin: 0 4px;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+}
+
+.theme-switch .slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+/* When unchecked (light), move dot right.
+   JS sets checked state on load. */
+#themeToggle:not(:checked) + .slider::before,
+.theme-switch input:not(:checked) + .slider::before {
+  transform: translateX(24px);
+}
+
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
+
+.layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+  display: grid;
+  grid-template-columns: 1.15fr 1.25fr 1.1fr;
+  gap: 16px;
+}
+
+.column h2 {
+  margin-top: 0;
+}
+
+/* Cards / boxes */
+.summary-box,
+.platform-card,
+.lab-card,
+.modal-content {
+  background: rgba(5, 7, 17, 0.96);
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+
+body:not(.dark-theme) .summary-box,
+body:not(.dark-theme) .platform-card,
+body:not(.dark-theme) .lab-card,
+body:not(.dark-theme) .modal-content {
+  background: #ffffff;
+  border-color: #ddd;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.summary-box h3,
+.platform-card h3,
+.lab-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(4, 6, 18, 0.95);
+  color: #f5f5ff;
+  font-size: 13px;
+}
+
+body:not(.dark-theme) input[type="text"],
+body:not(.dark-theme) input[type="number"],
+body:not(.dark-theme) input[type="date"],
+body:not(.dark-theme) textarea,
+body:not(.dark-theme) select {
+  background: #fafafa;
+  border-color: #ccc;
+  color: #111;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+label input,
+label textarea,
+label select {
+  margin-top: 4px;
+}
+
+/* Textareas */
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* small note text */
+.small-note {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.primary-btn {
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  border-radius: 999px;
+  border: none;
+  color: #fff;
+  padding: 8px 18px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primary-btn:hover {
+  filter: brightness(1.05);
+}
+
+.secondary-btn {
+  background: transparent;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 14px;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.copy-btn,
+.regen-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.copy-btn.copied {
+  border-color: #25d366;
+  color: #25d366;
+}
+
+.copy-btn.empty {
+  border-color: #ff4b2b;
+  color: #ff4b2b;
+}
+
+/* Status text under Boost button */
+.status-text {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.status-text.error {
+  color: #ff6b6b;
+}
+
+/* =========================================================
+   PHOTOS GRID (STEP 1)
+   ========================================================= */
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.photo-thumb {
+  width: 100%;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* =========================================================
+   FLOATING TOOLBAR
+   ========================================================= */
+
+.floating-tools {
+  position: fixed;
+  right: 16px;
+  top: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 40;
+}
+
+.tool-button {
+  background: #0a0d1c;
+  color: #ffffff;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tool-button:hover {
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  border-color: transparent;
+}
+
+/* =========================================================
+   PHOTO QUICK TUNER
+   ========================================================= */
+
+.photo-preview-wrapper {
+  margin: 10px 0;
+  min-height: 140px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(4, 6, 18, 0.9);
+}
+
+#photoPreview {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.slider-group label {
+  font-size: 12px;
+}
+
+.slider-group input[type="range"] {
+  width: 100%;
+}
+
+/* =========================================================
+   MODALS (TOOLS)
+   ========================================================= */
+
+/* .hidden is applied in JS to hide modals/overlay */
 .hidden {
   display: none !important;
 }
 
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+}
+
+.modal-content {
+  max-width: 640px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* Simple calculator styling */
+.simple-calc {
+  margin-top: 8px;
+}
+
+.simple-calc-display {
+  background: #050711;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: right;
+  font-size: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.simple-calc-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.simple-calc-grid button {
+  padding: 8px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #101323;
+  color: #fff;
+  cursor: pointer;
+}
+
 /* =========================================================
-   CREATIVE STUDIO OVERLAY LAYER
+   CREATIVE STUDIO OVERLAY
    ========================================================= */
 
 /* Fullscreen dark overlay */
 .creative-overlay {
   position: fixed;
-  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  inset: 0;
   background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999; /* above everything else */
+  z-index: 9999;
 }
 
 /* The actual modal box */
@@ -81,6 +486,7 @@
   padding: 4px 8px;
 }
 
+/* Buttons in header */
 .creative-actions {
   display: flex;
   align-items: center;
@@ -136,7 +542,7 @@
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 
-/* Hidden file input */
+/* Hidden file input for image upload */
 .hidden-input {
   display: none;
 }
@@ -192,7 +598,24 @@
   font-size: 13px;
 }
 
-/* Make overlay layout stack on smaller screens */
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .floating-tools {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 0 16px 24px;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 900px) {
   .creative-modal {
     width: 100vw;
