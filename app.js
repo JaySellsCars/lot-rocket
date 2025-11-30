@@ -1,4 +1,4 @@
-// app.js – Lot Rocket backend with AI tools
+// app.js – Lot Rocket backend with AI tools (fixed)
 
 require("dotenv").config();
 const express = require("express");
@@ -59,7 +59,6 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     if (!src) return;
     src = src.trim();
 
-    // crude filter
     const lower = src.toLowerCase();
     if (
       lower.includes("logo") ||
@@ -70,7 +69,6 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
       return;
     }
 
-    // make absolute
     try {
       const abs = new URL(src, base).href;
       urls.add(abs);
@@ -84,19 +82,28 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 
 // ---------------- Helper: call GPT for structured social kit ----------------
 
-async function buildSocialKit({
-  pageInfo,
-  labelOverride,
-  priceOverride,
-  photos,
-}) {
+async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos }) {
   const { title, metaDesc, visibleText } = pageInfo;
 
   const system = `
 You are Lot Rocket, an elite automotive social media copywriter for car salespeople.
-You must produce high-converting content for multiple platforms.
-Return JSON only, no extra text.
-  `.trim();
+You produce a high-converting, multi-platform social media kit as a single JSON object.
+Return ONLY valid JSON, no extra text, no backticks.
+The JSON must use these keys exactly:
+- label                (vehicle title)
+- price                (price / offer)
+- facebook
+- instagram
+- tiktok
+- linkedin
+- twitter
+- text                 (generic text blurb)
+- marketplace
+- hashtags
+- selfieScript
+- videoPlan
+- canvaIdea
+`.trim();
 
   const user = `
 Dealer page data:
@@ -109,73 +116,46 @@ Optional custom label: ${labelOverride || "none"}
 Optional custom price: ${priceOverride || "none"}
 
 If label/price overrides are provided, prefer those in the copy.
-Create persuasive, trustworthy, and high-energy copy.
+Create persuasive, trustworthy, high-energy copy that feels like a real salesperson.
 Include emojis where appropriate but don't overdo it.
-  `.trim();
+Remember: output MUST be strict JSON for the keys listed above.
+`.trim();
 
   const response = await client.responses.create({
     model: "gpt-4.1-mini",
     input: [
-      {
-        role: "system",
-        content: system,
-      },
-      {
-        role: "user",
-        content: user,
-      },
+      { role: "system", content: system },
+      { role: "user", content: user },
     ],
-    
-      type: "json_schema",
-      json_schema: {
-        name: "lot_rocket_social_kit",
-        schema: {
-          type: "object",
-          properties: {
-            label: { type: "string" },
-            price: { type: "string" },
-            facebook: { type: "string" },
-            instagram: { type: "string" },
-            tiktok: { type: "string" },
-            linkedin: { type: "string" },
-            twitter: { type: "string" },
-            text: { type: "string" },
-            marketplace: { type: "string" },
-            hashtags: { type: "string" },
-            selfieScript: { type: "string" },
-            videoPlan: { type: "string" },
-            canvaIdea: { type: "string" },
-          },
-          required: [
-            "label",
-            "price",
-            "facebook",
-            "instagram",
-            "tiktok",
-            "linkedin",
-            "twitter",
-            "text",
-            "marketplace",
-            "hashtags",
-            "selfieScript",
-            "videoPlan",
-            "canvaIdea",
-          ],
-          additionalProperties: false,
-        },
-      },
-    },
   });
 
-  const toolContent = response.output[0]?.content[0]?.json || {};
-  const kit = toolContent || {};
+  const raw = response.output?.[0]?.content?.[0]?.text || "{}";
 
-  // Prefer overrides if present
-  if (labelOverride) kit.label = labelOverride;
-  if (priceOverride) kit.price = priceOverride;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    console.error("Failed to parse social kit JSON:", e, raw.slice(0, 200));
+    parsed = {};
+  }
 
-  // attach photos we scraped
-  kit.photos = photos || [];
+  // Map to the shape the frontend expects
+  const kit = {
+    vehicleLabel: labelOverride || parsed.label || "",
+    priceInfo: priceOverride || parsed.price || "",
+    facebook: parsed.facebook || "",
+    instagram: parsed.instagram || "",
+    tiktok: parsed.tiktok || "",
+    linkedin: parsed.linkedin || "",
+    twitter: parsed.twitter || "",
+    text: parsed.text || "",
+    marketplace: parsed.marketplace || "",
+    hashtags: parsed.hashtags || "",
+    selfieScript: parsed.selfieScript || "",
+    shotPlan: parsed.videoPlan || "",
+    designIdea: parsed.canvaIdea || "",
+    photos: photos || [],
+  };
 
   return kit;
 }
@@ -210,10 +190,10 @@ app.post("/api/social-kit", async (req, res) => {
   }
 });
 
-// New content for a single platform
+// New content for a single platform (regen buttons)
 app.post("/api/new-post", async (req, res) => {
   try {
-    const { url, platform, labelOverride, priceOverride } = req.body;
+    const { url, platform, label, price, labelOverride, priceOverride } = req.body;
     if (!url || !platform) {
       return res.status(400).json({ error: "Missing url or platform" });
     }
@@ -223,8 +203,8 @@ app.post("/api/new-post", async (req, res) => {
 
     const system = `
 You are Lot Rocket, an elite automotive copywriter.
-Return ONLY the copy for the requested platform, no labels, no JSON.
-  `.trim();
+Return ONLY the copy for the requested platform, no labels, no JSON, no explanation.
+`.trim();
 
     const user = `
 Dealer page:
@@ -234,12 +214,12 @@ TEXT:
 ${visibleText.slice(0, 3000)}
 
 Platform: ${platform}
-Optional custom label: ${labelOverride || "none"}
-Optional custom price: ${priceOverride || "none"}
+Optional custom label: ${label || labelOverride || "none"}
+Optional custom price: ${price || priceOverride || "none"}
 
-Write a single best-performing piece of content for this platform.
-Include call-to-action to DM or message the salesperson.
-    `.trim();
+Write ONE high-performing piece of content for this platform.
+Include a call-to-action to DM or message the salesperson.
+`.trim();
 
     const completion = await client.responses.create({
       model: "gpt-4.1-mini",
@@ -249,37 +229,66 @@ Include call-to-action to DM or message the salesperson.
       ],
     });
 
-    const content = completion.output[0]?.content[0]?.text || "";
-    res.json({ content });
+    const text = completion.output?.[0]?.content?.[0]?.text || "";
+    res.json({ text });
   } catch (err) {
     console.error("new-post error", err);
     res.status(500).json({ error: "Failed to regenerate post" });
   }
 });
 
-// New video script for Creative Lab quick video
+// New video script for:
+// - kind: "selfie" (Step 2 selfie script regen, uses URL)
+// - kind: "idea"   (Creative Lab, uses form inputs)
 app.post("/api/new-script", async (req, res) => {
   try {
-    const { vehicle, hook, aspect, style, length } = req.body;
+    const { kind, url, vehicle, hook, style, length } = req.body;
 
-    const system = `
+    let system;
+    let user;
+
+    if (kind === "selfie" && url) {
+      // Selfie walkaround script based on dealer page
+      const pageInfo = await scrapePage(url);
+      const { title, metaDesc, visibleText } = pageInfo;
+
+      system = `
+You are Lot Rocket, an expert vertical video script writer for car salespeople.
+Write natural sounding, selfie-style walkaround scripts.
+`.trim();
+
+      user = `
+Dealer page:
+TITLE: ${title}
+META: ${metaDesc}
+TEXT:
+${visibleText.slice(0, 2500)}
+
+Write a 30–60 second selfie video script the salesperson can record.
+Use short, spoken lines and a clear CTA to DM or message.
+Return plain text only.
+`.trim();
+    } else {
+      // Creative Lab idea mode
+      system = `
 You are Lot Rocket, an expert short-form car video script writer.
 Write scripts that feel natural for Reels / TikTok / Shorts.
-  `.trim();
+`.trim();
 
-    const user = `
-Vehicle / Offer: ${vehicle}
+      user = `
+Vehicle / Offer: ${vehicle || "(not specified)"}
 Hook (optional): ${hook || "none"}
-Aspect: ${aspect || "9:16"}
 Style: ${style || "hype"}
 Length: about ${length || 30} seconds
 
 Write:
-- A hook line
+- A grabber hook
 - 3–6 short bullet points (spoken lines)
-- A closing CTA that invites viewers to DM or message the salesperson
+- A closing CTA inviting viewers to DM or message the salesperson
+
 Return plain text only.
-  `.trim();
+`.trim();
+    }
 
     const completion = await client.responses.create({
       model: "gpt-4.1-mini",
@@ -289,7 +298,7 @@ Return plain text only.
       ],
     });
 
-    const script = completion.output[0]?.content[0]?.text || "";
+    const script = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ script });
   } catch (err) {
     console.error("new-script error", err);
@@ -297,21 +306,62 @@ Return plain text only.
   }
 });
 
-// Canva-style layout idea
+// Shot plan from URL (used by regenShotPlan button)
+app.post("/api/video-from-photos", async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: "Missing url" });
+
+    const pageInfo = await scrapePage(url);
+    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, url);
+
+    const system = `
+You are Lot Rocket, a video director for car salespeople.
+You design shot lists / storyboards for short vertical videos.
+`.trim();
+
+    const user = `
+Dealer page title: ${pageInfo.title}
+Meta: ${pageInfo.metaDesc}
+
+You have ${photos.length} exterior/interior still photos.
+Create a shot plan for a 30–45 second vertical video that uses these photos
+with text overlays and pacing notes.
+
+Return plain text with bullet points or numbered steps.
+`.trim();
+
+    const completion = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const plan = completion.output?.[0]?.content?.[0]?.text || "";
+    res.json({ plan });
+  } catch (err) {
+    console.error("video-from-photos error", err);
+    res.status(500).json({ error: "Failed to generate shot plan" });
+  }
+});
+
+// Canva-style layout idea (used by Creative Lab)
 app.post("/api/design-idea", async (req, res) => {
   try {
-    const { creativeType, headline, cta, vibe } = req.body;
+    const { type, creativeType, headline, cta, vibe, label } = req.body;
 
     const system = `
 You are Lot Rocket, a senior marketing designer.
 You output clear bullet-point layout blueprints for Canva or similar tools.
-  `.trim();
+`.trim();
 
     const user = `
-Creative type: ${creativeType}
-Headline: ${headline || "(you decide a strong one)"}
+Creative type: ${creativeType || type || "story / feed post"}
+Vehicle / headline context: ${label || headline || "(you decide a strong one)"}
 CTA: ${cta || "(you decide a strong one)"}
-Brand vibe: ${vibe || "bold, trustworthy"}
+Brand vibe: ${vibe || "bold, trustworthy, premium"}
 
 Describe:
 - Overall layout (top / middle / bottom)
@@ -321,7 +371,7 @@ Describe:
 - Suggested color / style notes
 
 Return plain text in bullet format.
-  `.trim();
+`.trim();
 
     const completion = await client.responses.create({
       model: "gpt-4.1-mini",
@@ -331,7 +381,7 @@ Return plain text in bullet format.
       ],
     });
 
-    const idea = completion.output[0]?.content[0]?.text || "";
+    const idea = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ idea });
   } catch (err) {
     console.error("design-idea error", err);
@@ -347,7 +397,7 @@ app.post("/api/objection-coach", async (req, res) => {
     const system = `
 You are Lot Rocket's Objection Coach, helping a car salesperson respond to customer objections.
 Be empathetic, honest, and sales-savvy.
-  `.trim();
+`.trim();
 
     const user = `
 Conversation history (if any):
@@ -356,8 +406,8 @@ ${history || "(none)"}
 New customer objection:
 ${objection}
 
-Write a suggested response the salesperson can send, plus 1-2 coaching tips in brackets.
-  `.trim();
+Write a suggested response the salesperson can send, plus 1–2 coaching tips in [brackets] at the end.
+`.trim();
 
     const completion = await client.responses.create({
       model: "gpt-4.1-mini",
@@ -367,15 +417,15 @@ Write a suggested response the salesperson can send, plus 1-2 coaching tips in b
       ],
     });
 
-    const reply = completion.output[0]?.content[0]?.text || "";
-    res.json({ reply });
+    const answer = completion.output?.[0]?.content?.[0]?.text || "";
+    res.json({ answer });
   } catch (err) {
     console.error("objection-coach error", err);
     res.status(500).json({ error: "Failed to coach objection" });
   }
 });
 
-// Payment Estimator (math, no AI needed)
+// Payment Estimator (math, no AI)
 app.post("/api/payment-helper", (req, res) => {
   try {
     const price = Number(req.body.price || 0);
@@ -413,11 +463,11 @@ app.post("/api/payment-helper", (req, res) => {
   }
 });
 
-// Income Estimator (math, no AI needed)
+// Income Estimator (math, no AI)
 app.post("/api/income-helper", (req, res) => {
   try {
     const payment = Number(req.body.payment || 0);
-    const dti = Number(req.body.dti || 0); // percent of income
+    const dti = Number(req.body.dti || 0);
 
     if (!payment || !dti) {
       return res
@@ -436,7 +486,7 @@ the customer would need roughly:
 - ~${incomeYearly.toFixed(0)} per year
 
 This is a very rough guideline, not financial advice.
-    `.trim();
+`.trim();
 
     res.json({ result });
   } catch (err) {
@@ -445,55 +495,119 @@ This is a very rough guideline, not financial advice.
   }
 });
 
-// Message Helper: workflow, message, ask, car
+// Message Helper: workflow, message, ask, car, image-brief, video-brief
 app.post("/api/message-helper", async (req, res) => {
   try {
-    const { mode, context, tone, channel } = req.body;
+    const {
+      mode,
+      prompt,
+      type,
+      goal,
+      details,
+      question,
+      tone,
+      channel,
+    } = req.body;
 
     let system;
+    let user;
+
     switch (mode) {
       case "workflow":
         system = `
 You are Lot Rocket's Workflow Architect.
 You design step-by-step workflows and playbooks for car salespeople.
 Return clear numbered steps and optional templates.
-        `.trim();
+`.trim();
+
+        user = `
+Situation:
+${prompt || "(none)"}
+`.trim();
         break;
+
       case "message":
         system = `
 You are Lot Rocket's AI Message Builder.
 Write ready-to-send messages for car shoppers via text, email, or social DM.
-        `.trim();
+`.trim();
+
+        user = `
+Message type: ${type || "(not specified)"}
+Goal: ${goal || "(not specified)"}
+Details / context:
+${details || "(none)"}
+
+Tone: ${tone || "friendly, professional"}
+Channel: ${channel || "text / DM"}
+`.trim();
         break;
+
       case "ask":
         system = `
-You are Lot Rocket, a helpful sales and business assistant.
+You are Lot Rocket, a helpful sales and business assistant for car salespeople.
 Answer clearly and practically. Use examples where helpful.
-        `.trim();
+`.trim();
+
+        user = `
+Question:
+${question || prompt || "(none)"}
+`.trim();
         break;
+
       case "car":
         system = `
 You are Lot Rocket's automotive product expert.
 Explain trims, features, comparisons, and recommendations like a pro salesperson.
 Avoid made-up technical specs; keep it realistic.
-        `.trim();
+`.trim();
+
+        user = `
+Car-related question:
+${question || prompt || "(none)"}
+`.trim();
         break;
+
+      case "image-brief":
+        system = `
+You are Lot Rocket's image prompt helper.
+You write detailed prompts for AI image generators to create car marketing images.
+`.trim();
+
+        user = `
+Raw idea from user:
+${prompt || "(none)"}
+
+Write a single, detailed prompt suitable for an AI image generator
+(e.g., composition, lighting, angle, style, background, mood).
+`.trim();
+        break;
+
+      case "video-brief":
+        system = `
+You are Lot Rocket's video brief helper.
+You write detailed briefs for AI video tools to create car marketing videos.
+`.trim();
+
+        user = `
+Raw idea from user:
+${prompt || "(none)"}
+
+Write a detailed video brief: scenes, pacing, visual style, on-screen text,
+and music/energy suggestions.
+`.trim();
+        break;
+
       default:
         system = `
 You are Lot Rocket, a helpful assistant for car salespeople.
-        `.trim();
+`.trim();
+
+        user = `
+Context:
+${prompt || "(none)"}
+`.trim();
     }
-
-    const extra = [];
-    if (tone) extra.push(`Tone: ${tone}`);
-    if (channel) extra.push(`Channel: ${channel}`);
-
-    const user = `
-Context / Question:
-${context || "(none)"}
-
-${extra.join("\n")}
-    `.trim();
 
     const completion = await client.responses.create({
       model: "gpt-4.1-mini",
@@ -503,8 +617,8 @@ ${extra.join("\n")}
       ],
     });
 
-    const result = completion.output[0]?.content[0]?.text || "";
-    res.json({ result });
+    const text = completion.output?.[0]?.content?.[0]?.text || "";
+    res.json({ text });
   } catch (err) {
     console.error("message-helper error", err);
     res.status(500).json({ error: "Failed to generate message" });
