@@ -120,9 +120,15 @@ body.light-theme .branding p {
   margin: 16px auto 40px;
   padding: 0 16px 40px;
   display: grid;
-  grid-template-columns: 1.15fr 1.1fr 1.1fr;
   gap: 24px;
+
+  /* 2 columns: Step 1 + Step 2 on top, Step 3 full width below */
+  grid-template-columns: 1.1fr 1.1fr;
+  grid-template-areas:
+    "left middle"
+    "right right";
 }
+
 
 /* Card look used all over */
 .summary-box,
