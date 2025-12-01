@@ -1,4 +1,4 @@
-// app.js – Lot Rocket backend with AI tools (normalized URLs)
+// app.js – Lot Rocket backend with AI tools (normalized URLs + better error handling)
 
 require("dotenv").config();
 const express = require("express");
@@ -40,6 +40,36 @@ function normalizeUrl(raw) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Helpers for consistent AI error handling
+ */
+function isRateLimitError(err) {
+  const msg = (err && err.message) ? err.message.toLowerCase() : "";
+  if (msg.includes("rate limit")) return true;
+  if (err && err.code === "rate_limit_exceeded") return true;
+  if (err && err.error && err.error.type === "rate_limit_exceeded") return true;
+  if (err && err.status === 429) return true;
+  if (err && err.response && err.response.status === 429) return true;
+  return false;
+}
+
+function sendAIError(res, err, friendlyMessage) {
+  console.error(friendlyMessage, err);
+
+  if (isRateLimitError(err)) {
+    return res.status(429).json({
+      error: "rate_limit",
+      message:
+        "Lot Rocket hit the AI limit for a moment. Wait 20–30 seconds and try again.",
+    });
+  }
+
+  return res.status(500).json({
+    error: "server_error",
+    message: friendlyMessage,
+  });
 }
 
 // ---------------- Helper: scrape page text ----------------
@@ -104,7 +134,12 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 
 // ---------------- Helper: call GPT for structured social kit ----------------
 
-async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos }) {
+async function buildSocialKit({
+  pageInfo,
+  labelOverride,
+  priceOverride,
+  photos,
+}) {
   const { title, metaDesc, visibleText } = pageInfo;
 
   const system = `
@@ -144,7 +179,7 @@ Remember: output MUST be strict JSON for the keys listed above.
 `.trim();
 
   const response = await client.responses.create({
-    model: "gpt-4.1-mini",
+    model: "gpt-4o-mini",
     input: [
       { role: "system", content: system },
       { role: "user", content: user },
@@ -213,8 +248,7 @@ app.post("/api/social-kit", async (req, res) => {
 
     res.json(kit);
   } catch (err) {
-    console.error("social-kit error", err);
-    res.status(500).json({ error: "Failed to build social kit" });
+    return sendAIError(res, err, "Failed to build social kit.");
   }
 });
 
@@ -256,7 +290,7 @@ Include a call-to-action to DM or message the salesperson.
 `.trim();
 
     const completion = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -266,8 +300,7 @@ Include a call-to-action to DM or message the salesperson.
     const text = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ text });
   } catch (err) {
-    console.error("new-post error", err);
-    res.status(500).json({ error: "Failed to regenerate post" });
+    return sendAIError(res, err, "Failed to regenerate post.");
   }
 });
 
@@ -282,7 +315,9 @@ app.post("/api/new-script", async (req, res) => {
     if (kind === "selfie") {
       const pageUrl = normalizeUrl(url);
       if (!pageUrl) {
-        return res.status(400).json({ error: "Invalid or missing URL for selfie script." });
+        return res
+          .status(400)
+          .json({ error: "Invalid or missing URL for selfie script." });
       }
 
       const pageInfo = await scrapePage(pageUrl);
@@ -327,7 +362,7 @@ Return plain text only.
     }
 
     const completion = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -337,8 +372,7 @@ Return plain text only.
     const script = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ script });
   } catch (err) {
-    console.error("new-script error", err);
-    res.status(500).json({ error: "Failed to create script" });
+    return sendAIError(res, err, "Failed to create script.");
   }
 });
 
@@ -370,7 +404,7 @@ Return plain text with bullet points or numbered steps.
 `.trim();
 
     const completion = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -380,8 +414,7 @@ Return plain text with bullet points or numbered steps.
     const plan = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ plan });
   } catch (err) {
-    console.error("video-from-photos error", err);
-    res.status(500).json({ error: "Failed to generate shot plan" });
+    return sendAIError(res, err, "Failed to generate shot plan.");
   }
 });
 
@@ -412,7 +445,7 @@ Return plain text in bullet format.
 `.trim();
 
     const completion = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -422,8 +455,7 @@ Return plain text in bullet format.
     const idea = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ idea });
   } catch (err) {
-    console.error("design-idea error", err);
-    res.status(500).json({ error: "Failed to generate design idea" });
+    return sendAIError(res, err, "Failed to generate design idea.");
   }
 });
 
@@ -448,7 +480,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 `.trim();
 
     const completion = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -456,34 +488,11 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
     });
 
     const answer = completion.output?.[0]?.content?.[0]?.text || "";
-    return res.json({ answer });
-
+    res.json({ answer });
   } catch (err) {
-    console.error("=== OBJECTION COACH ERROR START ===");
-    console.error(JSON.stringify(err, null, 2));
-    console.error("=== OBJECTION COACH ERROR END ===");
-
-    const msg = err?.message || "";
-    if (
-      msg.includes("rate limit") ||
-      msg.includes("Rate limit reached") ||
-      err?.code === "rate_limit_exceeded" ||
-      err?.error?.type === "rate_limit_exceeded"
-    ) {
-      return res.status(429).json({
-        error: "rate_limit",
-        message:
-          "Lot Rocket hit the AI limit for a moment. Wait ~30 seconds or try again later.",
-      });
-    }
-
-    return res
-      .status(500)
-      .json({ error: "server_error", message: "Failed to coach objection." });
+    return sendAIError(res, err, "Failed to coach objection.");
   }
 });
-
-
 
 // Payment Estimator (math only)
 app.post("/api/payment-helper", (req, res) => {
@@ -670,7 +679,7 @@ ${prompt || "(none)"}
     }
 
     const completion = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
       input: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -680,11 +689,7 @@ ${prompt || "(none)"}
     const text = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ text });
   } catch (err) {
-    console.error("message-helper error", err);
-    res.status(500).json({
-      error: "Failed to generate message",
-      detail: err.message || String(err),
-    });
+    return sendAIError(res, err, "Failed to generate message.");
   }
 });
 
