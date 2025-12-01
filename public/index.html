@@ -1,519 +1,835 @@
-/* GLOBAL BASE ------------------------------------------------------- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lot Rocket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="branding">
+      <h1>🚀 Lot Rocket</h1>
+      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+    </div>
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-}
+    <div class="header-controls">
+      <label class="theme-switch">
+        <span>Dark</span>
+        <input type="checkbox" id="themeToggle" checked />
+        <span class="slider"></span>
+        <span>Light</span>
+      </label>
+    </div>
+  </header>
 
-/* Dark theme is the default state on load */
-body {
-  background: radial-gradient(circle at top, #111636 0%, #050711 60%);
-  color: #f5f5ff;
-}
+  <!-- MAIN LAYOUT -->
+  <main class="layout">
+    <!-- STEP 1 – Dealer URL Scraper (LEFT) -->
+    <section class="column-left column">
+      <h2>Step 1 – Dealer URL Scraper</h2>
 
-/* LIGHT THEME TOGGLE OVERRIDE */
-body:not(.dark-theme) {
-  background: #f4f4f8;
-  color: #14121e;
-}
+      <div class="summary-box">
+        <h3>Vehicle Details</h3>
 
-a {
-  color: #ff82b2;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
+        <label>
+          Dealer Vehicle URL
+          <input
+            type="text"
+            id="vehicleUrl"
+            placeholder="Paste full dealer listing URL here..."
+          />
+        </label>
 
-/* HEADER ------------------------------------------------------------- */
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    90deg,
-    rgba(15, 16, 40, 0.98),
-    rgba(23, 27, 64, 0.98)
-  );
-}
+        <label>
+          Vehicle Label (optional override)
+          <input
+            type="text"
+            id="vehicleLabel"
+            placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
+          />
+        </label>
 
-.branding h1 {
-  margin: 0 0 4px;
-  font-size: 20px;
-}
-.branding p {
-  margin: 0;
-  font-size: 13px;
-  opacity: 0.8;
-}
+        <label>
+          Price / Offer (optional override)
+          <input
+            type="text"
+            id="priceInfo"
+            placeholder="Example: $699/mo or $47,995 + tax"
+          />
+        </label>
 
-/* Theme switch style */
-.theme-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #ddd;
-}
-.theme-switch input {
-  display: none;
-}
+        <p class="small-note">
+          Lot Rocket will scrape the page and clean up the title, description, and photos.
+        </p>
 
-.slider {
-  position: relative;
-  width: 48px;
-  height: 24px;
-  border-radius: 99px;
-  border: 1px solid #444;
-  background: linear-gradient(90deg, #0e1724, #262b44);
-  cursor: pointer;
-}
-.slider::before {
-  content: "";
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ff4b2b;
-  transition: transform 0.24s;
-}
-#themeToggle:not(:checked) + .slider::before {
-  transform: translateX(24px);
-}
+        <div class="summary-box" style="margin-top: 8px;">
+          <h3>Summary Snapshot</h3>
+          <p>Vehicle: <span id="summaryLabel">—</span></p>
+          <p>Price: <span id="summaryPrice">—</span></p>
+        </div>
 
-/* MAIN LAYOUT -------------------------------------------------------- */
-.layout {
-  max-width: 1400px;
-  margin: 16px auto 40px;
-  padding: 16px 24px 32px;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1.15fr 1.15fr 1.1fr;
-}
+        <button id="boostButton" class="primary-btn" style="margin-top: 8px;">
+          Boost This Listing
+        </button>
+        <div id="statusText" class="status-text"></div>
+      </div>
 
-/* Columns */
-.column h2 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 18px;
-}
+      <div class="summary-box">
+        <h3>Photos pulled from dealer site</h3>
+        <p class="small-note">
+          Click "Boost This Listing" to refresh photos. Up to 24 images, logos removed when possible.
+        </p>
 
-/* Card / box base */
-.summary-box,
-.platform-card,
-.lab-card,
-.modal-content {
-  background: rgba(5, 7, 17, 0.96);
-  border-radius: 12px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
-}
+        <button
+          id="sendPhotosToStudio"
+          class="secondary-btn"
+          style="margin-bottom: 8px;"
+          disabled
+        >
+          Send top photos to Creative Studio
+        </button>
 
-.summary-box h3,
-.platform-card h3,
-.lab-card h3 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 15px;
-}
+        <div id="photosGrid" class="photo-grid"></div>
+      </div>
+    </section>
 
-/* Inputs / textareas */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-textarea,
-select {
-  width: 100%;
-  padding: 8px 9px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(6, 10, 22, 0.96);
-  color: inherit;
-  font-size: 13px;
-}
+    <!-- STEP 2 – Social Media Kit (MIDDLE) -->
+    <section class="column-middle">
+      <div class="summary-box">
+        <h3>Step 2 – Social Media Kit</h3>
+        <p class="small-note">
+          Copy, tweak, and paste into each platform. Spin fresh versions anytime.
+        </p>
+      </div>
 
-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
+      <!-- Facebook -->
+      <div class="platform-card">
+        <h3>Facebook Post</h3>
+        <textarea
+          id="facebookPost"
+          placeholder="Facebook post will appear here after Boost."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="facebook">New Post</button>
+          <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
+        </div>
+      </div>
 
-label {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
+      <!-- Instagram -->
+      <div class="platform-card">
+        <h3>Instagram Caption</h3>
+        <textarea
+          id="instagramPost"
+          placeholder="Instagram caption will appear here after Boost."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="instagram">New Post</button>
+          <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
+        </div>
+      </div>
 
-.small-note {
-  font-size: 11px;
-  opacity: 0.78;
-}
+      <!-- TikTok -->
+      <div class="platform-card">
+        <h3>TikTok Caption</h3>
+        <textarea
+          id="tiktokPost"
+          placeholder="TikTok caption + hook will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="tiktok">New Post</button>
+          <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
+        </div>
+      </div>
 
-/* Status text */
-.status-text {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #a3ffc8;
-}
-.status-text.error {
-  color: #ff9a9a;
-}
+      <!-- LinkedIn -->
+      <div class="platform-card">
+        <h3>LinkedIn Post</h3>
+        <textarea
+          id="linkedinPost"
+          placeholder="LinkedIn post will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="linkedin">New Post</button>
+          <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
+        </div>
+      </div>
 
-/* BUTTONS ------------------------------------------------------------ */
-.primary-btn,
-.secondary-btn,
-.tool-button,
-.regen-btn,
-.copy-btn {
-  font-size: 12px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  padding: 7px 14px;
-}
+      <!-- X / Twitter -->
+      <div class="platform-card">
+        <h3>X / Twitter Post</h3>
+        <textarea
+          id="twitterPost"
+          placeholder="X / Twitter post will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="twitter">New Post</button>
+          <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
+        </div>
+      </div>
 
-.primary-btn {
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  color: #fff;
-  border: none;
-}
-.primary-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
+      <!-- Text / DM -->
+      <div class="platform-card">
+        <h3>Text / DM</h3>
+        <textarea
+          id="textBlurb"
+          placeholder="Short, high-converting text / DM will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="text">New Text</button>
+          <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
+        </div>
+      </div>
 
-.secondary-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #fff;
-}
+      <!-- Marketplace -->
+      <div class="platform-card">
+        <h3>Marketplace Listing</h3>
+        <textarea
+          id="marketplacePost"
+          placeholder="Marketplace description will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="marketplace">New Post</button>
+          <button class="copy-btn" data-copy-target="marketplacePost">Copy</button>
+        </div>
+      </div>
 
-.regen-btn {
-  background: #16192f;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-.copy-btn {
-  background: rgba(8, 190, 130, 0.16);
-  border: 1px solid rgba(82, 244, 191, 0.6);
-  color: #b7ffe4;
-}
+      <!-- Hashtags -->
+      <div class="platform-card">
+        <h3>Hashtag Set</h3>
+        <textarea
+          id="hashtags"
+          placeholder="Hashtag set will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="regen-btn" data-platform="hashtags">New Set</button>
+          <button class="copy-btn" data-copy-target="hashtags">Copy</button>
+        </div>
+      </div>
+    </section>
 
-/* Button row */
-.btn-row {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 6px;
-}
+    <!-- STEP 3 – Creative Lab (RIGHT COLUMN) -->
+    <section class="column-right column">
+      <h2>Step 3 – Creative Lab</h2>
 
-/* PHOTOS GRID (STEP 1) ---------------------------------------------- */
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 6px;
-  margin-top: 8px;
-}
-.photo-thumb {
-  width: 100%;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
+      <!-- Big bar to open overlay -->
+      <button
+        id="openCreativeStudio"
+        class="primary-btn"
+        style="width: 100%; margin-bottom: 16px;"
+      >
+        ✨ Open Creative Studio
+      </button>
 
-/* FLOATING TOOLBAR --------------------------------------------------- */
-.floating-tools {
-  position: fixed;
-  right: 16px;
-  top: 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 50;
-}
-.tool-button {
-  background: #0a0d1c;
-  color: #fff;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 14px;
-  font-size: 11px;
-  cursor: pointer;
-  white-space: nowrap;
-}
+      <!-- Quick Sales Video Idea -->
+      <div class="lab-card">
+        <h3>Quick Sales Video Idea</h3>
+        <div class="column">
+          <label>
+            Vehicle / Offer
+            <input
+              type="text"
+              id="videoVehicle"
+              placeholder="Vehicle or promo"
+            />
+          </label>
 
-/* PHOTO QUICK TUNER -------------------------------------------------- */
-.photo-preview-wrapper {
-  margin: 10px 0;
-  min-height: 140px;
-  border-radius: 8px;
-  border: 1px dashed rgba(193, 225, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: rgba(4, 6, 18, 0.09);
-}
-#photoPreview {
-  max-width: 100%;
-  max-height: 220px;
-  object-fit: contain;
-}
-.slider-group label {
-  font-size: 12px;
-}
-.slider-group input[type="range"] {
-  width: 100%;
-}
+          <label>
+            Hook
+            <input
+              type="text"
+              id="videoHook"
+              placeholder="Example: Stop scrolling..."
+            />
+          </label>
 
-/* MODALS (TOOLS) ----------------------------------------------------- */
-.modal {
-  position: fixed;
-  inset: 0;
-  display: none;
-  background: rgba(0, 0, 0, 0.78);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9000;
-}
-.modal-content {
-  max-width: 640px;
-  width: 95vw;
-  max-height: 90vh;
-  overflow: auto;
-  position: relative;
-  padding-top: 32px;
-}
-.modal-close {
-  position: absolute;
-  right: 12px;
-  top: 8px;
-  font-size: 24px;
-  cursor: pointer;
-  color: #f1f1ff;
-}
-.modal h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
-}
+          <label>
+            Style
+            <input
+              type="text"
+              id="videoStyle"
+              placeholder="Energetic, educational, hype"
+            />
+          </label>
 
-/* Simple calc grid */
-.simple-calc {
-  background: #050713;
-  border-radius: 8px;
-  padding: 8px;
-  display: grid;
-  gap: 4px;
-}
-.simple-calc-display {
-  background: #000218;
-  border-radius: 6px;
-  padding: 8px;
-  text-align: right;
-  font-family: "Menlo", "Consolas", monospace;
-  font-size: 16px;
-  margin-bottom: 8px;
-}
-.simple-calc-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
-}
-.simple-calc-grid button {
-  padding: 6px 0;
-  border-radius: 6px;
-  border: 1px solid #2f3254;
-  background: #0e1230;
-  color: #f5f5ff;
-  cursor: pointer;
-}
+          <label>
+            Length / Aspect
+            <input
+              type="text"
+              id="videoLength"
+              placeholder="Example: 30s vertical 9:16"
+            />
+          </label>
 
-/* HIDDEN CLASS (for modals + overlay) ------------------------------- */
-.hidden {
-  display: none !important;
-}
+          <button id="generateVideoIdea" class="primary-btn">
+            Generate Video Idea
+          </button>
 
-/* CREATIVE STUDIO OVERLAY ------------------------------------------- */
-.creative-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
+          <textarea
+            id="videoIdeaOutput"
+            placeholder="Video script / beats will appear here."
+          ></textarea>
+          <div class="btn-row">
+            <button class="copy-btn" data-copy-target="videoIdeaOutput">
+              Copy
+            </button>
+          </div>
+        </div>
+      </div>
 
-/* The actual modal box */
-.creative-modal {
-  background: #050711;
-  border-radius: 16px;
-  width: min(1200px, 95vw);
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
-  border: 1px solid #2b2b4a;
-}
+      <!-- Canva Layout Planner -->
+      <div class="lab-card">
+        <h3>Canva Layout Planner</h3>
+        <label>
+          Creative Type
+          <input
+            type="text"
+            id="layoutType"
+            placeholder="Story, feed post, flyer"
+          />
+        </label>
+        <label>
+          Headline
+          <input
+            type="text"
+            id="layoutHeadline"
+            placeholder="Main headline"
+          />
+        </label>
+        <label>
+          Call To Action
+          <input
+            type="text"
+            id="layoutCTA"
+            placeholder="CTA text"
+          />
+        </label>
+        <label>
+          Vibe
+          <input
+            type="text"
+            id="layoutVibe"
+            placeholder="Clean, bold, premium"
+          />
+        </label>
+        <button id="generateLayoutIdea" class="primary-btn">
+          Generate Layout Idea
+        </button>
+        <textarea
+          id="layoutIdeaOutput"
+          placeholder="Layout idea / text content will appear here."
+        ></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="layoutIdeaOutput">
+            Copy
+          </button>
+        </div>
+      </div>
 
-/* Header row inside overlay */
-.creative-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid #222438;
-  background: #050711;
-}
-.creative-header h2 {
-  margin: 0;
-  font-size: 16px;
-}
+      <!-- Simple Photo Tweaker -->
+      <div class="lab-card">
+        <h3>Photo Quick Tuner</h3>
+        <input type="file" id="photoUpload" accept="image/*" />
 
-/* Close button */
-.modal-close-btn {
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 18px;
-  cursor: pointer;
-}
+        <div class="photo-preview-wrapper">
+          <img id="photoPreview" style="display: none;" />
+          <div id="photoPlaceholder" class="small-note">
+            Upload a photo to tweak brightness, contrast, and saturation.
+          </div>
+        </div>
 
-/* Top bar: preset + actions */
-.creative-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 16px;
-  border-bottom: 1px solid #222438;
-  background: #080b12;
-}
-.preset-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-.creative-actions button {
-  margin-left: 6px;
-}
+        <div class="slider-group">
+          <label>
+            Brightness
+            <input
+              type="range"
+              id="brightnessRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
+          <label>
+            Contrast
+            <input
+              type="range"
+              id="contrastRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
+          <label>
+            Saturation
+            <input
+              type="range"
+              id="saturationRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
+        </div>
+      </div>
+    </section>
+  </main>
 
-/* Main 3-column layout inside modal */
-.creative-body {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 260px;
-  gap: 10px;
-  padding: 12px 16px 16px;
-  overflow: hidden;
-  background: #050711;
-}
+  <!-- FLOATING TOOL BUTTONS -->
+  <aside class="floating-tools">
+    <button id="objectionLauncher" class="tool-button">
+      Objection Coach
+    </button>
+    <button id="calcLauncher" class="tool-button">
+      Calculator
+    </button>
+    <button id="paymentLauncher" class="tool-button">
+      Payment Calculator
+    </button>
+    <button id="incomeLauncher" class="tool-button">
+      Income Calculator
+    </button>
+    <button id="workflowLauncher" class="tool-button">
+      AI Work Flow Expert
+    </button>
+    <button id="messageLauncher" class="tool-button">
+      AI Message Builder
+    </button>
+    <button id="askLauncher" class="tool-button">
+      Ask A.I.
+    </button>
+    <button id="carLauncher" class="tool-button">
+      AI Car Expert
+    </button>
+    <button id="imageLauncher" class="tool-button">
+      AI Image Generation
+    </button>
+    <button id="videoLauncher" class="tool-button">
+      AI Video Generation
+    </button>
+  </aside>
 
-/* LEFT: tools */
-.creative-tools {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
-}
-.tool-btn {
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #33334d;
-  background: #101323;
-  color: #fff;
-  cursor: pointer;
-  text-align: left;
-  font-size: 13px;
-}
-.tool-btn-active {
-  border-color: #ff4b2b;
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-}
+  <!-- ############ MODALS ############ -->
 
-/* Hidden file input */
-.hidden-input {
-  display: none;
-}
+  <!-- Objection Coach -->
+  <div id="objectionModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="objectionClose" class="modal-close">&times;</span>
+      <h2>Objection Coach</h2>
+      <p>Drop in a customer objection and we’ll coach you through it.</p>
+      <textarea
+        id="objectionInput"
+        placeholder="Example: I need to talk to my spouse..."
+      ></textarea>
+      <button id="runObjectionCoach" class="primary-btn">
+        Get Coaching
+      </button>
+      <textarea
+        id="objectionOutput"
+        placeholder="Coaching response will appear here."
+      ></textarea>
+    </div>
+  </div>
 
-/* CENTER: canvas */
-.creative-canvas-wrap {
-  background: #080b12;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-#creativeCanvas {
-  background: #050711;
-}
+  <!-- Standalone Calculator -->
+  <div id="calcModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="calcClose" class="modal-close">&times;</span>
+      <h2>Calculator</h2>
 
-/* RIGHT: properties */
-.creative-properties {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 14px;
-}
-.prop-group {
-  padding: 8px;
-  border-radius: 8px;
-  background: #090c18;
-  border: 1px solid #222438;
-}
-.prop-group h4 {
-  margin: 0 0 6px;
-  font-size: 13px;
-}
-.prop-group label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-.prop-group input,
-.prop-group select {
-  width: 100%;
-}
+      <div id="basicCalcPanel" class="simple-calc">
+        <div id="basicCalcDisplay" class="simple-calc-display">0</div>
+        <div class="simple-calc-grid">
+          <button data-calc="C">C</button>
+          <button data-calc="DEL">⌫</button>
+          <button data-calc="(">(</button>
+          <button data-calc=")">)</button>
 
-/* Make overlay layout stack on smaller screens */
-@media (max-width: 900px) {
-  .creative-body {
-    grid-template-columns: 1fr;
-  }
-  .creative-tools,
-  .creative-properties {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-}
+          <button data-calc="7">7</button>
+          <button data-calc="8">8</button>
+          <button data-calc="9">9</button>
+          <button data-calc="/">÷</button>
 
-/* RESPONSIVE MAIN ---------------------------------------------------- */
-@media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 16px 24px;
-    justify-content: center;
-  }
-}
+          <button data-calc="4">4</button>
+          <button data-calc="5">5</button>
+          <button data-calc="6">6</button>
+          <button data-calc="*">×</button>
+
+          <button data-calc="1">1</button>
+          <button data-calc="2">2</button>
+          <button data-calc="3">3</button>
+          <button data-calc="-">−</button>
+
+          <button data-calc="0">0</button>
+          <button data-calc=".">.</button>
+          <button data-calc="=">=</button>
+          <button data-calc="+">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Calculator -->
+  <div id="paymentModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="paymentClose" class="modal-close">&times;</span>
+      <h2>Payment Calculator</h2>
+
+      <div class="summary-box">
+        <h3>Auto Loan Details</h3>
+
+        <label>
+          Auto Price
+          <input type="number" id="autoPrice" value="50000" />
+        </label>
+
+        <label>
+          Loan Term (months)
+          <input type="number" id="loanTermMonths" value="60" />
+        </label>
+
+        <label>
+          Interest Rate (%)
+          <input type="number" id="interestRate" value="5" />
+        </label>
+
+        <label>
+          Cash Incentives
+          <input type="number" id="cashIncentives" value="0" />
+        </label>
+
+        <label>
+          Down Payment
+          <input type="number" id="downPayment" value="10000" />
+        </label>
+
+        <label>
+          Trade-in Value
+          <input type="number" id="tradeInValue" value="0" />
+        </label>
+
+        <label>
+          Amount Owed on Trade-in
+          <input type="number" id="tradeOwed" value="0" />
+        </label>
+
+        <label>
+          Sales Tax (%)
+          <input type="number" id="salesTax" value="7" />
+        </label>
+
+        <label>
+          Title, Registration &amp; Other Fees
+          <input type="number" id="fees" value="2000" />
+        </label>
+
+        <button id="runPaymentHelper" class="primary-btn">
+          Estimate Payment
+        </button>
+      </div>
+
+      <div class="summary-box">
+        <h3>Estimate</h3>
+        <textarea
+          id="paymentOutput"
+          placeholder="Payment breakdown will appear here."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Calculator -->
+  <div id="incomeModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="incomeClose" class="modal-close">&times;</span>
+      <h2>Income Calculator</h2>
+
+      <div class="summary-box">
+        <h3>Inputs</h3>
+        <label>
+          Year to Date Income
+          <input type="number" id="ytdIncome" placeholder="50000" />
+        </label>
+        <label>
+          Hire Date
+          <input type="date" id="hireDate" />
+        </label>
+        <label>
+          Check Date
+          <input type="date" id="checkDate" />
+        </label>
+        <button id="runIncomeHelper" class="primary-btn">
+          Estimate Income
+        </button>
+      </div>
+
+      <div class="summary-box">
+        <h3>Estimate</h3>
+        <textarea
+          id="incomeOutput"
+          placeholder="Monthly income estimate will appear here."
+        ></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow Expert -->
+  <div id="workflowModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="workflowClose" class="modal-close">&times;</span>
+      <h2>AI Work Flow Expert</h2>
+      <textarea
+        id="workflowSituation"
+        placeholder="Explain your sales situation and what result you want."
+      ></textarea>
+      <button id="runWorkflowHelper" class="primary-btn">
+        Build Workflow
+      </button>
+      <textarea
+        id="workflowOutput"
+        placeholder="Suggested workflow will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Message Builder -->
+  <div id="messageModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="messageClose" class="modal-close">&times;</span>
+      <h2>AI Message Builder</h2>
+
+      <label>
+        What are you creating?
+        <select id="messageType">
+          <option value="text">Text / SMS</option>
+          <option value="email">Email</option>
+          <option value="social">Social Post</option>
+        </select>
+      </label>
+
+      <label>
+        What's the goal?
+        <input
+          type="text"
+          id="messageGoal"
+          placeholder="Get them to book a test drive..."
+        />
+      </label>
+
+      <label>
+        Details / Context
+        <textarea
+          id="messageDetails"
+          placeholder="Vehicle, situation, urgency, tone, etc."
+        ></textarea>
+      </label>
+
+      <button id="runMessageHelper" class="primary-btn">
+        Generate Message
+      </button>
+
+      <textarea
+        id="messageOutput"
+        placeholder="Finished message will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- Ask A.I. -->
+  <div id="askModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="askClose" class="modal-close">&times;</span>
+      <h2>Ask A.I.</h2>
+      <textarea
+        id="askQuestion"
+        placeholder="Ask anything — sales, business, life, tech, you name it."
+      ></textarea>
+      <button id="runAskHelper" class="primary-btn">Ask</button>
+      <textarea
+        id="askOutput"
+        placeholder="Answer will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- AI Car Expert -->
+  <div id="carModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="carClose" class="modal-close">&times;</span>
+      <h2>AI Car Expert</h2>
+      <textarea
+        id="carQuestion"
+        placeholder="Ask anything about vehicles, trims, features, comparisons, or automotive advice."
+      ></textarea>
+      <button id="runCarHelper" class="primary-btn">
+        Ask Car Expert
+      </button>
+      <textarea
+        id="carOutput"
+        placeholder="Car expert answer will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- AI Image Generation Helper -->
+  <div id="imageModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="imageClose" class="modal-close">&times;</span>
+      <h2>AI Image Generation</h2>
+      <p class="small-note">
+        Coming soon: direct image generation. For now, this builds a high-quality prompt you can paste into an image tool.
+      </p>
+      <textarea
+        id="imagePrompt"
+        placeholder="Describe the image you want (vehicle, background, lighting, style, etc.)"
+      ></textarea>
+      <button id="runImageHelper" class="primary-btn">
+        Build Image Prompt
+      </button>
+      <textarea
+        id="imageOutput"
+        placeholder="Image prompt will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- AI Video Generation Helper -->
+  <div id="videoModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="videoClose" class="modal-close">&times;</span>
+      <h2>AI Video Generation</h2>
+      <p class="small-note">
+        Coming soon: direct video generation. For now, this builds a detailed brief you can paste into a video tool.
+      </p>
+      <textarea
+        id="videoGenPrompt"
+        placeholder="Describe the video you want to create."
+      ></textarea>
+      <button id="runVideoHelper" class="primary-btn">
+        Build Video Brief
+      </button>
+      <textarea
+        id="videoGenOutput"
+        placeholder="Video brief will appear here."
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- ==================================================================
+       CREATIVE STUDIO OVERLAY
+       ================================================================== -->
+  <div id="creativeStudioOverlay" class="creative-overlay hidden">
+    <div class="creative-modal">
+      <!-- HEADER -->
+      <div class="creative-header">
+        <h2>Creative Studio</h2>
+        <button id="creativeClose" class="modal-close-btn">✕</button>
+      </div>
+
+      <!-- PRESET + GLOBAL ACTIONS -->
+      <div class="creative-top-bar">
+        <div class="preset-label">
+          <span>Canvas preset</span>
+          <select id="creativeCanvasPreset">
+            <option value="1080x1080">Square – 1080 x 1080</option>
+            <option value="1080x1920">Story / Reel – 1080 x 1920</option>
+            <option value="1920x1080">Landscape – 1920 x 1080</option>
+          </select>
+        </div>
+
+        <div class="creative-actions">
+          <button id="creativeUndo">Undo</button>
+          <button id="creativeRedo">Redo</button>
+          <button id="creativeDelete">Delete</button>
+          <button id="creativeExportPng">Export PNG</button>
+        </div>
+      </div>
+
+      <!-- 3-COLUMN GRID -->
+      <div class="creative-body">
+        <!-- LEFT: tools -->
+        <aside class="creative-tools">
+          <h3>Tools</h3>
+          <button class="tool-btn tool-btn-active" data-tool="select">
+            Select / Move
+          </button>
+          <button class="tool-btn" data-tool="uploadImage">
+            Add Photo
+          </button>
+          <button class="tool-btn" data-tool="addText">
+            Add Text
+          </button>
+          <button class="tool-btn" data-tool="addRect">
+            Banner Bar
+          </button>
+          <button class="tool-btn" data-tool="addBadge">
+            Price Badge
+          </button>
+          <input
+            type="file"
+            id="creativeImageInput"
+            class="hidden-input"
+            accept="image/*"
+          />
+        </aside>
+
+        <!-- CENTER: canvas -->
+        <div class="creative-canvas-wrap">
+          <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
+        </div>
+
+        <!-- RIGHT: properties -->
+        <aside class="creative-properties">
+          <div class="prop-group">
+            <h4>Shape / Image</h4>
+            <label>
+              Fill color
+              <input type="color" id="propFillColor" value="#ffffff" />
+            </label>
+            <label>
+              Stroke color
+              <input type="color" id="propStrokeColor" value="#000000" />
+            </label>
+            <label>
+              Stroke width
+              <input
+                type="number"
+                id="propStrokeWidth"
+                value="0"
+                min="0"
+                max="20"
+              />
+            </label>
+          </div>
+
+          <div class="prop-group" id="textOptions" style="display: none;">
+            <h4>Text</h4>
+            <label>
+              Font size
+              <input
+                type="number"
+                id="propFontSize"
+                value="48"
+                min="10"
+                max="120"
+              />
+            </label>
+            <label>
+              Align
+              <select id="propTextAlign">
+                <option value="left">Left</option>
+                <option value="center" selected>Center</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fabric.js for Creative Studio -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
