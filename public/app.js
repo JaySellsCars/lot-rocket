@@ -3,7 +3,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const apiBase = "";
 
-  // ---------- THEME TOGGLE ----------
+  // =====================================================
+  // THEME TOGGLE
+  // =====================================================
   const themeToggleInput = document.getElementById("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
@@ -23,7 +25,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- STEP 1: BOOST WORKFLOW ----------
+  // =====================================================
+  // AUTOGROW HELPERS (make tall textareas auto-expand)
+  // =====================================================
+  function autoGrowTextarea(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }
+
+  function initAutogrow() {
+    const textareas = document.querySelectorAll("textarea[data-autogrow='true']");
+    textareas.forEach((ta) => {
+      autoGrowTextarea(ta);
+      ta.addEventListener("input", () => autoGrowTextarea(ta));
+    });
+  }
+
+  // =====================================================
+  // STEP 1: BOOST WORKFLOW
+  // =====================================================
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
   const priceInfoInput = document.getElementById("priceInfo");
@@ -145,7 +166,9 @@ document.addEventListener("DOMContentLoaded", () => {
     boostButton.addEventListener("click", handleBoost);
   }
 
-  // ---------- COPY BUTTONS ----------
+  // =====================================================
+  // COPY BUTTONS (works for ALL .copy-btn in app)
+  // =====================================================
   function wireCopyButtons() {
     const copyButtons = document.querySelectorAll(".copy-btn[data-copy-target]");
     copyButtons.forEach((btn) => {
@@ -184,7 +207,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   wireCopyButtons();
 
-  // ---------- REGEN BUTTONS (SOCIAL KIT) ----------
+  // =====================================================
+  // REGEN BUTTONS (SOCIAL KIT)
+  // =====================================================
   const regenButtons = document.querySelectorAll(".regen-btn[data-platform]");
   regenButtons.forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -256,6 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         selfieScript.value = data.script || "";
+        autoGrowTextarea(selfieScript);
       } catch (err) {
         console.error(err);
       } finally {
@@ -278,6 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         shotPlan.value = data.plan || "";
+        autoGrowTextarea(shotPlan);
       } catch (err) {
         console.error(err);
       } finally {
@@ -300,6 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const data = await res.json();
         designIdea.value = data.idea || "";
+        autoGrowTextarea(designIdea);
       } catch (err) {
         console.error(err);
       } finally {
@@ -309,7 +337,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- CREATIVE LAB: VIDEO IDEA & LAYOUT ----------
+  // =====================================================
+  // CREATIVE LAB: VIDEO IDEA & LAYOUT
+  // =====================================================
   const videoVehicle = document.getElementById("videoVehicle");
   const videoHook = document.getElementById("videoHook");
   const videoStyle = document.getElementById("videoStyle");
@@ -337,9 +367,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = await res.json();
         videoIdeaOutput.value = data.script || "";
+        autoGrowTextarea(videoIdeaOutput);
       } catch (err) {
         console.error(err);
         videoIdeaOutput.value = "Error generating video idea.";
+        autoGrowTextarea(videoIdeaOutput);
       } finally {
         generateVideoIdeaBtn.disabled = false;
         generateVideoIdeaBtn.textContent = "Generate Video Idea";
@@ -373,9 +405,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = await res.json();
         layoutIdeaOutput.value = data.idea || "";
+        autoGrowTextarea(layoutIdeaOutput);
       } catch (err) {
         console.error(err);
         layoutIdeaOutput.value = "Error generating layout idea.";
+        autoGrowTextarea(layoutIdeaOutput);
       } finally {
         generateLayoutIdeaBtn.disabled = false;
         generateLayoutIdeaBtn.textContent = "Generate Layout Idea";
@@ -383,7 +417,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- PHOTO EDITOR ----------
+  // =====================================================
+  // PHOTO EDITOR
+  // =====================================================
   const photoUpload = document.getElementById("photoUpload");
   const photoPreview = document.getElementById("photoPreview");
   const photoPlaceholder = document.getElementById("photoPlaceholder");
@@ -419,14 +455,18 @@ document.addEventListener("DOMContentLoaded", () => {
     slider.addEventListener("input", updatePhotoFilters);
   });
 
-  // ---------- COMMON MONEY HELPER ----------
+  // =====================================================
+  // COMMON MONEY HELPER
+  // =====================================================
   function formatMoney(value) {
     if (isNaN(value)) return "$0.00";
     const rounded = Math.round(value * 100) / 100;
     return "$" + rounded.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  // ---------- PAYMENT CALCULATOR MATH ----------
+  // =====================================================
+  // PAYMENT CALCULATOR MATH
+  // =====================================================
   const autoPriceInput = document.getElementById("autoPrice");
   const loanTermInput = document.getElementById("loanTermMonths");
   const interestRateInput = document.getElementById("interestRate");
@@ -454,6 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!price || !termMonths) {
         paymentOutput.value =
           "Please enter at least Auto Price and Loan Term to estimate a payment.";
+        autoGrowTextarea(paymentOutput);
         return;
       }
 
@@ -489,10 +530,13 @@ document.addEventListener("DOMContentLoaded", () => {
         `Estimated Total Cost (vehicle, tax, fees, interest): ${formatMoney(
           totalPayments + upfront
         )}`;
+      autoGrowTextarea(paymentOutput);
     });
   }
 
-  // ---------- STANDALONE BASIC CALCULATOR ----------
+  // =====================================================
+  // STANDALONE BASIC CALCULATOR
+  // =====================================================
   const basicCalcPanel = document.getElementById("basicCalcPanel");
   const basicCalcDisplay = document.getElementById("basicCalcDisplay");
 
@@ -548,7 +592,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDisplay();
   }
 
-  // ---------- INCOME CALCULATOR ----------
+  // =====================================================
+  // INCOME CALCULATOR
+  // =====================================================
   const ytdIncomeInput = document.getElementById("ytdIncome");
   const hireDateInput = document.getElementById("hireDate");
   const checkDateInput = document.getElementById("checkDate");
@@ -564,6 +610,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!ytd || !hireVal || !checkVal) {
         incomeOutput.value =
           "Please enter Year to Date income, hire date, and check date.";
+        autoGrowTextarea(incomeOutput);
         return;
       }
 
@@ -573,6 +620,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!(hire instanceof Date) || !(check instanceof Date) || hire >= check) {
         incomeOutput.value =
           "Check date must be after hire date. Please double-check your dates.";
+        autoGrowTextarea(incomeOutput);
         return;
       }
 
@@ -591,10 +639,13 @@ document.addEventListener("DOMContentLoaded", () => {
         `Year-to-Date Income: ${formatMoney(ytd)}\n` +
         `Days Worked: ${daysWorked}\n` +
         `Estimated Annual Income: ${formatMoney(annualIncome)}`;
+      autoGrowTextarea(incomeOutput);
     });
   }
 
-  // ---------- AI TOOL HELPERS (BACKEND ENDPOINTS) ----------
+  // =====================================================
+  // AI TOOL HELPERS (BACKEND ENDPOINTS)
+  // =====================================================
   async function callHelper(endpoint, payload) {
     const res = await fetch(apiBase + endpoint, {
       method: "POST",
@@ -620,10 +671,13 @@ document.addEventListener("DOMContentLoaded", () => {
           objection: objectionInput.value,
         });
 
-        objectionOutput.value = data.answer || "";
+        objectionOutput.value =
+          data.answer || "Error generating coaching response.";
+        autoGrowTextarea(objectionOutput);
       } catch (err) {
         console.error(err);
         objectionOutput.value = "Error generating coaching response.";
+        autoGrowTextarea(objectionOutput);
       } finally {
         runObjectionCoachBtn.disabled = false;
         runObjectionCoachBtn.textContent = "Get Coaching";
@@ -648,9 +702,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         workflowOutput.value = data.text || "";
+        autoGrowTextarea(workflowOutput);
       } catch (err) {
         console.error(err);
         workflowOutput.value = "Error generating workflow.";
+        autoGrowTextarea(workflowOutput);
       } finally {
         runWorkflowHelperBtn.disabled = false;
         runWorkflowHelperBtn.textContent = "Build Workflow";
@@ -679,9 +735,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         messageOutput.value = data.text || "";
+        autoGrowTextarea(messageOutput);
       } catch (err) {
         console.error(err);
         messageOutput.value = "Error generating message.";
+        autoGrowTextarea(messageOutput);
       } finally {
         runMessageHelperBtn.disabled = false;
         runMessageHelperBtn.textContent = "Generate Message";
@@ -706,9 +764,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         askOutput.value = data.text || "";
+        autoGrowTextarea(askOutput);
       } catch (err) {
         console.error(err);
         askOutput.value = "Error answering question.";
+        autoGrowTextarea(askOutput);
       } finally {
         runAskHelperBtn.disabled = false;
         runAskHelperBtn.textContent = "Ask";
@@ -733,9 +793,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         carOutput.value = data.text || "";
+        autoGrowTextarea(carOutput);
       } catch (err) {
         console.error(err);
         carOutput.value = "Error answering car question.";
+        autoGrowTextarea(carOutput);
       } finally {
         runCarHelperBtn.disabled = false;
         runCarHelperBtn.textContent = "Ask Car Expert";
@@ -762,9 +824,11 @@ document.addEventListener("DOMContentLoaded", () => {
         imageOutput.value =
           data.text ||
           "Describe your image in detail (vehicle, background, lighting, angle, style).";
+        autoGrowTextarea(imageOutput);
       } catch (err) {
         console.error(err);
         imageOutput.value = "Error generating image prompt.";
+        autoGrowTextarea(imageOutput);
       } finally {
         runImageHelperBtn.disabled = false;
         runImageHelperBtn.textContent = "Build Image Prompt";
@@ -789,9 +853,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         videoGenOutput.value = data.text || "";
+        autoGrowTextarea(videoGenOutput);
       } catch (err) {
         console.error(err);
         videoGenOutput.value = "Error generating video brief.";
+        autoGrowTextarea(videoGenOutput);
       } finally {
         runVideoHelperBtn.disabled = false;
         runVideoHelperBtn.textContent = "Build Video Brief";
@@ -800,9 +866,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  //     CREATIVE STUDIO – OVERLAY + FABRIC CANVAS
+  // CREATIVE STUDIO – OVERLAY + FABRIC CANVAS
   // =====================================================
-
   const creativeOverlay = document.getElementById("creativeStudioOverlay");
   const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
 
@@ -859,6 +924,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Stop here if Fabric isn’t loaded – overlay still works, just no canvas.
     if (typeof fabric === "undefined") {
+      initAutogrow(); // still initialize autogrow even if fabric is missing
       return;
     }
 
@@ -1190,7 +1256,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---------- MODAL OPEN/CLOSE WIRING ----------
+  // =====================================================
+  // MODAL OPEN/CLOSE WIRING (right-side tools)
+  // =====================================================
   function wireModal(triggerId, modalId, closeId) {
     const trigger = document.getElementById(triggerId);
     const modal = document.getElementById(modalId);
@@ -1223,4 +1291,7 @@ document.addEventListener("DOMContentLoaded", () => {
   wireModal("carLauncher", "carModal", "carClose");
   wireModal("imageLauncher", "imageModal", "imageClose");
   wireModal("videoLauncher", "videoModal", "videoClose");
+
+  // finally, initialize autogrow for all marked textareas
+  initAutogrow();
 });
