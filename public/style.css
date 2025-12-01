@@ -20,6 +20,9 @@ body {
   background: radial-gradient(circle at top, #24104f 0, #050612 55%, #02030a 100%);
   color: #f5f5ff;
 }
+.hidden {
+  display: none !important;
+}
 
 /* Header ------------------------------------------------- */
 
