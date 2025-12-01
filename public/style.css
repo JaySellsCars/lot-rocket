@@ -122,7 +122,7 @@ a:hover {
   margin: 24px auto 40px;
   padding: 0 16px 32px;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.9fr); /* STEP 1 narrower */
   grid-template-rows: auto auto;
   grid-template-areas:
     "left middle"
@@ -144,13 +144,13 @@ a:hover {
   grid-area: left;
 }
 
-/* Step 2 – two tall columns of cards */
+/* Step 2 – two tall columns of posts */
 .column-middle {
   grid-area: middle;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-auto-rows: minmax(280px, auto); /* tall rows */
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(340px, auto); /* TALL → portrait feel */
+  gap: 18px;
   align-content: flex-start;
 }
 
@@ -252,15 +252,15 @@ body.light-theme select {
    STEP 2 – PLATFORM CARDS
    ========================================================= */
 
+/* Wrapper for each platform – NO visible card here */
 .platform-card {
-  background: rgba(5, 5, 20, 0.96);
-  border-radius: 10px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent; /* card-look handled by textarea */
+  border: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  height: 100%; /* fill the tall grid row */
+  height: 100%;
 }
 
 .platform-card h3 {
@@ -268,20 +268,26 @@ body.light-theme select {
   font-size: 13px;
 }
 
-/* Textarea takes remaining height inside the card */
+/* Make textarea the "card" itself (tall + portrait) */
 .platform-card textarea {
   flex: 1;
-  min-height: 0;          /* let flexbox control height */
+  min-height: 260px;                  /* taller than wide feel */
   max-height: none;
-  overflow-y: visible;    /* no scrolling inside the box */
+  overflow-y: visible;
   font-size: 12px;
+
+  background: rgba(5, 5, 20, 0.96);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px;
 }
 
-/* Buttons row at bottom of each card */
+/* Buttons sit on backdrop (not inside the visual box) */
 .btn-row {
   display: flex;
   justify-content: flex-end;
   gap: 6px;
+  margin-top: 4px;
 }
 
 /* =========================================================
@@ -355,7 +361,7 @@ body.light-theme .regen-btn {
 .floating-tools {
   position: fixed;
   top: 86px;
-  right: 32px;    /* nudged a bit more off the Step 2 box */
+  right: 32px;
   display: flex;
   flex-direction: column;
   gap: 6px;
