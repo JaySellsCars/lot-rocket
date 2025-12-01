@@ -391,13 +391,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const contrastRange = document.getElementById("contrastRange");
   const saturationRange = document.getElementById("saturationRange");
 
- function updatePhotoFilters() {
-  if (!photoPreview) return;
-  const b = brightnessRange ? brightnessRange.value : 100;
-  const c = contrastRange ? contrastRange.value : 100;
-  const s = saturationRange ? saturationRange.value : 100;  // ✅
-  photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
-}
+  function updatePhotoFilters() {
+    if (!photoPreview) return;
+    const b = brightnessRange ? brightnessRange.value : 100;
+    const c = contrastRange ? contrastRange.value : 100;
+    const s = saturationRange ? saturationRange.value : 100;
+    photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  }
 
   if (photoUpload && photoPreview) {
     photoUpload.addEventListener("change", (e) => {
@@ -834,7 +834,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (typeof fabric !== "undefined") {
           ensureCreativeCanvas(true);
         } else {
-          console.warn("Fabric.js not loaded – Creative Studio canvas disabled.");
+          console.warn(
+            "Fabric.js not loaded – Creative Studio canvas disabled."
+          );
         }
       });
     }
@@ -1015,7 +1017,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Undo / Redo / Delete ---
     if (undoBtn) undoBtn.addEventListener("click", handleUndo);
-    if (redoBtn) undoBtn && redoBtn.addEventListener("click", handleRedo);
+    if (redoBtn) redoBtn.addEventListener("click", handleRedo);
     if (deleteBtn) {
       deleteBtn.addEventListener("click", () => {
         if (!creativeCanvas) return;
