@@ -671,3 +671,78 @@ body.light-theme .photo-preview-wrapper {
 .hidden {
   display: none !important;
 }
+/* =========================================================
+   LAYOUT FIX: STEP 1 + STEP 2 TO MATCH ORIGINAL MOCKUP
+   (ADD THIS AT THE VERY BOTTOM OF style.css)
+   ========================================================= */
+
+/* Main layout: 2 columns (Step 1 + Step 2) with Step 3 full-width under them */
+@media (min-width: 1024px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "step1 step2"
+      "step3 step3";
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* STEP 1 – narrower left column */
+  .column-left {
+    grid-area: step1;
+    max-width: 320px;
+    width: 100%;
+  }
+
+  /* STEP 2 – becomes a grid: header spans both columns, cards in 2 columns */
+  .column-middle {
+    grid-area: step2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(260px, auto); /* make cards taller than wide */
+    gap: 16px;
+  }
+
+  /* Step 2 header box (the “Step 2 – Social Media Kit” summary) spans both columns */
+  .column-middle > .summary-box:first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* STEP 3 – Creative Lab full-width at the bottom */
+  .column-right {
+    grid-area: step3;
+    width: 100%;
+  }
+}
+
+/* Platform cards – make them taller and keep textarea big */
+.platform-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #090b18;
+  border: 1px solid #222438;
+  min-height: 260px;        /* <<< taller cards */
+}
+
+/* Headline inside card */
+.platform-card h3 {
+  margin-bottom: 8px;
+}
+
+/* Textarea fills most of the height */
+.platform-card textarea {
+  flex: 1;
+  min-height: 140px;
+}
+
+/* Button row stays at the bottom of the card */
+.platform-card .btn-row {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
