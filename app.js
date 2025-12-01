@@ -457,11 +457,15 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 
     const answer = completion.output?.[0]?.content?.[0]?.text || "";
     res.json({ answer });
-  } catch (err) {
+   } catch (err) {
     console.error("objection-coach error", err);
-    res.status(500).json({ error: "Failed to coach objection" });
+    res.status(500).json({
+      error: "Failed to coach objection",
+      detail: err.message || String(err),
+    });
   }
 });
+
 
 // Payment Estimator (math only)
 app.post("/api/payment-helper", (req, res) => {
@@ -659,7 +663,10 @@ ${prompt || "(none)"}
     res.json({ text });
   } catch (err) {
     console.error("message-helper error", err);
-    res.status(500).json({ error: "Failed to generate message" });
+    res.status(500).json({
+      error: "Failed to generate message",
+      detail: err.message || String(err),
+    });
   }
 });
 
