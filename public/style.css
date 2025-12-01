@@ -617,11 +617,18 @@ body.light-theme .secondary-btn {
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "left middle"
+      "right right";
   }
 }
 
 @media (max-width: 800px) {
   .layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "left"
+      "middle"
+      "right";
   }
 }
