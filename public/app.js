@@ -2,6 +2,25 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const apiBase = "";
+  // ---------- AUTO-RESIZE MODAL TEXTAREAS ----------
+  function autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }
+
+  // Apply to all side-modal body textareas (AI helpers, calculators, etc.)
+  const sideModalTextareas = document.querySelectorAll(".side-modal-body textarea");
+
+  sideModalTextareas.forEach((ta) => {
+    // Initial size based on any pre-filled content
+    autoResizeTextarea(ta);
+
+    // Grow/shrink on input
+    ["input", "change"].forEach((evt) => {
+      ta.addEventListener(evt, () => autoResizeTextarea(ta));
+    });
+  });
 
   // =====================================================
   // THEME TOGGLE
