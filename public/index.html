@@ -283,6 +283,327 @@
     <button id="imageLauncher" class="tool-button">AI Image Generation</button>
     <button id="videoLauncher" class="tool-button">AI Video Generation</button>
   </aside>
+  <!-- ===================================================== -->
+  <!-- AI TOOL MODALS – Slide-over side panels               -->
+  <!-- ===================================================== -->
+
+  <!-- Objection Coach -->
+  <div id="objectionModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>Objection Coach</h2>
+        <button id="objectionClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Paste the customer’s objection and get a ready-to-send reply plus coaching tips.</p>
+        <label>
+          Customer Objection
+          <textarea id="objectionInput" placeholder="Example: &quot;I want to think about it&quot;"></textarea>
+        </label>
+        <button id="runObjectionCoach" class="primary-btn">Get Coaching</button>
+        <label>
+          Suggested Reply + Coaching
+          <textarea id="objectionOutput" placeholder="Response and coaching will appear here."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Basic Calculator -->
+  <div id="calcModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>Calculator</h2>
+        <button id="calcClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Quick math while you’re working a deal. Tap the keys below.</p>
+        <div id="basicCalcDisplay" class="calc-display">0</div>
+        <div id="basicCalcPanel" class="basic-calc-keys">
+          <!-- Row 1 -->
+          <button data-calc="7">7</button>
+          <button data-calc="8">8</button>
+          <button data-calc="9">9</button>
+          <button data-calc="/">÷</button>
+          <!-- Row 2 -->
+          <button data-calc="4">4</button>
+          <button data-calc="5">5</button>
+          <button data-calc="6">6</button>
+          <button data-calc="*">×</button>
+          <!-- Row 3 -->
+          <button data-calc="1">1</button>
+          <button data-calc="2">2</button>
+          <button data-calc="3">3</button>
+          <button data-calc="-">−</button>
+          <!-- Row 4 -->
+          <button data-calc="0">0</button>
+          <button data-calc=".">.</button>
+          <button data-calc="=">=</button>
+          <button data-calc="+">+</button>
+          <!-- Row 5 -->
+          <button data-calc="C">C</button>
+          <button data-calc="DEL">DEL</button>
+        </div>
+        <p class="small-note">This is a simple helper, not a financial calculator.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Calculator -->
+  <div id="paymentModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>Payment Calculator</h2>
+        <button id="paymentClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Rough payment estimate – perfect for early desk conversations.</p>
+
+        <div class="calc-grid">
+          <label>
+            Auto Price
+            <input type="number" id="autoPrice" placeholder="Example: 38995" />
+          </label>
+          <label>
+            Loan Term (months)
+            <input type="number" id="loanTermMonths" placeholder="Example: 72" />
+          </label>
+          <label>
+            Interest Rate (% APR)
+            <input type="number" id="interestRate" placeholder="Example: 8.49" />
+          </label>
+          <label>
+            Cash Incentives / Rebates
+            <input type="number" id="cashIncentives" placeholder="Example: 1000" />
+          </label>
+          <label>
+            Down Payment
+            <input type="number" id="downPayment" placeholder="Example: 3000" />
+          </label>
+          <label>
+            Trade-In Value
+            <input type="number" id="tradeInValue" placeholder="Example: 15000" />
+          </label>
+          <label>
+            Trade Balance Owed
+            <input type="number" id="tradeOwed" placeholder="Example: 12000" />
+          </label>
+          <label>
+            Sales Tax (%)
+            <input type="number" id="salesTax" placeholder="Example: 6" />
+          </label>
+          <label>
+            Fees (doc, title, etc.)
+            <input type="number" id="fees" placeholder="Example: 600" />
+          </label>
+        </div>
+
+        <button id="runPaymentHelper" class="primary-btn">Estimate Payment</button>
+
+        <label>
+          Payment Breakdown
+          <textarea id="paymentOutput" placeholder="Results will appear here."></textarea>
+        </label>
+        <p class="small-note">
+          Estimates only – not a formal quote or offer. Always verify numbers with your desk / finance.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Calculator -->
+  <div id="incomeModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>Income Calculator</h2>
+        <button id="incomeClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Estimate a customer’s income based on YTD and hire date.</p>
+
+        <label>
+          Year-to-Date Income
+          <input type="number" id="ytdIncome" placeholder="Example: 28500" />
+        </label>
+        <label>
+          Hire Date
+          <input type="date" id="hireDate" />
+        </label>
+        <label>
+          Most Recent Check Date
+          <input type="date" id="checkDate" />
+        </label>
+
+        <button id="runIncomeHelper" class="primary-btn">Estimate Income</button>
+
+        <label>
+          Income Estimate
+          <textarea id="incomeOutput" placeholder="Results will appear here."></textarea>
+        </label>
+        <p class="small-note">
+          Rough guideline only. Always follow lender guidelines and compliance rules.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow Expert -->
+  <div id="workflowModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>AI Work Flow Expert</h2>
+        <button id="workflowClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Describe the situation and get a step-by-step game plan.</p>
+
+        <label>
+          Situation / Scenario
+          <textarea id="workflowSituation" placeholder="Example: Internet lead that went cold after first appointment..."></textarea>
+        </label>
+
+        <button id="runWorkflowHelper" class="primary-btn">Build Workflow</button>
+
+        <label>
+          Workflow / Playbook
+          <textarea id="workflowOutput" placeholder="Steps and templates will appear here."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Builder -->
+  <div id="messageModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>AI Message Builder</h2>
+        <button id="messageClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Build ready-to-send texts, emails, and DMs.</p>
+
+        <label>
+          Message Type
+          <input type="text" id="messageType" placeholder="Text, email, DM, follow-up, apology, etc." />
+        </label>
+        <label>
+          Goal
+          <input type="text" id="messageGoal" placeholder="Set appointment, re-engage, follow-up on credit app, etc." />
+        </label>
+        <label>
+          Details / Context
+          <textarea id="messageDetails" placeholder="Anything you know about the customer or situation."></textarea>
+        </label>
+
+        <button id="runMessageHelper" class="primary-btn">Generate Message</button>
+
+        <label>
+          Suggested Message
+          <textarea id="messageOutput" placeholder="Copy and tweak before sending."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ask AI -->
+  <div id="askModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>Ask A.I.</h2>
+        <button id="askClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Quick answers to sales, business, and process questions.</p>
+
+        <label>
+          Your Question
+          <textarea id="askQuestion" placeholder="Ask anything related to car sales, leads, process, or business."></textarea>
+        </label>
+
+        <button id="runAskHelper" class="primary-btn">Ask</button>
+
+        <label>
+          Answer
+          <textarea id="askOutput" placeholder="Answer will appear here."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Car Expert -->
+  <div id="carModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>AI Car Expert</h2>
+        <button id="carClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Explain trims, features, and comparisons like a pro.</p>
+
+        <label>
+          Car Question
+          <textarea id="carQuestion" placeholder="Example: Differences between LT and LTZ on a 2024 Silverado?"></textarea>
+        </label>
+
+        <button id="runCarHelper" class="primary-btn">Ask Car Expert</button>
+
+        <label>
+          Response
+          <textarea id="carOutput" placeholder="Explanation will appear here."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Image Prompt Builder -->
+  <div id="imageModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>AI Image Generation</h2>
+        <button id="imageClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Turn a rough idea into a detailed prompt for your favorite image generator.</p>
+
+        <label>
+          Image Idea
+          <textarea id="imagePrompt" placeholder="Example: Red Silverado on showroom floor, night lighting, big &quot;0 Down&quot; overlay..."></textarea>
+        </label>
+
+        <button id="runImageHelper" class="primary-btn">Build Image Prompt</button>
+
+        <label>
+          AI Image Prompt
+          <textarea id="imageOutput" placeholder="Paste this into Midjourney, DALL·E, etc."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Video Prompt Builder -->
+  <div id="videoModal" class="side-modal hidden">
+    <div class="side-modal-panel">
+      <div class="side-modal-header">
+        <h2>AI Video Generation</h2>
+        <button id="videoClose" class="side-modal-close">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <p>Describe the idea and get a detailed brief for AI video tools.</p>
+
+        <label>
+          Video Idea
+          <textarea id="videoGenPrompt" placeholder="Example: 20s hype reel for fresh trade-in SUV, fast cuts, big text..."></textarea>
+        </label>
+
+        <button id="runVideoHelper" class="primary-btn">Build Video Brief</button>
+
+        <label>
+          AI Video Brief
+          <textarea id="videoGenOutput" placeholder="Scene-by-scene brief will appear here."></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
 
   <!-- CREATIVE STUDIO OVERLAY (unchanged, works with app.js) -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
