@@ -600,9 +600,28 @@ textarea {
   font-size: 12px;
 }
 
+/* All textareas get a decent height */
 .side-modal-body textarea {
-  min-height: 120px;
+  min-height: 160px;
+  max-height: none;
+  line-height: 1.45;
 }
+
+/* Output-only textareas get EVEN bigger */
+#objectionOutput,
+#paymentOutput,
+#incomeOutput,
+#workflowOutput,
+#messageOutput,
+#askOutput,
+#carOutput,
+#imageOutput,
+#videoGenOutput {
+  min-height: 260px;   /* or 300px if you want */
+}
+
+
+
 
 .side-modal-body .primary-btn {
   width: 100%;
