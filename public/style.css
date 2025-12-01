@@ -12,25 +12,24 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Dark theme is the default state on body */
+/* Dark theme is the default state on load */
 body {
-  background: radial-gradient(circle at top, #141636 0%, #050711 60%, #01030a 100%);
-  color: #f5f5ff;
+  background: radial-gradient(circle at top, #1f1136 0%, #050711 60%, #000 100%);
+  color: #ffffff;
 }
 
-/* Light theme (toggled by JS) */
+/* Light theme (toggled by JS with .light-theme on <body>) */
 body.light-theme {
-  background: #f5f5fa;
-  color: #111321;
+  background: #f4f5fb;
+  color: #111;
 }
 
-/* Simple links */
+/* Links */
 a {
-  color: #ff8b2b;
+  color: #ff82b9;
   text-decoration: none;
 }
 a:hover {
@@ -40,134 +39,117 @@ a:hover {
 /* =========================================================
    HEADER
    ========================================================= */
+
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(
-    90deg,
-    rgba(23, 25, 65, 0.95),
-    rgba(10, 10, 20, 0.98)
-  );
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: radial-gradient(circle at top, #321c5a 0%, #12081f 60%, #05050a 100%);
 }
 
 .branding h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
 }
 .branding p {
-  margin: 2px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
   opacity: 0.8;
 }
 
-/* Theme switch */
+/* Theme switcher */
 .header-controls {
   display: flex;
+  gap: 16px;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
 }
 
 .theme-switch {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
+  gap: 8px;
+  font-size: 12px;
   cursor: pointer;
+  color: #fdfdfd;
 }
 .theme-switch input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 .slider {
-  width: 34px;
-  height: 16px;
+  width: 50px;
+  height: 24px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid #444;
   position: relative;
-  background: #111421;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 .slider::before {
   content: "";
   position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 12px;
-  height: 12px;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
-  background: #ff8b2b;
-  transition: transform 0.24s ease;
+  background: #000;
+  transition: transform 0.24s;
 }
-body.light-theme .slider::before {
-  transform: translateX(17px);
+#themeToggle:not(:checked) + .slider::before {
+  transform: translateX(24px);
+}
+
+/* Light mode header tweaks */
+body.light-theme .app-header {
+  background: #ffffff;
+  border-bottom-color: #e3e4ef;
+}
+body.light-theme .branding p {
+  color: #555;
 }
 
 /* =========================================================
-   MAIN LAYOUT
+   MAIN LAYOUT (3 COLUMNS)
    ========================================================= */
+
 .layout {
-  max-width: 1400px;
-  margin: 24px auto 32px;
+  max-width: 1350px;
+  margin: 16px auto 40px;
   padding: 0 16px 40px;
   display: grid;
-  grid-template-columns: 1.15fr 1.15fr 1.1fr;
-  gap: 16px;
+  grid-template-columns: 1.15fr 1.1fr 1.1fr;
+  gap: 24px;
 }
 
-/* Cards / boxes */
+/* Card look used all over */
 .summary-box,
 .platform-card,
 .lab-card,
 .modal-content {
-  background: rgba(7, 11, 30, 0.95);
+  background: #07051b;
   border-radius: 12px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* Light theme card background */
 body.light-theme .summary-box,
 body.light-theme .platform-card,
 body.light-theme .lab-card,
 body.light-theme .modal-content {
   background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.05);
+  border-color: #e1e3f0;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
 }
 
-/* Column titles */
 .column h2 {
   margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 16px;
 }
 
-/* Text bits */
-h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-}
-
-.small-note {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-label {
-  display: block;
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-
-/* Inputs / textareas */
+/* Inputs / textareas / selects */
 input[type="text"],
 input[type="number"],
 input[type="date"],
@@ -175,31 +157,52 @@ textarea,
 select {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(120, 125, 170, 0.8);
-  background: #050814;
-  color: #f8f8ff;
-  font-size: 12px;
-  outline: none;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(2, 4, 16, 0.9);
+  color: #ffffff;
+  font-size: 13px;
 }
-input::placeholder,
-textarea::placeholder {
-  color: rgba(215, 220, 255, 0.6);
-}
+
 textarea {
   min-height: 80px;
   resize: vertical;
 }
 
-/* Light theme fields */
 body.light-theme input[type="text"],
 body.light-theme input[type="number"],
 body.light-theme input[type="date"],
 body.light-theme textarea,
 body.light-theme select {
-  background: #f9fafc;
-  color: #14151a;
-  border-color: rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: #111;
+  border-color: #ccd0e4;
+}
+
+/* Labels & notes */
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+label input,
+label textarea,
+label select {
+  margin-top: 4px;
+}
+.small-note {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* Status text under "Boost" */
+.status-text {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+.status-text.error {
+  color: #ff7c8e;
 }
 
 /* =========================================================
@@ -207,72 +210,77 @@ body.light-theme select {
    ========================================================= */
 
 .primary-btn {
-  border: none;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 16px;
-  font-size: 12px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  color: #fff;
   cursor: pointer;
-  background: linear-gradient(90deg, #ff8b2b, #ff416c);
-  color: #ffffff;
+  font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 24px rgba(255, 65, 108, 0.45);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
 }
 
 .secondary-btn {
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 7px 14px;
-  background: transparent;
-  color: #f5f5ff;
-  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 8, 26, 0.9);
+  color: #ffffff;
+  font-size: 12px;
   cursor: pointer;
+}
+
+body.light-theme .secondary-btn {
+  background: #f7f7ff;
+  color: #111;
+}
+
+/* tiny buttons in card footers */
+.btn-row {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .copy-btn,
 .regen-btn {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(6, 9, 24, 0.95);
-  color: #ffffff;
-  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
   font-size: 11px;
+  padding: 4px 10px;
   cursor: pointer;
 }
-
 .copy-btn.copied {
-  background: #0fbe6c;
-  border-color: #0fbe6c;
+  border-color: #47d16f;
+  color: #47d16f;
 }
 .copy-btn.empty {
-  background: #8b1b1b;
-  border-color: #f84e4e;
-}
-
-/* Button row beneath fields */
-.btn-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-/* Status text under Boost button */
-.status-text {
-  font-size: 11px;
-  margin-top: 6px;
-}
-.status-text.error {
-  color: #ff728a;
+  border-color: #ffb347;
+  color: #ffb347;
 }
 
 /* =========================================================
-   PHOTOS GRID (STEP 1)
+   PHOTO GRID (STEP 1)
    ========================================================= */
+
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 6px;
   margin-top: 8px;
-  padding-top: 4px;
 }
 .photo-thumb {
   width: 100%;
@@ -282,8 +290,9 @@ body.light-theme select {
 }
 
 /* =========================================================
-   FLOATING TOOLBAR (RIGHT SIDE)
+   FLOATING TOOLBAR
    ========================================================= */
+
 .floating-tools {
   position: fixed;
   right: 16px;
@@ -293,6 +302,7 @@ body.light-theme select {
   gap: 8px;
   z-index: 50;
 }
+
 .tool-button {
   background: #0a0d1c;
   color: #ffffff;
@@ -304,29 +314,48 @@ body.light-theme select {
   white-space: nowrap;
 }
 .tool-button:hover {
-  background: linear-gradient(90deg, #ff8b2b, #ff416c);
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
   border-color: transparent;
 }
 
+/* Hide the toolbar on smaller screens to avoid overlap */
+@media (max-width: 1100px) {
+  .floating-tools {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 0 16px 24px;
+  }
+}
+
 /* =========================================================
-   PHOTO QUICK TUNER (RIGHT COLUMN)
+   STEP 3 – RIGHT COLUMN CARDS
    ========================================================= */
+
+.lab-card {
+  margin-bottom: 16px;
+}
+
+/* Photo quick tuner preview */
 .photo-preview-wrapper {
   margin: 10px 0;
   min-height: 140px;
   border-radius: 8px;
-  background: #060918;
-  border: 1px dashed rgba(255, 255, 255, 0.25);
+  padding: 8px;
+  border: 1px dashed rgba(193, 225, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  background: rgba(4, 6, 18, 0.09);
 }
+
 #photoPreview {
   max-width: 100%;
   max-height: 100%;
-  border-radius: 8px;
   object-fit: contain;
 }
+
 .slider-group label {
   font-size: 12px;
 }
@@ -345,10 +374,11 @@ body.light-theme select {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9000;
+  z-index: 9990;
 }
+
 .modal.hidden {
-  display: none !important;
+  display: none;
 }
 
 .modal-content {
@@ -358,37 +388,55 @@ body.light-theme select {
   overflow: auto;
   position: relative;
 }
+
 .modal-close {
   position: absolute;
   right: 12px;
   top: 8px;
-  font-size: 22px;
   cursor: pointer;
-  user-select: none;
+  font-size: 20px;
 }
 
-/* Simple calc */
+/* Simple calc grid */
+.simple-calc {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px;
+}
+.simple-calc-display {
+  padding: 8px;
+  margin-bottom: 8px;
+  text-align: right;
+  background: #0d0f2b;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
 .simple-calc-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 5px;
 }
-.simple-calc button {
+.simple-calc-grid button {
   padding: 8px 0;
+  border-radius: 6px;
+  border: none;
+  background: #11132f;
+  color: #fff;
+  cursor: pointer;
 }
 
 /* =========================================================
-   STEP 2 CARDS
+   HIDDEN CLASS
    ========================================================= */
-.platform-card {
-  margin-bottom: 10px;
+
+.hidden {
+  display: none !important;
 }
 
 /* =========================================================
    CREATIVE STUDIO OVERLAY
    ========================================================= */
 
-/* Fullscreen dark overlay */
 .creative-overlay {
   position: fixed;
   inset: 0;
@@ -396,10 +444,9 @@ body.light-theme select {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 9999; /* above everything */
 }
 
-/* The actual modal box */
 .creative-modal {
   background: #050711;
   border-radius: 16px;
@@ -412,20 +459,17 @@ body.light-theme select {
   border: 1px solid #2b2b4a;
 }
 
-/* Header row inside overlay */
+/* Header */
 .creative-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid #222438;
 }
 .creative-header h2 {
   margin: 0;
-  font-size: 16px;
 }
-
-/* Close button */
 .modal-close-btn {
   background: none;
   border: none;
@@ -434,7 +478,7 @@ body.light-theme select {
   cursor: pointer;
 }
 
-/* Top bar: preset + actions */
+/* Top bar with preset + actions */
 .creative-top-bar {
   display: flex;
   align-items: center;
@@ -449,24 +493,15 @@ body.light-theme select {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .creative-actions {
   display: flex;
   gap: 6px;
 }
-.creative-actions button {
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid #34365a;
-  background: #101322;
-  color: #f5f5ff;
-  font-size: 11px;
-  cursor: pointer;
-}
 
-/* Main 3-column layout inside modal */
+/* Layout inside overlay */
 .creative-body {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 260px;
@@ -476,18 +511,14 @@ body.light-theme select {
   background: #050711;
 }
 
-/* LEFT: tools */
+/* Tools column */
 .creative-tools {
   display: flex;
   flex-direction: column;
   gap: 8px;
   font-size: 14px;
 }
-.creative-tools h3 {
-  margin-bottom: 4px;
-}
 
-/* Tool buttons */
 .tool-btn {
   width: 100%;
   padding: 6px 8px;
@@ -497,19 +528,18 @@ body.light-theme select {
   color: #fff;
   cursor: pointer;
   text-align: left;
-  font-size: 12px;
 }
 .tool-btn-active {
   border-color: #ff4b2b;
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 
-/* Hidden file input */
+/* hidden input for image upload */
 .hidden-input {
   display: none;
 }
 
-/* CENTER: canvas area */
+/* Canvas area */
 .creative-canvas-wrap {
   background: #080b12;
   border-radius: 8px;
@@ -522,44 +552,39 @@ body.light-theme select {
   background: #050711;
 }
 
-/* RIGHT: properties */
+/* Properties column */
 .creative-properties {
   display: flex;
   flex-direction: column;
   gap: 12px;
   font-size: 14px;
 }
-
 .prop-group {
   padding: 8px;
   border-radius: 8px;
   background: #090c18;
   border: 1px solid #222438;
 }
-
 .prop-group h4 {
   margin: 0 0 6px;
-  font-size: 13px;
 }
-
 .prop-group label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   margin-bottom: 6px;
-  font-size: 12px;
+  gap: 4px;
 }
-
 .prop-group input,
 .prop-group select {
   width: 100%;
 }
 
-/* Make overlay layout stack on smaller screens */
+/* Responsive overlay */
 @media (max-width: 900px) {
   .creative-body {
     grid-template-columns: 1fr;
   }
+
   .creative-tools,
   .creative-properties {
     flex-direction: row;
@@ -568,24 +593,17 @@ body.light-theme select {
 }
 
 /* =========================================================
-   RESPONSIVE (MAIN LAYOUT)
+   RESPONSIVE FOR MAIN LAYOUT
    ========================================================= */
+
 @media (max-width: 1100px) {
   .layout {
-    grid-template-columns: 1fr;
-  }
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 16px 24px;
-    justify-content: center;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-/* =========================================================
-   UNIVERSAL .hidden CLASS
-   ========================================================= */
-.hidden {
-  display: none !important;
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
 }
