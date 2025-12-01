@@ -605,6 +605,7 @@ textarea {
   min-height: 160px;
   max-height: none;
   line-height: 1.45;
+  overflow-y: hidden;      /* <-- add this line */
 }
 
 /* Output-only textareas get EVEN bigger */
@@ -617,8 +618,10 @@ textarea {
 #carOutput,
 #imageOutput,
 #videoGenOutput {
-  min-height: 300px;   /* was 260px */
+  min-height: 260px;   /* or 300px if you want */
 }
+
+
 
 
 /* Buttons inside modals */
