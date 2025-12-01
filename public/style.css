@@ -1,7 +1,4 @@
-/* =========================================================
-   GLOBAL BASE
-   ========================================================= */
-
+/* GLOBAL BASE ------------------------------------------------------- */
 *,
 *::before,
 *::after {
@@ -16,114 +13,104 @@ body {
     sans-serif;
 }
 
-/* Dark theme is the default state the JS applies */
-body.dark-theme {
-  background: radial-gradient(circle at top, #111633 0, #050711 60%);
+/* Dark theme is the default state on load */
+body {
+  background: radial-gradient(circle at top, #111636 0%, #050711 60%);
   color: #f5f5ff;
 }
 
+/* LIGHT THEME TOGGLE OVERRIDE */
 body:not(.dark-theme) {
-  background: #f4f4f7;
-  color: #111;
+  background: #f4f4f8;
+  color: #14121e;
 }
 
-/* Links (just in case) */
 a {
-  color: #ff4b2b;
+  color: #ff82b2;
   text-decoration: none;
 }
-
 a:hover {
   text-decoration: underline;
 }
 
-/* =========================================================
-   HEADER
-   ========================================================= */
-
+/* HEADER ------------------------------------------------------------- */
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(5, 7, 17, 0.95);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 16, 40, 0.98),
+    rgba(23, 27, 64, 0.98)
+  );
 }
 
 .branding h1 {
-  margin: 0;
-  font-size: 24px;
+  margin: 0 0 4px;
+  font-size: 20px;
 }
-
 .branding p {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 13px;
   opacity: 0.8;
 }
 
-/* Theme switcher */
+/* Theme switch style */
 .theme-switch {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  cursor: pointer;
+  color: #ddd;
 }
-
 .theme-switch input {
   display: none;
 }
 
-.theme-switch .slider {
-  width: 50px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid #444;
+.slider {
   position: relative;
-  margin: 0 4px;
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  width: 48px;
+  height: 24px;
+  border-radius: 99px;
+  border: 1px solid #444;
+  background: linear-gradient(90deg, #0e1724, #262b44);
+  cursor: pointer;
 }
-
-.theme-switch .slider::before {
+.slider::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
+  top: 1px;
+  left: 1px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: #fff;
-  transition: transform 0.2s ease;
+  background: #ff4b2b;
+  transition: transform 0.24s;
 }
-
-/* When unchecked (light), move dot right.
-   JS sets checked state on load. */
-#themeToggle:not(:checked) + .slider::before,
-.theme-switch input:not(:checked) + .slider::before {
+#themeToggle:not(:checked) + .slider::before {
   transform: translateX(24px);
 }
 
-/* =========================================================
-   MAIN LAYOUT
-   ========================================================= */
-
+/* MAIN LAYOUT -------------------------------------------------------- */
 .layout {
   max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px 16px 80px;
+  margin: 16px auto 40px;
+  padding: 16px 24px 32px;
   display: grid;
-  grid-template-columns: 1.15fr 1.25fr 1.1fr;
   gap: 16px;
+  grid-template-columns: 1.15fr 1.15fr 1.1fr;
 }
 
+/* Columns */
 .column h2 {
   margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
 }
 
-/* Cards / boxes */
+/* Card / box base */
 .summary-box,
 .platform-card,
 .lab-card,
@@ -132,16 +119,7 @@ a:hover {
   border-radius: 12px;
   padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-}
-
-body:not(.dark-theme) .summary-box,
-body:not(.dark-theme) .platform-card,
-body:not(.dark-theme) .lab-card,
-body:not(.dark-theme) .modal-content {
-  background: #ffffff;
-  border-color: #ddd;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
 }
 
 .summary-box h3,
@@ -149,31 +127,27 @@ body:not(.dark-theme) .modal-content {
 .lab-card h3 {
   margin-top: 0;
   margin-bottom: 8px;
+  font-size: 15px;
 }
 
-/* Inputs */
+/* Inputs / textareas */
 input[type="text"],
 input[type="number"],
 input[type="date"],
 textarea,
 select {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(4, 6, 18, 0.95);
-  color: #f5f5ff;
+  padding: 8px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(6, 10, 22, 0.96);
+  color: inherit;
   font-size: 13px;
 }
 
-body:not(.dark-theme) input[type="text"],
-body:not(.dark-theme) input[type="number"],
-body:not(.dark-theme) input[type="date"],
-body:not(.dark-theme) textarea,
-body:not(.dark-theme) select {
-  background: #fafafa;
-  border-color: #ccc;
-  color: #111;
+textarea {
+  min-height: 80px;
+  resize: vertical;
 }
 
 label {
@@ -182,113 +156,84 @@ label {
   margin-bottom: 8px;
 }
 
-label input,
-label textarea,
-label select {
-  margin-top: 4px;
-}
-
-/* Textareas */
-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-/* small note text */
 .small-note {
-  font-size: 12px;
-  opacity: 0.8;
+  font-size: 11px;
+  opacity: 0.78;
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
+/* Status text */
+.status-text {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #a3ffc8;
+}
+.status-text.error {
+  color: #ff9a9a;
+}
+
+/* BUTTONS ------------------------------------------------------------ */
+.primary-btn,
+.secondary-btn,
+.tool-button,
+.regen-btn,
+.copy-btn {
+  font-size: 12px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  padding: 7px 14px;
+}
 
 .primary-btn {
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  border-radius: 999px;
-  border: none;
   color: #fff;
-  padding: 8px 18px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 600;
+  border: none;
 }
-
-.primary-btn:hover {
-  filter: brightness(1.05);
+.primary-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .secondary-btn {
   background: transparent;
-  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 14px;
-  font-size: 12px;
-  color: inherit;
-  cursor: pointer;
+  color: #fff;
 }
 
+.regen-btn {
+  background: #16192f;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.copy-btn {
+  background: rgba(8, 190, 130, 0.16);
+  border: 1px solid rgba(82, 244, 191, 0.6);
+  color: #b7ffe4;
+}
+
+/* Button row */
 .btn-row {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
-}
-
-.copy-btn,
-.regen-btn {
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  padding: 5px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  color: inherit;
-}
-
-.copy-btn.copied {
-  border-color: #25d366;
-  color: #25d366;
-}
-
-.copy-btn.empty {
-  border-color: #ff4b2b;
-  color: #ff4b2b;
-}
-
-/* Status text under Boost button */
-.status-text {
+  justify-content: flex-end;
   margin-top: 6px;
-  font-size: 12px;
-  opacity: 0.9;
 }
 
-.status-text.error {
-  color: #ff6b6b;
-}
-
-/* =========================================================
-   PHOTOS GRID (STEP 1)
-   ========================================================= */
-
+/* PHOTOS GRID (STEP 1) ---------------------------------------------- */
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 6px;
   margin-top: 8px;
 }
-
 .photo-thumb {
   width: 100%;
-  border-radius: 6px;
+  border-radius: 8px;
   object-fit: cover;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* =========================================================
-   FLOATING TOOLBAR
-   ========================================================= */
-
+/* FLOATING TOOLBAR --------------------------------------------------- */
 .floating-tools {
   position: fixed;
   right: 16px;
@@ -296,12 +241,11 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 40;
+  z-index: 50;
 }
-
 .tool-button {
   background: #0a0d1c;
-  color: #ffffff;
+  color: #fff;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 6px 14px;
@@ -310,115 +254,103 @@ textarea {
   white-space: nowrap;
 }
 
-.tool-button:hover {
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  border-color: transparent;
-}
-
-/* =========================================================
-   PHOTO QUICK TUNER
-   ========================================================= */
-
+/* PHOTO QUICK TUNER -------------------------------------------------- */
 .photo-preview-wrapper {
   margin: 10px 0;
   min-height: 140px;
   border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px dashed rgba(193, 225, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: rgba(4, 6, 18, 0.9);
+  background: rgba(4, 6, 18, 0.09);
 }
-
 #photoPreview {
   max-width: 100%;
   max-height: 220px;
   object-fit: contain;
 }
-
 .slider-group label {
   font-size: 12px;
 }
-
 .slider-group input[type="range"] {
   width: 100%;
 }
 
-/* =========================================================
-   MODALS (TOOLS)
-   ========================================================= */
-
-/* .hidden is applied in JS to hide modals/overlay */
-.hidden {
-  display: none !important;
-}
-
+/* MODALS (TOOLS) ----------------------------------------------------- */
 .modal {
   position: fixed;
   inset: 0;
+  display: none;
   background: rgba(0, 0, 0, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9000;
 }
-
 .modal-content {
   max-width: 640px;
   width: 95vw;
   max-height: 90vh;
   overflow: auto;
   position: relative;
+  padding-top: 32px;
 }
-
 .modal-close {
   position: absolute;
   right: 12px;
   top: 8px;
-  font-size: 22px;
+  font-size: 24px;
   cursor: pointer;
+  color: #f1f1ff;
+}
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
-/* Simple calculator styling */
+/* Simple calc grid */
 .simple-calc {
-  margin-top: 8px;
-}
-
-.simple-calc-display {
-  background: #050711;
+  background: #050713;
   border-radius: 8px;
-  padding: 10px;
-  text-align: right;
-  font-size: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 8px;
+  display: grid;
+  gap: 4px;
 }
-
+.simple-calc-display {
+  background: #000218;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: right;
+  font-family: "Menlo", "Consolas", monospace;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
 .simple-calc-grid {
-  margin-top: 8px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 5px;
 }
-
 .simple-calc-grid button {
-  padding: 8px 0;
+  padding: 6px 0;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: #101323;
-  color: #fff;
+  border: 1px solid #2f3254;
+  background: #0e1230;
+  color: #f5f5ff;
   cursor: pointer;
 }
 
-/* =========================================================
-   CREATIVE STUDIO OVERLAY
-   ========================================================= */
+/* HIDDEN CLASS (for modals + overlay) ------------------------------- */
+.hidden {
+  display: none !important;
+}
 
-/* Fullscreen dark overlay */
+/* CREATIVE STUDIO OVERLAY ------------------------------------------- */
 .creative-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -443,12 +375,13 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid #222438;
+  background: #050711;
 }
-
 .creative-header h2 {
   margin: 0;
+  font-size: 16px;
 }
 
 /* Close button */
@@ -456,7 +389,7 @@ textarea {
   background: none;
   border: none;
   color: #ffffff;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
 }
 
@@ -470,37 +403,14 @@ textarea {
   border-bottom: 1px solid #222438;
   background: #080b12;
 }
-
 .preset-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-}
-
-.preset-label select {
-  background: #050711;
-  border-radius: 6px;
-  border: 1px solid #33334d;
-  color: #ffffff;
-  padding: 4px 8px;
-}
-
-/* Buttons in header */
-.creative-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.creative-actions button {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #33334d;
-  background: #101323;
-  color: #ffffff;
-  cursor: pointer;
   font-size: 13px;
+}
+.creative-actions button {
+  margin-left: 6px;
 }
 
 /* Main 3-column layout inside modal */
@@ -520,11 +430,6 @@ textarea {
   gap: 8px;
   font-size: 14px;
 }
-
-.creative-tools h3 {
-  margin: 0 0 8px;
-}
-
 .tool-btn {
   width: 100%;
   padding: 6px 8px;
@@ -536,18 +441,17 @@ textarea {
   text-align: left;
   font-size: 13px;
 }
-
 .tool-btn-active {
   border-color: #ff4b2b;
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 
-/* Hidden file input for image upload */
+/* Hidden file input */
 .hidden-input {
   display: none;
 }
 
-/* CENTER: canvas area */
+/* CENTER: canvas */
 .creative-canvas-wrap {
   background: #080b12;
   border-radius: 8px;
@@ -556,7 +460,6 @@ textarea {
   justify-content: center;
   overflow: auto;
 }
-
 #creativeCanvas {
   background: #050711;
 }
@@ -568,86 +471,49 @@ textarea {
   gap: 12px;
   font-size: 14px;
 }
-
 .prop-group {
   padding: 8px;
   border-radius: 8px;
   background: #090c18;
   border: 1px solid #222438;
 }
-
 .prop-group h4 {
   margin: 0 0 6px;
+  font-size: 13px;
 }
-
 .prop-group label {
   display: flex;
   flex-direction: column;
   gap: 4px;
   margin-bottom: 6px;
 }
-
 .prop-group input,
 .prop-group select {
   width: 100%;
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: 1px solid #33334d;
-  background: #050711;
-  color: #ffffff;
-  font-size: 13px;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 0 16px 24px;
-    justify-content: flex-start;
-  }
-}
-
+/* Make overlay layout stack on smaller screens */
 @media (max-width: 900px) {
-  .creative-modal {
-    width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
   .creative-body {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    overflow: auto;
   }
-
   .creative-tools,
   .creative-properties {
     flex-direction: row;
     flex-wrap: wrap;
   }
+}
 
-  .tool-btn {
-    width: auto;
+/* RESPONSIVE MAIN ---------------------------------------------------- */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
   }
-
-  .creative-top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .creative-actions {
-    width: 100%;
-    justify-content: flex-start;
+  .floating-tools {
+    position: static;
+    flex-direction: row;
     flex-wrap: wrap;
+    margin: 16px 24px;
+    justify-content: center;
   }
 }
