@@ -527,6 +527,135 @@ textarea {
 /* =========================================================
    Responsive tweaks
    ========================================================= */
+/* =========================================================
+   Side Modals – AI Tools (slide-over panels)
+   ========================================================= */
+
+.hidden {
+  display: none !important;
+}
+
+.side-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 3, 12, 0.82);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 45;
+}
+
+.side-modal-panel {
+  width: min(420px, 90vw);
+  height: 100%;
+  background: #040612;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: -12px 0 35px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.side-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(90deg, #25104f, #3b145c);
+}
+
+.side-modal-header h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.side-modal-close {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.side-modal-body {
+  padding: 14px 18px 18px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.side-modal-body h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.side-modal-body p {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.side-modal-body label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.side-modal-body textarea {
+  min-height: 120px;
+}
+
+.side-modal-body .primary-btn {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.side-modal-body .small-note {
+  margin-top: 6px;
+}
+
+/* Calculator panel tweaks */
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.calc-grid label {
+  margin-bottom: 0;
+}
+
+.calc-display {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(4, 5, 12, 0.96);
+  min-height: 40px;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+}
+
+.basic-calc-keys {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.basic-calc-keys button {
+  padding: 8px 0;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.basic-calc-keys button:hover {
+  filter: brightness(1.05);
+}
 
 @media (max-width: 900px) {
   .layout {
