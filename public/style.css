@@ -12,26 +12,29 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
-/* Dark theme is the default state on load */
+/* Dark theme is the default state */
 body {
-  background: radial-gradient(circle at top, #1f1136 0%, #050711 60%, #000 100%);
-  color: #ffffff;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #111633 0%, #050711 60%, #000 100%);
+  color: #f5f5ff;
 }
 
-/* Light theme (toggled by JS with .light-theme on <body>) */
+/* Light theme */
 body.light-theme {
   background: #f4f5fb;
-  color: #111;
+  color: #111224;
 }
 
-/* Links */
+/* Link styles */
 a {
-  color: #ff82b9;
+  color: #ff4b2b;
   text-decoration: none;
 }
+
 a:hover {
   text-decoration: underline;
 }
@@ -45,25 +48,30 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: radial-gradient(circle at top, #321c5a 0%, #12081f 60%, #05050a 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(90deg, #120d35 0%, #2a1045 40%, #120d35 100%);
+  position: sticky;
+  top: 0;
+  z-index: 1100;
 }
 
 .branding h1 {
-  margin: 0;
-  font-size: 22px;
-}
-.branding p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  opacity: 0.8;
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
-/* Theme switcher */
+.branding p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Theme switch */
 .header-controls {
   display: flex;
-  gap: 16px;
   align-items: center;
+  gap: 16px;
 }
 
 .theme-switch {
@@ -71,254 +79,286 @@ a:hover {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  cursor: pointer;
-  color: #fdfdfd;
+  color: #f5f5ff;
 }
+
 .theme-switch input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
-.slider {
-  width: 50px;
+
+.theme-switch .slider {
+  width: 52px;
   height: 24px;
   border-radius: 999px;
   border: 1px solid #444;
   position: relative;
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  cursor: pointer;
 }
-.slider::before {
+
+.theme-switch .slider::before {
   content: "";
   position: absolute;
   top: 2px;
   left: 2px;
   width: 18px;
   height: 18px;
-  border-radius: 999px;
-  background: #000;
-  transition: transform 0.24s;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.22s ease;
 }
-#themeToggle:not(:checked) + .slider::before {
+
+/* When checkbox is checked = light theme */
+.theme-switch input:checked + .slider::before {
   transform: translateX(24px);
 }
 
-/* Light mode header tweaks */
-body.light-theme .app-header {
-  background: #ffffff;
-  border-bottom-color: #e3e4ef;
-}
-body.light-theme .branding p {
-  color: #555;
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
+
+/* 2-column grid for Step 1 + Step 2, Step 3 full width underneath */
+.layout {
+  max-width: 1400px;
+  margin: 24px auto 40px;
+  padding: 0 16px 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "left middle"
+    "step3 step3";
+  gap: 24px;
 }
 
-/* =========================================================
-   MAIN LAYOUT (3 COLUMNS)
-   ========================================================= */
-/* Map sections to grid areas */
+/* Card boxes & shared column styling */
+.column {
+  background: rgba(7, 6, 24, 0.92);
+  border-radius: 12px;
+  padding: 16px 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* Step 1 left */
 .column-left {
   grid-area: left;
 }
 
+/* Step 2 right (contains platform cards grid) */
 .column-middle {
   grid-area: middle;
-}
-
-.column-right {
-  grid-area: right;
-}
-
-.layout {
-  max-width: 1350px;
-  margin: 16px auto 40px;
-  padding: 0 16px 40px;
   display: grid;
-  gap: 24px;
-
-  /* 2 columns: Step 1 + Step 2 on top, Step 3 full width below */
-  grid-template-columns: 1.1fr 1.1fr;
-  grid-template-areas:
-    "left middle"
-    "right right";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-content: flex-start;
 }
 
-
-/* Card look used all over */
-.summary-box,
-.platform-card,
-.lab-card,
-.modal-content {
-  background: #07051b;
-  border-radius: 12px;
-  padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+/* summary at top of Step 2 spans both columns */
+.column-middle > .summary-box {
+  grid-column: 1 / -1;
 }
 
-body.light-theme .summary-box,
-body.light-theme .platform-card,
-body.light-theme .lab-card,
-body.light-theme .modal-content {
-  background: #ffffff;
-  border-color: #e1e3f0;
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
+/* Step 3 – Creative Lab (bottom, full width) */
+.column-right {
+  grid-area: step3;
 }
 
-.column h2 {
+/* Headings */
+.column-left h2,
+.column-right h2 {
   margin-top: 0;
+  margin-bottom: 12px;
 }
 
-/* Inputs / textareas / selects */
+/* Generic summary / card container */
+.summary-box,
+.lab-card {
+  background: rgba(5, 5, 20, 0.96);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  margin-bottom: 12px;
+}
+
+/* Inputs & textareas */
 input[type="text"],
 input[type="number"],
 input[type="date"],
 textarea,
 select {
   width: 100%;
-  padding: 8px 10px;
+  padding: 8px 9px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(2, 4, 16, 0.9);
-  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(6, 6, 25, 0.98);
+  color: #f5f5ff;
   font-size: 13px;
+  outline: none;
 }
 
 textarea {
-  min-height: 80px;
   resize: vertical;
+  min-height: 90px;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+/* Light theme overrides for inputs */
 body.light-theme input[type="text"],
 body.light-theme input[type="number"],
 body.light-theme input[type="date"],
 body.light-theme textarea,
 body.light-theme select {
   background: #ffffff;
-  color: #111;
-  border-color: #ccd0e4;
+  color: #111224;
+  border-color: #d2d4e8;
 }
 
-/* Labels & notes */
-label {
-  display: block;
+/* Small helper text */
+.small-note {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* =========================================================
+   STEP 1 SPECIFICS
+   ========================================================= */
+
+.summary-box h3 {
+  margin-top: 0;
   margin-bottom: 8px;
   font-size: 13px;
 }
-label input,
-label textarea,
-label select {
-  margin-top: 4px;
-}
-.small-note {
-  font-size: 11px;
-  opacity: 0.8;
+
+/* Photos grid */
+.photo-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
 }
 
-/* Status text under "Boost" */
-.status-text {
-  margin-top: 6px;
-  font-size: 12px;
-  opacity: 0.9;
+.photo-grid img {
+  width: 100%;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
-.status-text.error {
-  color: #ff7c8e;
+
+/* =========================================================
+   STEP 2 – PLATFORM CARDS (SOCIAL KIT)
+   ========================================================= */
+
+.platform-card {
+  background: rgba(5, 5, 20, 0.96);
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.platform-card h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+/* Taller textareas so you rarely scroll inside them */
+.platform-card textarea {
+  min-height: 220px;
+  max-height: none;
+  overflow-y: visible;
+  font-size: 12px;
+}
+
+/* Buttons under each card */
+.btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 /* =========================================================
    BUTTONS
    ========================================================= */
 
-.primary-btn {
+.primary-btn,
+.secondary-btn,
+.tool-button,
+.copy-btn,
+.regen-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  color: #fff;
+  font-size: 12px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 10px 24px rgba(255, 65, 108, 0.45);
+  white-space: nowrap;
+}
+
+/* Main CTA (orange/pink gradient) */
+.primary-btn {
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(255, 75, 43, 0.35);
 }
 
 .primary-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: default;
-  box-shadow: none;
 }
 
 .secondary-btn {
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(8, 8, 26, 0.9);
+  background: transparent;
   color: #ffffff;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-body.light-theme .secondary-btn {
-  background: #f7f7ff;
-  color: #111;
-}
-
-/* tiny buttons in card footers */
-.btn-row {
-  margin-top: 6px;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .copy-btn,
 .regen-btn {
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+/* Light theme button tweaks */
+body.light-theme .primary-btn {
   color: #fff;
-  font-size: 11px;
-  padding: 4px 10px;
-  cursor: pointer;
 }
-.copy-btn.copied {
-  border-color: #47d16f;
-  color: #47d16f;
+
+body.light-theme .secondary-btn,
+body.light-theme .copy-btn,
+body.light-theme .regen-btn {
+  background: #ffffff;
+  color: #111224;
+  border-color: #d2d4e8;
 }
-.copy-btn.empty {
-  border-color: #ffb347;
-  color: #ffb347;
+
+/* Status text */
+.status-text {
+  margin-top: 6px;
+  font-size: 12px;
+  min-height: 16px;
 }
 
 /* =========================================================
-   PHOTO GRID (STEP 1)
-   ========================================================= */
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 6px;
-  margin-top: 8px;
-}
-.photo-thumb {
-  width: 100%;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* =========================================================
-   FLOATING TOOLBAR
+   FLOATING TOOLBAR (RIGHT SIDE)
    ========================================================= */
 
 .floating-tools {
   position: fixed;
-  right: 16px;
-  top: 100px;
+  top: 86px;          /* align roughly with top row */
+  right: 24px;        /* keep clear of Step 2 card edge */
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  z-index: 50;
+  gap: 6px;
+  z-index: 2000;
 }
 
 .tool-button {
@@ -326,46 +366,35 @@ body.light-theme .secondary-btn {
   color: #ffffff;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 14px;
+  padding: 4px 10px;
   font-size: 11px;
-  cursor: pointer;
   white-space: nowrap;
 }
+
 .tool-button:hover {
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  border-color: transparent;
 }
 
-/* Hide the toolbar on smaller screens to avoid overlap */
-@media (max-width: 1100px) {
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 0 16px 24px;
-  }
+/* Light theme floating tools */
+body.light-theme .floating-tools .tool-button {
+  background: #ffffff;
+  color: #111224;
 }
 
 /* =========================================================
-   STEP 3 – RIGHT COLUMN CARDS
+   PHOTO QUICK TUNER
    ========================================================= */
 
-.lab-card {
-  margin-bottom: 16px;
-}
-
-/* Photo quick tuner preview */
 .photo-preview-wrapper {
   margin: 10px 0;
   min-height: 140px;
   border-radius: 8px;
-  padding: 8px;
-  border: 1px dashed rgba(193, 225, 255, 0.25);
+  background: rgba(4, 6, 18, 0.95);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: rgba(4, 6, 18, 0.09);
 }
 
 #photoPreview {
@@ -377,8 +406,15 @@ body.light-theme .secondary-btn {
 .slider-group label {
   font-size: 12px;
 }
+
 .slider-group input[type="range"] {
   width: 100%;
+}
+
+/* Light theme */
+body.light-theme .photo-preview-wrapper {
+  background: #ffffff;
+  border-color: #d2d4e8;
 }
 
 /* =========================================================
@@ -386,17 +422,14 @@ body.light-theme .secondary-btn {
    ========================================================= */
 
 .modal {
+  /* JS toggles .hidden, so base is visible */
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
   z-index: 9990;
-}
-
-.modal.hidden {
-  display: none;
 }
 
 .modal-content {
@@ -405,50 +438,39 @@ body.light-theme .secondary-btn {
   max-height: 90vh;
   overflow: auto;
   position: relative;
+  background: #050711;
+  border-radius: 12px;
+  padding: 16px 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .modal-close {
   position: absolute;
   right: 12px;
-  top: 8px;
-  cursor: pointer;
+  top: 10px;
   font-size: 20px;
+  cursor: pointer;
 }
 
 /* Simple calc grid */
-.simple-calc {
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px;
-}
-.simple-calc-display {
-  padding: 8px;
-  margin-bottom: 8px;
-  text-align: right;
-  background: #0d0f2b;
-  border-radius: 6px;
-  font-variant-numeric: tabular-nums;
-}
 .simple-calc-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
-}
-.simple-calc-grid button {
-  padding: 8px 0;
-  border-radius: 6px;
-  border: none;
-  background: #11132f;
-  color: #fff;
-  cursor: pointer;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
-/* =========================================================
-   HIDDEN CLASS
-   ========================================================= */
-
-.hidden {
-  display: none !important;
+.simple-calc-display {
+  background: #0a0d1c;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  text-align: right;
 }
 
 /* =========================================================
@@ -457,14 +479,15 @@ body.light-theme .secondary-btn {
 
 .creative-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  inset: 0; /* top:0 right:0 bottom:0 left:0 */
+  background: rgba(0, 0, 0, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999; /* above everything */
 }
 
+/* The actual overlay box */
 .creative-modal {
   background: #050711;
   border-radius: 16px;
@@ -477,17 +500,19 @@ body.light-theme .secondary-btn {
   border: 1px solid #2b2b4a;
 }
 
-/* Header */
+/* Header row */
 .creative-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid #222438;
 }
+
 .creative-header h2 {
   margin: 0;
 }
+
 .modal-close-btn {
   background: none;
   border: none;
@@ -496,7 +521,7 @@ body.light-theme .secondary-btn {
   cursor: pointer;
 }
 
-/* Top bar with preset + actions */
+/* Preset + actions row */
 .creative-top-bar {
   display: flex;
   align-items: center;
@@ -511,25 +536,24 @@ body.light-theme .secondary-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
-.creative-actions {
-  display: flex;
-  gap: 6px;
+.creative-actions button {
+  margin-left: 6px;
 }
 
-/* Layout inside overlay */
+/* 3-column layout inside modal */
 .creative-body {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 260px;
   gap: 10px;
   padding: 12px 16px 16px;
-  overflow: hidden;
   background: #050711;
+  overflow: hidden;
 }
 
-/* Tools column */
+/* LEFT: tools */
 .creative-tools {
   display: flex;
   flex-direction: column;
@@ -547,17 +571,18 @@ body.light-theme .secondary-btn {
   cursor: pointer;
   text-align: left;
 }
+
 .tool-btn-active {
   border-color: #ff4b2b;
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 
-/* hidden input for image upload */
+/* Hidden file input */
 .hidden-input {
   display: none;
 }
 
-/* Canvas area */
+/* CENTER: canvas area */
 .creative-canvas-wrap {
   background: #080b12;
   border-radius: 8px;
@@ -566,38 +591,41 @@ body.light-theme .secondary-btn {
   justify-content: center;
   overflow: auto;
 }
+
 #creativeCanvas {
   background: #050711;
 }
 
-/* Properties column */
+/* RIGHT: properties panel */
 .creative-properties {
   display: flex;
   flex-direction: column;
   gap: 12px;
   font-size: 14px;
 }
+
 .prop-group {
   padding: 8px;
   border-radius: 8px;
   background: #090c18;
   border: 1px solid #222438;
 }
+
 .prop-group h4 {
   margin: 0 0 6px;
 }
+
 .prop-group label {
   display: flex;
   flex-direction: column;
-  margin-bottom: 6px;
   gap: 4px;
-}
-.prop-group input,
-.prop-group select {
-  width: 100%;
+  margin-bottom: 6px;
 }
 
-/* Responsive overlay */
+/* -----------------------------------
+   Overlay responsive
+   ----------------------------------- */
+
 @media (max-width: 900px) {
   .creative-body {
     grid-template-columns: 1fr;
@@ -608,27 +636,44 @@ body.light-theme .secondary-btn {
     flex-direction: row;
     flex-wrap: wrap;
   }
+
+  .creative-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .creative-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 
 /* =========================================================
-   RESPONSIVE FOR MAIN LAYOUT
+   RESPONSIVE – MAIN GRID
    ========================================================= */
 
 @media (max-width: 1100px) {
   .layout {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "left middle"
-      "right right";
-  }
-}
-
-@media (max-width: 800px) {
-  .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "left"
       "middle"
-      "right";
+      "step3";
   }
+
+  .floating-tools {
+    top: auto;
+    bottom: 16px;
+    right: 16px;
+  }
+}
+
+/* =========================================================
+   HIDDEN UTILITY
+   ========================================================= */
+
+.hidden {
+  display: none !important;
 }
