@@ -617,8 +617,9 @@ textarea {
 #carOutput,
 #imageOutput,
 #videoGenOutput {
-  min-height: 260px;   /* increase to 300px if you want them taller */
+  min-height: 300px;   /* was 260px */
 }
+
 
 /* Buttons inside modals */
 .side-modal-body .primary-btn {
