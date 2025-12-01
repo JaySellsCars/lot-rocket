@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body class="dark-theme">
   <!-- HEADER -->
   <header class="app-header">
@@ -18,15 +19,17 @@
       <label class="theme-switch">
         <span>Dark</span>
         <input type="checkbox" id="themeToggle" checked />
-        <span class="slider"></span>
         <span>Light</span>
       </label>
     </div>
   </header>
 
-  <!-- MAIN LAYOUT: Step 1 (left) + Step 2 (right top) + Step 3 (full-width bottom) -->
+  <!-- MAIN LAYOUT -->
   <main class="layout">
-    <!-- STEP 1 – Dealer URL Scraper (LEFT) -->
+
+    <!-- ========================================= -->
+    <!-- STEP 1 – Dealer URL Scraper (LEFT COLUMN) -->
+    <!-- ========================================= -->
     <section class="column-left column">
       <h2>Step 1 – Dealer URL Scraper</h2>
 
@@ -35,29 +38,17 @@
 
         <label>
           Dealer Vehicle URL
-          <input
-            type="text"
-            id="vehicleUrl"
-            placeholder="Paste full dealer listing URL here..."
-          />
+          <input type="text" id="vehicleUrl" placeholder="Paste full dealer listing URL here..." />
         </label>
 
         <label>
           Vehicle Label (optional override)
-          <input
-            type="text"
-            id="vehicleLabel"
-            placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
-          />
+          <input type="text" id="vehicleLabel" placeholder="Example: 2024 Chevy Silverado LTZ 4x4" />
         </label>
 
         <label>
           Price / Offer (optional override)
-          <input
-            type="text"
-            id="priceInfo"
-            placeholder="Example: $699/mo or $47,995 + tax"
-          />
+          <input type="text" id="priceInfo" placeholder="Example: $699/mo or $47,995 + tax" />
         </label>
 
         <p class="small-note">
@@ -70,9 +61,7 @@
           <p>Price: <span id="summaryPrice">—</span></p>
         </div>
 
-        <button id="boostButton" class="primary-btn summary-btn">
-          Boost This Listing
-        </button>
+        <button id="boostButton" class="primary-btn summary-btn">Boost This Listing</button>
         <div id="statusText" class="status-text"></div>
       </div>
 
@@ -82,11 +71,7 @@
           Click "Boost This Listing" to refresh photos. Up to 24 images, logos removed when possible.
         </p>
 
-        <button
-          id="sendPhotosToStudio"
-          class="secondary-btn"
-          disabled
-        >
+        <button id="sendPhotosToStudio" class="secondary-btn" disabled>
           Send top photos to Creative Studio
         </button>
 
@@ -94,113 +79,85 @@
       </div>
     </section>
 
-    <!-- STEP 2 – Social Media Kit (RIGHT/TOP) -->
+    <!-- ============================== -->
+    <!-- STEP 2 – Social Media Kit     -->
+    <!-- ============================== -->
     <section class="column-middle">
+
+      <!-- Step 2 header spans both columns -->
       <div class="summary-box step2-header">
         <h2>Step 2 – Social Media Kit</h2>
-        <p class="small-note">
-          Copy, tweak, and paste into each platform. Spin fresh versions anytime.
-        </p>
+        <p class="small-note">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</p>
       </div>
 
-      <!-- Facebook -->
+      <!-- 8 Social Platform Cards — EXACTLY like your white screenshot -->
+
       <div class="platform-card">
         <h3>Facebook Post</h3>
-        <textarea
-          id="facebookPost"
-          placeholder="Facebook post will appear here after Boost."
-        ></textarea>
+        <textarea id="facebookPost" placeholder="Facebook post will appear here after Boost."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="facebook">New Post</button>
           <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
         </div>
       </div>
 
-      <!-- Instagram -->
       <div class="platform-card">
         <h3>Instagram Caption</h3>
-        <textarea
-          id="instagramPost"
-          placeholder="Instagram caption will appear here after Boost."
-        ></textarea>
+        <textarea id="instagramPost" placeholder="Instagram caption will appear here after Boost."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="instagram">New Post</button>
           <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
         </div>
       </div>
 
-      <!-- TikTok -->
       <div class="platform-card">
         <h3>TikTok Caption</h3>
-        <textarea
-          id="tiktokPost"
-          placeholder="TikTok caption + hook will appear here."
-        ></textarea>
+        <textarea id="tiktokPost" placeholder="TikTok caption + hook will appear here."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="tiktok">New Post</button>
           <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
         </div>
       </div>
 
-      <!-- LinkedIn -->
       <div class="platform-card">
         <h3>LinkedIn Post</h3>
-        <textarea
-          id="linkedinPost"
-          placeholder="LinkedIn post will appear here."
-        ></textarea>
+        <textarea id="linkedinPost" placeholder="LinkedIn post will appear here."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="linkedin">New Post</button>
           <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
         </div>
       </div>
 
-      <!-- X / Twitter -->
       <div class="platform-card">
         <h3>X / Twitter Post</h3>
-        <textarea
-          id="twitterPost"
-          placeholder="X / Twitter post will appear here."
-        ></textarea>
+        <textarea id="twitterPost" placeholder="X / Twitter post will appear here."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="twitter">New Post</button>
           <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
         </div>
       </div>
 
-      <!-- Text / DM -->
       <div class="platform-card">
         <h3>Text / DM</h3>
-        <textarea
-          id="textBlurb"
-          placeholder="Short, high-converting text / DM will appear here."
-        ></textarea>
+        <textarea id="textBlurb" placeholder="Short, high-converting text / DM will appear here."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="text">New Text</button>
           <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
         </div>
       </div>
 
-      <!-- Marketplace -->
       <div class="platform-card">
         <h3>Marketplace Listing</h3>
-        <textarea
-          id="marketplacePost"
-          placeholder="Marketplace description will appear here."
-        ></textarea>
+        <textarea id="marketplacePost" placeholder="Marketplace description will appear here."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="marketplace">New Post</button>
           <button class="copy-btn" data-copy-target="marketplacePost">Copy</button>
         </div>
       </div>
 
-      <!-- Hashtags -->
       <div class="platform-card">
         <h3>Hashtag Set</h3>
-        <textarea
-          id="hashtags"
-          placeholder="Hashtag set will appear here."
-        ></textarea>
+        <textarea id="hashtags" placeholder="Hashtag set will appear here."></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="hashtags">New Set</button>
           <button class="copy-btn" data-copy-target="hashtags">Copy</button>
@@ -208,228 +165,140 @@
       </div>
     </section>
 
-    <!-- STEP 3 – Creative Lab (BOTTOM, FULL-WIDTH) -->
+    <!-- ============================== -->
+    <!-- STEP 3 – Creative Lab (BOTTOM) -->
+    <!-- ============================== -->
     <section class="column-right column">
       <h2>Step 3 – Creative Lab</h2>
 
-      <!-- Big bar to open overlay -->
-      <button
-        id="openCreativeStudio"
-        class="primary-btn full-width-bar"
-      >
+      <button id="openCreativeStudio" class="primary-btn full-width-bar">
         ✨ Open Creative Studio
       </button>
 
-      <!-- Quick Sales Video Idea -->
+      <!-- Quick Video Idea -->
       <div class="lab-card">
         <h3>Quick Sales Video Idea</h3>
-        <div class="column">
-          <label>
-            Vehicle / Offer
-            <input
-              type="text"
-              id="videoVehicle"
-              placeholder="Vehicle or promo"
-            />
-          </label>
 
-          <label>
-            Hook
-            <input
-              type="text"
-              id="videoHook"
-              placeholder="Example: Stop scrolling..."
-            />
-          </label>
+        <label>
+          Vehicle / Offer
+          <input type="text" id="videoVehicle" placeholder="Vehicle or promo" />
+        </label>
 
-          <label>
-            Style
-            <input
-              type="text"
-              id="videoStyle"
-              placeholder="Energetic, educational, hype"
-            />
-          </label>
+        <label>
+          Hook
+          <input type="text" id="videoHook" placeholder="Example: Stop scrolling..." />
+        </label>
 
-          <label>
-            Length / Aspect
-            <input
-              type="text"
-              id="videoLength"
-              placeholder="Example: 30s vertical 9:16"
-            />
-          </label>
+        <label>
+          Style
+          <input type="text" id="videoStyle" placeholder="Energetic, educational, hype" />
+        </label>
 
-          <button id="generateVideoIdea" class="primary-btn">
-            Generate Video Idea
-          </button>
+        <label>
+          Length / Aspect
+          <input type="text" id="videoLength" placeholder="Example: 30s vertical 9:16" />
+        </label>
 
-          <textarea
-            id="videoIdeaOutput"
-            placeholder="Video script / beats will appear here."
-          ></textarea>
-          <div class="btn-row">
-            <button class="copy-btn" data-copy-target="videoIdeaOutput">
-              Copy
-            </button>
-          </div>
+        <button id="generateVideoIdea" class="primary-btn">Generate Video Idea</button>
+
+        <textarea id="videoIdeaOutput" placeholder="Video script / beats will appear here."></textarea>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="videoIdeaOutput">Copy</button>
         </div>
       </div>
 
       <!-- Canva Layout Planner -->
       <div class="lab-card">
         <h3>Canva Layout Planner</h3>
+
         <label>
           Creative Type
-          <input
-            type="text"
-            id="layoutType"
-            placeholder="Story, feed post, flyer"
-          />
+          <input type="text" id="layoutType" placeholder="Story, feed post, flyer" />
         </label>
+
         <label>
           Headline
-          <input
-            type="text"
-            id="layoutHeadline"
-            placeholder="Main headline"
-          />
+          <input type="text" id="layoutHeadline" placeholder="Main headline" />
         </label>
+
         <label>
           Call To Action
-          <input
-            type="text"
-            id="layoutCTA"
-            placeholder="CTA text"
-          />
+          <input type="text" id="layoutCTA" placeholder="CTA text" />
         </label>
+
         <label>
           Vibe
-          <input
-            type="text"
-            id="layoutVibe"
-            placeholder="Clean, bold, premium"
-          />
+          <input type="text" id="layoutVibe" placeholder="Clean, bold, premium" />
         </label>
-        <button id="generateLayoutIdea" class="primary-btn">
-          Generate Layout Idea
-        </button>
-        <textarea
-          id="layoutIdeaOutput"
-          placeholder="Layout idea / text content will appear here."
-        ></textarea>
+
+        <button id="generateLayoutIdea" class="primary-btn">Generate Layout Idea</button>
+
+        <textarea id="layoutIdeaOutput" placeholder="Layout idea / text content will appear here."></textarea>
         <div class="btn-row">
-          <button class="copy-btn" data-copy-target="layoutIdeaOutput">
-            Copy
-          </button>
+          <button class="copy-btn" data-copy-target="layoutIdeaOutput">Copy</button>
         </div>
       </div>
 
-      <!-- Simple Photo Tweaker -->
+      <!-- Photo Tuner -->
       <div class="lab-card">
         <h3>Photo Quick Tuner</h3>
+
         <input type="file" id="photoUpload" accept="image/*" />
 
         <div class="photo-preview-wrapper">
           <img id="photoPreview" style="display: none;" />
-          <div id="photoPlaceholder" class="small-note">
-            Upload a photo to tweak brightness, contrast, and saturation.
-          </div>
+          <div id="photoPlaceholder" class="small-note">Upload a photo to tweak brightness, contrast, and saturation.</div>
         </div>
 
         <div class="slider-group">
           <label>
             Brightness
-            <input
-              type="range"
-              id="brightnessRange"
-              min="50"
-              max="150"
-              value="100"
-            />
+            <input type="range" id="brightnessRange" min="50" max="150" value="100" />
           </label>
+
           <label>
             Contrast
-            <input
-              type="range"
-              id="contrastRange"
-              min="50"
-              max="150"
-              value="100"
-            />
+            <input type="range" id="contrastRange" min="50" max="150" value="100" />
           </label>
+
           <label>
             Saturation
-            <input
-              type="range"
-              id="saturationRange"
-              min="50"
-              max="150"
-              value="100"
-            />
+            <input type="range" id="saturationRange" min="50" max="150" value="100" />
           </label>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- FLOATING TOOL BUTTONS -->
+  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
   <aside class="floating-tools">
-    <button id="objectionLauncher" class="tool-button">
-      Objection Coach
-    </button>
-    <button id="calcLauncher" class="tool-button">
-      Calculator
-    </button>
-    <button id="paymentLauncher" class="tool-button">
-      Payment Calculator
-    </button>
-    <button id="incomeLauncher" class="tool-button">
-      Income Calculator
-    </button>
-    <button id="workflowLauncher" class="tool-button">
-      AI Work Flow Expert
-    </button>
-    <button id="messageLauncher" class="tool-button">
-      AI Message Builder
-    </button>
-    <button id="askLauncher" class="tool-button">
-      Ask A.I.
-    </button>
-    <button id="carLauncher" class="tool-button">
-      AI Car Expert
-    </button>
-    <button id="imageLauncher" class="tool-button">
-      AI Image Generation
-    </button>
-    <button id="videoLauncher" class="tool-button">
-      AI Video Generation
-    </button>
+    <button id="objectionLauncher" class="tool-button">Objection Coach</button>
+    <button id="calcLauncher" class="tool-button">Calculator</button>
+    <button id="paymentLauncher" class="tool-button">Payment Calculator</button>
+    <button id="incomeLauncher" class="tool-button">Income Calculator</button>
+    <button id="workflowLauncher" class="tool-button">AI Work Flow Expert</button>
+    <button id="messageLauncher" class="tool-button">AI Message Builder</button>
+    <button id="askLauncher" class="tool-button">Ask A.I.</button>
+    <button id="carLauncher" class="tool-button">AI Car Expert</button>
+    <button id="imageLauncher" class="tool-button">AI Image Generation</button>
+    <button id="videoLauncher" class="tool-button">AI Video Generation</button>
   </aside>
 
-  <!-- ############ MODALS ############ -->
-  <!-- (same modals you already had – Objection, Calculator, Payment, Income, Workflow, Message, Ask, Car, Image, Video) -->
-  <!-- I’m not rewriting all those here since your versions are working; keep them exactly as in your current index. -->
-
-  <!-- ==================================================================
-       CREATIVE STUDIO OVERLAY
-       ================================================================== -->
+  <!-- CREATIVE STUDIO OVERLAY (unchanged, works with app.js) -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
     <div class="creative-modal">
-      <!-- HEADER -->
       <div class="creative-header">
         <h2>Creative Studio</h2>
         <button id="creativeClose" class="modal-close-btn">✕</button>
       </div>
 
-      <!-- PRESET + GLOBAL ACTIONS -->
       <div class="creative-top-bar">
         <div class="preset-label">
           <span>Canvas preset</span>
           <select id="creativeCanvasPreset">
-            <option value="1080x1080">Square – 1080 x 1080</option>
-            <option value="1080x1920">Story / Reel – 1080 x 1920</option>
-            <option value="1920x1080">Landscape – 1920 x 1080</option>
+            <option value="1080x1080">Square – 1080x1080</option>
+            <option value="1080x1920">Story – 1080x1920</option>
+            <option value="1920x1080">Landscape – 1920x1080</option>
           </select>
         </div>
 
@@ -441,40 +310,21 @@
         </div>
       </div>
 
-      <!-- 3-COLUMN GRID -->
       <div class="creative-body">
-        <!-- LEFT: tools -->
         <aside class="creative-tools">
           <h3>Tools</h3>
-          <button class="tool-btn tool-btn-active" data-tool="select">
-            Select / Move
-          </button>
-          <button class="tool-btn" data-tool="uploadImage">
-            Add Photo
-          </button>
-          <button class="tool-btn" data-tool="addText">
-            Add Text
-          </button>
-          <button class="tool-btn" data-tool="addRect">
-            Banner Bar
-          </button>
-          <button class="tool-btn" data-tool="addBadge">
-            Price Badge
-          </button>
-          <input
-            type="file"
-            id="creativeImageInput"
-            class="hidden-input"
-            accept="image/*"
-          />
+          <button class="tool-btn tool-btn-active" data-tool="select">Select / Move</button>
+          <button class="tool-btn" data-tool="uploadImage">Add Photo</button>
+          <button class="tool-btn" data-tool="addText">Add Text</button>
+          <button class="tool-btn" data-tool="addRect">Banner Bar</button>
+          <button class="tool-btn" data-tool="addBadge">Price Badge</button>
+          <input id="creativeImageInput" type="file" class="hidden-input" accept="image/*" />
         </aside>
 
-        <!-- CENTER: canvas -->
         <div class="creative-canvas-wrap">
           <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
         </div>
 
-        <!-- RIGHT: properties -->
         <aside class="creative-properties">
           <div class="prop-group">
             <h4>Shape / Image</h4>
@@ -488,27 +338,15 @@
             </label>
             <label>
               Stroke width
-              <input
-                type="number"
-                id="propStrokeWidth"
-                value="0"
-                min="0"
-                max="20"
-              />
+              <input type="number" id="propStrokeWidth" min="0" max="20" value="0" />
             </label>
           </div>
 
-          <div class="prop-group" id="textOptions" style="display: none;">
+          <div class="prop-group" id="textOptions" style="display:none;">
             <h4>Text</h4>
             <label>
               Font size
-              <input
-                type="number"
-                id="propFontSize"
-                value="48"
-                min="10"
-                max="120"
-              />
+              <input type="number" id="propFontSize" value="48" min="10" max="120" />
             </label>
             <label>
               Align
@@ -524,9 +362,7 @@
     </div>
   </div>
 
-  <!-- Fabric.js for Creative Studio -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  <!-- Your main frontend logic -->
   <script src="app.js"></script>
 </body>
 </html>
