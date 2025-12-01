@@ -456,15 +456,33 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
     });
 
     const answer = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ answer });
-   } catch (err) {
-    console.error("objection-coach error", err);
-    res.status(500).json({
-      error: "Failed to coach objection",
-      detail: err.message || String(err),
-    });
+    return res.json({ answer });
+
+  } catch (err) {
+    console.error("=== OBJECTION COACH ERROR START ===");
+    console.error(JSON.stringify(err, null, 2));
+    console.error("=== OBJECTION COACH ERROR END ===");
+
+    const msg = err?.message || "";
+    if (
+      msg.includes("rate limit") ||
+      msg.includes("Rate limit reached") ||
+      err?.code === "rate_limit_exceeded" ||
+      err?.error?.type === "rate_limit_exceeded"
+    ) {
+      return res.status(429).json({
+        error: "rate_limit",
+        message:
+          "Lot Rocket hit the AI limit for a moment. Wait ~30 seconds or try again later.",
+      });
+    }
+
+    return res
+      .status(500)
+      .json({ error: "server_error", message: "Failed to coach objection." });
   }
 });
+
 
 
 // Payment Estimator (math only)
