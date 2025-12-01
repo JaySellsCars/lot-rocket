@@ -16,7 +16,7 @@ body {
     sans-serif;
 }
 
-/* Dark theme is the default state */
+/* Dark theme default */
 body {
   min-height: 100vh;
   background: radial-gradient(circle at top, #111633 0%, #050711 60%, #000 100%);
@@ -29,12 +29,11 @@ body.light-theme {
   color: #111224;
 }
 
-/* Link styles */
+/* Links */
 a {
   color: #ff4b2b;
   text-decoration: none;
 }
-
 a:hover {
   text-decoration: underline;
 }
@@ -108,7 +107,7 @@ a:hover {
   transition: transform 0.22s ease;
 }
 
-/* When checkbox is checked = light theme */
+/* Checkbox checked = light */
 .theme-switch input:checked + .slider::before {
   transform: translateX(24px);
 }
@@ -117,13 +116,13 @@ a:hover {
    MAIN LAYOUT
    ========================================================= */
 
-/* 2-column grid for Step 1 + Step 2, Step 3 full width underneath */
+/* Step 1 (left) + Step 2 (right), Step 3 full-width under them */
 .layout {
   max-width: 1400px;
   margin: 24px auto 40px;
   padding: 0 16px 32px;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
   grid-template-rows: auto auto;
   grid-template-areas:
     "left middle"
@@ -131,7 +130,7 @@ a:hover {
   gap: 24px;
 }
 
-/* Card boxes & shared column styling */
+/* Shared card look */
 .column {
   background: rgba(7, 6, 24, 0.92);
   border-radius: 12px;
@@ -140,38 +139,38 @@ a:hover {
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
 }
 
-/* Step 1 left */
+/* Step 1 */
 .column-left {
   grid-area: left;
 }
 
-/* Step 2 right (contains platform cards grid) */
+/* Step 2 – two tall columns of cards */
 .column-middle {
   grid-area: middle;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-auto-rows: minmax(280px, auto); /* tall rows */
   gap: 16px;
   align-content: flex-start;
 }
 
-/* summary at top of Step 2 spans both columns */
+/* Step 2 header spans both columns */
 .column-middle > .summary-box {
   grid-column: 1 / -1;
 }
 
-/* Step 3 – Creative Lab (bottom, full width) */
+/* Step 3 bottom */
 .column-right {
   grid-area: step3;
 }
 
-/* Headings */
 .column-left h2,
 .column-right h2 {
   margin-top: 0;
   margin-bottom: 12px;
 }
 
-/* Generic summary / card container */
+/* Generic card containers */
 .summary-box,
 .lab-card {
   background: rgba(5, 5, 20, 0.96);
@@ -181,7 +180,7 @@ a:hover {
   margin-bottom: 12px;
 }
 
-/* Inputs & textareas */
+/* Inputs / textareas */
 input[type="text"],
 input[type="number"],
 input[type="date"],
@@ -207,7 +206,7 @@ textarea::placeholder {
   color: rgba(255, 255, 255, 0.48);
 }
 
-/* Light theme overrides for inputs */
+/* Light theme inputs */
 body.light-theme input[type="text"],
 body.light-theme input[type="number"],
 body.light-theme input[type="date"],
@@ -218,14 +217,14 @@ body.light-theme select {
   border-color: #d2d4e8;
 }
 
-/* Small helper text */
+/* Small note text */
 .small-note {
   font-size: 11px;
   opacity: 0.7;
 }
 
 /* =========================================================
-   STEP 1 SPECIFICS
+   STEP 1
    ========================================================= */
 
 .summary-box h3 {
@@ -250,7 +249,7 @@ body.light-theme select {
 }
 
 /* =========================================================
-   STEP 2 – PLATFORM CARDS (SOCIAL KIT)
+   STEP 2 – PLATFORM CARDS
    ========================================================= */
 
 .platform-card {
@@ -261,6 +260,7 @@ body.light-theme select {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  height: 100%; /* fill the tall grid row */
 }
 
 .platform-card h3 {
@@ -268,15 +268,16 @@ body.light-theme select {
   font-size: 13px;
 }
 
-/* Taller textareas so you rarely scroll inside them */
+/* Textarea takes remaining height inside the card */
 .platform-card textarea {
-  min-height: 220px;
+  flex: 1;
+  min-height: 0;          /* let flexbox control height */
   max-height: none;
-  overflow-y: visible;
+  overflow-y: visible;    /* no scrolling inside the box */
   font-size: 12px;
 }
 
-/* Buttons under each card */
+/* Buttons row at bottom of each card */
 .btn-row {
   display: flex;
   justify-content: flex-end;
@@ -303,7 +304,7 @@ body.light-theme select {
   white-space: nowrap;
 }
 
-/* Main CTA (orange/pink gradient) */
+/* Main CTA */
 .primary-btn {
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
   color: #ffffff;
@@ -348,13 +349,13 @@ body.light-theme .regen-btn {
 }
 
 /* =========================================================
-   FLOATING TOOLBAR (RIGHT SIDE)
+   FLOATING TOOLBAR
    ========================================================= */
 
 .floating-tools {
   position: fixed;
-  top: 86px;          /* align roughly with top row */
-  right: 24px;        /* keep clear of Step 2 card edge */
+  top: 86px;
+  right: 32px;    /* nudged a bit more off the Step 2 box */
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -375,7 +376,7 @@ body.light-theme .regen-btn {
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 
-/* Light theme floating tools */
+/* Light theme tools */
 body.light-theme .floating-tools .tool-button {
   background: #ffffff;
   color: #111224;
@@ -418,11 +419,10 @@ body.light-theme .photo-preview-wrapper {
 }
 
 /* =========================================================
-   MODALS (TOOLS)
+   MODALS
    ========================================================= */
 
 .modal {
-  /* JS toggles .hidden, so base is visible */
   position: fixed;
   inset: 0;
   display: flex;
@@ -458,7 +458,6 @@ body.light-theme .photo-preview-wrapper {
   cursor: pointer;
 }
 
-/* Simple calc grid */
 .simple-calc-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -479,15 +478,14 @@ body.light-theme .photo-preview-wrapper {
 
 .creative-overlay {
   position: fixed;
-  inset: 0; /* top:0 right:0 bottom:0 left:0 */
+  inset: 0;
   background: rgba(0, 0, 0, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999; /* above everything */
+  z-index: 9999;
 }
 
-/* The actual overlay box */
 .creative-modal {
   background: #050711;
   border-radius: 16px;
@@ -500,7 +498,6 @@ body.light-theme .photo-preview-wrapper {
   border: 1px solid #2b2b4a;
 }
 
-/* Header row */
 .creative-header {
   display: flex;
   align-items: center;
@@ -521,7 +518,6 @@ body.light-theme .photo-preview-wrapper {
   cursor: pointer;
 }
 
-/* Preset + actions row */
 .creative-top-bar {
   display: flex;
   align-items: center;
@@ -543,7 +539,6 @@ body.light-theme .photo-preview-wrapper {
   margin-left: 6px;
 }
 
-/* 3-column layout inside modal */
 .creative-body {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 260px;
@@ -553,7 +548,6 @@ body.light-theme .photo-preview-wrapper {
   overflow: hidden;
 }
 
-/* LEFT: tools */
 .creative-tools {
   display: flex;
   flex-direction: column;
@@ -577,12 +571,10 @@ body.light-theme .photo-preview-wrapper {
   background: linear-gradient(90deg, #ff4b2b, #ff416c);
 }
 
-/* Hidden file input */
 .hidden-input {
   display: none;
 }
 
-/* CENTER: canvas area */
 .creative-canvas-wrap {
   background: #080b12;
   border-radius: 8px;
@@ -596,7 +588,6 @@ body.light-theme .photo-preview-wrapper {
   background: #050711;
 }
 
-/* RIGHT: properties panel */
 .creative-properties {
   display: flex;
   flex-direction: column;
@@ -622,10 +613,7 @@ body.light-theme .photo-preview-wrapper {
   margin-bottom: 6px;
 }
 
-/* -----------------------------------
-   Overlay responsive
-   ----------------------------------- */
-
+/* Overlay responsive */
 @media (max-width: 900px) {
   .creative-body {
     grid-template-columns: 1fr;
