@@ -114,6 +114,18 @@ body.light-theme .branding p {
 /* =========================================================
    MAIN LAYOUT (3 COLUMNS)
    ========================================================= */
+/* Map sections to grid areas */
+.column-left {
+  grid-area: left;
+}
+
+.column-middle {
+  grid-area: middle;
+}
+
+.column-right {
+  grid-area: right;
+}
 
 .layout {
   max-width: 1350px;
