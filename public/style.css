@@ -16,12 +16,10 @@ body {
     sans-serif;
 }
 
+/* Dark background – current default look */
 body {
   background: radial-gradient(circle at top, #24104f 0, #050612 55%, #02030a 100%);
   color: #f5f5ff;
-}
-.hidden {
-  display: none !important;
 }
 
 /* Header ------------------------------------------------- */
@@ -103,23 +101,22 @@ body {
   grid-template-rows: auto auto;
   grid-template-areas:
     "step1 step2"
-    "step3 step2";   /* <-- NEW: Step 3 under Step 1, Step 2 spans both rows */
+    "step3 step2";   /* Step 3 under Step 1, Step 2 spans both rows */
   column-gap: 24px;
   row-gap: 24px;
 }
-
 
 /* Step 1 left column */
 .column-left {
   grid-area: step1;
 }
 
-/* Step 2 center / top */
+/* Step 2 center / right */
 .column-middle {
   grid-area: step2;
 }
 
-/* Step 3 bottom right section */
+/* Step 3 bottom left section */
 .column-right {
   grid-area: step3;
 }
@@ -236,7 +233,7 @@ textarea {
 }
 
 /* =========================================================
-   Step 2 – Social Kit  (middle column)
+   Step 2 – Social Kit  (middle area)
    ========================================================= */
 
 .column-middle {
@@ -257,15 +254,13 @@ textarea {
   font-size: 14px;
 }
 
+/* Taller, scroll-free textareas for posts */
 .platform-card textarea {
   width: 100%;
-  /* Taller base height so posts are easily readable */
   min-height: 260px;
-  /* Let the card grow with content on desktop */
   max-height: none;
   line-height: 1.3;
 }
-
 
 /* Buttons row under each textarea */
 .btn-row {
@@ -290,7 +285,7 @@ textarea {
 }
 
 /* =========================================================
-   Step 3 – Creative Lab (bottom right section)
+   Step 3 – Creative Lab
    ========================================================= */
 
 .column-right h2 {
@@ -366,7 +361,7 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* keep main content from hiding under tools on small widths */
+/* keep main content from hiding under tools on large widths */
 @media (min-width: 1024px) {
   .layout {
     padding-right: 220px;
@@ -525,90 +520,97 @@ textarea {
 }
 
 /* =========================================================
-   Responsive tweaks
-   ========================================================= */
-/* =========================================================
-   Side Modals – AI Tools (slide-over panels)
+   SIDE MODALS – AI Tools (Objection Coach, Workflow, etc.)
    ========================================================= */
 
-.hidden {
-  display: none !important;
-}
-
+/* Outer modal container */
 .side-modal {
   position: fixed;
-  inset: 0;
-  background: rgba(3, 3, 12, 0.82);
-  display: flex;
-  justify-content: flex-end;
-  z-index: 45;
-}
-
-.side-modal-panel {
-  width: min(420px, 90vw);
-  height: 100%;
-  background: #040612;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: -12px 0 35px rgba(0, 0, 0, 0.8);
+  top: 0;
+  right: 0;
+  width: 360px;
+  max-width: 100%;
+  height: 100vh;
+  background: rgba(8, 10, 20, 0.96);
+  box-shadow: -4px 0 14px rgba(0, 0, 0, 0.45);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 200;
   display: flex;
   flex-direction: column;
 }
 
+/* Inner scroll wrapper */
+.side-modal-inner {
+  flex: 1;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Header bar */
 .side-modal-header {
+  padding: 14px 16px;
+  background: linear-gradient(90deg, #1e083b, #3b145c);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-  background: linear-gradient(90deg, #25104f, #3b145c);
+  font-size: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.side-modal-header h2 {
-  margin: 0;
-  font-size: 15px;
+.side-modal-title {
+  font-weight: 600;
 }
 
 .side-modal-close {
-  border: none;
-  background: transparent;
-  color: #ffffff;
-  font-size: 18px;
   cursor: pointer;
+  font-size: 20px;
+  color: #fff;
 }
 
-.side-modal-body {
-  padding: 14px 18px 18px;
-  overflow-y: auto;
-  font-size: 13px;
-}
-
-.side-modal-body h3 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.side-modal-body p {
-  margin: 4px 0 10px;
-  font-size: 12px;
+.side-modal-subtitle {
+  font-size: 11px;
   opacity: 0.8;
+  margin: 8px 0 12px;
+}
+
+/* Body */
+.side-modal-body {
+  max-height: none !important;
+  overflow-y: visible !important;
+  padding-bottom: 30px;
 }
 
 .side-modal-body label {
   display: block;
-  margin-bottom: 8px;
-  font-size: 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  opacity: 0.85;
 }
 
-/* All textareas get a decent height */
+.side-modal-body input[type="text"],
+.side-modal-body input[type="number"],
 .side-modal-body textarea {
-  min-height: 160px;
-  max-height: none;
-  line-height: 1.45;
-  overflow-y: hidden;      /* <-- add this line */
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(5, 6, 18, 0.95);
+  color: #ffffff;
+  font-size: 13px;
 }
 
-/* Output-only textareas get EVEN bigger */
+/* Auto-growing textareas in all AI modals */
+.side-modal-body textarea {
+  height: auto !important;
+  min-height: 180px;
+  max-height: none !important;
+  overflow: visible !important;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+/* Output-only textareas get more height */
 #objectionOutput,
 #paymentOutput,
 #incomeOutput,
@@ -618,77 +620,88 @@ textarea {
 #carOutput,
 #imageOutput,
 #videoGenOutput {
-  min-height: 260px;   /* or 300px if you want */
+  min-height: 260px !important;
 }
 
-
-
-
-/* Buttons inside modals */
+/* Primary buttons inside modals */
 .side-modal-body .primary-btn {
   width: 100%;
-  margin-top: 6px;
-}
-
-.side-modal-body .small-note {
-  margin-top: 6px;
-}
-
-
-
-
-.side-modal-body .primary-btn {
-  width: 100%;
-  margin-top: 6px;
-}
-
-.side-modal-body .small-note {
-  margin-top: 6px;
-}
-
-/* Calculator panel tweaks */
-.calc-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
-}
-
-.calc-grid label {
-  margin-bottom: 0;
-}
-
-.calc-display {
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(4, 5, 12, 0.96);
-  min-height: 40px;
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
-}
-
-.basic-calc-keys {
   margin-top: 12px;
+  padding: 10px 0;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.side-modal-body .primary-btn:hover {
+  filter: brightness(1.07);
+}
+
+/* Small helper text */
+.side-modal-body .small-note {
+  margin-top: 6px;
+}
+
+/* =========================================================
+   BASIC CALCULATOR STYLING (inside Calculator modal)
+   ========================================================= */
+
+.basic-calc-wrapper {
+  margin-top: 10px;
+}
+
+.basic-calc-display {
+  background: #050814;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 16px;
+  text-align: right;
+  min-height: 32px;
+}
+
+.basic-calc-panel {
+  background: radial-gradient(circle at top left, #1b1f33 0, #050712 60%, #02030a 100%);
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
-.basic-calc-keys button {
-  padding: 8px 0;
+.basic-calc-panel button {
   border-radius: 8px;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  padding: 8px 0;
   font-size: 13px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
   cursor: pointer;
 }
 
-.basic-calc-keys button:hover {
-  filter: brightness(1.05);
+.basic-calc-panel button:hover {
+  filter: brightness(1.1);
 }
+
+.basic-calc-panel button[data-calc="="] {
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  font-weight: 600;
+}
+
+.basic-calc-panel button[data-calc="C"],
+.basic-calc-panel button[data-calc="DEL"] {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================================================
+   Responsive tweaks
+   ========================================================= */
 
 @media (max-width: 900px) {
   .layout {
@@ -717,5 +730,9 @@ textarea {
 
   .column-middle {
     grid-template-columns: 1fr;
+  }
+
+  .side-modal {
+    width: 100%;
   }
 }
