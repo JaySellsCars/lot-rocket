@@ -440,11 +440,11 @@ button {
 .side-modal {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(10px);
   display: flex;
   justify-content: flex-end;
-  z-index: 70;
+  align-items: stretch;
+  background: rgba(15, 23, 42, 0.7);
+  z-index: 50;
 }
 
 .side-modal.hidden {
@@ -452,14 +452,15 @@ button {
 }
 
 .side-modal-content {
-  width: min(360px, 100%);
-  height: 100%;
+  width: 340px;
+  max-width: 90vw;
   background: #020617;
-  border-left: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.9);
+  border-left: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow: -12px 0 40px rgba(15, 23, 42, 0.9);
   display: flex;
   flex-direction: column;
 }
+
 
 .side-modal-header {
   padding: 0.7rem 0.9rem;
