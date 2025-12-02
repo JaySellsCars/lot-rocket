@@ -19,6 +19,7 @@
       <label class="theme-switch">
         <span>Dark</span>
         <input type="checkbox" id="themeToggle" checked />
+        <span class="slider"></span>
         <span>Light</span>
       </label>
     </div>
@@ -28,7 +29,7 @@
   <main class="layout">
 
     <!-- ========================================= -->
-    <!-- STEP 1 – Dealer URL Scraper (LEFT COLUMN) -->
+    <!-- STEP 1 – Dealer URL Scraper (TOP LEFT)   -->
     <!-- ========================================= -->
     <section class="column-left column">
       <h2>Step 1 – Dealer URL Scraper</h2>
@@ -83,15 +84,13 @@
     <!-- STEP 2 – Social Media Kit     -->
     <!-- ============================== -->
     <section class="column-middle">
-
       <!-- Step 2 header spans both columns -->
       <div class="summary-box step2-header">
         <h2>Step 2 – Social Media Kit</h2>
         <p class="small-note">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</p>
       </div>
 
-      <!-- 8 Social Platform Cards -->
-
+      <!-- 8 Social Platform Cards laid out in 2 columns -->
       <div class="platform-card">
         <h3>Facebook Post</h3>
         <textarea id="facebookPost" placeholder="Facebook post will appear here after Boost."></textarea>
@@ -166,7 +165,7 @@
     </section>
 
     <!-- ============================== -->
-    <!-- STEP 3 – Creative Lab (BOTTOM) -->
+    <!-- STEP 3 – Creative Lab (BELOW STEP 1) -->
     <!-- ============================== -->
     <section class="column-right column">
       <h2>Step 3 – Creative Lab</h2>
@@ -270,60 +269,49 @@
     </section>
   </main>
 
-<!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
-<aside class="floating-tools">
-  ...
-  <button id="calcLauncher" class="tool-button">
-    <span class="tool-icon">🧮</span>
-    <span class="tool-label">Calculator</span>
-  </button>
-  ...
-</aside>
-
-<!-- Basic Calculator -->
-<div id="calcModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>Calculator</h2>
-      <button id="calcClose" class="modal-close-btn">✕</button>
-    </header>
-
-    <div class="side-modal-body">
-      <div id="basicCalcPanel" class="basic-calc">
-        <div id="basicCalcDisplay" class="basic-calc-display">0</div>
-
-       <div class="basic-calc-grid">
-  <button class="basic-calc-btn" data-calc="C">C</button>
-  <button class="basic-calc-btn" data-calc="DEL">DEL</button>
-  <button class="basic-calc-btn" data-calc="(">(</button>
-  <button class="basic-calc-btn" data-calc=")">)</button>
-
-  <button class="basic-calc-btn" data-calc="7">7</button>
-  <button class="basic-calc-btn" data-calc="8">8</button>
-  <button class="basic-calc-btn" data-calc="9">9</button>
-  <button class="basic-calc-btn" data-calc="/">÷</button>
-
-  <button class="basic-calc-btn" data-calc="4">4</button>
-  <button class="basic-calc-btn" data-calc="5">5</button>
-  <button class="basic-calc-btn" data-calc="6">6</button>
-  <button class="basic-calc-btn" data-calc="*">×</button>
-
-  <button class="basic-calc-btn" data-calc="1">1</button>
-  <button class="basic-calc-btn" data-calc="2">2</button>
-  <button class="basic-calc-btn" data-calc="3">3</button>
-  <button class="basic-calc-btn" data-calc="-">−</button>
-
-  <button class="basic-calc-btn" data-calc="0">0</button>
-  <button class="basic-calc-btn" data-calc=".">.</button>
-  <button class="basic-calc-btn equals" data-calc="=">=</button>
-  <button class="basic-calc-btn" data-calc="+">+</button>
-</div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
+  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+  <aside class="floating-tools">
+    <button id="objectionLauncher" class="tool-button">
+      <span class="tool-icon">🧠</span>
+      <span class="tool-label">Objection Coach</span>
+    </button>
+    <button id="calcLauncher" class="tool-button">
+      <span class="tool-icon">🧮</span>
+      <span class="tool-label">Calculator</span>
+    </button>
+    <button id="paymentLauncher" class="tool-button">
+      <span class="tool-icon">💳</span>
+      <span class="tool-label">Payment Calculator</span>
+    </button>
+    <button id="incomeLauncher" class="tool-button">
+      <span class="tool-icon">📈</span>
+      <span class="tool-label">Income Calculator</span>
+    </button>
+    <button id="workflowLauncher" class="tool-button">
+      <span class="tool-icon">📋</span>
+      <span class="tool-label">AI Work Flow Expert</span>
+    </button>
+    <button id="messageLauncher" class="tool-button">
+      <span class="tool-icon">✉️</span>
+      <span class="tool-label">AI Message Builder</span>
+    </button>
+    <button id="askLauncher" class="tool-button">
+      <span class="tool-icon">❓</span>
+      <span class="tool-label">Ask A.I.</span>
+    </button>
+    <button id="carLauncher" class="tool-button">
+      <span class="tool-icon">🚗</span>
+      <span class="tool-label">AI Car Expert</span>
+    </button>
+    <button id="imageLauncher" class="tool-button">
+      <span class="tool-icon">🖼️</span>
+      <span class="tool-label">AI Image Generation</span>
+    </button>
+    <button id="videoLauncher" class="tool-button">
+      <span class="tool-icon">🎬</span>
+      <span class="tool-label">AI Video Generation</span>
+    </button>
+  </aside>
 
   <!-- ############ MODALS ############ -->
 
@@ -363,37 +351,47 @@
   </div>
 
   <!-- Basic Calculator -->
-<div id="basicCalcPanel" class="basic-calc">
-  <div id="basicCalcDisplay" class="basic-calc-display">0</div>
+  <div id="calcModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>Calculator</h2>
+        <button id="calcClose" class="modal-close-btn">✕</button>
+      </header>
 
-<div class="basic-calc-grid">
-  <button class="basic-calc-btn" data-calc="C">C</button>
-  <button class="basic-calc-btn" data-calc="DEL">DEL</button>
-  <button class="basic-calc-btn" data-calc="(">(</button>
-  <button class="basic-calc-btn" data-calc=")">)</button>
+      <div class="side-modal-body">
+        <div id="basicCalcPanel" class="basic-calc">
+          <div id="basicCalcDisplay" class="basic-calc-display">0</div>
 
-  <button class="basic-calc-btn" data-calc="7">7</button>
-  <button class="basic-calc-btn" data-calc="8">8</button>
-  <button class="basic-calc-btn" data-calc="9">9</button>
-  <button class="basic-calc-btn" data-calc="/">÷</button>
+          <div class="basic-calc-grid">
+            <button class="basic-calc-btn" data-calc="C">C</button>
+            <button class="basic-calc-btn" data-calc="DEL">DEL</button>
+            <button class="basic-calc-btn" data-calc="(">(</button>
+            <button class="basic-calc-btn" data-calc=")">)</button>
 
-  <button class="basic-calc-btn" data-calc="4">4</button>
-  <button class="basic-calc-btn" data-calc="5">5</button>
-  <button class="basic-calc-btn" data-calc="6">6</button>
-  <button class="basic-calc-btn" data-calc="*">×</button>
+            <button class="basic-calc-btn" data-calc="7">7</button>
+            <button class="basic-calc-btn" data-calc="8">8</button>
+            <button class="basic-calc-btn" data-calc="9">9</button>
+            <button class="basic-calc-btn" data-calc="/">÷</button>
 
-  <button class="basic-calc-btn" data-calc="1">1</button>
-  <button class="basic-calc-btn" data-calc="2">2</button>
-  <button class="basic-calc-btn" data-calc="3">3</button>
-  <button class="basic-calc-btn" data-calc="-">−</button>
+            <button class="basic-calc-btn" data-calc="4">4</button>
+            <button class="basic-calc-btn" data-calc="5">5</button>
+            <button class="basic-calc-btn" data-calc="6">6</button>
+            <button class="basic-calc-btn" data-calc="*">×</button>
 
-  <button class="basic-calc-btn" data-calc="0">0</button>
-  <button class="basic-calc-btn" data-calc=".">.</button>
-  <button class="basic-calc-btn equals" data-calc="=">=</button>
-  <button class="basic-calc-btn" data-calc="+">+</button>
-</div>
+            <button class="basic-calc-btn" data-calc="1">1</button>
+            <button class="basic-calc-btn" data-calc="2">2</button>
+            <button class="basic-calc-btn" data-calc="3">3</button>
+            <button class="basic-calc-btn" data-calc="-">−</button>
 
-
+            <button class="basic-calc-btn" data-calc="0">0</button>
+            <button class="basic-calc-btn" data-calc=".">.</button>
+            <button class="basic-calc-btn equals" data-calc="=">=</button>
+            <button class="basic-calc-btn" data-calc="+">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Payment Calculator -->
   <div id="paymentModal" class="side-modal hidden">
@@ -691,7 +689,7 @@
   </div>
 
   <!-- AI Video Brief Builder -->
-  <div id="videoModal" class="side-modal hidden" style="display:none;">
+  <div id="videoModal" class="side-modal hidden">
     <div class="side-modal-content">
       <header class="side-modal-header">
         <h2>AI Video Generation Helper</h2>
