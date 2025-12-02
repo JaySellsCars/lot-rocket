@@ -16,15 +16,15 @@ body {
     sans-serif;
 }
 
+/* Simple utility so modals start hidden */
+.hidden {
+  display: none !important;
+}
+
 /* Dark background – default look */
 body {
   background: radial-gradient(circle at top, #24104f 0, #050612 55%, #02030a 100%);
   color: #f5f5ff;
-}
-
-/* Utility: hide things with .hidden (CRITICAL for modals) */
-.hidden {
-  display: none !important;
 }
 
 /* Header ------------------------------------------------- */
@@ -81,7 +81,7 @@ body {
   content: "";
   position: absolute;
   width: 14px;
- 14px;
+  height: 14px;
   border-radius: 50%;
   background: #fff;
   top: 1px;
@@ -111,18 +111,21 @@ body {
   row-gap: 24px;
 }
 
+/* keep main content from hiding under tools on large widths */
+@media (min-width: 1024px) {
+  .layout {
+    padding-right: 220px;  /* space for the floating tool stack */
+  }
+}
+
 /* Step 1 left column */
 .column-left {
   grid-area: step1;
 }
 
-/* Step 2 center / right */
+/* Step 2 center/right */
 .column-middle {
   grid-area: step2;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: auto;
-  gap: 16px;
 }
 
 /* Step 3 bottom left section */
@@ -242,24 +245,37 @@ textarea {
 }
 
 /* =========================================================
-   Step 2 – Social Kit (middle)
+   Step 2 – Social Kit  (middle area)
    ========================================================= */
 
-/* Step 2 header spans both columns */
+.column-middle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* two tall columns */
+  grid-auto-rows: auto;
+  gap: 16px;
+}
+
+/* Step 2 header should span both columns */
 .step2-header {
   grid-column: 1 / -1;
 }
 
-/* Social cards themselves */
+/* Social cards – tall and skinny, text area fills card */
+.platform-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;    /* tall cards */
+}
+
 .platform-card h3 {
   margin: 0 0 6px;
   font-size: 14px;
 }
 
 .platform-card textarea {
-  width: 100%;
-  min-height: 260px;       /* tall cards, no tiny boxes */
-  max-height: none;
+  flex: 1;
+  min-height: 0;        /* let flexbox control height */
+  margin-top: 6px;
   line-height: 1.3;
 }
 
@@ -345,11 +361,11 @@ textarea {
   position: fixed;
   top: 76px;
   right: 24px;
-  width: 180px;
+  width: 190px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 50;
+  z-index: 150;
 }
 
 .tool-button {
@@ -360,13 +376,6 @@ textarea {
   font-size: 11px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* Keep main content from hiding under tools on large widths */
-@media (min-width: 1024px) {
-  .layout {
-    padding-right: 220px;
-  }
 }
 
 /* =========================================================
@@ -380,7 +389,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 90;
+  z-index: 160;
 }
 
 .creative-overlay.hidden {
@@ -521,20 +530,30 @@ textarea {
 }
 
 /* =========================================================
-   SIDE MODALS – AI Tools (Objection Coach, Workflow, etc.)
+   SIDE MODALS – AI Tools (Objection Coach, etc.)
    ========================================================= */
 
+/* Outer overlay for slide-over */
 .side-modal {
   position: fixed;
   top: 0;
   right: 0;
+  bottom: 0;
   width: 380px;
   max-width: 100%;
-  height: 100vh;
+  z-index: 200;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+/* Panel itself */
+.side-modal-content {
   background: rgba(8, 10, 20, 0.98);
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);
   border-left: 1px solid rgba(255, 255, 255, 0.15);
-  z-index: 100;
+  width: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -549,16 +568,28 @@ textarea {
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.side-modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+.side-modal-title {
+  font-weight: 600;
+}
+
+.side-modal-close {
+  cursor: pointer;
+  font-size: 20px;
+  color: #fff;
 }
 
 .side-modal-subtitle {
   font-size: 11px;
   opacity: 0.8;
   margin: 8px 0 12px;
+}
+
+/* Scrollable body inside panel */
+.side-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  padding-bottom: 24px;
 }
 
 .side-modal-body label {
@@ -570,6 +601,7 @@ textarea {
 
 .side-modal-body input[type="text"],
 .side-modal-body input[type="number"],
+.side-modal-body input[type="date"],
 .side-modal-body textarea {
   width: 100%;
   padding: 8px 10px;
@@ -580,12 +612,10 @@ textarea {
   font-size: 13px;
 }
 
-/* Auto-growing textareas in all AI modals */
+/* Auto-growing-ish textareas in AI modals */
 .side-modal-body textarea {
-  height: auto;
-  min-height: 180px;
+  min-height: 160px;
   max-height: none;
-  resize: vertical;
   line-height: 1.45;
 }
 
@@ -607,15 +637,17 @@ textarea {
   width: 100%;
   margin-top: 12px;
   padding: 10px 0;
-  border-radius: 999px;
+  font-size: 14px;
 }
 
-/* =========================================================
-   BASIC CALCULATOR STYLING (inside Calculator modal)
-   ========================================================= */
+/* Small helper text */
+.side-modal-body .small-note {
+  margin-top: 6px;
+}
 
+/* Basic calculator frame */
 .basic-calc {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .basic-calc-display {
@@ -628,40 +660,6 @@ textarea {
   font-size: 16px;
   text-align: right;
   min-height: 32px;
-}
-
-.basic-calc-panel {
-  background: radial-gradient(circle at top left, #1b1f33 0, #050712 60%, #02030a 100%);
-  border-radius: 12px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.basic-calc-panel button {
-  border-radius: 8px;
-  border: none;
-  padding: 8px 0;
-  font-size: 13px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.basic-calc-panel button:hover {
-  filter: brightness(1.1);
-}
-
-.basic-calc-panel button[data-calc="="] {
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  font-weight: 600;
-}
-
-.basic-calc-panel button[data-calc="C"],
-.basic-calc-panel button[data-calc="DEL"] {
-  background: rgba(255, 255, 255, 0.15);
 }
 
 /* =========================================================
@@ -679,10 +677,6 @@ textarea {
     padding-right: 16px;
   }
 
-  .column-middle {
-    grid-template-columns: 1fr;
-  }
-
   .floating-tools {
     position: static;
     flex-direction: row;
@@ -692,7 +686,17 @@ textarea {
     justify-content: flex-end;
   }
 
+  .tool-button {
+    font-size: 10px;
+    padding: 5px 8px;
+  }
+
+  .column-middle {
+    grid-template-columns: 1fr;
+  }
+
   .side-modal {
+    left: 0;
     width: 100%;
   }
 }
