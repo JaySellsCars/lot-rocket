@@ -6,6 +6,10 @@
 *::after {
   box-sizing: border-box;
 }
+/* Utility: hide elements by default */
+.hidden {
+  display: none !important;
+}
 
 html,
 body {
