@@ -528,16 +528,17 @@ textarea {
   position: fixed;
   top: 0;
   right: 0;
-  width: 360px;
+  width: 380px;              /* was 360 – a bit wider */
   max-width: 100%;
   height: 100vh;
-  background: rgba(8, 10, 20, 0.96);
-  box-shadow: -4px 0 14px rgba(0, 0, 0, 0.45);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 10, 20, 0.98);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);  /* stronger shadow so it feels "on top" */
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
   z-index: 200;
   display: flex;
   flex-direction: column;
 }
+
 
 /* Inner scroll wrapper */
 .side-modal-inner {
