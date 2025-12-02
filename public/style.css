@@ -105,6 +105,13 @@ body {
   column-gap: 24px;
   row-gap: 24px;
 }
+/* Keep main content perfectly centered even when side modal is open */
+@media (min-width: 1280px) {
+  .layout {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 
 /* Step 1 left column */
 .column-left {
