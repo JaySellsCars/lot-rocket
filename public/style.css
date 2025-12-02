@@ -171,22 +171,34 @@ textarea::placeholder {
   color: rgba(148, 163, 184, 0.8);
 }
 
-/* ====== STEP 2 GRID (2 columns of platform cards) ====== */
+/* ----- STEP 2 LAYOUT FIX ----- */
 
+/* Step 2 area: same width feel as Step 1 & 3 */
 .column-middle {
+  max-width: 1200px;
+  margin: 2rem auto 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: min-content;
-  gap: 1rem 1.2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 vertical columns */
+  gap: 1.75rem;
 }
 
-.step2-header {
+/* Heading behaves like Step 1 heading and spans both columns */
+.column-middle > h2 {
   grid-column: 1 / -1;
+  margin: 0 0 0.25rem 0;
 }
 
-.platform-card textarea {
-  min-height: 5.5rem;
+/* Small description line under heading, also full width */
+.step2-subtitle {
+  grid-column: 1 / -1;
+  margin: 0 0 1rem 0;
 }
+
+/* Just in case any old styles are hanging around */
+.step2-header {
+  display: none;
+}
+
 
 /* ====== BUTTONS ====== */
 
