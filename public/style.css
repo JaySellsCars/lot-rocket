@@ -730,3 +730,41 @@ textarea {
     width: 100%;
   }
 }
+/* Mini icon bar version of tool buttons on mobile */
+@media (max-width: 900px) {
+  .floating-tools {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    padding: 6px 8px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 8px;
+    overflow-x: auto;
+
+    background: rgba(5, 6, 18, 0.96);
+    border-radius: 999px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
+    z-index: 250;
+  }
+
+  .tool-button {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .tool-label {
+    display: none;       /* hide text on small screens */
+  }
+
+  .tool-icon {
+    font-size: 18px;     /* bigger emoji icon */
+  }
+}
