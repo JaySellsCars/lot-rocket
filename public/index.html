@@ -270,49 +270,33 @@
     </section>
   </main>
 
-  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+<!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
 <aside class="floating-tools">
-  <button id="objectionLauncher" class="tool-button">
-    <span class="tool-icon">🧠</span>
-    <span class="tool-label">Objection Coach</span>
-  </button>
+  ...
   <button id="calcLauncher" class="tool-button">
     <span class="tool-icon">🧮</span>
     <span class="tool-label">Calculator</span>
   </button>
-  <button id="paymentLauncher" class="tool-button">
-    <span class="tool-icon">💳</span>
-    <span class="tool-label">Payment Calculator</span>
-  </button>
-  <button id="incomeLauncher" class="tool-button">
-    <span class="tool-icon">📈</span>
-    <span class="tool-label">Income Calculator</span>
-  </button>
-  <button id="workflowLauncher" class="tool-button">
-    <span class="tool-icon">📋</span>
-    <span class="tool-label">AI Work Flow Expert</span>
-  </button>
-  <button id="messageLauncher" class="tool-button">
-    <span class="tool-icon">✉️</span>
-    <span class="tool-label">AI Message Builder</span>
-  </button>
-  <button id="askLauncher" class="tool-button">
-    <span class="tool-icon">❓</span>
-    <span class="tool-label">Ask A.I.</span>
-  </button>
-  <button id="carLauncher" class="tool-button">
-    <span class="tool-icon">🚗</span>
-    <span class="tool-label">AI Car Expert</span>
-  </button>
-  <button id="imageLauncher" class="tool-button">
-    <span class="tool-icon">🖼️</span>
-    <span class="tool-label">AI Image Generation</span>
-  </button>
-  <button id="videoLauncher" class="tool-button">
-    <span class="tool-icon">🎬</span>
-    <span class="tool-label">AI Video Generation</span>
-  </button>
+  ...
 </aside>
+
+<!-- Basic Calculator -->
+<div id="calcModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <header class="side-modal-header">
+      <h2>Calculator</h2>
+      <button id="calcClose" class="modal-close-btn">✕</button>
+    </header>
+
+    <div class="side-modal-body">
+      <div id="basicCalcPanel" class="basic-calc">
+        <div id="basicCalcDisplay" class="basic-calc-display">0</div>
+
+        <!-- we’ll add the button grid here in step 2 -->
+      </div>
+    </div>
+  </div>
+</div>
 
 
   <!-- ############ MODALS ############ -->
