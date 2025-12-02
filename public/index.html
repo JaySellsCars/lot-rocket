@@ -90,7 +90,7 @@
         <p class="small-note">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</p>
       </div>
 
-      <!-- 8 Social Platform Cards — EXACTLY like your white screenshot -->
+      <!-- 8 Social Platform Cards -->
 
       <div class="platform-card">
         <h3>Facebook Post</h3>
@@ -283,396 +283,392 @@
     <button id="imageLauncher" class="tool-button">AI Image Generation</button>
     <button id="videoLauncher" class="tool-button">AI Video Generation</button>
   </aside>
-  <!-- ===================================================== -->
-  <!-- AI TOOL MODALS – Slide-over side panels               -->
-  <!-- ===================================================== -->
 
-<!-- ############ MODALS ############ -->
+  <!-- ############ MODALS ############ -->
 
-<!-- Objection Coach -->
-<div id="objectionModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>Objection Coach</h2>
-      <button id="objectionClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Objection Coach -->
+  <div id="objectionModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>Objection Coach</h2>
+        <button id="objectionClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Paste the customer's objection and get a ready-to-send reply plus coaching tips.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Paste the customer's objection and get a ready-to-send reply plus coaching tips.
+        </p>
 
-      <label>
-        Customer Objection
-        <textarea id="objectionInput"
-                  placeholder="Example: I need to talk to my wife."></textarea>
-      </label>
+        <label>
+          Customer Objection
+          <textarea id="objectionInput"
+                    placeholder="Example: I need to talk to my wife."></textarea>
+        </label>
 
-      <button id="runObjectionCoach" class="primary-btn">Get Coaching</button>
+        <button id="runObjectionCoach" class="primary-btn">Get Coaching</button>
 
-      <label>
-        Suggested Reply + Coaching
-        <textarea id="objectionOutput"
-                  data-autogrow="true"
-                  placeholder="Suggested reply + coaching will appear here."></textarea>
-      </label>
+        <label>
+          Suggested Reply + Coaching
+          <textarea id="objectionOutput"
+                    data-autogrow="true"
+                    placeholder="Suggested reply + coaching will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="objectionOutput">Copy Reply</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="objectionOutput">Copy Reply</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Basic Calculator -->
-<div id="calcModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>Calculator</h2>
-      <button id="calcClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Basic Calculator -->
+  <div id="calcModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>Calculator</h2>
+        <button id="calcClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <div id="basicCalcPanel" class="basic-calc">
-        <div id="basicCalcDisplay" class="basic-calc-display">0</div>
-        <!-- your calculator buttons markup here (unchanged) -->
+      <div class="side-modal-body">
+        <div id="basicCalcPanel" class="basic-calc">
+          <div id="basicCalcDisplay" class="basic-calc-display">0</div>
+          <!-- calculator buttons go here -->
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Payment Calculator -->
-<div id="paymentModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>Payment Calculator</h2>
-      <button id="paymentClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Payment Calculator -->
+  <div id="paymentModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>Payment Calculator</h2>
+        <button id="paymentClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Rough payment estimate only. Not a quote or offer.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Rough payment estimate only. Not a quote or offer.
+        </p>
 
-      <label>
-        Auto Price
-        <input type="number" id="autoPrice" placeholder="Vehicle price" />
-      </label>
+        <label>
+          Auto Price
+          <input type="number" id="autoPrice" placeholder="Vehicle price" />
+        </label>
 
-      <label>
-        Loan Term (months)
-        <input type="number" id="loanTermMonths" placeholder="72" />
-      </label>
+        <label>
+          Loan Term (months)
+          <input type="number" id="loanTermMonths" placeholder="72" />
+        </label>
 
-      <label>
-        Interest Rate (APR %)
-        <input type="number" id="interestRate" placeholder="7.9" />
-      </label>
+        <label>
+          Interest Rate (APR %)
+          <input type="number" id="interestRate" placeholder="7.9" />
+        </label>
 
-      <label>
-        Cash Incentives / Rebates
-        <input type="number" id="cashIncentives" placeholder="0" />
-      </label>
+        <label>
+          Cash Incentives / Rebates
+          <input type="number" id="cashIncentives" placeholder="0" />
+        </label>
 
-      <label>
-        Down Payment
-        <input type="number" id="downPayment" placeholder="0" />
-      </label>
+        <label>
+          Down Payment
+          <input type="number" id="downPayment" placeholder="0" />
+        </label>
 
-      <label>
-        Trade-In Value
-        <input type="number" id="tradeInValue" placeholder="0" />
-      </label>
+        <label>
+          Trade-In Value
+          <input type="number" id="tradeInValue" placeholder="0" />
+        </label>
 
-      <label>
-        Amount Owed on Trade
-        <input type="number" id="tradeOwed" placeholder="0" />
-      </label>
+        <label>
+          Amount Owed on Trade
+          <input type="number" id="tradeOwed" placeholder="0" />
+        </label>
 
-      <label>
-        Sales Tax (%)
-        <input type="number" id="salesTax" placeholder="6" />
-      </label>
+        <label>
+          Sales Tax (%)
+          <input type="number" id="salesTax" placeholder="6" />
+        </label>
 
-      <label>
-        Fees (doc, title, etc.)
-        <input type="number" id="fees" placeholder="0" />
-      </label>
+        <label>
+          Fees (doc, title, etc.)
+          <input type="number" id="fees" placeholder="0" />
+        </label>
 
-      <button id="runPaymentHelper" class="primary-btn">Run Payment Estimate</button>
+        <button id="runPaymentHelper" class="primary-btn">Run Payment Estimate</button>
 
-      <label>
-        Payment Breakdown
-        <textarea id="paymentOutput"
-                  data-autogrow="true"
-                  placeholder="Payment estimate will appear here."></textarea>
-      </label>
+        <label>
+          Payment Breakdown
+          <textarea id="paymentOutput"
+                    data-autogrow="true"
+                    placeholder="Payment estimate will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="paymentOutput">Copy Breakdown</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="paymentOutput">Copy Breakdown</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Income Calculator -->
-<div id="incomeModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>Income Calculator</h2>
-      <button id="incomeClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Income Calculator -->
+  <div id="incomeModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>Income Calculator</h2>
+        <button id="incomeClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Estimate monthly & annual income from YTD on a pay stub.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Estimate monthly & annual income from YTD on a pay stub.
+        </p>
 
-      <label>
-        Year-to-Date Income
-        <input type="number" id="ytdIncome" placeholder="YTD gross income" />
-      </label>
+        <label>
+          Year-to-Date Income
+          <input type="number" id="ytdIncome" placeholder="YTD gross income" />
+        </label>
 
-      <label>
-        Hire Date
-        <input type="date" id="hireDate" />
-      </label>
+        <label>
+          Hire Date
+          <input type="date" id="hireDate" />
+        </label>
 
-      <label>
-        Latest Check Date
-        <input type="date" id="checkDate" />
-      </label>
+        <label>
+          Latest Check Date
+          <input type="date" id="checkDate" />
+        </label>
 
-      <button id="runIncomeHelper" class="primary-btn">Estimate Income</button>
+        <button id="runIncomeHelper" class="primary-btn">Estimate Income</button>
 
-      <label>
-        Income Estimate
-        <textarea id="incomeOutput"
-                  data-autogrow="true"
-                  placeholder="Estimated income will appear here."></textarea>
-      </label>
+        <label>
+          Income Estimate
+          <textarea id="incomeOutput"
+                    data-autogrow="true"
+                    placeholder="Estimated income will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="incomeOutput">Copy Estimate</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="incomeOutput">Copy Estimate</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Workflow Expert -->
-<div id="workflowModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>AI Workflow Expert</h2>
-      <button id="workflowClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Workflow Expert -->
+  <div id="workflowModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>AI Workflow Expert</h2>
+        <button id="workflowClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Describe the situation and get a step-by-step follow-up workflow.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Describe the situation and get a step-by-step follow-up workflow.
+        </p>
 
-      <label>
-        Situation
-        <textarea id="workflowSituation"
-                  placeholder="Example: Fresh internet lead, hasn't replied to first text..."></textarea>
-      </label>
+        <label>
+          Situation
+          <textarea id="workflowSituation"
+                    placeholder="Example: Fresh internet lead, hasn't replied to first text..."></textarea>
+        </label>
 
-      <button id="runWorkflowHelper" class="primary-btn">Build Workflow</button>
+        <button id="runWorkflowHelper" class="primary-btn">Build Workflow</button>
 
-      <label>
-        Workflow Plan
-        <textarea id="workflowOutput"
-                  data-autogrow="true"
-                  placeholder="Steps and templates will appear here."></textarea>
-      </label>
+        <label>
+          Workflow Plan
+          <textarea id="workflowOutput"
+                    data-autogrow="true"
+                    placeholder="Steps and templates will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="workflowOutput">Copy Workflow</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="workflowOutput">Copy Workflow</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Message Builder -->
-<div id="messageModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>AI Message Builder</h2>
-      <button id="messageClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Message Builder -->
+  <div id="messageModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>AI Message Builder</h2>
+        <button id="messageClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Generate ready-to-send text, email, or DM for your customer.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Generate ready-to-send text, email, or DM for your customer.
+        </p>
 
-      <label>
-        Message Type
-        <input type="text" id="messageType" placeholder="Text, email, DM, follow-up, etc." />
-      </label>
+        <label>
+          Message Type
+          <input type="text" id="messageType" placeholder="Text, email, DM, follow-up, etc." />
+        </label>
 
-      <label>
-        Goal
-        <input type="text" id="messageGoal" placeholder="Example: Get them back in, set appointment, etc." />
-      </label>
+        <label>
+          Goal
+          <input type="text" id="messageGoal" placeholder="Example: Get them back in, set appointment, etc." />
+        </label>
 
-      <label>
-        Details / Context
-        <textarea id="messageDetails"
-                  placeholder="Customer situation, vehicle, objections, notes..."></textarea>
-      </label>
+        <label>
+          Details / Context
+          <textarea id="messageDetails"
+                    placeholder="Customer situation, vehicle, objections, notes..."></textarea>
+        </label>
 
-      <button id="runMessageHelper" class="primary-btn">Generate Message</button>
+        <button id="runMessageHelper" class="primary-btn">Generate Message</button>
 
-      <label>
-        Suggested Message
-        <textarea id="messageOutput"
-                  data-autogrow="true"
-                  placeholder="Your ready-to-send message will appear here."></textarea>
-      </label>
+        <label>
+          Suggested Message
+          <textarea id="messageOutput"
+                    data-autogrow="true"
+                    placeholder="Your ready-to-send message will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="messageOutput">Copy Message</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="messageOutput">Copy Message</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Ask AI -->
-<div id="askModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>Ask A.I.</h2>
-      <button id="askClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Ask AI -->
+  <div id="askModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>Ask A.I.</h2>
+        <button id="askClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <label>
-        Question
-        <textarea id="askQuestion"
-                  placeholder="Any sales, follow-up, or business question."></textarea>
-      </label>
+      <div class="side-modal-body">
+        <label>
+          Question
+          <textarea id="askQuestion"
+                    placeholder="Any sales, follow-up, or business question."></textarea>
+        </label>
 
-      <button id="runAskHelper" class="primary-btn">Ask</button>
+        <button id="runAskHelper" class="primary-btn">Ask</button>
 
-      <label>
-        Answer
-        <textarea id="askOutput"
-                  data-autogrow="true"
-                  placeholder="Answer will appear here."></textarea>
-      </label>
+        <label>
+          Answer
+          <textarea id="askOutput"
+                    data-autogrow="true"
+                    placeholder="Answer will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="askOutput">Copy Answer</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="askOutput">Copy Answer</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Car Expert -->
-<div id="carModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>AI Car Expert</h2>
-      <button id="carClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- Car Expert -->
+  <div id="carModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>AI Car Expert</h2>
+        <button id="carClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <label>
-        Car Question
-        <textarea id="carQuestion"
-                  placeholder="Trim, features, comparisons, which model to recommend, etc."></textarea>
-      </label>
+      <div class="side-modal-body">
+        <label>
+          Car Question
+          <textarea id="carQuestion"
+                    placeholder="Trim, features, comparisons, which model to recommend, etc."></textarea>
+        </label>
 
-      <button id="runCarHelper" class="primary-btn">Ask Car Expert</button>
+        <button id="runCarHelper" class="primary-btn">Ask Car Expert</button>
 
-      <label>
-        Answer
-        <textarea id="carOutput"
-                  data-autogrow="true"
-                  placeholder="Explanation will appear here."></textarea>
-      </label>
+        <label>
+          Answer
+          <textarea id="carOutput"
+                    data-autogrow="true"
+                    placeholder="Explanation will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="carOutput">Copy Answer</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="carOutput">Copy Answer</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- AI Image Prompt Builder -->
-<div id="imageModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>AI Image Generation Helper</h2>
-      <button id="imageClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- AI Image Prompt Builder -->
+  <div id="imageModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>AI Image Generation Helper</h2>
+        <button id="imageClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Describe the image you want; Lot Rocket will turn it into a detailed AI prompt.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Describe the image you want; Lot Rocket will turn it into a detailed AI prompt.
+        </p>
 
-      <label>
-        Raw Idea
-        <textarea id="imagePrompt"
-                  placeholder="Example: Red Silverado at sunset, payment badge, dealership in background..."></textarea>
-      </label>
+        <label>
+          Raw Idea
+          <textarea id="imagePrompt"
+                    placeholder="Example: Red Silverado at sunset, payment badge, dealership in background..."></textarea>
+        </label>
 
-      <button id="runImageHelper" class="primary-btn">Build Image Prompt</button>
+        <button id="runImageHelper" class="primary-btn">Build Image Prompt</button>
 
-      <label>
-        AI Image Prompt
-        <textarea id="imageOutput"
-                  data-autogrow="true"
-                  placeholder="Copy this into your favorite AI image tool."></textarea>
-      </label>
+        <label>
+          AI Image Prompt
+          <textarea id="imageOutput"
+                    data-autogrow="true"
+                    placeholder="Copy this into your favorite AI image tool."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="imageOutput">Copy Prompt</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="imageOutput">Copy Prompt</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- AI Video Brief Builder -->
-<div id="videoModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <header class="side-modal-header">
-      <h2>AI Video Generation Helper</h2>
-      <button id="videoClose" class="modal-close-btn">✕</button>
-    </header>
+  <!-- AI Video Brief Builder -->
+  <div id="videoModal" class="side-modal hidden" style="display:none;">
+    <div class="side-modal-content">
+      <header class="side-modal-header">
+        <h2>AI Video Generation Helper</h2>
+        <button id="videoClose" class="modal-close-btn">✕</button>
+      </header>
 
-    <div class="side-modal-body">
-      <p class="small-note">
-        Describe the video idea and get a detailed brief for an AI video tool.
-      </p>
+      <div class="side-modal-body">
+        <p class="small-note">
+          Describe the video idea and get a detailed brief for an AI video tool.
+        </p>
 
-      <label>
-        Raw Idea
-        <textarea id="videoGenPrompt"
-                  placeholder="Example: 30s vertical hype reel for a 2025 Tahoe RST..."></textarea>
-      </label>
+        <label>
+          Raw Idea
+          <textarea id="videoGenPrompt"
+                    placeholder="Example: 30s vertical hype reel for a 2025 Tahoe RST..."></textarea>
+        </label>
 
-      <button id="runVideoHelper" class="primary-btn">Build Video Brief</button>
+        <button id="runVideoHelper" class="primary-btn">Build Video Brief</button>
 
-      <label>
-        Video Brief
-        <textarea id="videoGenOutput"
-                  data-autogrow="true"
-                  placeholder="Scene-by-scene brief will appear here."></textarea>
-      </label>
+        <label>
+          Video Brief
+          <textarea id="videoGenOutput"
+                    data-autogrow="true"
+                    placeholder="Scene-by-scene brief will appear here."></textarea>
+        </label>
 
-      <div class="btn-row">
-        <button class="copy-btn" data-copy-target="videoGenOutput">Copy Brief</button>
+        <div class="btn-row">
+          <button class="copy-btn" data-copy-target="videoGenOutput">Copy Brief</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-
-  <!-- CREATIVE STUDIO OVERLAY (unchanged, works with app.js) -->
+  <!-- CREATIVE STUDIO OVERLAY -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
     <div class="creative-modal">
       <div class="creative-header">
