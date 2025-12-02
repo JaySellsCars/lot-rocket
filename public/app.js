@@ -556,60 +556,61 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
   // STANDALONE BASIC CALCULATOR
   // =====================================================
-  const basicCalcPanel = document.getElementById("basicCalcPanel");
-  const basicCalcDisplay = document.getElementById("basicCalcDisplay");
+const basicCalcPanel = document.getElementById("basicCalcPanel");
+const basicCalcDisplay = document.getElementById("basicCalcDisplay");
 
-  if (basicCalcPanel && basicCalcDisplay) {
-    let calcExpression = "0";
+if (basicCalcPanel && basicCalcDisplay) {
+  let calcExpression = "0";
 
-    const updateDisplay = () => {
-      basicCalcDisplay.textContent = calcExpression || "0";
-    };
+  const updateDisplay = () => {
+    basicCalcDisplay.textContent = calcExpression || "0";
+  };
 
-    basicCalcPanel.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-calc]");
-      if (!btn) return;
-      const value = btn.getAttribute("data-calc");
+  basicCalcPanel.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-calc]");
+    if (!btn) return;
+    const value = btn.getAttribute("data-calc");
 
-      if (value === "C") {
-        calcExpression = "0";
-        updateDisplay();
-        return;
-      }
-
-      if (value === "DEL") {
-        calcExpression = calcExpression.slice(0, -1) || "0";
-        updateDisplay();
-        return;
-      }
-
-      if (value === "=") {
-        try {
-          if (!/^[0-9+\-*/().\s]+$/.test(calcExpression)) {
-            throw new Error("Invalid expression");
-          }
-          const result = Function(`"use strict"; return (${calcExpression})`)();
-          calcExpression = String(result);
-        } catch {
-          calcExpression = "Error";
-        }
-        updateDisplay();
-        return;
-      }
-
-      if (calcExpression === "0" && /[0-9.]/.test(value)) {
-        calcExpression = value;
-      } else if (calcExpression === "Error") {
-        calcExpression = value;
-      } else {
-        calcExpression += value;
-      }
-
+    if (value === "C") {
+      calcExpression = "0";
       updateDisplay();
-    });
+      return;
+    }
+
+    if (value === "DEL") {
+      calcExpression = calcExpression.slice(0, -1) || "0";
+      updateDisplay();
+      return;
+    }
+
+    if (value === "=") {
+      try {
+        if (!/^[0-9+\-*/().\s]+$/.test(calcExpression)) {
+          throw new Error("Invalid expression");
+        }
+        const result = Function(`"use strict"; return (${calcExpression})`)();
+        calcExpression = String(result);
+      } catch {
+        calcExpression = "Error";
+      }
+      updateDisplay();
+      return;
+    }
+
+    if (calcExpression === "0" && /[0-9.]/.test(value)) {
+      calcExpression = value;
+    } else if (calcExpression === "Error") {
+      calcExpression = value;
+    } else {
+      calcExpression += value;
+    }
 
     updateDisplay();
-  }
+  });
+
+  updateDisplay();
+}
+
 
   // =====================================================
   // INCOME CALCULATOR
