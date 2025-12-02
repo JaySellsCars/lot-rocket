@@ -654,3 +654,23 @@ textarea::placeholder {
     justify-content: center;
   }
 }
+/* STEP 2 – make cards wider & taller */
+.step2-card {
+  min-height: 330px !important;     /* taller */
+  padding: 1.4rem !important;
+  width: 100%;
+}
+
+/* make textareas bigger */
+.step2-card textarea {
+  min-height: 180px !important;     /* taller writing window */
+  font-size: 0.95rem !important;
+  padding: 0.9rem !important;
+}
+
+/* make the 2-column grid a little wider */
+.column-middle {
+  max-width: 1350px !important;     /* increased from ~1200 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem !important;             /* more spacing between cards */
+}
