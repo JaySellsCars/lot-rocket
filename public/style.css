@@ -369,14 +369,30 @@ textarea {
 }
 
 .tool-button {
-  background: linear-gradient(90deg, #181a2b, #1e2236);
-  color: #f8f8ff;
-  padding: 6px 10px;
-  text-align: left;
-  font-size: 11px;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c); /* same gradient as your main buttons */
+  color: #ffffff;
+  padding: 8px 16px;
+  font-size: 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+
+  box-shadow:
+    0 0 6px rgba(255, 65, 108, 0.7),
+    0 0 12px rgba(255, 65, 108, 0.5);
+
+  transition: 0.18s ease;
 }
+
+.tool-button:hover {
+  filter: brightness(1.15);
+  box-shadow:
+    0 0 10px rgba(255, 65, 108, 0.9),
+    0 0 20px rgba(255, 65, 108, 0.7);
+}
+
 
 /* =========================================================
    Creative Studio overlay
