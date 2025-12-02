@@ -546,7 +546,6 @@ textarea {
   flex-direction: column;
 }
 
-
 /* Inner scroll wrapper */
 .side-modal-inner {
   flex: 1;
@@ -705,6 +704,33 @@ textarea {
 .basic-calc-panel button[data-calc="C"],
 .basic-calc-panel button[data-calc="DEL"] {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================================================
+   AI VIDEO GENERATION HELPER – SPECIAL FIXES
+   ========================================================= */
+
+/* Make the Video Generation Helper body scroll instead of
+   letting content cover the Copy button */
+#videoGenModal .side-modal-body {
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  padding-bottom: 18px;
+}
+
+/* Ensure its textareas grow but stop before the button row */
+#videoGenModal #videoGenPrompt,
+#videoGenModal #videoGenOutput {
+  height: auto !important;
+  min-height: 160px;
+  max-height: none !important;
+  overflow-y: visible !important;
+  margin-bottom: 10px;
+}
+
+/* Give the Copy Brief row a bit of breathing room */
+#videoGenModal .btn-row {
+  margin-top: 4px;
 }
 
 /* =========================================================
