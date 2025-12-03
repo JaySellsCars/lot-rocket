@@ -785,3 +785,24 @@ textarea::placeholder {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2rem !important;
 }
+/* --- Step 2 Micro Adjustments --- */
+
+/* Reduce Step 2 max width to tighten the column */
+.column-middle {
+  max-width: 1150px !important;  /* adjust between 1100–1200 to your preference */
+}
+
+/* Make each card taller so the text areas feel longer */
+.platform-card.step2-card {
+  min-height: 190px !important;  /* was 140, now longer */
+}
+
+/* Make the textarea itself taller */
+.step2-card textarea {
+  min-height: 130px !important;  /* increase to taste */
+}
+
+/* Slightly shrink the button column so card looks slimmer */
+.step2-card .btn-row button {
+  width: 95px !important;
+}
