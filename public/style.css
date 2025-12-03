@@ -92,81 +92,6 @@ body {
   grid-row: 1;
 }
 
-/* ======= STEP 2 – SOCIAL KIT LAYOUT (LONG & SKINNY ROWS) ======= */
-
-/* This is now the ONLY .column-middle style */
-.column-middle {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  margin: 0;
-  padding-top: 0.3rem;
-  max-width: 1350px;
-}
-
-/* Step 2 heading aligns visually with Step 1 */
-.column-middle > h2 {
-  grid-column: 1 / -1;
-  margin: 0 0 0.2rem 0;
-}
-
-.step2-subtitle {
-  grid-column: 1 / -1;
-  margin: 0 0 1rem 0;
-}
-
-/* Make Step 2 cards long + skinny rows */
-.platform-card.step2-card {
-  min-height: 140px;
-  padding: 1.1rem 1.3rem;
-
-  /* 2-column grid: textarea left, buttons right */
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto minmax(90px, auto);
-  column-gap: 0.9rem;
-  row-gap: 0.4rem;
-  align-items: flex-start;
-}
-
-/* Title spans full width across the top */
-.step2-card h3 {
-  grid-column: 1 / -1;
-  margin-bottom: 0.3rem;
-}
-
-/* Textarea: long + low, takes the left side */
-.step2-card textarea {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-  min-height: 90px;
-  padding: 0.85rem 1rem;
-  font-size: 0.9rem;
-}
-
-/* Button column on YOUR right side */
-.step2-card .btn-row {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  gap: 0.35rem;
-
-  margin-top: 0; /* no extra gap */
-}
-
-/* Narrow, stacked buttons on the right */
-.step2-card .btn-row button {
-  width: 110px; /* make this 100% if you want full-height column */
-}
-
-/* Keep original horizontal rows for modals, so they don't break */
-.side-modal-body .btn-row {
-  justify-content: flex-end;
-  flex-direction: row;
-}
 
 /* ====== RESPONSIVE BEHAVIOR FOR STEP 2 ====== */
 
@@ -285,42 +210,6 @@ textarea::placeholder {
   color: rgba(148, 163, 184, 0.8);
 }
 
-/* ======= STEP 2 FIXED GRID LAYOUT ======= */
-
-.column-middle {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  margin: 0;
-  padding-top: 0.3rem;
-
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.75rem;
-}
-
-/* Step 2 heading aligns with Step 1 heading */
-.column-middle > h2 {
-  grid-column: 1 / -1;
-  margin: 0 0 0.2rem 0;
-}
-
-/* Subtitle also spans full width */
-.step2-subtitle {
-  grid-column: 1 / -1;
-  margin: 0 0 1rem 0;
-}
-
-/* Larger, taller cards */
-.platform-card {
-  min-height: 350px;
-  padding: 1.4rem;
-}
-
-.platform-card textarea {
-  min-height: 200px;
-  padding: 0.9rem;
-  font-size: 0.95rem;
-}
 
 /* ====== BUTTONS ====== */
 
