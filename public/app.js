@@ -544,6 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerContrast = document.getElementById("tunerContrast");
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
+  let hasLoadedTunerOnce = false;
 
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
