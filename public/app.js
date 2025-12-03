@@ -531,12 +531,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
   // PHOTO EDITOR
   // =====================================================
+  const photoDropZone = document.getElementById("photoDropZone");
   const photoUpload = document.getElementById("photoUpload");
   const photoPreview = document.getElementById("photoPreview");
   const photoPlaceholder = document.getElementById("photoPlaceholder");
   const brightnessRange = document.getElementById("brightnessRange");
   const contrastRange = document.getElementById("contrastRange");
   const saturationRange = document.getElementById("saturationRange");
+
+  // Store uploads from Step 3 so we can also send them to Canvas Studio
+  let uploadedPhotoUrls = [];
 
   function updatePhotoFilters() {
     if (!photoPreview) return;
@@ -546,18 +550,73 @@ document.addEventListener("DOMContentLoaded", () => {
     photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
-  if (photoUpload && photoPreview) {
-    photoUpload.addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
+  // This helper is also used by Step 1 thumbnails
+  function setPhotoPreviewFromUrl(src) {
+    if (!photoPreview) return;
+    photoPreview.src = src;
+    photoPreview.style.display = "block";
+    if (photoPlaceholder) {
+      photoPlaceholder.style.display = "none";
+    }
+    updatePhotoFilters();
+  }
+
+  function handleLocalPhotos(files) {
+    if (!files || !files.length) return;
+
+    Array.from(files).forEach((file, index) => {
+      if (!file.type.startsWith("image/")) return;
+
       const reader = new FileReader();
       reader.onload = (ev) => {
-        photoPreview.src = ev.target.result;
-        photoPreview.style.display = "block";
-        if (photoPlaceholder) photoPlaceholder.style.display = "none";
-        updatePhotoFilters();
+        const dataUrl = ev.target.result;
+
+        // Remember uploads for Canvas Studio
+        uploadedPhotoUrls.push(dataUrl);
+        latestPhotoUrls = uploadedPhotoUrls.slice(); // reuse with Creative Studio
+
+        // First image dropped/selected becomes the preview
+        if (index === 0 && !photoPreview.src) {
+          setPhotoPreviewFromUrl(dataUrl);
+        }
       };
       reader.readAsDataURL(file);
+    });
+  }
+
+  // Click on drop zone → open file picker
+  if (photoDropZone && photoUpload) {
+    photoDropZone.addEventListener("click", () => {
+      photoUpload.click();
+    });
+
+    ["dragenter", "dragover"].forEach((evtName) => {
+      photoDropZone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.add("photo-dropzone-hover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((evtName) => {
+      photoDropZone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.remove("photo-dropzone-hover");
+      });
+    });
+
+    photoDropZone.addEventListener("drop", (e) => {
+      const files = e.dataTransfer && e.dataTransfer.files;
+      handleLocalPhotos(files);
+    });
+  }
+
+  // File picker → same handler
+  if (photoUpload) {
+    photoUpload.addEventListener("change", (e) => {
+      const files = e.target.files;
+      handleLocalPhotos(files);
     });
   }
 
@@ -565,6 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!slider) return;
     slider.addEventListener("input", updatePhotoFilters);
   });
+
 
   // =====================================================
   // COMMON MONEY HELPER
