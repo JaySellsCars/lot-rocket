@@ -8,10 +8,14 @@
 //   - Boost button + social-kit handlers
 //
 // Before changing these, create backups of app.js, index.html, style.css.
-public app js:   // public/app.js – Lot Rocket frontend logic
+
+// public/app.js – Lot Rocket frontend logic
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ Lot Rocket frontend loaded v2.5");
+
   const apiBase = "";
+
   // ---------- AUTO-RESIZE MODAL TEXTAREAS ----------
   function autoResizeTextarea(el) {
     if (!el) return;
@@ -20,13 +24,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Apply to all side-modal body textareas (AI helpers, calculators, etc.)
-  const sideModalTextareas = document.querySelectorAll(".side-modal-body textarea");
+  const sideModalTextareas = document.querySelectorAll(
+    ".side-modal-body textarea"
+  );
 
   sideModalTextareas.forEach((ta) => {
-    // Initial size based on any pre-filled content
     autoResizeTextarea(ta);
-
-    // Grow/shrink on input
     ["input", "change"].forEach((evt) => {
       ta.addEventListener(evt, () => autoResizeTextarea(ta));
     });
@@ -64,149 +67,183 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function initAutogrow() {
-    const textareas = document.querySelectorAll("textarea[data-autogrow='true']");
+    const textareas = document.querySelectorAll(
+      "textarea[data-autogrow='true']"
+    );
     textareas.forEach((ta) => {
       autoGrowTextarea(ta);
       ta.addEventListener("input", () => autoGrowTextarea(ta));
     });
   }
 
-// =====================================================
-// STEP 1: BOOST WORKFLOW
-// =====================================================
-const vehicleUrlInput = document.getElementById("vehicleUrl");
-const vehicleLabelInput = document.getElementById("vehicleLabel");
-const priceInfoInput = document.getElementById("priceInfo");
-const boostButton = document.getElementById("boostButton");
-const statusText = document.getElementById("statusText");
+  // =====================================================
+  // STEP 1: BOOST WORKFLOW
+  // =====================================================
+  const vehicleUrlInput = document.getElementById("vehicleUrl");
+  const vehicleLabelInput = document.getElementById("vehicleLabel");
+  const priceInfoInput = document.getElementById("priceInfo");
+  const boostButton = document.getElementById("boostButton");
+  const statusText = document.getElementById("statusText");
 
-const summaryLabel = document.getElementById("summaryLabel");
-const summaryPrice = document.getElementById("summaryPrice");
+  const summaryLabel = document.getElementById("summaryLabel");
+  const summaryPrice = document.getElementById("summaryPrice");
 
-const photosGrid = document.getElementById("photosGrid");
-const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+  const photosGrid = document.getElementById("photosGrid");
+  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
 
-// will hold the last batch of photos from Boost
-let latestPhotoUrls = [];
-if (sendPhotosToStudioBtn) {
-  sendPhotosToStudioBtn.disabled = true;
-}
+  // will hold the last batch of photos from Boost
+  let latestPhotoUrls = [];
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = true;
+  }
 
-const facebookPost = document.getElementById("facebookPost");
-const instagramPost = document.getElementById("instagramPost");
-const tiktokPost = document.getElementById("tiktokPost");
-const linkedinPost = document.getElementById("linkedinPost");
-const twitterPost = document.getElementById("twitterPost");
-const textBlurb = document.getElementById("textBlurb");
-const marketplacePost = document.getElementById("marketplacePost");
-const hashtags = document.getElementById("hashtags");
+  const facebookPost = document.getElementById("facebookPost");
+  const instagramPost = document.getElementById("instagramPost");
+  const tiktokPost = document.getElementById("tiktokPost");
+  const linkedinPost = document.getElementById("linkedinPost");
+  const twitterPost = document.getElementById("twitterPost");
+  const textBlurb = document.getElementById("textBlurb");
+  const marketplacePost = document.getElementById("marketplacePost");
+  const hashtags = document.getElementById("hashtags");
 
-const selfieScript = document.getElementById("selfieScript");
-const shotPlan = document.getElementById("shotPlan");
-const designIdea = document.getElementById("designIdea");
+  const selfieScript = document.getElementById("selfieScript");
+  const shotPlan = document.getElementById("shotPlan");
+  const designIdea = document.getElementById("designIdea");
 
-async function handleBoost() {
-  console.log("🚀 Boost clicked"); // debug breadcrumb
+  function setValue(el, value) {
+    if (!el) return;
+    el.value = value || "";
+  }
 
-  const url = (vehicleUrlInput?.value || "").trim();
-  if (!url) {
-    if (statusText) {
-      statusText.textContent = "Please paste a dealer vehicle URL first.";
-      statusText.classList.add("error");
+  function renderPhotos(photoUrls) {
+    if (!photosGrid) return;
+
+    photosGrid.innerHTML = "";
+
+    if (!photoUrls || !photoUrls.length) {
+      const empty = document.createElement("div");
+      empty.className = "small-note";
+      empty.textContent = "No photos were detected on this page.";
+      photosGrid.appendChild(empty);
+      return;
     }
-    return;
-  }
 
-  if (statusText) {
-    statusText.classList.remove("error");
-    statusText.textContent = "Building social kit... 🚀";
-  }
-
-  try {
-    const body = {
-      url,
-      labelOverride: vehicleLabelInput?.value || "",
-      priceOverride: priceInfoInput?.value || "",
-    };
-
-    const res = await fetch(apiBase + "/api/social-kit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    photoUrls.slice(0, 24).forEach((url) => {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Vehicle photo";
+      img.className = "photo-thumb";
+      photosGrid.appendChild(img);
     });
+  }
 
-    console.log("Boost response status:", res.status); // debug
+  async function handleBoost() {
+    console.log("🚀 Boost clicked");
+    const url = (vehicleUrlInput?.value || "").trim();
 
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      console.error("Boost error payload:", txt);
-      throw new Error(`Server returned ${res.status}`);
+    if (!url) {
+      if (statusText) {
+        statusText.textContent = "Please paste a dealer vehicle URL first.";
+        statusText.classList.add("error");
+      }
+      return;
     }
 
-    const data = await res.json();
-    console.log("Boost data:", data);
-document.body.classList.add("kit-ready");
+    if (statusText) {
+      statusText.classList.remove("error");
+      statusText.textContent = "Building social kit... 🚀";
+    }
 
-    // Summary
-    if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
-    if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
+    try {
+      const body = {
+        url,
+        labelOverride: vehicleLabelInput?.value || "",
+        priceOverride: priceInfoInput?.value || "",
+      };
 
-    // Posts
-    if (facebookPost) facebookPost.value = data.facebook || "";
-    if (instagramPost) instagramPost.value = data.instagram || "";
-    if (tiktokPost) tiktokPost.value = data.tiktok || "";
-    if (linkedinPost) linkedinPost.value = data.linkedin || "";
-    if (twitterPost) twitterPost.value = data.twitter || "";
-    if (textBlurb) textBlurb.value = data.text || "";
-    if (marketplacePost) marketplacePost.value = data.marketplace || "";
-    if (hashtags) hashtags.value = data.hashtags || "";
-
-    if (selfieScript) selfieScript.value = data.selfieScript || "";
-    if (shotPlan) shotPlan.value = data.shotPlan || "";
-    if (designIdea) designIdea.value = data.designIdea || "";
-
-    // ---------- PHOTOS ----------
-    if (photosGrid) {
-      photosGrid.innerHTML = "";
-
-      const photos = Array.isArray(data.photos) ? data.photos : [];
-
-      // Save the recent photos so Creative Studio can use them
-      latestPhotoUrls = photos.slice(0, 8); // top 8
-
-      latestPhotoUrls.forEach((url) => {
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = "Vehicle photo";
-        img.className = "photo-thumb";
-        photosGrid.appendChild(img);
+      const res = await fetch(apiBase + "/api/social-kit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
-      // Enable the "Send to Creative Studio" button only when photos exist
+      console.log("Boost response status:", res.status);
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        console.error("Boost error payload:", txt);
+        throw new Error(`Server returned ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("Boost data:", data);
+
+      document.body.classList.add("kit-ready");
+
+      // ---- Summary (support both old + new shapes) ----
+      const labelFromData = data.vehicleLabel || data.label || "";
+      const priceFromData = data.priceInfo || data.price || "";
+
+      if (summaryLabel) summaryLabel.textContent = labelFromData || "—";
+      if (summaryPrice) summaryPrice.textContent = priceFromData || "—";
+
+      // ---- Posts – support both flat + posts{} ----
+      const posts = data.posts || data;
+
+      setValue(facebookPost, posts.facebook);
+      setValue(instagramPost, posts.instagram);
+      setValue(tiktokPost, posts.tiktok);
+      setValue(linkedinPost, posts.linkedin);
+      setValue(twitterPost, posts.twitter);
+      setValue(textBlurb, posts.text);
+      setValue(marketplacePost, posts.marketplace);
+
+      const hashtagsText = data.hashtags || posts.hashtags;
+      setValue(hashtags, hashtagsText);
+
+      // ---- Creative lab scripts / ideas ----
+      const selfieFrom =
+        data.selfieScript || (data.scripts && data.scripts.selfie);
+      const shotFrom = data.shotPlan || (data.scripts && data.scripts.shotPlan);
+      const designFrom =
+        data.designIdea || (data.scripts && data.scripts.design);
+
+      setValue(selfieScript, selfieFrom);
+      setValue(shotPlan, shotFrom);
+      setValue(designIdea, designFrom);
+
+      // ---- Photos ----
+      const photos = Array.isArray(data.photos)
+        ? data.photos
+        : Array.isArray(data.photoUrls)
+        ? data.photoUrls
+        : [];
+
+      latestPhotoUrls = photos.slice(0, 8);
+      renderPhotos(photos);
+
       if (sendPhotosToStudioBtn) {
         sendPhotosToStudioBtn.disabled = latestPhotoUrls.length === 0;
       }
-    }
 
-    if (statusText) {
-      statusText.textContent = "Social kit ready! 🎯";
-    }
-  } catch (err) {
-    console.error("Boost failed:", err);
-    if (statusText) {
-      statusText.textContent =
-        "Error building social kit. Check URL, then try again.";
-      statusText.classList.add("error");
+      if (statusText) {
+        statusText.textContent = "Social kit ready! 🎯";
+      }
+    } catch (err) {
+      console.error("Boost failed:", err);
+      if (statusText) {
+        statusText.textContent =
+          "Error building social kit. Check URL, then try again.";
+        statusText.classList.add("error");
+      }
     }
   }
-}
 
-if (boostButton) {
-  boostButton.addEventListener("click", handleBoost);
-} else {
-  console.warn("⚠️ boostButton not found in DOM");
-}
-
+  if (boostButton) {
+    boostButton.addEventListener("click", handleBoost);
+  } else {
+    console.warn("⚠️ boostButton not found in DOM");
+  }
 
   // =====================================================
   // COPY BUTTONS (works for ALL .copy-btn in app)
@@ -914,7 +951,6 @@ if (boostButton) {
   const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
 
   if (creativeOverlay && openCreativeStudioBtn) {
-    // ---------- Overlay show / hide ----------
     const closeCreativeStudioBtn = document.getElementById("creativeClose");
 
     function showOverlay() {
@@ -966,11 +1002,10 @@ if (boostButton) {
 
     // Stop here if Fabric isn’t loaded – overlay still works, just no canvas.
     if (typeof fabric === "undefined") {
-      initAutogrow(); // still initialize autogrow even if fabric is missing
+      initAutogrow();
       return;
     }
 
-    // ---------- Fabric.js wiring ----------
     const exportPngBtn = document.getElementById("creativeExportPng");
     const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
     const imageInput = document.getElementById("creativeImageInput");
@@ -990,7 +1025,6 @@ if (boostButton) {
     let creativeCanvas = null;
     let activeTool = "select";
 
-    // Simple undo/redo stacks
     const historyStack = [];
     let historyIndex = -1;
     let isRestoringHistory = false;
@@ -1052,7 +1086,10 @@ if (boostButton) {
       if (propStrokeColor && active.stroke) {
         propStrokeColor.value = active.stroke;
       }
-      if (propStrokeWidth && typeof active.strokeWidth === "number") {
+      if (
+        propStrokeWidth &&
+        typeof active.strokeWidth === "number"
+      ) {
         propStrokeWidth.value = active.strokeWidth;
       }
 
@@ -1089,7 +1126,7 @@ if (boostButton) {
       creativeCanvas.on("selection:updated", updatePropertyPanel);
       creativeCanvas.on("selection:cleared", updatePropertyPanel);
 
-      pushHistory(); // seed empty state
+      pushHistory();
     }
 
     function ensureCreativeCanvas(withPhotos) {
@@ -1123,7 +1160,6 @@ if (boostButton) {
       }
     }
 
-    // --- Undo / Redo / Delete ---
     if (undoBtn) undoBtn.addEventListener("click", handleUndo);
     if (redoBtn) redoBtn.addEventListener("click", handleRedo);
     if (deleteBtn) {
@@ -1138,12 +1174,10 @@ if (boostButton) {
       });
     }
 
-    // --- Canvas preset dropdown ---
     if (canvasPresetSelect) {
       canvasPresetSelect.addEventListener("change", applyCanvasPreset);
     }
 
-    // --- Property controls ---
     if (propFillColor) {
       propFillColor.addEventListener("input", () => {
         if (!creativeCanvas) return;
@@ -1199,7 +1233,6 @@ if (boostButton) {
       });
     }
 
-    // --- Tool buttons (select, add text, add shapes, upload image) ---
     toolButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const tool = btn.getAttribute("data-tool");
@@ -1259,7 +1292,6 @@ if (boostButton) {
       });
     });
 
-    // --- Hidden file input for images ---
     if (imageInput) {
       imageInput.addEventListener("change", (e) => {
         const file = e.target.files && e.target.files[0];
@@ -1282,7 +1314,6 @@ if (boostButton) {
       });
     }
 
-    // --- Export PNG ---
     if (exportPngBtn) {
       exportPngBtn.addEventListener("click", () => {
         if (!creativeCanvas) return;
