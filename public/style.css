@@ -625,24 +625,11 @@ textarea::placeholder {
 .column-middle {
   grid-column: 2;
   grid-row: 1;
-  max-width: 1180px;
+  max-width: 1040px;                  /* was 1180px – makes the whole column slimmer */
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 1.9rem;
   row-gap: 1.9rem;
-}
-
-/* Heading + subtitle spacing */
-.column-middle > h2 {
-  font-size: 1.15rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 0.1rem;
-}
-
-.step2-subtitle {
-  font-size: 0.8rem;
-  opacity: 0.8;
 }
 
 /* Core card shell */
@@ -653,7 +640,7 @@ textarea::placeholder {
   border-radius: 1.3rem;
   border: 1px solid rgba(148, 163, 184, 0.55);
   padding: 1.4rem 1.4rem 1.1rem;
-  min-height: 210px;
+  min-height: 270px;                  /* was 210px – cards get taller / more vertical */
   display: flex;
   flex-direction: column;
   box-shadow:
@@ -664,75 +651,6 @@ textarea::placeholder {
     box-shadow 0.18s ease,
     border-color 0.18s ease;
 }
-
-/* Outer glow edge */
-.platform-card.step2-card::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(248, 113, 113, 0.4),
-    rgba(251, 191, 36, 0.3),
-    rgba(129, 140, 248, 0.2)
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-}
-
-/* Soft inner highlight */
-.platform-card.step2-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    circle at top left,
-    rgba(248, 250, 252, 0.04),
-    transparent 55%
-  );
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-/* Hover feel – float + glow */
-.platform-card.step2-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 26px 60px rgba(15, 23, 42, 0.98),
-    0 0 0 1px rgba(15, 23, 42, 0.98);
-}
-
-.platform-card.step2-card:hover::before {
-  opacity: 1;
-}
-
-/* When Boost has run – subtle “kit ready” highlight */
-.kit-ready .platform-card.step2-card {
-  border-color: rgba(251, 191, 36, 0.7);
-}
-
-/* Card title */
-.platform-card.step2-card h3 {
-  margin: 0 0 0.6rem;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #e5e7eb;
-  opacity: 0.96;
-}
-
-/* Optional emojis per platform (if you add those classes in HTML) */
-.facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
-.instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
-.tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
-.linkedin-card h3::before { content: "💼"; margin-right: 0.35rem; }
-.twitter-card h3::before { content: "✖️"; margin-right: 0.35rem; }
-.textdm-card h3::before { content: "💬"; margin-right: 0.35rem; }
-.marketplace-card h3::before { content: "🏷️"; margin-right: 0.35rem; }
-.hashtags-card h3::before { content: "#";  margin-right: 0.35rem; }
 
 /* Long, skinny glossy text area */
 .step2-card textarea {
@@ -749,7 +667,9 @@ textarea::placeholder {
     inset 0 0 0 1px rgba(15, 23, 42, 0.95),
     inset 0 12px 40px rgba(15, 23, 42, 0.95);
   resize: vertical;
+  min-height: 170px;                  /* was ~default – now feels like those tall boxes */
 }
+
 
 /* Buttons row stays tight on the right */
 .step2-card .btn-row {
