@@ -587,10 +587,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         addThumb(dataUrl);
 
-        // First new image becomes the tuner preview
-        if (index === 0 && !tunerPreviewImg.src) {
+        // First uploaded image becomes the tuner preview
+        if (!hasLoadedTunerOnce) {
           setTunerImage(dataUrl);
+          hasLoadedTunerOnce = true;
         }
+
       };
       reader.readAsDataURL(file);
     });
