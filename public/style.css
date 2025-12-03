@@ -69,7 +69,7 @@ body {
 /* ====== MAIN LAYOUT GRID ====== */
 
 .layout {
-  padding: 1.5rem 3.5rem 3rem;
+  padding: 1.5rem 8.5rem 3rem 3.5rem; /* extra right padding for button column */
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.6fr);
   grid-auto-rows: auto;
@@ -77,6 +77,7 @@ body {
   row-gap: 1.8rem;
   align-items: flex-start;
 }
+
 
 /* Step 1 – top left */
 .column-left {
@@ -101,13 +102,14 @@ body {
 .column-middle {
   grid-column: 2;
   grid-row: 1 / span 2;
-  margin: 0;
-  padding-top: 0.3rem; /* pulls Step 2 closer to Step 1 heading */
+  margin: 0 6rem 0 0;      /* gutter on the right, pulls cards left */
+  padding-top: 0rem;       /* lines Step 2 heading up with Step 1 */
 
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 tall columns */
   gap: 1.75rem;
 }
+
 
 /* Step 2 heading + subtitle span full width */
 .column-middle > h2 {
