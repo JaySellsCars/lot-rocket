@@ -175,274 +175,220 @@
     </section>
 
 
-<!-- ============================ -->
-<!-- STEP 3 – CREATIVE LAB 2.0   -->
-<!-- ============================ -->
-<section class="column-right">
+<!-- ========================= -->
+<!-- STEP 3 – CREATIVE LAB     -->
+<!-- ========================= -->
+<section class="column-right" id="step3">
   <h2>Step 3 – Creative Lab</h2>
+  <p class="step3-subtitle">
+    Turn your scraped photos and AI copy into scroll-stopping creative.
+  </p>
 
-  <!-- Top studio bar -->
-  <div class="lab-top-bar summary-box lab-header-card">
-    <div class="lab-header-text">
-      <h3>Lot Rocket Studio</h3>
-      <p>Turn your scraped photos and AI copy into scroll-stopping content.</p>
-    </div>
-    <button
-      id="openCreativeStudio"
-      class="primary-btn full-width-bar lab-open-btn"
-      type="button"
-    >
+  <!-- Top: Lot Rocket Studio / Canvas launch -->
+  <div class="lab-card">
+    <h3>Lot Rocket Studio</h3>
+    <p class="small-note">
+      Send your best photos into a simple canvas to build thumbnails, stories, and ad creatives.
+    </p>
+    <button id="openCreativeStudio" class="primary-btn full-width-bar">
       ✨ Open Canvas Studio
     </button>
   </div>
 
-  <!-- Tabbed workspace -->
-  <div class="lab-shell summary-box">
-    <!-- Tabs row -->
-    <div class="lab-tabs">
-      <button
-        class="lab-tab is-active"
-        type="button"
-        data-lab-tab="video"
-      >
-        🎬 Video Ideas
-      </button>
-      <button
-        class="lab-tab"
-        type="button"
-        data-lab-tab="layout"
-      >
-        🎨 Canva-Style Layouts
-      </button>
-      <button
-        class="lab-tab"
-        type="button"
-        data-lab-tab="photo"
-      >
-        📷 Photo Tuner
-      </button>
+  <!-- Two-column creative workspace -->
+  <div class="step3-grid">
+    <!-- LEFT SIDE: Inputs / Controls -->
+    <div class="step3-left">
+      <!-- Quick Sales Video Idea (inputs only) -->
+      <div class="lab-card" id="videoIdeaCard">
+        <h3>Quick Sales Video Idea</h3>
+        <p class="small-note">
+          Feed in the basics and let Lot Rocket draft a punchy short-form script.
+        </p>
+
+        <label>
+          Vehicle / Offer
+          <input
+            type="text"
+            id="videoVehicle"
+            placeholder="Example: 2025 Chevy Tahoe RST demo unit"
+          />
+        </label>
+
+        <label>
+          Hook
+          <input
+            type="text"
+            id="videoHook"
+            placeholder="Example: Stop scrolling—this Tahoe has your name on it."
+          />
+        </label>
+
+        <label>
+          Style
+          <input
+            type="text"
+            id="videoStyle"
+            placeholder="Energetic, educational, fun, luxury, walk-around, etc."
+          />
+        </label>
+
+        <label>
+          Length / Aspect
+          <input
+            type="text"
+            id="videoLength"
+            placeholder="15–30 seconds, vertical 9:16"
+          />
+        </label>
+
+        <button id="generateVideoIdea" class="secondary-btn summary-btn">
+          🎥 Generate Video Idea
+        </button>
+      </div>
+
+      <!-- Canva-Style Layout Idea (inputs only) -->
+      <div class="lab-card" id="layoutIdeaCard">
+        <h3>Canva-Style Layout Idea</h3>
+        <p class="small-note">
+          Get a clean, high-converting layout idea for Facebook, Instagram, or print.
+        </p>
+
+        <label>
+          Layout Type
+          <select id="layoutType">
+            <option value="instagram">Instagram post – 1080×1080 square</option>
+            <option value="story">Story / Reel cover – 1080×1920 vertical</option>
+            <option value="thumb">YouTube thumbnail – 1280×720</option>
+            <option value="print">Flyer / Print piece</option>
+          </select>
+        </label>
+
+        <label>
+          Headline
+          <input
+            type="text"
+            id="layoutHeadline"
+            placeholder="Example: 0 Down • 0 First Payment • 0 Worries"
+          />
+        </label>
+
+        <label>
+          Call-to-Action
+          <input
+            type="text"
+            id="layoutCTA"
+            placeholder="Example: Call or text Jay at 517-836-5186"
+          />
+        </label>
+
+        <label>
+          Vibe / Notes
+          <input
+            type="text"
+            id="layoutVibe"
+            placeholder="Bold, modern, dealership-branded, clean, etc."
+          />
+        </label>
+
+        <button id="generateLayoutIdea" class="secondary-btn summary-btn">
+          🎨 Generate Layout Idea
+        </button>
+      </div>
+
+      <!-- Photo Tuner (upload control) -->
+      <div class="lab-card" id="photoTunerCard">
+        <h3>Photo Tuner</h3>
+        <p class="small-note">
+          Upload or drop a photo, then tweak brightness, contrast, and saturation.
+        </p>
+
+        <button
+          type="button"
+          class="secondary-btn"
+          onclick="document.getElementById('photoUpload').click();"
+        >
+          📷 Upload Photo
+        </button>
+        <input
+          type="file"
+          id="photoUpload"
+          accept="image/*"
+          class="hidden-input"
+        />
+      </div>
     </div>
 
-    <!-- Panels -->
-    <div class="lab-panels">
-
-      <!-- Video Ideas Panel -->
-      <div class="lab-panel is-active" data-lab-panel="video">
-        <div class="lab-panel-inner">
-
-          <!-- Left: Inputs -->
-          <div class="lab-panel-column">
-            <h3 class="lab-panel-title">Quick Sales Video Idea</h3>
-            <p class="lab-panel-subtitle">
-              Feed in the basics and let Lot Rocket draft a punchy short-form script.
-            </p>
-
-            <label>
-              Vehicle / Offer
-              <input
-                type="text"
-                id="videoVehicle"
-                placeholder="Example: 2025 Chevy Tahoe RST demo unit"
-              />
-            </label>
-
-            <label>
-              Hook
-              <input
-                type="text"
-                id="videoHook"
-                placeholder="Example: Stop scrolling – this Tahoe has your name on it."
-              />
-            </label>
-
-            <label>
-              Style
-              <input
-                type="text"
-                id="videoStyle"
-                placeholder="Energetic, educational, fun, luxury, walk-around, etc."
-              />
-            </label>
-
-            <label>
-              Length / Aspect
-              <input
-                type="text"
-                id="videoLength"
-                placeholder="15–30 seconds, vertical 9:16"
-              />
-            </label>
-
-            <button
-              id="generateVideoIdea"
-              type="button"
-              class="secondary-btn lab-generate-btn"
-            >
-              🚀 Generate Video Idea
-            </button>
-          </div>
-
-          <!-- Right: Output -->
-          <div class="lab-panel-column lab-output-column">
-            <h4 class="lab-output-title">Script & Shot List</h4>
-            <textarea
-              id="videoIdeaOutput"
-              data-autogrow="true"
-              placeholder="Your ready-to-read video script and shot-by-shot breakdown will appear here."
-            ></textarea>
-          </div>
-
-        </div>
+    <!-- RIGHT SIDE: Outputs / Previews -->
+    <div class="step3-right">
+      <!-- Script & Shot List -->
+      <div class="lab-card" id="scriptShotCard">
+        <h3>Script & Shot List</h3>
+        <textarea
+          id="videoIdeaOutput"
+          data-autogrow="true"
+          placeholder="Your ready-to-read video script and shot-by-shot breakdown will appear here."
+        ></textarea>
       </div>
 
-      <!-- Layout Ideas Panel -->
-      <div class="lab-panel" data-lab-panel="layout">
-        <div class="lab-panel-inner">
-
-          <!-- Left: Inputs -->
-          <div class="lab-panel-column">
-            <h3 class="lab-panel-title">Canva-Style Layout Idea</h3>
-            <p class="lab-panel-subtitle">
-              Get a clean, high-converting layout idea for Facebook, Instagram, or print.
-            </p>
-
-            <label>
-              Layout Type
-              <input
-                type="text"
-                id="layoutType"
-                placeholder="Instagram story, 1080x1080 square, 16:9 YouTube thumbnail, 8.5x11 flyer, etc."
-              />
-            </label>
-
-            <label>
-              Headline
-              <input
-                type="text"
-                id="layoutHeadline"
-                placeholder="Example: &quot;Bad Credit? You’re Still Approved.&quot;"
-              />
-            </label>
-
-            <label>
-              Call to Action
-              <input
-                type="text"
-                id="layoutCTA"
-                placeholder="Example: &quot;Message Jay for payment options today.&quot;"
-              />
-            </label>
-
-            <label>
-              Vibe / Brand Direction
-              <input
-                type="text"
-                id="layoutVibe"
-                placeholder="Clean, premium black & gold, family friendly, bold dealership colors, etc."
-              />
-            </label>
-
-            <button
-              id="generateLayoutIdea"
-              type="button"
-              class="secondary-btn lab-generate-btn"
-            >
-              🎨 Generate Layout Idea
-            </button>
-          </div>
-
-          <!-- Right: Output -->
-          <div class="lab-panel-column lab-output-column">
-            <h4 class="lab-output-title">Designer-Ready Brief</h4>
-            <textarea
-              id="layoutIdeaOutput"
-              data-autogrow="true"
-              placeholder="You’ll get a Canva-style description with text placement, photo placement, and color notes."
-            ></textarea>
-          </div>
-
-        </div>
+      <!-- Layout Idea Output -->
+      <div class="lab-card" id="layoutOutputCard">
+        <h3>Layout Idea Notes</h3>
+        <textarea
+          id="layoutIdeaOutput"
+          data-autogrow="true"
+          placeholder="Layout concept, suggested text blocks, photo placement, and color notes will appear here."
+        ></textarea>
       </div>
 
-      <!-- Photo Tuner Panel -->
-      <div class="lab-panel" data-lab-panel="photo">
-        <div class="lab-panel-inner lab-photo-layout">
+      <!-- Photo Preview + Sliders -->
+      <div class="lab-card" id="photoTunerOutputCard">
+        <h3>Photo Preview & Tweaks</h3>
 
-          <!-- Left: Preview -->
-          <div class="lab-panel-column">
-            <h3 class="lab-panel-title">Photo Tuner</h3>
-            <p class="lab-panel-subtitle">
-              Start with a scraped photo or upload your own, then polish it for ads.
-            </p>
+        <div class="photo-preview-wrapper">
+          <span id="photoPlaceholder">Drop or upload a photo to preview.</span>
+          <img id="photoPreview" alt="Photo preview" style="display: none;" />
+        </div>
 
-            <div class="photo-preview-wrapper">
-              <img
-                id="photoPreview"
-                alt="Photo preview"
-                style="display:none;"
-              />
-              <div id="photoPlaceholder" class="photo-placeholder-text">
-                Drop in a photo from Step 1 or upload below.
-              </div>
-            </div>
+        <div class="slider-group">
+          <label>
+            Brightness
+            <input
+              type="range"
+              id="brightnessRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
 
-            <label class="lab-upload-label">
-              <span>Upload a photo</span>
-              <input type="file" id="photoUpload" accept="image/*" />
-            </label>
-          </div>
+          <label>
+            Contrast
+            <input
+              type="range"
+              id="contrastRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
 
-          <!-- Right: Sliders -->
-          <div class="lab-panel-column lab-output-column">
-            <h4 class="lab-output-title">Quick Adjustments</h4>
-
-            <div class="slider-group">
-              <label>
-                Brightness
-                <input
-                  type="range"
-                  id="brightnessRange"
-                  min="60"
-                  max="140"
-                  value="100"
-                />
-              </label>
-
-              <label>
-                Contrast
-                <input
-                  type="range"
-                  id="contrastRange"
-                  min="60"
-                  max="140"
-                  value="100"
-                />
-              </label>
-
-              <label>
-                Saturation
-                <input
-                  type="range"
-                  id="saturationRange"
-                  min="60"
-                  max="140"
-                  value="100"
-                />
-              </label>
-            </div>
-
-            <p class="lab-panel-subtitle lab-photo-note">
-              Use these sliders to get a clean, bright, “studio” look before you export or
-              drop the photo into Canva.
-            </p>
-          </div>
-
+          <label>
+            Saturation
+            <input
+              type="range"
+              id="saturationRange"
+              min="50"
+              max="150"
+              value="100"
+            />
+          </label>
         </div>
       </div>
-
     </div>
   </div>
 </section>
+
 
 
   <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
