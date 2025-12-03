@@ -93,52 +93,6 @@ body {
 }
 
 
-/* ====== RESPONSIVE BEHAVIOR FOR STEP 2 ====== */
-
-@media (max-width: 1100px) {
-  /* Step 2 drops under Step 1 on small screens */
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .column-left,
-  .column-middle,
-  .column-right {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .column-middle {
-    max-width: 100%;
-  }
-
-  /* On mobile, stack buttons under the textarea again */
-  .platform-card.step2-card {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-  }
-
-  .step2-card .btn-row {
-    grid-column: 1 / -1;
-    grid-row: 3 / 4;
-    flex-direction: row;
-    justify-content: flex-end;
-    margin-top: 0.4rem;
-  }
-
-  .step2-card .btn-row button {
-    width: auto;
-  }
-
-  /* Keep floating tools usable on small screens */
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0 1rem 1rem;
-    justify-content: center;
-  }
-}
 
 
 /* ====== PANELS / SUMMARY BOXES ====== */
@@ -653,10 +607,7 @@ textarea::placeholder {
     grid-row: auto;
   }
 
-  .column-middle {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+  /* Floating tools move to bottom as a wrap row */
   .floating-tools {
     position: static;
     flex-direction: row;
@@ -664,49 +615,21 @@ textarea::placeholder {
     padding: 0 1rem 1rem;
     justify-content: center;
   }
-}   
-
-
-
-
-
-
-.column-middle {
-  max-width: 1350px !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2rem !important;
-}
-/* --- Step 2 Micro Adjustments --- */
-
-/* Reduce Step 2 max width to tighten the column */
-.column-middle {
-  max-width: 1150px !important;  /* adjust between 1100–1200 to your preference */
 }
 
-/* Make each card taller so the text areas feel longer */
-.platform-card.step2-card {
-  min-height: 190px !important;  /* was 140, now longer */
-}
-
-/* Make the textarea itself taller */
-.step2-card textarea {
-  min-height: 130px !important;  /* increase to taste */
-}
-
-/* Slightly shrink the button column so card looks slimmer */
-.step2-card .btn-row button {
-  width: 95px !important;
-}
 /* ============================= */
 /* STEP 2 – PREMIUM ROCKET SKIN  */
 /* ============================= */
 
-/* Slightly tighten Step 2 column so it feels long + skinny */
+/* Step 2 column – long, skinny, 2-up grid */
 .column-middle {
-  max-width: 1180px !important;
+  grid-column: 2;
+  grid-row: 1;
+  max-width: 1180px;
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 1.9rem !important;
-  row-gap: 1.9rem !important;
+  column-gap: 1.9rem;
+  row-gap: 1.9rem;
 }
 
 /* Heading + subtitle spacing */
@@ -801,46 +724,15 @@ textarea::placeholder {
   opacity: 0.96;
 }
 
-/* Tiny label tone */
-.platform-card.step2-card h3 span {
-  font-weight: 600;
-}
-
-/* Give each platform a branded emoji via classes if you want later
-   (optional: just add class="platform-card step2-card facebook-card" etc.)
-*/
-.facebook-card h3::before {
-  content: "📘";
-  margin-right: 0.35rem;
-}
-.instagram-card h3::before {
-  content: "📸";
-  margin-right: 0.35rem;
-}
-.tiktok-card h3::before {
-  content: "🎵";
-  margin-right: 0.35rem;
-}
-.linkedin-card h3::before {
-  content: "💼";
-  margin-right: 0.35rem;
-}
-.twitter-card h3::before {
-  content: "✖️";
-  margin-right: 0.35rem;
-}
-.textdm-card h3::before {
-  content: "💬";
-  margin-right: 0.35rem;
-}
-.marketplace-card h3::before {
-  content: "🏷️";
-  margin-right: 0.35rem;
-}
-.hashtags-card h3::before {
-  content: "#";
-  margin-right: 0.35rem;
-}
+/* Optional emojis per platform (if you add those classes in HTML) */
+.facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
+.instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
+.tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
+.linkedin-card h3::before { content: "💼"; margin-right: 0.35rem; }
+.twitter-card h3::before { content: "✖️"; margin-right: 0.35rem; }
+.textdm-card h3::before { content: "💬"; margin-right: 0.35rem; }
+.marketplace-card h3::before { content: "🏷️"; margin-right: 0.35rem; }
+.hashtags-card h3::before { content: "#";  margin-right: 0.35rem; }
 
 /* Long, skinny glossy text area */
 .step2-card textarea {
@@ -879,17 +771,19 @@ textarea::placeholder {
 /* Slightly smaller on tablet */
 @media (max-width: 1280px) {
   .column-middle {
-    max-width: 1100px !important;
+    max-width: 1100px;
   }
   .platform-card.step2-card {
     min-height: 190px;
   }
 }
 
-/* Mobile: single column; cards keep premium look */
+/* Mobile: Step 2 becomes single column, premium look kept */
 @media (max-width: 1100px) {
   .column-middle {
-    grid-template-columns: minmax(0, 1fr) !important;
-    max-width: 100% !important;
+    grid-column: 1;
+    grid-row: auto;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
