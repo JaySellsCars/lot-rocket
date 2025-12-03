@@ -105,12 +105,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const photosGrid = document.getElementById("photosGrid");
   const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
 
-  // will hold the last batch of photos from Boost
+  // last batch of photos from Boost or uploads
   let latestPhotoUrls = [];
+  // manual uploads from Step 3
+  let uploadedPhotoUrls = [];
+
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = true;
   }
+
 
   const facebookPost = document.getElementById("facebookPost");
   const instagramPost = document.getElementById("instagramPost");
@@ -529,39 +534,43 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  // PHOTO EDITOR
+  // PHOTO EDITOR – STEP 3 CREATIVE HUB
   // =====================================================
   const photoDropZone = document.getElementById("photoDropZone");
-  const photoUpload = document.getElementById("photoUpload");
-  const photoPreview = document.getElementById("photoPreview");
-  const photoPlaceholder = document.getElementById("photoPlaceholder");
-  const brightnessRange = document.getElementById("brightnessRange");
-  const contrastRange = document.getElementById("contrastRange");
-  const saturationRange = document.getElementById("saturationRange");
+  const photoFileInput = document.getElementById("photoFileInput");
+  const creativeThumbGrid = document.getElementById("creativeThumbGrid");
+  const tunerPreviewImg = document.getElementById("tunerPreviewImg");
+  const tunerBrightness = document.getElementById("tunerBrightness");
+  const tunerContrast = document.getElementById("tunerContrast");
+  const tunerSaturation = document.getElementById("tunerSaturation");
+  const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 
-  // Store uploads from Step 3 so we can also send them to Canvas Studio
-  let uploadedPhotoUrls = [];
-
-  function updatePhotoFilters() {
-    if (!photoPreview) return;
-    const b = brightnessRange ? brightnessRange.value : 100;
-    const c = contrastRange ? contrastRange.value : 100;
-    const s = saturationRange ? saturationRange.value : 100;
-    photoPreview.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  function applyTunerFilters() {
+    if (!tunerPreviewImg) return;
+    const b = tunerBrightness ? tunerBrightness.value : 100;
+    const c = tunerContrast ? tunerContrast.value : 100;
+    const s = tunerSaturation ? tunerSaturation.value : 100;
+    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
-  // This helper is also used by Step 1 thumbnails
-  function setPhotoPreviewFromUrl(src) {
-    if (!photoPreview) return;
-    photoPreview.src = src;
-    photoPreview.style.display = "block";
-    if (photoPlaceholder) {
-      photoPlaceholder.style.display = "none";
-    }
-    updatePhotoFilters();
+  function setTunerImage(src) {
+    if (!tunerPreviewImg || !src) return;
+    tunerPreviewImg.src = src;
+    tunerPreviewImg.style.display = "block";
+    applyTunerFilters();
   }
 
-  function handleLocalPhotos(files) {
+  function addThumb(src) {
+    if (!creativeThumbGrid) return;
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Uploaded photo";
+    img.className = "creative-thumb";
+    img.addEventListener("click", () => setTunerImage(src));
+    creativeThumbGrid.appendChild(img);
+  }
+
+  function handleDroppedFiles(files) {
     if (!files || !files.length) return;
 
     Array.from(files).forEach((file, index) => {
@@ -573,23 +582,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Remember uploads for Canvas Studio
         uploadedPhotoUrls.push(dataUrl);
-        latestPhotoUrls = uploadedPhotoUrls.slice(); // reuse with Creative Studio
+        latestPhotoUrls = uploadedPhotoUrls.slice();
 
-        // First image dropped/selected becomes the preview
-        if (index === 0 && !photoPreview.src) {
-          setPhotoPreviewFromUrl(dataUrl);
+        addThumb(dataUrl);
+
+        // First new image becomes the tuner preview
+        if (index === 0 && !tunerPreviewImg.src) {
+          setTunerImage(dataUrl);
         }
       };
       reader.readAsDataURL(file);
     });
   }
 
-  // Click on drop zone → open file picker
-  if (photoDropZone && photoUpload) {
-    photoDropZone.addEventListener("click", () => {
-      photoUpload.click();
-    });
-
+  // Drag & drop wiring
+  if (photoDropZone) {
     ["dragenter", "dragover"].forEach((evtName) => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
@@ -608,22 +615,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
     photoDropZone.addEventListener("drop", (e) => {
       const files = e.dataTransfer && e.dataTransfer.files;
-      handleLocalPhotos(files);
+      handleDroppedFiles(files);
+    });
+
+    // Click to open file picker
+    photoDropZone.addEventListener("click", () => {
+      if (photoFileInput) photoFileInput.click();
     });
   }
 
-  // File picker → same handler
-  if (photoUpload) {
-    photoUpload.addEventListener("change", (e) => {
-      const files = e.target.files;
-      handleLocalPhotos(files);
+  // File input → same handler
+  if (photoFileInput) {
+    photoFileInput.addEventListener("change", (e) => {
+      handleDroppedFiles(e.target.files);
+      photoFileInput.value = ""; // reset
     });
   }
 
-  [brightnessRange, contrastRange, saturationRange].forEach((slider) => {
+  // Sliders → live filters
+  [tunerBrightness, tunerContrast, tunerSaturation].forEach((slider) => {
     if (!slider) return;
-    slider.addEventListener("input", updatePhotoFilters);
+    slider.addEventListener("input", applyTunerFilters);
   });
+
+  // One-tap “Make it pop”
+  if (autoEnhanceBtn) {
+    autoEnhanceBtn.addEventListener("click", () => {
+      if (tunerBrightness) tunerBrightness.value = 110;
+      if (tunerContrast) tunerContrast.value = 115;
+      if (tunerSaturation) tunerSaturation.value = 120;
+      applyTunerFilters();
+    });
+  }
+
 
 
   // =====================================================
