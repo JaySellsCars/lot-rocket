@@ -77,6 +77,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
+  // STEP 3 HELPER – SEND URL DIRECTLY INTO PHOTO TUNER
+  // =====================================================
+  function setPhotoPreviewFromUrl(src) {
+    const photoPreview = document.getElementById("photoPreview");
+    const photoPlaceholder = document.getElementById("photoPlaceholder");
+    if (!photoPreview) return;
+
+    photoPreview.src = src;
+    photoPreview.style.display = "block";
+    if (photoPlaceholder) {
+      photoPlaceholder.style.display = "none";
+    }
+  }
+
+  // =====================================================
   // STEP 1: BOOST WORKFLOW
   // =====================================================
   const vehicleUrlInput = document.getElementById("vehicleUrl");
@@ -128,13 +143,30 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    photoUrls.slice(0, 24).forEach((url) => {
+    const limited = photoUrls.slice(0, 24);
+    let firstSrc = null;
+
+    limited.forEach((url, index) => {
+      if (index === 0) {
+        firstSrc = url;
+      }
       const img = document.createElement("img");
       img.src = url;
       img.alt = "Vehicle photo";
       img.className = "photo-thumb";
+
+      // NEW: click thumbnail → send to Step 3 photo tuner
+      img.addEventListener("click", () => {
+        setPhotoPreviewFromUrl(url);
+      });
+
       photosGrid.appendChild(img);
     });
+
+    // Auto-load first photo into the tuner so it's ready instantly
+    if (firstSrc) {
+      setPhotoPreviewFromUrl(firstSrc);
+    }
   }
 
   async function handleBoost() {
