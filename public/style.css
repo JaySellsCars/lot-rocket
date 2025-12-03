@@ -287,6 +287,21 @@ textarea::placeholder {
 .summary-btn {
   margin-top: 0.6rem;
 }
+/* ===== DARK THEME BUTTON TEXT FIXES ===== */
+
+body.dark-theme .secondary-btn,
+body.dark-theme .tool-button,
+body.dark-theme .copy-btn,
+body.dark-theme .regen-btn,
+body.dark-theme .basic-calc-btn {
+  color: #e5e7eb;          /* bright slate text on dark buttons */
+}
+
+/* Make sure the tiny labels inside Step 2 buttons stay readable too */
+body.dark-theme .step2-card .regen-btn,
+body.dark-theme .step2-card .copy-btn {
+  color: #e5e7eb;
+}
 
 /* ===== Floating AI TOOL LAUNCHERS (right side) ===== */
 
