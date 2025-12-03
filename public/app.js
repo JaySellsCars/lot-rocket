@@ -71,129 +71,141 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // =====================================================
-  // STEP 1: BOOST WORKFLOW
-  // =====================================================
-  const vehicleUrlInput = document.getElementById("vehicleUrl");
-  const vehicleLabelInput = document.getElementById("vehicleLabel");
-  const priceInfoInput = document.getElementById("priceInfo");
-  const boostButton = document.getElementById("boostButton");
-  const statusText = document.getElementById("statusText");
+// =====================================================
+// STEP 1: BOOST WORKFLOW
+// =====================================================
+const vehicleUrlInput = document.getElementById("vehicleUrl");
+const vehicleLabelInput = document.getElementById("vehicleLabel");
+const priceInfoInput = document.getElementById("priceInfo");
+const boostButton = document.getElementById("boostButton");
+const statusText = document.getElementById("statusText");
 
-  const summaryLabel = document.getElementById("summaryLabel");
-  const summaryPrice = document.getElementById("summaryPrice");
+const summaryLabel = document.getElementById("summaryLabel");
+const summaryPrice = document.getElementById("summaryPrice");
 
-  const photosGrid = document.getElementById("photosGrid");
-  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+const photosGrid = document.getElementById("photosGrid");
+const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
 
-  // will hold the last batch of photos from Boost
-  let latestPhotoUrls = [];
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = true;
+// will hold the last batch of photos from Boost
+let latestPhotoUrls = [];
+if (sendPhotosToStudioBtn) {
+  sendPhotosToStudioBtn.disabled = true;
+}
+
+const facebookPost = document.getElementById("facebookPost");
+const instagramPost = document.getElementById("instagramPost");
+const tiktokPost = document.getElementById("tiktokPost");
+const linkedinPost = document.getElementById("linkedinPost");
+const twitterPost = document.getElementById("twitterPost");
+const textBlurb = document.getElementById("textBlurb");
+const marketplacePost = document.getElementById("marketplacePost");
+const hashtags = document.getElementById("hashtags");
+
+const selfieScript = document.getElementById("selfieScript");
+const shotPlan = document.getElementById("shotPlan");
+const designIdea = document.getElementById("designIdea");
+
+async function handleBoost() {
+  console.log("🚀 Boost clicked"); // debug breadcrumb
+
+  const url = (vehicleUrlInput?.value || "").trim();
+  if (!url) {
+    if (statusText) {
+      statusText.textContent = "Please paste a dealer vehicle URL first.";
+      statusText.classList.add("error");
+    }
+    return;
   }
 
-  const facebookPost = document.getElementById("facebookPost");
-  const instagramPost = document.getElementById("instagramPost");
-  const tiktokPost = document.getElementById("tiktokPost");
-  const linkedinPost = document.getElementById("linkedinPost");
-  const twitterPost = document.getElementById("twitterPost");
-  const textBlurb = document.getElementById("textBlurb");
-  const marketplacePost = document.getElementById("marketplacePost");
-  const hashtags = document.getElementById("hashtags");
+  if (statusText) {
+    statusText.classList.remove("error");
+    statusText.textContent = "Building social kit... 🚀";
+  }
 
-  const selfieScript = document.getElementById("selfieScript");
-  const shotPlan = document.getElementById("shotPlan");
-  const designIdea = document.getElementById("designIdea");
+  try {
+    const body = {
+      url,
+      labelOverride: vehicleLabelInput?.value || "",
+      priceOverride: priceInfoInput?.value || "",
+    };
 
-  async function handleBoost() {
-    const url = (vehicleUrlInput?.value || "").trim();
-    if (!url) {
-      if (statusText) {
-        statusText.textContent = "Please paste a dealer vehicle URL first.";
-        statusText.classList.add("error");
+    const res = await fetch(apiBase + "/api/social-kit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    console.log("Boost response status:", res.status); // debug
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      console.error("Boost error payload:", txt);
+      throw new Error(`Server returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("Boost data:", data);
+
+    // Summary
+    if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
+    if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
+
+    // Posts
+    if (facebookPost) facebookPost.value = data.facebook || "";
+    if (instagramPost) instagramPost.value = data.instagram || "";
+    if (tiktokPost) tiktokPost.value = data.tiktok || "";
+    if (linkedinPost) linkedinPost.value = data.linkedin || "";
+    if (twitterPost) twitterPost.value = data.twitter || "";
+    if (textBlurb) textBlurb.value = data.text || "";
+    if (marketplacePost) marketplacePost.value = data.marketplace || "";
+    if (hashtags) hashtags.value = data.hashtags || "";
+
+    if (selfieScript) selfieScript.value = data.selfieScript || "";
+    if (shotPlan) shotPlan.value = data.shotPlan || "";
+    if (designIdea) designIdea.value = data.designIdea || "";
+
+    // ---------- PHOTOS ----------
+    if (photosGrid) {
+      photosGrid.innerHTML = "";
+
+      const photos = Array.isArray(data.photos) ? data.photos : [];
+
+      // Save the recent photos so Creative Studio can use them
+      latestPhotoUrls = photos.slice(0, 8); // top 8
+
+      latestPhotoUrls.forEach((url) => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Vehicle photo";
+        img.className = "photo-thumb";
+        photosGrid.appendChild(img);
+      });
+
+      // Enable the "Send to Creative Studio" button only when photos exist
+      if (sendPhotosToStudioBtn) {
+        sendPhotosToStudioBtn.disabled = latestPhotoUrls.length === 0;
       }
-      return;
     }
 
     if (statusText) {
-      statusText.classList.remove("error");
-      statusText.textContent = "Building social kit... 🚀";
+      statusText.textContent = "Social kit ready! 🎯";
     }
-
-    try {
-      const body = {
-        url,
-        labelOverride: vehicleLabelInput?.value || "",
-        priceOverride: priceInfoInput?.value || "",
-      };
-
-      const res = await fetch(apiBase + "/api/social-kit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-
-      const data = await res.json();
-
-      // Summary
-      if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
-      if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
-
-      // Posts
-      if (facebookPost) facebookPost.value = data.facebook || "";
-      if (instagramPost) instagramPost.value = data.instagram || "";
-      if (tiktokPost) tiktokPost.value = data.tiktok || "";
-      if (linkedinPost) linkedinPost.value = data.linkedin || "";
-      if (twitterPost) twitterPost.value = data.twitter || "";
-      if (textBlurb) textBlurb.value = data.text || "";
-      if (marketplacePost) marketplacePost.value = data.marketplace || "";
-      if (hashtags) hashtags.value = data.hashtags || "";
-
-      if (selfieScript) selfieScript.value = data.selfieScript || "";
-      if (shotPlan) shotPlan.value = data.shotPlan || "";
-      if (designIdea) designIdea.value = data.designIdea || "";
-
-      // ---------- PHOTOS ----------
-      if (photosGrid) {
-        photosGrid.innerHTML = "";
-
-        const photos = Array.isArray(data.photos) ? data.photos : [];
-
-        // Save the recent photos so Creative Studio can use them
-        latestPhotoUrls = photos.slice(0, 8); // top 8
-
-        latestPhotoUrls.forEach((url) => {
-          const img = document.createElement("img");
-          img.src = url;
-          img.alt = "Vehicle photo";
-          img.className = "photo-thumb";
-          photosGrid.appendChild(img);
-        });
-
-        // Enable the "Send to Creative Studio" button only when photos exist
-        if (sendPhotosToStudioBtn) {
-          sendPhotosToStudioBtn.disabled = latestPhotoUrls.length === 0;
-        }
-      }
-
-      if (statusText) {
-        statusText.textContent = "Social kit ready! 🎯";
-      }
-    } catch (err) {
-      console.error(err);
-      if (statusText) {
-        statusText.textContent =
-          "Error building social kit. Check URL or try again.";
-        statusText.classList.add("error");
-      }
+  } catch (err) {
+    console.error("Boost failed:", err);
+    if (statusText) {
+      statusText.textContent =
+        "Error building social kit. Check URL, then try again.";
+      statusText.classList.add("error");
     }
   }
+}
 
-  if (boostButton) {
-    boostButton.addEventListener("click", handleBoost);
-  }
+if (boostButton) {
+  boostButton.addEventListener("click", handleBoost);
+} else {
+  console.warn("⚠️ boostButton not found in DOM");
+}
+
 
   // =====================================================
   // COPY BUTTONS (works for ALL .copy-btn in app)
