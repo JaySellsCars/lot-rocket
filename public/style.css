@@ -880,6 +880,22 @@ body.dark-theme .step2-card .copy-btn {
 .step2-card .copy-btn {
   min-width: 76px;
 }
+/* ====== STEP 1 – PHOTO GRID THUMBNAILS ====== */
+
+.photo-grid {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.photo-thumb {
+  width: 100%;
+  height: 70px;           /* thumbnail height */
+  object-fit: cover;      /* crop nicely */
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
 
 /* ====== RESPONSIVE ====== */
 
