@@ -145,6 +145,7 @@ async function handleBoost() {
 
     const data = await res.json();
     console.log("Boost data:", data);
+document.body.classList.add("kit-ready");
 
     // Summary
     if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
