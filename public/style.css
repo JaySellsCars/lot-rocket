@@ -806,3 +806,199 @@ textarea::placeholder {
 .step2-card .btn-row button {
   width: 95px !important;
 }
+/* ============================= */
+/* STEP 2 – PREMIUM ROCKET SKIN  */
+/* ============================= */
+
+/* Slightly tighten Step 2 column so it feels long + skinny */
+.column-middle {
+  max-width: 1180px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.9rem !important;
+  row-gap: 1.9rem !important;
+}
+
+/* Heading + subtitle spacing */
+.column-middle > h2 {
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.1rem;
+}
+
+.step2-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Core card shell */
+.platform-card.step2-card {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, #020617, #020617 45%, #020617 100%);
+  border-radius: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 1.4rem 1.4rem 1.1rem;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 20px 48px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(15, 23, 42, 0.95);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+/* Outer glow edge */
+.platform-card.step2-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.4),
+    rgba(251, 191, 36, 0.3),
+    rgba(129, 140, 248, 0.2)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+/* Soft inner highlight */
+.platform-card.step2-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at top left,
+    rgba(248, 250, 252, 0.04),
+    transparent 55%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Hover feel – float + glow */
+.platform-card.step2-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 26px 60px rgba(15, 23, 42, 0.98),
+    0 0 0 1px rgba(15, 23, 42, 0.98);
+}
+
+.platform-card.step2-card:hover::before {
+  opacity: 1;
+}
+
+/* When Boost has run – subtle “kit ready” highlight */
+.kit-ready .platform-card.step2-card {
+  border-color: rgba(251, 191, 36, 0.7);
+}
+
+/* Card title */
+.platform-card.step2-card h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e5e7eb;
+  opacity: 0.96;
+}
+
+/* Tiny label tone */
+.platform-card.step2-card h3 span {
+  font-weight: 600;
+}
+
+/* Give each platform a branded emoji via classes if you want later
+   (optional: just add class="platform-card step2-card facebook-card" etc.)
+*/
+.facebook-card h3::before {
+  content: "📘";
+  margin-right: 0.35rem;
+}
+.instagram-card h3::before {
+  content: "📸";
+  margin-right: 0.35rem;
+}
+.tiktok-card h3::before {
+  content: "🎵";
+  margin-right: 0.35rem;
+}
+.linkedin-card h3::before {
+  content: "💼";
+  margin-right: 0.35rem;
+}
+.twitter-card h3::before {
+  content: "✖️";
+  margin-right: 0.35rem;
+}
+.textdm-card h3::before {
+  content: "💬";
+  margin-right: 0.35rem;
+}
+.marketplace-card h3::before {
+  content: "🏷️";
+  margin-right: 0.35rem;
+}
+.hashtags-card h3::before {
+  content: "#";
+  margin-right: 0.35rem;
+}
+
+/* Long, skinny glossy text area */
+.step2-card textarea {
+  flex: 1;
+  margin-top: 0.3rem;
+  border-radius: 0.95rem;
+  background: radial-gradient(circle at top left, #020617, #020617 60%, #020617 100%);
+  border: 1px solid rgba(31, 41, 55, 0.95);
+  padding: 0.85rem 0.95rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-main);
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 23, 42, 0.95),
+    inset 0 12px 40px rgba(15, 23, 42, 0.95);
+  resize: vertical;
+}
+
+/* Buttons row stays tight on the right */
+.step2-card .btn-row {
+  margin-top: 0.7rem;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+/* New Post / New Set button – tighter width for “skinny” feel */
+.step2-card .regen-btn {
+  min-width: 96px;
+}
+
+/* Copy buttons already share global glow behaviour */
+.step2-card .copy-btn {
+  min-width: 76px;
+}
+
+/* Slightly smaller on tablet */
+@media (max-width: 1280px) {
+  .column-middle {
+    max-width: 1100px !important;
+  }
+  .platform-card.step2-card {
+    min-height: 190px;
+  }
+}
+
+/* Mobile: single column; cards keep premium look */
+@media (max-width: 1100px) {
+  .column-middle {
+    grid-template-columns: minmax(0, 1fr) !important;
+    max-width: 100% !important;
+  }
+}
