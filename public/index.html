@@ -175,67 +175,60 @@
     </section>
 
 
-<!-- ========================================= -->
-<!-- STEP 3 – CREATIVE LAB WORKSPACE (NEW)     -->
-<!-- ========================================= -->
-<div class="creative-workspace">
+<!-- =============================== -->
+<!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
+<!-- =============================== -->
 
-  <!-- LEFT COLUMN: Photo Tools -->
+<section id="creativeHub" class="creative-hub">
+
+  <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
   <div class="creative-left">
 
-    <!-- Canvas Studio Button -->
-    <button id="openCreativeStudio" class="primary-btn full-width">
-      🚀 Open Canvas Studio
-    </button>
+    <h3>Photos</h3>
 
-    <!-- Drag & Drop Upload Zone -->
-    <div id="photoDropZone" class="drop-zone">
+    <!-- Drag & Drop Zone -->
+    <div id="photoDropZone" class="photo-dropzone">
       <p>Drag & Drop Photos Here<br><span>(or click to upload)</span></p>
-      <input type="file" id="photoUpload" accept="image/*" hidden>
+      <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
     </div>
 
-    <!-- Preview Window -->
-    <div class="photo-preview-panel">
-      <img id="photoPreview" class="preview-img" />
-      <div id="photoPlaceholder" class="preview-placeholder">No Photo Loaded</div>
-    </div>
+    <!-- Thumbnails -->
+    <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-    <!-- Photo Enhancement Controls -->
-    <div class="tuner-controls">
-      <label>Brightness</label>
-      <input type="range" id="brightnessRange" min="40" max="160" value="100">
-
-      <label>Contrast</label>
-      <input type="range" id="contrastRange" min="40" max="160" value="100">
-
-      <label>Saturation</label>
-      <input type="range" id="saturationRange" min="40" max="160" value="100">
-
-      <button id="enhancePhoto" class="secondary-btn full-width">✨ Enhance Photo</button>
-    </div>
+    <button id="sendAllToCanvas" class="primary-btn full">Send All to Canvas Studio</button>
 
   </div>
 
-  <!-- RIGHT COLUMN: Scripts / Ideas -->
+  <!-- RIGHT SIDE: Photo Tuner -->
   <div class="creative-right">
 
-    <!-- Video Script Generator -->
-    <div class="lab-card">
-      <h3>Video Script Idea</h3>
-      <textarea id="videoIdeaOutput" data-autogrow="true"></textarea>
-      <button id="generateVideoIdea" class="secondary-btn summary-btn">Generate Video Idea</button>
+    <h3>Photo Tuner</h3>
+
+    <div class="tuner-preview">
+      <img id="tunerPreviewImg" src="" alt="Preview" />
     </div>
 
-    <!-- Canva Layout Generator -->
-    <div class="lab-card">
-      <h3>Layout / Canva Template Idea</h3>
-      <textarea id="layoutIdeaOutput" data-autogrow="true"></textarea>
-      <button id="generateLayoutIdea" class="secondary-btn summary-btn">Generate Layout Idea</button>
+    <div class="slider-block">
+      <label>Brightness</label>
+      <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
     </div>
+
+    <div class="slider-block">
+      <label>Contrast</label>
+      <input type="range" id="tunerContrast" min="50" max="150" value="100" />
+    </div>
+
+    <div class="slider-block">
+      <label>Saturation</label>
+      <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
+    </div>
+
+    <button id="autoEnhanceBtn" class="secondary-btn full">Auto Enhance</button>
 
   </div>
 
-</div>
+</section>
+
 
 
 
