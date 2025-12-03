@@ -910,6 +910,88 @@ body.dark-theme .step2-card .copy-btn {
   border-radius: 0.6rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
 }
+/* ============================================= */
+/* STEP 3 — FLEXBOX CREATIVE WORKSPACE (NEW)     */
+/* ============================================= */
+
+.creative-workspace {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* left + right columns */
+.creative-left,
+.creative-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* --- Drag & Drop Zone --- */
+.drop-zone {
+  border: 2px dashed rgba(148, 163, 184, 0.6);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  color: rgba(148, 163, 184, 0.8);
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.drop-zone.dragover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.6);
+}
+
+/* --- Preview Window --- */
+.photo-preview-panel {
+  background: #0f172a;
+  border-radius: 1rem;
+  border: 1px solid rgba(148,163,184,0.5);
+  padding: 1rem;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-placeholder {
+  opacity: 0.5;
+  font-size: 0.85rem;
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 0.8rem;
+  display: none;
+}
+
+/* --- Tuner Controls --- */
+.tuner-controls {
+  border-radius: 1rem;
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,0.5);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.tuner-controls input[type=range] {
+  width: 100%;
+}
+
+/* Two-column responsiveness */
+@media (max-width: 1100px) {
+  .creative-workspace {
+    flex-direction: column;
+  }
+}
 
 /* ====== RESPONSIVE ====== */
 
