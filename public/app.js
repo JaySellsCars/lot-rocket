@@ -1,3 +1,13 @@
+// Lot Rocket Frontend Logic
+// Version: 2.5 STABLE
+// Last known good: 2025-12-02
+//
+// PROTECTED SECTIONS:
+//   - Modal wiring (wireModal("...", "...", "..."))
+//   - Basic calculator wiring
+//   - Boost button + social-kit handlers
+//
+// Before changing these, create backups of app.js, index.html, style.css.
 public app js:   // public/app.js – Lot Rocket frontend logic
 
 document.addEventListener("DOMContentLoaded", () => {
