@@ -446,6 +446,10 @@ body.dark-theme .step2-card .copy-btn {
     0 0 0 1px rgba(15, 23, 42, 1),
     0 0 10px rgba(248, 113, 113, 0.7);
 }
+.photo-dropzone-hover {
+  border-color: #ff8a4a;
+  box-shadow: 0 0 18px rgba(255, 138, 74, 0.8);
+}
 
 /* ===== BASIC CALCULATOR KEYPAD (glowing) ===== */
 
