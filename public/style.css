@@ -1,3 +1,19 @@
+/* 
+  Lot Rocket UI Styles
+  Version: 2.5 STABLE
+  Last known good: 2025-12-02
+
+  PROTECTED LAYOUT SECTION:
+    - .layout
+    - .column-left
+    - .column-middle
+    - .column-right
+    - .floating-tools
+
+  Do NOT edit the PROTECTED LAYOUT SECTION unless:
+    1) You have saved a backup in /backups, or
+    2) You create a new experimental copy (style_experiment.css).
+*/
 /* ====== GLOBAL ====== */
 
 *,
