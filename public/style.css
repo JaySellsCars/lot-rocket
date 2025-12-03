@@ -1072,3 +1072,128 @@ body.dark-theme .step2-card .copy-btn {
   display: grid;
   gap: 0.6rem;
 }
+/* ========================================= */
+/* STEP 3 – FULL WIDTH CREATIVE COMMAND HUB  */
+/* ========================================= */
+
+.creative-hub {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.6rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* LEFT SIDE */
+.creative-left {
+  background: #020617;
+  border-radius: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 1.2rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
+}
+
+.creative-left h3 {
+  margin: 0 0 0.8rem;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+/* Drag + Drop Zone */
+.photo-dropzone {
+  width: 100%;
+  padding: 2rem 1rem;
+  border: 2px dashed rgba(148, 163, 184, 0.6);
+  border-radius: 1rem;
+  text-align: center;
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.photo-dropzone:hover {
+  border-color: #60a5fa;
+  background: rgba(30, 64, 175, 0.15);
+}
+
+.photo-dropzone.dragover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.8);
+}
+
+/* Thumbnails */
+.creative-thumb-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.55rem;
+}
+
+.creative-thumb-grid img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  cursor: pointer;
+  transition: 0.18s;
+}
+
+.creative-thumb-grid img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
+}
+
+/* RIGHT SIDE – PHOTO TUNER */
+.creative-right {
+  background: #020617;
+  border-radius: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 1.2rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
+}
+
+.creative-right h3 {
+  margin: 0 0 0.8rem;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.tuner-preview {
+  width: 100%;
+  height: 200px;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.tuner-preview img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Sliders */
+.slider-block {
+  margin-bottom: 1rem;
+}
+
+.slider-block label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.slider-block input[type="range"] {
+  width: 100%;
+}
+
+.full {
+  width: 100%;
+  margin-top: 0.8rem;
+}
