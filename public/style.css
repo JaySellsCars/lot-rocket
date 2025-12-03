@@ -14,10 +14,22 @@
   --bg-panel: #020617;
   --bg-panel-soft: #020617;
   --border-soft: rgba(148, 163, 184, 0.55);
-  --text-main: #e5e7eb;
-  --text-muted: #9ca3af;
+  --text-main: #0b1120;  /* base text used in light theme; dark theme overrides via body */
+  --text-muted: #6b7280;
   --accent-1: #f97316;
   --accent-2: #ec4899;
+}
+
+/* Dark theme baseline */
+body.dark-theme {
+  background: radial-gradient(circle at top left, #020617, #020617 50%, #020617 100%);
+  color: #e5e7eb;
+}
+
+/* Light theme baseline */
+body:not(.dark-theme) {
+  background: #f3f4f6;
+  color: #0b1120;
 }
 
 html,
@@ -25,8 +37,6 @@ body {
   margin: 0;
   padding: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top left, #020617, #020617 50%, #020617 100%);
-  color: var(--text-main);
 }
 
 /* ====== HEADER ====== */
@@ -83,31 +93,45 @@ body {
   align-items: flex-start;
 }
 
-
-
-
 /* Step 1 – top left */
 .column-left {
   grid-column: 1;
   grid-row: 1;
 }
 
+/* Step 2 – right column, row 1 (we’ll grid its internals later) */
+.column-middle {
+  grid-column: 2;
+  grid-row: 1;
+}
 
+/* Step 3 – under Step 1 */
+.column-right {
+  grid-column: 1;
+  grid-row: 2;
+}
 
-
-/* ====== PANELS / SUMMARY BOXES ====== */
+/* ====== PANELS / SUMMARY BOXES (BASE) ====== */
 
 .summary-box,
 .lab-card,
 .platform-card {
-  background: radial-gradient(circle at top left, #020617, #020617);
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
   border-radius: 1.2rem;
   border: 1px solid var(--border-soft);
   padding: 1rem 1.1rem;
   box-shadow:
+    0 18px 40px rgba(15, 23, 42, 0.09),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+  margin-bottom: 1rem;
+}
+
+body.dark-theme .summary-box,
+body.dark-theme .lab-card,
+body.dark-theme .platform-card {
+  box-shadow:
     0 18px 40px rgba(15, 23, 42, 0.9),
     0 0 0 1px rgba(15, 23, 42, 0.9);
-  margin-bottom: 1rem;
 }
 
 .summary-box h3,
@@ -119,7 +143,7 @@ body {
 
 .inner-summary {
   margin-top: 0.8rem;
-  background: #020617;
+  background: var(--bg-panel);
 }
 
 .small-note {
@@ -142,12 +166,12 @@ textarea,
 select {
   width: 100%;
   margin-top: 0.25rem;
-  background: #020617;
+  background: var(--bg-panel);
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
   padding: 0.45rem 0.8rem;
   font-size: 0.8rem;
-  color: var(--text-main);
+  color: inherit;
   outline: none;
 }
 
@@ -164,7 +188,6 @@ textarea::placeholder {
   color: rgba(148, 163, 184, 0.8);
 }
 
-
 /* ====== BUTTONS ====== */
 
 .primary-btn {
@@ -180,8 +203,8 @@ textarea::placeholder {
   color: #0b1120;
   background: radial-gradient(circle at top left, var(--accent-1), var(--accent-2));
   box-shadow:
-    0 0 25px rgba(248, 113, 113, 0.8),
-    0 0 7px rgba(251, 191, 36, 0.85);
+    0 0 25px rgba(248, 113, 113, 0.5),
+    0 0 7px rgba(251, 191, 36, 0.6);
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
@@ -199,8 +222,8 @@ textarea::placeholder {
   font-size: 0.75rem;
   font-weight: 500;
   border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
+  background: var(--bg-panel);
+  color: inherit;
   cursor: pointer;
   transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
@@ -211,7 +234,6 @@ textarea::placeholder {
 }
 
 .secondary-btn:hover:not(:disabled) {
-  background: #020617;
   box-shadow: 0 0 16px rgba(148, 163, 184, 0.65);
   transform: translateY(-1px);
 }
@@ -232,8 +254,8 @@ textarea::placeholder {
 .regen-btn {
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.8);
-  background: #020617;
-  color: var(--text-main);
+  background: var(--bg-panel);
+  color: inherit;
   font-size: 0.7rem;
   padding: 0.3rem 0.7rem;
   cursor: pointer;
@@ -242,7 +264,6 @@ textarea::placeholder {
 
 .copy-btn:hover,
 .regen-btn:hover {
-  background: #020617;
   box-shadow: 0 0 12px rgba(148, 163, 184, 0.7);
   transform: translateY(-1px);
 }
@@ -254,6 +275,7 @@ textarea::placeholder {
 
 .copy-btn.empty {
   background: #7f1d1d;
+  color: #fee2e2;
 }
 
 /* full-width bar */
@@ -299,13 +321,13 @@ textarea::placeholder {
   padding: 0.38rem 0.9rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.85);
-  background: radial-gradient(circle at top left, #020617, #020617);
-  color: var(--text-main);
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
+  color: inherit;
   font-size: 0.76rem;
   cursor: pointer;
   box-shadow:
     0 0 16px rgba(56, 189, 248, 0.5),
-    0 0 0 1px rgba(15, 23, 42, 0.95);
+    0 0 0 1px rgba(15, 23, 42, 0.3);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
@@ -313,7 +335,7 @@ textarea::placeholder {
   transform: translateX(-1px);
   box-shadow:
     0 0 25px rgba(96, 165, 250, 0.9),
-    0 0 0 1px rgba(15, 23, 42, 0.95);
+    0 0 0 1px rgba(15, 23, 42, 0.5);
 }
 
 .tool-icon {
@@ -325,11 +347,11 @@ textarea::placeholder {
 .status-text {
   margin-top: 0.4rem;
   font-size: 0.76rem;
-  color: #a3e635;
+  color: #16a34a;
 }
 
 .status-text.error {
-  color: #fca5a5;
+  color: #dc2626;
 }
 
 /* ====== MODALS (RIGHT-SIDE) ====== */
@@ -351,7 +373,7 @@ textarea::placeholder {
 .side-modal-content {
   width: 340px;
   max-width: 90vw;
-  background: #020617;
+  background: var(--bg-panel);
   border-left: 1px solid rgba(148, 163, 184, 0.6);
   box-shadow: -12px 0 40px rgba(15, 23, 42, 0.95);
   display: flex;
@@ -374,8 +396,8 @@ textarea::placeholder {
 .modal-close-btn {
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.9);
-  background: #020617;
-  color: var(--text-main);
+  background: var(--bg-panel);
+  color: inherit;
   cursor: pointer;
   padding: 0.25rem 0.65rem;
   font-size: 0.8rem;
@@ -396,7 +418,7 @@ textarea::placeholder {
 
 .basic-calc {
   margin-top: 0.4rem;
-  background: radial-gradient(circle at top left, #020617, #020617);
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
   border-radius: 0.9rem;
   padding: 0.75rem;
   border: 1px solid rgba(148, 163, 184, 0.75);
@@ -406,7 +428,7 @@ textarea::placeholder {
 }
 
 .basic-calc-display {
-  background: #020617;
+  background: var(--bg-panel);
   border-radius: 0.7rem;
   border: 1px solid rgba(148, 163, 184, 0.9);
   padding: 0.4rem 0.7rem;
@@ -428,15 +450,14 @@ textarea::placeholder {
   padding: 0.35rem 0;
   font-size: 0.8rem;
   font-weight: 600;
-  background: #020617;
-  color: var(--text-main);
+  background: var(--bg-panel);
+  color: inherit;
   border: 1px solid rgba(148, 163, 184, 0.7);
   cursor: pointer;
   transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
 
 .basic-calc-btn:hover {
-  background: #020617;
   box-shadow: 0 0 14px rgba(148, 163, 184, 0.7);
   transform: translateY(-1px);
 }
@@ -469,7 +490,7 @@ textarea::placeholder {
 .creative-modal {
   width: min(1200px, 95vw);
   height: min(720px, 90vh);
-  background: #020617;
+  background: var(--bg-panel);
   border-radius: 1.4rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
   box-shadow: 0 30px 80px rgba(15, 23, 42, 0.95);
@@ -498,8 +519,8 @@ textarea::placeholder {
 .creative-actions button {
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
-  background: #020617;
-  color: var(--text-main);
+  background: var(--bg-panel);
+  color: inherit;
   padding: 0.25rem 0.7rem;
   font-size: 0.75rem;
   cursor: pointer;
@@ -528,8 +549,8 @@ textarea::placeholder {
   margin-bottom: 0.4rem;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.75);
-  background: #020617;
-  color: var(--text-main);
+  background: var(--bg-panel);
+  color: inherit;
   cursor: pointer;
   padding: 0.35rem 0.6rem;
   font-size: 0.78rem;
@@ -542,7 +563,7 @@ textarea::placeholder {
 }
 
 .creative-canvas-wrap {
-  background: #020617;
+  background: var(--bg-panel);
   border-radius: 1rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
   display: flex;
@@ -593,85 +614,138 @@ textarea::placeholder {
   gap: 0.4rem;
 }
 
-/* ====== RESPONSIVE ====== */
-
-@media (max-width: 1100px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .column-left,
-  .column-middle,
-  .column-right {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  /* Floating tools move to bottom as a wrap row */
-  .floating-tools {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0 1rem 1rem;
-    justify-content: center;
-  }
-}
-
 /* ============================= */
 /* STEP 2 – PREMIUM ROCKET SKIN  */
 /* ============================= */
 
 /* Step 2 column – long, skinny, 2-up grid */
 .column-middle {
-  grid-column: 2;
-  grid-row: 1;
-  max-width: 1040px;                  /* was 1180px – makes the whole column slimmer */
+  max-width: 1040px; /* tighter to feel more vertical */
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 1.9rem;
   row-gap: 1.9rem;
 }
 
-/* Core card shell */
+/* Heading + subtitle spacing */
+.column-middle > h2 {
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.1rem;
+}
+
+.step2-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Core Step 2 card shell with glow */
 .platform-card.step2-card {
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at top left, #020617, #020617 45%, #020617 100%);
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
   border-radius: 1.3rem;
   border: 1px solid rgba(148, 163, 184, 0.55);
   padding: 1.4rem 1.4rem 1.1rem;
-  min-height: 270px;                  /* was 210px – cards get taller / more vertical */
+  min-height: 260px;
   display: flex;
   flex-direction: column;
   box-shadow:
-    0 20px 48px rgba(15, 23, 42, 0.95),
-    0 0 0 1px rgba(15, 23, 42, 0.95);
+    0 20px 48px rgba(15, 23, 42, 0.35),
+    0 0 0 1px rgba(15, 23, 42, 0.5);
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
     border-color 0.18s ease;
 }
 
+/* Outer glow edge */
+.platform-card.step2-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.5),
+    rgba(251, 191, 36, 0.4),
+    rgba(129, 140, 248, 0.35)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+/* Soft inner highlight */
+.platform-card.step2-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at top left,
+    rgba(248, 250, 252, 0.05),
+    transparent 55%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Hover feel – float + glow */
+.platform-card.step2-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 26px 60px rgba(15, 23, 42, 0.55),
+    0 0 0 1px rgba(15, 23, 42, 0.7);
+}
+
+.platform-card.step2-card:hover::before {
+  opacity: 1;
+}
+
+/* When Boost has run – subtle “kit ready” highlight */
+.kit-ready .platform-card.step2-card {
+  border-color: rgba(251, 191, 36, 0.7);
+}
+
+/* Card title */
+.platform-card.step2-card h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.96;
+}
+
+/* Optional emojis per platform (only if you add those classes in HTML) */
+.facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
+.instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
+.tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
+.linkedin-card h3::before { content: "💼"; margin-right: 0.35rem; }
+.twitter-card h3::before { content: "✖️"; margin-right: 0.35rem; }
+.textdm-card h3::before { content: "💬"; margin-right: 0.35rem; }
+.marketplace-card h3::before { content: "🏷️"; margin-right: 0.35rem; }
+.hashtags-card h3::before { content: "#";  margin-right: 0.35rem; }
+
 /* Long, skinny glossy text area */
 .step2-card textarea {
   flex: 1;
   margin-top: 0.3rem;
   border-radius: 0.95rem;
-  background: radial-gradient(circle at top left, #020617, #020617 60%, #020617 100%);
-  border: 1px solid rgba(31, 41, 55, 0.95);
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
+  border: 1px solid rgba(31, 41, 55, 0.7);
   padding: 0.85rem 0.95rem;
   font-size: 0.86rem;
   line-height: 1.55;
-  color: var(--text-main);
   box-shadow:
-    inset 0 0 0 1px rgba(15, 23, 42, 0.95),
-    inset 0 12px 40px rgba(15, 23, 42, 0.95);
+    inset 0 0 0 1px rgba(15, 23, 42, 0.7),
+    inset 0 12px 40px rgba(15, 23, 42, 0.6);
   resize: vertical;
-  min-height: 170px;                  /* was ~default – now feels like those tall boxes */
+  min-height: 170px;
 }
 
-
-/* Buttons row stays tight on the right */
+/* Buttons row stays tight on the right / bottom */
 .step2-card .btn-row {
   margin-top: 0.7rem;
   justify-content: flex-end;
@@ -688,8 +762,13 @@ textarea::placeholder {
   min-width: 76px;
 }
 
+/* ====== RESPONSIVE ====== */
+
 /* Slightly smaller on tablet */
 @media (max-width: 1280px) {
+  .layout {
+    padding-right: 13rem;
+  }
   .column-middle {
     max-width: 980px;
   }
@@ -698,13 +777,32 @@ textarea::placeholder {
   }
 }
 
-
-/* Mobile: Step 2 becomes single column, premium look kept */
+/* Mobile & smaller laptops */
 @media (max-width: 1100px) {
-  .column-middle {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+
+  .column-left,
+  .column-middle,
+  .column-right {
     grid-column: 1;
     grid-row: auto;
+  }
+
+  /* Step 2 becomes single column but keeps premium look */
+  .column-middle {
     max-width: 100%;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Floating tools move to bottom as a wrap row */
+  .floating-tools {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0 1rem 1rem;
+    justify-content: center;
   }
 }
