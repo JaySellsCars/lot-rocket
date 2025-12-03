@@ -73,7 +73,8 @@ body {
 /* ====== MAIN LAYOUT GRID ====== */
 
 .layout {
-  padding: 1.5rem 7rem 3rem 3.5rem; /* extra right padding for tool buttons */
+  /* top | right | bottom | left */
+  padding: 1.5rem 15rem 3rem 3.5rem; /* bigger right buffer so Step 2 never touches tools */
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.6fr);
   grid-auto-rows: auto;
@@ -81,6 +82,7 @@ body {
   row-gap: 1.8rem;
   align-items: flex-start;
 }
+
 
 
 
