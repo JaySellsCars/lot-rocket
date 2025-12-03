@@ -13,7 +13,6 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5");
-  // DEBUG: make sure step 1 elements exist
   console.log("Boost button present?", !!document.getElementById("boostButton"));
   console.log("Vehicle URL input present?", !!document.getElementById("vehicleUrl"));
 
@@ -26,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
     el.style.height = el.scrollHeight + "px";
   }
 
-  // Apply to all side-modal body textareas (AI helpers, calculators, etc.)
   const sideModalTextareas = document.querySelectorAll(
     ".side-modal-body textarea"
   );
@@ -61,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  // AUTOGROW HELPERS (make tall textareas auto-expand)
+  // AUTOGROW HELPERS
   // =====================================================
   function autoGrowTextarea(el) {
     if (!el) return;
@@ -83,13 +81,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // STEP 3 HELPER – SEND URL DIRECTLY INTO PHOTO TUNER
   // =====================================================
   function setPhotoPreviewFromUrl(src) {
-    // Re-use the Step 3 tuner helper
     if (!src) return;
     if (typeof setTunerImage === "function") {
       setTunerImage(src);
     }
   }
-
 
   // =====================================================
   // STEP 1: BOOST WORKFLOW
@@ -115,7 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = true;
   }
-
 
   const facebookPost = document.getElementById("facebookPost");
   const instagramPost = document.getElementById("instagramPost");
@@ -160,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img.alt = "Vehicle photo";
       img.className = "photo-thumb";
 
-      // NEW: click thumbnail → send to Step 3 photo tuner
+      // click thumbnail → send to Step 3 photo tuner
       img.addEventListener("click", () => {
         setPhotoPreviewFromUrl(url);
       });
@@ -168,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
       photosGrid.appendChild(img);
     });
 
-    // Auto-load first photo into the tuner so it's ready instantly
+    // Auto-load first photo into the tuner
     if (firstSrc) {
       setPhotoPreviewFromUrl(firstSrc);
     }
@@ -217,14 +212,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       document.body.classList.add("kit-ready");
 
-      // ---- Summary (support both old + new shapes) ----
+      // ---- Summary ----
       const labelFromData = data.vehicleLabel || data.label || "";
       const priceFromData = data.priceInfo || data.price || "";
 
       if (summaryLabel) summaryLabel.textContent = labelFromData || "—";
       if (summaryPrice) summaryPrice.textContent = priceFromData || "—";
 
-      // ---- Posts – support both flat + posts{} ----
+      // ---- Posts ----
       const posts = data.posts || data;
 
       setValue(facebookPost, posts.facebook);
@@ -283,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  // COPY BUTTONS (works for ALL .copy-btn in app)
+  // COPY BUTTONS
   // =====================================================
   function wireCopyButtons() {
     const copyButtons = document.querySelectorAll(".copy-btn[data-copy-target]");
@@ -551,7 +546,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const b = tunerBrightness ? tunerBrightness.value : 100;
     const c = tunerContrast ? tunerContrast.value : 100;
     const s = tunerSaturation ? tunerSaturation.value : 100;
-    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+    tunerPreviewImg.style.filter =
+      `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
   function setTunerImage(src) {
@@ -574,7 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleDroppedFiles(files) {
     if (!files || !files.length) return;
 
-    Array.from(files).forEach((file, index) => {
+    Array.from(files).forEach((file) => {
       if (!file.type.startsWith("image/")) return;
 
       const reader = new FileReader();
@@ -592,7 +588,6 @@ document.addEventListener("DOMContentLoaded", () => {
           setTunerImage(dataUrl);
           hasLoadedTunerOnce = true;
         }
-
       };
       reader.readAsDataURL(file);
     });
@@ -650,8 +645,6 @@ document.addEventListener("DOMContentLoaded", () => {
       applyTunerFilters();
     });
   }
-
-
 
   // =====================================================
   // COMMON MONEY HELPER
@@ -1080,9 +1073,10 @@ document.addEventListener("DOMContentLoaded", () => {
       creativeOverlay.classList.add("hidden");
     }
 
-    // If we ever add back a top "Open Canvas Studio" button, it will still work:
+    // Direct open from Step 3 button
     if (openCreativeStudioBtn) {
       openCreativeStudioBtn.addEventListener("click", () => {
+        console.log("🎨 Open Canvas Studio (empty)");
         showOverlay();
         if (typeof fabric !== "undefined") {
           ensureCreativeCanvas(false);
@@ -1096,6 +1090,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sendPhotosToStudioBtn) {
       sendPhotosToStudioBtn.addEventListener("click", () => {
         if (!latestPhotoUrls || !latestPhotoUrls.length) return;
+        console.log("🎨 Open Canvas Studio with dealer photos");
         showOverlay();
         if (typeof fabric !== "undefined") {
           ensureCreativeCanvas(true);
@@ -1112,6 +1107,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sendAllToCanvasBtn.addEventListener("click", () => {
         if (!uploadedPhotoUrls || !uploadedPhotoUrls.length) return;
         latestPhotoUrls = uploadedPhotoUrls.slice();
+        console.log("🎨 Open Canvas Studio with uploaded photos");
         showOverlay();
         if (typeof fabric !== "undefined") {
           ensureCreativeCanvas(true);
@@ -1464,7 +1460,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
-
 
   // =====================================================
   // MODAL OPEN/CLOSE WIRING (right-side tools)
