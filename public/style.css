@@ -1,13 +1,5 @@
-/* 
-  Lot Rocket – AI Social Media Kit & Creative Lab
-  Version: 2.5 STABLE
-  Last known good: 2025-12-02
-  Notes:
-    - Layout grid: Step 1 (left), Step 2 (middle), Step 3 (under Step 1),
-      tools floating on the right.
-    - BEFORE changing structure or layout classes, make a backup copy of
-      index.html, style.css, and app.js.
-*/
+/* ====== Lot Rocket – Version 2.5 STABLE CSS ====== */
+/* Layout: Step 1 (left), Step 2 (middle), Step 3 (under Step 1), tools floating right */
 
 /* ====== GLOBAL ====== */
 
@@ -188,10 +180,11 @@ textarea::placeholder {
   grid-column: 2;
   grid-row: 1 / span 2;
   margin: 0;
-  padding-top: 0.3rem;   /* pulls Step 2 closer to Step 1 */
+  padding-top: 0.3rem;
+
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 tall columns */
-  gap: 1.75rem;          /* spacing between cards */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem;
 }
 
 /* Step 2 heading aligns with Step 1 heading */
@@ -673,21 +666,19 @@ textarea::placeholder {
   }
 }
 
-/* STEP 2 – make cards wider & taller */
+/* Extra tweaks just for Step 2 card feel */
 .step2-card {
   min-height: 330px !important;
   padding: 1.4rem !important;
   width: 100%;
 }
 
-/* make textareas bigger */
 .step2-card textarea {
   min-height: 180px !important;
   font-size: 0.95rem !important;
   padding: 0.9rem !important;
 }
 
-/* widen Step 2 grid a bit */
 .column-middle {
   max-width: 1350px !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
