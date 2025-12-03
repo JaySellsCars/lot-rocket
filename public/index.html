@@ -175,131 +175,68 @@
     </section>
 
 
-<!-- =============================== -->
-<!-- STEP 3 — CREATIVE LAB (REWORKED) -->
-<!-- =============================== -->
+<!-- ========================================= -->
+<!-- STEP 3 – CREATIVE LAB WORKSPACE (NEW)     -->
+<!-- ========================================= -->
+<div class="creative-workspace">
 
-<div class="column-right">
+  <!-- LEFT COLUMN: Photo Tools -->
+  <div class="creative-left">
 
-  <h2>Step 3 – Creative Lab</h2>
-
-  <!-- TOP: Canvas Studio -->
-  <div class="lab-card">
-    <h3>Lot Rocket Studio</h3>
-    <p>Turn your scraped photos and AI copy into scroll-stopping content.</p>
-    <button id="openCreativeStudio" class="primary-btn full-width-bar">
-      ✨ Open Canvas Studio
+    <!-- Canvas Studio Button -->
+    <button id="openCreativeStudio" class="primary-btn full-width">
+      🚀 Open Canvas Studio
     </button>
+
+    <!-- Drag & Drop Upload Zone -->
+    <div id="photoDropZone" class="drop-zone">
+      <p>Drag & Drop Photos Here<br><span>(or click to upload)</span></p>
+      <input type="file" id="photoUpload" accept="image/*" hidden>
+    </div>
+
+    <!-- Preview Window -->
+    <div class="photo-preview-panel">
+      <img id="photoPreview" class="preview-img" />
+      <div id="photoPlaceholder" class="preview-placeholder">No Photo Loaded</div>
+    </div>
+
+    <!-- Photo Enhancement Controls -->
+    <div class="tuner-controls">
+      <label>Brightness</label>
+      <input type="range" id="brightnessRange" min="40" max="160" value="100">
+
+      <label>Contrast</label>
+      <input type="range" id="contrastRange" min="40" max="160" value="100">
+
+      <label>Saturation</label>
+      <input type="range" id="saturationRange" min="40" max="160" value="100">
+
+      <button id="enhancePhoto" class="secondary-btn full-width">✨ Enhance Photo</button>
+    </div>
+
   </div>
 
-  <!-- NEW TOP ROW: PHOTO UPLOAD + PHOTO PREVIEW SIDE BY SIDE -->
-  <div class="step3-row">
-    
-    <!-- LEFT: Photo Uploader -->
+  <!-- RIGHT COLUMN: Scripts / Ideas -->
+  <div class="creative-right">
+
+    <!-- Video Script Generator -->
     <div class="lab-card">
-      <h3>Photo Uploader</h3>
-      <p>Upload or drop a vehicle photo.</p>
-
-      <input
-        id="photoUpload"
-        type="file"
-        accept="image/*"
-        style="display:none"
-      />
-
-      <button
-        onclick="document.getElementById('photoUpload').click()"
-        class="secondary-btn"
-      >
-        📸 Upload Photo
-      </button>
+      <h3>Video Script Idea</h3>
+      <textarea id="videoIdeaOutput" data-autogrow="true"></textarea>
+      <button id="generateVideoIdea" class="secondary-btn summary-btn">Generate Video Idea</button>
     </div>
 
-    <!-- RIGHT: Photo Preview/Tuner -->
+    <!-- Canva Layout Generator -->
     <div class="lab-card">
-      <h3>Photo Preview & Tweaks</h3>
-
-      <div id="photoPreview" class="photo-preview-wrapper">
-        <span id="photoPlaceholder">Drop or upload a photo to preview.</span>
-      </div>
-
-      <div class="slider-group">
-        <label>Brightness</label>
-        <input id="brightnessRange" type="range" min="50" max="150" value="100" />
-
-        <label>Contrast</label>
-        <input id="contrastRange" type="range" min="50" max="150" value="100" />
-
-        <label>Saturation</label>
-        <input id="saturationRange" type="range" min="50" max="150" value="100" />
-      </div>
-    </div>
-
-  </div> <!-- END top photo row -->
-
-  <!-- NEXT ROW: VIDEO + SCRIPT -->
-  <div class="step3-row">
-    <div class="lab-card">
-      <h3>Quick Sales Video Idea</h3>
-      <p>Feed in basics — Lot Rocket drafts a punchy short-form script.</p>
-
-      <label>Vehicle / Offer</label>
-      <input id="videoVehicle" placeholder="Example: 2025 Chevy Tahoe RST demo unit" />
-
-      <label>Hook</label>
-      <input id="videoHook" placeholder="Example: Stop scrolling—this Tahoe has your name on it." />
-
-      <label>Style</label>
-      <input id="videoStyle" placeholder="Energetic, luxury, fun, walk-around, etc." />
-
-      <label>Length / Aspect</label>
-      <input id="videoLength" placeholder="15–30 seconds, vertical 9:16" />
-
-      <button id="generateVideoIdea" class="secondary-btn">
-        🎥 Generate Video Idea
-      </button>
-    </div>
-
-    <div class="lab-card">
-      <h3>Script & Shot List</h3>
-      <textarea id="videoIdeaOutput" placeholder="Your ready-to-read script will appear here." data-autogrow="true"></textarea>
-    </div>
-  </div>
-
-  <!-- LAST ROW: CANVA LAYOUT + NOTES -->
-  <div class="step3-row">
-    <div class="lab-card">
-      <h3>Canva-Style Layout Idea</h3>
-
-      <label>Layout Type</label>
-      <select id="layoutType">
-        <option>Instagram post — 1080×1080 square</option>
-        <option>Facebook banner — 820×312</option>
-        <option>IG Story — 1080×1920 vertical</option>
-      </select>
-
-      <label>Headline</label>
-      <input id="layoutHeadline" placeholder="Example: $0 Down • 0 First Payment • 0 Worries" />
-
-      <label>Call-to-Action</label>
-      <input id="layoutCTA" placeholder="Example: Call or text Jay at 517-836-5186" />
-
-      <label>Vibe / Notes</label>
-      <input id="layoutVibe" placeholder="Bold, clean, dealership-branded, etc." />
-
-      <button id="generateLayoutIdea" class="secondary-btn">
-        🖼️ Generate Layout Idea
-      </button>
-    </div>
-
-    <div class="lab-card">
-      <h3>Layout Idea Notes</h3>
-      <textarea id="layoutIdeaOutput" placeholder="Suggested text blocks, colors, and layout guidance." data-autogrow="true"></textarea>
+      <h3>Layout / Canva Template Idea</h3>
+      <textarea id="layoutIdeaOutput" data-autogrow="true"></textarea>
+      <button id="generateLayoutIdea" class="secondary-btn summary-btn">Generate Layout Idea</button>
     </div>
 
   </div>
 
 </div>
+
 
 
 
