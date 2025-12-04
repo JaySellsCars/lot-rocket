@@ -530,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  // PHOTO EDITOR – STEP 3 CREATIVE HUB (DEBUGGED)
+  // PHOTO EDITOR – STEP 3 CREATIVE HUB
   // =====================================================
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
@@ -540,17 +540,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerContrast = document.getElementById("tunerContrast");
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
-
   let hasLoadedTunerOnce = false;
 
-  if (!photoDropZone) {
-    console.warn("⚠️ Step 3: #photoDropZone not found in DOM");
-  } else {
-    console.log("✅ Step 3: photoDropZone wired");
-  }
-  if (!photoFileInput) {
-    console.warn("⚠️ Step 3: #photoFileInput not found in DOM");
-  }
+  console.log("STEP 3 wiring:", {
+    photoDropZone: !!photoDropZone,
+    photoFileInput: !!photoFileInput,
+    creativeThumbGrid: !!creativeThumbGrid,
+    tunerPreviewImg: !!tunerPreviewImg,
+  });
 
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
@@ -561,24 +558,17 @@ document.addEventListener("DOMContentLoaded", () => {
       `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
-  // keep global so Step 1 thumbnails can call it
   function setTunerImage(src) {
-    if (!tunerPreviewImg || !src) {
-      console.warn("setTunerImage called without image or src");
-      return;
-    }
-    console.log("🖼️ setTunerImage ->", src.slice(0, 80));
+    if (!tunerPreviewImg || !src) return;
+    console.log("➡️ setTunerImage", src.slice(0, 40));
     tunerPreviewImg.src = src;
     tunerPreviewImg.style.display = "block";
     applyTunerFilters();
   }
 
-  // expose to other helpers
-  window.setTunerImage = setTunerImage;
-
   function addThumb(src) {
     if (!creativeThumbGrid) return;
-    console.log("➕ Adding thumbnail", src.slice(0, 80));
+    console.log("➕ addThumb", src.slice(0, 40));
     const img = document.createElement("img");
     img.src = src;
     img.alt = "Uploaded photo";
@@ -589,26 +579,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleDroppedFiles(files) {
     if (!files || !files.length) {
-      console.warn("📭 handleDroppedFiles called with empty FileList");
+      console.log("handleDroppedFiles: no files");
       return;
     }
 
-    console.log("📥 handleDroppedFiles: got", files.length, "file(s)");
-
-    let anyImage = false;
+    console.log("handleDroppedFiles: got", files.length, "file(s)");
 
     Array.from(files).forEach((file) => {
-      console.log("   · file:", file.name, "| type:", file.type);
       if (!file.type || !file.type.startsWith("image/")) {
-        console.warn("   ⏭️ Skipping non-image file:", file.name);
+        console.log("Skipping non-image file:", file.name, file.type);
         return;
       }
-      anyImage = true;
 
       const reader = new FileReader();
       reader.onload = (ev) => {
         const dataUrl = ev.target.result;
-        console.log("   ✅ FileReader loaded image:", file.name);
+        console.log("FileReader onload", file.name, String(dataUrl).slice(0, 40));
 
         // Remember uploads for Canvas Studio
         uploadedPhotoUrls.push(dataUrl);
@@ -622,25 +608,20 @@ document.addEventListener("DOMContentLoaded", () => {
           hasLoadedTunerOnce = true;
         }
       };
-      reader.onerror = (err) => {
-        console.error("   ❌ FileReader error for", file.name, err);
+      reader.onerror = (ev) => {
+        console.error("FileReader error for", file.name, ev);
       };
       reader.readAsDataURL(file);
     });
-
-    if (!anyImage) {
-      console.warn("⚠️ No image/* files in dropped selection");
-    }
   }
 
-  // Drag & drop wiring for the zone
+  // Drag & drop wiring
   if (photoDropZone) {
-    // highlight when dragging over
     ["dragenter", "dragover"].forEach((evtName) => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.add("dragover");
+        photoDropZone.classList.add("photo-dropzone-hover");
       });
     });
 
@@ -648,40 +629,46 @@ document.addEventListener("DOMContentLoaded", () => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.remove("dragover");
+        photoDropZone.classList.remove("photo-dropzone-hover");
       });
     });
 
     photoDropZone.addEventListener("drop", (e) => {
+      console.log("📥 DROP event");
       const files = e.dataTransfer && e.dataTransfer.files;
-      console.log("📦 DROP event on zone. files length =",
-                  files ? files.length : 0);
       handleDroppedFiles(files);
     });
 
     // Click to open file picker
     photoDropZone.addEventListener("click", () => {
-      console.log("🖱️ photoDropZone clicked -> open file picker");
+      console.log("📂 Dropzone clicked");
       if (photoFileInput) photoFileInput.click();
     });
+  } else {
+    console.warn("⚠️ photoDropZone not found in DOM");
   }
 
   // File input → same handler
   if (photoFileInput) {
     photoFileInput.addEventListener("change", (e) => {
-      const files = e.target.files;
-      console.log("📁 Input change: files length =", files ? files.length : 0);
-      handleDroppedFiles(files);
+      console.log("📂 File input change", e.target.files?.length || 0);
+      handleDroppedFiles(e.target.files);
       photoFileInput.value = ""; // reset
     });
+  } else {
+    console.warn("⚠️ photoFileInput not found in DOM");
   }
 
-  // Slider wiring
-  [tunerBrightness, tunerContrast, tunerSaturation].forEach((slider) => {
-    if (!slider) return;
+  // Sliders → live filters
+  [tunerBrightness, tunerContrast, tunerSaturation].forEach((slider, idx) => {
+    if (!slider) {
+      console.warn("⚠️ tuner slider missing index", idx);
+      return;
+    }
     slider.addEventListener("input", applyTunerFilters);
   });
 
+  // One-tap “Make it pop”
   if (autoEnhanceBtn) {
     autoEnhanceBtn.addEventListener("click", () => {
       console.log("✨ Auto Enhance clicked");
@@ -691,6 +678,7 @@ document.addEventListener("DOMContentLoaded", () => {
       applyTunerFilters();
     });
   }
+
 
 
   // =====================================================
