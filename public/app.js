@@ -1,13 +1,15 @@
 // public/app.js – Lot Rocket frontend logic v2.5.5
-// PROTECTED: theme toggle, Boost button wiring, calculator + modal wiring.
-// Extensions: selectable dealer photos + Creative Hub drag & drop + Canvas Studio + Design Studio 3.0.
+// Stable: theme toggle, Boost, calculators, side tools.
+// Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva).
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5.5");
 
   const apiBase = "";
 
-  // ---------- THEME TOGGLE ----------
+  // --------------------------------------------------
+  // THEME TOGGLE
+  // --------------------------------------------------
   const themeToggleInput = document.getElementById("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
@@ -24,9 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ======================================================
-  // STEP 1 – Dealer URL Scraper + Social Kit (PROTECTED)
-  // ======================================================
+  // ==================================================
+  // STEP 1 – DEALER URL + SOCIAL KIT (PROTECTED)
+  // ==================================================
 
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
@@ -47,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const hashtags = document.getElementById("hashtags");
 
   const photosGrid = document.getElementById("photosGrid");
-  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+  const sendPhotosToCreativeBtn = document.getElementById("sendPhotosToCreative"); // Step 1 button
 
   // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
@@ -138,18 +140,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – cap to 40
+      // Photos – cap to 40
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
-      if (sendPhotosToStudioBtn) {
-        sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-      }
-
-      // Visually mark kit as ready for Step 2
       document.body.classList.add("kit-ready");
-
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
       console.error("❌ Boost error:", err);
@@ -167,7 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
     boostButton.addEventListener("click", doBoostListing);
   }
 
-  // ---------- Copy buttons ----------
+  // --------------------------------------------------
+  // COPY / REGEN
+  // --------------------------------------------------
   document.querySelectorAll(".copy-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-copy-target");
@@ -189,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ---------- Regen buttons ----------
   document.querySelectorAll(".regen-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const platform = btn.getAttribute("data-platform");
@@ -232,30 +229,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const text = data.text || "";
         let targetId = "";
         switch (platform) {
-          case "facebook":
-            targetId = "facebookPost";
-            break;
-          case "instagram":
-            targetId = "instagramPost";
-            break;
-          case "tiktok":
-            targetId = "tiktokPost";
-            break;
-          case "linkedin":
-            targetId = "linkedinPost";
-            break;
-          case "twitter":
-            targetId = "twitterPost";
-            break;
-          case "text":
-            targetId = "textBlurb";
-            break;
-          case "marketplace":
-            targetId = "marketplacePost";
-            break;
-          case "hashtags":
-            targetId = "hashtags";
-            break;
+          case "facebook": targetId = "facebookPost"; break;
+          case "instagram": targetId = "instagramPost"; break;
+          case "tiktok": targetId = "tiktokPost"; break;
+          case "linkedin": targetId = "linkedinPost"; break;
+          case "twitter": targetId = "twitterPost"; break;
+          case "text": targetId = "textBlurb"; break;
+          case "marketplace": targetId = "marketplacePost"; break;
+          case "hashtags": targetId = "hashtags"; break;
         }
         if (targetId) {
           const ta = document.getElementById(targetId);
@@ -275,9 +256,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ==========================================
-  // MODALS + TOOLS (Objection, Payment, etc.)
-  // ==========================================
+  // ==================================================
+  // MODALS + TOOLS
+  // ==================================================
 
   function wireModal(launcherId, modalId, closeSelector) {
     const launcher = document.getElementById(launcherId);
@@ -420,7 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- AI Message / Workflow / Ask / Car / Image / Video helpers ----------
+  // ---------- AI Message / Workflow / Ask / Car / Image / Video ----------
   function wireMessageHelper(formId, outputId, mode) {
     const form = document.getElementById(formId);
     const output = document.getElementById(outputId);
@@ -445,8 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!res.ok) {
           const msg =
-            (data && data.message) ||
-            `Message helper error (HTTP ${res.status}).`;
+            (data && data.message) || `Message helper error (HTTP ${res.status}).`;
           console.error("❌ message-helper backend error:", res.status, data);
           if (output) output.value = msg;
           return;
@@ -468,9 +448,9 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
   wireMessageHelper("videoForm", "videoOutput", "video-brief");
 
-  // ==========================================
-  // CREATIVE HUB (STEP 3) + CANVAS STUDIO
-  // ==========================================
+  // ==================================================
+  // STEP 3 – CREATIVE HUB (Fabric)
+  // ==================================================
 
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
@@ -499,10 +479,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeCanvas = null;
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
-  let currentTool = "select";
-  let localCreativePhotos = []; // keep track of locally added URLs
+  let localCreativePhotos = [];
 
-  // ----- Canvas helpers (Fabric) -----
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
     if (typeof fabric === "undefined") {
@@ -536,8 +514,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
     if (!canvas || !url) return;
-
-    console.log("🖼️ addImageFromUrl:", url);
 
     fabric.Image.fromURL(url, (img) => {
       if (!img) {
@@ -632,7 +608,6 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeStudioOverlay.classList.add("hidden");
   }
 
-  // ----- Canvas Studio wiring -----
   if (canvasLauncher) {
     canvasLauncher.addEventListener("click", openCreativeStudio);
   }
@@ -658,7 +633,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (creativeUndo) {
     creativeUndo.addEventListener("click", () => {
-      if (!creativeCanvas) return;
       if (creativeHistoryIndex > 0) {
         loadCanvasState(creativeHistoryIndex - 1);
       }
@@ -666,7 +640,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (creativeRedo) {
     creativeRedo.addEventListener("click", () => {
-      if (!creativeCanvas) return;
       if (creativeHistoryIndex < creativeHistory.length - 1) {
         loadCanvasState(creativeHistoryIndex + 1);
       }
@@ -696,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("Export PNG error (likely CORS):", err);
         alert(
-          "Browser blocked exporting this image (CORS). The overlay still works for social, but exporting might be limited on some dealer images."
+          "Browser blocked exporting this image (CORS). Export may be limited on some dealer images."
         );
       }
     });
@@ -707,17 +680,14 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", () => {
         const tool = btn.getAttribute("data-tool");
         if (!tool) return;
-        currentTool = tool;
 
         creativeToolButtons.forEach((b) =>
           b.classList.remove("tool-btn-active")
         );
         btn.classList.add("tool-btn-active");
 
-        if (!creativeCanvas) return;
-
         if (tool === "select") {
-          creativeCanvas.isDrawingMode = false;
+          if (creativeCanvas) creativeCanvas.isDrawingMode = false;
         } else if (tool === "addText") {
           addTextBox();
         } else if (tool === "addRect") {
@@ -745,7 +715,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- Photo tuner filters -----
+  // ---- Photo tuner ----
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
     const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
@@ -772,8 +742,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- Drag & Drop + thumbnails in Step 3 -----
-
+  // ---- Thumbnails + drag/drop ----
   function addCreativeThumb(url) {
     if (!creativeThumbGrid) return;
     const img = document.createElement("img");
@@ -796,7 +765,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
-    console.log("[LotRocket] handleCreativeFiles: got", files.length, "files");
     if (!files.length) return;
 
     files.forEach((file) => {
@@ -805,7 +773,6 @@ document.addEventListener("DOMContentLoaded", () => {
       localCreativePhotos.push(url);
       addCreativeThumb(url);
 
-      // If no preview yet, use the first image dropped
       if (tunerPreviewImg && !tunerPreviewImg.src) {
         tunerPreviewImg.src = url;
         applyTunerFilters();
@@ -814,18 +781,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (photoDropZone && photoFileInput) {
-    // Click → open file picker
     photoDropZone.addEventListener("click", () => {
       photoFileInput.click();
     });
 
-    // File picker change
     photoFileInput.addEventListener("change", (e) => {
       handleCreativeFiles(e.target.files);
       photoFileInput.value = "";
     });
 
-    // Highlight on drag over
     ["dragenter", "dragover"].forEach((evtName) => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
@@ -834,7 +798,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Remove highlight
     ["dragleave", "dragend"].forEach((evtName) => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
@@ -843,7 +806,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Handle drop
     photoDropZone.addEventListener("drop", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -851,12 +813,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const dt = e.dataTransfer;
       let files = dt && dt.files;
-      console.log(
-        "[LotRocket] drop event; types:",
-        dt ? dt.types : "none",
-        "fileCount:",
-        files ? files.length : 0
-      );
 
       if ((!files || !files.length) && dt && dt.items) {
         const collected = [];
@@ -869,17 +825,13 @@ document.addEventListener("DOMContentLoaded", () => {
         files = collected;
       }
 
-      if (!files || !files.length) {
-        console.log("[LotRocket] drop had no files");
-        return;
-      }
-
+      if (!files || !files.length) return;
       handleCreativeFiles(files);
     });
   }
 
-  // Gather URLs currently visible in Creative Hub / dealer selection
-  function gatherImageUrlsForCanvas() {
+  // ---- Shared helper: gather image URLs for studios ----
+  function gatherImageUrlsForStudios() {
     const urls = [];
 
     if (creativeThumbGrid) {
@@ -888,84 +840,18 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Fallback: directly selected dealer photos
-    if (!urls.length && photosGrid) {
-      photosGrid
-        .querySelectorAll(".photo-thumb-btn.photo-thumb-selected img")
-        .forEach((img) => {
-          if (img.src) urls.push(img.src);
-        });
+    if (!urls.length && dealerPhotos.length) {
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const fallback = dealerPhotos.map((p) => p.src);
+      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
     }
 
-    return urls;
+    return urls.slice(0, 8); // cap at 8
   }
 
-  // "Send All to Canvas Studio" – uses whatever is in the Creative Hub thumbnails
-  if (sendAllToCanvasBtn) {
-    sendAllToCanvasBtn.addEventListener("click", () => {
-      const urls = gatherImageUrlsForCanvas();
-      if (!urls.length) {
-        alert("Add or select some photos in the Creative Lab first.");
-        return;
-      }
-      openCreativeStudio();
-      urls.forEach((url) => addImageFromUrl(url));
-    });
-  }
-
-  // "Send to Design Studio 3.0" – uses the same pool of images from Creative Hub
-  if (sendToDesignStudioBtn) {
-    sendToDesignStudioBtn.addEventListener("click", () => {
-      const urls = gatherImageUrlsForCanvas();
-      if (!urls.length) {
-        alert("Add or select some photos in the Creative Lab first.");
-        return;
-      }
-
-      openDesignStudio();
-
-      urls.forEach((url, index) => {
-        addStudioImageFromUrl(url, index === 0); // first = background
-      });
-    });
-  }
-
-  // ----- Wiring Step 1 "Send top photos to Design Studio 3.0" -----
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-
-      // Use selected photos if any, else first 8 dealer photos
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-        .slice(0, 8); // cap at 8
-
-      if (!chosen.length) {
-        alert("No photos selected.");
-        return;
-      }
-
-      // 1) Also push them into Step 3 thumbnails (Creative Lab)
-      chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-      });
-
-      // 2) Open Design Studio 3.0 and feed those same URLs into Konva
-      openDesignStudio();
-
-      chosen.forEach((url, index) => {
-        addStudioImageFromUrl(url, index === 0); // first one = background
-      });
-    });
-  }
-
-  // ==========================================
-  // DESIGN STUDIO 3.0 (Konva – fresh version)
-  // ==========================================
+  // ==================================================
+  // DESIGN STUDIO 3.0 (Konva)
+  // ==================================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
   const designLauncher = document.getElementById("designLauncher");
@@ -990,7 +876,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let studioStage = null;
   let studioLayer = null;
   let studioSelectedNode = null;
-
   let studioHistory = [];
   let studioHistoryIndex = -1;
 
@@ -1005,9 +890,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const rect = container.getBoundingClientRect();
-    const width = rect.width || 1080;
-    const height = rect.height || 1080;
+    // Use fixed logical canvas size; CSS handles visual sizing.
+    const width = 1080;
+    const height = 1080;
 
     studioStage = new Konva.Stage({
       container: "konvaStageContainer",
@@ -1018,27 +903,12 @@ document.addEventListener("DOMContentLoaded", () => {
     studioLayer = new Konva.Layer();
     studioStage.add(studioLayer);
 
-    // Background layer
     setStudioBackground("#111111");
-
-    // Resize with window
-    window.addEventListener("resize", () => {
-      const r = container.getBoundingClientRect();
-      studioStage.width(r.width || width);
-      studioStage.height(r.height || height);
-      const bg = studioLayer.findOne(".BackgroundLayer");
-      if (bg) {
-        bg.width(studioStage.width());
-        bg.height(studioStage.height());
-      }
-      studioStage.draw();
-    });
-
     wireDesignStudioUI();
     saveStudioHistory();
   }
 
-  // ---------- History (undo / redo) ----------
+  // ---- History ----
   function saveStudioHistory() {
     if (!studioStage) return;
     const json = studioStage.toJSON();
@@ -1050,22 +920,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function restoreStudioFromHistory(index) {
     if (!studioStage || index < 0 || index >= studioHistory.length) return;
     const container = studioStage.container();
-    const w = studioStage.width();
-    const h = studioStage.height();
-
-    studioHistoryIndex = index;
     const json = studioHistory[index];
 
+    studioHistoryIndex = index;
     studioStage.destroy();
     studioStage = Konva.Node.create(json, container);
-    studioStage.width(w);
-    studioStage.height(h);
-
     const layers = studioStage.getLayers();
     studioLayer = layers[0] || new Konva.Layer();
-    if (!layers.length) {
-      studioStage.add(studioLayer);
-    }
+    if (!layers.length) studioStage.add(studioLayer);
     studioSelectedNode = null;
     rebuildLayersList();
   }
@@ -1082,7 +944,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---------- Selection + layers ----------
+  // ---- Selection / layers ----
   function selectStudioNode(node) {
     studioSelectedNode = node;
     rebuildLayersList();
@@ -1095,13 +957,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const nodes = studioLayer.getChildren();
 
     nodes.forEach((node, index) => {
-      if (node.name() === "BackgroundLayer") return; // skip background
+      if (node.name() === "BackgroundLayer") return;
       const li = document.createElement("li");
       li.className = "layer-item";
       li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
-      if (node === studioSelectedNode) {
-        li.classList.add("layer-item-selected");
-      }
+      if (node === studioSelectedNode) li.classList.add("layer-item-selected");
       li.addEventListener("click", () => {
         selectStudioNode(node);
       });
@@ -1140,7 +1000,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- Add elements ----------
+  // ---- Add elements ----
   function addStudioText(text = "YOUR HEADLINE HERE") {
     if (!studioLayer || !studioStage) return;
 
@@ -1242,16 +1102,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addStudioImageFromUrl(url, asBackground = false) {
-    console.log("[DesignStudio] addStudioImageFromUrl:", url, "background?", asBackground);
-    if (!studioLayer || !studioStage || !url) {
-      console.warn("[DesignStudio] Missing stage/layer/url; aborting image add.");
-      return;
-    }
+    if (!studioLayer || !studioStage || !url) return;
 
     const img = new Image();
     img.onload = () => {
-      console.log("[DesignStudio] Image loaded:", img.width, "x", img.height);
-
       const ratio = Math.min(
         studioStage.width() / img.width,
         studioStage.height() / img.height
@@ -1286,11 +1140,9 @@ document.addEventListener("DOMContentLoaded", () => {
     img.onerror = (err) => {
       console.error("[DesignStudio] Failed to load image:", url, err);
     };
-    console.log("[DesignStudio] setting img.src =", url);
     img.src = url;
   }
 
-  // ---------- Export + size presets ----------
   function exportStudioAsPng() {
     if (!studioStage) return;
     const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
@@ -1317,7 +1169,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 
-  // ---------- Wire Design Studio UI ----------
   function wireDesignStudioUI() {
     if (toolAddText) {
       toolAddText.addEventListener("click", () => addStudioText());
@@ -1329,7 +1180,9 @@ document.addEventListener("DOMContentLoaded", () => {
       toolAddBadge.addEventListener("click", () => addStudioBadge());
     }
     if (toolSetBackground) {
-      toolSetBackground.addEventListener("click", () => setStudioBackground("#111111"));
+      toolSetBackground.addEventListener("click", () =>
+        setStudioBackground("#111111")
+      );
     }
 
     if (studioExportPng) {
@@ -1389,7 +1242,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---------- Open / close wiring ----------
   function openDesignStudio() {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
@@ -1413,6 +1265,75 @@ document.addEventListener("DOMContentLoaded", () => {
     designCloseBtn.addEventListener("click", closeDesignStudio);
     designStudioOverlay.addEventListener("click", (e) => {
       if (e.target === designStudioOverlay) closeDesignStudio();
+    });
+  }
+
+  // ---- Shared wiring from Step 1 / Step 3 into Design Studio ----
+
+  function pushUrlsIntoDesignStudio(urls) {
+    if (!urls.length) {
+      alert("No photos available. Boost a listing or add photos first.");
+      return;
+    }
+    openDesignStudio();
+    urls.forEach((url, index) => {
+      addStudioImageFromUrl(url, index === 0); // first is background
+    });
+  }
+
+  // Step 1 button – “Send top photos to Creative Studio” (and Design Studio)
+  if (sendPhotosToCreativeBtn) {
+    sendPhotosToCreativeBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+        .slice(0, 8);
+
+      if (!chosen.length) {
+        alert("No photos selected.");
+        return;
+      }
+
+      // Push into Creative Hub thumbnails
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
+      });
+
+      // ALSO push into Design Studio
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  // Step 3 button – “Send to Design Studio 3.0”
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
+      }
+      pushUrlsIntoDesignStudio(urls);
+    });
+  }
+
+  // “Send All to Canvas Studio” stays Fabric-only
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
+      }
+      openCreativeStudio();
+      urls.forEach((url) => addImageFromUrl(url));
     });
   }
 
