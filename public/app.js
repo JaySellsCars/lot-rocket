@@ -47,9 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const hashtags = document.getElementById("hashtags");
 
   const photosGrid = document.getElementById("photosGrid");
-  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToCreativeStudio");
+  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
 
-  // Dealer photos state (click-select)
+  // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
 
   function renderDealerPhotos() {
@@ -63,24 +63,22 @@ document.addEventListener("DOMContentLoaded", () => {
         "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
       wrapper.dataset.index = String(index);
 
-      // image
       const img = document.createElement("img");
       img.src = photo.src;
       img.alt = `Dealer photo ${index + 1}`;
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
-      // little check badge (visual checkbox)
       const check = document.createElement("span");
       check.className = "photo-thumb-check";
-      check.innerHTML = "✓";
+      check.textContent = "✓";
 
       wrapper.appendChild(img);
       wrapper.appendChild(check);
       photosGrid.appendChild(wrapper);
     });
 
-    // click to toggle selected
+    // Click to toggle selection
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
@@ -147,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – cap to 40
+      // Photos from backend – cap at 40 to avoid insane grids
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
@@ -156,13 +154,17 @@ document.addEventListener("DOMContentLoaded", () => {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
 
+      // Visually mark kit-ready
       document.body.classList.add("kit-ready");
+
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
-      console.error("❌ Boost error:", err);
+      console.error("Boost error:", err);
       if (statusText)
         statusText.textContent =
-          (err && err.message) || "Failed to build kit. Try again in a moment.";
+          err && err.message
+            ? err.message
+            : "Failed to build kit. Try again in a moment.";
     } finally {
       if (boostButton) boostButton.disabled = false;
     }
@@ -260,8 +262,9 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("regen error", err);
         alert(
-          (err && err.message) ||
-            "Failed to generate a new post. Try again."
+          err && err.message
+            ? err.message
+            : "Failed to generate a new post. Try again."
         );
       } finally {
         btn.disabled = false;
@@ -466,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
   let currentTool = "select";
-  let localCreativePhotos = []; // URLs from drag/drop or file uploads
+  let localCreativePhotos = []; // URLs from drag/drop, file uploads, or dealer photos
 
   // ----- Canvas helpers -----
   function ensureCanvas() {
@@ -694,14 +697,14 @@ document.addEventListener("DOMContentLoaded", () => {
       Array.from(files).forEach((file) => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
-        addImageFromUrl(url);
         localCreativePhotos.push(url);
+        addCreativeThumb(url);
       });
       creativeImageInput.value = "";
     });
   }
 
-  // ----- Drag & Drop + thumbnails in Step 3 -----
+  // ----- Photo tuner helpers -----
 
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
@@ -729,16 +732,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ----- Creative Hub thumbnails -----
+
   function addCreativeThumb(url) {
     if (!creativeThumbGrid) return;
     const img = document.createElement("img");
     img.src = url;
     img.alt = "Creative photo";
     img.loading = "lazy";
+    img.className = "creative-thumb";
 
     img.addEventListener("click", () => {
       document
-        .querySelectorAll("#creativeThumbGrid img.selected")
+        .querySelectorAll(".creative-thumb.selected")
         .forEach((el) => el.classList.remove("selected"));
       img.classList.add("selected");
       if (tunerPreviewImg) tunerPreviewImg.src = url;
@@ -764,6 +770,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ----- Drag & drop zone -----
+
   if (photoDropZone && photoFileInput) {
     photoDropZone.addEventListener("click", () => {
       photoFileInput.click();
@@ -778,7 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.add("dragover"); // matches CSS
+        photoDropZone.classList.add("dragover");
       });
     });
     ["dragleave", "dragend", "drop"].forEach((evt) => {
@@ -795,6 +803,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ----- Send-all from Creative Hub to Canvas -----
+
   if (sendAllToCanvasBtn) {
     sendAllToCanvasBtn.addEventListener("click", () => {
       if (!localCreativePhotos.length) {
@@ -808,12 +818,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
   if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+
     sendPhotosToStudioBtn.addEventListener("click", () => {
       if (!dealerPhotos.length) {
         alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
       }
 
+      // only selected photos; if none selected, take first 8
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
       const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
         0,
@@ -825,6 +838,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Add to Creative Hub thumbnails AND Canvas Studio
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
