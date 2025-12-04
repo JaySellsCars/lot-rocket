@@ -174,61 +174,56 @@
       </div>
     </section>
 
-    <!-- =============================== -->
-    <!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
-    <!-- =============================== -->
+<!-- =============================== -->
+<!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
+<!-- =============================== -->
 
-    <section id="creativeHub" class="creative-hub">
+<section id="creativeHub" class="creative-hub">
+  <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
+  <div class="creative-left">
+    <h3>Photos</h3>
 
-      <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
-      <div class="creative-left">
+    <!-- Drag & Drop Zone -->
+    <div id="photoDropZone" class="photo-dropzone">
+      <p>Drag & Drop Photos Here<br><span>(or click to upload)</span></p>
+      <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
+    </div>
 
-        <h3>Photos</h3>
+    <!-- Thumbnails -->
+    <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-        <!-- Drag & Drop Zone -->
-        <div id="photoDropZone" class="photo-dropzone">
-          <p>Drag & Drop Photos Here<br><span>(or click to upload)</span></p>
-          <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
-        </div>
+    <button id="sendAllToCanvas" class="primary-btn full">
+      Send All to Canvas Studio
+    </button>
+  </div>
 
-        <!-- Thumbnails -->
-        <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
+  <!-- RIGHT SIDE: Photo Tuner -->
+  <div class="creative-right">
+    <h3>Photo Tuner</h3>
 
-        <button id="sendAllToCanvas" class="primary-btn full">Send All to Canvas Studio</button>
+    <div class="tuner-preview">
+      <img id="tunerPreviewImg" src="" alt="Preview" />
+    </div>
 
-      </div>
+    <div class="slider-block">
+      <label>Brightness</label>
+      <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
+    </div>
 
-      <!-- RIGHT SIDE: Photo Tuner -->
-      <div class="creative-right">
+    <div class="slider-block">
+      <label>Contrast</label>
+      <input type="range" id="tunerContrast" min="50" max="150" value="100" />
+    </div>
 
-        <h3>Photo Tuner</h3>
+    <div class="slider-block">
+      <label>Saturation</label>
+      <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
+    </div>
 
-        <div class="tuner-preview">
-          <img id="tunerPreviewImg" src="" alt="Preview" />
-        </div>
+    <button id="autoEnhanceBtn" class="secondary-btn full">Auto Enhance</button>
+  </div>
+</section>
 
-        <div class="slider-block">
-          <label>Brightness</label>
-          <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
-        </div>
-
-        <div class="slider-block">
-          <label>Contrast</label>
-          <input type="range" id="tunerContrast" min="50" max="150" value="100" />
-        </div>
-
-        <div class="slider-block">
-          <label>Saturation</label>
-          <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
-        </div>
-
-        <button id="autoEnhanceBtn" class="secondary-btn full">Auto Enhance</button>
-
-      </div>
-
-    </section>
-
-  </main>
 
   <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
   <aside class="floating-tools">
