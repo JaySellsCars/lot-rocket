@@ -67,21 +67,18 @@ document.addEventListener("DOMContentLoaded", () => {
       img.src = photo.src;
       img.alt = `Dealer photo ${index + 1}`;
       img.loading = "lazy";
-      // match CSS thumbnail class
-      img.className = "photo-thumb";
+      img.className = "photo-thumb-img";
 
       wrapper.appendChild(img);
       photosGrid.appendChild(wrapper);
     });
 
-    // Re-attach click handlers
+    // Re-attach click handlers for select / deselect
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
-        if (!Number.isNaN(idx) && dealerPhotos[idx]) {
-          dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-          renderDealerPhotos();
-        }
+        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
+        renderDealerPhotos();
       });
     });
   }
@@ -90,8 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!vehicleUrlInput || !boostButton) return;
 
     const url = vehicleUrlInput.value.trim();
-    const labelOverride = (vehicleLabelInput?.value || "").trim();
-    const priceOverride = (priceInfoInput?.value || "").trim();
+    const labelOverride = vehicleLabelInput?.value.trim() || "";
+    const priceOverride = priceInfoInput?.value.trim() || "";
 
     if (!url) {
       alert("Paste a full dealer URL first.");
@@ -99,10 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     boostButton.disabled = true;
-    if (statusText)
-      statusText.textContent = "Scraping dealer page and building kit…";
-
-    console.log("🚀 Boosting listing for URL:", url);
+    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
 
     try {
       const res = await fetch(apiBase + "/api/social-kit", {
@@ -119,12 +113,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) {
         const msg =
-          (data && data.message) ||
-          "Something went wrong building the kit.";
+          data && data.message
+            ? data.message
+            : "Something went wrong building the kit.";
         throw new Error(msg);
       }
-
-      console.log("✅ Social kit payload:", data);
 
       // Summary / overrides
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
@@ -152,38 +145,28 @@ document.addEventListener("DOMContentLoaded", () => {
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
-// Enable "Send to Studio" when photos exist
-if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+      // Enable / disable send-to-studio button
+      if (sendPhotosToStudioBtn) {
+        sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+      }
 
-    sendPhotosToStudioBtn.onclick = () => {
-        if (!dealerPhotos.length) {
-            alert("Boost a listing first so Lot Rocket can grab photos.");
-            return;
-        }
+      // Mark Step 2 visually "kit ready"
+      document.body.classList.add("kit-ready");
 
-        // pull only selected photos
-        const selected = dealerPhotos.filter(p => p.selected).map(p => p.src);
+      if (statusText) statusText.textContent = "Social kit ready ✔";
+    } catch (err) {
+      console.error("❌ Boost error:", err);
+      if (statusText)
+        statusText.textContent =
+          (err && err.message) || "Failed to build kit. Try again in a moment.";
+    } finally {
+      if (boostButton) boostButton.disabled = false;
+    }
+  }
 
-        // fallback → if none selected, send first 8
-        const chosen = (selected.length ? selected : dealerPhotos.map(p => p.src)).slice(0, 8);
-
-        if (!chosen.length) {
-            alert("No photos selected.");
-            return;
-        }
-
-        // Add to Creative Hub thumbnails AND Canvas Studio
-        chosen.forEach(url => {
-            localCreativePhotos.push(url);
-            addCreativeThumb(url);
-        });
-
-        openCreativeStudio();
-        chosen.forEach(url => addImageFromUrl(url));
-    };
-}
-
+  if (boostButton) {
+    boostButton.addEventListener("click", doBoostListing);
+  }
 
   // ---------- Copy buttons ----------
   document.querySelectorAll(".copy-btn").forEach((btn) => {
@@ -197,9 +180,8 @@ if (sendPhotosToStudioBtn) {
       el.setSelectionRange(0, 99999);
       document.execCommand("copy");
 
-      const original = btn.textContent;
       btn.textContent = "Copied!";
-      setTimeout(() => (btn.textContent = original), 1500);
+      setTimeout(() => (btn.textContent = "Copy"), 1500);
     });
   });
 
@@ -221,11 +203,9 @@ if (sendPhotosToStudioBtn) {
 
       try {
         const label =
-          (vehicleLabelInput?.value || "").trim() ||
-          (summaryLabel?.textContent || "");
+          vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
         const price =
-          (priceInfoInput?.value || "").trim() ||
-          (summaryPrice?.textContent || "");
+          priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
 
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
@@ -239,8 +219,7 @@ if (sendPhotosToStudioBtn) {
         });
 
         const data = await res.json();
-        if (!res.ok)
-          throw new Error((data && data.message) || "Error generating copy");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
 
         const text = data.text || "";
         let targetId = "";
@@ -343,8 +322,7 @@ if (sendPhotosToStudioBtn) {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok)
-          throw new Error((data && data.message) || "Error calculating");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
         console.error("payment-helper error", err);
@@ -374,8 +352,7 @@ if (sendPhotosToStudioBtn) {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok)
-          throw new Error((data && data.message) || "Error estimating");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
         console.error("income-helper error", err);
@@ -405,8 +382,7 @@ if (sendPhotosToStudioBtn) {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok)
-          throw new Error((data && data.message) || "Error coaching");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
         console.error("objection-coach error", err);
@@ -439,13 +415,11 @@ if (sendPhotosToStudioBtn) {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok)
-          throw new Error((data && data.message) || "Error talking to AI");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (output) output.value = data.text || "";
       } catch (err) {
         console.error("message-helper error", err);
-        if (output) output.value =
-          "Lot Rocket hit a snag. Try again in a moment.";
+        if (output) output.value = "Lot Rocket hit a snag. Try again in a moment.";
       }
     });
   }
@@ -521,25 +495,16 @@ if (sendPhotosToStudioBtn) {
     });
   }
 
-  // *** FIXED: robust loader for dealer image URLs + blobs ***
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
     if (!canvas) return;
 
-    console.log("🎨 Adding image to canvas:", url);
-
-    const isLocal =
-      url.startsWith("blob:") ||
-      url.startsWith("data:") ||
-      url.startsWith(window.location.origin);
-
-    // Local / blob / same-origin – normal Fabric path
-    if (isLocal) {
-      fabric.Image.fromURL(url, (img) => {
-        if (!img) return;
+    fabric.Image.fromURL(
+      url,
+      (img) => {
         const scale = Math.min(
-          canvas.width / (img.width * 1.2 || 1),
-          canvas.height / (img.height * 1.2 || 1),
+          canvas.width / (img.width * 1.2),
+          canvas.height / (img.height * 1.2),
           1
         );
         img.set({
@@ -554,41 +519,9 @@ if (sendPhotosToStudioBtn) {
         canvas.setActiveObject(img);
         canvas.renderAll();
         saveCanvasState();
-      });
-      return;
-    }
-
-    // Remote dealer URLs – use plain HTMLImage to avoid CORS weirdness
-    const imgEl = new Image();
-    imgEl.onload = function () {
-      try {
-        const img = new fabric.Image(imgEl);
-        const scale = Math.min(
-          canvas.width / (img.width * 1.2 || 1),
-          canvas.height / (img.height * 1.2 || 1),
-          1
-        );
-        img.set({
-          left: canvas.width / 2,
-          top: canvas.height / 2,
-          originX: "center",
-          originY: "center",
-          selectable: true,
-        });
-        img.scale(scale);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        saveCanvasState();
-      } catch (err) {
-        console.error("❌ Fabric failed to add image:", url, err);
-      }
-    };
-    imgEl.onerror = function (err) {
-      console.error("❌ Failed to load canvas image:", url, err);
-    };
-    // no crossOrigin – just display; exporting may be restricted by browser
-    imgEl.src = url;
+      },
+      { crossOrigin: "Anonymous" }
+    );
   }
 
   function addRectBanner() {
@@ -820,6 +753,7 @@ if (sendPhotosToStudioBtn) {
       const url = URL.createObjectURL(file);
       localCreativePhotos.push(url);
       addCreativeThumb(url);
+      // If no preview yet, set the first one
       if (tunerPreviewImg && !tunerPreviewImg.src) {
         tunerPreviewImg.src = url;
         applyTunerFilters();
@@ -851,35 +785,10 @@ if (sendPhotosToStudioBtn) {
         photoDropZone.classList.remove("photo-dropzone-active");
       });
     });
-
-    // Support dropping files AND URLs
     photoDropZone.addEventListener("drop", (e) => {
       const dt = e.dataTransfer;
-      if (!dt) return;
-
-      if (dt.files && dt.files.length) {
-        handleCreativeFiles(dt.files);
-        return;
-      }
-
-      let url = dt.getData("text/uri-list") || "";
-
-      if (!url) {
-        const html = dt.getData("text/html");
-        if (html) {
-          const match = html.match(/src=["']([^"']+)["']/i);
-          if (match && match[1]) url = match[1];
-        }
-      }
-
-      if (url) {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-        if (tunerPreviewImg && !tunerPreviewImg.src) {
-          tunerPreviewImg.src = url;
-          applyTunerFilters();
-        }
-      }
+      if (!dt || !dt.files) return;
+      handleCreativeFiles(dt.files);
     });
   }
 
@@ -894,3 +803,38 @@ if (sendPhotosToStudioBtn) {
     });
   }
 
+  // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
+
+      // use only selected photos if any selected
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+
+      // if none selected, fall back to first 8 photos
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+        0,
+        8
+      );
+
+      if (!chosen.length) {
+        alert("No photos selected.");
+        return;
+      }
+
+      // Also show them inside the Creative Hub thumbnails for tuning
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+      });
+
+      openCreativeStudio();
+      chosen.forEach((url) => addImageFromUrl(url));
+    });
+  }
+
+  console.log("✅ Lot Rocket frontend wiring complete");
+});
