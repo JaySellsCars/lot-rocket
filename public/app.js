@@ -479,7 +479,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
-
   const tunerPreviewImg = document.getElementById("tunerPreviewImg");
   const tunerBrightness = document.getElementById("tunerBrightness");
   const tunerContrast = document.getElementById("tunerContrast");
@@ -504,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTool = "select";
   let localCreativePhotos = []; // keep track of locally added URLs
 
-  // ----- Canvas helpers -----
+  // ----- Canvas helpers (Fabric) -----
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
     if (typeof fabric === "undefined") {
@@ -916,7 +915,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
   // "Send to Design Studio 3.0" – uses the same pool of images
   if (sendToDesignStudioBtn) {
     sendToDesignStudioBtn.addEventListener("click", () => {
@@ -926,12 +924,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Open the Konva-based Design Studio
       openDesignStudio();
 
-      // First image = background, rest as draggable layers
       urls.forEach((url, index) => {
-        addStudioImageFromUrl(url, index === 0); // true = background
+        addStudioImageFromUrl(url, index === 0); // first = background
       });
     });
   }
@@ -962,6 +958,8 @@ document.addEventListener("DOMContentLoaded", () => {
       chosen.forEach((url) => addImageFromUrl(url));
     });
   }
+
+
 
 
   // ==========================================
