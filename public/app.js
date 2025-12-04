@@ -140,8 +140,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend
-      const photos = Array.isArray(data.photos) ? data.photos : [];
+      // Photos from backend – clamp to max 24 on frontend
+      const photos = Array.isArray(data.photos)
+        ? data.photos.slice(0, 24)
+        : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
@@ -284,7 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     if (closeBtn) {
       closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    }
+    });
     modal.addEventListener("click", backdropClose);
   }
 
@@ -743,6 +745,16 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeThumbGrid.appendChild(img);
   }
 
+  function addCreativeUrl(url) {
+    if (!url) return;
+    localCreativePhotos.push(url);
+    addCreativeThumb(url);
+    if (tunerPreviewImg && !tunerPreviewImg.src) {
+      tunerPreviewImg.src = url;
+      applyTunerFilters();
+    }
+  }
+
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
     if (!files.length) return;
@@ -750,13 +762,7 @@ document.addEventListener("DOMContentLoaded", () => {
     files.forEach((file) => {
       if (!file.type.startsWith("image/")) return;
       const url = URL.createObjectURL(file);
-      localCreativePhotos.push(url);
-      addCreativeThumb(url);
-      // If no preview yet, set the first one
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
+      addCreativeUrl(url);
     });
   }
 
@@ -777,7 +783,7 @@ document.addEventListener("DOMContentLoaded", () => {
         photoDropZone.classList.add("photo-dropzone-active");
       });
     });
-    ["dragleave", "dragend", "drop"].forEach((evt) => {
+    ["dragleave", "dragend"].forEach((evt) => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -785,9 +791,40 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
     photoDropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoDropZone.classList.remove("photo-dropzone-active");
+
       const dt = e.dataTransfer;
-      if (!dt || !dt.files) return;
-      handleCreativeFiles(dt.files);
+      if (!dt) return;
+
+      // 1) If real files are present (from desktop / downloads), use them
+      if (dt.files && dt.files.length) {
+        handleCreativeFiles(dt.files);
+        return;
+      }
+
+      // 2) If this is an image dragged from the browser, we often get a URL instead of a File
+      const uri =
+        dt.getData("text/uri-list") || dt.getData("text/plain") || "";
+      if (uri) {
+        addCreativeUrl(uri.trim());
+        return;
+      }
+
+      // 3) Fallback: inspect items
+      if (dt.items && dt.items.length) {
+        Array.from(dt.items).forEach((item) => {
+          if (
+            item.kind === "string" &&
+            (item.type === "text/uri-list" || item.type === "text/plain")
+          ) {
+            item.getAsString((url) => {
+              addCreativeUrl(url.trim());
+            });
+          }
+        });
+      }
     });
   }
 
@@ -822,8 +859,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Also show them inside the Creative Hub thumbnails for tuning
       chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
+        addCreativeUrl(url);
       });
 
       openCreativeStudio();
