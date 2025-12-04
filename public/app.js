@@ -894,31 +894,3 @@ if (sendPhotosToStudioBtn) {
     });
   }
 
-  // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const fallback = dealerPhotos.map((p) => p.src);
-      const chosen = (selected.length ? selected : fallback).slice(0, 8); // up to 8 images
-
-      if (!chosen.length) {
-        alert("No photos selected.");
-        return;
-      }
-
-      chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-      });
-
-      openCreativeStudio();
-      chosen.forEach((url) => addImageFromUrl(url));
-    });
-  }
-
-  console.log("✅ Lot Rocket frontend wiring complete");
-});
