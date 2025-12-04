@@ -529,7 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  // PHOTO EDITOR – STEP 3 CREATIVE HUB
+  // PHOTO EDITOR – STEP 3 CREATIVE HUB (FIXED)
   // =====================================================
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
@@ -539,13 +539,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerContrast = document.getElementById("tunerContrast");
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
-  let hasLoadedTunerOnce = false;
+
+  if (tunerPreviewImg && !tunerPreviewImg.src) {
+    // hide empty image on initial load
+    tunerPreviewImg.style.display = "none";
+  }
 
   function applyTunerFilters() {
-    if (!tunerPreviewImg) return;
-    const b = tunerBrightness ? tunerBrightness.value : 100;
-    const c = tunerContrast ? tunerContrast.value : 100;
-    const s = tunerSaturation ? tunerSaturation.value : 100;
+    if (!tunerPreviewImg || !tunerPreviewImg.src) return;
+
+    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
+    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
+    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
+
     tunerPreviewImg.style.filter =
       `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
@@ -567,28 +573,49 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeThumbGrid.appendChild(img);
   }
 
-  function handleDroppedFiles(files) {
-    if (!files || !files.length) return;
+  function handleDroppedFiles(fileList) {
+    if (!fileList || !fileList.length) {
+      console.warn("📂 handleDroppedFiles called with empty file list");
+      return;
+    }
 
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
+    const files = Array.from(fileList);
+    files.forEach((file) => {
+      // Some environments give empty type; fall back to extension check
+      const isImage =
+        (file.type && file.type.startsWith("image/")) ||
+        /\.(png|jpe?g|webp|gif|heic)$/i.test(file.name || "");
+
+      if (!isImage) {
+        console.warn("⛔ Skipping non-image file:", file.name);
+        return;
+      }
 
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target.result;
 
-        // Remember uploads for Canvas Studio
+      reader.onload = (ev) => {
+        const dataUrl = ev.target && ev.target.result;
+        if (!dataUrl) {
+          console.error("❌ FileReader produced no data URL for", file.name);
+          return;
+        }
+
+        // Track uploads for Creative Studio
         uploadedPhotoUrls.push(dataUrl);
-        latestPhotoUrls = uploadedPhotoUrls.slice();
+
+        // Keep latestPhotoUrls as "canvas pool" – dealer photos + uploads
+        latestPhotoUrls = [...latestPhotoUrls, dataUrl];
 
         addThumb(dataUrl);
+        setTunerImage(dataUrl); // always make the most recent upload the preview
 
-        // First uploaded image becomes the tuner preview
-        if (!hasLoadedTunerOnce) {
-          setTunerImage(dataUrl);
-          hasLoadedTunerOnce = true;
-        }
+        console.log("📷 Uploaded image wired into tuner & canvas pool:", file.name);
       };
+
+      reader.onerror = (err) => {
+        console.error("❌ FileReader error for", file.name, err);
+      };
+
       reader.readAsDataURL(file);
     });
   }
@@ -613,21 +640,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     photoDropZone.addEventListener("drop", (e) => {
       const files = e.dataTransfer && e.dataTransfer.files;
+      console.log("📥 Drop event, files:", files ? files.length : 0);
       handleDroppedFiles(files);
     });
 
     // Click to open file picker
     photoDropZone.addEventListener("click", () => {
-      if (photoFileInput) photoFileInput.click();
+      if (photoFileInput) {
+        photoFileInput.click();
+      }
     });
+  } else {
+    console.warn("⚠️ photoDropZone not found – Step 3 uploader inactive");
   }
 
   // File input → same handler
   if (photoFileInput) {
     photoFileInput.addEventListener("change", (e) => {
+      console.log(
+        "📁 File input change, files:",
+        e.target.files ? e.target.files.length : 0
+      );
       handleDroppedFiles(e.target.files);
-      photoFileInput.value = ""; // reset
+      photoFileInput.value = ""; // allow same file re-select
     });
+  } else {
+    console.warn("⚠️ photoFileInput not found – click uploader inactive");
   }
 
   // Sliders → live filters
@@ -645,6 +683,7 @@ document.addEventListener("DOMContentLoaded", () => {
       applyTunerFilters();
     });
   }
+
 
   // =====================================================
   // COMMON MONEY HELPER
