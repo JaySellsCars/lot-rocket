@@ -67,14 +67,14 @@ document.addEventListener("DOMContentLoaded", () => {
       img.src = photo.src;
       img.alt = `Dealer photo ${index + 1}`;
       img.loading = "lazy";
-      // IMPORTANT: match CSS class so they show as thumbnails not full-size
+      // match CSS thumbnail class
       img.className = "photo-thumb";
 
       wrapper.appendChild(img);
       photosGrid.appendChild(wrapper);
     });
 
-    // Click to toggle selected / unselected
+    // Re-attach click handlers
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
@@ -512,16 +512,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // *** FIXED: robust loader for dealer image URLs + blobs ***
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
     if (!canvas) return;
 
-    fabric.Image.fromURL(
-      url,
-      (img) => {
+    console.log("🎨 Adding image to canvas:", url);
+
+    const isLocal =
+      url.startsWith("blob:") ||
+      url.startsWith("data:") ||
+      url.startsWith(window.location.origin);
+
+    // Local / blob / same-origin – normal Fabric path
+    if (isLocal) {
+      fabric.Image.fromURL(url, (img) => {
+        if (!img) return;
         const scale = Math.min(
-          canvas.width / (img.width * 1.2),
-          canvas.height / (img.height * 1.2),
+          canvas.width / (img.width * 1.2 || 1),
+          canvas.height / (img.height * 1.2 || 1),
           1
         );
         img.set({
@@ -536,9 +545,41 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.setActiveObject(img);
         canvas.renderAll();
         saveCanvasState();
-      },
-      { crossOrigin: "Anonymous" }
-    );
+      });
+      return;
+    }
+
+    // Remote dealer URLs – use plain HTMLImage to avoid CORS weirdness
+    const imgEl = new Image();
+    imgEl.onload = function () {
+      try {
+        const img = new fabric.Image(imgEl);
+        const scale = Math.min(
+          canvas.width / (img.width * 1.2 || 1),
+          canvas.height / (img.height * 1.2 || 1),
+          1
+        );
+        img.set({
+          left: canvas.width / 2,
+          top: canvas.height / 2,
+          originX: "center",
+          originY: "center",
+          selectable: true,
+        });
+        img.scale(scale);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        saveCanvasState();
+      } catch (err) {
+        console.error("❌ Fabric failed to add image:", url, err);
+      }
+    };
+    imgEl.onerror = function (err) {
+      console.error("❌ Failed to load canvas image:", url, err);
+    };
+    // no crossOrigin – just display; exporting may be restricted by browser
+    imgEl.src = url;
   }
 
   function addRectBanner() {
@@ -802,27 +843,23 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Support dropping files AND URLs (e.g. dragging from Step 1 thumbnails)
+    // Support dropping files AND URLs
     photoDropZone.addEventListener("drop", (e) => {
       const dt = e.dataTransfer;
       if (!dt) return;
 
       if (dt.files && dt.files.length) {
-        // Files from computer
         handleCreativeFiles(dt.files);
         return;
       }
 
-      // Try to extract an image URL from the drop (text/uri-list or HTML)
       let url = dt.getData("text/uri-list") || "";
 
       if (!url) {
         const html = dt.getData("text/html");
         if (html) {
           const match = html.match(/src=["']([^"']+)["']/i);
-          if (match && match[1]) {
-            url = match[1];
-          }
+          if (match && match[1]) url = match[1];
         }
       }
 
@@ -864,7 +901,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Show them in Creative Hub thumbnails too
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
