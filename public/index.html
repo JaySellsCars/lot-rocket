@@ -1,12 +1,8 @@
 <!--
   Lot Rocket – AI Social Media Kit & Creative Lab
   Version: 2.5 STABLE
-  Last known good: 2025-12-02
-  Notes:
-    - Layout grid: Step 1 (left), Step 2 (middle), Step 3 (under Step 1),
-      tools floating on the right.
-    - BEFORE changing structure or layout classes, make a backup copy of
-      index.html, style.css, and app.js.
+  Layout: Step 1 (left), Step 2 (middle), Step 3 (under Step 1),
+          tools floating on the right.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +12,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 
 <body class="dark-theme">
   <!-- HEADER -->
@@ -114,7 +109,7 @@
         Copy, tweak, and paste into each platform. Spin fresh versions anytime.
       </p>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card facebook-card">
         <h3>Facebook Post</h3>
         <textarea
           id="facebookPost"
@@ -126,7 +121,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card instagram-card">
         <h3>Instagram Caption</h3>
         <textarea
           id="instagramPost"
@@ -138,7 +133,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card tiktok-card">
         <h3>TikTok Caption</h3>
         <textarea
           id="tiktokPost"
@@ -150,7 +145,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card linkedin-card">
         <h3>LinkedIn Post</h3>
         <textarea
           id="linkedinPost"
@@ -162,7 +157,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card twitter-card">
         <h3>X / Twitter Post</h3>
         <textarea
           id="twitterPost"
@@ -174,7 +169,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card textdm-card">
         <h3>Text / DM</h3>
         <textarea
           id="textBlurb"
@@ -186,7 +181,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card marketplace-card">
         <h3>Marketplace Listing</h3>
         <textarea
           id="marketplacePost"
@@ -198,7 +193,7 @@
         </div>
       </div>
 
-      <div class="platform-card step2-card">
+      <div class="platform-card step2-card hashtags-card">
         <h3>Hashtag Set</h3>
         <textarea
           id="hashtags"
@@ -214,76 +209,82 @@
     <!-- =============================== -->
     <!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
     <!-- =============================== -->
-    <section id="creativeHub" class="creative-hub">
-      <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
-      <div class="creative-left">
-        <h3>Photos</h3>
+    <section id="creativeHub" class="column-right">
+      <div class="lab-card">
+        <h3>Step 3 – Creative Lab</h3>
 
-        <div id="photoDropZone" class="photo-dropzone">
-          <p>
-            Drag & Drop Photos Here<br />
-            <span>(or click to upload)</span>
-          </p>
-          <input
-            type="file"
-            id="photoFileInput"
-            accept="image/*"
-            multiple
-            hidden
-          />
+        <div class="creative-hub">
+          <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
+          <div class="creative-left">
+            <h3>Photos</h3>
+
+            <div id="photoDropZone" class="photo-dropzone">
+              <p>
+                Drag & Drop Photos Here<br />
+                <span>(or click to upload)</span>
+              </p>
+              <input
+                type="file"
+                id="photoFileInput"
+                accept="image/*"
+                multiple
+                hidden
+              />
+            </div>
+
+            <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
+
+            <button id="sendAllToCanvas" class="primary-btn full">
+              Send All to Canvas Studio
+            </button>
+          </div>
+
+          <!-- RIGHT SIDE: Photo Tuner -->
+          <div class="creative-right">
+            <h3>Photo Tuner</h3>
+
+            <div class="tuner-preview">
+              <img id="tunerPreviewImg" src="" alt="Preview" />
+            </div>
+
+            <div class="slider-block">
+              <label>Brightness</label>
+              <input
+                type="range"
+                id="tunerBrightness"
+                min="50"
+                max="150"
+                value="100"
+              />
+            </div>
+
+            <div class="slider-block">
+              <label>Contrast</label>
+              <input
+                type="range"
+                id="tunerContrast"
+                min="50"
+                max="150"
+                value="100"
+              />
+            </div>
+
+            <div class="slider-block">
+              <label>Saturation</label>
+              <input
+                type="range"
+                id="tunerSaturation"
+                min="50"
+                max="150"
+                value="100"
+              />
+            </div>
+
+            <button id="autoEnhanceBtn" class="secondary-btn full">
+              Auto Enhance
+            </button>
+          </div>
         </div>
-
-        <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
-
-        <button id="sendAllToCanvas" class="primary-btn full">
-          Send All to Canvas Studio
-        </button>
-      </div>
-
-      <!-- RIGHT SIDE: Photo Tuner -->
-      <div class="creative-right">
-        <h3>Photo Tuner</h3>
-
-        <div class="tuner-preview">
-          <img id="tunerPreviewImg" src="" alt="Preview" />
-        </div>
-
-        <div class="slider-block">
-          <label>Brightness</label>
-          <input
-            type="range"
-            id="tunerBrightness"
-            min="50"
-            max="150"
-            value="100"
-          />
-        </div>
-
-        <div class="slider-block">
-          <label>Contrast</label>
-          <input
-            type="range"
-            id="tunerContrast"
-            min="50"
-            max="150"
-            value="100"
-          />
-        </div>
-
-        <div class="slider-block">
-          <label>Saturation</label>
-          <input
-            type="range"
-            id="tunerSaturation"
-            min="50"
-            max="150"
-            value="100"
-          />
-        </div>
-
-        <button id="autoEnhanceBtn" class="secondary-btn full">
-          Auto Enhance
-        </button>
       </div>
     </section>
 
@@ -436,9 +437,302 @@
     </div>
   </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-<script src="app.js"></script>
+  <!-- ========= SIDE MODALS FOR TOOLS ========= -->
 
+  <!-- Objection Coach -->
+  <div id="objectionModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>Objection Coach</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="objectionForm">
+          <label>
+            Customer Objection
+            <textarea name="objection" rows="3"
+              placeholder="Customer says they need to think about it, payment too high, etc."></textarea>
+          </label>
+          <label>
+            Context / History (optional)
+            <textarea name="history" rows="3"
+              placeholder="Any context about credit, trade, vehicle, prior visits, etc."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Coach this objection
+          </button>
+        </form>
 
+        <label>
+          AI Coaching Response
+          <textarea id="objectionOutput" rows="5" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Basic Calculator -->
+  <div id="calcModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>Quick Calculator</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <div class="basic-calc">
+          <div id="basicCalcDisplay" class="basic-calc-display">0</div>
+          <div class="basic-calc-grid">
+            <!-- buttons wired in app.js basic calculator section -->
+            <button class="basic-calc-btn" data-key="7">7</button>
+            <button class="basic-calc-btn" data-key="8">8</button>
+            <button class="basic-calc-btn" data-key="9">9</button>
+            <button class="basic-calc-btn" data-key="÷">÷</button>
+
+            <button class="basic-calc-btn" data-key="4">4</button>
+            <button class="basic-calc-btn" data-key="5">5</button>
+            <button class="basic-calc-btn" data-key="6">6</button>
+            <button class="basic-calc-btn" data-key="×">×</button>
+
+            <button class="basic-calc-btn" data-key="1">1</button>
+            <button class="basic-calc-btn" data-key="2">2</button>
+            <button class="basic-calc-btn" data-key="3">3</button>
+            <button class="basic-calc-btn" data-key="-">−</button>
+
+            <button class="basic-calc-btn" data-key="0">0</button>
+            <button class="basic-calc-btn" data-key=".">.</button>
+            <button class="basic-calc-btn" data-key="C">C</button>
+            <button class="basic-calc-btn equals" data-key="=">=</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Helper -->
+  <div id="paymentModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>Payment Calculator</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="paymentForm">
+          <label>
+            Vehicle Price
+            <input type="number" name="price" placeholder="30000" />
+          </label>
+          <label>
+            Cash / Trade Down
+            <input type="number" name="down" placeholder="3000" />
+          </label>
+          <label>
+            APR %
+            <input type="number" step="0.01" name="rate" placeholder="8.99" />
+          </label>
+          <label>
+            Term (months)
+            <input type="number" name="term" placeholder="72" />
+          </label>
+          <label>
+            Tax %
+            <input type="number" step="0.01" name="tax" placeholder="6" />
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Calculate Payment
+          </button>
+        </form>
+        <div id="paymentOutput" class="status-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Helper -->
+  <div id="incomeModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>Income Calculator</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="incomeForm">
+          <label>
+            Target Payment
+            <input type="number" name="payment" placeholder="450" />
+          </label>
+          <label>
+            Max DTI % (front-end)
+            <input type="number" step="0.01" name="dti" placeholder="15" />
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Estimate Income Needed
+          </button>
+        </form>
+        <div id="incomeOutput" class="status-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workflow, Message, Ask, Car, Image, Video helpers (all share message-helper API) -->
+  <div id="workflowModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>AI Work Flow Expert</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="workflowForm">
+          <label>
+            What process do you want to design or improve?
+            <textarea name="prompt" rows="4"
+              placeholder="Example: Follow-up flow for Facebook Marketplace leads over 7 days..."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Build Workflow
+          </button>
+        </form>
+        <label>
+          Workflow Plan
+          <textarea id="workflowOutput" rows="7" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="messageModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>AI Message Builder</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="messageForm">
+          <label>
+            Who are you messaging?
+            <input name="audience" type="text" placeholder="Cold lead, hot lead, service customer, etc." />
+          </label>
+          <label>
+            Goal of the message
+            <input name="goal" type="text" placeholder="Get them to set an appointment, bring docs, etc." />
+          </label>
+          <label>
+            Extra details
+            <textarea name="details" rows="4"
+              placeholder="Vehicle, payment range, time frame, previous conversations, etc."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Build Message
+          </button>
+        </form>
+        <label>
+          AI Message
+          <textarea id="messageOutput" rows="7" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="askModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>Ask A.I.</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="askForm">
+          <label>
+            Your question
+            <textarea name="question" rows="5"
+              placeholder="Any question about deals, structure, customers, marketing, etc."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Ask
+          </button>
+        </form>
+        <label>
+          Answer
+          <textarea id="askOutput" rows="7" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="carModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>AI Car Expert</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="carForm">
+          <label>
+            What do you want to compare / explain?
+            <textarea name="prompt" rows="5"
+              placeholder="Example: Compare 2022 Traverse LT vs 2022 Explorer XLT for a family of 5..."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Generate Answer
+          </button>
+        </form>
+        <label>
+          AI Car Breakdown
+          <textarea id="carOutput" rows="7" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="imageModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>AI Image Generation</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="imageForm">
+          <label>
+            Describe the image you want
+            <textarea name="prompt" rows="5"
+              placeholder="Example: White Tahoe on a turntable with neon showroom lights..."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Build Image Brief
+          </button>
+        </form>
+        <label>
+          Image Prompt
+          <textarea id="imageOutput" rows="7" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div id="videoModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>AI Video Generation</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="videoForm">
+          <label>
+            Describe the video you want
+            <textarea name="prompt" rows="5"
+              placeholder="Example: 30-second vertical walkaround of a 2024 Silverado Z71 with 3 main hooks..."></textarea>
+          </label>
+          <button type="submit" class="secondary-btn full-width-bar">
+            Build Video Shot Plan
+          </button>
+        </form>
+        <label>
+          Video Script / Shot Plan
+          <textarea id="videoOutput" rows="7" readonly></textarea>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS (Fabric, then app.js) ===== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
