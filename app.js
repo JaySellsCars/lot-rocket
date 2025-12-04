@@ -101,7 +101,6 @@ async function scrapePage(url) {
 }
 
 // ---------------- Helper: scrape vehicle photos ----------------
-
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
   const base = new URL(baseUrl);
@@ -129,8 +128,10 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     }
   });
 
-  return Array.from(urls);
+  // HARD CAP: only send the first 24 back to the frontend
+  return Array.from(urls).slice(0, 24);
 }
+
 
 // ---------------- Helper: call GPT for structured social kit ----------------
 
