@@ -1100,6 +1100,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
   const creativeOverlay = document.getElementById("creativeStudioOverlay");
   const openCreativeStudioBtn = document.getElementById("openCreativeStudio");
+  const canvasLauncher = document.getElementById("canvasLauncher");
 
   if (creativeOverlay) {
     const closeCreativeStudioBtn = document.getElementById("creativeClose");
@@ -1112,16 +1113,30 @@ document.addEventListener("DOMContentLoaded", () => {
       creativeOverlay.classList.add("hidden");
     }
 
-    // Direct open from Step 3 button
+    // Single entry point for ALL launchers
+    function openCreativeStudio(withPhotos) {
+      console.log(
+        `🎨 Open Canvas Studio | withPhotos=${!!withPhotos} | latestPhotoUrls=${latestPhotoUrls.length}`
+      );
+      showOverlay();
+      if (typeof fabric !== "undefined") {
+        ensureCreativeCanvas(!!withPhotos);
+      } else {
+        console.warn("Fabric.js not loaded – Creative Studio canvas disabled.");
+      }
+    }
+
+    // Direct open from Step 3 button (if you add one somewhere else)
     if (openCreativeStudioBtn) {
       openCreativeStudioBtn.addEventListener("click", () => {
-        console.log("🎨 Open Canvas Studio (empty)");
-        showOverlay();
-        if (typeof fabric !== "undefined") {
-          ensureCreativeCanvas(false);
-        } else {
-          console.warn("Fabric.js not loaded – Creative Studio canvas disabled.");
-        }
+        openCreativeStudio(false);
+      });
+    }
+
+    // NEW: Right-side floating Canvas Studio button
+    if (canvasLauncher) {
+      canvasLauncher.addEventListener("click", () => {
+        openCreativeStudio(false);
       });
     }
 
@@ -1129,15 +1144,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sendPhotosToStudioBtn) {
       sendPhotosToStudioBtn.addEventListener("click", () => {
         if (!latestPhotoUrls || !latestPhotoUrls.length) return;
-        console.log("🎨 Open Canvas Studio with dealer photos");
-        showOverlay();
-        if (typeof fabric !== "undefined") {
-          ensureCreativeCanvas(true);
-        } else {
-          console.warn(
-            "Fabric.js not loaded – Creative Studio canvas disabled."
-          );
-        }
+        openCreativeStudio(true);
       });
     }
 
@@ -1145,18 +1152,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sendAllToCanvasBtn) {
       sendAllToCanvasBtn.addEventListener("click", () => {
         if (!uploadedPhotoUrls || !uploadedPhotoUrls.length) return;
+        // Replace pool with uploads for this pathway
         latestPhotoUrls = uploadedPhotoUrls.slice();
-        console.log("🎨 Open Canvas Studio with uploaded photos");
-        showOverlay();
-        if (typeof fabric !== "undefined") {
-          ensureCreativeCanvas(true);
-        } else {
-          console.warn(
-            "Fabric.js not loaded – Creative Studio canvas disabled."
-          );
-        }
+        openCreativeStudio(true);
       });
     }
+
 
     if (closeCreativeStudioBtn) {
       closeCreativeStudioBtn.addEventListener("click", hideOverlay);
