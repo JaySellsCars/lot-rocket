@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5
+// public/app.js – Lot Rocket frontend logic v2.5.3
 // PROTECTED: theme toggle, Boost button wiring, calculator + modal wiring.
 // Extensions: selectable dealer photos + Creative Hub drag & drop + Canvas Studio.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5");
+  console.log("✅ Lot Rocket frontend loaded v2.5.3");
 
   const apiBase = "";
 
@@ -69,24 +69,16 @@ document.addEventListener("DOMContentLoaded", () => {
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
-      // little green check element – only visible when selected via CSS
-      const check = document.createElement("span");
-      check.className = "photo-thumb-check";
-      check.textContent = "✓";
-
       wrapper.appendChild(img);
-      wrapper.appendChild(check);
       photosGrid.appendChild(wrapper);
     });
 
-    // click to toggle selected
+    // Re-attach click handlers
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
-        if (!Number.isNaN(idx) && dealerPhotos[idx]) {
-          dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-          renderDealerPhotos();
-        }
+        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
+        renderDealerPhotos();
       });
     });
   }
@@ -95,8 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!vehicleUrlInput || !boostButton) return;
 
     const url = vehicleUrlInput.value.trim();
-    const labelOverride = (vehicleLabelInput && vehicleLabelInput.value.trim()) || "";
-    const priceOverride = (priceInfoInput && priceInfoInput.value.trim()) || "";
+    const labelOverride = vehicleLabelInput?.value.trim() || "";
+    const priceOverride = priceInfoInput?.value.trim() || "";
 
     if (!url) {
       alert("Paste a full dealer URL first.");
@@ -148,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – cap to 40 so it doesn’t go insane
+      // Photos from backend – cap to 40 so it doesn't go insane
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
@@ -157,13 +149,17 @@ document.addEventListener("DOMContentLoaded", () => {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
 
-      if (statusText) statusText.textContent = "Social kit ready ✔";
+      // Visually mark kit as ready for Step 2
       document.body.classList.add("kit-ready");
+
+      if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
       console.error("Boost error:", err);
       if (statusText)
         statusText.textContent =
-          (err && err.message) || "Failed to build kit. Try again in a moment.";
+          err && err.message
+            ? err.message
+            : "Failed to build kit. Try again in a moment.";
     } finally {
       if (boostButton) boostButton.disabled = false;
     }
@@ -181,25 +177,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const el = document.getElementById(targetId);
       if (!el) return;
 
-      if (el.value.trim() === "") {
-        btn.classList.add("empty");
-        btn.textContent = "Empty";
-        setTimeout(() => {
-          btn.classList.remove("empty");
-          btn.textContent = "Copy";
-        }, 1200);
-        return;
-      }
-
       el.select();
       el.setSelectionRange(0, 99999);
       document.execCommand("copy");
 
       btn.classList.add("copied");
+      const original = btn.textContent;
       btn.textContent = "Copied!";
       setTimeout(() => {
+        btn.textContent = original;
         btn.classList.remove("copied");
-        btn.textContent = "Copy";
       }, 1500);
     });
   });
@@ -222,13 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const label =
-          (vehicleLabelInput && vehicleLabelInput.value.trim()) ||
-          (summaryLabel && summaryLabel.textContent) ||
-          "";
+          vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
         const price =
-          (priceInfoInput && priceInfoInput.value.trim()) ||
-          (summaryPrice && summaryPrice.textContent) ||
-          "";
+          priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
 
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
@@ -242,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error((data && data.message) || "Error");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
 
         const text = data.text || "";
         let targetId = "";
@@ -279,8 +262,9 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("regen error", err);
         alert(
-          (err && err.message) ||
-            "Failed to generate a new post. Try again."
+          err && err.message
+            ? err.message
+            : "Failed to generate a new post. Try again."
         );
       } finally {
         btn.disabled = false;
@@ -345,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error((data && data.message) || "Error");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
         console.error("payment-helper error", err);
@@ -375,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error((data && data.message) || "Error");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
         console.error("income-helper error", err);
@@ -405,7 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error((data && data.message) || "Error");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
         console.error("objection-coach error", err);
@@ -438,12 +422,11 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error((data && data.message) || "Error");
+        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
         if (output) output.value = data.text || "";
       } catch (err) {
         console.error("message-helper error", err);
-        if (output)
-          output.value = "Lot Rocket hit a snag. Try again in a moment.";
+        if (output) output.value = "Lot Rocket hit a snag. Try again in a moment.";
       }
     });
   }
@@ -486,21 +469,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
   let currentTool = "select";
-  let localCreativePhotos = []; // URLs from drag/drop, uploads or dealer photos
 
   // ----- Canvas helpers -----
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
-
     if (typeof fabric === "undefined") {
-      console.error("❌ Fabric.js is not loaded. Check script tag.");
+      console.error("Fabric.js not loaded");
       return null;
     }
-
     creativeCanvas = new fabric.Canvas("creativeCanvas", {
       preserveObjectStacking: true,
     });
-    console.log("🎨 Creative canvas initialized");
     saveCanvasState();
     return creativeCanvas;
   }
@@ -524,35 +503,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
-    if (!canvas) return;
+    if (!canvas || !url) return;
 
-    console.log("🖼️ Adding image to canvas:", url);
+    console.log("🖼️ addImageFromUrl:", url);
 
-    fabric.Image.fromURL(
-      url,
-      (img) => {
-        const scale = Math.min(
-          canvas.width / (img.width * 1.2),
-          canvas.height / (img.height * 1.2),
-          1
-        );
-        img.set({
-          left: canvas.width / 2,
-          top: canvas.height / 2,
-          originX: "center",
-          originY: "center",
-          selectable: true,
-        });
-        img.scale(scale);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        saveCanvasState();
-      },
-      {
-        crossOrigin: "anonymous",
+    fabric.Image.fromURL(url, (img) => {
+      if (!img) {
+        console.error("Fabric could not load image:", url);
+        return;
       }
-    );
+      const scale = Math.min(
+        canvas.width / (img.width * 1.2),
+        canvas.height / (img.height * 1.2),
+        1
+      );
+      img.set({
+        left: canvas.width / 2,
+        top: canvas.height / 2,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+      });
+      img.scale(scale);
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+      saveCanvasState();
+    });
   }
 
   function addRectBanner() {
@@ -643,6 +620,7 @@ document.addEventListener("DOMContentLoaded", () => {
       canvas.setHeight(h);
       canvas.calcOffset();
       canvas.renderAll();
+      saveCanvasState();
     });
   }
 
@@ -677,11 +655,18 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeExportPng.addEventListener("click", () => {
       const canvas = ensureCanvas();
       if (!canvas) return;
-      const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "lot-rocket-creative.png";
-      a.click();
+      try {
+        const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "lot-rocket-creative.png";
+        a.click();
+      } catch (err) {
+        console.error("Export PNG error (likely CORS):", err);
+        alert(
+          "Browser blocked exporting this image (CORS). The overlay still works for social, but exporting might be limited on some dealer images."
+        );
+      }
     });
   }
 
@@ -722,8 +707,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
         addImageFromUrl(url);
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
       });
       creativeImageInput.value = "";
     });
@@ -758,7 +741,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addCreativeThumb(url) {
-    if (!creativeThumbGrid) return;
+    if (!creativeThumbGrid || !url) return;
     const img = document.createElement("img");
     img.src = url;
     img.alt = "Creative photo";
@@ -775,12 +758,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     creativeThumbGrid.appendChild(img);
-
-    // If no preview yet, set the first one
-    if (tunerPreviewImg && !tunerPreviewImg.src) {
-      tunerPreviewImg.src = url;
-      applyTunerFilters();
-    }
   }
 
   function handleCreativeFiles(fileList) {
@@ -790,8 +767,11 @@ document.addEventListener("DOMContentLoaded", () => {
     files.forEach((file) => {
       if (!file.type.startsWith("image/")) return;
       const url = URL.createObjectURL(file);
-      localCreativePhotos.push(url);
       addCreativeThumb(url);
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
+      }
     });
   }
 
@@ -821,54 +801,68 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     photoDropZone.addEventListener("drop", (e) => {
       const dt = e.dataTransfer;
-      if (!dt || !dt.files) return;
-      handleCreativeFiles(dt.files);
+      if (dt && dt.files && dt.files.length) {
+        handleCreativeFiles(dt.files);
+      }
     });
   }
 
-  // ----- Send ALL Creative Hub photos to Canvas -----
+  // Gather URLs currently visible in Creative Hub / dealer selection
+  function gatherImageUrlsForCanvas() {
+    const urls = [];
+
+    if (creativeThumbGrid) {
+      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+        if (img.src) urls.push(img.src);
+      });
+    }
+
+    // Fallback: directly selected dealer photos
+    if (!urls.length && photosGrid) {
+      photosGrid
+        .querySelectorAll(".photo-thumb-btn.photo-thumb-selected img")
+        .forEach((img) => {
+          if (img.src) urls.push(img.src);
+        });
+    }
+
+    return urls;
+  }
+
+  // "Send All to Canvas Studio" – uses whatever is in the Creative Hub thumbnails
   if (sendAllToCanvasBtn) {
     sendAllToCanvasBtn.addEventListener("click", () => {
-      if (!localCreativePhotos.length) {
-        alert("Add or drop some photos into Step 3 first.");
+      const urls = gatherImageUrlsForCanvas();
+      if (!urls.length) {
+        alert("Add or select some photos in the Creative Lab first.");
         return;
       }
       openCreativeStudio();
-      localCreativePhotos.forEach((url) => addImageFromUrl(url));
+      urls.forEach((url) => addImageFromUrl(url));
     });
   }
 
   // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
   if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-
     sendPhotosToStudioBtn.addEventListener("click", () => {
       if (!dealerPhotos.length) {
         alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
       }
-
-      // pull only selected photos
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-
-      // fallback → if none selected, send first 8
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+        .slice(0, 8); // up to 8 images
 
       if (!chosen.length) {
         alert("No photos selected.");
         return;
       }
 
-      // Add to Creative Hub thumbnails
+      // Also show them inside the Creative Hub thumbnails for tuning
       chosen.forEach((url) => {
-        localCreativePhotos.push(url);
         addCreativeThumb(url);
       });
 
-      // And drop into Canvas Studio
       openCreativeStudio();
       chosen.forEach((url) => addImageFromUrl(url));
     });
@@ -876,4 +870,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ Lot Rocket frontend wiring complete");
 });
-
