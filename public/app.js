@@ -714,34 +714,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ----- Drag & Drop + thumbnails in Step 3 -----
 
-  function applyTunerFilters() {
-    if (!tunerPreviewImg) return;
-    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
-    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
-    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
-    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
-  }
-
-  if (tunerBrightness) {
-    tunerBrightness.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerContrast) {
-    tunerContrast.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerSaturation) {
-    tunerSaturation.addEventListener("input", applyTunerFilters);
-  }
-  if (autoEnhanceBtn) {
-    autoEnhanceBtn.addEventListener("click", () => {
-      if (tunerBrightness) tunerBrightness.value = "115";
-      if (tunerContrast) tunerContrast.value = "115";
-      if (tunerSaturation) tunerSaturation.value = "120";
-      applyTunerFilters();
-    });
-  }
-
   function addCreativeThumb(url) {
-    if (!creativeThumbGrid || !url) return;
+    if (!creativeThumbGrid) return;
     const img = document.createElement("img");
     img.src = url;
     img.alt = "Creative photo";
@@ -762,12 +736,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
+    console.log("[LotRocket] handleCreativeFiles: got", files.length, "files");
     if (!files.length) return;
 
     files.forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
+      if (!file || !file.type || !file.type.startsWith("image/")) return;
       const url = URL.createObjectURL(file);
+      localCreativePhotos.push(url);
       addCreativeThumb(url);
+
+      // If no preview yet, use the first image dropped
       if (tunerPreviewImg && !tunerPreviewImg.src) {
         tunerPreviewImg.src = url;
         applyTunerFilters();
@@ -776,36 +754,71 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (photoDropZone && photoFileInput) {
+    // Click → open file picker
     photoDropZone.addEventListener("click", () => {
       photoFileInput.click();
     });
 
+    // File picker change
     photoFileInput.addEventListener("change", (e) => {
       handleCreativeFiles(e.target.files);
       photoFileInput.value = "";
     });
 
-    ["dragenter", "dragover"].forEach((evt) => {
-      photoDropZone.addEventListener(evt, (e) => {
+    // Highlight on drag over
+    ["dragenter", "dragover"].forEach((evtName) => {
+      photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.add("photo-dropzone-active");
+        photoDropZone.classList.add("dragover");
       });
     });
-    ["dragleave", "dragend", "drop"].forEach((evt) => {
-      photoDropZone.addEventListener(evt, (e) => {
+
+    // Remove highlight
+    ["dragleave", "dragend"].forEach((evtName) => {
+      photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.remove("photo-dropzone-active");
+        photoDropZone.classList.remove("dragover");
       });
     });
+
+    // Handle drop
     photoDropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoDropZone.classList.remove("dragover");
+
       const dt = e.dataTransfer;
-      if (dt && dt.files && dt.files.length) {
-        handleCreativeFiles(dt.files);
+      let files = dt && dt.files;
+      console.log(
+        "[LotRocket] drop event; types:",
+        dt ? dt.types : "none",
+        "fileCount:",
+        files ? files.length : 0
+      );
+
+      // Fallback: some browsers expose files via dataTransfer.items
+      if ((!files || !files.length) && dt && dt.items) {
+        const collected = [];
+        for (const item of dt.items) {
+          if (item.kind === "file") {
+            const f = item.getAsFile();
+            if (f) collected.push(f);
+          }
+        }
+        files = collected;
       }
+
+      if (!files || !files.length) {
+        console.log("[LotRocket] drop had no files");
+        return;
+      }
+
+      handleCreativeFiles(files);
     });
   }
+
 
   // Gather URLs currently visible in Creative Hub / dealer selection
   function gatherImageUrlsForCanvas() {
