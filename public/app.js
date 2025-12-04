@@ -530,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================
-  // PHOTO EDITOR – STEP 3 CREATIVE HUB (FIXED)
+  // PHOTO EDITOR – STEP 3 CREATIVE HUB (DEBUGGED)
   // =====================================================
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
@@ -541,30 +541,44 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 
-  if (tunerPreviewImg && !tunerPreviewImg.src) {
-    tunerPreviewImg.style.display = "none";
+  let hasLoadedTunerOnce = false;
+
+  if (!photoDropZone) {
+    console.warn("⚠️ Step 3: #photoDropZone not found in DOM");
+  } else {
+    console.log("✅ Step 3: photoDropZone wired");
+  }
+  if (!photoFileInput) {
+    console.warn("⚠️ Step 3: #photoFileInput not found in DOM");
   }
 
   function applyTunerFilters() {
-    if (!tunerPreviewImg || !tunerPreviewImg.src) return;
-
-    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
-    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
-    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
-
+    if (!tunerPreviewImg) return;
+    const b = tunerBrightness ? tunerBrightness.value : 100;
+    const c = tunerContrast ? tunerContrast.value : 100;
+    const s = tunerSaturation ? tunerSaturation.value : 100;
     tunerPreviewImg.style.filter =
       `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
+  // keep global so Step 1 thumbnails can call it
   function setTunerImage(src) {
-    if (!tunerPreviewImg || !src) return;
+    if (!tunerPreviewImg || !src) {
+      console.warn("setTunerImage called without image or src");
+      return;
+    }
+    console.log("🖼️ setTunerImage ->", src.slice(0, 80));
     tunerPreviewImg.src = src;
     tunerPreviewImg.style.display = "block";
     applyTunerFilters();
   }
 
+  // expose to other helpers
+  window.setTunerImage = setTunerImage;
+
   function addThumb(src) {
     if (!creativeThumbGrid) return;
+    console.log("➕ Adding thumbnail", src.slice(0, 80));
     const img = document.createElement("img");
     img.src = src;
     img.alt = "Uploaded photo";
@@ -573,59 +587,60 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeThumbGrid.appendChild(img);
   }
 
-  function handleDroppedFiles(fileList) {
-    if (!fileList || !fileList.length) {
-      console.warn("📂 handleDroppedFiles called with empty file list");
+  function handleDroppedFiles(files) {
+    if (!files || !files.length) {
+      console.warn("📭 handleDroppedFiles called with empty FileList");
       return;
     }
 
-    const files = Array.from(fileList);
-    files.forEach((file) => {
-      const isImage =
-        (file.type && file.type.startsWith("image/")) ||
-        /\.(png|jpe?g|webp|gif|heic)$/i.test(file.name || "");
+    console.log("📥 handleDroppedFiles: got", files.length, "file(s)");
 
-      if (!isImage) {
-        console.warn("⛔ Skipping non-image file:", file.name);
+    let anyImage = false;
+
+    Array.from(files).forEach((file) => {
+      console.log("   · file:", file.name, "| type:", file.type);
+      if (!file.type || !file.type.startsWith("image/")) {
+        console.warn("   ⏭️ Skipping non-image file:", file.name);
         return;
       }
+      anyImage = true;
 
       const reader = new FileReader();
-
       reader.onload = (ev) => {
-        const dataUrl = ev.target && ev.target.result;
-        if (!dataUrl) {
-          console.error("❌ FileReader produced no data URL for", file.name);
-          return;
-        }
+        const dataUrl = ev.target.result;
+        console.log("   ✅ FileReader loaded image:", file.name);
 
-        // Track uploads for Creative Studio
+        // Remember uploads for Canvas Studio
         uploadedPhotoUrls.push(dataUrl);
-
-        // Keep dealer photos + uploads together for canvas
-        latestPhotoUrls = [...latestPhotoUrls, dataUrl];
+        latestPhotoUrls = uploadedPhotoUrls.slice();
 
         addThumb(dataUrl);
-        setTunerImage(dataUrl); // always show latest upload
 
-        console.log("📷 Uploaded image wired into tuner & canvas pool:", file.name);
+        // First uploaded image becomes the tuner preview
+        if (!hasLoadedTunerOnce) {
+          setTunerImage(dataUrl);
+          hasLoadedTunerOnce = true;
+        }
       };
-
       reader.onerror = (err) => {
-        console.error("❌ FileReader error for", file.name, err);
+        console.error("   ❌ FileReader error for", file.name, err);
       };
-
       reader.readAsDataURL(file);
     });
+
+    if (!anyImage) {
+      console.warn("⚠️ No image/* files in dropped selection");
+    }
   }
 
-  // Drag & drop wiring
+  // Drag & drop wiring for the zone
   if (photoDropZone) {
+    // highlight when dragging over
     ["dragenter", "dragover"].forEach((evtName) => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.add("photo-dropzone-hover");
+        photoDropZone.classList.add("dragover");
       });
     });
 
@@ -633,55 +648,50 @@ document.addEventListener("DOMContentLoaded", () => {
       photoDropZone.addEventListener(evtName, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.remove("photo-dropzone-hover");
+        photoDropZone.classList.remove("dragover");
       });
     });
 
     photoDropZone.addEventListener("drop", (e) => {
       const files = e.dataTransfer && e.dataTransfer.files;
-      console.log("📥 Drop event, files:", files ? files.length : 0);
+      console.log("📦 DROP event on zone. files length =",
+                  files ? files.length : 0);
       handleDroppedFiles(files);
     });
 
     // Click to open file picker
     photoDropZone.addEventListener("click", () => {
-      if (photoFileInput) {
-        photoFileInput.click();
-      }
+      console.log("🖱️ photoDropZone clicked -> open file picker");
+      if (photoFileInput) photoFileInput.click();
     });
-  } else {
-    console.warn("⚠️ photoDropZone not found – Step 3 uploader inactive");
   }
 
   // File input → same handler
   if (photoFileInput) {
     photoFileInput.addEventListener("change", (e) => {
-      console.log(
-        "📁 File input change, files:",
-        e.target.files ? e.target.files.length : 0
-      );
-      handleDroppedFiles(e.target.files);
-      photoFileInput.value = "";
+      const files = e.target.files;
+      console.log("📁 Input change: files length =", files ? files.length : 0);
+      handleDroppedFiles(files);
+      photoFileInput.value = ""; // reset
     });
-  } else {
-    console.warn("⚠️ photoFileInput not found – click uploader inactive");
   }
 
-  // Sliders → live filters
+  // Slider wiring
   [tunerBrightness, tunerContrast, tunerSaturation].forEach((slider) => {
     if (!slider) return;
     slider.addEventListener("input", applyTunerFilters);
   });
 
-  // One-tap “Make it pop”
   if (autoEnhanceBtn) {
     autoEnhanceBtn.addEventListener("click", () => {
+      console.log("✨ Auto Enhance clicked");
       if (tunerBrightness) tunerBrightness.value = 110;
       if (tunerContrast) tunerContrast.value = 115;
       if (tunerSaturation) tunerSaturation.value = 120;
       applyTunerFilters();
     });
   }
+
 
   // =====================================================
   // COMMON MONEY HELPER
