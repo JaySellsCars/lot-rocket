@@ -343,18 +343,18 @@
     </button>
   </aside>
 
-  <!-- ######## CREATIVE STUDIO OVERLAY ######## -->
+  <!-- ######## CREATIVE STUDIO OVERLAY – DESIGN STUDIO 3.0 ######## -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
     <div class="creative-modal">
       <div class="creative-header">
-        <h2>Creative Studio</h2>
+        <h2>Design Studio 3.0</h2>
         <button id="creativeClose" class="modal-close-btn">✕</button>
       </div>
 
       <div class="creative-top-bar">
         <div class="preset-label">
           <span>Canvas preset</span>
-          <select id="creativeCanvasPreset">
+          <select id="studioSizePreset">
             <option value="1080x1080">Square – 1080x1080</option>
             <option value="1080x1920">Story – 1080x1920</option>
             <option value="1920x1080">Landscape – 1920x1080</option>
@@ -362,84 +362,70 @@
         </div>
 
         <div class="creative-actions">
-          <button id="creativeUndo">Undo</button>
-          <button id="creativeRedo">Redo</button>
-          <button id="creativeDelete">Delete</button>
-          <button id="creativeExportPng">Export PNG</button>
+          <button id="studioUndoBtn">Undo</button>
+          <button id="studioRedoBtn">Redo</button>
+          <button id="studioExportPng">Export PNG</button>
         </div>
       </div>
 
       <div class="creative-body">
+        <!-- LEFT SIDE: Tools -->
         <aside class="creative-tools">
           <h3>Tools</h3>
-          <button
-            class="tool-btn tool-btn-active"
-            data-tool="select"
-          >Select / Move</button>
-          <button class="tool-btn" data-tool="uploadImage">Add Photo</button>
-          <button class="tool-btn" data-tool="addText">Add Text</button>
-          <button class="tool-btn" data-tool="addRect">Banner Bar</button>
-          <button class="tool-btn" data-tool="addBadge">Price Badge</button>
-          <input
-            id="creativeImageInput"
-            type="file"
-            class="hidden-input"
-            accept="image/*"
-          />
+          <button id="toolAddText" class="tool-btn">Add Text</button>
+          <button id="toolAddShape" class="tool-btn">Add Shape</button>
+          <button id="toolAddBadge" class="tool-btn">Add Badge</button>
+          <button id="toolSetBackground" class="tool-btn">Set Background</button>
         </aside>
 
+        <!-- CENTER: Konva Stage -->
         <div class="creative-canvas-wrap">
-          <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
+          <div id="konvaStageContainer" class="studio-canvas-container"></div>
         </div>
 
+        <!-- RIGHT SIDE: Layers / Properties -->
         <aside class="creative-properties">
           <div class="prop-group">
-            <h4>Shape / Image</h4>
-            <label>
-              Fill color
-              <input type="color" id="propFillColor" value="#ffffff" />
-            </label>
-            <label>
-              Stroke color
-              <input type="color" id="propStrokeColor" value="#000000" />
-            </label>
-            <label>
-              Stroke width
-              <input
-                type="number"
-                id="propStrokeWidth"
-                min="0"
-                max="20"
-                value="0"
-              />
-            </label>
+            <h4>Layers</h4>
+            <ul id="layersList" class="layers-list"></ul>
           </div>
 
-          <div class="prop-group" id="textOptions" style="display:none;">
-            <h4>Text</h4>
+          <div class="prop-group">
+            <h4>Selected Layer</h4>
+            <label>
+              Text
+              <input id="layerTextInput" type="text" placeholder="Edit text…" />
+            </label>
             <label>
               Font size
               <input
+                id="layerFontSizeInput"
                 type="number"
-                id="propFontSize"
-                value="48"
-                min="10"
+                min="8"
                 max="120"
+                value="40"
               />
             </label>
             <label>
-              Align
-              <select id="propTextAlign">
-                <option value="left">Left</option>
-                <option value="center" selected>Center</option>
-                <option value="right">Right</option>
-              </select>
+              Opacity
+              <input
+                id="layerOpacityInput"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value="1"
+              />
             </label>
+            <button id="layerDeleteBtn" class="btn-danger full-width-bar">
+              Delete Layer
+            </button>
           </div>
         </aside>
       </div>
     </div>
   </div>
+
 
   <!-- ========= SIDE MODALS FOR TOOLS ========= -->
 
