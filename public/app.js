@@ -941,5 +941,436 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ==========================================
+  // DESIGN STUDIO 3.0 (Konva – runs alongside Fabric)
+  // ==========================================
+
+  const designStudioOverlay = document.getElementById("designStudioOverlay");
+  const designLauncher = document.getElementById("designLauncher");
+  const designCloseBtn = document.getElementById("designClose");
+
+  const studioSizePreset = document.getElementById("studioSizePreset");
+  const studioUndoBtn = document.getElementById("studioUndoBtn");
+  const studioRedoBtn = document.getElementById("studioRedoBtn");
+  const studioExportPng = document.getElementById("studioExportPng");
+
+  const toolAddText = document.getElementById("toolAddText");
+  const toolAddShape = document.getElementById("toolAddShape");
+  const toolAddBadge = document.getElementById("toolAddBadge");
+  const toolSetBackground = document.getElementById("toolSetBackground");
+
+  const layersList = document.getElementById("layersList");
+  const layerTextInput = document.getElementById("layerTextInput");
+  const layerFontSizeInput = document.getElementById("layerFontSizeInput");
+  const layerOpacityInput = document.getElementById("layerOpacityInput");
+  const layerDeleteBtn = document.getElementById("layerDeleteBtn");
+
+  let studioStage = null;
+  let studioLayer = null;
+  let studioSelectedNode = null;
+  let studioHistory = [];
+  let studioHistoryIndex = -1;
+
+  function initDesignStudio() {
+    if (!window.Konva) {
+      console.warn("Konva not loaded – Design Studio 3.0 disabled.");
+      return;
+    }
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) {
+      console.warn("konvaStageContainer not found.");
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const width = rect.width || 1080;
+    const height = rect.height || 1080;
+
+    studioStage = new Konva.Stage({
+      container: "konvaStageContainer",
+      width,
+      height,
+    });
+
+    studioLayer = new Konva.Layer();
+    studioStage.add(studioLayer);
+
+    // Resize with window
+    window.addEventListener("resize", () => {
+      const r = container.getBoundingClientRect();
+      studioStage.width(r.width || width);
+      studioStage.height(r.height || height);
+      studioStage.draw();
+    });
+
+    wireDesignStudioUI();
+    setStudioBackground("#111111");
+    saveStudioHistory();
+  }
+
+  // ---------- History (undo / redo) ----------
+  function saveStudioHistory() {
+    if (!studioStage) return;
+    const json = studioStage.toJSON();
+    studioHistory = studioHistory.slice(0, studioHistoryIndex + 1);
+    studioHistory.push(json);
+    studioHistoryIndex = studioHistory.length - 1;
+  }
+
+  function restoreStudioFromHistory(index) {
+    if (!studioStage || index < 0 || index >= studioHistory.length) return;
+    studioHistoryIndex = index;
+    const json = studioHistory[index];
+
+    const container = studioStage.container();
+    const w = studioStage.width();
+    const h = studioStage.height();
+
+    studioStage.destroy();
+    studioStage = Konva.Node.create(json, container);
+    studioStage.width(w);
+    studioStage.height(h);
+
+    studioLayer = studioStage.getLayers()[0] || new Konva.Layer();
+    if (!studioStage.getLayers().length) {
+      studioStage.add(studioLayer);
+    }
+
+    studioSelectedNode = null;
+    rebuildLayersList();
+  }
+
+  function studioUndo() {
+    if (studioHistoryIndex > 0) {
+      restoreStudioFromHistory(studioHistoryIndex - 1);
+    }
+  }
+
+  function studioRedo() {
+    if (studioHistoryIndex < studioHistory.length - 1) {
+      restoreStudioFromHistory(studioHistoryIndex + 1);
+    }
+  }
+
+  // ---------- Selection + layers ----------
+  function selectStudioNode(node) {
+    studioSelectedNode = node;
+    rebuildLayersList();
+    syncLayerControlsWithSelection();
+  }
+
+  function rebuildLayersList() {
+    if (!layersList || !studioLayer) return;
+    layersList.innerHTML = "";
+    const nodes = studioLayer.getChildren();
+
+    nodes.forEach((node, index) => {
+      const li = document.createElement("li");
+      li.className = "layer-item";
+      li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
+      if (node === studioSelectedNode) {
+        li.classList.add("layer-item-selected");
+      }
+      li.addEventListener("click", () => {
+        selectStudioNode(node);
+      });
+      layersList.appendChild(li);
+    });
+  }
+
+  function syncLayerControlsWithSelection() {
+    if (!studioSelectedNode) {
+      if (layerTextInput) layerTextInput.value = "";
+      if (layerFontSizeInput) layerFontSizeInput.value = "";
+      if (layerOpacityInput) layerOpacityInput.value = 1;
+      return;
+    }
+
+    if (studioSelectedNode.className === "Text") {
+      if (layerTextInput) layerTextInput.value = studioSelectedNode.text() || "";
+      if (layerFontSizeInput)
+        layerFontSizeInput.value = studioSelectedNode.fontSize() || 40;
+    } else {
+      if (layerTextInput) layerTextInput.value = "";
+      if (layerFontSizeInput) layerFontSizeInput.value = "";
+    }
+
+    if (layerOpacityInput) {
+      layerOpacityInput.value = studioSelectedNode.opacity() ?? 1;
+    }
+  }
+
+  function attachNodeInteractions(node) {
+    node.on("click tap", () => {
+      selectStudioNode(node);
+    });
+    node.on("dragend transformend", () => {
+      saveStudioHistory();
+    });
+  }
+
+  // ---------- Add elements ----------
+  function addStudioText(text = "YOUR HEADLINE HERE") {
+    if (!studioLayer || !studioStage) return;
+
+    const node = new Konva.Text({
+      x: studioStage.width() / 2,
+      y: 120,
+      text,
+      fontFamily: "system-ui, sans-serif",
+      fontSize: 48,
+      fill: "#FFFFFF",
+      shadowColor: "black",
+      shadowBlur: 6,
+      shadowOffset: { x: 2, y: 2 },
+      shadowOpacity: 0.4,
+      align: "center",
+      offsetX: 0,
+      name: "Text Layer",
+      draggable: true,
+    });
+
+    node.offsetX(node.width() / 2);
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function addStudioShape() {
+    if (!studioLayer || !studioStage) return;
+    const width = studioStage.width() * 0.9;
+    const height = 170;
+
+    const node = new Konva.Rect({
+      x: studioStage.width() / 2,
+      y: studioStage.height() - height,
+      width,
+      height,
+      fill: "#000000",
+      opacity: 0.7,
+      cornerRadius: 18,
+      offsetX: width / 2,
+      offsetY: height / 2,
+      name: "Banner Layer",
+      draggable: true,
+    });
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function addStudioBadge() {
+    if (!studioLayer || !studioStage) return;
+
+    const node = new Konva.Ring({
+      x: studioStage.width() - 180,
+      y: 160,
+      innerRadius: 70,
+      outerRadius: 90,
+      fill: "#FFFFFF",
+      stroke: "#FF2E2E",
+      strokeWidth: 6,
+      name: "Badge Layer",
+      draggable: true,
+    });
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function setStudioBackground(color = "#111111") {
+    if (!studioLayer || !studioStage) return;
+    let bg = studioLayer.findOne(".BackgroundLayer");
+    if (!bg) {
+      bg = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: studioStage.width(),
+        height: studioStage.height(),
+        fill: color,
+        name: "BackgroundLayer",
+        listening: false,
+      });
+      studioLayer.add(bg);
+      bg.moveToBottom();
+    } else {
+      bg.fill(color);
+      bg.width(studioStage.width());
+      bg.height(studioStage.height());
+    }
+    studioLayer.draw();
+    saveStudioHistory();
+  }
+
+  function addStudioImageFromUrl(url, asBackground = false) {
+    if (!studioLayer || !studioStage || !url) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const ratio = Math.min(
+        studioStage.width() / img.width,
+        studioStage.height() / img.height
+      );
+      const w = img.width * ratio;
+      const h = img.height * ratio;
+
+      const node = new Konva.Image({
+        image: img,
+        x: studioStage.width() / 2,
+        y: studioStage.height() / 2,
+        width: w,
+        height: h,
+        offsetX: w / 2,
+        offsetY: h / 2,
+        draggable: !asBackground,
+        name: asBackground ? "Background Photo" : "Photo Layer",
+      });
+
+      attachNodeInteractions(node);
+      studioLayer.add(node);
+      if (asBackground) node.moveToBottom();
+      studioLayer.draw();
+      selectStudioNode(node);
+      saveStudioHistory();
+    };
+    img.onerror = (err) => {
+      console.error("Design Studio: failed to load image", err);
+    };
+    img.src = url;
+  }
+
+  // ---------- Export + size presets ----------
+  function exportStudioAsPng() {
+    if (!studioStage) return;
+    const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = "lot-rocket-design.png";
+    a.click();
+  }
+
+  function applyStudioSizePreset() {
+    if (!studioStage || !studioLayer || !studioSizePreset) return;
+    const [w, h] = studioSizePreset.value.split("x").map(Number);
+    studioStage.width(w);
+    studioStage.height(h);
+
+    const bg = studioLayer.findOne(".BackgroundLayer");
+    if (bg) {
+      bg.width(w);
+      bg.height(h);
+    }
+
+    studioStage.draw();
+    saveStudioHistory();
+  }
+
+  // ---------- Wire Design Studio UI ----------
+  function wireDesignStudioUI() {
+    if (toolAddText) {
+      toolAddText.addEventListener("click", () => addStudioText());
+    }
+    if (toolAddShape) {
+      toolAddShape.addEventListener("click", () => addStudioShape());
+    }
+    if (toolAddBadge) {
+      toolAddBadge.addEventListener("click", () => addStudioBadge());
+    }
+    if (toolSetBackground) {
+      toolSetBackground.addEventListener("click", () => setStudioBackground("#111111"));
+    }
+
+    if (studioExportPng) {
+      studioExportPng.addEventListener("click", exportStudioAsPng);
+    }
+    if (studioUndoBtn) {
+      studioUndoBtn.addEventListener("click", studioUndo);
+    }
+    if (studioRedoBtn) {
+      studioRedoBtn.addEventListener("click", studioRedo);
+    }
+    if (studioSizePreset) {
+      studioSizePreset.addEventListener("change", applyStudioSizePreset);
+    }
+
+    if (layerTextInput) {
+      layerTextInput.addEventListener("input", () => {
+        if (studioSelectedNode && studioSelectedNode.className === "Text") {
+          studioSelectedNode.text(layerTextInput.value);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerFontSizeInput) {
+      layerFontSizeInput.addEventListener("input", () => {
+        if (studioSelectedNode && studioSelectedNode.className === "Text") {
+          const size = Number(layerFontSizeInput.value) || 40;
+          studioSelectedNode.fontSize(size);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerOpacityInput) {
+      layerOpacityInput.addEventListener("input", () => {
+        if (studioSelectedNode) {
+          const val = Number(layerOpacityInput.value);
+          studioSelectedNode.opacity(val);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerDeleteBtn) {
+      layerDeleteBtn.addEventListener("click", () => {
+        if (!studioSelectedNode || !studioLayer) return;
+        studioSelectedNode.destroy();
+        studioSelectedNode = null;
+        studioLayer.draw();
+        rebuildLayersList();
+        saveStudioHistory();
+      });
+    }
+  }
+
+  // ---------- Open / close wiring ----------
+  function openDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.remove("hidden");
+    if (!studioStage && window.Konva) {
+      initDesignStudio();
+    }
+  }
+
+  function closeDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.add("hidden");
+  }
+
+  if (designLauncher) {
+    designLauncher.addEventListener("click", openDesignStudio);
+  }
+  if (designCloseBtn && designStudioOverlay) {
+    designCloseBtn.addEventListener("click", closeDesignStudio);
+    designStudioOverlay.addEventListener("click", (e) => {
+      if (e.target === designStudioOverlay) closeDesignStudio();
+    });
+  }
+
   console.log("✅ Lot Rocket frontend wiring complete");
 });
+
