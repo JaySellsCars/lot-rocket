@@ -932,32 +932,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-        .slice(0, 8); // up to 8 images
+// ----- Wiring Step 1 "Send top photos to Design Studio 3.0" -----
+if (sendPhotosToStudioBtn) {
+  sendPhotosToStudioBtn.addEventListener("click", () => {
+    if (!dealerPhotos.length) {
+      alert("Boost a listing first so Lot Rocket can grab photos.");
+      return;
+    }
 
-      if (!chosen.length) {
-        alert("No photos selected.");
-        return;
-      }
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+      .slice(0, 8); // up to 8 images
 
-      // Also show them inside the Creative Hub thumbnails for tuning
-      chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-      });
+    if (!chosen.length) {
+      alert("No photos selected.");
+      return;
+    }
 
-      openCreativeStudio();
-      chosen.forEach((url) => addImageFromUrl(url));
+    // Open Konva Design Studio 3.0 instead of old Fabric canvas
+    openDesignStudio();
+
+    // First photo = background, others = draggable layers
+    chosen.forEach((url, index) => {
+      addStudioImageFromUrl(url, index === 0); // true => background layer
     });
-  }
+  });
+}
+
 
 
 
