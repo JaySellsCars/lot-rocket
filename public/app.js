@@ -916,6 +916,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
+  // "Send to Design Studio 3.0" – uses the same pool of images
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForCanvas();
+      if (!urls.length) {
+        alert("Add or select some photos in the Creative Lab first.");
+        return;
+      }
+
+      // Open the Konva-based Design Studio
+      openDesignStudio();
+
+      // First image = background, rest as draggable layers
+      urls.forEach((url, index) => {
+        addStudioImageFromUrl(url, index === 0); // true = background
+      });
+    });
+  }
+
   // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.addEventListener("click", () => {
@@ -942,6 +962,7 @@ document.addEventListener("DOMContentLoaded", () => {
       chosen.forEach((url) => addImageFromUrl(url));
     });
   }
+
 
   // ==========================================
   // DESIGN STUDIO 3.0 (Konva – runs alongside Fabric)
