@@ -49,17 +49,29 @@
 
         <label>
           Dealer Vehicle URL
-          <input type="text" id="vehicleUrl" placeholder="Paste full dealer listing URL here..." />
+          <input
+            type="text"
+            id="vehicleUrl"
+            placeholder="Paste full dealer listing URL here..."
+          />
         </label>
 
         <label>
           Vehicle Label (optional override)
-          <input type="text" id="vehicleLabel" placeholder="Example: 2024 Chevy Silverado LTZ 4x4" />
+          <input
+            type="text"
+            id="vehicleLabel"
+            placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
+          />
         </label>
 
         <label>
           Price / Offer (optional override)
-          <input type="text" id="priceInfo" placeholder="Example: $699/mo or $47,995 + tax" />
+          <input
+            type="text"
+            id="priceInfo"
+            placeholder="Example: $699/mo or $47,995 + tax"
+          />
         </label>
 
         <p class="small-note">
@@ -72,7 +84,9 @@
           <p>Price: <span id="summaryPrice">—</span></p>
         </div>
 
-        <button id="boostButton" class="primary-btn summary-btn">Boost This Listing</button>
+        <button id="boostButton" class="primary-btn summary-btn">
+          Boost This Listing
+        </button>
         <div id="statusText" class="status-text"></div>
       </div>
 
@@ -94,16 +108,17 @@
     <!-- STEP 2 – Social Media Kit     -->
     <!-- ============================== -->
     <section class="column-middle column">
-      <!-- Clean heading like Step 1 (no box) -->
       <h2>Step 2 – Social Media Kit</h2>
       <p class="small-note step2-subtitle">
         Copy, tweak, and paste into each platform. Spin fresh versions anytime.
       </p>
 
-      <!-- 8 Social Platform Cards -->
       <div class="platform-card step2-card">
         <h3>Facebook Post</h3>
-        <textarea id="facebookPost" placeholder="Facebook post will appear here after Boost."></textarea>
+        <textarea
+          id="facebookPost"
+          placeholder="Facebook post will appear here after Boost."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="facebook">New Post</button>
           <button class="copy-btn" data-copy-target="facebookPost">Copy</button>
@@ -112,7 +127,10 @@
 
       <div class="platform-card step2-card">
         <h3>Instagram Caption</h3>
-        <textarea id="instagramPost" placeholder="Instagram caption will appear here after Boost."></textarea>
+        <textarea
+          id="instagramPost"
+          placeholder="Instagram caption will appear here after Boost."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="instagram">New Post</button>
           <button class="copy-btn" data-copy-target="instagramPost">Copy</button>
@@ -121,7 +139,10 @@
 
       <div class="platform-card step2-card">
         <h3>TikTok Caption</h3>
-        <textarea id="tiktokPost" placeholder="TikTok caption + hook will appear here."></textarea>
+        <textarea
+          id="tiktokPost"
+          placeholder="TikTok caption + hook will appear here."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="tiktok">New Post</button>
           <button class="copy-btn" data-copy-target="tiktokPost">Copy</button>
@@ -130,7 +151,10 @@
 
       <div class="platform-card step2-card">
         <h3>LinkedIn Post</h3>
-        <textarea id="linkedinPost" placeholder="LinkedIn post will appear here."></textarea>
+        <textarea
+          id="linkedinPost"
+          placeholder="LinkedIn post will appear here."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="linkedin">New Post</button>
           <button class="copy-btn" data-copy-target="linkedinPost">Copy</button>
@@ -139,7 +163,10 @@
 
       <div class="platform-card step2-card">
         <h3>X / Twitter Post</h3>
-        <textarea id="twitterPost" placeholder="X / Twitter post will appear here."></textarea>
+        <textarea
+          id="twitterPost"
+          placeholder="X / Twitter post will appear here."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="twitter">New Post</button>
           <button class="copy-btn" data-copy-target="twitterPost">Copy</button>
@@ -148,7 +175,10 @@
 
       <div class="platform-card step2-card">
         <h3>Text / DM</h3>
-        <textarea id="textBlurb" placeholder="Short, high-converting text / DM will appear here."></textarea>
+        <textarea
+          id="textBlurb"
+          placeholder="Short, high-converting text / DM will appear here."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="text">New Text</button>
           <button class="copy-btn" data-copy-target="textBlurb">Copy</button>
@@ -157,7 +187,10 @@
 
       <div class="platform-card step2-card">
         <h3>Marketplace Listing</h3>
-        <textarea id="marketplacePost" placeholder="Marketplace description will appear here."></textarea>
+        <textarea
+          id="marketplacePost"
+          placeholder="Marketplace description will appear here."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="marketplace">New Post</button>
           <button class="copy-btn" data-copy-target="marketplacePost">Copy</button>
@@ -166,7 +199,10 @@
 
       <div class="platform-card step2-card">
         <h3>Hashtag Set</h3>
-        <textarea id="hashtags" placeholder="Hashtag set will appear here."></textarea>
+        <textarea
+          id="hashtags"
+          placeholder="Hashtag set will appear here."
+        ></textarea>
         <div class="btn-row">
           <button class="regen-btn" data-platform="hashtags">New Set</button>
           <button class="copy-btn" data-copy-target="hashtags">Copy</button>
@@ -174,56 +210,83 @@
       </div>
     </section>
 
-<!-- =============================== -->
-<!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
-<!-- =============================== -->
+    <!-- =============================== -->
+    <!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
+    <!-- =============================== -->
+    <section id="creativeHub" class="creative-hub">
+      <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
+      <div class="creative-left">
+        <h3>Photos</h3>
 
-<section id="creativeHub" class="creative-hub">
-  <!-- LEFT SIDE: Photo Dropzone + Thumbnails -->
-  <div class="creative-left">
-    <h3>Photos</h3>
+        <div id="photoDropZone" class="photo-dropzone">
+          <p>
+            Drag & Drop Photos Here<br />
+            <span>(or click to upload)</span>
+          </p>
+          <input
+            type="file"
+            id="photoFileInput"
+            accept="image/*"
+            multiple
+            hidden
+          />
+        </div>
 
-    <!-- Drag & Drop Zone -->
-    <div id="photoDropZone" class="photo-dropzone">
-      <p>Drag & Drop Photos Here<br><span>(or click to upload)</span></p>
-      <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
-    </div>
+        <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-    <!-- Thumbnails -->
-    <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
+        <button id="sendAllToCanvas" class="primary-btn full">
+          Send All to Canvas Studio
+        </button>
+      </div>
 
-    <button id="sendAllToCanvas" class="primary-btn full">
-      Send All to Canvas Studio
-    </button>
-  </div>
+      <!-- RIGHT SIDE: Photo Tuner -->
+      <div class="creative-right">
+        <h3>Photo Tuner</h3>
 
-  <!-- RIGHT SIDE: Photo Tuner -->
-  <div class="creative-right">
-    <h3>Photo Tuner</h3>
+        <div class="tuner-preview">
+          <img id="tunerPreviewImg" src="" alt="Preview" />
+        </div>
 
-    <div class="tuner-preview">
-      <img id="tunerPreviewImg" src="" alt="Preview" />
-    </div>
+        <div class="slider-block">
+          <label>Brightness</label>
+          <input
+            type="range"
+            id="tunerBrightness"
+            min="50"
+            max="150"
+            value="100"
+          />
+        </div>
 
-    <div class="slider-block">
-      <label>Brightness</label>
-      <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
-    </div>
+        <div class="slider-block">
+          <label>Contrast</label>
+          <input
+            type="range"
+            id="tunerContrast"
+            min="50"
+            max="150"
+            value="100"
+          />
+        </div>
 
-    <div class="slider-block">
-      <label>Contrast</label>
-      <input type="range" id="tunerContrast" min="50" max="150" value="100" />
-    </div>
+        <div class="slider-block">
+          <label>Saturation</label>
+          <input
+            type="range"
+            id="tunerSaturation"
+            min="50"
+            max="150"
+            value="100"
+          />
+        </div>
 
-    <div class="slider-block">
-      <label>Saturation</label>
-      <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
-    </div>
+        <button id="autoEnhanceBtn" class="secondary-btn full">
+          Auto Enhance
+        </button>
+      </div>
+    </section>
 
-    <button id="autoEnhanceBtn" class="secondary-btn full">Auto Enhance</button>
-  </div>
-</section>
-
+  </main>
 
   <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
   <aside class="floating-tools">
@@ -267,20 +330,14 @@
       <span class="tool-icon">🎬</span>
       <span class="tool-label">AI Video Generation</span>
     </button>
-    <!-- NEW: Dedicated Canvas Studio launcher -->
+    <!-- Dedicated Canvas Studio launcher -->
     <button id="canvasLauncher" class="tool-button">
       <span class="tool-icon">🎨</span>
       <span class="tool-label">Canvas Studio</span>
     </button>
   </aside>
 
-  <!-- ############ MODALS ############ -->
-  <!-- (rest of modals + Creative Studio overlay stay exactly as you had them) -->
-
-  <!-- Objection Coach -->
-  <!-- ... ALL YOUR MODAL HTML EXACTLY AS BEFORE ... -->
-
-  <!-- CREATIVE STUDIO OVERLAY -->
+  <!-- ######## CREATIVE STUDIO OVERLAY ######## -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
     <div class="creative-modal">
       <div class="creative-header">
@@ -309,12 +366,20 @@
       <div class="creative-body">
         <aside class="creative-tools">
           <h3>Tools</h3>
-          <button class="tool-btn tool-btn-active" data-tool="select">Select / Move</button>
+          <button
+            class="tool-btn tool-btn-active"
+            data-tool="select"
+          >Select / Move</button>
           <button class="tool-btn" data-tool="uploadImage">Add Photo</button>
           <button class="tool-btn" data-tool="addText">Add Text</button>
           <button class="tool-btn" data-tool="addRect">Banner Bar</button>
           <button class="tool-btn" data-tool="addBadge">Price Badge</button>
-          <input id="creativeImageInput" type="file" class="hidden-input" accept="image/*" />
+          <input
+            id="creativeImageInput"
+            type="file"
+            class="hidden-input"
+            accept="image/*"
+          />
         </aside>
 
         <div class="creative-canvas-wrap">
@@ -334,7 +399,13 @@
             </label>
             <label>
               Stroke width
-              <input type="number" id="propStrokeWidth" min="0" max="20" value="0" />
+              <input
+                type="number"
+                id="propStrokeWidth"
+                min="0"
+                max="20"
+                value="0"
+              />
             </label>
           </div>
 
@@ -342,7 +413,13 @@
             <h4>Text</h4>
             <label>
               Font size
-              <input type="number" id="propFontSize" value="48" min="10" max="120" />
+              <input
+                type="number"
+                id="propFontSize"
+                value="48"
+                min="10"
+                max="120"
+              />
             </label>
             <label>
               Align
