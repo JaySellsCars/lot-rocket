@@ -486,18 +486,21 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
   let currentTool = "select";
-  let localCreativePhotos = []; // URLs from drag/drop or file uploads
+  let localCreativePhotos = []; // URLs from drag/drop, uploads or dealer photos
 
   // ----- Canvas helpers -----
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
+
     if (typeof fabric === "undefined") {
-      console.error("Fabric.js not loaded");
+      console.error("❌ Fabric.js is not loaded. Check script tag.");
       return null;
     }
+
     creativeCanvas = new fabric.Canvas("creativeCanvas", {
       preserveObjectStacking: true,
     });
+    console.log("🎨 Creative canvas initialized");
     saveCanvasState();
     return creativeCanvas;
   }
@@ -523,6 +526,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = ensureCanvas();
     if (!canvas) return;
 
+    console.log("🖼️ Adding image to canvas:", url);
+
     fabric.Image.fromURL(
       url,
       (img) => {
@@ -544,7 +549,9 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.renderAll();
         saveCanvasState();
       },
-      { crossOrigin: "Anonymous" }
+      {
+        crossOrigin: "anonymous",
+      }
     );
   }
 
@@ -714,6 +721,7 @@ document.addEventListener("DOMContentLoaded", () => {
       Array.from(files).forEach((file) => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
+        addImageFromUrl(url);
         localCreativePhotos.push(url);
         addCreativeThumb(url);
       });
@@ -767,6 +775,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     creativeThumbGrid.appendChild(img);
+
+    // If no preview yet, set the first one
+    if (tunerPreviewImg && !tunerPreviewImg.src) {
+      tunerPreviewImg.src = url;
+      applyTunerFilters();
+    }
   }
 
   function handleCreativeFiles(fileList) {
@@ -778,10 +792,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const url = URL.createObjectURL(file);
       localCreativePhotos.push(url);
       addCreativeThumb(url);
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
     });
   }
 
@@ -799,14 +809,14 @@ document.addEventListener("DOMContentLoaded", () => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.add("dragover");
+        photoDropZone.classList.add("photo-dropzone-active");
       });
     });
     ["dragleave", "dragend", "drop"].forEach((evt) => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.remove("dragover");
+        photoDropZone.classList.remove("photo-dropzone-active");
       });
     });
     photoDropZone.addEventListener("drop", (e) => {
@@ -816,6 +826,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ----- Send ALL Creative Hub photos to Canvas -----
   if (sendAllToCanvasBtn) {
     sendAllToCanvasBtn.addEventListener("click", () => {
       if (!localCreativePhotos.length) {
@@ -839,23 +850,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // pull only selected photos
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+
       // fallback → if none selected, send first 8
-      const chosen = (selected.length
-        ? selected
-        : dealerPhotos.map((p) => p.src)
-      ).slice(0, 8);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+        0,
+        8
+      );
 
       if (!chosen.length) {
         alert("No photos selected.");
         return;
       }
 
-      // Also show them inside the Creative Hub thumbnails for tuning
+      // Add to Creative Hub thumbnails
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
       });
 
+      // And drop into Canvas Studio
       openCreativeStudio();
       chosen.forEach((url) => addImageFromUrl(url));
     });
@@ -863,3 +876,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ Lot Rocket frontend wiring complete");
 });
+
