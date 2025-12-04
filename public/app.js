@@ -47,9 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const hashtags = document.getElementById("hashtags");
 
   const photosGrid = document.getElementById("photosGrid");
-  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
+  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToCreativeStudio");
 
-  // Dealer photos state (allows selection)
+  // Dealer photos state (click-select)
   let dealerPhotos = []; // [{ src, selected }]
 
   function renderDealerPhotos() {
@@ -63,17 +63,24 @@ document.addEventListener("DOMContentLoaded", () => {
         "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
       wrapper.dataset.index = String(index);
 
+      // image
       const img = document.createElement("img");
       img.src = photo.src;
       img.alt = `Dealer photo ${index + 1}`;
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
+      // little check badge (visual checkbox)
+      const check = document.createElement("span");
+      check.className = "photo-thumb-check";
+      check.innerHTML = "✓";
+
       wrapper.appendChild(img);
+      wrapper.appendChild(check);
       photosGrid.appendChild(wrapper);
     });
 
-    // Re-attach click handlers for select / deselect
+    // click to toggle selected
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
@@ -140,19 +147,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – cap to 40 to avoid insane grids
+      // Photos from backend – cap to 40
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
-      // Enable / disable send-to-studio button
       if (sendPhotosToStudioBtn) {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
 
-      // Mark Step 2 visually "kit ready"
       document.body.classList.add("kit-ready");
-
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
       console.error("❌ Boost error:", err);
@@ -691,6 +695,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
         addImageFromUrl(url);
+        localCreativePhotos.push(url);
       });
       creativeImageInput.value = "";
     });
@@ -730,11 +735,10 @@ document.addEventListener("DOMContentLoaded", () => {
     img.src = url;
     img.alt = "Creative photo";
     img.loading = "lazy";
-    img.className = "creative-thumb";
 
     img.addEventListener("click", () => {
       document
-        .querySelectorAll(".creative-thumb.selected")
+        .querySelectorAll("#creativeThumbGrid img.selected")
         .forEach((el) => el.classList.remove("selected"));
       img.classList.add("selected");
       if (tunerPreviewImg) tunerPreviewImg.src = url;
@@ -753,7 +757,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const url = URL.createObjectURL(file);
       localCreativePhotos.push(url);
       addCreativeThumb(url);
-      // If no preview yet, set the first one
       if (tunerPreviewImg && !tunerPreviewImg.src) {
         tunerPreviewImg.src = url;
         applyTunerFilters();
@@ -775,14 +778,14 @@ document.addEventListener("DOMContentLoaded", () => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.add("photo-dropzone-active");
+        photoDropZone.classList.add("dragover"); // matches CSS
       });
     });
     ["dragleave", "dragend", "drop"].forEach((evt) => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
-        photoDropZone.classList.remove("photo-dropzone-active");
+        photoDropZone.classList.remove("dragover");
       });
     });
     photoDropZone.addEventListener("drop", (e) => {
@@ -811,10 +814,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // use only selected photos if any selected
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-
-      // if none selected, fall back to first 8 photos
       const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
         0,
         8
@@ -825,7 +825,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Also show them inside the Creative Hub thumbnails for tuning
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
