@@ -53,7 +53,6 @@ body {
   margin: 0;
   font-size: 1.6rem;
   letter-spacing: 0.04em;
-  /* branding heading tuned – Rocket-1 fix */
 }
 
 .branding p {
@@ -84,7 +83,6 @@ body {
 /* ====== MAIN LAYOUT GRID ====== */
 
 .layout {
-  /* top | right | bottom | left */
   padding: 1.5rem 15rem 3rem 3.5rem; /* bigger right buffer so Step 2 never touches tools */
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.6fr);
@@ -100,7 +98,7 @@ body {
   grid-row: 1;
 }
 
-/* Step 2 – right column, row 1 (we’ll grid its internals later) */
+/* Step 2 – right column, row 1 */
 .column-middle {
   grid-column: 2;
   grid-row: 1;
@@ -115,10 +113,10 @@ body {
 /* Center Step 3 content and cap width */
 .column-right .lab-card {
   max-width: 1180px;
-  margin: 0 auto 1rem;   /* center + keep existing spacing */
+  margin: 0 auto 1rem;
 }
 
-/* Step 3 two-column layout */
+/* Step 3 two-column layout (if you use it) */
 .step3-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -311,10 +309,9 @@ body.dark-theme .tool-button,
 body.dark-theme .copy-btn,
 body.dark-theme .regen-btn,
 body.dark-theme .basic-calc-btn {
-  color: #e5e7eb;          /* bright slate text on dark buttons */
+  color: #e5e7eb;
 }
 
-/* Make sure the tiny labels inside Step 2 buttons stay readable too */
 body.dark-theme .step2-card .regen-btn,
 body.dark-theme .step2-card .copy-btn {
   color: #e5e7eb;
@@ -376,7 +373,6 @@ body.dark-theme .step2-card .copy-btn {
 
 /* ===== STEP 2 COPY / NEW POST BUTTONS ===== */
 
-/* shrink row to hug buttons & sit at card bottom-right */
 .btn-row {
   display: inline-flex;
   align-self: flex-end;
@@ -385,7 +381,6 @@ body.dark-theme .step2-card .copy-btn {
   margin-top: 0.7rem;
 }
 
-/* copy / regen buttons – premium glowing micro-buttons */
 .copy-btn,
 .regen-btn {
   border-radius: 999px;
@@ -433,7 +428,6 @@ body.dark-theme .step2-card .copy-btn {
     0 0 4px rgba(148, 163, 184, 0.4);
 }
 
-/* keep “Copied” / “Empty” states but with glow */
 .copy-btn.copied {
   background: linear-gradient(90deg, #22c55e, #4ade80);
   color: #022c22;
@@ -450,6 +444,7 @@ body.dark-theme .step2-card .copy-btn {
     0 0 10px rgba(248, 113, 113, 0.7);
 }
 
+/* optional legacy hover class (not used by JS now but harmless) */
 .photo-dropzone-hover {
   border-color: #ff8a4a;
   box-shadow: 0 0 18px rgba(255, 138, 74, 0.8);
@@ -576,7 +571,6 @@ body.dark-theme .step2-card .copy-btn {
   max-height: calc(100vh - 3rem);
 }
 
-/* allow autogrow textareas inside modals to be flat edged */
 .side-modal-body textarea {
   border-radius: 0.85rem;
 }
@@ -759,7 +753,6 @@ body.dark-theme .step2-card .copy-btn {
 /* STEP 2 – PREMIUM ROCKET SKIN  */
 /* ============================= */
 
-/* Step 2 column – long, skinny, 2-up grid */
 .column-middle {
   max-width: 1040px; /* tighter to feel more vertical */
   display: grid;
@@ -859,7 +852,7 @@ body.dark-theme .step2-card .copy-btn {
   opacity: 0.96;
 }
 
-/* Optional emojis per platform (only if you add those classes in HTML) */
+/* Optional emojis per platform */
 .facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
 .instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
 .tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
@@ -886,25 +879,24 @@ body.dark-theme .step2-card .copy-btn {
   min-height: 170px;
 }
 
-/* Buttons row stays tight on the right / bottom for Step 2 */
+/* Buttons row for Step 2 */
 .step2-card .btn-row {
   margin-top: 0.7rem;
   justify-content: flex-end;
   gap: 0.45rem;
 }
 
-/* New Post / New Set button – tighter width for “skinny” feel */
 .step2-card .regen-btn {
   min-width: 96px;
 }
 
-/* Copy buttons already share global glow behaviour */
 .step2-card .copy-btn {
   min-width: 76px;
 }
 
-/* ====== STEP 1 – PHOTO GRID THUMBNAILS ====== */
+/* ====== STEP 1 – PHOTO GRID THUMBNAILS + CHECKBOXES ====== */
 
+/* grid in Step 1 */
 .photo-grid {
   margin-top: 0.6rem;
   display: grid;
@@ -912,21 +904,59 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.35rem;
 }
 
-.photo-thumb {
-  width: 100%;
-  height: 70px;           /* thumbnail height */
-  object-fit: cover;      /* crop nicely */
-  border-radius: 0.6rem;
-  border: 1px solid rgba(148, 163, 184, 0.7);
+/* button wrapper for each dealer photo */
+.photo-thumb-btn {
+  position: relative;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
-/* Extra safety: clamp any image inside #photosGrid */
-#photosGrid img {
+/* the image itself */
+.photo-thumb-img {
   width: 100%;
   height: 70px;
   object-fit: cover;
   border-radius: 0.6rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
+  display: block;
+}
+
+/* small circular check badge */
+.photo-thumb-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 18px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.9);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.9);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* selected state */
+.photo-thumb-selected .photo-thumb-img {
+  box-shadow: 0 0 0 2px #22c55e;
+  border-color: #22c55e;
+}
+
+.photo-thumb-selected .photo-thumb-check {
+  opacity: 1;
+}
+
+/* safety clamp if anything else drops images straight into #photosGrid */
+#photosGrid img {
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 0.6rem;
 }
 
 /* ========================================= */
@@ -974,6 +1004,7 @@ body.dark-theme .step2-card .copy-btn {
   background: rgba(30, 64, 175, 0.15);
 }
 
+/* JS adds/remove .dragover */
 .photo-dropzone.dragover {
   border-color: #38bdf8;
   background: rgba(56, 189, 248, 0.25);
@@ -997,7 +1028,6 @@ body.dark-theme .step2-card .copy-btn {
   cursor: pointer;
   transition: 0.18s;
   display: block;
-  position: relative;
 }
 
 /* hover glow */
@@ -1006,31 +1036,11 @@ body.dark-theme .step2-card .copy-btn {
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
 }
 
-/* selected state (acts like a checked box) */
+/* selected state */
 .creative-thumb-grid img.selected {
   box-shadow: 0 0 14px rgba(96, 165, 250, 1);
   border-color: rgba(96, 165, 250, 1);
 }
-
-/* the little checkbox in the corner */
-.creative-thumb-grid img.selected::after {
-  content: "✓";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  background: #22c55e;
-  color: #022c22;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  box-shadow: 0 0 6px rgba(15, 23, 42, 0.9);
-}
-
 
 /* RIGHT SIDE – PHOTO TUNER */
 .creative-right {
@@ -1114,13 +1124,11 @@ body.dark-theme .step2-card .copy-btn {
     padding: 1.5rem 1.25rem 2.5rem;
   }
 
-  /* Step 2 becomes single column but keeps premium look */
   .column-middle {
     max-width: 100%;
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Floating tools move to bottom as a wrap row */
   .floating-tools {
     position: static;
     flex-direction: row;
@@ -1129,7 +1137,6 @@ body.dark-theme .step2-card .copy-btn {
     justify-content: center;
   }
 
-  /* Creative hub stacks columns */
   .creative-hub {
     grid-template-columns: 1fr;
   }
