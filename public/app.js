@@ -152,29 +152,38 @@ document.addEventListener("DOMContentLoaded", () => {
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
-      if (sendPhotosToStudioBtn) {
-        sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-      }
+// Enable "Send to Studio" when photos exist
+if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
 
-      // Mark Step 2 visually "kit ready"
-      document.body.classList.add("kit-ready");
+    sendPhotosToStudioBtn.onclick = () => {
+        if (!dealerPhotos.length) {
+            alert("Boost a listing first so Lot Rocket can grab photos.");
+            return;
+        }
 
-      if (statusText) statusText.textContent = "Social kit ready ✔";
-    } catch (err) {
-      console.error("❌ Boost error:", err);
-      if (statusText) {
-        statusText.textContent =
-          (err && err.message) ||
-          "Failed to build kit. Try again in a moment.";
-      }
-    } finally {
-      if (boostButton) boostButton.disabled = false;
-    }
-  }
+        // pull only selected photos
+        const selected = dealerPhotos.filter(p => p.selected).map(p => p.src);
 
-  if (boostButton) {
-    boostButton.addEventListener("click", doBoostListing);
-  }
+        // fallback → if none selected, send first 8
+        const chosen = (selected.length ? selected : dealerPhotos.map(p => p.src)).slice(0, 8);
+
+        if (!chosen.length) {
+            alert("No photos selected.");
+            return;
+        }
+
+        // Add to Creative Hub thumbnails AND Canvas Studio
+        chosen.forEach(url => {
+            localCreativePhotos.push(url);
+            addCreativeThumb(url);
+        });
+
+        openCreativeStudio();
+        chosen.forEach(url => addImageFromUrl(url));
+    };
+}
+
 
   // ---------- Copy buttons ----------
   document.querySelectorAll(".copy-btn").forEach((btn) => {
