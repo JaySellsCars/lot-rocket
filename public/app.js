@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.4
+// public/app.js – Lot Rocket frontend logic v2.5.5
 // PROTECTED: theme toggle, Boost button wiring, calculator + modal wiring.
-// Extensions: selectable dealer photos + Creative Hub drag & drop + Canvas Studio.
+// Extensions: selectable dealer photos + Creative Hub drag & drop + Canvas Studio + Design Studio 3.0.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.4");
+  console.log("✅ Lot Rocket frontend loaded v2.5.5");
 
   const apiBase = "";
 
@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
       photosGrid.appendChild(wrapper);
     });
 
-    // Re-attach click handlers
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
@@ -139,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – cap to 40 so it doesn't go insane
+      // Photos from backend – cap to 40
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
@@ -859,7 +858,6 @@ document.addEventListener("DOMContentLoaded", () => {
         files ? files.length : 0
       );
 
-      // Fallback: some browsers expose files via dataTransfer.items
       if ((!files || !files.length) && dt && dt.items) {
         const collected = [];
         for (const item of dt.items) {
@@ -915,7 +913,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // "Send to Design Studio 3.0" – uses the same pool of images
+  // "Send to Design Studio 3.0" – uses the same pool of images from Creative Hub
   if (sendToDesignStudioBtn) {
     sendToDesignStudioBtn.addEventListener("click", () => {
       const urls = gatherImageUrlsForCanvas();
@@ -940,22 +938,27 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // If user clicked photos, use those. Otherwise: use first 8.
+      // Use selected photos if any, else first 8 dealer photos
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
       const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-        .slice(0, 8);
+        .slice(0, 8); // cap at 8
 
       if (!chosen.length) {
         alert("No photos selected.");
         return;
       }
 
-      // Open Design Studio 3.0 (Konva)
+      // 1) Also push them into Step 3 thumbnails (Creative Lab)
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+      });
+
+      // 2) Open Design Studio 3.0 and feed those same URLs into Konva
       openDesignStudio();
 
-      // First photo = background, rest = draggable layers
       chosen.forEach((url, index) => {
-        addStudioImageFromUrl(url, index === 0); // true => background
+        addStudioImageFromUrl(url, index === 0); // first one = background
       });
     });
   }
@@ -1240,10 +1243,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addStudioImageFromUrl(url, asBackground = false) {
     console.log("[DesignStudio] addStudioImageFromUrl:", url, "background?", asBackground);
-    if (!studioLayer || !studioStage || !url) return;
+    if (!studioLayer || !studioStage || !url) {
+      console.warn("[DesignStudio] Missing stage/layer/url; aborting image add.");
+      return;
+    }
 
     const img = new Image();
     img.onload = () => {
+      console.log("[DesignStudio] Image loaded:", img.width, "x", img.height);
+
       const ratio = Math.min(
         studioStage.width() / img.width,
         studioStage.height() / img.height
@@ -1278,6 +1286,7 @@ document.addEventListener("DOMContentLoaded", () => {
     img.onerror = (err) => {
       console.error("[DesignStudio] Failed to load image:", url, err);
     };
+    console.log("[DesignStudio] setting img.src =", url);
     img.src = url;
   }
 
