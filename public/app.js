@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.3
+// public/app.js – Lot Rocket frontend logic v2.5.4
 // PROTECTED: theme toggle, Boost button wiring, calculator + modal wiring.
 // Extensions: selectable dealer photos + Creative Hub drag & drop + Canvas Studio.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.3");
+  console.log("✅ Lot Rocket frontend loaded v2.5.4");
 
   const apiBase = "";
 
@@ -113,9 +113,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) {
         const msg =
-          data && data.message
-            ? data.message
-            : "Something went wrong building the kit.";
+          (data && data.message) ||
+          `Something went wrong building the kit (HTTP ${res.status}).`;
         throw new Error(msg);
       }
 
@@ -154,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
-      console.error("Boost error:", err);
+      console.error("❌ Boost error:", err);
       if (statusText)
         statusText.textContent =
           err && err.message
@@ -225,7 +224,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error generating post (HTTP ${res.status}).`;
+          throw new Error(msg);
+        }
 
         const text = data.text || "";
         let targetId = "";
@@ -260,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (ta) ta.value = text;
         }
       } catch (err) {
-        console.error("regen error", err);
+        console.error("❌ regen error", err);
         alert(
           err && err.message
             ? err.message
@@ -329,13 +332,19 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error (HTTP ${res.status}) calculating payment.`;
+          throw new Error(msg);
+        }
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
-        console.error("payment-helper error", err);
+        console.error("❌ payment-helper error", err);
         if (paymentOutput)
           paymentOutput.textContent =
-            "Could not calculate payment. Check numbers and try again.";
+            err && err.message
+              ? err.message
+              : "Could not calculate payment. Check numbers and try again.";
       }
     });
   }
@@ -359,13 +368,19 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error (HTTP ${res.status}) estimating income.`;
+          throw new Error(msg);
+        }
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
-        console.error("income-helper error", err);
+        console.error("❌ income-helper error", err);
         if (incomeOutput)
           incomeOutput.textContent =
-            "Could not estimate income. Check numbers and try again.";
+            err && err.message
+              ? err.message
+              : "Could not estimate income. Check numbers and try again.";
       }
     });
   }
@@ -389,13 +404,19 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error (HTTP ${res.status}) from objection coach.`;
+          throw new Error(msg);
+        }
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
-        console.error("objection-coach error", err);
+        console.error("❌ objection-coach error", err);
         if (objectionOutput)
           objectionOutput.value =
-            "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
+            err && err.message
+              ? err.message
+              : "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
       }
     });
   }
@@ -422,11 +443,21 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+
+        if (!res.ok) {
+          const msg =
+            (data && data.message) ||
+            `Message helper error (HTTP ${res.status}).`;
+          console.error("❌ message-helper backend error:", res.status, data);
+          if (output) output.value = msg;
+          return;
+        }
+
         if (output) output.value = data.text || "";
       } catch (err) {
-        console.error("message-helper error", err);
-        if (output) output.value = "Lot Rocket hit a snag. Try again in a moment.";
+        console.error("❌ message-helper network error", err);
+        if (output)
+          output.value = "Lot Rocket hit a snag talking to AI. Try again in a moment.";
       }
     });
   }
@@ -469,6 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
   let currentTool = "select";
+  let localCreativePhotos = []; // keep track of locally added URLs
 
   // ----- Canvas helpers -----
   function ensureCanvas() {
@@ -706,9 +738,37 @@ document.addEventListener("DOMContentLoaded", () => {
       Array.from(files).forEach((file) => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
-        addImageFromUrl(url);
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
       });
       creativeImageInput.value = "";
+    });
+  }
+
+  // ----- Photo tuner filters -----
+  function applyTunerFilters() {
+    if (!tunerPreviewImg) return;
+    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
+    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
+    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
+    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  }
+
+  if (tunerBrightness) {
+    tunerBrightness.addEventListener("input", applyTunerFilters);
+  }
+  if (tunerContrast) {
+    tunerContrast.addEventListener("input", applyTunerFilters);
+  }
+  if (tunerSaturation) {
+    tunerSaturation.addEventListener("input", applyTunerFilters);
+  }
+  if (autoEnhanceBtn) {
+    autoEnhanceBtn.addEventListener("click", () => {
+      if (tunerBrightness) tunerBrightness.value = "115";
+      if (tunerContrast) tunerContrast.value = "115";
+      if (tunerSaturation) tunerSaturation.value = "120";
+      applyTunerFilters();
     });
   }
 
@@ -819,7 +879,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
   // Gather URLs currently visible in Creative Hub / dealer selection
   function gatherImageUrlsForCanvas() {
     const urls = [];
@@ -873,6 +932,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Also show them inside the Creative Hub thumbnails for tuning
       chosen.forEach((url) => {
+        localCreativePhotos.push(url);
         addCreativeThumb(url);
       });
 
