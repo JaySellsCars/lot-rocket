@@ -477,6 +477,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const photoFileInput = document.getElementById("photoFileInput");
   const creativeThumbGrid = document.getElementById("creativeThumbGrid");
   const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
+  const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
+
 
   const tunerPreviewImg = document.getElementById("tunerPreviewImg");
   const tunerBrightness = document.getElementById("tunerBrightness");
