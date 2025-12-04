@@ -996,12 +996,41 @@ body.dark-theme .step2-card .copy-btn {
   border: 1px solid rgba(148, 163, 184, 0.55);
   cursor: pointer;
   transition: 0.18s;
+  display: block;
+  position: relative;
 }
 
+/* hover glow */
 .creative-thumb-grid img:hover {
   transform: scale(1.03);
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
 }
+
+/* selected state (acts like a checked box) */
+.creative-thumb-grid img.selected {
+  box-shadow: 0 0 14px rgba(96, 165, 250, 1);
+  border-color: rgba(96, 165, 250, 1);
+}
+
+/* the little checkbox in the corner */
+.creative-thumb-grid img.selected::after {
+  content: "✓";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #22c55e;
+  color: #022c22;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 0 6px rgba(15, 23, 42, 0.9);
+}
+
 
 /* RIGHT SIDE – PHOTO TUNER */
 .creative-right {
