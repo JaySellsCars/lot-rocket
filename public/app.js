@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
+      // little green check element – only visible when selected via CSS
       const check = document.createElement("span");
       check.className = "photo-thumb-check";
       check.textContent = "✓";
@@ -78,12 +79,14 @@ document.addEventListener("DOMContentLoaded", () => {
       photosGrid.appendChild(wrapper);
     });
 
-    // Click to toggle selection
+    // click to toggle selected
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
-        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-        renderDealerPhotos();
+        if (!Number.isNaN(idx) && dealerPhotos[idx]) {
+          dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
+          renderDealerPhotos();
+        }
       });
     });
   }
@@ -92,8 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!vehicleUrlInput || !boostButton) return;
 
     const url = vehicleUrlInput.value.trim();
-    const labelOverride = vehicleLabelInput?.value.trim() || "";
-    const priceOverride = priceInfoInput?.value.trim() || "";
+    const labelOverride = (vehicleLabelInput && vehicleLabelInput.value.trim()) || "";
+    const priceOverride = (priceInfoInput && priceInfoInput.value.trim()) || "";
 
     if (!url) {
       alert("Paste a full dealer URL first.");
@@ -145,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – cap at 40 to avoid insane grids
+      // Photos from backend – cap to 40 so it doesn’t go insane
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
@@ -154,17 +157,13 @@ document.addEventListener("DOMContentLoaded", () => {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
 
-      // Visually mark kit-ready
-      document.body.classList.add("kit-ready");
-
       if (statusText) statusText.textContent = "Social kit ready ✔";
+      document.body.classList.add("kit-ready");
     } catch (err) {
       console.error("Boost error:", err);
       if (statusText)
         statusText.textContent =
-          err && err.message
-            ? err.message
-            : "Failed to build kit. Try again in a moment.";
+          (err && err.message) || "Failed to build kit. Try again in a moment.";
     } finally {
       if (boostButton) boostButton.disabled = false;
     }
@@ -182,12 +181,26 @@ document.addEventListener("DOMContentLoaded", () => {
       const el = document.getElementById(targetId);
       if (!el) return;
 
+      if (el.value.trim() === "") {
+        btn.classList.add("empty");
+        btn.textContent = "Empty";
+        setTimeout(() => {
+          btn.classList.remove("empty");
+          btn.textContent = "Copy";
+        }, 1200);
+        return;
+      }
+
       el.select();
       el.setSelectionRange(0, 99999);
       document.execCommand("copy");
 
+      btn.classList.add("copied");
       btn.textContent = "Copied!";
-      setTimeout(() => (btn.textContent = "Copy"), 1500);
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.textContent = "Copy";
+      }, 1500);
     });
   });
 
@@ -209,9 +222,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const label =
-          vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
+          (vehicleLabelInput && vehicleLabelInput.value.trim()) ||
+          (summaryLabel && summaryLabel.textContent) ||
+          "";
         const price =
-          priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
+          (priceInfoInput && priceInfoInput.value.trim()) ||
+          (summaryPrice && summaryPrice.textContent) ||
+          "";
 
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
@@ -225,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) throw new Error((data && data.message) || "Error");
 
         const text = data.text || "";
         let targetId = "";
@@ -262,9 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("regen error", err);
         alert(
-          err && err.message
-            ? err.message
-            : "Failed to generate a new post. Try again."
+          (err && err.message) ||
+            "Failed to generate a new post. Try again."
         );
       } finally {
         btn.disabled = false;
@@ -329,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) throw new Error((data && data.message) || "Error");
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
         console.error("payment-helper error", err);
@@ -359,7 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) throw new Error((data && data.message) || "Error");
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
         console.error("income-helper error", err);
@@ -389,7 +405,7 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) throw new Error((data && data.message) || "Error");
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
         console.error("objection-coach error", err);
@@ -422,11 +438,12 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) throw new Error((data && data.message) || "Error");
         if (output) output.value = data.text || "";
       } catch (err) {
         console.error("message-helper error", err);
-        if (output) output.value = "Lot Rocket hit a snag. Try again in a moment.";
+        if (output)
+          output.value = "Lot Rocket hit a snag. Try again in a moment.";
       }
     });
   }
@@ -469,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
   let currentTool = "select";
-  let localCreativePhotos = []; // URLs from drag/drop, file uploads, or dealer photos
+  let localCreativePhotos = []; // URLs from drag/drop or file uploads
 
   // ----- Canvas helpers -----
   function ensureCanvas() {
@@ -704,7 +721,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- Photo tuner helpers -----
+  // ----- Drag & Drop + thumbnails in Step 3 -----
 
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
@@ -731,8 +748,6 @@ document.addEventListener("DOMContentLoaded", () => {
       applyTunerFilters();
     });
   }
-
-  // ----- Creative Hub thumbnails -----
 
   function addCreativeThumb(url) {
     if (!creativeThumbGrid) return;
@@ -770,8 +785,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- Drag & drop zone -----
-
   if (photoDropZone && photoFileInput) {
     photoDropZone.addEventListener("click", () => {
       photoFileInput.click();
@@ -803,8 +816,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- Send-all from Creative Hub to Canvas -----
-
   if (sendAllToCanvasBtn) {
     sendAllToCanvasBtn.addEventListener("click", () => {
       if (!localCreativePhotos.length) {
@@ -826,19 +837,20 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // only selected photos; if none selected, take first 8
+      // pull only selected photos
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
+      // fallback → if none selected, send first 8
+      const chosen = (selected.length
+        ? selected
+        : dealerPhotos.map((p) => p.src)
+      ).slice(0, 8);
 
       if (!chosen.length) {
         alert("No photos selected.");
         return;
       }
 
-      // Add to Creative Hub thumbnails AND Canvas Studio
+      // Also show them inside the Creative Hub thumbnails for tuning
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
