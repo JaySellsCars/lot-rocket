@@ -67,18 +67,21 @@ document.addEventListener("DOMContentLoaded", () => {
       img.src = photo.src;
       img.alt = `Dealer photo ${index + 1}`;
       img.loading = "lazy";
-      img.className = "photo-thumb-img";
+      // IMPORTANT: match CSS class so they show as thumbnails not full-size
+      img.className = "photo-thumb";
 
       wrapper.appendChild(img);
       photosGrid.appendChild(wrapper);
     });
 
-    // Re-attach click handlers
+    // Click to toggle selected / unselected
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
-        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-        renderDealerPhotos();
+        if (!Number.isNaN(idx) && dealerPhotos[idx]) {
+          dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
+          renderDealerPhotos();
+        }
       });
     });
   }
@@ -87,8 +90,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!vehicleUrlInput || !boostButton) return;
 
     const url = vehicleUrlInput.value.trim();
-    const labelOverride = vehicleLabelInput?.value.trim() || "";
-    const priceOverride = priceInfoInput?.value.trim() || "";
+    const labelOverride = (vehicleLabelInput?.value || "").trim();
+    const priceOverride = (priceInfoInput?.value || "").trim();
 
     if (!url) {
       alert("Paste a full dealer URL first.");
@@ -96,7 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     boostButton.disabled = true;
-    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
+    if (statusText)
+      statusText.textContent = "Scraping dealer page and building kit…";
+
+    console.log("🚀 Boosting listing for URL:", url);
 
     try {
       const res = await fetch(apiBase + "/api/social-kit", {
@@ -113,11 +119,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) {
         const msg =
-          data && data.message
-            ? data.message
-            : "Something went wrong building the kit.";
+          (data && data.message) ||
+          "Something went wrong building the kit.";
         throw new Error(msg);
       }
+
+      console.log("✅ Social kit payload:", data);
 
       // Summary / overrides
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
@@ -140,10 +147,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend – clamp to max 24 on frontend
-      const photos = Array.isArray(data.photos)
-        ? data.photos.slice(0, 24)
-        : [];
+      // Photos from backend – cap to 40 to avoid insane grids
+      const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
@@ -151,14 +156,17 @@ document.addEventListener("DOMContentLoaded", () => {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
 
+      // Mark Step 2 visually "kit ready"
+      document.body.classList.add("kit-ready");
+
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
-      console.error("Boost error:", err);
-      if (statusText)
+      console.error("❌ Boost error:", err);
+      if (statusText) {
         statusText.textContent =
-          err && err.message
-            ? err.message
-            : "Failed to build kit. Try again in a moment.";
+          (err && err.message) ||
+          "Failed to build kit. Try again in a moment.";
+      }
     } finally {
       if (boostButton) boostButton.disabled = false;
     }
@@ -180,8 +188,9 @@ document.addEventListener("DOMContentLoaded", () => {
       el.setSelectionRange(0, 99999);
       document.execCommand("copy");
 
+      const original = btn.textContent;
       btn.textContent = "Copied!";
-      setTimeout(() => (btn.textContent = "Copy"), 1500);
+      setTimeout(() => (btn.textContent = original), 1500);
     });
   });
 
@@ -203,9 +212,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const label =
-          vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
+          (vehicleLabelInput?.value || "").trim() ||
+          (summaryLabel?.textContent || "");
         const price =
-          priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
+          (priceInfoInput?.value || "").trim() ||
+          (summaryPrice?.textContent || "");
 
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
@@ -219,7 +230,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok)
+          throw new Error((data && data.message) || "Error generating copy");
 
         const text = data.text || "";
         let targetId = "";
@@ -256,9 +268,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("regen error", err);
         alert(
-          err && err.message
-            ? err.message
-            : "Failed to generate a new post. Try again."
+          (err && err.message) ||
+            "Failed to generate a new post. Try again."
         );
       } finally {
         btn.disabled = false;
@@ -286,7 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     if (closeBtn) {
       closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    });
+    }
     modal.addEventListener("click", backdropClose);
   }
 
@@ -323,7 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok)
+          throw new Error((data && data.message) || "Error calculating");
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
         console.error("payment-helper error", err);
@@ -353,7 +365,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok)
+          throw new Error((data && data.message) || "Error estimating");
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
         console.error("income-helper error", err);
@@ -383,7 +396,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok)
+          throw new Error((data && data.message) || "Error coaching");
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
         console.error("objection-coach error", err);
@@ -416,11 +430,13 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok)
+          throw new Error((data && data.message) || "Error talking to AI");
         if (output) output.value = data.text || "";
       } catch (err) {
         console.error("message-helper error", err);
-        if (output) output.value = "Lot Rocket hit a snag. Try again in a moment.";
+        if (output) output.value =
+          "Lot Rocket hit a snag. Try again in a moment.";
       }
     });
   }
@@ -745,16 +761,6 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeThumbGrid.appendChild(img);
   }
 
-  function addCreativeUrl(url) {
-    if (!url) return;
-    localCreativePhotos.push(url);
-    addCreativeThumb(url);
-    if (tunerPreviewImg && !tunerPreviewImg.src) {
-      tunerPreviewImg.src = url;
-      applyTunerFilters();
-    }
-  }
-
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
     if (!files.length) return;
@@ -762,7 +768,12 @@ document.addEventListener("DOMContentLoaded", () => {
     files.forEach((file) => {
       if (!file.type.startsWith("image/")) return;
       const url = URL.createObjectURL(file);
-      addCreativeUrl(url);
+      localCreativePhotos.push(url);
+      addCreativeThumb(url);
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
+      }
     });
   }
 
@@ -783,47 +794,45 @@ document.addEventListener("DOMContentLoaded", () => {
         photoDropZone.classList.add("photo-dropzone-active");
       });
     });
-    ["dragleave", "dragend"].forEach((evt) => {
+    ["dragleave", "dragend", "drop"].forEach((evt) => {
       photoDropZone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
         photoDropZone.classList.remove("photo-dropzone-active");
       });
     });
-    photoDropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      photoDropZone.classList.remove("photo-dropzone-active");
 
+    // Support dropping files AND URLs (e.g. dragging from Step 1 thumbnails)
+    photoDropZone.addEventListener("drop", (e) => {
       const dt = e.dataTransfer;
       if (!dt) return;
 
-      // 1) If real files are present (from desktop / downloads), use them
       if (dt.files && dt.files.length) {
+        // Files from computer
         handleCreativeFiles(dt.files);
         return;
       }
 
-      // 2) If this is an image dragged from the browser, we often get a URL instead of a File
-      const uri =
-        dt.getData("text/uri-list") || dt.getData("text/plain") || "";
-      if (uri) {
-        addCreativeUrl(uri.trim());
-        return;
+      // Try to extract an image URL from the drop (text/uri-list or HTML)
+      let url = dt.getData("text/uri-list") || "";
+
+      if (!url) {
+        const html = dt.getData("text/html");
+        if (html) {
+          const match = html.match(/src=["']([^"']+)["']/i);
+          if (match && match[1]) {
+            url = match[1];
+          }
+        }
       }
 
-      // 3) Fallback: inspect items
-      if (dt.items && dt.items.length) {
-        Array.from(dt.items).forEach((item) => {
-          if (
-            item.kind === "string" &&
-            (item.type === "text/uri-list" || item.type === "text/plain")
-          ) {
-            item.getAsString((url) => {
-              addCreativeUrl(url.trim());
-            });
-          }
-        });
+      if (url) {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
       }
     });
   }
@@ -847,19 +856,18 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      ); // up to 8 images
+      const fallback = dealerPhotos.map((p) => p.src);
+      const chosen = (selected.length ? selected : fallback).slice(0, 8); // up to 8 images
 
       if (!chosen.length) {
         alert("No photos selected.");
         return;
       }
 
-      // Also show them inside the Creative Hub thumbnails for tuning
+      // Show them in Creative Hub thumbnails too
       chosen.forEach((url) => {
-        addCreativeUrl(url);
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
       });
 
       openCreativeStudio();
