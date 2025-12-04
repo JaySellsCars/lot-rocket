@@ -48,8 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const marketplacePost = document.getElementById("marketplacePost");
   const hashtags = document.getElementById("hashtags");
 
-  const photosGrid = document.getElementById("photosGrid");
-  const sendPhotosToCreativeBtn = document.getElementById("sendPhotosToCreative"); // Step 1 button
+const photosGrid = document.getElementById("photosGrid");
+
+// Works with either id="sendPhotosToCreative" or old id="sendPhotosToStudio"
+const sendPhotosToStudioBtn =
+  document.getElementById("sendPhotosToCreative") ||
+  document.getElementById("sendPhotosToStudio");
+
 
   // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
