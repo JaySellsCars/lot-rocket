@@ -430,6 +430,92 @@
       </div>
     </div>
   </div>
+  <!-- ######## DESIGN STUDIO 3.0 OVERLAY (Konva) ######## -->
+  <div id="designStudioOverlay" class="creative-overlay hidden">
+    <div class="creative-modal">
+      <div class="creative-header">
+        <h2>Design Studio 3.0 (Beta)</h2>
+        <button id="designClose" class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="creative-top-bar">
+        <div class="preset-label">
+          <span>Canvas preset</span>
+          <select id="studioSizePreset">
+            <option value="1080x1080">Square – 1080x1080</option>
+            <option value="1080x1920">Story – 1080x1920</option>
+            <option value="1920x1080">Landscape – 1920x1080</option>
+          </select>
+        </div>
+
+        <div class="creative-actions">
+          <button id="studioUndoBtn">Undo</button>
+          <button id="studioRedoBtn">Redo</button>
+          <button id="studioExportPng">Export PNG</button>
+        </div>
+      </div>
+
+      <div class="creative-body">
+        <!-- LEFT: tools -->
+        <aside class="creative-tools">
+          <h3>Tools</h3>
+          <button id="toolAddText" class="tool-btn">Add Text</button>
+          <button id="toolAddShape" class="tool-btn">Add Banner Bar</button>
+          <button id="toolAddBadge" class="tool-btn">Add Price Badge</button>
+          <button id="toolSetBackground" class="tool-btn">Set Background</button>
+        </aside>
+
+        <!-- CENTER: Konva stage container -->
+        <div class="creative-canvas-wrap">
+          <div id="konvaStageContainer" class="studio-canvas-container"></div>
+        </div>
+
+        <!-- RIGHT: layers + properties -->
+        <aside class="creative-properties">
+          <div class="prop-group">
+            <h4>Layers</h4>
+            <ul id="layersList" class="layers-list"></ul>
+          </div>
+
+          <div class="prop-group">
+            <h4>Selected Layer</h4>
+            <label>
+              Text
+              <input
+                id="layerTextInput"
+                type="text"
+                placeholder="Edit text…"
+              />
+            </label>
+            <label>
+              Font size
+              <input
+                id="layerFontSizeInput"
+                type="number"
+                min="8"
+                max="120"
+                value="40"
+              />
+            </label>
+            <label>
+              Opacity
+              <input
+                id="layerOpacityInput"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value="1"
+              />
+            </label>
+            <button id="layerDeleteBtn" class="btn-danger full-width-bar">
+              Delete Layer
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
 
 
   <!-- ========= SIDE MODALS FOR TOOLS ========= -->
