@@ -949,15 +949,16 @@ if (sendPhotosToStudioBtn) {
       return;
     }
 
-    // Open Konva Design Studio 3.0 instead of old Fabric canvas
+    // Open Konva Design Studio 3.0
     openDesignStudio();
 
     // First photo = background, others = draggable layers
     chosen.forEach((url, index) => {
-      addStudioImageFromUrl(url, index === 0); // true => background layer
+      addStudioImageFromUrl(url, index === 0); // true => background
     });
   });
 }
+
 
 
 
