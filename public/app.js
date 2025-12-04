@@ -932,40 +932,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-// ----- Wiring Step 1 "Send top photos to Design Studio 3.0" -----
-if (sendPhotosToStudioBtn) {
-  sendPhotosToStudioBtn.addEventListener("click", () => {
-    if (!dealerPhotos.length) {
-      alert("Boost a listing first so Lot Rocket can grab photos.");
-      return;
-    }
+  // ----- Wiring Step 1 "Send top photos to Design Studio 3.0" -----
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
 
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-      .slice(0, 8); // up to 8 images
+      // If user clicked photos, use those. Otherwise: use first 8.
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+        .slice(0, 8);
 
-    if (!chosen.length) {
-      alert("No photos selected.");
-      return;
-    }
+      if (!chosen.length) {
+        alert("No photos selected.");
+        return;
+      }
 
-    // Open Konva Design Studio 3.0
-    openDesignStudio();
+      // Open Design Studio 3.0 (Konva)
+      openDesignStudio();
 
-    // First photo = background, others = draggable layers
-    chosen.forEach((url, index) => {
-      addStudioImageFromUrl(url, index === 0); // true => background
+      // First photo = background, rest = draggable layers
+      chosen.forEach((url, index) => {
+        addStudioImageFromUrl(url, index === 0); // true => background
+      });
     });
-  });
-}
-
-
-
-
-
+  }
 
   // ==========================================
-  // DESIGN STUDIO 3.0 (Konva – runs alongside Fabric)
+  // DESIGN STUDIO 3.0 (Konva – fresh version)
   // ==========================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
@@ -991,6 +987,7 @@ if (sendPhotosToStudioBtn) {
   let studioStage = null;
   let studioLayer = null;
   let studioSelectedNode = null;
+
   let studioHistory = [];
   let studioHistoryIndex = -1;
 
@@ -1018,16 +1015,23 @@ if (sendPhotosToStudioBtn) {
     studioLayer = new Konva.Layer();
     studioStage.add(studioLayer);
 
+    // Background layer
+    setStudioBackground("#111111");
+
     // Resize with window
     window.addEventListener("resize", () => {
       const r = container.getBoundingClientRect();
       studioStage.width(r.width || width);
       studioStage.height(r.height || height);
+      const bg = studioLayer.findOne(".BackgroundLayer");
+      if (bg) {
+        bg.width(studioStage.width());
+        bg.height(studioStage.height());
+      }
       studioStage.draw();
     });
 
     wireDesignStudioUI();
-    setStudioBackground("#111111");
     saveStudioHistory();
   }
 
@@ -1042,23 +1046,23 @@ if (sendPhotosToStudioBtn) {
 
   function restoreStudioFromHistory(index) {
     if (!studioStage || index < 0 || index >= studioHistory.length) return;
-    studioHistoryIndex = index;
-    const json = studioHistory[index];
-
     const container = studioStage.container();
     const w = studioStage.width();
     const h = studioStage.height();
+
+    studioHistoryIndex = index;
+    const json = studioHistory[index];
 
     studioStage.destroy();
     studioStage = Konva.Node.create(json, container);
     studioStage.width(w);
     studioStage.height(h);
 
-    studioLayer = studioStage.getLayers()[0] || new Konva.Layer();
-    if (!studioStage.getLayers().length) {
+    const layers = studioStage.getLayers();
+    studioLayer = layers[0] || new Konva.Layer();
+    if (!layers.length) {
       studioStage.add(studioLayer);
     }
-
     studioSelectedNode = null;
     rebuildLayersList();
   }
@@ -1088,6 +1092,7 @@ if (sendPhotosToStudioBtn) {
     const nodes = studioLayer.getChildren();
 
     nodes.forEach((node, index) => {
+      if (node.name() === "BackgroundLayer") return; // skip background
       const li = document.createElement("li");
       li.className = "layer-item";
       li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
@@ -1148,7 +1153,6 @@ if (sendPhotosToStudioBtn) {
       shadowOffset: { x: 2, y: 2 },
       shadowOpacity: 0.4,
       align: "center",
-      offsetX: 0,
       name: "Text Layer",
       draggable: true,
     });
@@ -1229,21 +1233,22 @@ if (sendPhotosToStudioBtn) {
       bg.fill(color);
       bg.width(studioStage.width());
       bg.height(studioStage.height());
+      bg.moveToBottom();
     }
     studioLayer.draw();
-    saveStudioHistory();
   }
 
   function addStudioImageFromUrl(url, asBackground = false) {
+    console.log("[DesignStudio] addStudioImageFromUrl:", url, "background?", asBackground);
     if (!studioLayer || !studioStage || !url) return;
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
     img.onload = () => {
       const ratio = Math.min(
         studioStage.width() / img.width,
         studioStage.height() / img.height
-      );
+      ) || 1;
+
       const w = img.width * ratio;
       const h = img.height * ratio;
 
@@ -1261,13 +1266,17 @@ if (sendPhotosToStudioBtn) {
 
       attachNodeInteractions(node);
       studioLayer.add(node);
-      if (asBackground) node.moveToBottom();
+      if (asBackground) {
+        node.moveToBottom();
+        const bg = studioLayer.findOne(".BackgroundLayer");
+        if (bg) bg.moveToBottom();
+      }
       studioLayer.draw();
       selectStudioNode(node);
       saveStudioHistory();
     };
     img.onerror = (err) => {
-      console.error("Design Studio: failed to load image", err);
+      console.error("[DesignStudio] Failed to load image:", url, err);
     };
     img.src = url;
   }
@@ -1292,6 +1301,7 @@ if (sendPhotosToStudioBtn) {
     if (bg) {
       bg.width(w);
       bg.height(h);
+      bg.moveToBottom();
     }
 
     studioStage.draw();
@@ -1376,6 +1386,9 @@ if (sendPhotosToStudioBtn) {
     designStudioOverlay.classList.remove("hidden");
     if (!studioStage && window.Konva) {
       initDesignStudio();
+    } else if (studioStage) {
+      studioStage.draw();
+      rebuildLayersList();
     }
   }
 
@@ -1396,4 +1409,3 @@ if (sendPhotosToStudioBtn) {
 
   console.log("✅ Lot Rocket frontend wiring complete");
 });
-
