@@ -46,31 +46,58 @@ function normalizeUrl(raw) {
  * Helpers for consistent AI error handling
  */
 function isRateLimitError(err) {
-  const msg = (err && err.message) ? err.message.toLowerCase() : "";
+  const msg =
+    (err && (err.message || err.error?.message || ""))?.toLowerCase() || "";
+
+  // True per-minute rate limits
   if (msg.includes("rate limit")) return true;
+
+  // Quota / billing issues also often come back as 429
+  if (msg.includes("quota") || msg.includes("billing")) return true;
+  if (msg.includes("insufficient") && msg.includes("quota")) return true;
+
+  // Status-code based checks
   if (err && err.code === "rate_limit_exceeded") return true;
   if (err && err.error && err.error.type === "rate_limit_exceeded") return true;
   if (err && err.status === 429) return true;
   if (err && err.response && err.response.status === 429) return true;
+
   return false;
 }
 
 function sendAIError(res, err, friendlyMessage) {
-  console.error(friendlyMessage, err);
+  // Log the full error so Render logs show exactly what's going on
+  console.error("🔴 OpenAI error:", friendlyMessage, err);
+
+  const rawMsg =
+    (err && (err.message || err.error?.message || "")) || "Unknown error";
 
   if (isRateLimitError(err)) {
+    const lower = rawMsg.toLowerCase();
+
+    const isQuotaOrBilling =
+      lower.includes("quota") ||
+      lower.includes("billing") ||
+      (lower.includes("insufficient") && lower.includes("balance"));
+
+    // Distinguish “temporary rate limit” vs “quota/billing” problems
     return res.status(429).json({
-      error: "rate_limit",
-      message:
-        "Lot Rocket hit the AI limit for a moment. Wait 20–30 seconds and try again.",
+      error: isQuotaOrBilling ? "quota" : "rate_limit",
+      message: isQuotaOrBilling
+        ? "Lot Rocket’s AI quota / billing looks tapped on the server. Check the OpenAI key and billing settings."
+        : "Lot Rocket hit the AI rate limit for a moment. Wait 20–30 seconds and try again.",
+      // Optional: send raw error text for easier debugging in the browser
+      rawMessage: rawMsg,
     });
   }
 
   return res.status(500).json({
     error: "server_error",
     message: friendlyMessage,
+    rawMessage: rawMsg,
   });
 }
+
 
 // ---------------- Helper: scrape page text ----------------
 
