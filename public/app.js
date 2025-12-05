@@ -1,13 +1,16 @@
-// public/app.js – Lot Rocket frontend logic v2.5
-// PROTECTED: theme toggle, Boost button wiring, calculator + modal wiring.
-// Extensions: selectable dealer photos + Creative Hub drag & drop + Canvas Studio.
+// public/app.js – Lot Rocket frontend logic v2.5 (CLEAN DESIGN-STUDIO-ONLY)
+// - Theme toggle
+// - Step 1 / Step 2 Social Kit
+// - Floating tool modals (calc, objection, etc.)
+// - Step 3 Creative Hub (thumbnails + tuner)
+// - Design Studio 3.0 (Konva) wired to dealer photos + local uploads
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5");
+  console.log("✅ Lot Rocket frontend loaded v2.5 (Design Studio only)");
 
   const apiBase = "";
 
-  // ---------- THEME TOGGLE ----------
+  // ---------------- THEME TOGGLE ----------------
   const themeToggleInput = document.getElementById("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
@@ -25,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ======================================================
-  // STEP 1 – Dealer URL Scraper + Social Kit (PROTECTED)
+  // STEP 1 – Dealer URL Scraper + Social Kit
   // ======================================================
 
   const vehicleUrlInput = document.getElementById("vehicleUrl");
@@ -69,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
-      // little “checkbox” indicator in the corner
       const mark = document.createElement("span");
       mark.className = "photo-checkmark";
       mark.textContent = "✓";
@@ -80,7 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
       photosGrid.appendChild(wrapper);
     });
 
-    // Re-attach click handlers
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
@@ -157,9 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
 
-      // Mark Step 2 visually "kit ready"
       document.body.classList.add("kit-ready");
-
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
       console.error("Boost error:", err);
@@ -442,13 +441,13 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("videoForm", "videoOutput", "video-brief");
 
   // ==========================================
-  // CREATIVE HUB (STEP 3) + CANVAS STUDIO
+  // STEP 3 CREATIVE HUB (thumbnails + tuner)
   // ==========================================
 
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
   const creativeThumbGrid = document.getElementById("creativeThumbGrid");
-  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
+  const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
   const tunerPreviewImg = document.getElementById("tunerPreviewImg");
   const tunerBrightness = document.getElementById("tunerBrightness");
@@ -456,260 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 
-  const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
-  const creativeCloseBtn = document.getElementById("creativeClose");
-  const canvasLauncher = document.getElementById("canvasLauncher");
-
-  const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
-  const creativeUndo = document.getElementById("creativeUndo");
-  const creativeRedo = document.getElementById("creativeRedo");
-  const creativeDelete = document.getElementById("creativeDelete");
-  const creativeExportPng = document.getElementById("creativeExportPng");
-  const creativeImageInput = document.getElementById("creativeImageInput");
-  const creativeToolButtons = document.querySelectorAll(".tool-btn");
-
-  let creativeCanvas = null;
-  let creativeHistory = [];
-  let creativeHistoryIndex = -1;
-  let currentTool = "select";
   let localCreativePhotos = []; // URLs from drag/drop or file uploads
-
-  // ----- Canvas helpers -----
-  function ensureCanvas() {
-    if (creativeCanvas) return creativeCanvas;
-    if (typeof fabric === "undefined") {
-      console.error("Fabric.js not loaded");
-      return null;
-    }
-    creativeCanvas = new fabric.Canvas("creativeCanvas", {
-      preserveObjectStacking: true,
-    });
-    saveCanvasState();
-    return creativeCanvas;
-  }
-
-  function saveCanvasState() {
-    if (!creativeCanvas) return;
-    const json = creativeCanvas.toJSON();
-    creativeHistory = creativeHistory.slice(0, creativeHistoryIndex + 1);
-    creativeHistory.push(json);
-    creativeHistoryIndex = creativeHistory.length - 1;
-  }
-
-  function loadCanvasState(index) {
-    if (!creativeCanvas) return;
-    if (index < 0 || index >= creativeHistory.length) return;
-    creativeHistoryIndex = index;
-    creativeCanvas.loadFromJSON(creativeHistory[index], () => {
-      creativeCanvas.renderAll();
-    });
-  }
-
-  function addImageFromUrl(url) {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-
-    fabric.Image.fromURL(
-      url,
-      (img) => {
-        // Fit but keep it smaller than full canvas
-        const fitScale = Math.min(
-          canvas.width / img.width,
-          canvas.height / img.height
-        );
-        const scale = Math.min(fitScale * 0.75, 0.75); // 75% of fit, max 75%
-
-        img.set({
-          left: canvas.width / 2,
-          top: canvas.height / 2,
-          originX: "center",
-          originY: "center",
-          selectable: true,
-        });
-        img.scale(scale);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        saveCanvasState();
-      },
-      { crossOrigin: "Anonymous" }
-    );
-  }
-
-  function addRectBanner() {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-    const rect = new fabric.Rect({
-      left: canvas.width / 2,
-      top: canvas.height - 120,
-      originX: "center",
-      originY: "center",
-      width: canvas.width * 0.9,
-      height: 160,
-      fill: "#000000",
-      opacity: 0.75,
-      rx: 16,
-      ry: 16,
-    });
-    canvas.add(rect);
-    canvas.setActiveObject(rect);
-    canvas.renderAll();
-    saveCanvasState();
-  }
-
-  function addBadge() {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-    const circle = new fabric.Circle({
-      radius: 130,
-      fill: "#ff0000",
-      left: canvas.width - 220,
-      top: 80,
-      originX: "center",
-      originY: "center",
-    });
-    canvas.add(circle);
-    canvas.setActiveObject(circle);
-    canvas.renderAll();
-    saveCanvasState();
-  }
-
-  function addTextBox() {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-    const text = new fabric.Textbox("YOUR TEXT HERE", {
-      left: canvas.width / 2,
-      top: 150,
-      originX: "center",
-      originY: "center",
-      fill: "#ffffff",
-      fontSize: 64,
-      fontWeight: "bold",
-      textAlign: "center",
-    });
-    canvas.add(text);
-    canvas.setActiveObject(text);
-    canvas.renderAll();
-    saveCanvasState();
-  }
-
-  function openCreativeStudio() {
-    if (!creativeStudioOverlay) return;
-    creativeStudioOverlay.classList.remove("hidden");
-    ensureCanvas();
-  }
-
-  function closeCreativeStudio() {
-    if (!creativeStudioOverlay) return;
-    creativeStudioOverlay.classList.add("hidden");
-  }
-
-  // ----- Canvas Studio wiring -----
-  if (canvasLauncher) {
-    canvasLauncher.addEventListener("click", openCreativeStudio);
-  }
-  if (creativeCloseBtn && creativeStudioOverlay) {
-    creativeCloseBtn.addEventListener("click", closeCreativeStudio);
-    creativeStudioOverlay.addEventListener("click", (e) => {
-      if (e.target === creativeStudioOverlay) closeCreativeStudio();
-    });
-  }
-
-  if (canvasPresetSelect) {
-    canvasPresetSelect.addEventListener("change", () => {
-      const canvas = ensureCanvas();
-      if (!canvas) return;
-      const [w, h] = canvasPresetSelect.value.split("x").map(Number);
-      canvas.setWidth(w);
-      canvas.setHeight(h);
-      canvas.calcOffset();
-      canvas.renderAll();
-      saveCanvasState();
-    });
-  }
-
-  if (creativeUndo) {
-    creativeUndo.addEventListener("click", () => {
-      if (!creativeCanvas) return;
-      if (creativeHistoryIndex > 0) {
-        loadCanvasState(creativeHistoryIndex - 1);
-      }
-    });
-  }
-  if (creativeRedo) {
-    creativeRedo.addEventListener("click", () => {
-      if (!creativeCanvas) return;
-      if (creativeHistoryIndex < creativeHistory.length - 1) {
-        loadCanvasState(creativeHistoryIndex + 1);
-      }
-    });
-  }
-  if (creativeDelete) {
-    creativeDelete.addEventListener("click", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active) return;
-      creativeCanvas.remove(active);
-      creativeCanvas.discardActiveObject();
-      creativeCanvas.renderAll();
-      saveCanvasState();
-    });
-  }
-  if (creativeExportPng) {
-    creativeExportPng.addEventListener("click", () => {
-      const canvas = ensureCanvas();
-      if (!canvas) return;
-      const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "lot-rocket-creative.png";
-      a.click();
-    });
-  }
-
-  if (creativeToolButtons.length) {
-    creativeToolButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tool = btn.getAttribute("data-tool");
-        if (!tool) return;
-        currentTool = tool;
-
-        creativeToolButtons.forEach((b) =>
-          b.classList.remove("tool-btn-active")
-        );
-        btn.classList.add("tool-btn-active");
-
-        if (!creativeCanvas) return;
-
-        if (tool === "select") {
-          creativeCanvas.isDrawingMode = false;
-        } else if (tool === "addText") {
-          addTextBox();
-        } else if (tool === "addRect") {
-          addRectBanner();
-        } else if (tool === "addBadge") {
-          addBadge();
-        } else if (tool === "uploadImage" && creativeImageInput) {
-          creativeImageInput.click();
-        }
-      });
-    });
-  }
-
-  if (creativeImageInput) {
-    creativeImageInput.addEventListener("change", (e) => {
-      const files = e.target.files;
-      if (!files || !files.length) return;
-      Array.from(files).forEach((file) => {
-        if (!file.type.startsWith("image/")) return;
-        const url = URL.createObjectURL(file);
-        addImageFromUrl(url);
-      });
-      creativeImageInput.value = "";
-    });
-  }
-
-  // ----- Drag & Drop + thumbnails in Step 3 -----
 
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
@@ -804,18 +550,423 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (sendAllToCanvasBtn) {
-    sendAllToCanvasBtn.addEventListener("click", () => {
+  // ==========================================
+  // DESIGN STUDIO 3.0 (Konva)
+  // ==========================================
+
+  const designStudioOverlay = document.getElementById("designStudioOverlay");
+  const designCloseBtn = document.getElementById("designClose");
+  const designLauncher = document.getElementById("designLauncher");
+
+  const studioSizePreset = document.getElementById("studioSizePreset");
+  const konvaContainer = document.getElementById("konvaStageContainer");
+
+  const toolAddText = document.getElementById("toolAddText");
+  const toolAddShape = document.getElementById("toolAddShape");
+  const toolAddBadge = document.getElementById("toolAddBadge");
+  const toolSetBackground = document.getElementById("toolSetBackground");
+
+  const studioUndoBtn = document.getElementById("studioUndoBtn");
+  const studioRedoBtn = document.getElementById("studioRedoBtn");
+  const studioExportPng = document.getElementById("studioExportPng");
+
+  const layersList = document.getElementById("layersList");
+  const layerTextInput = document.getElementById("layerTextInput");
+  const layerFontSizeInput = document.getElementById("layerFontSizeInput");
+  const layerOpacityInput = document.getElementById("layerOpacityInput");
+  const layerDeleteBtn = document.getElementById("layerDeleteBtn");
+
+  let stage = null;
+  let designLayer = null;
+  let designHistory = [];
+  let designHistoryIndex = -1;
+
+  function getPresetSize() {
+    if (!studioSizePreset) return [1080, 1080];
+    const [w, h] = studioSizePreset.value.split("x").map(Number);
+    return [w || 1080, h || 1080];
+  }
+
+  function ensureDesignStudio() {
+    if (stage) return { stage, designLayer };
+
+    if (!konvaContainer || typeof Konva === "undefined") {
+      console.error("Konva or container missing");
+      return null;
+    }
+
+    const [w, h] = getPresetSize();
+    stage = new Konva.Stage({
+      container: konvaContainer,
+      width: w,
+      height: h,
+    });
+    designLayer = new Konva.Layer();
+    stage.add(designLayer);
+    stage.draw();
+    saveDesignState();
+    wireStageSelection();
+    return { stage, designLayer };
+  }
+
+  function saveDesignState() {
+    if (!stage) return;
+    const json = stage.toJSON();
+    designHistory = designHistory.slice(0, designHistoryIndex + 1);
+    designHistory.push(json);
+    designHistoryIndex = designHistory.length - 1;
+  }
+
+  function loadDesignState(index) {
+    if (!konvaContainer) return;
+    if (index < 0 || index >= designHistory.length) return;
+
+    const json = designHistory[index];
+    // Destroy old stage and recreate from JSON
+    if (stage) {
+      stage.destroy();
+    }
+    stage = Konva.Node.create(json, konvaContainer);
+    designLayer = stage.findOne("Layer");
+    designHistoryIndex = index;
+    wireStageSelection();
+    rebuildLayersList();
+  }
+
+  function wireStageSelection() {
+    if (!stage) return;
+    stage.off("click");
+    stage.on("click", (e) => {
+      const node = e.target;
+      if (!node || node === stage) {
+        stage.find("Transformer").destroy();
+        stage.draw();
+        syncInspector(null);
+        return;
+      }
+      const layer = designLayer || stage.findOne("Layer");
+      if (!layer) return;
+
+      layer.find("Transformer").destroy();
+      const tr = new Konva.Transformer({
+        rotateEnabled: true,
+        enabledAnchors: [
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right",
+        ],
+      });
+      layer.add(tr);
+      tr.nodes([node]);
+      layer.draw();
+      syncInspector(node);
+    });
+  }
+
+  function rebuildLayersList() {
+    if (!layersList || !designLayer) return;
+    layersList.innerHTML = "";
+    designLayer.getChildren().forEach((node, index) => {
+      if (node.getClassName() === "Transformer") return;
+      const li = document.createElement("li");
+      li.textContent = `${index + 1} – ${node.getClassName()}`;
+      li.dataset.nodeId = node._id;
+      li.addEventListener("click", () => {
+        stage.fire("click", { target: node });
+      });
+      layersList.appendChild(li);
+    });
+  }
+
+  function syncInspector(node) {
+    if (!layerTextInput || !layerFontSizeInput || !layerOpacityInput) return;
+
+    if (!node) {
+      layerTextInput.value = "";
+      layerFontSizeInput.value = "40";
+      layerOpacityInput.value = "1";
+      layerDeleteBtn && (layerDeleteBtn.disabled = true);
+      return;
+    }
+
+    const text = node.text ? node.text() : "";
+    const fs = node.fontSize ? node.fontSize() : 40;
+    const op = node.opacity ? node.opacity() : 1;
+
+    if (typeof text === "string") layerTextInput.value = text;
+    else layerTextInput.value = "";
+
+    if (typeof fs === "number") layerFontSizeInput.value = String(fs);
+    else layerFontSizeInput.value = "40";
+
+    layerOpacityInput.value = String(op);
+    if (layerDeleteBtn) layerDeleteBtn.disabled = false;
+  }
+
+  function getSelectedNode() {
+    if (!stage) return null;
+    const tr = stage.findOne("Transformer");
+    if (!tr) return null;
+    const nodes = tr.nodes();
+    return nodes && nodes[0] ? nodes[0] : null;
+  }
+
+  function addKonvaText() {
+    const ctx = ensureDesignStudio();
+    if (!ctx) return;
+    const { stage, designLayer } = ctx;
+    const text = new Konva.Text({
+      text: "YOUR TEXT HERE",
+      x: stage.width() / 2,
+      y: 150,
+      fontSize: 64,
+      fontStyle: "bold",
+      fill: "#ffffff",
+      align: "center",
+      listening: true,
+    });
+    text.offsetX(text.width() / 2);
+    designLayer.add(text);
+    designLayer.draw();
+    saveDesignState();
+    rebuildLayersList();
+  }
+
+  function addKonvaBanner() {
+    const ctx = ensureDesignStudio();
+    if (!ctx) return;
+    const { stage, designLayer } = ctx;
+    const rect = new Konva.Rect({
+      x: stage.width() / 2,
+      y: stage.height() - 120,
+      width: stage.width() * 0.9,
+      height: 160,
+      offsetX: (stage.width() * 0.9) / 2,
+      offsetY: 80,
+      fill: "black",
+      opacity: 0.75,
+      cornerRadius: 16,
+      listening: true,
+    });
+    designLayer.add(rect);
+    designLayer.draw();
+    saveDesignState();
+    rebuildLayersList();
+  }
+
+  function addKonvaBadge() {
+    const ctx = ensureDesignStudio();
+    if (!ctx) return;
+    const { stage, designLayer } = ctx;
+    const circle = new Konva.Circle({
+      x: stage.width() - 220,
+      y: 140,
+      radius: 130,
+      fill: "red",
+      opacity: 0.95,
+      listening: true,
+    });
+    designLayer.add(circle);
+    designLayer.draw();
+    saveDesignState();
+    rebuildLayersList();
+  }
+
+  function addImageToStage(url, asBackground = false) {
+    const ctx = ensureDesignStudio();
+    if (!ctx) return;
+    const { stage, designLayer } = ctx;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const imgW = img.width;
+      const imgH = img.height;
+      const stageW = stage.width();
+      const stageH = stage.height();
+
+      const scale = Math.min(
+        (stageW * 0.8) / imgW,
+        (stageH * 0.8) / imgH
+      );
+
+      const konvaImg = new Konva.Image({
+        image: img,
+        x: stageW / 2,
+        y: stageH / 2,
+        offsetX: (imgW * scale) / 2,
+        offsetY: (imgH * scale) / 2,
+        scaleX: scale,
+        scaleY: scale,
+        listening: true,
+      });
+
+      if (asBackground) {
+        konvaImg.zIndex(0);
+      }
+
+      designLayer.add(konvaImg);
+      designLayer.draw();
+      saveDesignState();
+      rebuildLayersList();
+    };
+    img.src = url;
+  }
+
+  function openDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.remove("hidden");
+    ensureDesignStudio();
+  }
+
+  function closeDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.add("hidden");
+  }
+
+  // ---- Design Studio wiring ----
+  if (designLauncher) {
+    designLauncher.addEventListener("click", () => {
+      openDesignStudio();
+    });
+  }
+  if (designCloseBtn && designStudioOverlay) {
+    designCloseBtn.addEventListener("click", closeDesignStudio);
+    designStudioOverlay.addEventListener("click", (e) => {
+      if (e.target === designStudioOverlay) closeDesignStudio();
+    });
+  }
+
+  if (studioSizePreset) {
+    studioSizePreset.addEventListener("change", () => {
+      const ctx = ensureDesignStudio();
+      if (!ctx) return;
+      const [w, h] = getPresetSize();
+      stage.size({ width: w, height: h });
+      stage.draw();
+      saveDesignState();
+    });
+  }
+
+  if (toolAddText) toolAddText.addEventListener("click", addKonvaText);
+  if (toolAddShape) toolAddShape.addEventListener("click", addKonvaBanner);
+  if (toolAddBadge) toolAddBadge.addEventListener("click", addKonvaBadge);
+  if (toolSetBackground) {
+    toolSetBackground.addEventListener("click", () => {
+      // Use currently selected creative thumb or tuner image as background
+      let url = "";
+      const selectedThumb = document.querySelector(".creative-thumb.selected");
+      if (selectedThumb) url = selectedThumb.src;
+      else if (tunerPreviewImg && tunerPreviewImg.src) url = tunerPreviewImg.src;
+      if (!url) {
+        alert("Select a photo in Step 3 first.");
+        return;
+      }
+      openDesignStudio();
+      addImageToStage(url, true);
+    });
+  }
+
+  if (studioUndoBtn) {
+    studioUndoBtn.addEventListener("click", () => {
+      if (designHistoryIndex > 0) {
+        loadDesignState(designHistoryIndex - 1);
+      }
+    });
+  }
+
+  if (studioRedoBtn) {
+    studioRedoBtn.addEventListener("click", () => {
+      if (designHistoryIndex < designHistory.length - 1) {
+        loadDesignState(designHistoryIndex + 1);
+      }
+    });
+  }
+
+  if (studioExportPng) {
+    studioExportPng.addEventListener("click", () => {
+      if (!stage) return;
+      const dataUrl = stage.toDataURL({ mimeType: "image/png", pixelRatio: 1 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "lot-rocket-design.png";
+      a.click();
+    });
+  }
+
+  // Inspector wiring
+  if (layerTextInput) {
+    layerTextInput.addEventListener("input", () => {
+      const node = getSelectedNode();
+      if (!node || !node.text) return;
+      node.text(layerTextInput.value);
+      node.getLayer().batchDraw();
+      saveDesignState();
+      rebuildLayersList();
+    });
+  }
+
+  if (layerFontSizeInput) {
+    layerFontSizeInput.addEventListener("input", () => {
+      const node = getSelectedNode();
+      const size = Number(layerFontSizeInput.value || "40");
+      if (!node || !node.fontSize) return;
+      node.fontSize(size);
+      node.getLayer().batchDraw();
+      saveDesignState();
+    });
+  }
+
+  if (layerOpacityInput) {
+    layerOpacityInput.addEventListener("input", () => {
+      const node = getSelectedNode();
+      const op = Number(layerOpacityInput.value || "1");
+      if (!node || !node.opacity) return;
+      node.opacity(op);
+      node.getLayer().batchDraw();
+      saveDesignState();
+    });
+  }
+
+  if (layerDeleteBtn) {
+    layerDeleteBtn.addEventListener("click", () => {
+      const node = getSelectedNode();
+      if (!node) return;
+      node.destroy();
+      stage.find("Transformer").destroy();
+      stage.draw();
+      saveDesignState();
+      rebuildLayersList();
+      syncInspector(null);
+    });
+  }
+
+  // ----- Wiring Step 3 "Send Selected to Design Studio" -----
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
       if (!localCreativePhotos.length) {
         alert("Add or drop some photos into Step 3 first.");
         return;
       }
-      openCreativeStudio();
-      localCreativePhotos.forEach((url) => addImageFromUrl(url));
+      openDesignStudio();
+
+      // If any thumbs are selected, send only those; otherwise send all
+      const selectedThumbs = Array.from(
+        document.querySelectorAll(".creative-thumb.selected")
+      );
+      const urls =
+        selectedThumbs.length > 0
+          ? selectedThumbs.map((img) => img.src)
+          : localCreativePhotos;
+
+      urls.forEach((url, idx) => {
+        addImageToStage(url, idx === 0); // first could be treated as bg if desired
+      });
     });
   }
 
-  // ----- Wiring Step 1 "Send top photos to Creative Studio" -----
+  // ----- Wiring Step 1 "Send top photos to Design Studio" -----
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
 
@@ -836,15 +987,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Also pipe them into Step 3 thumbnails for consistency
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
       });
 
-      openCreativeStudio();
-      chosen.forEach((url) => addImageFromUrl(url));
+      openDesignStudio();
+      chosen.forEach((url, idx) => addImageToStage(url, idx === 0));
     });
   }
 
-  console.log("✅ Lot Rocket frontend wiring complete");
+  console.log("✅ Lot Rocket frontend wiring complete (Design Studio 3.0)");
 });
