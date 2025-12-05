@@ -367,101 +367,97 @@
         </div>
       </div>
 
-      <div class="creative-body">
-        <!-- LEFT: tools -->
-      <aside class="creative-tools">
-  <h3>Tools</h3>
-
-  <!-- Basic tools -->
-  <button id="toolAddText" class="pill-btn">Add Text</button>
-  <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
-  <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
-  <button id="toolSetBackground" class="pill-btn">Set Background</button>
-
-  <hr class="tool-divider" />
-
-  <!-- Templates -->
-  <p class="tools-label">Templates</p>
-  <button id="toolTemplatePayment" class="pill-btn pill-btn-secondary">
-    Payment Promo
-  </button>
-  <button id="toolTemplateArrival" class="pill-btn pill-btn-secondary">
-    Just Arrived
-  </button>
-  <button id="toolTemplateSale" class="pill-btn pill-btn-secondary">
-    Sale Blast
-  </button>
-
-  <hr class="tool-divider" />
-
-  <!-- Save / Load -->
-  <p class="tools-label">Design</p>
-  <button id="toolSaveDesign" class="pill-btn pill-btn-ghost">
-    Save Design
-  </button>
-  <button id="toolLoadDesign" class="pill-btn pill-btn-ghost">
-    Load Design
-  </button>
-</aside>
+<div class="creative-body">
+  <!-- LEFT: tools -->
   <aside class="creative-tools">
-          <h3>Tools</h3>
-          <button id="toolAddText" class="tool-btn">Add Text</button>
-          <button id="toolAddShape" class="tool-btn">Add Banner Bar</button>
-          <button id="toolAddBadge" class="tool-btn">Add Price Badge</button>
-          <button id="toolSetBackground" class="tool-btn">Set Background</button>
-        </aside>
+    <h3>Tools</h3>
 
-        <!-- CENTER: Konva stage container -->
-        <div class="creative-canvas-wrap">
-          <div id="konvaStageContainer" class="studio-canvas-container"></div>
-        </div>
+    <!-- Main tools -->
+    <button id="toolAddText" class="pill-btn">Add Text</button>
+    <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
+    <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
+    <button id="toolSetBackground" class="pill-btn">Set Background</button>
 
-        <!-- RIGHT: layers + properties -->
-        <aside class="creative-properties">
-          <div class="prop-group">
-            <h4>Layers</h4>
-            <ul id="layersList" class="layers-list"></ul>
-          </div>
+    <hr class="tool-divider" />
 
-          <div class="prop-group">
-            <h4>Selected Layer</h4>
-            <label>
-              Text
-              <input
-                id="layerTextInput"
-                type="text"
-                placeholder="Edit text…"
-              />
-            </label>
-            <label>
-              Font size
-              <input
-                id="layerFontSizeInput"
-                type="number"
-                min="8"
-                max="120"
-                value="40"
-              />
-            </label>
-            <label>
-              Opacity
-              <input
-                id="layerOpacityInput"
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value="1"
-              />
-            </label>
-            <button id="layerDeleteBtn" class="btn-danger full-width-bar">
-              Delete Layer
-            </button>
-          </div>
-        </aside>
-      </div>
-    </div>
+    <!-- Templates section -->
+    <p class="tools-label">Templates</p>
+    <button id="templatePayment" class="pill-btn pill-btn-secondary">
+      Payment Promo
+    </button>
+    <button id="templateArrival" class="pill-btn pill-btn-secondary">
+      Just Arrived
+    </button>
+    <button id="templateSale" class="pill-btn pill-btn-secondary">
+      Sale Blast
+    </button>
+
+    <hr class="tool-divider" />
+
+    <!-- Save / load section -->
+    <p class="tools-label">Design</p>
+    <button id="saveDesignBtn" class="pill-btn pill-btn-ghost">
+      Save Design
+    </button>
+    <button id="loadDesignBtn" class="pill-btn pill-btn-ghost">
+      Load Design
+    </button>
+  </aside>
+
+  <!-- CENTER: Konva stage container -->
+  <div class="creative-canvas-wrap">
+    <div id="konvaStageContainer" class="studio-canvas-container"></div>
   </div>
+
+  <!-- RIGHT: layers + properties -->
+  <aside class="creative-properties">
+    <div class="prop-group">
+      <h4>Layers</h4>
+      <ul id="layersList" class="layers-list"></ul>
+    </div>
+
+    <div class="prop-group">
+      <h4>Selected Layer</h4>
+
+      <label>
+        Text
+        <input
+          id="layerTextInput"
+          type="text"
+          placeholder="Edit text…"
+        />
+      </label>
+
+      <label>
+        Font size
+        <input
+          id="layerFontSizeInput"
+          type="number"
+          min="8"
+          max="120"
+          value="40"
+        />
+      </label>
+
+      <label>
+        Opacity
+        <input
+          id="layerOpacityInput"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value="1"
+        />
+      </label>
+
+      <button id="layerDeleteBtn" class="btn-danger full-width-bar">
+        Delete Layer
+      </button>
+    </div>
+  </aside>
+</div>
+
 
   <!-- ===== SIDE MODALS FOR TOOLS (keep your existing ones here) ===== -->
   <!-- Objection / Calculators / Message / Ask / Car / Image / Video modals go here unchanged -->
