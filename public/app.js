@@ -1,13 +1,14 @@
-// public/app.js – Lot Rocket frontend logic v2.5 CLEAN
+// public/app.js – Lot Rocket frontend logic v2.6
 // - Theme toggle
 // - Step 1 + Step 2 social kit
 // - Step 3 Creative Lab (drag/drop + tuner)
 // - Canvas Studio (Fabric)
 // - Design Studio 3.0 (Konva)
 // - Side tool modals + AI helpers
+// - CORS-safe image loading via /api/image-proxy
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5");
+  console.log("✅ Lot Rocket frontend loaded v2.6");
   const apiBase = "";
 
   // ======================================
@@ -162,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (boostButton) {
     boostButton.addEventListener("click", doBoostListing);
   }
-
 
   // ---------- Copy buttons ----------
   document.querySelectorAll(".copy-btn").forEach((btn) => {
@@ -459,14 +459,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tunerBrightness) tunerBrightness.addEventListener("input", applyTunerFilters);
   if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
   if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
+
   // Any external image should go through our proxy to avoid CORS issues on canvas
   function getSafeImageUrl(rawUrl) {
     if (!rawUrl) return "";
-    // Local blobs & data URLs are already safe
     if (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) return rawUrl;
-    // Already same-origin (e.g., served from our own backend)
     if (rawUrl.startsWith(window.location.origin)) return rawUrl;
-    // Everything else: proxy through backend
     return "/api/image-proxy?url=" + encodeURIComponent(rawUrl);
   }
 
@@ -653,7 +651,6 @@ document.addEventListener("DOMContentLoaded", () => {
       { crossOrigin: "Anonymous" }
     );
   }
-
 
   function addRectBanner() {
     const canvas = ensureCanvas();
@@ -934,7 +931,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const stage = ensureDesignStage();
     if (!stage) return;
     stage.fromJSON(designHistory[index]);
-    // After fromJSON, we need to re-hook click events
     stage.find("Shape").forEach((shape) => {
       shape.draggable(true);
     });
@@ -1066,7 +1062,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       img.scale({ x: scale, y: scale });
       img.position({ x: 0, y: 0 });
-      img.listening(false); // background not selectable
+      img.listening(false);
 
       designBgLayer.destroyChildren();
       designBgLayer.add(img);
@@ -1074,7 +1070,6 @@ document.addEventListener("DOMContentLoaded", () => {
       saveDesignState();
     });
   }
-
 
   function openDesignStudio() {
     if (!designStudioOverlay) return;
@@ -1088,24 +1083,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Helper: send a list of URLs into Design Studio (bg + overlays)
-        const safeUrl = getSafeImageUrl(url);
-
-        Konva.Image.fromURL(safeUrl, (img) => {
-          img.draggable(true);
-          const scaleFactor = 0.5;
-          img.scale({ x: scaleFactor, y: scaleFactor });
-          img.position({
-            x: stage.width() / 2,
-            y: stage.height() / 2,
-          });
-          designMainLayer.add(img);
-          setSelectedNode(img);
-          designMainLayer.draw();
-          saveDesignState();
-          refreshLayersList();
-        });
-
-
+  function sendUrlsToDesignStudio(urls) {
+    if (!urls || !urls.length) {
+      alert("No photos available to send to Design Studio yet.");
+      return;
+    }
 
     openDesignStudio();
 
@@ -1113,14 +1095,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return;
 
       if (index === 0) {
-        // First image = background
         setBackgroundFromUrl(url);
       } else {
-        // Others = draggable overlays
         const stage = ensureDesignStage();
         if (!stage || !designMainLayer) return;
 
-        Konva.Image.fromURL(url, (img) => {
+        const safeUrl = getSafeImageUrl(url);
+
+        Konva.Image.fromURL(safeUrl, (img) => {
           img.draggable(true);
           const scaleFactor = 0.5;
           img.scale({ x: scaleFactor, y: scaleFactor });
@@ -1139,9 +1121,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (designLauncher) {
-    designLauncher.addEventListener("click", () => {
-      openDesignStudio();
-    });
+    designLauncher.addEventListener("click", openDesignStudio);
   }
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
@@ -1196,12 +1176,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (toolAddBadge) toolAddBadge.addEventListener("click", addDesignBadge);
   if (toolSetBackground) {
     toolSetBackground.addEventListener("click", () => {
-      // Use currently selected Creative Lab image, or first one
-      const selectedThumb = document.querySelector(
-        ".creative-thumb.selected"
-      );
-      let url =
-        selectedThumb?.getAttribute("src") || localCreativePhotos[0] || null;
+      const selectedThumb = document.querySelector(".creative-thumb.selected");
+      const url = selectedThumb?.getAttribute("src") || localCreativePhotos[0];
       if (!url) {
         alert("Select or add a photo in Step 3 first.");
         return;
@@ -1255,7 +1231,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (layerOpacityInput) {
     layerOpacityInput.addEventListener("input", () => {
-      if (selectedNode && selectedNode.opacity) {
+      if (selectedNode && typeof selectedNode.opacity === "function") {
         const val = Number(layerOpacityInput.value || 1);
         selectedNode.opacity(val);
         if (designStage) designStage.draw();
