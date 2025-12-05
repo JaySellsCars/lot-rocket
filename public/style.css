@@ -1084,6 +1084,51 @@ body.dark-theme .step2-card .copy-btn {
   border-color: transparent;
   color: #020617;
 }
+.tools-label {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.tool-divider {
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  margin: 0.75rem 0;
+}
+
+.pill-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.45rem 0.2rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: radial-gradient(circle at top left, #020617, #020617);
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.pill-btn:hover {
+  background: radial-gradient(circle at top left, #0f172a, #020617);
+  box-shadow: 0 0 0 1px rgba(248, 250, 252, 0.1),
+    0 10px 24px rgba(15, 23, 42, 0.9);
+  transform: translateY(-1px);
+}
+
+.pill-btn-secondary {
+  border-color: rgba(248, 250, 252, 0.18);
+  background: radial-gradient(circle at top left, #020617, #020617);
+}
+
+.pill-btn-ghost {
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.5);
+  background: transparent;
+}
 
 /* ====== SCROLLABLE CANVAS WRAPPER / KONVA CONTAINER ====== */
 
