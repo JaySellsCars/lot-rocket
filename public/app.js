@@ -140,9 +140,48 @@ document.addEventListener("DOMContentLoaded", () => {
       const photos = Array.isArray(data.photos) ? data.photos : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
-      if (sendPhotosToStudioBtn) {
-        sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+  // Step 1 -> Creative Lab + Design Studio 3.0
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
       }
+
+      // Use selected dealer photos if any, otherwise use all
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+        0,
+        8
+      );
+
+      if (!chosen.length) {
+        alert("Lot Rocket didn’t see any usable photos from the dealer page.");
+        return;
+      }
+
+      // 1) Feed Step 3 Creative Lab thumbnails
+      chosen.forEach((url) => {
+        if (!localCreativePhotos.includes(url)) {
+          localCreativePhotos.push(url);
+          addCreativeThumb(url);
+        }
+      });
+
+      // 2) Send directly into Design Studio 3.0
+      console.log("[DesignStudio] From Step 1 -> chosen URLs:", chosen);
+      openDesignStudio();
+
+      // First = background
+      setBackgroundFromUrl(chosen[0]);
+
+      // Rest = overlay photos
+      chosen.slice(1).forEach((u) => addDesignImage(u));
+    });
+  }
+
 
       document.body.classList.add("kit-ready");
       if (statusText) statusText.textContent = "Social kit ready ✔";
