@@ -1166,17 +1166,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const w = img.width * ratio;
       const h = img.height * ratio;
 
-      const node = new Konva.Image({
-        image: img,
-        x: studioStage.width() / 2,
-        y: studioStage.height() / 2,
-        width: w,
-        height: h,
-        offsetX: w / 2,
-        offsetY: h / 2,
-        draggable: !asBackground,
-        name: asBackground ? "Background Photo" : "Photo Layer",
-      });
+const node = new Konva.Image({
+  image: img,
+  x: studioStage.width() / 2,
+  // If it's the background, nudge it upward so the car sits higher
+  y: studioStage.height() / 2 - (asBackground ? studioStage.height() * 0.1 : 0),
+  width: w,
+  height: h,
+  offsetX: w / 2,
+  offsetY: h / 2,
+  draggable: !asBackground,
+  name: asBackground ? "Background Photo" : "Photo Layer",
+});
+
 
       attachNodeInteractions(node);
       studioLayer.add(node);
