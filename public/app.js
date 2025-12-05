@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.5
+// public/app.js – Lot Rocket frontend logic v2.5.6
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva).
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.5");
+  console.log("✅ Lot Rocket frontend loaded v2.5.6");
 
   const apiBase = "";
 
@@ -48,13 +48,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const marketplacePost = document.getElementById("marketplacePost");
   const hashtags = document.getElementById("hashtags");
 
-const photosGrid = document.getElementById("photosGrid");
+  const photosGrid = document.getElementById("photosGrid");
 
-// Works with either id="sendPhotosToCreative" or old id="sendPhotosToStudio"
-const sendPhotosToStudioBtn =
-  document.getElementById("sendPhotosToCreative") ||
-  document.getElementById("sendPhotosToStudio");
-
+  // Works with either id="sendPhotosToCreative" or old id="sendPhotosToStudio"
+  const sendPhotosToCreativeBtn =
+    document.getElementById("sendPhotosToCreative") ||
+    document.getElementById("sendPhotosToStudio");
 
   // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
