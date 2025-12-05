@@ -622,16 +622,16 @@ body.dark-theme .step2-card .copy-btn {
   display: none;
 }
 
-/* BIGGER STUDIO WINDOW */
 .creative-modal {
-  width: min(1400px, 98vw);        /* was 1200px/95vw */
-  height: min(860px, 96vh);        /* was 720px/90vh  */
+  width: min(1200px, 98vw);
+  height: 95vh;                 /* almost full height */
   background: var(--bg-panel);
   border-radius: 1.4rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
   box-shadow: 0 30px 80px rgba(15, 23, 42, 0.95);
   display: flex;
   flex-direction: column;
+  overflow: hidden;             /* header fixed, body scrolls */
 }
 
 .creative-header {
@@ -652,86 +652,16 @@ body.dark-theme .step2-card .copy-btn {
   font-size: 0.8rem;
 }
 
-.creative-actions button {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: var(--bg-panel);
-  color: inherit;
-  padding: 0.25rem 0.7rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-/* more room for center canvas, but still side panels */
+/* THIS is the key: let the main interior scroll */
 .creative-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr) 230px;
-  gap: 0.8rem;
+  grid-template-columns: 180px minmax(0, 1fr) 210px;
+  gap: 0.6rem;
   padding: 0.7rem 1rem 1rem;
+  overflow: auto;              /* scroll when content is taller */
 }
 
-/* left + right panels unchanged */
-.creative-tools,
-.creative-properties {
-  font-size: 0.8rem;
-}
-
-.creative-tools h3 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-}
-
-/* TOOL BUTTONS */
-.tool-btn {
-  width: 100%;
-  margin-bottom: 0.4rem;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.75);
-  background: var(--bg-panel);
-  color: inherit;
-  cursor: pointer;
-  padding: 0.35rem 0.6rem;
-  font-size: 0.78rem;
-}
-
-.tool-btn-active {
-  background: radial-gradient(circle at top left, var(--accent-1), var(--accent-2));
-  border-color: transparent;
-  color: #020617;
-}
-
-/* CENTER CANVAS AREA – smaller pic + scrollable */
-.creative-canvas-wrap {
-  background: var(--bg-panel);
-  border-radius: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 0.75rem;
-  overflow: auto;                 /* <— allows scrolling when image/canvas is larger */
-}
-
-/* the canvas never grows beyond the viewport box */
-.creative-canvas-wrap canvas {
-  max-width: 90%;                 /* <— makes the picture feel smaller inside studio */
-  max-height: 90%;
-}
-
-/* right-side property groups */
-.prop-group {
-  margin-bottom: 0.7rem;
-}
-
-.prop-group h4 {
-  margin: 0 0 0.4rem;
-  font-size: 0.82rem;
-}
-
-.hidden-input {
-  display: none;
-}
 
 
 /* ====== PHOTO TUNER (inside panels) ====== */
