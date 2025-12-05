@@ -1288,18 +1288,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (layerDeleteBtn) {
-    layerDeleteBtn.addEventListener("click", () => {
-      if (!selectedNode || !designMainLayer) return;
-      selectedNode.destroy();
-      selectedNode = null;
-      designMainLayer.draw();
-      saveDesignState();
-      refreshLayersList();
-    });
-  }
+if (layerDeleteBtn) {
+  layerDeleteBtn.addEventListener("click", () => {
+    if (!selectedNode || !designMainLayer) return;
+    selectedNode.destroy();
+    selectedNode = null;
+    designMainLayer.draw();
+    saveDesignState();
+    refreshLayersList();
+  });
+}
 
-  console.log("✅ Lot Rocket frontend wiring complete");
+console.log("✅ Lot Rocket frontend wiring complete");
 });
 
 
