@@ -572,38 +572,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Step 1 -> Creative Lab + Canvas Studio
-if (sendPhotosToStudioBtn) {
-  sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-  sendPhotosToStudioBtn.addEventListener("click", () => {
-    if (!dealerPhotos.length) {
-      alert("Boost a listing first so Lot Rocket can grab photos.");
-      return;
-    }
-
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-      0,
-      8
-    );
-
-    // 1) Feed Step 3 Creative Lab thumbnails
-    chosen.forEach((url) => {
-      if (!localCreativePhotos.includes(url)) {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
+  // Step 1 -> Creative Lab + Design Studio 3.0
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
       }
+
+      // Use selected dealer photos if any, otherwise take the first 8
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+        0,
+        8
+      );
+
+      if (!chosen.length) {
+        alert("No dealer photos available yet.");
+        return;
+      }
+
+      // 1) Feed Step 3 Creative Lab thumbs
+      chosen.forEach((url) => {
+        if (!localCreativePhotos.includes(url)) {
+          localCreativePhotos.push(url);
+          addCreativeThumb(url);
+        }
+      });
+
+      // 2) Open Design Studio and load them:
+      //    first = background, rest = overlays
+      openDesignStudio();
+      setBackgroundFromUrl(chosen[0]);
+      chosen.slice(1).forEach((u) => addDesignImage(u));
     });
+  }
 
-    // 2) Send directly into Design Studio 3.0
-    if (!chosen.length) return;
-
-    openDesignStudio();
-    // first = background, rest = overlays
-    setBackgroundFromUrl(chosen[0]);
-    chosen.slice(1).forEach((u) => addDesignImage(u));
-  });
-}
 
   // ======================================
   // CANVAS STUDIO (FABRIC)
@@ -658,28 +663,24 @@ if (sendPhotosToStudioBtn) {
   // Basic image URL sanitizer + proxy for cross-origin dealer photos
   function getSafeImageUrl(url) {
     if (!url) return url;
-
-    // blob:/data: from local uploads are already safe
-    if (url.startsWith("blob:") || url.startsWith("data:")) {
-      return url;
-    }
-
     try {
+      // Local blobs/data are already safe
+      if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+
       const u = new URL(url, window.location.href);
 
-      // If image is already same-origin (our backend/static/proxy), just use it
+      // Same-origin: use directly
       if (u.origin === window.location.origin) {
         return u.toString();
       }
 
-      // For external dealer images, route through backend proxy
-      const proxied = `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
-      return proxied;
+      // Dealer / external images -> go through proxy for CORS-safe canvas usage
+      return `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
     } catch {
-      // If URL constructor blows up, just fall back
       return url;
     }
   }
+
 
 
 
