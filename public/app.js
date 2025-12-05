@@ -1074,7 +1074,7 @@ document.addEventListener("DOMContentLoaded", () => {
     designMainLayer.draw();
     saveDesignState();
     refreshLayersList();
-
+  }
 
   function addDesignBadge() {
     const stage = ensureDesignStage();
@@ -1096,7 +1096,6 @@ document.addEventListener("DOMContentLoaded", () => {
     designMainLayer.draw();
     saveDesignState();
     refreshLayersList();
-
   }
 
   function setBackgroundFromUrl(url) {
@@ -1145,28 +1144,35 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!url) return;
 
       if (index === 0) {
+        // First image becomes background
         setBackgroundFromUrl(url);
-      } else {
-        const stage = ensureDesignStage();
-        if (!stage || !designMainLayer) return;
+        return;
+      }
 
-        const safeUrl = getSafeImageUrl(url);
+      const stage = ensureDesignStage();
+      if (!stage || !designMainLayer) return;
 
-        Konva.Image.fromURL(url, (img) => {
-          const scaleFactor = 0.5;
-          img.scale({ x: scaleFactor, y: scaleFactor });
-          img.position({
-            x: stage.width() / 2,
-            y: stage.height() / 2,
-          });
-          designMainLayer.add(img);
-          attachDragWithSnapping(img); // 🔥 use snapping helper
-          setSelectedNode(img);
-          designMainLayer.draw();
-          saveDesignState();
-          refreshLayersList();
+      const safeUrl = getSafeImageUrl(url);
+
+      Konva.Image.fromURL(safeUrl, (img) => {
+        const scaleFactor = 0.5;
+        img.scale({ x: scaleFactor, y: scaleFactor });
+        img.position({
+          x: stage.width() / 2,
+          y: stage.height() / 2,
         });
 
+        designMainLayer.add(img);
+        attachDragWithSnapping(img); // snapping helper
+        setSelectedNode(img);
+        designMainLayer.draw();
+        saveDesignState();
+        refreshLayersList();
+      });
+    });
+  }
+
+  // ----- Wiring the Design Studio UI -----
 
   if (designLauncher) {
     designLauncher.addEventListener("click", openDesignStudio);
@@ -1222,6 +1228,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (toolAddText) toolAddText.addEventListener("click", addDesignText);
   if (toolAddShape) toolAddShape.addEventListener("click", addDesignBanner);
   if (toolAddBadge) toolAddBadge.addEventListener("click", addDesignBadge);
+
   if (toolSetBackground) {
     toolSetBackground.addEventListener("click", () => {
       const selectedThumb = document.querySelector(".creative-thumb.selected");
@@ -1289,16 +1296,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Selected layer delete button
-if (layerDeleteBtn) {
-  layerDeleteBtn.addEventListener("click", () => {
-    if (!selectedNode || !designMainLayer) return;
-    selectedNode.destroy();
-    selectedNode = null;
-    designMainLayer.draw();
-    saveDesignState();
-    refreshLayersList();
-  });
-}
+  if (layerDeleteBtn) {
+    layerDeleteBtn.addEventListener("click", () => {
+      if (!selectedNode || !designMainLayer) return;
+      selectedNode.destroy();
+      selectedNode = null;
+      designMainLayer.draw();
+      saveDesignState();
+      refreshLayersList();
+    });
+  }
 
-console.log("✅ Lot Rocket frontend wiring complete");
+  console.log("Lot Rocket frontend wiring complete");
 }); // end DOMContentLoaded
