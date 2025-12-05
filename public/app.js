@@ -533,9 +533,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Step 1 -> Creative Lab + Design Studio
+  // Step 1 -> Creative Lab + Design Studio 3.0
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+
     sendPhotosToStudioBtn.addEventListener("click", () => {
       if (!dealerPhotos.length) {
         alert("Boost a listing first so Lot Rocket can grab photos.");
@@ -547,39 +548,16 @@ document.addEventListener("DOMContentLoaded", () => {
         selected.length ? selected : dealerPhotos.map((p) => p.src)
       ).slice(0, 8);
 
-      // Always mirror into Creative Lab thumbnails
+      // 1) Feed into Creative Lab thumbnails / tuner
       chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
+        if (!localCreativePhotos.includes(url)) {
+          localCreativePhotos.push(url);
+          addCreativeThumb(url);
+        }
       });
 
-      // NEW: open Design Studio and preload these images
-      if (!chosen.length) return;
-
-      openDesignStudio();
-
-      const [first, ...rest] = chosen;
-      if (first) {
-        setBackgroundFromUrl(first);
-      }
-
-      rest.forEach((url) => {
-        const stage = ensureDesignStage();
-        if (!stage || !designMainLayer) return;
-        Konva.Image.fromURL(url, (img) => {
-          img.draggable(true);
-          img.scale({ x: 0.5, y: 0.5 });
-          img.position({
-            x: stage.width() / 2,
-            y: stage.height() / 2,
-          });
-          designMainLayer.add(img);
-          setSelectedNode(img);
-          designMainLayer.draw();
-          saveDesignState();
-          refreshLayersList();
-        });
-      });
+      // 2) Also open Design Studio and send the same photos there
+      sendUrlsToDesignStudio(chosen);
     });
   }
 
@@ -1092,8 +1070,48 @@ document.addEventListener("DOMContentLoaded", () => {
     designStudioOverlay.classList.add("hidden");
   }
 
+  // Helper: send a list of URLs into Design Studio (bg + overlays)
+  function sendUrlsToDesignStudio(urls) {
+    if (!urls || !urls.length) {
+      alert("No photos available to send to Design Studio yet.");
+      return;
+    }
+
+    openDesignStudio();
+
+    urls.forEach((url, index) => {
+      if (!url) return;
+
+      if (index === 0) {
+        // First image = background
+        setBackgroundFromUrl(url);
+      } else {
+        // Others = draggable overlays
+        const stage = ensureDesignStage();
+        if (!stage || !designMainLayer) return;
+
+        Konva.Image.fromURL(url, (img) => {
+          img.draggable(true);
+          const scaleFactor = 0.5;
+          img.scale({ x: scaleFactor, y: scaleFactor });
+          img.position({
+            x: stage.width() / 2,
+            y: stage.height() / 2,
+          });
+          designMainLayer.add(img);
+          setSelectedNode(img);
+          designMainLayer.draw();
+          saveDesignState();
+          refreshLayersList();
+        });
+      }
+    });
+  }
+
   if (designLauncher) {
-    designLauncher.addEventListener("click", openDesignStudio);
+    designLauncher.addEventListener("click", () => {
+      openDesignStudio();
+    });
   }
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
@@ -1158,17 +1176,17 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Select or add a photo in Step 3 first.");
         return;
       }
-      openDesignStudio();
-      setBackgroundFromUrl(url);
+      sendUrlsToDesignStudio([url]);
     });
   }
 
-  // Step 3 button: Send selected thumbs to Design Studio as layers
+  // Step 3 button: Send selected thumbs (or all) to Design Studio as bg + layers
   if (sendToDesignStudioBtn) {
     sendToDesignStudioBtn.addEventListener("click", () => {
       const thumbs = Array.from(
         document.querySelectorAll(".creative-thumb.selected")
       );
+
       const urls =
         thumbs.length > 0
           ? thumbs.map((img) => img.getAttribute("src"))
@@ -1179,30 +1197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      openDesignStudio();
-      // First image as background, rest as draggable overlays
-      urls.forEach((url, index) => {
-        if (!url) return;
-        if (index === 0) {
-          setBackgroundFromUrl(url);
-        } else {
-          const stage = ensureDesignStage();
-          if (!stage || !designMainLayer) return;
-          Konva.Image.fromURL(url, (img) => {
-            img.draggable(true);
-            img.scale({ x: 0.5, y: 0.5 });
-            img.position({
-              x: stage.width() / 2,
-              y: stage.height() / 2,
-            });
-            designMainLayer.add(img);
-            setSelectedNode(img);
-            designMainLayer.draw();
-            saveDesignState();
-            refreshLayersList();
-          });
-        }
-      });
+      sendUrlsToDesignStudio(urls);
     });
   }
 
