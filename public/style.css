@@ -992,6 +992,9 @@ body.dark-theme .step2-card .copy-btn {
   padding: 1.25rem;
   z-index: 70;
 }
+.creative-overlay.hidden {
+  display: none !important;
+}
 
 
 .creative-modal {
