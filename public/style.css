@@ -600,7 +600,7 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.35rem;
 }
 
-/* ====== CREATIVE STUDIO OVERLAY ====== */
+/* ====== CREATIVE STUDIO OVERLAY (Fabric + Konva share this shell) ====== */
 
 .creative-overlay {
   position: fixed;
@@ -655,11 +655,12 @@ body.dark-theme .step2-card .copy-btn {
   cursor: pointer;
 }
 
+/* UPDATED: give more breathing room for Tools | Canvas | Layers */
 .creative-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) 210px;
-  gap: 0.6rem;
+  grid-template-columns: 230px minmax(0, 1fr) 260px;
+  gap: 1.25rem;
   padding: 0.7rem 1rem 1rem;
 }
 
@@ -698,6 +699,27 @@ body.dark-theme .step2-card .copy-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden; /* keep any canvas inside the frame */
+}
+
+/* ====== DESIGN STUDIO 3.0 – Konva canvas containment ====== */
+
+.studio-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  max-height: 640px;     /* prevents overlap with tools/layers */
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* force Konva canvas to scale with container */
+.studio-canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
 .creative-canvas-wrap canvas {
@@ -889,13 +911,13 @@ body.dark-theme .step2-card .copy-btn {
 
 /* ====== STEP 1 – PHOTO GRID THUMBNAILS ====== */
 
-.photo-grid { ... }
+.photo-grid {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.4rem;
+}
 
-.photo-thumb { ... }
-
-#photosGrid img { ... }
-
-/* Step 1 dealer photo buttons + selected checkmark */
 .photo-thumb-btn {
   position: relative;
   padding: 0;
@@ -913,6 +935,7 @@ body.dark-theme .step2-card .copy-btn {
   border: 1px solid rgba(148, 163, 184, 0.7);
 }
 
+/* selected frame + green check */
 .photo-thumb-btn.photo-thumb-selected::after {
   content: "✓";
   position: absolute;
@@ -931,15 +954,13 @@ body.dark-theme .step2-card .copy-btn {
   box-shadow: 0 0 6px rgba(15, 23, 42, 0.9);
 }
 
-}
-
 /* selection highlight */
 .photo-thumb-selected .photo-thumb-img {
   box-shadow: 0 0 14px rgba(96, 165, 250, 1);
   border-color: rgba(96, 165, 250, 1);
 }
 
-/* green check in corner */
+/* green check in corner (legacy hook) */
 .photo-thumb-check {
   position: absolute;
   top: 4px;
