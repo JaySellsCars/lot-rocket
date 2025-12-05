@@ -534,25 +534,37 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Step 1 -> Creative Lab + Canvas Studio
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
+if (sendPhotosToStudioBtn) {
+  sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+  sendPhotosToStudioBtn.addEventListener("click", () => {
+    if (!dealerPhotos.length) {
+      alert("Boost a listing first so Lot Rocket can grab photos.");
+      return;
+    }
 
-      chosen.forEach((url) => {
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+      0,
+      8
+    );
+
+    // 1) Feed Step 3 Creative Lab thumbnails
+    chosen.forEach((url) => {
+      if (!localCreativePhotos.includes(url)) {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
-      });
+      }
     });
-  }
+
+    // 2) Send directly into Design Studio 3.0
+    if (!chosen.length) return;
+
+    openDesignStudio();
+    // first = background, rest = overlays
+    setBackgroundFromUrl(chosen[0]);
+    chosen.slice(1).forEach((u) => addDesignImage(u));
+  });
+}
 
   // ======================================
   // CANVAS STUDIO (FABRIC)
