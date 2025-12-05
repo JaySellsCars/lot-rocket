@@ -98,7 +98,7 @@ body {
   grid-row: 1;
 }
 
-/* Step 2 – right column, row 1 */
+/* Step 2 – right column, row 1 (we’ll turn this into its own grid below) */
 .column-middle {
   grid-column: 2;
   grid-row: 1;
@@ -116,7 +116,7 @@ body {
   margin: 0 auto 1rem;
 }
 
-/* Step 3 two-column layout (if you use it) */
+/* Step 3 two-column layout (optional inner grid) */
 .step3-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -516,6 +516,380 @@ body.dark-theme .step2-card .copy-btn {
   color: #dc2626;
 }
 
+/* ======================================= */
+/* STEP 2 – PREMIUM ROCKET SKIN (SOCIALS) */
+/* ======================================= */
+
+/* Step 2 column – long, skinny, 2-up grid */
+.column-middle {
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.9rem;
+  row-gap: 1.9rem;
+}
+
+/* Heading + subtitle spacing */
+.column-middle > h2 {
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.1rem;
+}
+
+.step2-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Core Step 2 card shell with glow */
+.platform-card.step2-card {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
+  border-radius: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 1.4rem 1.4rem 1.1rem;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 20px 48px rgba(15, 23, 42, 0.35),
+    0 0 0 1px rgba(15, 23, 42, 0.5);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+/* Outer glow edge */
+.platform-card.step2-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.5),
+    rgba(251, 191, 36, 0.4),
+    rgba(129, 140, 248, 0.35)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+/* Soft inner highlight */
+.platform-card.step2-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at top left,
+    rgba(248, 250, 252, 0.05),
+    transparent 55%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Hover feel – float + glow */
+.platform-card.step2-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 26px 60px rgba(15, 23, 42, 0.55),
+    0 0 0 1px rgba(15, 23, 42, 0.7);
+}
+
+.platform-card.step2-card:hover::before {
+  opacity: 1;
+}
+
+/* When Boost has run – subtle “kit ready” highlight */
+.kit-ready .platform-card.step2-card {
+  border-color: rgba(251, 191, 36, 0.7);
+}
+
+/* Card title */
+.platform-card.step2-card h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.96;
+}
+
+/* Optional emojis per platform (only if you add those classes in HTML) */
+.facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
+.instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
+.tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
+.linkedin-card h3::before { content: "💼"; margin-right: 0.35rem; }
+.twitter-card h3::before { content: "✖️"; margin-right: 0.35rem; }
+.textdm-card h3::before { content: "💬"; margin-right: 0.35rem; }
+.marketplace-card h3::before { content: "🏷️"; margin-right: 0.35rem; }
+.hashtags-card h3::before { content: "#";  margin-right: 0.35rem; }
+
+/* Long, skinny glossy text area */
+.step2-card textarea {
+  flex: 1;
+  margin-top: 0.3rem;
+  border-radius: 0.95rem;
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
+  border: 1px solid rgba(31, 41, 55, 0.7);
+  padding: 0.85rem 0.95rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 23, 42, 0.7),
+    inset 0 12px 40px rgba(15, 23, 42, 0.6);
+  resize: vertical;
+  min-height: 170px;
+}
+
+/* Buttons row stays tight on the right / bottom for Step 2 */
+.step2-card .btn-row {
+  margin-top: 0.7rem;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+/* New Post / New Set button – tighter width for “skinny” feel */
+.step2-card .regen-btn {
+  min-width: 96px;
+}
+
+/* Copy buttons already share global glow behaviour */
+.step2-card .copy-btn {
+  min-width: 76px;
+}
+
+/* ============================================= */
+/* STEP 1 – PHOTOS PULLED FROM DEALER (SCROLL)  */
+/* ============================================= */
+
+#photosGrid {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  max-height: 260px;        /* keep panel from going to the floor */
+  overflow-y: auto;         /* scroll if lots of photos */
+  padding-right: 0.25rem;   /* space for scrollbar */
+}
+
+/* each thumb is a button so we can toggle selected state */
+.photo-thumb-btn {
+  position: relative;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.7),
+    0 6px 14px rgba(15, 23, 42, 0.85);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.photo-thumb-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.9),
+    0 10px 20px rgba(15, 23, 42, 0.95);
+}
+
+.photo-thumb-img {
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  display: block;
+}
+
+/* selected glow */
+.photo-thumb-selected {
+  box-shadow:
+    0 0 0 2px rgba(96, 165, 250, 1),
+    0 0 16px rgba(96, 165, 250, 0.9);
+}
+
+/* little check in top-right corner */
+.photo-thumb-btn::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.65);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.photo-thumb-selected::after {
+  opacity: 1;
+  background: #22c55e;
+  border-color: #022c22;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.9);
+}
+
+/* inner check mark */
+.photo-thumb-selected::before {
+  content: "✓";
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 16px;
+  height: 16px;
+  color: #022c22;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+/* ========================================= */
+/* STEP 3 – FULL WIDTH CREATIVE COMMAND HUB  */
+/* ========================================= */
+
+.creative-hub {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1.6rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* LEFT SIDE (photos + thumbs) */
+.creative-left {
+  background: #020617;
+  border-radius: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 1.2rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
+}
+
+.creative-left h3 {
+  margin: 0 0 0.8rem;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+/* Drag + Drop Zone */
+.photo-dropzone {
+  width: 100%;
+  padding: 2rem 1rem;
+  border: 2px dashed rgba(148, 163, 184, 0.6);
+  border-radius: 1rem;
+  text-align: center;
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.photo-dropzone:hover {
+  border-color: #60a5fa;
+  background: rgba(30, 64, 175, 0.15);
+}
+
+.photo-dropzone.dragover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.8);
+}
+
+/* Thumbnails inside Creative Hub */
+.creative-thumb-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.55rem;
+}
+
+.creative-thumb-grid img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  cursor: pointer;
+  transition: 0.18s;
+  display: block;
+}
+
+/* hover glow */
+.creative-thumb-grid img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
+}
+
+/* selected state (for tuner preview) */
+.creative-thumb-grid img.selected {
+  box-shadow: 0 0 14px rgba(96, 165, 250, 1);
+  border-color: rgba(96, 165, 250, 1);
+}
+
+/* RIGHT SIDE – PHOTO TUNER */
+.creative-right {
+  background: #020617;
+  border-radius: 1.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 1.2rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
+}
+
+.creative-right h3 {
+  margin: 0 0 0.8rem;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.tuner-preview {
+  width: 100%;
+  height: 200px;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.tuner-preview img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Sliders */
+.slider-block {
+  margin-bottom: 1rem;
+}
+
+.slider-block label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.slider-block input[type="range"] {
+  width: 100%;
+}
+
+.full {
+  width: 100%;
+  margin-top: 0.8rem;
+}
+
 /* ====== MODALS (RIGHT-SIDE) ====== */
 
 .side-modal {
@@ -606,7 +980,7 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.35rem;
 }
 
-/* ====== CREATIVE STUDIO OVERLAY ====== */
+/* ====== DESIGN STUDIO OVERLAY (CANVAS) ====== */
 
 .creative-overlay {
   position: fixed;
@@ -743,7 +1117,7 @@ body.dark-theme .step2-card .copy-btn {
   display: none;
 }
 
-/* ====== PHOTO TUNER (Step 3) ====== */
+/* ====== PHOTO TUNER WRAPPER (generic) ====== */
 
 .photo-preview-wrapper {
   margin-top: 0.5rem;
@@ -770,7 +1144,53 @@ body.dark-theme .step2-card .copy-btn {
 
 /* ====== RESPONSIVE ====== */
 
+/* Slightly smaller on tablet */
+@media (max-width: 1280px) {
+  .layout {
+    padding-right: 13rem;
+  }
+  .column-middle {
+    max-width: 980px;
+  }
+  .platform-card.step2-card {
+    min-height: 240px;
+  }
+}
+
+/* Mobile & smaller laptops */
 @media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+
+  .column-left,
+  .column-middle,
+  .column-right {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  /* Step 2 becomes single column but keeps premium look */
+  .column-middle {
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Floating tools move to bottom as a wrap row */
+  .floating-tools {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0 1rem 1rem;
+    justify-content: center;
+  }
+
+  /* Creative hub stacks columns */
+  .creative-hub {
+    grid-template-columns: 1fr;
+  }
+
   .creative-modal {
     width: 100%;
     height: 100%;
@@ -787,4 +1207,3 @@ body.dark-theme .step2-card .copy-btn {
     max-height: 70vh;
   }
 }
-
