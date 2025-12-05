@@ -720,6 +720,40 @@ ${prompt || "(none)"}
     return sendAIError(res, err, "Failed to generate message.");
   }
 });
+// ---------------- Image proxy for CORS-safe canvas loading ----------------
+app.get("/api/image-proxy", async (req, res) => {
+  try {
+    let rawUrl = req.query.url;
+    if (!rawUrl) {
+      return res.status(400).send("Missing url query param");
+    }
+
+    rawUrl = decodeURIComponent(rawUrl);
+
+    // Basic safety: only allow http/https
+    if (!/^https?:\/\//i.test(rawUrl)) {
+      return res.status(400).send("Invalid url");
+    }
+
+    const upstream = await fetch(rawUrl);
+    if (!upstream.ok) {
+      console.error("Image proxy fetch failed:", upstream.status, rawUrl);
+      return res.status(502).send("Failed to fetch image");
+    }
+
+    // Pass through content-type, set CORS so canvas is not tainted
+    const contentType = upstream.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const arrayBuf = await upstream.arrayBuffer();
+    res.end(Buffer.from(arrayBuf));
+  } catch (err) {
+    console.error("Image proxy error:", err);
+    res.status(500).send("Image proxy error");
+  }
+});
 
 // ---------------- Start server ----------------
 
