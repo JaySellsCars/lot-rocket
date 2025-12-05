@@ -838,3 +838,386 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ Lot Rocket frontend wiring complete");
 });
+// ===============================
+// LOT ROCKET – CANVAS STUDIO V3
+// ===============================
+
+let dealerPhotos = window.dealerPhotos || [];        // from Boost step
+let localCreativePhotos = window.localCreativePhotos || [];
+
+window.dealerPhotos = dealerPhotos;
+window.localCreativePhotos = localCreativePhotos;
+
+// ---- DOM refs ----
+const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudioBtn");
+const photosGrid = document.getElementById("photosGrid");
+
+const photoDropzone = document.getElementById("photoDropzone");
+const photoInput = document.getElementById("photoInput");
+const creativeThumbGrid = document.getElementById("creativeThumbGrid");
+const tunerPreviewImg = document.getElementById("tunerPreviewImg");
+
+const creativeOverlay = document.getElementById("creativeOverlay");
+const creativeCloseBtn = document.getElementById("creativeCloseBtn");
+
+const canvasPresetSelect = document.getElementById("canvasPreset");
+const uploadImageBtn = document.getElementById("uploadImageBtn");
+const exportPngBtn = document.getElementById("exportPngBtn");
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
+const deleteLayerBtn = document.getElementById("deleteLayerBtn");
+
+const toolSelectBtn = document.getElementById("toolSelect");
+const toolAddTextBtn = document.getElementById("toolAddText");
+const toolAddBannerBtn = document.getElementById("toolAddBanner");
+const toolAddPriceBadgeBtn = document.getElementById("toolAddPriceBadge");
+const toolSetBackgroundBtn = document.getElementById("toolSetBackground");
+
+let fabricCanvas = null;
+let historyStack = [];
+let redoStack = [];
+
+// Make sure Fabric is ready
+function ensureCanvas() {
+  if (!fabricCanvas) {
+    const canvasEl = document.getElementById("designCanvas");
+    if (!canvasEl || typeof fabric === "undefined") {
+      console.warn("Canvas Studio: missing canvas element or fabric.js");
+      return null;
+    }
+    fabricCanvas = new fabric.Canvas("designCanvas", {
+      backgroundColor: "#020617",
+      preserveObjectStacking: true,
+    });
+    setPresetSize(canvasPresetSelect ? canvasPresetSelect.value : "square");
+    saveHistory();
+  }
+  return fabricCanvas;
+}
+
+function setPresetSize(presetValue) {
+  const canvas = ensureCanvas();
+  if (!canvas) return;
+
+  let w = 1080, h = 1080;
+  if (presetValue === "story") {
+    w = 1080; h = 1920;
+  } else if (presetValue === "wide") {
+    w = 1920; h = 1080;
+  }
+
+  canvas.setWidth(w);
+  canvas.setHeight(h);
+  canvas.calcOffset();
+  canvas.renderAll();
+}
+
+function saveHistory() {
+  if (!fabricCanvas) return;
+  const json = fabricCanvas.toJSON();
+  historyStack.push(json);
+  if (historyStack.length > 50) historyStack.shift();
+  redoStack = [];
+}
+
+function loadFromJSON(json) {
+  if (!fabricCanvas) return;
+  fabricCanvas.loadFromJSON(json, () => {
+    fabricCanvas.renderAll();
+  });
+}
+
+// ---------- Add image to canvas, smaller & centered ----------
+function addImageFromUrl(url) {
+  const canvas = ensureCanvas();
+  if (!canvas || !url) return;
+
+  fabric.Image.fromURL(
+    url,
+    (img) => {
+      if (!img) return;
+
+      const fitScale = Math.min(
+        canvas.getWidth() / img.width,
+        canvas.getHeight() / img.height
+      );
+
+      // make it a bit smaller than “just fits”
+      const scale = Math.min(fitScale * 0.75, 0.75);
+
+      img.set({
+        left: canvas.getWidth() / 2,
+        top: canvas.getHeight() / 2,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+      });
+      img.scale(scale);
+
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+      saveHistory();
+    },
+    { crossOrigin: "anonymous" }
+  );
+}
+
+// ---------- Thumbnails for Step 1 dealer photos ----------
+function renderDealerPhotos() {
+  if (!photosGrid) return;
+  photosGrid.innerHTML = "";
+
+  dealerPhotos.forEach((p, idx) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "photo-thumb-btn" + (p.selected ? " photo-thumb-selected" : "");
+
+    const img = document.createElement("img");
+    img.src = p.src;
+    img.alt = "Photo " + (idx + 1);
+    img.className = "photo-thumb-img";
+
+    btn.appendChild(img);
+
+    btn.addEventListener("click", () => {
+      p.selected = !p.selected;
+      renderDealerPhotos();
+    });
+
+    photosGrid.appendChild(btn);
+  });
+}
+
+// Call this after /api/social-kit returns photos
+window.handlePhotosFromBackend = function (rawPhotos) {
+  const arr = Array.isArray(rawPhotos) ? rawPhotos : [];
+  dealerPhotos = arr.slice(0, 24).map((src) => ({ src, selected: false }));
+  window.dealerPhotos = dealerPhotos;
+  renderDealerPhotos();
+
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+  }
+};
+
+// ---------- Creative Hub thumbnails (drag & drop + dealer send) ----------
+function addCreativeThumb(url) {
+  if (!creativeThumbGrid || !url) return;
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = "Creative thumb";
+  img.dataset.url = url;
+
+  img.addEventListener("click", () => {
+    // highlight
+    [...creativeThumbGrid.querySelectorAll("img")].forEach((el) =>
+      el.classList.remove("selected")
+    );
+    img.classList.add("selected");
+
+    if (tunerPreviewImg) tunerPreviewImg.src = url;
+    addImageFromUrl(url);
+  });
+
+  creativeThumbGrid.appendChild(img);
+}
+
+// send top photos / selected photos to creative hub + studio
+if (sendPhotosToStudioBtn) {
+  sendPhotosToStudioBtn.onclick = () => {
+    if (!dealerPhotos.length) {
+      alert("Boost a listing first so Lot Rocket can grab photos.");
+      return;
+    }
+
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+      .slice(0, 8);
+
+    if (!chosen.length) {
+      alert("No photos available.");
+      return;
+    }
+
+    chosen.forEach((url) => {
+      if (!localCreativePhotos.includes(url)) {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+      }
+    });
+
+    // also add the first one to the canvas on open
+    openCreativeStudio(chosen[0]);
+  };
+}
+
+// ---------- Drag & drop uploads ----------
+if (photoDropzone && photoInput) {
+  ["dragenter", "dragover"].forEach((evt) => {
+    photoDropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoDropzone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((evt) => {
+    photoDropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoDropzone.classList.remove("dragover");
+    });
+  });
+
+  photoDropzone.addEventListener("click", () => photoInput.click());
+
+  photoDropzone.addEventListener("drop", (e) => {
+    const files = Array.from(e.dataTransfer.files || []);
+    handleLocalFiles(files);
+  });
+
+  photoInput.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files || []);
+    handleLocalFiles(files);
+    photoInput.value = "";
+  });
+}
+
+function handleLocalFiles(files) {
+  const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+  if (!imageFiles.length) return;
+
+  imageFiles.forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target.result;
+      localCreativePhotos.push(url);
+      addCreativeThumb(url);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  openCreativeStudio();
+}
+
+// ---------- Open / Close creative overlay ----------
+function openCreativeStudio(firstUrl) {
+  ensureCanvas();
+  if (creativeOverlay) {
+    creativeOverlay.classList.remove("hidden");
+  }
+  if (firstUrl) {
+    addImageFromUrl(firstUrl);
+  }
+}
+
+if (creativeCloseBtn) {
+  creativeCloseBtn.addEventListener("click", () => {
+    if (creativeOverlay) creativeOverlay.classList.add("hidden");
+  });
+}
+
+// expose helper if you want a “Design Studio 3.0” button on the right rail
+window.openCreativeStudio = openCreativeStudio;
+
+// ---------- Toolbar wiring ----------
+if (canvasPresetSelect) {
+  canvasPresetSelect.addEventListener("change", () => {
+    setPresetSize(canvasPresetSelect.value);
+  });
+}
+
+if (uploadImageBtn && photoInput) {
+  uploadImageBtn.addEventListener("click", () => photoInput.click());
+}
+
+if (exportPngBtn) {
+  exportPngBtn.addEventListener("click", () => {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+    });
+
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "lot-rocket-design.png";
+    link.click();
+  });
+}
+
+if (undoBtn) {
+  undoBtn.addEventListener("click", () => {
+    if (historyStack.length <= 1) return;
+    const current = historyStack.pop();
+    redoStack.push(current);
+    const prev = historyStack[historyStack.length - 1];
+    loadFromJSON(prev);
+  });
+}
+
+if (redoBtn) {
+  redoBtn.addEventListener("click", () => {
+    if (!redoStack.length) return;
+    const next = redoStack.pop();
+    historyStack.push(next);
+    loadFromJSON(next);
+  });
+}
+
+if (deleteLayerBtn) {
+  deleteLayerBtn.addEventListener("click", () => {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    const active = canvas.getActiveObject();
+    if (active) {
+      canvas.remove(active);
+      canvas.discardActiveObject();
+      canvas.renderAll();
+      saveHistory();
+    }
+  });
+}
+
+// Simple tool buttons (you can fancy these up later)
+function clearToolHighlights() {
+  [toolSelectBtn, toolAddTextBtn, toolAddBannerBtn, toolAddPriceBadgeBtn, toolSetBackgroundBtn]
+    .filter(Boolean)
+    .forEach((btn) => btn.classList.remove("tool-btn-active"));
+}
+
+if (toolSelectBtn) {
+  toolSelectBtn.addEventListener("click", () => {
+    clearToolHighlights();
+    toolSelectBtn.classList.add("tool-btn-active");
+  });
+}
+
+if (toolAddTextBtn) {
+  toolAddTextBtn.addEventListener("click", () => {
+    clearToolHighlights();
+    toolAddTextBtn.classList.add("tool-btn-active");
+
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+
+    const text = new fabric.IText("New Text", {
+      left: canvas.getWidth() / 2,
+      top: canvas.getHeight() / 2,
+      originX: "center",
+      originY: "center",
+      fill: "#ffffff",
+      fontSize: 60,
+      fontFamily: "system-ui",
+    });
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    canvas.renderAll();
+    saveHistory();
+  });
+}
+
+// (You can wire toolAddBannerBtn / toolAddPriceBadgeBtn / toolSetBackgroundBtn later)
