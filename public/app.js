@@ -617,16 +617,30 @@ if (sendPhotosToStudioBtn) {
   }
 
   // Basic image URL sanitizer for cross-origin issues
-  function getSafeImageUrl(url) {
-    if (!url) return url;
-    try {
-      const u = new URL(url, window.location.href);
-      // You can add more logic here if you later use a proxy or CDN
-      return u.toString();
-    } catch {
-      return url;
-    }
+function getSafeImageUrl(url) {
+  if (!url) return url;
+
+  // blob: or data: are already safe for canvas
+  if (url.startsWith("blob:") || url.startsWith("data:")) {
+    return url;
   }
+
+  try {
+    const u = new URL(url, window.location.href);
+
+    // If it's already our own origin (e.g., proxy or local static), just use it
+    if (u.origin === window.location.origin) {
+      return u.toString();
+    }
+
+    // For external dealer images, route through the backend proxy
+    const proxied = `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
+    return proxied;
+  } catch {
+    return url;
+  }
+}
+
 
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
