@@ -1,7 +1,8 @@
 {
   "name": "lot-rocket",
   "version": "1.0.0",
-  "description": "Lot Rocket social media kit backend",
+  "private": true,
+  "description": "Lot Rocket – AI social media kit backend",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
@@ -19,4 +20,3 @@
     "openai": "^4.58.1"
   }
 }
-
