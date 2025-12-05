@@ -98,7 +98,7 @@ body {
   grid-row: 1;
 }
 
-/* Step 2 – right column, row 1 (we’ll turn this into its own grid below) */
+/* Step 2 – right column, row 1 */
 .column-middle {
   grid-column: 2;
   grid-row: 1;
@@ -107,7 +107,7 @@ body {
 /* Step 3 – full-width row under Steps 1 & 2 */
 .column-right {
   grid-column: 1 / 3;   /* span both grid columns */
-  grid-row: 2;          /* second row of the layout */
+  grid-row: 2;
 }
 
 /* Center Step 3 content and cap width */
@@ -620,7 +620,7 @@ body.dark-theme .step2-card .copy-btn {
   opacity: 0.96;
 }
 
-/* Optional emojis per platform (only if you add those classes in HTML) */
+/* Optional emojis per platform */
 .facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
 .instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
 .tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
@@ -673,9 +673,9 @@ body.dark-theme .step2-card .copy-btn {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.35rem;
-  max-height: 260px;        /* keep panel from going to the floor */
-  overflow-y: auto;         /* scroll if lots of photos */
-  padding-right: 0.25rem;   /* space for scrollbar */
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
 /* each thumb is a button so we can toggle selected state */
@@ -980,7 +980,7 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.35rem;
 }
 
-/* ====== DESIGN STUDIO OVERLAY (CANVAS) ====== */
+/* ====== DESIGN STUDIO 3.0 OVERLAY (KONVA) ====== */
 
 .creative-overlay {
   position: fixed;
@@ -997,8 +997,8 @@ body.dark-theme .step2-card .copy-btn {
 }
 
 .creative-modal {
-  width: min(1300px, 96vw); /* bigger workspace */
-  height: min(820px, 92vh); /* taller workspace */
+  width: min(1300px, 96vw);  /* bigger workspace */
+  height: min(820px, 92vh);  /* taller workspace */
   background: var(--bg-panel);
   border-radius: 1.4rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
@@ -1078,7 +1078,7 @@ body.dark-theme .step2-card .copy-btn {
   color: #020617;
 }
 
-/* ====== SCROLLABLE CANVAS WRAPPER (UPDATED) ====== */
+/* ====== SCROLLABLE CANVAS WRAPPER / KONVA CONTAINER ====== */
 
 .creative-canvas-wrap {
   background: var(--bg-panel);
@@ -1087,17 +1087,20 @@ body.dark-theme .step2-card .copy-btn {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-
   width: 100%;
   height: 100%;
-
-  overflow: auto;              /* scrolling enabled */
-  padding: 1rem;               /* space around large canvases */
+  overflow: auto;
+  padding: 1rem;
 }
 
+/* Konva stage container fills this area */
+.studio-canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* In case Konva injects canvases directly */
 .creative-canvas-wrap canvas {
-  max-width: 100%;             /* prevent overflow sideways */
-  max-height: none;            /* allow full canvas height so scrolling works */
   display: block;
 }
 
