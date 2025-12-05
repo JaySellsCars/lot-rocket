@@ -533,7 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Step 1 -> Creative Lab + Canvas Studio
+  // Step 1 -> Creative Lab + Design Studio
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
     sendPhotosToStudioBtn.addEventListener("click", () => {
@@ -541,15 +541,44 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
       }
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
 
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (
+        selected.length ? selected : dealerPhotos.map((p) => p.src)
+      ).slice(0, 8);
+
+      // Always mirror into Creative Lab thumbnails
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
+      });
+
+      // NEW: open Design Studio and preload these images
+      if (!chosen.length) return;
+
+      openDesignStudio();
+
+      const [first, ...rest] = chosen;
+      if (first) {
+        setBackgroundFromUrl(first);
+      }
+
+      rest.forEach((url) => {
+        const stage = ensureDesignStage();
+        if (!stage || !designMainLayer) return;
+        Konva.Image.fromURL(url, (img) => {
+          img.draggable(true);
+          img.scale({ x: 0.5, y: 0.5 });
+          img.position({
+            x: stage.width() / 2,
+            y: stage.height() / 2,
+          });
+          designMainLayer.add(img);
+          setSelectedNode(img);
+          designMainLayer.draw();
+          saveDesignState();
+          refreshLayersList();
+        });
       });
     });
   }
