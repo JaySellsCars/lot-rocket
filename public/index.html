@@ -1,13 +1,13 @@
 <!--
   Lot Rocket – AI Social Media Kit & Creative Lab
-  Version: 2.5 STABLE
+  Version: 2.5 STABLE (Cleaned)
   Layout: Step 1 (left), Step 2 (middle), Step 3 (under Step 1),
           tools floating on the right.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- KONVA LIBRARY MUST LOAD BEFORE app.js -->
+  <!-- KONVA LIBRARY (for Design Studio 3.0) -->
   <script src="https://unpkg.com/konva/konva.min.js"></script>
 
   <meta charset="UTF-8" />
@@ -96,7 +96,7 @@
         </p>
 
         <button id="sendPhotosToStudio" class="secondary-btn">
-          Send top photos to Creative Studio
+          Send top photos to Design Studio
         </button>
 
         <div id="photosGrid" class="photo-grid"></div>
@@ -237,12 +237,8 @@
 
             <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-            <button id="sendAllToCanvas" class="primary-btn full">
-              Send All to Canvas Studio
-            </button>
-
-            <button id="sendToDesignStudio" class="secondary-btn full">
-              Send to Design Studio 3.0
+            <button id="sendToDesignStudio" class="primary-btn full">
+              Send Selected to Design Studio 3.0
             </button>
           </div>
 
@@ -339,86 +335,12 @@
       <span class="tool-icon">🎬</span>
       <span class="tool-label">AI Video Generation</span>
     </button>
-    <!-- Dedicated Canvas Studio launcher (Fabric studio) -->
-    <button id="canvasLauncher" class="tool-button">
-      <span class="tool-icon">🎨</span>
-      <span class="tool-label">Canvas Studio</span>
-    </button>
     <!-- Dedicated Design Studio 3.0 launcher (Konva studio) -->
     <button id="designLauncher" class="tool-button">
       <span class="tool-icon">🧪</span>
       <span class="tool-label">Design Studio 3.0</span>
     </button>
   </aside>
-
-<!-- ####### CANVAS STUDIO OVERLAY (Fabric) ####### -->
-<div id="creativeStudioOverlay" class="creative-overlay hidden">
-  <div class="creative-modal">
-    <!-- Top header -->
-    <header class="creative-header">
-      <h2>Canvas Studio</h2>
-      <button id="creativeClose" class="modal-close-btn">✕</button>
-    </header>
-
-    <!-- Preset selector + global actions -->
-    <div class="creative-top-bar">
-      <div class="preset-label">
-        <span>Canvas preset</span>
-        <select id="creativeCanvasPreset">
-          <option value="1080x1080">Square – 1080x1080</option>
-          <option value="1080x1920">Story – 1080x1920</option>
-          <option value="1920x1080">Landscape – 1920x1080</option>
-        </select>
-      </div>
-
-      <div class="creative-actions">
-        <button id="creativeUndo">Undo</button>
-        <button id="creativeRedo">Redo</button>
-        <button id="creativeDelete">Delete</button>
-        <button id="creativeExportPng">Export PNG</button>
-
-        <!-- upload is treated as a tool -->
-        <button class="tool-btn" data-tool="uploadImage">Upload Image</button>
-        <input
-          id="creativeImageInput"
-          type="file"
-          accept="image/*"
-          multiple
-          class="hidden-input"
-        />
-      </div>
-    </div>
-
-    <!-- Main 3-column body -->
-    <div class="creative-body">
-      <!-- LEFT: tools -->
-      <aside class="creative-tools">
-        <h3>Tools</h3>
-        <button class="tool-btn tool-btn-active" data-tool="select">
-          Select / Move
-        </button>
-        <button class="tool-btn" data-tool="addText">Add Text</button>
-        <button class="tool-btn" data-tool="addRect">Add Banner Bar</button>
-        <button class="tool-btn" data-tool="addBadge">Add Price Badge</button>
-        <button class="tool-btn" data-tool="uploadImage">Upload Image</button>
-      </aside>
-
-      <!-- CENTER: scrollable canvas area -->
-      <div class="creative-canvas-wrap">
-        <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
-      </div>
-
-      <!-- RIGHT: properties / layers -->
-      <aside class="creative-properties">
-        <h3>Layers</h3>
-        <div id="creativeLayersList" class="prop-group small-note">
-          <p>Layers panel coming soon.</p>
-        </div>
-      </aside>
-    </div>
-  </div>
-</div>
-
 
   <!-- ######## DESIGN STUDIO 3.0 OVERLAY (Konva) ######## -->
   <div id="designStudioOverlay" class="creative-overlay hidden">
@@ -507,12 +429,10 @@
     </div>
   </div>
 
-  <!-- ===== SIDE MODALS FOR TOOLS (UNCHANGED) ===== -->
-  <!-- (keeping your existing Objection / Calculators / Message / Ask / Car / Image / Video modals) -->
-  <!--  … your existing modals code here exactly as you pasted … -->
+  <!-- ===== SIDE MODALS FOR TOOLS (keep your existing ones here) ===== -->
+  <!-- Objection / Calculators / Message / Ask / Car / Image / Video modals go here unchanged -->
 
-  <!-- ===== SCRIPTS (Fabric, then app.js) ===== -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <!-- ===== APP SCRIPT ===== -->
   <script src="app.js"></script>
 </body>
 </html>
