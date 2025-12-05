@@ -458,6 +458,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tunerBrightness) tunerBrightness.addEventListener("input", applyTunerFilters);
   if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
   if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
+  // Any external image should go through our proxy to avoid CORS issues on canvas
+  function getSafeImageUrl(rawUrl) {
+    if (!rawUrl) return "";
+    // Local blobs & data URLs are already safe
+    if (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) return rawUrl;
+    // Already same-origin (e.g., served from our own backend)
+    if (rawUrl.startsWith(window.location.origin)) return rawUrl;
+    // Everything else: proxy through backend
+    return "/api/image-proxy?url=" + encodeURIComponent(rawUrl);
+  }
 
   if (autoEnhanceBtn) {
     autoEnhanceBtn.addEventListener("click", () => {
@@ -615,8 +625,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = ensureCanvas();
     if (!canvas) return;
 
+    const safeUrl = getSafeImageUrl(url);
+
     fabric.Image.fromURL(
-      url,
+      safeUrl,
       (img) => {
         const fitScale = Math.min(
           canvas.width / img.width,
@@ -640,6 +652,7 @@ document.addEventListener("DOMContentLoaded", () => {
       { crossOrigin: "Anonymous" }
     );
   }
+
 
   function addRectBanner() {
     const canvas = ensureCanvas();
@@ -1043,7 +1056,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const stage = ensureDesignStage();
     if (!stage || !designBgLayer) return;
 
-    Konva.Image.fromURL(url, (img) => {
+    const safeUrl = getSafeImageUrl(url);
+
+    Konva.Image.fromURL(safeUrl, (img) => {
       const scale = Math.max(
         stage.width() / img.width(),
         stage.height() / img.height()
@@ -1059,6 +1074,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
   function openDesignStudio() {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
@@ -1071,11 +1087,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Helper: send a list of URLs into Design Studio (bg + overlays)
-  function sendUrlsToDesignStudio(urls) {
-    if (!urls || !urls.length) {
-      alert("No photos available to send to Design Studio yet.");
-      return;
-    }
+        const safeUrl = getSafeImageUrl(url);
+
+        Konva.Image.fromURL(safeUrl, (img) => {
+          img.draggable(true);
+          const scaleFactor = 0.5;
+          img.scale({ x: scaleFactor, y: scaleFactor });
+          img.position({
+            x: stage.width() / 2,
+            y: stage.height() / 2,
+          });
+          designMainLayer.add(img);
+          setSelectedNode(img);
+          designMainLayer.draw();
+          saveDesignState();
+          refreshLayersList();
+        });
+
+
 
     openDesignStudio();
 
