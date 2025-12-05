@@ -1,11 +1,10 @@
-// public/app.js – Lot Rocket frontend logic v2.6
+// public/app.js – Lot Rocket frontend logic v2.6 CLEAN
 // - Theme toggle
 // - Step 1 + Step 2 social kit
 // - Step 3 Creative Lab (drag/drop + tuner)
 // - Canvas Studio (Fabric)
 // - Design Studio 3.0 (Konva)
 // - Side tool modals + AI helpers
-// - CORS-safe image loading via /api/image-proxy
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.6");
@@ -460,14 +459,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
   if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
 
-  // Any external image should go through our proxy to avoid CORS issues on canvas
-  function getSafeImageUrl(rawUrl) {
-    if (!rawUrl) return "";
-    if (rawUrl.startsWith("blob:") || rawUrl.startsWith("data:")) return rawUrl;
-    if (rawUrl.startsWith(window.location.origin)) return rawUrl;
-    return "/api/image-proxy?url=" + encodeURIComponent(rawUrl);
-  }
-
   if (autoEnhanceBtn) {
     autoEnhanceBtn.addEventListener("click", () => {
       if (tunerBrightness) tunerBrightness.value = "115";
@@ -542,31 +533,24 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Step 1 -> Creative Lab + Design Studio 3.0
+  // Step 1 -> Creative Lab + Canvas Studio
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-
     sendPhotosToStudioBtn.addEventListener("click", () => {
       if (!dealerPhotos.length) {
         alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
       }
-
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (
-        selected.length ? selected : dealerPhotos.map((p) => p.src)
-      ).slice(0, 8);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+        0,
+        8
+      );
 
-      // 1) Feed into Creative Lab thumbnails / tuner
       chosen.forEach((url) => {
-        if (!localCreativePhotos.includes(url)) {
-          localCreativePhotos.push(url);
-          addCreativeThumb(url);
-        }
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
       });
-
-      // 2) Also open Design Studio and send the same photos there
-      sendUrlsToDesignStudio(chosen);
     });
   }
 
@@ -618,6 +602,18 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeCanvas.loadFromJSON(creativeHistory[index], () => {
       creativeCanvas.renderAll();
     });
+  }
+
+  // Basic image URL sanitizer for cross-origin issues
+  function getSafeImageUrl(url) {
+    if (!url) return url;
+    try {
+      const u = new URL(url, window.location.href);
+      // You can add more logic here if you later use a proxy or CDN
+      return u.toString();
+    } catch {
+      return url;
+    }
   }
 
   function addImageFromUrl(url) {
@@ -870,6 +866,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let designHistory = [];
   let designHistoryIndex = -1;
   let selectedNode = null;
+
   // --- Smart snapping helpers for draggable nodes ---
 
   function attachDragWithSnapping(node) {
@@ -966,7 +963,7 @@ document.addEventListener("DOMContentLoaded", () => {
     designHistoryIndex = designHistory.length - 1;
   }
 
-  function loadDesignState(index) {
+  function loadDesignStateDesign(index) {
     if (!designStage) return;
     if (index < 0 || index >= designHistory.length) return;
     designHistoryIndex = index;
@@ -1049,7 +1046,7 @@ document.addEventListener("DOMContentLoaded", () => {
     designMainLayer.draw();
     saveDesignState();
     refreshLayersList();
-
+  }
 
   function addDesignBanner() {
     const stage = ensureDesignStage();
@@ -1199,7 +1196,7 @@ document.addEventListener("DOMContentLoaded", () => {
     studioUndoBtn.addEventListener("click", () => {
       if (!designStage) return;
       if (designHistoryIndex > 0) {
-        loadDesignState(designHistoryIndex - 1);
+        loadDesignStateDesign(designHistoryIndex - 1);
       }
     });
   }
@@ -1208,7 +1205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     studioRedoBtn.addEventListener("click", () => {
       if (!designStage) return;
       if (designHistoryIndex < designHistory.length - 1) {
-        loadDesignState(designHistoryIndex + 1);
+        loadDesignStateDesign(designHistoryIndex + 1);
       }
     });
   }
