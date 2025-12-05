@@ -870,6 +870,52 @@ document.addEventListener("DOMContentLoaded", () => {
   let designHistory = [];
   let designHistoryIndex = -1;
   let selectedNode = null;
+  // --- Smart snapping helpers for draggable nodes ---
+
+  function attachDragWithSnapping(node) {
+    if (!node) return;
+    node.draggable(true);
+
+    node.on("dragmove", () => {
+      snapNodeToGuides(node);
+      const stage = node.getStage();
+      if (stage) stage.batchDraw();
+    });
+
+    node.on("dragend", () => {
+      saveDesignState();
+      refreshLayersList();
+    });
+  }
+
+  function snapNodeToGuides(node) {
+    const stage = node.getStage();
+    if (!stage) return;
+
+    const SNAP = 12; // pixel tolerance
+    let { x, y } = node.position();
+
+    const centerX = stage.width() / 2;
+    const centerY = stage.height() / 2;
+    const topThirdY = stage.height() / 3;
+    const bottomThirdY = (stage.height() * 2) / 3;
+
+    // Snap X to center
+    if (Math.abs(x - centerX) < SNAP) {
+      x = centerX;
+    }
+
+    // Snap Y to thirds / center
+    if (Math.abs(y - centerY) < SNAP) {
+      y = centerY;
+    } else if (Math.abs(y - topThirdY) < SNAP) {
+      y = topThirdY;
+    } else if (Math.abs(y - bottomThirdY) < SNAP) {
+      y = bottomThirdY;
+    }
+
+    node.position({ x, y });
+  }
 
   function ensureDesignStage() {
     if (designStage) return designStage;
