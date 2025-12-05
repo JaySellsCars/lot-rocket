@@ -1301,3 +1301,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ Lot Rocket frontend wiring complete");
 });
+
