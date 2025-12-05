@@ -1299,8 +1299,5 @@ if (layerDeleteBtn) {
   });
 }
 
-console.log("✅ Lot Rocket frontend wiring complete");
+  console.log("✅ Lot Rocket frontend wiring complete");
 });
-
-
-
