@@ -140,10 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend
-      const photos = Array.isArray(data.photos) ? data.photos : [];
-      dealerPhotos = photos.map((src) => ({ src, selected: false }));
-      renderDealerPhotos();
+// Photos from backend → send into new Canvas Studio system
+if (window.handlePhotosFromBackend && Array.isArray(data.photos)) {
+    window.handlePhotosFromBackend(data.photos);
+}
+
 
       if (sendPhotosToStudioBtn) {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
