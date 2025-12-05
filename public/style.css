@@ -14,7 +14,7 @@
   --bg-panel: #020617;
   --bg-panel-soft: #020617;
   --border-soft: rgba(148, 163, 184, 0.55);
-  --text-main: #0b1120;  /* base text used in light theme */
+  --text-main: #0b1120;  /* base text used in light theme; dark theme overrides via body */
   --text-muted: #6b7280;
   --accent-1: #f97316;
   --accent-2: #ec4899;
@@ -83,7 +83,7 @@ body {
 /* ====== MAIN LAYOUT GRID ====== */
 
 .layout {
-  padding: 1.5rem 15rem 3rem 3.5rem; /* top | right | bottom | left */
+  padding: 1.5rem 15rem 3rem 3.5rem; /* bigger right buffer so Step 2 never touches tools */
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.6fr);
   grid-auto-rows: auto;
@@ -106,8 +106,8 @@ body {
 
 /* Step 3 – full-width row under Steps 1 & 2 */
 .column-right {
-  grid-column: 1 / 3;
-  grid-row: 2;
+  grid-column: 1 / 3;   /* span both grid columns */
+  grid-row: 2;          /* second row of the layout */
 }
 
 /* Center Step 3 content and cap width */
@@ -116,7 +116,7 @@ body {
   margin: 0 auto 1rem;
 }
 
-/* Step 3 two-column layout */
+/* Step 3 two-column layout (if you use it) */
 .step3-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -444,7 +444,13 @@ body.dark-theme .step2-card .copy-btn {
     0 0 10px rgba(248, 113, 113, 0.7);
 }
 
-/* ===== BASIC CALCULATOR KEYPAD ===== */
+/* optional legacy hover class (not used by JS now but harmless) */
+.photo-dropzone-hover {
+  border-color: #ff8a4a;
+  box-shadow: 0 0 18px rgba(255, 138, 74, 0.8);
+}
+
+/* ===== BASIC CALCULATOR KEYPAD (glowing) ===== */
 
 .basic-calc-btn {
   border-radius: 999px;
@@ -569,7 +575,7 @@ body.dark-theme .step2-card .copy-btn {
   border-radius: 0.85rem;
 }
 
-/* BASIC CALC CONTAINER */
+/* ====== BASIC CALCULATOR INSIDE MODAL ====== */
 
 .basic-calc {
   margin-top: 0.4rem;
@@ -600,7 +606,7 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.35rem;
 }
 
-/* ====== CREATIVE STUDIO OVERLAY (Fabric + Konva share this shell) ====== */
+/* ====== CREATIVE STUDIO OVERLAY ====== */
 
 .creative-overlay {
   position: fixed;
@@ -655,12 +661,11 @@ body.dark-theme .step2-card .copy-btn {
   cursor: pointer;
 }
 
-/* UPDATED: give more breathing room for Tools | Canvas | Layers */
 .creative-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr) 260px;
-  gap: 1.25rem;
+  grid-template-columns: 180px minmax(0, 1fr) 210px;
+  gap: 0.6rem;
   padding: 0.7rem 1rem 1rem;
 }
 
@@ -699,27 +704,6 @@ body.dark-theme .step2-card .copy-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; /* keep any canvas inside the frame */
-}
-
-/* ====== DESIGN STUDIO 3.0 – Konva canvas containment ====== */
-
-.studio-canvas-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 420px;
-  max-height: 640px;     /* prevents overlap with tools/layers */
-  margin: 0 auto;
-  overflow: hidden;
-  border-radius: 18px;
-}
-
-/* force Konva canvas to scale with container */
-.studio-canvas-container canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
 }
 
 .creative-canvas-wrap canvas {
@@ -740,51 +724,44 @@ body.dark-theme .step2-card .copy-btn {
   display: none;
 }
 
-/* ====== PHOTO TUNER (inside Step 3) ====== */
+/* ====== PHOTO TUNER (inside panels) ====== */
 
-.tuner-preview {
-  width: 100%;
-  height: 200px;
-  border-radius: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  overflow: hidden;
+.photo-preview-wrapper {
+  margin-top: 0.5rem;
+  border-radius: 0.9rem;
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0f172a;
-  margin-bottom: 1rem;
+  min-height: 120px;
 }
 
-.tuner-preview img {
+.photo-preview-wrapper img {
   max-width: 100%;
-  max-height: 100%;
+  max-height: 180px;
+  border-radius: 0.7rem;
 }
 
-.slider-block {
-  margin-bottom: 1rem;
+.slider-group {
+  margin-top: 0.6rem;
+  display: grid;
+  gap: 0.4rem;
 }
 
-.slider-block label {
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
-
-.slider-block input[type="range"] {
-  width: 100%;
-}
-
-/* ================================= */
-/* STEP 2 – PREMIUM ROCKET SKIN      */
-/* ================================= */
+/* ============================= */
+/* STEP 2 – PREMIUM ROCKET SKIN  */
+/* ============================= */
 
 .column-middle {
-  max-width: 1040px;
+  max-width: 1040px; /* tighter to feel more vertical */
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 1.9rem;
   row-gap: 1.9rem;
 }
 
+/* Heading + subtitle spacing */
 .column-middle > h2 {
   font-size: 1.15rem;
   letter-spacing: 0.06em;
@@ -797,6 +774,7 @@ body.dark-theme .step2-card .copy-btn {
   opacity: 0.8;
 }
 
+/* Core Step 2 card shell with glow */
 .platform-card.step2-card {
   position: relative;
   overflow: hidden;
@@ -816,6 +794,7 @@ body.dark-theme .step2-card .copy-btn {
     border-color 0.18s ease;
 }
 
+/* Outer glow edge */
 .platform-card.step2-card::before {
   content: "";
   position: absolute;
@@ -832,6 +811,7 @@ body.dark-theme .step2-card .copy-btn {
   transition: opacity 0.18s ease;
 }
 
+/* Soft inner highlight */
 .platform-card.step2-card::after {
   content: "";
   position: absolute;
@@ -846,6 +826,7 @@ body.dark-theme .step2-card .copy-btn {
   pointer-events: none;
 }
 
+/* Hover feel – float + glow */
 .platform-card.step2-card:hover {
   transform: translateY(-2px);
   box-shadow:
@@ -857,10 +838,12 @@ body.dark-theme .step2-card .copy-btn {
   opacity: 1;
 }
 
+/* When Boost has run – subtle “kit ready” highlight */
 .kit-ready .platform-card.step2-card {
   border-color: rgba(251, 191, 36, 0.7);
 }
 
+/* Card title */
 .platform-card.step2-card h3 {
   margin: 0 0 0.6rem;
   font-size: 0.78rem;
@@ -869,7 +852,7 @@ body.dark-theme .step2-card .copy-btn {
   opacity: 0.96;
 }
 
-/* Optional emojis */
+/* Optional emojis per platform */
 .facebook-card h3::before { content: "📘"; margin-right: 0.35rem; }
 .instagram-card h3::before { content: "📸"; margin-right: 0.35rem; }
 .tiktok-card h3::before { content: "🎵"; margin-right: 0.35rem; }
@@ -879,6 +862,7 @@ body.dark-theme .step2-card .copy-btn {
 .marketplace-card h3::before { content: "🏷️"; margin-right: 0.35rem; }
 .hashtags-card h3::before { content: "#";  margin-right: 0.35rem; }
 
+/* Long, skinny glossy text area */
 .step2-card textarea {
   flex: 1;
   margin-top: 0.3rem;
@@ -895,6 +879,7 @@ body.dark-theme .step2-card .copy-btn {
   min-height: 170px;
 }
 
+/* Buttons row for Step 2 */
 .step2-card .btn-row {
   margin-top: 0.7rem;
   justify-content: flex-end;
@@ -909,80 +894,64 @@ body.dark-theme .step2-card .copy-btn {
   min-width: 76px;
 }
 
-/* ====== STEP 1 – PHOTO GRID THUMBNAILS ====== */
+/* ====== STEP 1 – PHOTO GRID THUMBNAILS + CHECKBOXES ====== */
 
+/* grid in Step 1 */
 .photo-grid {
   margin-top: 0.6rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 0.4rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
 }
 
+/* button wrapper for each dealer photo */
 .photo-thumb-btn {
   position: relative;
   padding: 0;
   border: none;
   background: transparent;
-  border-radius: 0.6rem;
   cursor: pointer;
 }
 
-.photo-thumb-btn .photo-thumb-img {
+/* the image itself */
+.photo-thumb-img {
   width: 100%;
   height: 70px;
   object-fit: cover;
   border-radius: 0.6rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
+  display: block;
 }
 
-/* selected frame + green check */
-.photo-thumb-btn.photo-thumb-selected::after {
-  content: "✓";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: #22c55e;
-  color: #022c22;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  box-shadow: 0 0 6px rgba(15, 23, 42, 0.9);
-}
-
-/* selection highlight */
-.photo-thumb-selected .photo-thumb-img {
-  box-shadow: 0 0 14px rgba(96, 165, 250, 1);
-  border-color: rgba(96, 165, 250, 1);
-}
-
-/* green check in corner (legacy hook) */
+/* small circular check badge */
 .photo-thumb-check {
   position: absolute;
   top: 4px;
   right: 4px;
   width: 18px;
   height: 18px;
-  border-radius: 4px;
-  background: #22c55e;
-  color: #022c22;
-  font-size: 12px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  box-shadow: 0 0 6px rgba(15, 23, 42, 0.9);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 18px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.9);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.9);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* selected state */
+.photo-thumb-selected .photo-thumb-img {
+  box-shadow: 0 0 0 2px #22c55e;
+  border-color: #22c55e;
 }
 
 .photo-thumb-selected .photo-thumb-check {
-  display: flex;
+  opacity: 1;
 }
 
-/* safety clamp for any legacy images */
+/* safety clamp if anything else drops images straight into #photosGrid */
 #photosGrid img {
   width: 100%;
   height: 70px;
@@ -1035,6 +1004,7 @@ body.dark-theme .step2-card .copy-btn {
   background: rgba(30, 64, 175, 0.15);
 }
 
+/* JS adds/remove .dragover */
 .photo-dropzone.dragover {
   border-color: #38bdf8;
   background: rgba(56, 189, 248, 0.25);
@@ -1049,7 +1019,7 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.55rem;
 }
 
-.creative-thumb {
+.creative-thumb-grid img {
   width: 100%;
   height: 90px;
   object-fit: cover;
@@ -1058,17 +1028,16 @@ body.dark-theme .step2-card .copy-btn {
   cursor: pointer;
   transition: 0.18s;
   display: block;
-  position: relative;
 }
 
 /* hover glow */
-.creative-thumb:hover {
+.creative-thumb-grid img:hover {
   transform: scale(1.03);
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.9);
 }
 
 /* selected state */
-.creative-thumb.selected {
+.creative-thumb-grid img.selected {
   box-shadow: 0 0 14px rgba(96, 165, 250, 1);
   border-color: rgba(96, 165, 250, 1);
 }
@@ -1088,6 +1057,38 @@ body.dark-theme .step2-card .copy-btn {
   letter-spacing: 0.08em;
 }
 
+.tuner-preview {
+  width: 100%;
+  height: 200px;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.tuner-preview img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Sliders */
+.slider-block {
+  margin-bottom: 1rem;
+}
+
+.slider-block label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.slider-block input[type="range"] {
+  width: 100%;
+}
+
 .full {
   width: 100%;
   margin-top: 0.8rem;
@@ -1095,6 +1096,7 @@ body.dark-theme .step2-card .copy-btn {
 
 /* ====== RESPONSIVE ====== */
 
+/* Slightly smaller on tablet */
 @media (max-width: 1280px) {
   .layout {
     padding-right: 13rem;
@@ -1107,16 +1109,19 @@ body.dark-theme .step2-card .copy-btn {
   }
 }
 
+/* Mobile & smaller laptops */
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
-    padding: 1.5rem 1.25rem 2.5rem;
   }
   .column-left,
   .column-middle,
   .column-right {
     grid-column: 1;
     grid-row: auto;
+  }
+  .layout {
+    padding: 1.5rem 1.25rem 2.5rem;
   }
 
   .column-middle {
@@ -1135,65 +1140,4 @@ body.dark-theme .step2-card .copy-btn {
   .creative-hub {
     grid-template-columns: 1fr;
   }
-}
-/* ===== ROCKET-3: Fullscreen Design Studio layout ===== */
-/* Put this at the very bottom of style.css */
-
-.creative-overlay {
-  /* Keep it fixed on top of the app, but kill the heavy dim overlay look */
-  background: transparent;
-  align-items: stretch;
-  justify-content: stretch;
-}
-
-.creative-modal {
-  /* Make the studio full-screen instead of a centered card */
-  width: 100vw;
-  height: 100vh;
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-}
-
-/* Top bar tweaks so it feels like a full app view */
-.creative-header {
-  padding: 0.8rem 1.6rem;
-}
-
-.creative-top-bar {
-  padding: 0.4rem 1.6rem 0.6rem;
-}
-
-/* Main layout: narrow tool rails + big canvas in the middle */
-.creative-body {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 230px; /* small panels, big center */
-  gap: 1rem;
-  padding: 0.9rem 1.6rem 1.4rem;
-}
-
-/* Canvas wrapper takes all available height, no big margins */
-.creative-canvas-wrap {
-  border-radius: 1rem;
-  margin: 0;
-}
-
-/* Let the Konva canvas go big inside the new full-height center column */
-.studio-canvas-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  max-height: none;
-  margin: 0;
-  overflow: hidden;
-  border-radius: 18px;
-}
-
-/* Force canvas to fill the container (scales with window) */
-.studio-canvas-container canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
 }
