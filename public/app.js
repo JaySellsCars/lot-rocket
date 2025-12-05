@@ -1152,8 +1152,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const safeUrl = getSafeImageUrl(url);
 
-        Konva.Image.fromURL(safeUrl, (img) => {
-          img.draggable(true);
+        Konva.Image.fromURL(url, (img) => {
           const scaleFactor = 0.5;
           img.scale({ x: scaleFactor, y: scaleFactor });
           img.position({
@@ -1161,14 +1160,13 @@ document.addEventListener("DOMContentLoaded", () => {
             y: stage.height() / 2,
           });
           designMainLayer.add(img);
+          attachDragWithSnapping(img); // 🔥 use snapping helper
           setSelectedNode(img);
           designMainLayer.draw();
           saveDesignState();
           refreshLayersList();
         });
-      }
-    });
-  }
+
 
   if (designLauncher) {
     designLauncher.addEventListener("click", openDesignStudio);
