@@ -655,30 +655,32 @@ if (sendPhotosToStudioBtn) {
     });
   }
 
-  // Basic image URL sanitizer for cross-origin issues
-function getSafeImageUrl(url) {
-  if (!url) return url;
+  // Basic image URL sanitizer + proxy for cross-origin dealer photos
+  function getSafeImageUrl(url) {
+    if (!url) return url;
 
-  // blob: or data: are already safe for canvas
-  if (url.startsWith("blob:") || url.startsWith("data:")) {
-    return url;
-  }
-
-  try {
-    const u = new URL(url, window.location.href);
-
-    // If it's already our own origin (e.g., proxy or local static), just use it
-    if (u.origin === window.location.origin) {
-      return u.toString();
+    // blob:/data: from local uploads are already safe
+    if (url.startsWith("blob:") || url.startsWith("data:")) {
+      return url;
     }
 
-    // For external dealer images, route through the backend proxy
-    const proxied = `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
-    return proxied;
-  } catch {
-    return url;
+    try {
+      const u = new URL(url, window.location.href);
+
+      // If image is already same-origin (our backend/static/proxy), just use it
+      if (u.origin === window.location.origin) {
+        return u.toString();
+      }
+
+      // For external dealer images, route through backend proxy
+      const proxied = `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
+      return proxied;
+    } catch {
+      // If URL constructor blows up, just fall back
+      return url;
+    }
   }
-}
+
 
 
   function addImageFromUrl(url) {
