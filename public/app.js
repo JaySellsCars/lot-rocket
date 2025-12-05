@@ -163,6 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
     boostButton.addEventListener("click", doBoostListing);
   }
 
+
   // ---------- Copy buttons ----------
   document.querySelectorAll(".copy-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
