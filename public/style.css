@@ -985,28 +985,27 @@ body.dark-theme .step2-card .copy-btn {
 .creative-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.95);
+  background: radial-gradient(circle at top left, #020617, #020617 55%, #020617 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1.25rem;
   z-index: 70;
 }
 
-.creative-overlay.hidden {
-  display: none;
-}
 
 .creative-modal {
-  width: min(1300px, 96vw);  /* bigger workspace */
-  height: min(820px, 92vh);  /* taller workspace */
+  width: min(1420px, 98vw);
+  height: min(880px, 96vh);
   background: var(--bg-panel);
-  border-radius: 1.4rem;
+  border-radius: 1.6rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.95);
+  box-shadow: 0 32px 90px rgba(15, 23, 42, 0.98);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+
 
 .creative-header {
   padding: 0.9rem 1rem;
@@ -1040,11 +1039,12 @@ body.dark-theme .step2-card .copy-btn {
 .creative-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 240px;
-  gap: 0.8rem;
-  padding: 1rem;
+  grid-template-columns: 170px minmax(0, 1fr) 210px;
+  gap: 0.9rem;
+  padding: 1rem 1.2rem 1.1rem;
   overflow: hidden;
 }
+
 
 /* Left + Right tool columns */
 .creative-tools,
@@ -1053,10 +1053,14 @@ body.dark-theme .step2-card .copy-btn {
   overflow-y: auto;
 }
 
-.creative-tools h3,
-.creative-properties h3 {
-  margin-top: 0;
-  margin-bottom: 0.7rem;
+.creative-tools,
+.creative-properties {
+  font-size: 0.85rem;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.96);
+  border-radius: 1.1rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  padding: 0.75rem 0.9rem;
 }
 
 /* Tool buttons */
@@ -1081,23 +1085,29 @@ body.dark-theme .step2-card .copy-btn {
 /* ====== SCROLLABLE CANVAS WRAPPER / KONVA CONTAINER ====== */
 
 .creative-canvas-wrap {
-  background: var(--bg-panel);
-  border-radius: 1rem;
+  background: #020617;
+  border-radius: 1.2rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.9),
+    0 18px 45px rgba(15, 23, 42, 0.9);
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
-  overflow: auto;
-  padding: 1rem;
+  min-height: 540px;
+  overflow: hidden;
+  padding: 0.4rem;
 }
 
 /* Konva stage container fills this area */
 .studio-canvas-container {
   width: 100%;
   height: 100%;
+  min-height: 520px;
 }
+
 
 /* In case Konva injects canvases directly */
 .creative-canvas-wrap canvas {
@@ -1107,8 +1117,9 @@ body.dark-theme .step2-card .copy-btn {
 /* ====== PROPERTIES PANEL ====== */
 
 .prop-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
+
 
 .prop-group h4 {
   margin: 0 0 0.5rem;
