@@ -1,4 +1,4 @@
-// public/app.js – Lot Rocket frontend logic v2.5.6
+// public/app.js – Lot Rocket frontend logic v2.5.6 (Rocket-2)
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva).
 
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const photosGrid = document.getElementById("photosGrid");
 
   // Works with either id="sendPhotosToCreative" or old id="sendPhotosToStudio"
-  const sendPhotosToCreativeBtn =
+  const sendPhotosToStudioBtn =
     document.getElementById("sendPhotosToCreative") ||
     document.getElementById("sendPhotosToStudio");
 
@@ -1005,8 +1005,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- Add elements ----
-  function addStudioText(text = "YOUR HEADLINE HERE") {
+  function buildHeadlineText() {
+    const rawLabel = summaryLabel && summaryLabel.textContent
+      ? summaryLabel.textContent.trim()
+      : "";
+    const rawPrice =
+      (priceInfoInput && priceInfoInput.value.trim()) ||
+      (summaryPrice && summaryPrice.textContent &&
+        summaryPrice.textContent.trim() &&
+        summaryPrice.textContent !== "—"
+        ? summaryPrice.textContent.trim()
+        : "");
+
+    const label = rawLabel && rawLabel !== "—" ? rawLabel : "YOUR HEADLINE HERE";
+    if (rawPrice) {
+      return `${label}\n${rawPrice}`;
+    }
+    return label;
+  }
+
+  function addStudioText() {
     if (!studioLayer || !studioStage) return;
+
+    const text = buildHeadlineText();
 
     const node = new Konva.Text({
       x: studioStage.width() / 2,
@@ -1062,22 +1083,49 @@ document.addEventListener("DOMContentLoaded", () => {
   function addStudioBadge() {
     if (!studioLayer || !studioStage) return;
 
-    const node = new Konva.Ring({
-      x: studioStage.width() - 180,
+    const rawPrice =
+      (priceInfoInput && priceInfoInput.value.trim()) ||
+      (summaryPrice && summaryPrice.textContent &&
+        summaryPrice.textContent.trim() &&
+        summaryPrice.textContent !== "—"
+        ? summaryPrice.textContent.trim()
+        : "SPECIAL");
+
+    // Group so circle + text move together
+    const group = new Konva.Group({
+      x: studioStage.width() - 220,
       y: 160,
-      innerRadius: 70,
-      outerRadius: 90,
-      fill: "#FFFFFF",
-      stroke: "#FF2E2E",
-      strokeWidth: 6,
-      name: "Badge Layer",
       draggable: true,
+      name: "Price Badge",
     });
 
-    attachNodeInteractions(node);
-    studioLayer.add(node);
+    const circle = new Konva.Circle({
+      x: 0,
+      y: 0,
+      radius: 110,
+      fill: "#FF2E2E",
+      stroke: "#FFFFFF",
+      strokeWidth: 6,
+    });
+
+    const text = new Konva.Text({
+      x: -110,
+      y: -20,
+      width: 220,
+      text: rawPrice,
+      fontFamily: "system-ui, sans-serif",
+      fontSize: 32,
+      fill: "#FFFFFF",
+      align: "center",
+    });
+
+    group.add(circle);
+    group.add(text);
+
+    attachNodeInteractions(group);
+    studioLayer.add(group);
     studioLayer.draw();
-    selectStudioNode(node);
+    selectStudioNode(group);
     saveStudioHistory();
   }
 
@@ -1262,8 +1310,29 @@ document.addEventListener("DOMContentLoaded", () => {
     designStudioOverlay.classList.add("hidden");
   }
 
+  function stageHasPhotoContent() {
+    if (!studioLayer) return false;
+    return studioLayer
+      .getChildren()
+      .some((n) => n.name() && n.name() !== "BackgroundLayer");
+  }
+
+  function autoBackgroundFromBestPhoto() {
+    if (!studioStage || !studioLayer) return;
+    if (stageHasPhotoContent()) return; // don't double-load
+
+    const urls = gatherImageUrlsForStudios();
+    if (!urls.length) return;
+
+    // first photo as full background
+    addStudioImageFromUrl(urls[0], true);
+  }
+
   if (designLauncher) {
-    designLauncher.addEventListener("click", openDesignStudio);
+    designLauncher.addEventListener("click", () => {
+      openDesignStudio();
+      autoBackgroundFromBestPhoto();
+    });
   }
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
@@ -1273,7 +1342,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- Shared wiring from Step 1 / Step 3 into Design Studio ----
-
   function pushUrlsIntoDesignStudio(urls) {
     if (!urls.length) {
       alert("No photos available. Boost a listing or add photos first.");
@@ -1286,8 +1354,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Step 1 button – “Send top photos to Creative Studio” (and Design Studio)
-  if (sendPhotosToCreativeBtn) {
-    sendPhotosToCreativeBtn.addEventListener("click", () => {
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.addEventListener("click", () => {
       if (!dealerPhotos.length) {
         alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
@@ -1328,7 +1396,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // “Send All to Canvas Studio” stays Fabric-only
+  // “Send All to Canvas Studio” – Fabric-only
   if (sendAllToCanvasBtn) {
     sendAllToCanvasBtn.addEventListener("click", () => {
       const urls = gatherImageUrlsForStudios();
