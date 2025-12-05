@@ -1136,3 +1136,64 @@ body.dark-theme .step2-card .copy-btn {
     grid-template-columns: 1fr;
   }
 }
+/* ===== ROCKET-3: Fullscreen Design Studio layout ===== */
+/* Put this at the very bottom of style.css */
+
+.creative-overlay {
+  /* Keep it fixed on top of the app, but kill the heavy dim overlay look */
+  background: transparent;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.creative-modal {
+  /* Make the studio full-screen instead of a centered card */
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* Top bar tweaks so it feels like a full app view */
+.creative-header {
+  padding: 0.8rem 1.6rem;
+}
+
+.creative-top-bar {
+  padding: 0.4rem 1.6rem 0.6rem;
+}
+
+/* Main layout: narrow tool rails + big canvas in the middle */
+.creative-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 230px; /* small panels, big center */
+  gap: 1rem;
+  padding: 0.9rem 1.6rem 1.4rem;
+}
+
+/* Canvas wrapper takes all available height, no big margins */
+.creative-canvas-wrap {
+  border-radius: 1rem;
+  margin: 0;
+}
+
+/* Let the Konva canvas go big inside the new full-height center column */
+.studio-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* Force canvas to fill the container (scales with window) */
+.studio-canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
