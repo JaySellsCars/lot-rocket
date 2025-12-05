@@ -351,57 +351,74 @@
     </button>
   </aside>
 
-  <!-- ######## CANVAS STUDIO OVERLAY (Fabric) ######## -->
-  <div id="creativeStudioOverlay" class="creative-overlay hidden">
-    <div class="creative-modal">
-      <div class="creative-header">
-        <h2>Canvas Studio</h2>
-        <button id="creativeClose" class="modal-close-btn">✕</button>
+<!-- ####### CANVAS STUDIO OVERLAY (Fabric) ####### -->
+<div id="creativeStudioOverlay" class="creative-overlay hidden">
+  <div class="creative-modal">
+    <!-- Top header -->
+    <header class="creative-header">
+      <h2>Canvas Studio</h2>
+      <button id="creativeClose" class="modal-close-btn">✕</button>
+    </header>
+
+    <!-- Preset selector + global actions -->
+    <div class="creative-top-bar">
+      <div class="preset-label">
+        <span>Canvas preset</span>
+        <select id="creativeCanvasPreset">
+          <option value="1080x1080">Square – 1080x1080</option>
+          <option value="1080x1920">Story – 1080x1920</option>
+          <option value="1920x1080">Landscape – 1920x1080</option>
+        </select>
       </div>
 
-      <div class="creative-top-bar">
-        <div class="preset-label">
-          <span>Canvas preset</span>
-          <select id="creativeCanvasPreset">
-            <option value="1080x1080">Square – 1080x1080</option>
-            <option value="1080x1920">Story – 1080x1920</option>
-            <option value="1920x1080">Landscape – 1920x1080</option>
-          </select>
-        </div>
+      <div class="creative-actions">
+        <button id="creativeUndo">Undo</button>
+        <button id="creativeRedo">Redo</button>
+        <button id="creativeDelete">Delete</button>
+        <button id="creativeExportPng">Export PNG</button>
 
-        <div class="creative-actions">
-          <button id="creativeUndo">Undo</button>
-          <button id="creativeRedo">Redo</button>
-          <button id="creativeDelete">Delete</button>
-          <button id="creativeExportPng">Export PNG</button>
-          <button id="creativeUploadBtn" class="canvas-tool-btn" data-tool="uploadImage">
-            Upload Image
-          </button>
-          <input
-            id="creativeImageInput"
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-          />
-        </div>
-      </div>
-
-      <div class="creative-body">
-        <div class="creative-canvas-wrap">
-          <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
-        </div>
-
-        <aside class="creative-tools">
-          <h3>Tools</h3>
-          <button class="canvas-tool-btn" data-tool="select">Select / Move</button>
-          <button class="canvas-tool-btn" data-tool="addText">Add Text</button>
-          <button class="canvas-tool-btn" data-tool="addRect">Add Banner Bar</button>
-          <button class="canvas-tool-btn" data-tool="addBadge">Add Price Badge</button>
-        </aside>
+        <!-- upload is treated as a tool -->
+        <button class="tool-btn" data-tool="uploadImage">Upload Image</button>
+        <input
+          id="creativeImageInput"
+          type="file"
+          accept="image/*"
+          multiple
+          class="hidden-input"
+        />
       </div>
     </div>
+
+    <!-- Main 3-column body -->
+    <div class="creative-body">
+      <!-- LEFT: tools -->
+      <aside class="creative-tools">
+        <h3>Tools</h3>
+        <button class="tool-btn tool-btn-active" data-tool="select">
+          Select / Move
+        </button>
+        <button class="tool-btn" data-tool="addText">Add Text</button>
+        <button class="tool-btn" data-tool="addRect">Add Banner Bar</button>
+        <button class="tool-btn" data-tool="addBadge">Add Price Badge</button>
+        <button class="tool-btn" data-tool="uploadImage">Upload Image</button>
+      </aside>
+
+      <!-- CENTER: scrollable canvas area -->
+      <div class="creative-canvas-wrap">
+        <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
+      </div>
+
+      <!-- RIGHT: properties / layers -->
+      <aside class="creative-properties">
+        <h3>Layers</h3>
+        <div id="creativeLayersList" class="prop-group small-note">
+          <p>Layers panel coming soon.</p>
+        </div>
+      </aside>
+    </div>
   </div>
+</div>
+
 
   <!-- ######## DESIGN STUDIO 3.0 OVERLAY (Konva) ######## -->
   <div id="designStudioOverlay" class="creative-overlay hidden">
