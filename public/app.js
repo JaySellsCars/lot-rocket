@@ -1044,11 +1044,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     text.offsetX(text.width() / 2);
     designMainLayer.add(text);
+    attachDragWithSnapping(text);
     setSelectedNode(text);
     designMainLayer.draw();
     saveDesignState();
     refreshLayersList();
-  }
+
 
   function addDesignBanner() {
     const stage = ensureDesignStage();
@@ -1068,11 +1069,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     designMainLayer.add(rect);
+    attachDragWithSnapping(rect);
     setSelectedNode(rect);
     designMainLayer.draw();
     saveDesignState();
     refreshLayersList();
-  }
+
 
   function addDesignBadge() {
     const stage = ensureDesignStage();
@@ -1089,10 +1091,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     designMainLayer.add(circle);
+    attachDragWithSnapping(circle);
     setSelectedNode(circle);
     designMainLayer.draw();
     saveDesignState();
     refreshLayersList();
+
   }
 
   function setBackgroundFromUrl(url) {
