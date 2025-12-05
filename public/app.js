@@ -1,16 +1,18 @@
-// public/app.js – Lot Rocket frontend logic v2.5 (CLEAN DESIGN-STUDIO-ONLY)
+// public/app.js – Lot Rocket frontend logic v2.5 CLEAN
 // - Theme toggle
-// - Step 1 / Step 2 Social Kit
-// - Floating tool modals (calc, objection, etc.)
-// - Step 3 Creative Hub (thumbnails + tuner)
-// - Design Studio 3.0 (Konva) wired to dealer photos + local uploads
+// - Step 1 + Step 2 social kit
+// - Step 3 Creative Lab (drag/drop + tuner)
+// - Canvas Studio (Fabric)
+// - Design Studio 3.0 (Konva)
+// - Side tool modals + AI helpers
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5 (Design Studio only)");
-
+  console.log("✅ Lot Rocket frontend loaded v2.5");
   const apiBase = "";
 
-  // ---------------- THEME TOGGLE ----------------
+  // ======================================
+  // THEME TOGGLE
+  // ======================================
   const themeToggleInput = document.getElementById("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
@@ -27,9 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ======================================================
-  // STEP 1 – Dealer URL Scraper + Social Kit
-  // ======================================================
+  // ======================================
+  // STEP 1 + STEP 2 – SOCIAL KIT
+  // ======================================
 
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
@@ -52,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const photosGrid = document.getElementById("photosGrid");
   const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
 
-  // Dealer photos state (allows selection)
+  // Dealer photos state (Step 1)
   let dealerPhotos = []; // [{ src, selected }]
 
   function renderDealerPhotos() {
@@ -72,13 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
-      const mark = document.createElement("span");
-      mark.className = "photo-checkmark";
-      mark.textContent = "✓";
-      if (!photo.selected) mark.classList.add("hidden");
-
       wrapper.appendChild(img);
-      wrapper.appendChild(mark);
       photosGrid.appendChild(wrapper);
     });
 
@@ -111,24 +107,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(apiBase + "/api/social-kit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url,
-          labelOverride,
-          priceOverride,
-        }),
+        body: JSON.stringify({ url, labelOverride, priceOverride }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
-        const msg =
-          data && data.message
-            ? data.message
-            : "Something went wrong building the kit.";
-        throw new Error(msg);
+        throw new Error(data && data.message ? data.message : "Error building kit");
       }
 
-      // Summary / overrides
+      // Summary
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
       if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
 
@@ -149,11 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend
+      // Photos from backend -> Step 1 grid
       const photos = Array.isArray(data.photos) ? data.photos : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
-
       if (sendPhotosToStudioBtn) {
         sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
       }
@@ -162,11 +148,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
       console.error("Boost error:", err);
-      if (statusText)
+      if (statusText) {
         statusText.textContent =
           err && err.message
             ? err.message
             : "Failed to build kit. Try again in a moment.";
+      }
     } finally {
       if (boostButton) boostButton.disabled = false;
     }
@@ -188,8 +175,13 @@ document.addEventListener("DOMContentLoaded", () => {
       el.setSelectionRange(0, 99999);
       document.execCommand("copy");
 
+      btn.classList.add("copied");
+      const original = btn.textContent;
       btn.textContent = "Copied!";
-      setTimeout(() => (btn.textContent = "Copy"), 1500);
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.textContent = original || "Copy";
+      }, 1200);
     });
   });
 
@@ -218,14 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            platform,
-            url,
-            label,
-            price,
-          }),
+          body: JSON.stringify({ platform, url, label, price }),
         });
-
         const data = await res.json();
         if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
 
@@ -275,9 +261,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ==========================================
-  // MODALS + TOOLS (Objection, Payment, etc.)
-  // ==========================================
+  // ======================================
+  // SIDE MODALS (OBJECTION, CALCS, ETC.)
+  // ======================================
 
   function wireModal(launcherId, modalId, closeSelector) {
     const launcher = document.getElementById(launcherId);
@@ -285,9 +271,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!launcher || !modal) return;
 
     const closeBtn = modal.querySelector(closeSelector || ".modal-close-btn");
-    const backdropClose = (e) => {
-      if (e.target === modal) modal.classList.add("hidden");
-    };
 
     launcher.addEventListener("click", () => {
       modal.classList.remove("hidden");
@@ -295,7 +278,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (closeBtn) {
       closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
     }
-    modal.addEventListener("click", backdropClose);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.classList.add("hidden");
+    });
   }
 
   wireModal("objectionLauncher", "objectionModal", ".modal-close-btn");
@@ -335,9 +320,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
         console.error("payment-helper error", err);
-        if (paymentOutput)
+        if (paymentOutput) {
           paymentOutput.textContent =
             "Could not calculate payment. Check numbers and try again.";
+        }
       }
     });
   }
@@ -365,9 +351,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
         console.error("income-helper error", err);
-        if (incomeOutput)
+        if (incomeOutput) {
           incomeOutput.textContent =
             "Could not estimate income. Check numbers and try again.";
+        }
       }
     });
   }
@@ -395,14 +382,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
         console.error("objection-coach error", err);
-        if (objectionOutput)
+        if (objectionOutput) {
           objectionOutput.value =
             "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
+        }
       }
     });
   }
 
-  // ---------- AI helpers ----------
+  // ---------- Generic AI helpers ----------
   function wireMessageHelper(formId, outputId, mode) {
     const form = document.getElementById(formId);
     const output = document.getElementById(outputId);
@@ -412,7 +400,6 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const fd = new FormData(form);
       const payload = { mode };
-
       fd.forEach((value, key) => {
         payload[key] = value;
       });
@@ -428,7 +415,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (output) output.value = data.text || "";
       } catch (err) {
         console.error("message-helper error", err);
-        if (output) output.value = "Lot Rocket hit a snag. Try again in a moment.";
+        if (output) {
+          output.value = "Lot Rocket hit a snag. Try again in a moment.";
+        }
       }
     });
   }
@@ -440,13 +429,14 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
   wireMessageHelper("videoForm", "videoOutput", "video-brief");
 
-  // ==========================================
-  // STEP 3 CREATIVE HUB (thumbnails + tuner)
-  // ==========================================
+  // ======================================
+  // STEP 3 – CREATIVE LAB (Drag & Drop)
+  // ======================================
 
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
   const creativeThumbGrid = document.getElementById("creativeThumbGrid");
+  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
   const tunerPreviewImg = document.getElementById("tunerPreviewImg");
@@ -455,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 
-  let localCreativePhotos = []; // URLs from drag/drop or file uploads
+  let localCreativePhotos = []; // URLs from drag/drop or dealer photos
 
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
@@ -465,15 +455,10 @@ document.addEventListener("DOMContentLoaded", () => {
     tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
   }
 
-  if (tunerBrightness) {
-    tunerBrightness.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerContrast) {
-    tunerContrast.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerSaturation) {
-    tunerSaturation.addEventListener("input", applyTunerFilters);
-  }
+  if (tunerBrightness) tunerBrightness.addEventListener("input", applyTunerFilters);
+  if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
+  if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
+
   if (autoEnhanceBtn) {
     autoEnhanceBtn.addEventListener("click", () => {
       if (tunerBrightness) tunerBrightness.value = "115";
@@ -520,9 +505,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (photoDropZone && photoFileInput) {
-    photoDropZone.addEventListener("click", () => {
-      photoFileInput.click();
-    });
+    photoDropZone.addEventListener("click", () => photoFileInput.click());
 
     photoFileInput.addEventListener("change", (e) => {
       handleCreativeFiles(e.target.files);
@@ -550,25 +533,312 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ==========================================
-  // DESIGN STUDIO 3.0 (Konva)
-  // ==========================================
+  // Step 1 -> Creative Lab + Canvas Studio
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
+        0,
+        8
+      );
+
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+      });
+    });
+  }
+
+  // ======================================
+  // CANVAS STUDIO (FABRIC)
+  // ======================================
+
+  const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
+  const creativeCloseBtn = document.getElementById("creativeClose");
+  const canvasLauncher = document.getElementById("canvasLauncher");
+
+  const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
+  const creativeUndo = document.getElementById("creativeUndo");
+  const creativeRedo = document.getElementById("creativeRedo");
+  const creativeDelete = document.getElementById("creativeDelete");
+  const creativeExportPng = document.getElementById("creativeExportPng");
+  const creativeImageInput = document.getElementById("creativeImageInput");
+  const creativeToolButtons = document.querySelectorAll(".tool-btn");
+
+  let creativeCanvas = null;
+  let creativeHistory = [];
+  let creativeHistoryIndex = -1;
+
+  function ensureCanvas() {
+    if (creativeCanvas) return creativeCanvas;
+    if (typeof fabric === "undefined") {
+      console.error("Fabric.js not loaded");
+      return null;
+    }
+    creativeCanvas = new fabric.Canvas("creativeCanvas", {
+      preserveObjectStacking: true,
+    });
+    saveCanvasState();
+    return creativeCanvas;
+  }
+
+  function saveCanvasState() {
+    if (!creativeCanvas) return;
+    const json = creativeCanvas.toJSON();
+    creativeHistory = creativeHistory.slice(0, creativeHistoryIndex + 1);
+    creativeHistory.push(json);
+    creativeHistoryIndex = creativeHistory.length - 1;
+  }
+
+  function loadCanvasState(index) {
+    if (!creativeCanvas) return;
+    if (index < 0 || index >= creativeHistory.length) return;
+    creativeHistoryIndex = index;
+    creativeCanvas.loadFromJSON(creativeHistory[index], () => {
+      creativeCanvas.renderAll();
+    });
+  }
+
+  function addImageFromUrl(url) {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+
+    fabric.Image.fromURL(
+      url,
+      (img) => {
+        const fitScale = Math.min(
+          canvas.width / img.width,
+          canvas.height / img.height
+        );
+        const scale = Math.min(fitScale * 0.75, 0.75);
+
+        img.set({
+          left: canvas.width / 2,
+          top: canvas.height / 2,
+          originX: "center",
+          originY: "center",
+          selectable: true,
+        });
+        img.scale(scale);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        saveCanvasState();
+      },
+      { crossOrigin: "Anonymous" }
+    );
+  }
+
+  function addRectBanner() {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    const rect = new fabric.Rect({
+      left: canvas.width / 2,
+      top: canvas.height - 120,
+      originX: "center",
+      originY: "center",
+      width: canvas.width * 0.9,
+      height: 160,
+      fill: "#000000",
+      opacity: 0.75,
+      rx: 16,
+      ry: 16,
+    });
+    canvas.add(rect);
+    canvas.setActiveObject(rect);
+    canvas.renderAll();
+    saveCanvasState();
+  }
+
+  function addBadge() {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    const circle = new fabric.Circle({
+      radius: 130,
+      fill: "#ff0000",
+      left: canvas.width - 220,
+      top: 80,
+      originX: "center",
+      originY: "center",
+    });
+    canvas.add(circle);
+    canvas.setActiveObject(circle);
+    canvas.renderAll();
+    saveCanvasState();
+  }
+
+  function addTextBox() {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    const text = new fabric.Textbox("YOUR TEXT HERE", {
+      left: canvas.width / 2,
+      top: 150,
+      originX: "center",
+      originY: "center",
+      fill: "#ffffff",
+      fontSize: 64,
+      fontWeight: "bold",
+      textAlign: "center",
+    });
+    canvas.add(text);
+    canvas.setActiveObject(text);
+    canvas.renderAll();
+    saveCanvasState();
+  }
+
+  function openCreativeStudio() {
+    if (!creativeStudioOverlay) return;
+    creativeStudioOverlay.classList.remove("hidden");
+    ensureCanvas();
+  }
+
+  function closeCreativeStudio() {
+    if (!creativeStudioOverlay) return;
+    creativeStudioOverlay.classList.add("hidden");
+  }
+
+  if (canvasLauncher) {
+    canvasLauncher.addEventListener("click", openCreativeStudio);
+  }
+  if (creativeCloseBtn && creativeStudioOverlay) {
+    creativeCloseBtn.addEventListener("click", closeCreativeStudio);
+    creativeStudioOverlay.addEventListener("click", (e) => {
+      if (e.target === creativeStudioOverlay) closeCreativeStudio();
+    });
+  }
+
+  if (canvasPresetSelect) {
+    canvasPresetSelect.addEventListener("change", () => {
+      const canvas = ensureCanvas();
+      if (!canvas) return;
+      const [w, h] = canvasPresetSelect.value.split("x").map(Number);
+      canvas.setWidth(w);
+      canvas.setHeight(h);
+      canvas.calcOffset();
+      canvas.renderAll();
+      saveCanvasState();
+    });
+  }
+
+  if (creativeUndo) {
+    creativeUndo.addEventListener("click", () => {
+      if (!creativeCanvas) return;
+      if (creativeHistoryIndex > 0) {
+        loadCanvasState(creativeHistoryIndex - 1);
+      }
+    });
+  }
+  if (creativeRedo) {
+    creativeRedo.addEventListener("click", () => {
+      if (!creativeCanvas) return;
+      if (creativeHistoryIndex < creativeHistory.length - 1) {
+        loadCanvasState(creativeHistoryIndex + 1);
+      }
+    });
+  }
+  if (creativeDelete) {
+    creativeDelete.addEventListener("click", () => {
+      if (!creativeCanvas) return;
+      const active = creativeCanvas.getActiveObject();
+      if (!active) return;
+      creativeCanvas.remove(active);
+      creativeCanvas.discardActiveObject();
+      creativeCanvas.renderAll();
+      saveCanvasState();
+    });
+  }
+  if (creativeExportPng) {
+    creativeExportPng.addEventListener("click", () => {
+      const canvas = ensureCanvas();
+      if (!canvas) return;
+      const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "lot-rocket-creative.png";
+      a.click();
+    });
+  }
+
+  if (creativeToolButtons.length) {
+    creativeToolButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tool = btn.getAttribute("data-tool");
+        if (!tool) return;
+
+        creativeToolButtons.forEach((b) =>
+          b.classList.remove("tool-btn-active")
+        );
+        btn.classList.add("tool-btn-active");
+
+        if (!creativeCanvas) {
+          if (tool === "uploadImage" && creativeImageInput) {
+            creativeImageInput.click();
+          }
+          return;
+        }
+
+        if (tool === "select") {
+          creativeCanvas.isDrawingMode = false;
+        } else if (tool === "addText") {
+          addTextBox();
+        } else if (tool === "addRect") {
+          addRectBanner();
+        } else if (tool === "addBadge") {
+          addBadge();
+        } else if (tool === "uploadImage" && creativeImageInput) {
+          creativeImageInput.click();
+        }
+      });
+    });
+  }
+
+  if (creativeImageInput) {
+    creativeImageInput.addEventListener("change", (e) => {
+      const files = e.target.files;
+      if (!files || !files.length) return;
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith("image/")) return;
+        const url = URL.createObjectURL(file);
+        addImageFromUrl(url);
+      });
+      creativeImageInput.value = "";
+    });
+  }
+
+  // Send ALL local photos to Fabric canvas
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
+      if (!localCreativePhotos.length) {
+        alert("Add or drop some photos into Step 3 first.");
+        return;
+      }
+      openCreativeStudio();
+      localCreativePhotos.forEach((url) => addImageFromUrl(url));
+    });
+  }
+
+  // ======================================
+  // DESIGN STUDIO 3.0 (KONVA)
+  // ======================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
-  const designCloseBtn = document.getElementById("designClose");
   const designLauncher = document.getElementById("designLauncher");
+  const designCloseBtn = document.getElementById("designClose");
 
   const studioSizePreset = document.getElementById("studioSizePreset");
-  const konvaContainer = document.getElementById("konvaStageContainer");
+  const studioUndoBtn = document.getElementById("studioUndoBtn");
+  const studioRedoBtn = document.getElementById("studioRedoBtn");
+  const studioExportPng = document.getElementById("studioExportPng");
 
   const toolAddText = document.getElementById("toolAddText");
   const toolAddShape = document.getElementById("toolAddShape");
   const toolAddBadge = document.getElementById("toolAddBadge");
   const toolSetBackground = document.getElementById("toolSetBackground");
-
-  const studioUndoBtn = document.getElementById("studioUndoBtn");
-  const studioRedoBtn = document.getElementById("studioRedoBtn");
-  const studioExportPng = document.getElementById("studioExportPng");
 
   const layersList = document.getElementById("layersList");
   const layerTextInput = document.getElementById("layerTextInput");
@@ -576,248 +846,216 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
-  let stage = null;
-  let designLayer = null;
+  let designStage = null;
+  let designBgLayer = null;
+  let designMainLayer = null;
   let designHistory = [];
   let designHistoryIndex = -1;
+  let selectedNode = null;
 
-  function getPresetSize() {
-    if (!studioSizePreset) return [1080, 1080];
-    const [w, h] = studioSizePreset.value.split("x").map(Number);
-    return [w || 1080, h || 1080];
-  }
-
-  function ensureDesignStudio() {
-    if (stage) return { stage, designLayer };
-
-    if (!konvaContainer || typeof Konva === "undefined") {
-      console.error("Konva or container missing");
+  function ensureDesignStage() {
+    if (designStage) return designStage;
+    if (typeof Konva === "undefined") {
+      console.error("Konva not loaded");
       return null;
     }
 
-    const [w, h] = getPresetSize();
-    stage = new Konva.Stage({
-      container: konvaContainer,
-      width: w,
-      height: h,
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) return null;
+
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 500;
+
+    designStage = new Konva.Stage({
+      container: "konvaStageContainer",
+      width,
+      height,
     });
-    designLayer = new Konva.Layer();
-    stage.add(designLayer);
-    stage.draw();
+
+    designBgLayer = new Konva.Layer();
+    designMainLayer = new Konva.Layer();
+    designStage.add(designBgLayer);
+    designStage.add(designMainLayer);
+
+    designStage.on("click", (e) => {
+      if (e.target === designStage) {
+        setSelectedNode(null);
+      } else {
+        setSelectedNode(e.target);
+      }
+    });
+
+    designStage.on("dragend transformend", () => {
+      saveDesignState();
+      refreshLayersList();
+    });
+
     saveDesignState();
-    wireStageSelection();
-    return { stage, designLayer };
+    return designStage;
   }
 
   function saveDesignState() {
-    if (!stage) return;
-    const json = stage.toJSON();
+    if (!designStage) return;
+    const json = designStage.toJSON();
     designHistory = designHistory.slice(0, designHistoryIndex + 1);
     designHistory.push(json);
     designHistoryIndex = designHistory.length - 1;
   }
 
   function loadDesignState(index) {
-    if (!konvaContainer) return;
+    if (!designStage) return;
     if (index < 0 || index >= designHistory.length) return;
-
-    const json = designHistory[index];
-    // Destroy old stage and recreate from JSON
-    if (stage) {
-      stage.destroy();
-    }
-    stage = Konva.Node.create(json, konvaContainer);
-    designLayer = stage.findOne("Layer");
     designHistoryIndex = index;
-    wireStageSelection();
-    rebuildLayersList();
-  }
-
-  function wireStageSelection() {
+    designStage.destroy();
+    designStage = null;
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) return;
+    const stage = ensureDesignStage();
     if (!stage) return;
-    stage.off("click");
-    stage.on("click", (e) => {
-      const node = e.target;
-      if (!node || node === stage) {
-        stage.find("Transformer").destroy();
-        stage.draw();
-        syncInspector(null);
-        return;
-      }
-      const layer = designLayer || stage.findOne("Layer");
-      if (!layer) return;
-
-      layer.find("Transformer").destroy();
-      const tr = new Konva.Transformer({
-        rotateEnabled: true,
-        enabledAnchors: [
-          "top-left",
-          "top-right",
-          "bottom-left",
-          "bottom-right",
-        ],
-      });
-      layer.add(tr);
-      tr.nodes([node]);
-      layer.draw();
-      syncInspector(node);
+    stage.fromJSON(designHistory[index]);
+    // After fromJSON, we need to re-hook click events
+    stage.find("Shape").forEach((shape) => {
+      shape.draggable(true);
     });
+    refreshLayersList();
   }
 
-  function rebuildLayersList() {
-    if (!layersList || !designLayer) return;
+  function refreshLayersList() {
+    if (!layersList || !designMainLayer) return;
     layersList.innerHTML = "";
-    designLayer.getChildren().forEach((node, index) => {
-      if (node.getClassName() === "Transformer") return;
+    const nodes = designMainLayer.getChildren();
+
+    nodes.forEach((node, index) => {
       const li = document.createElement("li");
-      li.textContent = `${index + 1} – ${node.getClassName()}`;
-      li.dataset.nodeId = node._id;
+      li.textContent = node.name() || `Layer ${index + 1}`;
+      li.dataset.index = String(index);
+      if (node === selectedNode) li.classList.add("active");
       li.addEventListener("click", () => {
-        stage.fire("click", { target: node });
+        setSelectedNode(node);
       });
       layersList.appendChild(li);
     });
   }
 
-  function syncInspector(node) {
+  function setSelectedNode(node) {
+    selectedNode = node;
     if (!layerTextInput || !layerFontSizeInput || !layerOpacityInput) return;
 
     if (!node) {
       layerTextInput.value = "";
       layerFontSizeInput.value = "40";
       layerOpacityInput.value = "1";
-      layerDeleteBtn && (layerDeleteBtn.disabled = true);
+      refreshLayersList();
+      if (designStage) designStage.draw();
       return;
     }
 
-    const text = node.text ? node.text() : "";
-    const fs = node.fontSize ? node.fontSize() : 40;
-    const op = node.opacity ? node.opacity() : 1;
+    if (node.text) {
+      layerTextInput.value = node.text();
+    } else {
+      layerTextInput.value = "";
+    }
+    layerFontSizeInput.value = node.fontSize ? node.fontSize() : 40;
+    layerOpacityInput.value = node.opacity ? node.opacity() : 1;
 
-    if (typeof text === "string") layerTextInput.value = text;
-    else layerTextInput.value = "";
-
-    if (typeof fs === "number") layerFontSizeInput.value = String(fs);
-    else layerFontSizeInput.value = "40";
-
-    layerOpacityInput.value = String(op);
-    if (layerDeleteBtn) layerDeleteBtn.disabled = false;
+    refreshLayersList();
+    if (designStage) designStage.draw();
   }
 
-  function getSelectedNode() {
-    if (!stage) return null;
-    const tr = stage.findOne("Transformer");
-    if (!tr) return null;
-    const nodes = tr.nodes();
-    return nodes && nodes[0] ? nodes[0] : null;
-  }
+  function addDesignText() {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
 
-  function addKonvaText() {
-    const ctx = ensureDesignStudio();
-    if (!ctx) return;
-    const { stage, designLayer } = ctx;
     const text = new Konva.Text({
-      text: "YOUR TEXT HERE",
       x: stage.width() / 2,
-      y: 150,
-      fontSize: 64,
-      fontStyle: "bold",
+      y: 80,
+      text: "YOUR TEXT HERE",
+      fontSize: 40,
+      fontFamily: "Arial",
       fill: "#ffffff",
       align: "center",
-      listening: true,
+      offsetX: 0,
+      draggable: true,
+      name: "Text",
     });
+
     text.offsetX(text.width() / 2);
-    designLayer.add(text);
-    designLayer.draw();
+    designMainLayer.add(text);
+    setSelectedNode(text);
+    designMainLayer.draw();
     saveDesignState();
-    rebuildLayersList();
+    refreshLayersList();
   }
 
-  function addKonvaBanner() {
-    const ctx = ensureDesignStudio();
-    if (!ctx) return;
-    const { stage, designLayer } = ctx;
+  function addDesignBanner() {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
+
     const rect = new Konva.Rect({
       x: stage.width() / 2,
       y: stage.height() - 120,
       width: stage.width() * 0.9,
-      height: 160,
-      offsetX: (stage.width() * 0.9) / 2,
-      offsetY: 80,
-      fill: "black",
+      height: 120,
+      fill: "#000000",
       opacity: 0.75,
-      cornerRadius: 16,
-      listening: true,
+      cornerRadius: 20,
+      offsetX: (stage.width() * 0.9) / 2,
+      draggable: true,
+      name: "Banner",
     });
-    designLayer.add(rect);
-    designLayer.draw();
+
+    designMainLayer.add(rect);
+    setSelectedNode(rect);
+    designMainLayer.draw();
     saveDesignState();
-    rebuildLayersList();
+    refreshLayersList();
   }
 
-  function addKonvaBadge() {
-    const ctx = ensureDesignStudio();
-    if (!ctx) return;
-    const { stage, designLayer } = ctx;
+  function addDesignBadge() {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
+
     const circle = new Konva.Circle({
-      x: stage.width() - 220,
-      y: 140,
-      radius: 130,
-      fill: "red",
-      opacity: 0.95,
-      listening: true,
+      x: stage.width() - 150,
+      y: 120,
+      radius: 100,
+      fill: "#ef4444",
+      opacity: 0.9,
+      draggable: true,
+      name: "Price Badge",
     });
-    designLayer.add(circle);
-    designLayer.draw();
+
+    designMainLayer.add(circle);
+    setSelectedNode(circle);
+    designMainLayer.draw();
     saveDesignState();
-    rebuildLayersList();
+    refreshLayersList();
   }
 
-  function addImageToStage(url, asBackground = false) {
-    const ctx = ensureDesignStudio();
-    if (!ctx) return;
-    const { stage, designLayer } = ctx;
+  function setBackgroundFromUrl(url) {
+    const stage = ensureDesignStage();
+    if (!stage || !designBgLayer) return;
 
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const imgW = img.width;
-      const imgH = img.height;
-      const stageW = stage.width();
-      const stageH = stage.height();
-
-      const scale = Math.min(
-        (stageW * 0.8) / imgW,
-        (stageH * 0.8) / imgH
+    Konva.Image.fromURL(url, (img) => {
+      const scale = Math.max(
+        stage.width() / img.width(),
+        stage.height() / img.height()
       );
+      img.scale({ x: scale, y: scale });
+      img.position({ x: 0, y: 0 });
+      img.listening(false); // background not selectable
 
-      const konvaImg = new Konva.Image({
-        image: img,
-        x: stageW / 2,
-        y: stageH / 2,
-        offsetX: (imgW * scale) / 2,
-        offsetY: (imgH * scale) / 2,
-        scaleX: scale,
-        scaleY: scale,
-        listening: true,
-      });
-
-      if (asBackground) {
-        konvaImg.zIndex(0);
-      }
-
-      designLayer.add(konvaImg);
-      designLayer.draw();
+      designBgLayer.destroyChildren();
+      designBgLayer.add(img);
+      designBgLayer.draw();
       saveDesignState();
-      rebuildLayersList();
-    };
-    img.src = url;
+    });
   }
 
   function openDesignStudio() {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
-    ensureDesignStudio();
+    ensureDesignStage();
   }
 
   function closeDesignStudio() {
@@ -825,11 +1063,8 @@ document.addEventListener("DOMContentLoaded", () => {
     designStudioOverlay.classList.add("hidden");
   }
 
-  // ---- Design Studio wiring ----
   if (designLauncher) {
-    designLauncher.addEventListener("click", () => {
-      openDesignStudio();
-    });
+    designLauncher.addEventListener("click", openDesignStudio);
   }
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
@@ -840,36 +1075,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (studioSizePreset) {
     studioSizePreset.addEventListener("change", () => {
-      const ctx = ensureDesignStudio();
-      if (!ctx) return;
-      const [w, h] = getPresetSize();
+      const stage = ensureDesignStage();
+      if (!stage) return;
+      const [w, h] = studioSizePreset.value.split("x").map(Number);
       stage.size({ width: w, height: h });
       stage.draw();
       saveDesignState();
     });
   }
 
-  if (toolAddText) toolAddText.addEventListener("click", addKonvaText);
-  if (toolAddShape) toolAddShape.addEventListener("click", addKonvaBanner);
-  if (toolAddBadge) toolAddBadge.addEventListener("click", addKonvaBadge);
-  if (toolSetBackground) {
-    toolSetBackground.addEventListener("click", () => {
-      // Use currently selected creative thumb or tuner image as background
-      let url = "";
-      const selectedThumb = document.querySelector(".creative-thumb.selected");
-      if (selectedThumb) url = selectedThumb.src;
-      else if (tunerPreviewImg && tunerPreviewImg.src) url = tunerPreviewImg.src;
-      if (!url) {
-        alert("Select a photo in Step 3 first.");
-        return;
-      }
-      openDesignStudio();
-      addImageToStage(url, true);
-    });
-  }
-
   if (studioUndoBtn) {
     studioUndoBtn.addEventListener("click", () => {
+      if (!designStage) return;
       if (designHistoryIndex > 0) {
         loadDesignState(designHistoryIndex - 1);
       }
@@ -878,6 +1095,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (studioRedoBtn) {
     studioRedoBtn.addEventListener("click", () => {
+      if (!designStage) return;
       if (designHistoryIndex < designHistory.length - 1) {
         loadDesignState(designHistoryIndex + 1);
       }
@@ -886,8 +1104,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (studioExportPng) {
     studioExportPng.addEventListener("click", () => {
+      const stage = ensureDesignStage();
       if (!stage) return;
-      const dataUrl = stage.toDataURL({ mimeType: "image/png", pixelRatio: 1 });
+      const dataUrl = stage.toDataURL({ pixelRatio: 2 });
       const a = document.createElement("a");
       a.href = dataUrl;
       a.download = "lot-rocket-design.png";
@@ -895,108 +1114,112 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Inspector wiring
+  if (toolAddText) toolAddText.addEventListener("click", addDesignText);
+  if (toolAddShape) toolAddShape.addEventListener("click", addDesignBanner);
+  if (toolAddBadge) toolAddBadge.addEventListener("click", addDesignBadge);
+  if (toolSetBackground) {
+    toolSetBackground.addEventListener("click", () => {
+      // Use currently selected Creative Lab image, or first one
+      const selectedThumb = document.querySelector(
+        ".creative-thumb.selected"
+      );
+      let url =
+        selectedThumb?.getAttribute("src") || localCreativePhotos[0] || null;
+      if (!url) {
+        alert("Select or add a photo in Step 3 first.");
+        return;
+      }
+      openDesignStudio();
+      setBackgroundFromUrl(url);
+    });
+  }
+
+  // Step 3 button: Send selected thumbs to Design Studio as layers
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const thumbs = Array.from(
+        document.querySelectorAll(".creative-thumb.selected")
+      );
+      const urls =
+        thumbs.length > 0
+          ? thumbs.map((img) => img.getAttribute("src"))
+          : localCreativePhotos;
+
+      if (!urls || !urls.length) {
+        alert("Select at least one photo (or add some to Step 3).");
+        return;
+      }
+
+      openDesignStudio();
+      // First image as background, rest as draggable overlays
+      urls.forEach((url, index) => {
+        if (!url) return;
+        if (index === 0) {
+          setBackgroundFromUrl(url);
+        } else {
+          const stage = ensureDesignStage();
+          if (!stage || !designMainLayer) return;
+          Konva.Image.fromURL(url, (img) => {
+            img.draggable(true);
+            img.scale({ x: 0.5, y: 0.5 });
+            img.position({
+              x: stage.width() / 2,
+              y: stage.height() / 2,
+            });
+            designMainLayer.add(img);
+            setSelectedNode(img);
+            designMainLayer.draw();
+            saveDesignState();
+            refreshLayersList();
+          });
+        }
+      });
+    });
+  }
+
+  // Selected layer controls
   if (layerTextInput) {
     layerTextInput.addEventListener("input", () => {
-      const node = getSelectedNode();
-      if (!node || !node.text) return;
-      node.text(layerTextInput.value);
-      node.getLayer().batchDraw();
-      saveDesignState();
-      rebuildLayersList();
+      if (selectedNode && selectedNode.text) {
+        selectedNode.text(layerTextInput.value);
+        if (designStage) designStage.draw();
+        saveDesignState();
+      }
     });
   }
 
   if (layerFontSizeInput) {
     layerFontSizeInput.addEventListener("input", () => {
-      const node = getSelectedNode();
-      const size = Number(layerFontSizeInput.value || "40");
-      if (!node || !node.fontSize) return;
-      node.fontSize(size);
-      node.getLayer().batchDraw();
-      saveDesignState();
+      if (selectedNode && selectedNode.fontSize) {
+        const size = Number(layerFontSizeInput.value || 40);
+        selectedNode.fontSize(size);
+        if (designStage) designStage.draw();
+        saveDesignState();
+      }
     });
   }
 
   if (layerOpacityInput) {
     layerOpacityInput.addEventListener("input", () => {
-      const node = getSelectedNode();
-      const op = Number(layerOpacityInput.value || "1");
-      if (!node || !node.opacity) return;
-      node.opacity(op);
-      node.getLayer().batchDraw();
-      saveDesignState();
+      if (selectedNode && selectedNode.opacity) {
+        const val = Number(layerOpacityInput.value || 1);
+        selectedNode.opacity(val);
+        if (designStage) designStage.draw();
+        saveDesignState();
+      }
     });
   }
 
   if (layerDeleteBtn) {
     layerDeleteBtn.addEventListener("click", () => {
-      const node = getSelectedNode();
-      if (!node) return;
-      node.destroy();
-      stage.find("Transformer").destroy();
-      stage.draw();
+      if (!selectedNode || !designMainLayer) return;
+      selectedNode.destroy();
+      selectedNode = null;
+      designMainLayer.draw();
       saveDesignState();
-      rebuildLayersList();
-      syncInspector(null);
+      refreshLayersList();
     });
   }
 
-  // ----- Wiring Step 3 "Send Selected to Design Studio" -----
-  if (sendToDesignStudioBtn) {
-    sendToDesignStudioBtn.addEventListener("click", () => {
-      if (!localCreativePhotos.length) {
-        alert("Add or drop some photos into Step 3 first.");
-        return;
-      }
-      openDesignStudio();
-
-      // If any thumbs are selected, send only those; otherwise send all
-      const selectedThumbs = Array.from(
-        document.querySelectorAll(".creative-thumb.selected")
-      );
-      const urls =
-        selectedThumbs.length > 0
-          ? selectedThumbs.map((img) => img.src)
-          : localCreativePhotos;
-
-      urls.forEach((url, idx) => {
-        addImageToStage(url, idx === 0); // first could be treated as bg if desired
-      });
-    });
-  }
-
-  // ----- Wiring Step 1 "Send top photos to Design Studio" -----
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
-
-      if (!chosen.length) {
-        alert("No photos selected.");
-        return;
-      }
-
-      // Also pipe them into Step 3 thumbnails for consistency
-      chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-      });
-
-      openDesignStudio();
-      chosen.forEach((url, idx) => addImageToStage(url, idx === 0));
-    });
-  }
-
-  console.log("✅ Lot Rocket frontend wiring complete (Design Studio 3.0)");
+  console.log("✅ Lot Rocket frontend wiring complete");
 });
