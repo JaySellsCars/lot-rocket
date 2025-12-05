@@ -837,16 +837,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ======================================
-  // DESIGN STUDIO 3.0 (KONVA)
+  // DESIGN STUDIO 3.0 (KONVA) – SIMPLE, STABLE
   // ======================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
   const designLauncher = document.getElementById("designLauncher");
   const designCloseBtn = document.getElementById("designClose");
+  // reuse the Step 3 button already declared earlier
+  // const sendToDesignStudioBtn is already defined above
 
   const studioSizePreset = document.getElementById("studioSizePreset");
-  const studioUndoBtn = document.getElementById("studioUndoBtn");
-  const studioRedoBtn = document.getElementById("studioRedoBtn");
   const studioExportPng = document.getElementById("studioExportPng");
 
   const toolAddText = document.getElementById("toolAddText");
@@ -863,56 +863,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let designStage = null;
   let designBgLayer = null;
   let designMainLayer = null;
-  let designHistory = [];
-  let designHistoryIndex = -1;
   let selectedNode = null;
-
-  // --- Smart snapping helpers for draggable nodes ---
-
-  function attachDragWithSnapping(node) {
-    if (!node) return;
-    node.draggable(true);
-
-    node.on("dragmove", () => {
-      snapNodeToGuides(node);
-      const stage = node.getStage();
-      if (stage) stage.batchDraw();
-    });
-
-    node.on("dragend", () => {
-      saveDesignState();
-      refreshLayersList();
-    });
-  }
-
-  function snapNodeToGuides(node) {
-    const stage = node.getStage();
-    if (!stage) return;
-
-    const SNAP = 12; // pixel tolerance
-    let { x, y } = node.position();
-
-    const centerX = stage.width() / 2;
-    const centerY = stage.height() / 2;
-    const topThirdY = stage.height() / 3;
-    const bottomThirdY = (stage.height() * 2) / 3;
-
-    // Snap X to center
-    if (Math.abs(x - centerX) < SNAP) {
-      x = centerX;
-    }
-
-    // Snap Y to thirds / center
-    if (Math.abs(y - centerY) < SNAP) {
-      y = centerY;
-    } else if (Math.abs(y - topThirdY) < SNAP) {
-      y = topThirdY;
-    } else if (Math.abs(y - bottomThirdY) < SNAP) {
-      y = bottomThirdY;
-    }
-
-    node.position({ x, y });
-  }
 
   function ensureDesignStage() {
     if (designStage) return designStage;
@@ -922,7 +873,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const container = document.getElementById("konvaStageContainer");
-    if (!container) return null;
+    if (!container) {
+      console.error("No #konvaStageContainer found");
+      return null;
+    }
 
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 500;
@@ -946,38 +900,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    designStage.on("dragend transformend", () => {
-      saveDesignState();
-      refreshLayersList();
-    });
-
-    saveDesignState();
     return designStage;
-  }
-
-  function saveDesignState() {
-    if (!designStage) return;
-    const json = designStage.toJSON();
-    designHistory = designHistory.slice(0, designHistoryIndex + 1);
-    designHistory.push(json);
-    designHistoryIndex = designHistory.length - 1;
-  }
-
-  function loadDesignStateDesign(index) {
-    if (!designStage) return;
-    if (index < 0 || index >= designHistory.length) return;
-    designHistoryIndex = index;
-    designStage.destroy();
-    designStage = null;
-    const container = document.getElementById("konvaStageContainer");
-    if (!container) return;
-    const stage = ensureDesignStage();
-    if (!stage) return;
-    stage.fromJSON(designHistory[index]);
-    stage.find("Shape").forEach((shape) => {
-      shape.draggable(true);
-    });
-    refreshLayersList();
   }
 
   function refreshLayersList() {
@@ -988,7 +911,6 @@ document.addEventListener("DOMContentLoaded", () => {
     nodes.forEach((node, index) => {
       const li = document.createElement("li");
       li.textContent = node.name() || `Layer ${index + 1}`;
-      li.dataset.index = String(index);
       if (node === selectedNode) li.classList.add("active");
       li.addEventListener("click", () => {
         setSelectedNode(node);
@@ -1005,8 +927,8 @@ document.addEventListener("DOMContentLoaded", () => {
       layerTextInput.value = "";
       layerFontSizeInput.value = "40";
       layerOpacityInput.value = "1";
-      refreshLayersList();
       if (designStage) designStage.draw();
+      refreshLayersList();
       return;
     }
 
@@ -1015,84 +937,43 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       layerTextInput.value = "";
     }
+
     layerFontSizeInput.value = node.fontSize ? node.fontSize() : 40;
     layerOpacityInput.value = node.opacity ? node.opacity() : 1;
 
-    refreshLayersList();
     if (designStage) designStage.draw();
-  }
-
-  function addDesignText() {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
-
-    const text = new Konva.Text({
-      x: stage.width() / 2,
-      y: 80,
-      text: "YOUR TEXT HERE",
-      fontSize: 40,
-      fontFamily: "Arial",
-      fill: "#ffffff",
-      align: "center",
-      offsetX: 0,
-      draggable: true,
-      name: "Text",
-    });
-
-    text.offsetX(text.width() / 2);
-    designMainLayer.add(text);
-    attachDragWithSnapping(text);
-    setSelectedNode(text);
-    designMainLayer.draw();
-    saveDesignState();
     refreshLayersList();
   }
 
-  function addDesignBanner() {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
+  function attachDragWithSnapping(node) {
+    if (!node) return;
+    node.draggable(true);
 
-    const rect = new Konva.Rect({
-      x: stage.width() / 2,
-      y: stage.height() - 120,
-      width: stage.width() * 0.9,
-      height: 120,
-      fill: "#000000",
-      opacity: 0.75,
-      cornerRadius: 20,
-      offsetX: (stage.width() * 0.9) / 2,
-      draggable: true,
-      name: "Banner",
+    node.on("dragmove", () => {
+      snapNodeToGuides(node);
+      const stage = node.getStage();
+      if (stage) stage.batchDraw();
     });
-
-    designMainLayer.add(rect);
-    attachDragWithSnapping(rect);
-    setSelectedNode(rect);
-    designMainLayer.draw();
-    saveDesignState();
-    refreshLayersList();
   }
 
-  function addDesignBadge() {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
+  function snapNodeToGuides(node) {
+    const stage = node.getStage();
+    if (!stage) return;
 
-    const circle = new Konva.Circle({
-      x: stage.width() - 150,
-      y: 120,
-      radius: 100,
-      fill: "#ef4444",
-      opacity: 0.9,
-      draggable: true,
-      name: "Price Badge",
-    });
+    const SNAP = 12;
+    let { x, y } = node.position();
 
-    designMainLayer.add(circle);
-    attachDragWithSnapping(circle);
-    setSelectedNode(circle);
-    designMainLayer.draw();
-    saveDesignState();
-    refreshLayersList();
+    const centerX = stage.width() / 2;
+    const centerY = stage.height() / 2;
+    const topThirdY = stage.height() / 3;
+    const bottomThirdY = (stage.height() * 2) / 3;
+
+    if (Math.abs(x - centerX) < SNAP) x = centerX;
+    if (Math.abs(y - centerY) < SNAP) y = centerY;
+    else if (Math.abs(y - topThirdY) < SNAP) y = topThirdY;
+    else if (Math.abs(y - bottomThirdY) < SNAP) y = bottomThirdY;
+
+    node.position({ x, y });
   }
 
   function setBackgroundFromUrl(url) {
@@ -1113,12 +994,102 @@ document.addEventListener("DOMContentLoaded", () => {
       designBgLayer.destroyChildren();
       designBgLayer.add(img);
       designBgLayer.draw();
-      saveDesignState();
     });
   }
 
+  function addDesignImage(url) {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
+
+    const safeUrl = getSafeImageUrl(url);
+
+    Konva.Image.fromURL(safeUrl, (img) => {
+      const scaleFactor = 0.5;
+      img.scale({ x: scaleFactor, y: scaleFactor });
+      img.position({
+        x: stage.width() / 2,
+        y: stage.height() / 2,
+      });
+      img.name("Photo");
+      attachDragWithSnapping(img);
+      designMainLayer.add(img);
+      designMainLayer.draw();
+      setSelectedNode(img);
+    });
+  }
+
+  function addDesignText() {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
+
+    const text = new Konva.Text({
+      x: stage.width() / 2,
+      y: 80,
+      text: "YOUR TEXT HERE",
+      fontSize: 40,
+      fontFamily: "Arial",
+      fill: "#ffffff",
+      align: "center",
+      offsetX: 0,
+      draggable: true,
+      name: "Text",
+    });
+
+    text.offsetX(text.width() / 2);
+    attachDragWithSnapping(text);
+    designMainLayer.add(text);
+    designMainLayer.draw();
+    setSelectedNode(text);
+  }
+
+  function addDesignBanner() {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
+
+    const rect = new Konva.Rect({
+      x: stage.width() / 2,
+      y: stage.height() - 120,
+      width: stage.width() * 0.9,
+      height: 120,
+      fill: "#000000",
+      opacity: 0.75,
+      cornerRadius: 20,
+      offsetX: (stage.width() * 0.9) / 2,
+      draggable: true,
+      name: "Banner",
+    });
+
+    attachDragWithSnapping(rect);
+    designMainLayer.add(rect);
+    designMainLayer.draw();
+    setSelectedNode(rect);
+  }
+
+  function addDesignBadge() {
+    const stage = ensureDesignStage();
+    if (!stage || !designMainLayer) return;
+
+    const circle = new Konva.Circle({
+      x: stage.width() - 150,
+      y: 120,
+      radius: 100,
+      fill: "#ef4444",
+      opacity: 0.9,
+      draggable: true,
+      name: "Price Badge",
+    });
+
+    attachDragWithSnapping(circle);
+    designMainLayer.add(circle);
+    designMainLayer.draw();
+    setSelectedNode(circle);
+  }
+
   function openDesignStudio() {
-    if (!designStudioOverlay) return;
+    if (!designStudioOverlay) {
+      console.warn("No designStudioOverlay element found");
+      return;
+    }
     designStudioOverlay.classList.remove("hidden");
     ensureDesignStage();
   }
@@ -1128,52 +1099,12 @@ document.addEventListener("DOMContentLoaded", () => {
     designStudioOverlay.classList.add("hidden");
   }
 
-  // Helper: send a list of URLs into Design Studio (bg + overlays)
-  function sendUrlsToDesignStudio(urls) {
-    if (!urls || !urls.length) {
-      alert("No photos available to send to Design Studio yet.");
-      return;
-    }
-
-    openDesignStudio();
-
-    urls.forEach((url, index) => {
-      if (!url) return;
-
-      if (index === 0) {
-        // First image becomes background
-        setBackgroundFromUrl(url);
-        return;
-      }
-
-      const stage = ensureDesignStage();
-      if (!stage || !designMainLayer) return;
-
-      const safeUrl = getSafeImageUrl(url);
-
-      Konva.Image.fromURL(safeUrl, (img) => {
-        const scaleFactor = 0.5;
-        img.scale({ x: scaleFactor, y: scaleFactor });
-        img.position({
-          x: stage.width() / 2,
-          y: stage.height() / 2,
-        });
-
-        designMainLayer.add(img);
-        attachDragWithSnapping(img); // snapping helper
-        setSelectedNode(img);
-        designMainLayer.draw();
-        saveDesignState();
-        refreshLayersList();
-      });
-    });
-  }
-
-  // ----- Wiring the Design Studio UI -----
-
+  // Wire right-side launcher
   if (designLauncher) {
     designLauncher.addEventListener("click", openDesignStudio);
   }
+
+  // Wire close button + click outside
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
     designStudioOverlay.addEventListener("click", (e) => {
@@ -1181,6 +1112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Size preset
   if (studioSizePreset) {
     studioSizePreset.addEventListener("change", () => {
       const stage = ensureDesignStage();
@@ -1188,28 +1120,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const [w, h] = studioSizePreset.value.split("x").map(Number);
       stage.size({ width: w, height: h });
       stage.draw();
-      saveDesignState();
     });
   }
 
-  if (studioUndoBtn) {
-    studioUndoBtn.addEventListener("click", () => {
-      if (!designStage) return;
-      if (designHistoryIndex > 0) {
-        loadDesignStateDesign(designHistoryIndex - 1);
-      }
-    });
-  }
-
-  if (studioRedoBtn) {
-    studioRedoBtn.addEventListener("click", () => {
-      if (!designStage) return;
-      if (designHistoryIndex < designHistory.length - 1) {
-        loadDesignStateDesign(designHistoryIndex + 1);
-      }
-    });
-  }
-
+  // Export PNG
   if (studioExportPng) {
     studioExportPng.addEventListener("click", () => {
       const stage = ensureDesignStage();
@@ -1222,6 +1136,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Tool buttons inside Design Studio
   if (toolAddText) toolAddText.addEventListener("click", addDesignText);
   if (toolAddShape) toolAddShape.addEventListener("click", addDesignBanner);
   if (toolAddBadge) toolAddBadge.addEventListener("click", addDesignBadge);
@@ -1234,17 +1149,17 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Select or add a photo in Step 3 first.");
         return;
       }
-      sendUrlsToDesignStudio([url]);
+      openDesignStudio();
+      setBackgroundFromUrl(url);
     });
   }
 
-  // Step 3 button: Send selected thumbs (or all) to Design Studio as bg + layers
+  // Step 3 big button: send selected (or all) into Design Studio
   if (sendToDesignStudioBtn) {
     sendToDesignStudioBtn.addEventListener("click", () => {
       const thumbs = Array.from(
         document.querySelectorAll(".creative-thumb.selected")
       );
-
       const urls =
         thumbs.length > 0
           ? thumbs.map((img) => img.getAttribute("src"))
@@ -1255,17 +1170,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      sendUrlsToDesignStudio(urls);
+      openDesignStudio();
+      // first = background, rest = overlays
+      setBackgroundFromUrl(urls[0]);
+      urls.slice(1).forEach((u) => addDesignImage(u));
     });
   }
 
-  // Selected layer controls
+  // Layer text / font / opacity controls
   if (layerTextInput) {
     layerTextInput.addEventListener("input", () => {
       if (selectedNode && selectedNode.text) {
         selectedNode.text(layerTextInput.value);
         if (designStage) designStage.draw();
-        saveDesignState();
       }
     });
   }
@@ -1276,7 +1193,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const size = Number(layerFontSizeInput.value || 40);
         selectedNode.fontSize(size);
         if (designStage) designStage.draw();
-        saveDesignState();
       }
     });
   }
@@ -1287,19 +1203,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const val = Number(layerOpacityInput.value || 1);
         selectedNode.opacity(val);
         if (designStage) designStage.draw();
-        saveDesignState();
       }
     });
   }
 
-  // Selected layer delete button
   if (layerDeleteBtn) {
     layerDeleteBtn.addEventListener("click", () => {
       if (!selectedNode || !designMainLayer) return;
       selectedNode.destroy();
       selectedNode = null;
       designMainLayer.draw();
-      saveDesignState();
       refreshLayersList();
     });
   }
