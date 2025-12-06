@@ -507,6 +507,7 @@ function populateVideoOutputs(sections) {
 
   function parseVideoSections(full) {
     if (!full) return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
+populateVideoOutputs(parsed);
 
     const h1 = "### 1. Video Script";
     const h2 = "### 2. Shot List";
