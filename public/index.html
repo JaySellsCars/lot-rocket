@@ -460,58 +460,75 @@
     </div>   <!-- /.creative-modal -->
   </div>     <!-- /#designStudioOverlay -->
 
-<!-- =========================== -->
-<!-- AI VIDEO GENERATION MODAL   -->
-<!-- =========================== -->
+<!-- =============================== -->
+<!-- AI VIDEO SCRIPT + SHOT PLAN MODAL -->
+<!-- =============================== -->
 <div id="videoModal" class="side-modal hidden">
-  <div class="side-modal-content">
+  <div class="side-modal-content wide-video-modal">
+
     <div class="side-modal-header">
       <h2>🎬 AI Video Shot Plan & Script Builder</h2>
       <button class="modal-close-btn">✕</button>
     </div>
 
     <div class="side-modal-body">
-      <!-- INPUT FORM -->
       <form id="videoForm" class="video-form">
-        <!-- QUICK SETTINGS -->
-        <div class="video-grid">
-          <label>
-            Hook Style
-            <select name="hookStyle">
-              <option value="pattern-interrupt">Pattern Interrupt</option>
-              <option value="curiosity">Curiosity Hook</option>
-              <option value="emotional">Emotional Hook</option>
-              <option value="authority">Authority Hook</option>
-            </select>
-          </label>
 
-          <label>
-            Length
-            <select name="length">
-              <option value="15">15 seconds</option>
-              <option value="30" selected>30 seconds</option>
-              <option value="60">60 seconds</option>
-            </select>
-          </label>
-        </div>
+        <label>Hook Style</label>
+        <select name="hookStyle">
+          <option value="pattern-interrupt">Pattern Interrupt</option>
+          <option value="curiosity">Curiosity</option>
+          <option value="emotional">Emotional</option>
+          <option value="authority">Authority</option>
+        </select>
 
-        <label>
-          Describe the video you want
-          <textarea
-            name="prompt"
-            rows="4"
-            placeholder="Example: 30-second vertical walkaround of a 2024 Silverado Z71, show exterior, interior, tech, and close with a $699/mo style hook."
-          ></textarea>
-        </label>
+        <label>Length</label>
+        <select name="length">
+          <option value="15">15 seconds</option>
+          <option value="30">30 seconds</option>
+          <option value="60">60 seconds</option>
+        </select>
+
+        <label>Describe the video you want</label>
+        <textarea
+          name="prompt"
+          rows="4"
+          placeholder="Example: 30-second walkaround of a 2024 Silverado RST with a $699/mo hook."
+        ></textarea>
 
         <button type="submit" class="secondary-btn full-width-bar">
           Build Video Shot Plan
         </button>
 
-        <p class="small-note video-note">
-          Lot Rocket will generate a spoken script, shot list, AI video prompt, and thumbnail idea based on your description.
+        <p class="small-note">
+          Lot Rocket will generate:
+          <br>✔ Script (spoken)
+          <br>✔ Shot list (timeline)
+          <br>✔ AI video generator prompt
+          <br>✔ Thumbnail prompt
         </p>
+
+        <h3>1. Video Script (Spoken)</h3>
+        <button class="copy-btn" data-copy-target="videoScriptOutput">Copy</button>
+        <textarea id="videoScriptOutput" rows="6" readonly placeholder="Your spoken camera script will appear here."></textarea>
+
+        <h3>2. Shot List (Timeline)</h3>
+        <button class="copy-btn" data-copy-target="videoShotListOutput">Copy</button>
+        <textarea id="videoShotListOutput" rows="6" readonly placeholder="Shot-by-shot breakdown will appear here."></textarea>
+
+        <h3>3. AI Video Generator Prompt</h3>
+        <button class="copy-btn" data-copy-target="videoAIPromptOutput">Copy</button>
+        <textarea id="videoAIPromptOutput" rows="4" readonly placeholder="Paste this into Pika, Runway, or Luma."></textarea>
+
+        <h3>4. Thumbnail Prompt</h3>
+        <button class="copy-btn" data-copy-target="videoThumbPromptOutput">Copy</button>
+        <textarea id="videoThumbPromptOutput" rows="3" readonly placeholder="Thumbnail image idea for your video."></textarea>
+
       </form>
+    </div>
+  </div>
+</div>
+
 
       <!-- OUTPUT GRID -->
       <div class="video-output-grid">
