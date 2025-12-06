@@ -518,6 +518,7 @@ function populateVideoOutputs(sections) {
   if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt || "";
   if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt || "";
 }
+}
 
 function parseVideoSections(full) {
   if (!full) {
