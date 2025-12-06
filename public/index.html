@@ -1,4 +1,4 @@
-a<!--
+<!--
   Lot Rocket – AI Social Media Kit & Creative Lab
   Version: 2.5 STABLE (Cleaned)
   Layout: Step 1 (left), Step 2 (middle), Step 3 (under Step 1),
@@ -367,345 +367,154 @@ a<!--
         </div>
       </div>
 
-<div class="creative-body">
-  <!-- LEFT: tools -->
-  <aside class="creative-tools">
-    <h3>Tools</h3>
+      <div class="creative-body">
+        <!-- LEFT: tools -->
+        <aside class="creative-tools">
+          <h3>Tools</h3>
 
-    <!-- Main tools -->
-    <button id="toolAddText" class="pill-btn">Add Text</button>
-    <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
-    <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
-    <button id="toolSetBackground" class="pill-btn">Set Background</button>
+          <!-- Main tools -->
+          <button id="toolAddText" class="pill-btn">Add Text</button>
+          <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
+          <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
+          <button id="toolSetBackground" class="pill-btn">Set Background</button>
 
-    <hr class="tool-divider" />
+          <hr class="tool-divider" />
 
-    <!-- Templates section -->
-    <p class="tools-label">Templates</p>
-    <button id="templatePayment" class="pill-btn pill-btn-secondary">
-      Payment Promo
-    </button>
-    <button id="templateArrival" class="pill-btn pill-btn-secondary">
-      Just Arrived
-    </button>
-    <button id="templateSale" class="pill-btn pill-btn-secondary">
-      Sale Blast
-    </button>
+          <!-- Templates section -->
+          <p class="tools-label">Templates</p>
+          <button id="templatePayment" class="pill-btn pill-btn-secondary">
+            Payment Promo
+          </button>
+          <button id="templateArrival" class="pill-btn pill-btn-secondary">
+            Just Arrived
+          </button>
+          <button id="templateSale" class="pill-btn pill-btn-secondary">
+            Sale Blast
+          </button>
 
-    <hr class="tool-divider" />
+          <hr class="tool-divider" />
 
-    <!-- Save / load section -->
-    <p class="tools-label">Design</p>
-    <button id="saveDesignBtn" class="pill-btn pill-btn-ghost">
-      Save Design
-    </button>
-    <button id="loadDesignBtn" class="pill-btn pill-btn-ghost">
-      Load Design
-    </button>
-  </aside>
+          <!-- Save / load section -->
+          <p class="tools-label">Design</p>
+          <button id="saveDesignBtn" class="pill-btn pill-btn-ghost">
+            Save Design
+          </button>
+          <button id="loadDesignBtn" class="pill-btn pill-btn-ghost">
+            Load Design
+          </button>
+        </aside>
 
-  <!-- CENTER: Konva stage container -->
-  <div class="creative-canvas-wrap">
-    <div id="konvaStageContainer" class="studio-canvas-container"></div>
-  </div>
+        <!-- CENTER: Konva stage container -->
+        <div class="creative-canvas-wrap">
+          <div id="konvaStageContainer" class="studio-canvas-container"></div>
+        </div>
 
-  <!-- RIGHT: layers + properties -->
-  <aside class="creative-properties">
-    <div class="prop-group">
-      <h4>Layers</h4>
-      <ul id="layersList" class="layers-list"></ul>
-    </div>
+        <!-- RIGHT: layers + properties -->
+        <aside class="creative-properties">
+          <div class="prop-group">
+            <h4>Layers</h4>
+            <ul id="layersList" class="layers-list"></ul>
+          </div>
 
-    <div class="prop-group">
-      <h4>Selected Layer</h4>
+          <div class="prop-group">
+            <h4>Selected Layer</h4>
 
-      <label>
-        Text
-        <input
-          id="layerTextInput"
-          type="text"
-          placeholder="Edit text…"
-        />
-      </label>
+            <label>
+              Text
+              <input
+                id="layerTextInput"
+                type="text"
+                placeholder="Edit text…"
+              />
+            </label>
 
-      <label>
-        Font size
-        <input
-          id="layerFontSizeInput"
-          type="number"
-          min="8"
-          max="120"
-          value="40"
-        />
-      </label>
+            <label>
+              Font size
+              <input
+                id="layerFontSizeInput"
+                type="number"
+                min="8"
+                max="120"
+                value="40"
+              />
+            </label>
 
-      <label>
-        Opacity
-        <input
-          id="layerOpacityInput"
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          value="1"
-        />
-      </label>
+            <label>
+              Opacity
+              <input
+                id="layerOpacityInput"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value="1"
+              />
+            </label>
 
-      <button id="layerDeleteBtn" class="btn-danger full-width-bar">
-        Delete Layer
-      </button>
-    </div>
-  </aside>
-</div>
-<!-- end .design-studio-modal-content / overlay above this in your file -->
+            <button id="layerDeleteBtn" class="btn-danger full-width-bar">
+              Delete Layer
+            </button>
+          </div>
+        </aside>
+      </div> <!-- /.creative-body -->
+    </div>   <!-- /.creative-modal -->
+  </div>     <!-- /#designStudioOverlay -->
 
-<!-- ===== SIDE MODALS FOR TOOLS (keep your existing ones here) ===== -->
-<!-- Objection / Calculators / Message / Ask / Car / Image / Video modals go here unchanged -->
+  <!-- =========================== -->
+  <!-- AI VIDEO GENERATION MODAL   -->
+  <!-- =========================== -->
+  <div id="videoModal" class="side-modal hidden">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h2>🎬 AI Video Script Generator</h2>
+        <button class="modal-close-btn">✕</button>
+      </div>
 
-<!-- =========================== -->
-<!-- AI VIDEO GENERATION MODAL   -->
-<!-- =========================== -->
-<div id="videoModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h2>🎬 AI Video Script Generator</h2>
-      <button class="modal-close-btn">✕</button>
-    </div>
+      <div class="side-modal-body">
+        <form id="videoForm" class="video-form">
+          <!-- QUICK SETTINGS -->
+          <div class="video-grid">
+            <label>
+              Hook Style
+              <select name="hookStyle">
+                <option value="pattern-interrupt">Pattern Interrupt</option>
+                <option value="curiosity">Curiosity Hook</option>
+                <option value="emotional">Emotional Hook</option>
+                <option value="authority">Authority Hook</option>
+              </select>
+            </label>
 
-    <div class="side-modal-body">
-      <form id="videoForm" class="video-form">
+            <label>
+              Length
+              <select name="length">
+                <option value="15">15 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60">60 seconds</option>
+              </select>
+            </label>
+          </div>
 
-        <!-- QUICK SETTINGS -->
-        <div class="video-grid">
           <label>
-            Hook Style
-            <select name="hookStyle">
-              <option value="pattern-interrupt">Pattern Interrupt</option>
-              <option value="curiosity">Curiosity Hook</option>
-              <option value="emotional">Emotional Hook</option>
-              <option value="authority">Authority Hook</option>
-            </select>
+            Describe the video you want
+            <textarea
+              name="prompt"
+              rows="5"
+              placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."
+            ></textarea>
           </label>
+
+          <button type="submit" class="secondary-btn full-width-bar">
+            Build Video Shot Plan
+          </button>
 
           <label>
-            Length
-            <select name="length">
-              <option value="15">15 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60">60 seconds</option>
-            </select>
+            Video Script / Shot Plan
+            <textarea id="videoOutput" rows="7" readonly></textarea>
           </label>
-        </div>
-
-        <label>
-          Describe the video you want
-          <textarea
-            name="prompt"
-            rows="5"
-            placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."
-          ></textarea>
-        </label>
-
-        <button type="submit" class="secondary-btn full-width-bar">
-          Build Video Shot Plan
-        </button>
-
-        <label>
-          Video Script / Shot Plan
-          <textarea id="videoOutput" rows="7" readonly></textarea>
-        </label>
-
-      </form>
+        </form>
+      </div>
     </div>
   </div>
-</div>
-
-
-
-  <!-- ===== SIDE MODALS FOR TOOLS (keep your existing ones here) ===== -->
-  <!-- Objection / Calculators / Message / Ask / Car / Image / Video modals go here unchanged -->
-
-<!-- =========================== -->
-<!-- AI VIDEO GENERATION MODAL   -->
-<!-- =========================== -->
-<div id="videoModal" class="side-modal hidden">
-  <div class="side-modal-content">
-
-    <div class="side-modal-header">
-      <h2>🎬 AI Video Script Generator</h2>
-      <button class="modal-close-btn">✕</button>
-    </div>
-
-    <div class="side-modal-body">
-      <form id="videoForm" class="video-form">
-
-        <!-- QUICK SETTINGS -->
-        <div class="video-grid">
-          <label>Hook Style
-            <select name="hookStyle">
-              <option value="pattern-interrupt">Pattern Interrupt</option>
-              <option value="curiosity">Curiosity Hook</option>
-              <option value="emotional">Emotional Hook</option>
-              <option value="authority">Authority Hook</option>
-            </select>
-          </label>
-
-          <label>Length
-            <select name="length">
-              <option value="15">15 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60">60 seconds</option>
-            </select>
-          </label>
-        </div>
-
-        <label>
-          Describe the video you want
-          <textarea name="prompt" rows="5"
-            placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."></textarea>
-        </label>
-
-        <button type="submit" class="secondary-btn full-width-bar">
-          Build Video Shot Plan
-        </button>
-
-        <label>
-          Video Script / Shot Plan
-          <textarea id="videoOutput" rows="7" readonly></textarea>
-        </label>
-
-      </form>
-    </div>
-
-  </div>
-</div>
-
-
-          <label>Platform
-            <select name="platform">
-              <option value="tiktok">TikTok / Shorts</option>
-              <option value="reels">Instagram Reels</option>
-              <option value="facebook">Facebook</option>
-              <option value="youtube">YouTube</option>
-            </select>
-          </label>
-
-          <label>Target Length
-            <select name="length">
-              <option value="15">0–15 seconds</option>
-              <option value="30">15–30 seconds</option>
-              <option value="60">30–60 seconds</option>
-            </select>
-          </label>
-
-          <label>Tone
-            <select name="tone">
-              <option value="hype">Hype</option>
-              <option value="trust">Trust Builder</option>
-              <option value="funny">Funny</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- AUTO-CONTENT FROM BOOST -->
-        <label>Vehicle Context (auto-filled from Boost)
-          <textarea id="videoContext" name="context" rows="4"></textarea>
-        </label>
-
-        <!-- CUSTOM INSTRUCTIONS -->
-        <label>Special Instructions
-          <textarea name="notes" rows="3" placeholder="Example: emphasize low miles, 1-owner Carfax, show interior first, then exterior sweeping shot."></textarea>
-        </label>
-
-        <!-- OUTPUT -->
-        <label>Generated Script
-          <textarea id="videoOutput" name="output" rows="10"></textarea>
-        </label>
-
-        <button class="secondary-btn" type="submit">
-          ⚡ Generate Video Script
-        </button>
-      </form>
-
-    </div>
-  </div>
-</div>
-
-    <div class="side-modal-body">
-      <form id="videoForm">
-        <label>
-          Platform
-          <select name="platform">
-            <option value="tiktok">TikTok</option>
-            <option value="reels">Instagram / Facebook Reels</option>
-            <option value="shorts">YouTube Shorts</option>
-            <option value="generic">Generic / Other</option>
-          </select>
-        </label>
-
-        <label>
-          Length
-          <select name="length">
-            <option value="15">15 seconds</option>
-            <option value="30" selected>30 seconds</option>
-            <option value="45">45 seconds</option>
-            <option value="60">60 seconds</option>
-            <option value="90">90 seconds</option>
-          </select>
-        </label>
-
-        <label>
-          Style
-          <select name="style">
-            <option value="walkaround" selected>Walkaround / showroom tour</option>
-            <option value="hype">High-energy hype / hook heavy</option>
-            <option value="testimonial">Customer testimonial style</option>
-            <option value="story">Storytelling / problem → solution</option>
-            <option value="broll">B-roll + voiceover</option>
-          </select>
-        </label>
-
-        <label>
-          Describe the video you want
-          <textarea
-            name="prompt"
-            rows="5"
-            placeholder="Example: 30-second vertical walkaround of a 2024 Silverado Z71, focus on Z71 package, tech features, and payment hook around $699/mo."
-          ></textarea>
-        </label>
-
-        <!-- Quick templates -->
-        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.4rem 0 0.8rem;">
-          <button type="button" class="secondary-btn video-template-btn" data-template="30-second vertical walkaround focusing on exterior, interior, and key tech features. Include 3 strong hooks and 1 closing CTA to visit the store or message me.">
-            Quick Walkaround
-          </button>
-          <button type="button" class="secondary-btn video-template-btn" data-template="60-second story style video: start with common pain points (payments, bad credit, time), show how I make it easy, finish with a strong CTA to message me today. Vertical format.">
-            Story / Pain-Point
-          </button>
-          <button type="button" class="secondary-btn video-template-btn" data-template="45-second high-energy hype reel showing this vehicle, dealership vibe, and my personal brand. Short punchy lines, fast cuts, and a final CTA to follow and DM me.">
-            Hype Reel
-          </button>
-        </div>
-
-        <button type="submit" class="secondary-btn full-width-bar">
-          Build Video Shot Plan
-        </button>
-      </form>
-
-      <label>
-        Video Script / Shot Plan
-        <textarea
-          id="videoOutput"
-          rows="7"
-          readonly
-          placeholder="Your AI-generated script and shot list will appear here."
-        ></textarea>
-      </label>
-    </div>
-  </div>
-</div>
-
 
   <!-- ===== APP SCRIPT ===== -->
   <script src="app.js"></script>
