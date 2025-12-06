@@ -513,6 +513,19 @@ function populateVideoOutputs(sections) {
   if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt || "";
   if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt || "";
 }
+if (videoScriptOutput) videoScriptOutput.value = script || "";
+if (videoShotListOutput) videoShotListOutput.value = shots || "";
+if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt || "";
+if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt || "";
+}
+
+// =========================
+// ALSO UPDATE BOTTOM OUTPUTS
+// =========================
+if (videoScriptOutputBottom) videoScriptOutputBottom.value = script || "";
+if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots || "";
+if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt || "";
+if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt || "";
 
 /**
  * Given the full markdown text from AI, split it into:
