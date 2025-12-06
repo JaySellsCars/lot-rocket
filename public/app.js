@@ -1284,6 +1284,67 @@ document.addEventListener("DOMContentLoaded", () => {
       refreshLayersList();
     });
   }
+// ------------------------------------------------------------
+// ---------- Video plan from current dealer listing ----------
+// ------------------------------------------------------------
+const videoPlanFromListingBtn = document.getElementById("videoPlanFromListingBtn");
+if (videoPlanFromListingBtn) {
+  videoPlanFromListingBtn.addEventListener("click", async () => {
+    if (!vehicleUrlInput) {
+      alert("Paste a dealer URL in Step 1 first.");
+      return;
+    }
+
+    const url = vehicleUrlInput.value.trim();
+    if (!url) {
+      alert("Paste a dealer URL in Step 1 first.");
+      return;
+    }
+
+    const videoOutputEl = document.getElementById("videoOutput");
+
+    const originalText = videoPlanFromListingBtn.textContent;
+    videoPlanFromListingBtn.disabled = true;
+    videoPlanFromListingBtn.textContent = "Building plan…";
+
+    try {
+      const res = await fetch(apiBase + "/api/video-from-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(
+          (data && data.message) || "Failed to build video plan from listing."
+        );
+      }
+
+      if (videoOutputEl) {
+        videoOutputEl.value = data.plan || "";
+      } else {
+        alert("Plan generated, but #videoOutput not found.");
+      }
+    } catch (err) {
+      console.error("video-from-photos error", err);
+      alert(
+        err && err.message
+          ? err.message
+          : "Lot Rocket couldn't generate a video plan from that listing."
+      );
+    } finally {
+      videoPlanFromListingBtn.disabled = false;
+      videoPlanFromListingBtn.textContent =
+        originalText || "Build Video Plan From This Listing";
+    }
+  });
+}
+
+// ------------------------------------------------------------
+
+console.log("Lot Rocket frontend wiring complete");
+}); // end DOMContentLoaded
 
   console.log("Lot Rocket frontend wiring complete");
 }); // end DOMContentLoaded
