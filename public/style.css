@@ -1313,8 +1313,75 @@ body.dark-theme .step2-card .copy-btn {
     overflow-y: auto;
   }
 
-  .creative-canvas-wrap {
-    height: auto;
-    max-height: 70vh;
+.creative-canvas-wrap {
+  height: auto;
+  max-height: 70vh;
+}
+
+/* ======================================
+   LOT ROCKET — VIDEO MODAL STYLES (NEW)
+   ====================================== */
+
+.video-output-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .video-output-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.video-output-card {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  padding: 0.75rem;
+}
+
+body.light-theme .video-output-card {
+  background: #f9fafb;
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+.video-output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.video-output-card h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.video-output-card textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(15, 23, 42, 0.95);
+  color: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.6rem;
+}
+
+body.light-theme .video-output-card textarea {
+  background: #ffffff;
+}
+
+.video-note {
+  margin-top: 0.5rem;
+  opacity: 0.85;
+}
+
+.coming-soon-tag {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
 }
