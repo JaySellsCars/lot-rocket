@@ -488,7 +488,105 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("askForm", "askOutput", "ask");
   wireMessageHelper("carForm", "carOutput", "car");
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
- 
+   // ---------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ----------
+  const videoFormEl = document.getElementById("videoForm");
+  const videoScriptOutput = document.getElementById("videoScriptOutput");
+  const videoShotListOutput = document.getElementById("videoShotListOutput");
+  const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
+  const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
+
+  function parseVideoSections(full) {
+    if (!full) return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
+
+    const h1 = "### 1. Video Script";
+    const h2 = "### 2. Shot List";
+    const h3 = "### 3. AI Video Generator Prompt";
+    const h4 = "### 4. Thumbnail Prompt";
+
+    function getSection(thisHeading, nextHeadings) {
+      const start = full.indexOf(thisHeading);
+      if (start === -1) return "";
+      let end = full.length;
+      nextHeadings.forEach((h) => {
+        const idx = full.indexOf(h, start + thisHeading.length);
+        if (idx !== -1 && idx < end) end = idx;
+      });
+      return full.slice(start + thisHeading.length, end).trim();
+    }
+
+    return {
+      script: getSection(h1, [h2, h3, h4]),
+      shots: getSection(h2, [h1, h3, h4]),
+      aiPrompt: getSection(h3, [h1, h2, h4]),
+      thumbPrompt: getSection(h4, [h1, h2, h3]),
+    };
+  }
+
+  if (videoFormEl) {
+    videoFormEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const submitBtn = videoFormEl.querySelector("button[type='submit']");
+      const originalLabel = submitBtn ? submitBtn.textContent : "";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Building plan…";
+      }
+
+      const fd = new FormData(videoFormEl);
+      const payload = { mode: "video-brief" };
+      fd.forEach((value, key) => {
+        payload[key] = value;
+      });
+
+      try {
+        const res = await fetch(apiBase + "/api/message-helper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          const msg =
+            (data && data.message) ||
+            `Video helper error (HTTP ${res.status}).`;
+          alert(msg);
+          return;
+        }
+
+        const full = data.text || "";
+        const sections = parseVideoSections(full);
+
+        // Fallback: if parsing fails, drop full text into script box
+        if (videoScriptOutput) {
+          videoScriptOutput.value =
+            sections.script || full || "No script returned.";
+        }
+        if (videoShotListOutput) {
+          videoShotListOutput.value = sections.shots || "";
+        }
+        if (videoAIPromptOutput) {
+          videoAIPromptOutput.value = sections.aiPrompt || "";
+        }
+        if (videoThumbPromptOutput) {
+          videoThumbPromptOutput.value = sections.thumbPrompt || "";
+        }
+      } catch (err) {
+        console.error("❌ video-brief error", err);
+        alert(
+          "Lot Rocket couldn't build that video plan right now. Try again in a moment."
+        );
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent =
+            originalLabel || "Build Video Shot Plan";
+        }
+      }
+    });
+  }
+
 
   // ==================================================
   // STEP 3 – CREATIVE HUB (Fabric)
