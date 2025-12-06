@@ -1147,14 +1147,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!studioLayer || !studioStage || !url) return;
 
     const img = new Image();
-    img.onload = () => {
-      const ratio = Math.min(
+  img.onload = () => {
+    // Fit image to stage, then shrink a bit so it isn't edge-to-edge
+    const fitRatio =
+      Math.min(
         studioStage.width() / img.width,
         studioStage.height() / img.height
       ) || 1;
 
-      const w = img.width * ratio;
-      const h = img.height * ratio;
+    const finalRatio = fitRatio * 0.9; // 0.9 = 90% of full size; tweak if you want
+
+    const w = img.width * finalRatio;
+    const h = img.height * finalRatio;
+
 
       const node = new Konva.Image({
         image: img,
