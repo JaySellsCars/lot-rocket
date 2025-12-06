@@ -1447,3 +1447,25 @@ body.light-theme .video-output-card textarea {
   font-size: 0.8rem;
   opacity: 0.8;
 }
+/* ----- AI Video Modal Cleanup ----- */
+.wide-video-modal {
+  max-width: 650px;
+}
+
+.video-form textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.video-form h3 {
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.coming-soon-tag {
+  opacity: 0.6;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
