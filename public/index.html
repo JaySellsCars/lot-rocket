@@ -460,61 +460,67 @@
     </div>   <!-- /.creative-modal -->
   </div>     <!-- /#designStudioOverlay -->
 
-  <!-- =========================== -->
-  <!-- AI VIDEO GENERATION MODAL   -->
-  <!-- =========================== -->
-  <div id="videoModal" class="side-modal hidden">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h2>🎬 AI Video Script Generator</h2>
-        <button class="modal-close-btn">✕</button>
-      </div>
+<!-- =========================== -->
+<!-- AI VIDEO GENERATION MODAL   -->
+<!-- =========================== -->
+<div id="videoModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h2>🎬 AI Video Script Generator</h2>
+      <button class="modal-close-btn">✕</button>
+    </div>
 
-      <div class="side-modal-body">
-        <form id="videoForm" class="video-form">
-          <!-- QUICK SETTINGS -->
-          <div class="video-grid">
-            <label>
-              Hook Style
-              <select name="hookStyle">
-                <option value="pattern-interrupt">Pattern Interrupt</option>
-                <option value="curiosity">Curiosity Hook</option>
-                <option value="emotional">Emotional Hook</option>
-                <option value="authority">Authority Hook</option>
-              </select>
-            </label>
-
-            <label>
-              Length
-              <select name="length">
-                <option value="15">15 seconds</option>
-                <option value="30">30 seconds</option>
-                <option value="60">60 seconds</option>
-              </select>
-            </label>
-          </div>
-
+    <div class="side-modal-body">
+      <form id="videoForm" class="video-form">
+        <!-- QUICK SETTINGS -->
+        <div class="video-grid">
           <label>
-            Describe the video you want
-            <textarea
-              name="prompt"
-              rows="5"
-              placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."
-            ></textarea>
+            Hook Style
+            <select name="hookStyle">
+              <option value="pattern-interrupt">Pattern Interrupt</option>
+              <option value="curiosity">Curiosity Hook</option>
+              <option value="emotional">Emotional Hook</option>
+              <option value="authority">Authority Hook</option>
+            </select>
           </label>
 
-          <button type="submit" class="secondary-btn full-width-bar">
-            Build Video Shot Plan
-          </button>
-
           <label>
-            Video Script / Shot Plan
-            <textarea id="videoOutput" rows="7" readonly></textarea>
+            Length
+            <select name="length">
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+            </select>
           </label>
-        </form>
-      </div>
+        </div>
+
+        <label>
+          Describe the video you want
+          <textarea
+            name="prompt"
+            rows="5"
+            placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."
+          ></textarea>
+        </label>
+
+        <button type="submit" class="secondary-btn full-width-bar">
+          Build Video Shot Plan
+        </button>
+
+        <label>
+          Video Script / Shot Plan
+          <textarea
+            id="videoOutput"
+            rows="7"
+            readonly
+            placeholder="Your AI-generated script and shot list will appear here."
+          ></textarea>
+        </label>
+      </form>
     </div>
   </div>
+</div>
+
 
   <!-- ===== APP SCRIPT ===== -->
   <script src="app.js"></script>
