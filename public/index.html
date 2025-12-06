@@ -516,92 +516,105 @@
       <!-- OUTPUT GRID -->
       <div class="video-output-grid">
         <!-- SCRIPT -->
-        <div class="video-output-card">
-          <div class="video-output-header">
-            <h4>1. Video Script (Spoken)</h4>
-            <button
-              type="button"
-              class="copy-btn"
-              data-copy-target="videoScriptOutput"
-            >
-              Copy
-            </button>
-          </div>
-          <textarea
-            id="videoScriptOutput"
-            rows="6"
-            readonly
-            placeholder="Your on-camera script will appear here."
-          ></textarea>
-        </div>
+<!-- ========================= -->
+<!--   VIDEO OUTPUT SECTIONS   -->
+<!-- ========================= -->
 
-        <!-- SHOT LIST -->
-        <div class="video-output-card">
-          <div class="video-output-header">
-            <h4>2. Shot List (Timeline)</h4>
-            <button
-              type="button"
-              class="copy-btn"
-              data-copy-target="videoShotListOutput"
-            >
-              Copy
-            </button>
-          </div>
-          <textarea
-            id="videoShotListOutput"
-            rows="6"
-            readonly
-            placeholder="Shot-by-shot breakdown will appear here."
-          ></textarea>
-        </div>
+<div class="video-output">
 
-        <!-- AI VIDEO PROMPT -->
-        <div class="video-output-card">
-          <div class="video-output-header">
-            <h4>3. AI Video Generator Prompt</h4>
-            <button
-              type="button"
-              class="copy-btn"
-              data-copy-target="videoAIPromptOutput"
-            >
-              Copy
-            </button>
-          </div>
-          <textarea
-            id="videoAIPromptOutput"
-            rows="5"
-            readonly
-            placeholder="Paste this into Runway, Pika, Luma, etc."
-          ></textarea>
-        </div>
-
-        <!-- THUMBNAIL PROMPT -->
-        <div class="video-output-card">
-          <div class="video-output-header">
-            <h4>4. Thumbnail Prompt</h4>
-            <button
-              type="button"
-              class="copy-btn"
-              data-copy-target="videoThumbPromptOutput"
-            >
-              Copy
-            </button>
-          </div>
-          <textarea
-            id="videoThumbPromptOutput"
-            rows="4"
-            readonly
-            placeholder="One-sentence AI image prompt for your thumbnail."
-          ></textarea>
-        </div>
-      </div>
-
-      <p class="small-note coming-soon-tag">
-        🎥 Auto-rendered AI videos are on the roadmap for Lot Rocket 3.0. Right now this gives you a pro-level plan you can film or plug into tools like Runway, Pika, or Luma.
-      </p>
+  <!-- SCRIPT -->
+  <div class="video-output-card">
+    <div class="video-output-header">
+      <h4>1. Video Script (Spoken)</h4>
+      <button 
+        type="button" 
+        class="copy-btn"
+        data-copy-target="videoScriptOutput"
+      >
+        Copy
+      </button>
     </div>
+
+    <textarea
+      id="videoScriptOutput"
+      rows="6"
+      readonly
+      placeholder="On-camera spoken script will appear here."
+      class="video-output-area"
+    ></textarea>
   </div>
+
+
+  <!-- SHOT LIST -->
+  <div class="video-output-card">
+    <div class="video-output-header">
+      <h4>2. Shot List (Timeline)</h4>
+      <button 
+        type="button" 
+        class="copy-btn"
+        data-copy-target="videoShotListOutput"
+      >
+        Copy
+      </button>
+    </div>
+
+    <textarea
+      id="videoShotListOutput"
+      rows="6"
+      readonly
+      placeholder="Shot-by-shot breakdown will appear here."
+      class="video-output-area"
+    ></textarea>
+  </div>
+
+
+  <!-- AI VIDEO GENERATOR PROMPT -->
+  <div class="video-output-card">
+    <div class="video-output-header">
+      <h4>3. AI Video Generator Prompt</h4>
+      <button 
+        type="button" 
+        class="copy-btn"
+        data-copy-target="videoAIPromptOutput"
+      >
+        Copy
+      </button>
+    </div>
+
+    <textarea
+      id="videoAIPromptOutput"
+      rows="5"
+      readonly
+      placeholder="Paste this into Runway, Pika, Luma, or your AI video generator."
+      class="video-output-area"
+    ></textarea>
+  </div>
+
+
+  <!-- THUMBNAIL PROMPT -->
+  <div class="video-output-card">
+    <div class="video-output-header">
+      <h4>4. Thumbnail Prompt</h4>
+      <button 
+        type="button" 
+        class="copy-btn"
+        data-copy-target="videoThumbnailOutput"
+      >
+        Copy
+      </button>
+    </div>
+
+    <textarea
+      id="videoThumbnailOutput"
+      rows="3"
+      readonly
+      placeholder="Thumbnail idea for your vertical video."
+      class="video-output-area"
+    ></textarea>
+  </div>
+
 </div>
+
 
 
 
