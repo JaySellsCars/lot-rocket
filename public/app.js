@@ -573,6 +573,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Step 1 -> Creative Lab + Design Studio 3.0
+  // Step 1 -> Creative Lab + Design Studio 3.0
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
     sendPhotosToStudioBtn.addEventListener("click", () => {
@@ -581,7 +582,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Use selected dealer photos if any, otherwise take the first 8
+      // Prefer user-selected photos, fallback to first 8
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
       const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
         0,
@@ -589,11 +590,11 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       if (!chosen.length) {
-        alert("No dealer photos available yet.");
+        alert("Lot Rocket didn’t find any usable photos from this page yet.");
         return;
       }
 
-      // 1) Feed Step 3 Creative Lab thumbs
+      // 1) Feed Step 3 Creative Lab thumbnails
       chosen.forEach((url) => {
         if (!localCreativePhotos.includes(url)) {
           localCreativePhotos.push(url);
@@ -601,13 +602,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // 2) Open Design Studio and load them:
-      //    first = background, rest = overlays
+      // 2) Open Design Studio 3.0 and pipe photos in
       openDesignStudio();
+
+      // First becomes background
       setBackgroundFromUrl(chosen[0]);
+
+      // Others become overlay images
       chosen.slice(1).forEach((u) => addDesignImage(u));
     });
   }
+
 
 
   // ======================================
@@ -660,26 +665,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Basic image URL sanitizer + proxy for cross-origin dealer photos
+  // Basic image URL sanitizer + CORS-safe proxy for dealer photos
   function getSafeImageUrl(url) {
     if (!url) return url;
+
+    // Local object URLs or data URLs are already safe
+    if (url.startsWith("blob:") || url.startsWith("data:")) {
+      return url;
+    }
+
     try {
-      // Local blobs/data are already safe
-      if (url.startsWith("blob:") || url.startsWith("data:")) return url;
-
       const u = new URL(url, window.location.href);
+      const isHttp = u.protocol === "http:" || u.protocol === "https:";
+      const sameOrigin = u.origin === window.location.origin;
 
-      // Same-origin: use directly
-      if (u.origin === window.location.origin) {
-        return u.toString();
+      // For http(s) images from OTHER domains, route through backend proxy
+      if (isHttp && !sameOrigin) {
+        return `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
       }
 
-      // Dealer / external images -> go through proxy for CORS-safe canvas usage
-      return `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
+      return u.toString();
     } catch {
+      // If URL constructor chokes, just fall back to original
       return url;
     }
   }
+
 
 
 
