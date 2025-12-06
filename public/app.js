@@ -264,7 +264,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // MODALS + TOOLS
   // ==================================================
 
-  function wireModal(launcherId, modalId, closeSelector) {
+  // Optional: field inside video modal to auto-fill with context
+  const videoContextField = document.getElementById("videoContext");
+
+  function buildVideoContextFromKit() {
+    const parts = [];
+
+    const label =
+      (vehicleLabelInput && vehicleLabelInput.value.trim()) ||
+      (summaryLabel && (summaryLabel.textContent || "").trim()) ||
+      "";
+    const price =
+      (priceInfoInput && priceInfoInput.value.trim()) ||
+      (summaryPrice && (summaryPrice.textContent || "").trim()) ||
+      "";
+    const url = vehicleUrlInput ? vehicleUrlInput.value.trim() : "";
+    const tags = hashtags ? (hashtags.value || "").trim() : "";
+
+    if (label) parts.push(`Vehicle: ${label}`);
+    if (price) parts.push(`Price/Offer: ${price}`);
+    if (url) parts.push(`Listing URL: ${url}`);
+    if (tags) parts.push(`Hashtags: ${tags}`);
+
+    return parts.join("\n");
+  }
+
+  function wireModal(launcherId, modalId, closeSelector, onOpen) {
     const launcher = document.getElementById(launcherId);
     const modal = document.getElementById(modalId);
     if (!launcher || !modal) return;
@@ -276,6 +301,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     launcher.addEventListener("click", () => {
       modal.classList.remove("hidden");
+      if (typeof onOpen === "function") {
+        onOpen();
+      }
     });
     if (closeBtn) {
       closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
@@ -292,7 +320,18 @@ document.addEventListener("DOMContentLoaded", () => {
   wireModal("askLauncher", "askModal", ".modal-close-btn");
   wireModal("carLauncher", "carModal", ".modal-close-btn");
   wireModal("imageLauncher", "imageModal", ".modal-close-btn");
-  wireModal("videoLauncher", "videoModal", ".modal-close-btn");
+
+  // VIDEO: when opening, pre-fill context field (if present) with kit info
+  wireModal(
+    "videoLauncher",
+    "videoModal",
+    ".modal-close-btn",
+    () => {
+      if (videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+      }
+    }
+  );
 
   // ---------- Payment helper ----------
   const paymentForm = document.getElementById("paymentForm");
