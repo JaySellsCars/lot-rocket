@@ -494,6 +494,11 @@ const videoScriptOutput = document.getElementById("videoScriptOutput");
 const videoShotListOutput = document.getElementById("videoShotListOutput");
 const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
 const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
+// BOTTOM VIDEO OUTPUTS (main page)
+const videoScriptOutputBottom = document.getElementById("videoScriptOutputBottom");
+const videoShotListOutputBottom = document.getElementById("videoShotListOutputBottom");
+const videoAIPromptOutputBottom = document.getElementById("videoAIPromptOutputBottom");
+const videoThumbPromptOutputBottom = document.getElementById("videoThumbPromptOutputBottom");
 
 /**
  * Push parsed sections into the four textareas in the modal.
