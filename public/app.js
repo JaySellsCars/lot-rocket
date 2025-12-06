@@ -4,7 +4,6 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5.5");
-
   const apiBase = "";
 
   // --------------------------------------------------
