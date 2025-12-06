@@ -488,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("askForm", "askOutput", "ask");
   wireMessageHelper("carForm", "carOutput", "car");
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
-  wireMessageHelper("videoForm", "videoOutput", "video-brief");
+ 
 
   // ==================================================
   // STEP 3 – CREATIVE HUB (Fabric)
