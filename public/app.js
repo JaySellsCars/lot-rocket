@@ -494,6 +494,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const videoShotListOutput = document.getElementById("videoShotListOutput");
   const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
   const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
+function populateVideoOutputs(sections) {
+  if (!sections) return;
+
+  const { script, shots, aiPrompt, thumbPrompt } = sections;
+
+  if (videoScriptOutput) videoScriptOutput.value = script || "";
+  if (videoShotListOutput) videoShotListOutput.value = shots || "";
+  if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt || "";
+  if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt || "";
+}
 
   function parseVideoSections(full) {
     if (!full) return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
