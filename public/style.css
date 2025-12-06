@@ -1469,3 +1469,58 @@ body.light-theme .video-output-card textarea {
   font-size: 0.85rem;
   margin-top: 8px;
 }
+/* === VIDEO OUTPUT GRID (New) ========================== */
+
+.video-output-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.video-output-card {
+  background: #0d1126;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.25);
+}
+
+.video-output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.video-output-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.video-output-card textarea {
+  width: 100%;
+  background: #050816;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 140px;
+}
+
+.video-integrations {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: #0d1126;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.video-integrations .video-note {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
