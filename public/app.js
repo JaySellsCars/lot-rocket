@@ -488,36 +488,97 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("askForm", "askOutput", "ask");
   wireMessageHelper("carForm", "carOutput", "car");
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
-// --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ----------
+// --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ---------
 const videoFormEl = document.getElementById("videoForm");
 const videoScriptOutput = document.getElementById("videoScriptOutput");
 const videoShotListOutput = document.getElementById("videoShotListOutput");
 const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
 const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
-// BOTTOM VIDEO OUTPUTS (main page)
+
+// bottom copies under Design Studio
 const videoScriptOutputBottom = document.getElementById("videoScriptOutputBottom");
 const videoShotListOutputBottom = document.getElementById("videoShotListOutputBottom");
 const videoAIPromptOutputBottom = document.getElementById("videoAIPromptOutputBottom");
 const videoThumbPromptOutputBottom = document.getElementById("videoThumbPromptOutputBottom");
 
-/**
- * Push parsed sections into the four textareas in the modal.
- */
 function populateVideoOutputs(sections) {
   if (!sections) return;
 
   const { script, shots, aiPrompt, thumbPrompt } = sections;
 
+  // Right-side modal fields
   if (videoScriptOutput) videoScriptOutput.value = script || "";
   if (videoShotListOutput) videoShotListOutput.value = shots || "";
   if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt || "";
   if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt || "";
+
+  // Bottom (main page) fields
+  if (videoScriptOutputBottom) videoScriptOutputBottom.value = script || "";
+  if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots || "";
+  if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt || "";
+  if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt || "";
 }
-if (videoScriptOutput) videoScriptOutput.value = script || "";
-if (videoShotListOutput) videoShotListOutput.value = shots || "";
-if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt || "";
-if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt || "";
+
+function parseVideoSections(full) {
+  if (!full) {
+    return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
+  }
+
+  const h1 = "### 1. Video Script";
+  const h2 = "### 2. Shot List";
+  const h3 = "### 3. AI Video Generator Prompt";
+  const h4 = "### 4. Thumbnail Prompt";
+
+  function getSection(thisHeading, nextHeading) {
+    const start = full.indexOf(thisHeading);
+    if (start === -1) return "";
+    let end = full.length;
+
+    if (nextHeading) {
+      const idx = full.indexOf(nextHeading, start + thisHeading.length);
+      if (idx !== -1) end = idx;
+    }
+
+    return full.slice(start + thisHeading.length, end).trim();
+  }
+
+  return {
+    script: getSection(h1, h2),
+    shots: getSection(h2, h3),
+    aiPrompt: getSection(h3, h4),
+    thumbPrompt: getSection(h4),
+  };
 }
+
+if (videoFormEl) {
+  videoFormEl.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const fd = new FormData(videoFormEl);
+    const payload = { mode: "video-brief" };
+
+    fd.forEach((value, key) => {
+      payload[key] = value;
+    });
+
+    try {
+      const res = await fetch(apiBase + "/api/message-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      const fullText = data.text || "";
+
+      const sections = parseVideoSections(fullText);
+      populateVideoOutputs(sections);
+    } catch (err) {
+      console.error("Video brief error", err);
+    }
+  });
+}
+
 
 // =========================
 // ALSO UPDATE BOTTOM OUTPUTS
