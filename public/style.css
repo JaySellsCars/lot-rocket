@@ -1252,6 +1252,68 @@ body.dark-theme .step2-card .copy-btn {
   flex: 1;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 260px;
+/* ===== Video Brief Output UI ===== */
+
+.video-output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.video-output-header > label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.video-output-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.secondary-btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+}
+
+.video-output-textarea {
+  width: 100%;
+  min-height: 220px;
+  max-height: 360px;
+  resize: vertical;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  padding: 0.75rem 0.9rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.video-output-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  color: #e5e7eb;
+}
+
+.ghost-btn:hover {
+  border-style: solid;
+  background: rgba(15, 23, 42, 0.75);
+}
 
 /* ====== RESPONSIVE ====== */
 
