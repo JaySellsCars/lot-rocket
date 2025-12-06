@@ -1203,6 +1203,55 @@ body.dark-theme .step2-card .copy-btn {
   display: grid;
   gap: 0.4rem;
 }
+/* ====== DESIGN STUDIO 3.0 LAYOUT ====== */
+
+.design-studio-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top left, #020617, #020617 55%, #020617 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+
+.design-studio-overlay.hidden {
+  display: none;
+}
+
+.design-studio-modal {
+  width: min(1320px, 96vw);
+  height: min(760px, 92vh);
+  background: #020617;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.95);
+  display: flex;
+  flex-direction: column;
+}
+
+.design-studio-header {
+  padding: 0.9rem 1.4rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.design-studio-topbar {
+  padding: 0.7rem 1.4rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.82rem;
+}
+
+.design-studio-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 260px;
 
 /* ====== RESPONSIVE ====== */
 
