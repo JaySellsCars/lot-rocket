@@ -457,17 +457,180 @@ a<!--
     </div>
   </aside>
 </div>
+<!-- end .design-studio-modal-content / overlay above this in your file -->
+
+<!-- ===== SIDE MODALS FOR TOOLS (keep your existing ones here) ===== -->
+<!-- Objection / Calculators / Message / Ask / Car / Image / Video modals go here unchanged -->
+
+<!-- =========================== -->
+<!-- AI VIDEO GENERATION MODAL   -->
+<!-- =========================== -->
+<div id="videoModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h2>🎬 AI Video Script Generator</h2>
+      <button class="modal-close-btn">✕</button>
+    </div>
+
+    <div class="side-modal-body">
+      <form id="videoForm" class="video-form">
+
+        <!-- QUICK SETTINGS -->
+        <div class="video-grid">
+          <label>
+            Hook Style
+            <select name="hookStyle">
+              <option value="pattern-interrupt">Pattern Interrupt</option>
+              <option value="curiosity">Curiosity Hook</option>
+              <option value="emotional">Emotional Hook</option>
+              <option value="authority">Authority Hook</option>
+            </select>
+          </label>
+
+          <label>
+            Length
+            <select name="length">
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Describe the video you want
+          <textarea
+            name="prompt"
+            rows="5"
+            placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."
+          ></textarea>
+        </label>
+
+        <button type="submit" class="secondary-btn full-width-bar">
+          Build Video Shot Plan
+        </button>
+
+        <label>
+          Video Script / Shot Plan
+          <textarea id="videoOutput" rows="7" readonly></textarea>
+        </label>
+
+      </form>
+    </div>
+  </div>
+</div>
+
 
 
   <!-- ===== SIDE MODALS FOR TOOLS (keep your existing ones here) ===== -->
   <!-- Objection / Calculators / Message / Ask / Car / Image / Video modals go here unchanged -->
-<!-- AI Video Generation Modal -->
+
+<!-- =========================== -->
+<!-- AI VIDEO GENERATION MODAL   -->
+<!-- =========================== -->
 <div id="videoModal" class="side-modal hidden">
   <div class="side-modal-content">
+
     <div class="side-modal-header">
-      <h2>AI Video Generation</h2>
+      <h2>🎬 AI Video Script Generator</h2>
       <button class="modal-close-btn">✕</button>
     </div>
+
+    <div class="side-modal-body">
+      <form id="videoForm" class="video-form">
+
+        <!-- QUICK SETTINGS -->
+        <div class="video-grid">
+          <label>Hook Style
+            <select name="hookStyle">
+              <option value="pattern-interrupt">Pattern Interrupt</option>
+              <option value="curiosity">Curiosity Hook</option>
+              <option value="emotional">Emotional Hook</option>
+              <option value="authority">Authority Hook</option>
+            </select>
+          </label>
+
+          <label>Length
+            <select name="length">
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+              <option value="60">60 seconds</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Describe the video you want
+          <textarea name="prompt" rows="5"
+            placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."></textarea>
+        </label>
+
+        <button type="submit" class="secondary-btn full-width-bar">
+          Build Video Shot Plan
+        </button>
+
+        <label>
+          Video Script / Shot Plan
+          <textarea id="videoOutput" rows="7" readonly></textarea>
+        </label>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+
+
+          <label>Platform
+            <select name="platform">
+              <option value="tiktok">TikTok / Shorts</option>
+              <option value="reels">Instagram Reels</option>
+              <option value="facebook">Facebook</option>
+              <option value="youtube">YouTube</option>
+            </select>
+          </label>
+
+          <label>Target Length
+            <select name="length">
+              <option value="15">0–15 seconds</option>
+              <option value="30">15–30 seconds</option>
+              <option value="60">30–60 seconds</option>
+            </select>
+          </label>
+
+          <label>Tone
+            <select name="tone">
+              <option value="hype">Hype</option>
+              <option value="trust">Trust Builder</option>
+              <option value="funny">Funny</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- AUTO-CONTENT FROM BOOST -->
+        <label>Vehicle Context (auto-filled from Boost)
+          <textarea id="videoContext" name="context" rows="4"></textarea>
+        </label>
+
+        <!-- CUSTOM INSTRUCTIONS -->
+        <label>Special Instructions
+          <textarea name="notes" rows="3" placeholder="Example: emphasize low miles, 1-owner Carfax, show interior first, then exterior sweeping shot."></textarea>
+        </label>
+
+        <!-- OUTPUT -->
+        <label>Generated Script
+          <textarea id="videoOutput" name="output" rows="10"></textarea>
+        </label>
+
+        <button class="secondary-btn" type="submit">
+          ⚡ Generate Video Script
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
 
     <div class="side-modal-body">
       <form id="videoForm">
