@@ -592,134 +592,171 @@ This is a very rough guideline, not financial advice.
   }
 });
 
-// Generic message helper (workflow, message, ask, car, image-brief, video-brief)
+// =============================================
+//  AI Message Helper (workflow / message / ask / car / image / video)
+// =============================================
 app.post("/api/message-helper", async (req, res) => {
   try {
-    const {
-      mode,
-      prompt,
-      type,
-      goal,
-      details,
-      question,
-      tone,
-      channel,
-    } = req.body;
+    const body = req.body || {};
+    const { mode, ...fields } = body;
 
-    let system;
-    let user;
+    if (!mode) {
+      return res.status(400).json({ message: "Missing mode in request body." });
+    }
+
+    // -----------------------------------------
+    // Build system + user prompts per mode
+    // -----------------------------------------
+    let systemPrompt = "";
+    let userPrompt = "";
+
+    // Common context string from fields (used as backup)
+    const rawContext = Object.entries(fields)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\n");
 
     switch (mode) {
-      case "workflow":
-        system = `
-You are Lot Rocket's Workflow Architect.
-You design step-by-step workflows and playbooks for car salespeople.
-Return clear numbered steps and optional templates.
-`.trim();
+      // ---------------- VIDEO BRIEF (Shot Plan + AI Prompt) --------------
+      case "video-brief": {
+        const hookStyle = fields.hookStyle || "pattern-interrupt";
+        const length = fields.length || "30";
+        const describe = fields.prompt || "";
+        const context = fields.context || ""; // optional if you ever pass in vehicleContext
+        const tone = fields.tone || "";
+        const platform = fields.platform || "TikTok / Reels";
 
-        user = `
-Situation:
-${prompt || "(none)"}
-`.trim();
+        systemPrompt = `
+You are **Lot Rocket's AI Video Director** for car sales content.
+
+Goal:
+- Turn the user inputs into:
+  1) A short, punchy **spoken script**
+  2) A clear **shot-by-shot list**
+  3) A ready-to-paste **AI video generator prompt** (for tools like Runway, Pika, Luma, etc.)
+  4) A **thumbnail prompt** for a vertical social thumbnail.
+
+Rules:
+- Assume **vertical 9:16** video for TikTok / Reels / Shorts unless told otherwise.
+- Respect the requested length (15 / 30 / 60 seconds) with realistic pacing.
+- Write at a **reading level that sounds natural on social** (not corporate).
+- Always frame it as a **car salesperson or dealership** talking directly to the viewer.
+- Keep everything in **English**.
+- Do NOT include hashtags – those are handled elsewhere.
+- Make it easy to follow for non-technical users.
+
+Output FORMAT (exactly this structure):
+
+### 1. Video Script (Spoken Words)
+Write the full spoken script exactly as the salesperson would say it on camera.
+
+### 2. Shot List (Timeline)
+Numbered list of shots with:
+- [Time Range]
+- Camera framing
+- What is happening
+- Any text-on-screen
+
+### 3. AI Video Generator Prompt
+One clean paragraph the user can paste into a video model.
+Include: scene description, subject (vehicle/dealer), style, pacing, color/grading feel, and any important beats or overlays.
+
+### 4. Thumbnail Prompt
+One sentence describing the ideal thumbnail image for this video (for an AI image generator).
+        `.trim();
+
+        userPrompt = `
+Platform: ${platform}
+Hook style: ${hookStyle}
+Target length (seconds): ${length}
+Tone: ${tone || "sales pro, confident, trustworthy"}
+Video description from user:
+"${describe || "Walkaround of a car"}"
+
+Extra vehicle / offer context (if provided):
+${context || "(none)"}
+        `.trim();
+
+        break;
+      }
+
+      // ---------------- WORKFLOW / MESSAGE / ASK / CAR / IMAGE -----------
+      case "workflow":
+        systemPrompt = `
+You are Lot Rocket's AI Workflow Expert.
+Give clear, step-by-step guidance to car sales pros on how to handle leads,
+follow-up, and daily process. Be concise, direct, and action-focused.
+        `.trim();
+        userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
 
       case "message":
-        system = `
+        systemPrompt = `
 You are Lot Rocket's AI Message Builder.
-Write ready-to-send messages for car shoppers via text, email, or social DM.
-`.trim();
-
-        user = `
-Message type: ${type || "(not specified)"}
-Goal: ${goal || "(not specified)"}
-Details / context:
-${details || "(none)"}
-
-Tone: ${tone || "friendly, professional"}
-Channel: ${channel || "text / DM"}
-`.trim();
+Write high-converting, friendly, conversational messages for car shoppers.
+Match the channel (text / email / DM) if provided by the user.
+        `.trim();
+        userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
-        system = `
-You are Lot Rocket, a helpful sales and business assistant for car salespeople.
-Answer clearly and practically. Use examples where helpful.
-`.trim();
-
-        user = `
-Question:
-${question || prompt || "(none)"}
-`.trim();
+        systemPrompt = `
+You are Lot Rocket's general AI assistant for car salespeople.
+Answer clearly and practically with a focus on selling more cars and helping customers.
+        `.trim();
+        userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
       case "car":
-        system = `
-You are Lot Rocket's automotive product expert.
-Explain trims, features, comparisons, and recommendations like a pro salesperson.
-Avoid made-up technical specs; keep it realistic.
-`.trim();
-
-        user = `
-Car-related question:
-${question || prompt || "(none)"}
-`.trim();
+        systemPrompt = `
+You are Lot Rocket's AI Car Expert.
+Explain vehicle features, trim differences, and why a vehicle is a good fit,
+in simple language a customer would understand.
+        `.trim();
+        userPrompt = fields.prompt || rawContext || "Explain this vehicle to a customer.";
         break;
 
       case "image-brief":
-        system = `
-You are Lot Rocket's image prompt helper.
-You write detailed prompts for AI image generators to create car marketing images.
-`.trim();
-
-        user = `
-Raw idea from user:
-${prompt || "(none)"}
-
-Write a single, detailed prompt suitable for an AI image generator
-(e.g., composition, lighting, angle, style, background, mood).
-`.trim();
+        systemPrompt = `
+You are Lot Rocket's AI Image Brief generator.
+Create concise prompts for an AI image model to generate marketing graphics for car dealers.
+Return ONLY the prompt text, no explanations.
+        `.trim();
+        userPrompt = fields.prompt || rawContext || "Generate an image brief for a dealership post.";
         break;
 
-      case "video-brief":
-        system = `
-You are Lot Rocket's video brief helper.
-You write detailed briefs for AI video tools to create car marketing videos.
-`.trim();
-
-        user = `
-Raw idea from user:
-${prompt || "(none)"}
-
-Write a detailed video brief: scenes, pacing, visual style, on-screen text,
-and music/energy suggestions.
-`.trim();
-        break;
-
+      // ---------------- DEFAULT / FUTURE MODES ----------------------------
       default:
-        system = `
-You are Lot Rocket, a helpful assistant for car salespeople.
-`.trim();
-
-        user = `
-Context:
-${prompt || "(none)"}
-`.trim();
+        systemPrompt = `
+You are Lot Rocket's AI assistant for car dealers.
+Respond with clear, helpful content a salesperson can use immediately.
+        `.trim();
+        userPrompt = fields.prompt || rawContext || "Help me with sales & marketing.";
+        break;
     }
 
-    const completion = await client.responses.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      input: [
-        { role: "system", content: system },
-        { role: "user", content: user },
+      temperature: 0.8,
+      max_tokens: 900,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
     });
 
-    const text = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ text });
+    const text =
+      completion.choices?.[0]?.message?.content?.trim() ||
+      "Lot Rocket could not generate a response. Please try again.";
+
+    return res.json({ text });
   } catch (err) {
-    return sendAIError(res, err, "Failed to generate message.");
+    console.error("❌ /api/message-helper error", err);
+    return res
+      .status(500)
+      .json({ message: "Lot Rocket hit an error talking to AI." });
   }
 });
+
 // ---------------- Image proxy for CORS-safe canvas loading ----------------
 app.get("/api/image-proxy", async (req, res) => {
   try {
