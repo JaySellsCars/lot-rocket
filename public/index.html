@@ -466,52 +466,83 @@ a<!--
   <div class="side-modal-content">
     <div class="side-modal-header">
       <h2>AI Video Generation</h2>
-      <button type="button" class="modal-close-btn">✕</button>
+      <button class="modal-close-btn">✕</button>
     </div>
 
     <div class="side-modal-body">
-      <p class="small-note">
-        Turn your vehicle listing into a scroll-stopping vertical video.
-        Use the button below to build a shot plan from the current dealer URL,
-        or type your own idea and let Lot Rocket write a full brief.
-      </p>
-
-      <!-- 1) Build plan directly from Step 1 dealer URL -->
-      <button
-        id="videoPlanFromListingBtn"
-        type="button"
-        class="secondary-btn full-width-bar"
-      >
-        Build Video Plan From This Listing
-      </button>
-
-      <!-- 2) Free-form video idea -> AI brief -->
       <form id="videoForm">
         <label>
-          Your video idea or goal
+          Platform
+          <select name="platform">
+            <option value="tiktok">TikTok</option>
+            <option value="reels">Instagram / Facebook Reels</option>
+            <option value="shorts">YouTube Shorts</option>
+            <option value="generic">Generic / Other</option>
+          </select>
+        </label>
+
+        <label>
+          Length
+          <select name="length">
+            <option value="15">15 seconds</option>
+            <option value="30" selected>30 seconds</option>
+            <option value="45">45 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="90">90 seconds</option>
+          </select>
+        </label>
+
+        <label>
+          Style
+          <select name="style">
+            <option value="walkaround" selected>Walkaround / showroom tour</option>
+            <option value="hype">High-energy hype / hook heavy</option>
+            <option value="testimonial">Customer testimonial style</option>
+            <option value="story">Storytelling / problem → solution</option>
+            <option value="broll">B-roll + voiceover</option>
+          </select>
+        </label>
+
+        <label>
+          Describe the video you want
           <textarea
             name="prompt"
-            rows="4"
-            placeholder="Example: 30-second TikTok showing off this Silverado, focus on payment and remote delivery..."
+            rows="5"
+            placeholder="Example: 30-second vertical walkaround of a 2024 Silverado Z71, focus on Z71 package, tech features, and payment hook around $699/mo."
           ></textarea>
         </label>
 
-        <button type="submit" class="primary-btn full-width-bar">
-          Generate AI Video Brief
+        <!-- Quick templates -->
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.4rem 0 0.8rem;">
+          <button type="button" class="secondary-btn video-template-btn" data-template="30-second vertical walkaround focusing on exterior, interior, and key tech features. Include 3 strong hooks and 1 closing CTA to visit the store or message me.">
+            Quick Walkaround
+          </button>
+          <button type="button" class="secondary-btn video-template-btn" data-template="60-second story style video: start with common pain points (payments, bad credit, time), show how I make it easy, finish with a strong CTA to message me today. Vertical format.">
+            Story / Pain-Point
+          </button>
+          <button type="button" class="secondary-btn video-template-btn" data-template="45-second high-energy hype reel showing this vehicle, dealership vibe, and my personal brand. Short punchy lines, fast cuts, and a final CTA to follow and DM me.">
+            Hype Reel
+          </button>
+        </div>
+
+        <button type="submit" class="secondary-btn full-width-bar">
+          Build Video Shot Plan
         </button>
       </form>
 
-      <label style="margin-top: 0.9rem; display: block;">
-        Video script / shot plan
+      <label>
+        Video Script / Shot Plan
         <textarea
           id="videoOutput"
-          rows="8"
-          placeholder="Your video script and shot plan will appear here."
+          rows="7"
+          readonly
+          placeholder="Your AI-generated script and shot list will appear here."
         ></textarea>
       </label>
     </div>
   </div>
 </div>
+
 
   <!-- ===== APP SCRIPT ===== -->
   <script src="app.js"></script>
