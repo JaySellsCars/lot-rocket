@@ -501,116 +501,49 @@ const videoShotListOutputBottom = document.getElementById("videoShotListOutputBo
 const videoAIPromptOutputBottom = document.getElementById("videoAIPromptOutputBottom");
 const videoThumbPromptOutputBottom = document.getElementById("videoThumbPromptOutputBottom");
 
+/**
+ * Fill both the right-side modal textareas and the bottom copies.
+ */
 function populateVideoOutputs(sections) {
   if (!sections) return;
 
-  const { script, shots, aiPrompt, thumbPrompt } = sections;
+  const {
+    script = "",
+    shots = "",
+    aiPrompt = "",
+    thumbPrompt = "",
+  } = sections;
 
-  // Right-side modal fields
-  if (videoScriptOutput) videoScriptOutput.value = script || "";
-  if (videoShotListOutput) videoShotListOutput.value = shots || "";
-  if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt || "";
-  if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt || "";
+  // Right-side modal
+  if (videoScriptOutput) videoScriptOutput.value = script;
+  if (videoShotListOutput) videoShotListOutput.value = shots;
+  if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt;
+  if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt;
 
-  // Bottom (main page) fields
-  if (videoScriptOutputBottom) videoScriptOutputBottom.value = script || "";
-  if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots || "";
-  if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt || "";
-  if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt || "";
+  // Bottom under Design Studio
+  if (videoScriptOutputBottom) videoScriptOutputBottom.value = script;
+  if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots;
+  if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt;
+  if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt;
 }
-}
-
-function parseVideoSections(full) {
-  if (!full) {
-    return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
-  }
-
-  const h1 = "### 1. Video Script";
-  const h2 = "### 2. Shot List";
-  const h3 = "### 3. AI Video Generator Prompt";
-  const h4 = "### 4. Thumbnail Prompt";
-
-  function getSection(thisHeading, nextHeading) {
-    const start = full.indexOf(thisHeading);
-    if (start === -1) return "";
-    let end = full.length;
-
-    if (nextHeading) {
-      const idx = full.indexOf(nextHeading, start + thisHeading.length);
-      if (idx !== -1) end = idx;
-    }
-
-    return full.slice(start + thisHeading.length, end).trim();
-  }
-
-  return {
-    script: getSection(h1, h2),
-    shots: getSection(h2, h3),
-    aiPrompt: getSection(h3, h4),
-    thumbPrompt: getSection(h4),
-  };
-}
-
-if (videoFormEl) {
-  videoFormEl.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const fd = new FormData(videoFormEl);
-    const payload = { mode: "video-brief" };
-
-    fd.forEach((value, key) => {
-      payload[key] = value;
-    });
-
-    try {
-      const res = await fetch(apiBase + "/api/message-helper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      const fullText = data.text || "";
-
-      const sections = parseVideoSections(fullText);
-      populateVideoOutputs(sections);
-    } catch (err) {
-      console.error("Video brief error", err);
-    }
-  });
-}
-
-
-// =========================
-// ALSO UPDATE BOTTOM OUTPUTS
-// =========================
-if (videoScriptOutputBottom) videoScriptOutputBottom.value = script || "";
-if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots || "";
-if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt || "";
-if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt || "";
 
 /**
- * Given the full markdown text from AI, split it into:
- *  1. Script
- *  2. Shot list
- *  3. AI video generator prompt
- *  4. Thumbnail prompt
+ * Given the full markdown text from AI, split it into the 4 sections.
  */
 function parseVideoSections(full) {
   if (!full || typeof full !== "string") {
     return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
   }
 
-  // Headings we told AI to use in /api/message-helper
   const h1 = "### 1. Video Script";
   const h2 = "### 2. Shot List";
   const h3 = "### 3. AI Video Generator Prompt";
   const h4 = "### 4. Thumbnail Prompt";
 
-  function getSection(text, startMarker, endMarker) {
-    const startIdx = text.indexOf(startMarker);
+  function getSection(startMarker, endMarker) {
+    const startIdx = full.indexOf(startMarker);
     if (startIdx === -1) return "";
-    const fromStart = text.slice(startIdx + startMarker.length);
+    const fromStart = full.slice(startIdx + startMarker.length);
 
     if (!endMarker) {
       return fromStart.trim();
@@ -625,17 +558,17 @@ function parseVideoSections(full) {
   }
 
   return {
-    script: getSection(full, h1, h2),
-    shots: getSection(full, h2, h3),
-    aiPrompt: getSection(full, h3, h4),
-    thumbPrompt: getSection(full, h4, null),
+    script: getSection(h1, h2),
+    shots: getSection(h2, h3),
+    aiPrompt: getSection(h3, h4),
+    thumbPrompt: getSection(h4, null),
   };
 }
 
 /**
  * Custom submit wiring for the Video Shot Plan builder.
  * Calls /api/message-helper with mode="video-brief",
- * then parses and fills all four output boxes.
+ * then parses and fills all four output boxes (right panel + bottom).
  */
 if (
   videoFormEl &&
@@ -681,8 +614,8 @@ if (
       }
 
       const full = data.text || "";
-      const parsed = parseVideoSections(full);
-      populateVideoOutputs(parsed);
+      const sections = parseVideoSections(full);
+      populateVideoOutputs(sections);
     } catch (err) {
       console.error("❌ Video builder network/error:", err);
       alert(
@@ -696,6 +629,7 @@ if (
     }
   });
 }
+
 
 
 
