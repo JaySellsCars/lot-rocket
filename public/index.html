@@ -466,11 +466,12 @@
 <div id="videoModal" class="side-modal hidden">
   <div class="side-modal-content">
     <div class="side-modal-header">
-      <h2>🎬 AI Video Script Generator</h2>
+      <h2>🎬 AI Video Shot Plan & Script Builder</h2>
       <button class="modal-close-btn">✕</button>
     </div>
 
     <div class="side-modal-body">
+      <!-- INPUT FORM -->
       <form id="videoForm" class="video-form">
         <!-- QUICK SETTINGS -->
         <div class="video-grid">
@@ -488,7 +489,7 @@
             Length
             <select name="length">
               <option value="15">15 seconds</option>
-              <option value="30">30 seconds</option>
+              <option value="30" selected>30 seconds</option>
               <option value="60">60 seconds</option>
             </select>
           </label>
@@ -498,8 +499,8 @@
           Describe the video you want
           <textarea
             name="prompt"
-            rows="5"
-            placeholder="Example: 30-second vertical walkaround of a 2024 Sierra Denali with 3 main hooks..."
+            rows="4"
+            placeholder="Example: 30-second vertical walkaround of a 2024 Silverado Z71, show exterior, interior, tech, and close with a $699/mo style hook."
           ></textarea>
         </label>
 
@@ -507,19 +508,101 @@
           Build Video Shot Plan
         </button>
 
-        <label>
-          Video Script / Shot Plan
-          <textarea
-            id="videoOutput"
-            rows="7"
-            readonly
-            placeholder="Your AI-generated script and shot list will appear here."
-          ></textarea>
-        </label>
+        <p class="small-note video-note">
+          Lot Rocket will generate a spoken script, shot list, AI video prompt, and thumbnail idea based on your description.
+        </p>
       </form>
+
+      <!-- OUTPUT GRID -->
+      <div class="video-output-grid">
+        <!-- SCRIPT -->
+        <div class="video-output-card">
+          <div class="video-output-header">
+            <h4>1. Video Script (Spoken)</h4>
+            <button
+              type="button"
+              class="copy-btn"
+              data-copy-target="videoScriptOutput"
+            >
+              Copy
+            </button>
+          </div>
+          <textarea
+            id="videoScriptOutput"
+            rows="6"
+            readonly
+            placeholder="Your on-camera script will appear here."
+          ></textarea>
+        </div>
+
+        <!-- SHOT LIST -->
+        <div class="video-output-card">
+          <div class="video-output-header">
+            <h4>2. Shot List (Timeline)</h4>
+            <button
+              type="button"
+              class="copy-btn"
+              data-copy-target="videoShotListOutput"
+            >
+              Copy
+            </button>
+          </div>
+          <textarea
+            id="videoShotListOutput"
+            rows="6"
+            readonly
+            placeholder="Shot-by-shot breakdown will appear here."
+          ></textarea>
+        </div>
+
+        <!-- AI VIDEO PROMPT -->
+        <div class="video-output-card">
+          <div class="video-output-header">
+            <h4>3. AI Video Generator Prompt</h4>
+            <button
+              type="button"
+              class="copy-btn"
+              data-copy-target="videoAIPromptOutput"
+            >
+              Copy
+            </button>
+          </div>
+          <textarea
+            id="videoAIPromptOutput"
+            rows="5"
+            readonly
+            placeholder="Paste this into Runway, Pika, Luma, etc."
+          ></textarea>
+        </div>
+
+        <!-- THUMBNAIL PROMPT -->
+        <div class="video-output-card">
+          <div class="video-output-header">
+            <h4>4. Thumbnail Prompt</h4>
+            <button
+              type="button"
+              class="copy-btn"
+              data-copy-target="videoThumbPromptOutput"
+            >
+              Copy
+            </button>
+          </div>
+          <textarea
+            id="videoThumbPromptOutput"
+            rows="4"
+            readonly
+            placeholder="One-sentence AI image prompt for your thumbnail."
+          ></textarea>
+        </div>
+      </div>
+
+      <p class="small-note coming-soon-tag">
+        🎥 Auto-rendered AI videos are on the roadmap for Lot Rocket 3.0. Right now this gives you a pro-level plan you can film or plug into tools like Runway, Pika, or Luma.
+      </p>
     </div>
   </div>
 </div>
+
 
 
   <!-- ===== APP SCRIPT ===== -->
