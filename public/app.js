@@ -1,18 +1,15 @@
-// public/app.js – Lot Rocket frontend logic v2.6 CLEAN
-// - Theme toggle
-// - Step 1 + Step 2 social kit
-// - Step 3 Creative Lab (drag/drop + tuner)
-// - Canvas Studio (Fabric)
-// - Design Studio 3.0 (Konva)
-// - Side tool modals + AI helpers
+// public/app.js – Lot Rocket frontend logic v2.5.5
+// Stable: theme toggle, Boost, calculators, side tools.
+// Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva).
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.6");
+  console.log("✅ Lot Rocket frontend loaded v2.5.5");
+
   const apiBase = "";
 
-  // ======================================
+  // --------------------------------------------------
   // THEME TOGGLE
-  // ======================================
+  // --------------------------------------------------
   const themeToggleInput = document.getElementById("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
@@ -29,9 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ======================================
-  // STEP 1 + STEP 2 – SOCIAL KIT
-  // ======================================
+  // ==================================================
+  // STEP 1 – DEALER URL + SOCIAL KIT
+  // ==================================================
 
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
@@ -52,9 +49,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const hashtags = document.getElementById("hashtags");
 
   const photosGrid = document.getElementById("photosGrid");
-  const sendPhotosToStudioBtn = document.getElementById("sendPhotosToStudio");
 
-  // Dealer photos state (Step 1)
+  // Works with either id="sendPhotosToCreative" or id="sendPhotosToStudio"
+  const sendPhotosToStudioBtn =
+    document.getElementById("sendPhotosToCreative") ||
+    document.getElementById("sendPhotosToStudio");
+
+  // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
 
   function renderDealerPhotos() {
@@ -87,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- BOOST THIS LISTING ----------
   async function doBoostListing() {
     if (!vehicleUrlInput || !boostButton) return;
 
@@ -107,15 +107,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(apiBase + "/api/social-kit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, labelOverride, priceOverride }),
+        body: JSON.stringify({
+          url,
+          labelOverride,
+          priceOverride,
+        }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        throw new Error(data && data.message ? data.message : "Error building kit");
+        const msg =
+          (data && data.message) ||
+          `Something went wrong building the kit (HTTP ${res.status}).`;
+        throw new Error(msg);
       }
 
-      // Summary
+      // Summary / overrides
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
       if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
 
@@ -136,63 +144,20 @@ document.addEventListener("DOMContentLoaded", () => {
       if (marketplacePost) marketplacePost.value = data.marketplace || "";
       if (hashtags) hashtags.value = data.hashtags || "";
 
-      // Photos from backend -> Step 1 grid
-      const photos = Array.isArray(data.photos) ? data.photos : [];
+      // Photos – cap to 40
+      const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
-  // Step 1 -> Creative Lab + Design Studio 3.0
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-
-      // Use selected dealer photos if any, otherwise use all
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
-
-      if (!chosen.length) {
-        alert("Lot Rocket didn’t see any usable photos from the dealer page.");
-        return;
-      }
-
-      // 1) Feed Step 3 Creative Lab thumbnails
-      chosen.forEach((url) => {
-        if (!localCreativePhotos.includes(url)) {
-          localCreativePhotos.push(url);
-          addCreativeThumb(url);
-        }
-      });
-
-      // 2) Send directly into Design Studio 3.0
-      console.log("[DesignStudio] From Step 1 -> chosen URLs:", chosen);
-      openDesignStudio();
-
-      // First = background
-      setBackgroundFromUrl(chosen[0]);
-
-      // Rest = overlay photos
-      chosen.slice(1).forEach((u) => addDesignImage(u));
-    });
-  }
-
 
       document.body.classList.add("kit-ready");
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
-      console.error("Boost error:", err);
-      if (statusText) {
+      console.error("❌ Boost error:", err);
+      if (statusText)
         statusText.textContent =
           err && err.message
             ? err.message
             : "Failed to build kit. Try again in a moment.";
-      }
     } finally {
       if (boostButton) boostButton.disabled = false;
     }
@@ -202,7 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
     boostButton.addEventListener("click", doBoostListing);
   }
 
-  // ---------- Copy buttons ----------
+  // --------------------------------------------------
+  // COPY / REGEN
+  // --------------------------------------------------
   document.querySelectorAll(".copy-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-copy-target");
@@ -218,13 +185,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const original = btn.textContent;
       btn.textContent = "Copied!";
       setTimeout(() => {
+        btn.textContent = original;
         btn.classList.remove("copied");
-        btn.textContent = original || "Copy";
-      }, 1200);
+      }, 1500);
     });
   });
 
-  // ---------- Regen buttons ----------
   document.querySelectorAll(".regen-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const platform = btn.getAttribute("data-platform");
@@ -249,45 +215,39 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform, url, label, price }),
+          body: JSON.stringify({
+            platform,
+            url,
+            label,
+            price,
+          }),
         });
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error generating post (HTTP ${res.status}).`;
+          throw new Error(msg);
+        }
 
         const text = data.text || "";
         let targetId = "";
         switch (platform) {
-          case "facebook":
-            targetId = "facebookPost";
-            break;
-          case "instagram":
-            targetId = "instagramPost";
-            break;
-          case "tiktok":
-            targetId = "tiktokPost";
-            break;
-          case "linkedin":
-            targetId = "linkedinPost";
-            break;
-          case "twitter":
-            targetId = "twitterPost";
-            break;
-          case "text":
-            targetId = "textBlurb";
-            break;
-          case "marketplace":
-            targetId = "marketplacePost";
-            break;
-          case "hashtags":
-            targetId = "hashtags";
-            break;
+          case "facebook": targetId = "facebookPost"; break;
+          case "instagram": targetId = "instagramPost"; break;
+          case "tiktok": targetId = "tiktokPost"; break;
+          case "linkedin": targetId = "linkedinPost"; break;
+          case "twitter": targetId = "twitterPost"; break;
+          case "text": targetId = "textBlurb"; break;
+          case "marketplace": targetId = "marketplacePost"; break;
+          case "hashtags": targetId = "hashtags"; break;
         }
         if (targetId) {
           const ta = document.getElementById(targetId);
           if (ta) ta.value = text;
         }
       } catch (err) {
-        console.error("regen error", err);
+        console.error("❌ regen error", err);
         alert(
           err && err.message
             ? err.message
@@ -300,9 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ======================================
-  // SIDE MODALS (OBJECTION, CALCS, ETC.)
-  // ======================================
+  // ==================================================
+  // MODALS + TOOLS
+  // ==================================================
 
   function wireModal(launcherId, modalId, closeSelector) {
     const launcher = document.getElementById(launcherId);
@@ -310,6 +270,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!launcher || !modal) return;
 
     const closeBtn = modal.querySelector(closeSelector || ".modal-close-btn");
+    const backdropClose = (e) => {
+      if (e.target === modal) modal.classList.add("hidden");
+    };
 
     launcher.addEventListener("click", () => {
       modal.classList.remove("hidden");
@@ -317,9 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (closeBtn) {
       closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
     }
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.classList.add("hidden");
-    });
+    modal.addEventListener("click", backdropClose);
   }
 
   wireModal("objectionLauncher", "objectionModal", ".modal-close-btn");
@@ -355,14 +316,19 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error (HTTP ${res.status}) calculating payment.`;
+          throw new Error(msg);
+        }
         if (paymentOutput) paymentOutput.textContent = data.result || "";
       } catch (err) {
-        console.error("payment-helper error", err);
-        if (paymentOutput) {
+        console.error("❌ payment-helper error", err);
+        if (paymentOutput)
           paymentOutput.textContent =
-            "Could not calculate payment. Check numbers and try again.";
-        }
+            err && err.message
+              ? err.message
+              : "Could not calculate payment. Check numbers and try again.";
       }
     });
   }
@@ -386,14 +352,19 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error (HTTP ${res.status}) estimating income.`;
+          throw new Error(msg);
+        }
         if (incomeOutput) incomeOutput.textContent = data.result || "";
       } catch (err) {
-        console.error("income-helper error", err);
-        if (incomeOutput) {
+        console.error("❌ income-helper error", err);
+        if (incomeOutput)
           incomeOutput.textContent =
-            "Could not estimate income. Check numbers and try again.";
-        }
+            err && err.message
+              ? err.message
+              : "Could not estimate income. Check numbers and try again.";
       }
     });
   }
@@ -417,19 +388,24 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Error (HTTP ${res.status}) from objection coach.`;
+          throw new Error(msg);
+        }
         if (objectionOutput) objectionOutput.value = data.answer || "";
       } catch (err) {
-        console.error("objection-coach error", err);
-        if (objectionOutput) {
+        console.error("❌ objection-coach error", err);
+        if (objectionOutput)
           objectionOutput.value =
-            "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
-        }
+            err && err.message
+              ? err.message
+              : "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
       }
     });
   }
 
-  // ---------- Generic AI helpers ----------
+  // ---------- AI Message / Workflow / Ask / Car / Image / Video ----------
   function wireMessageHelper(formId, outputId, mode) {
     const form = document.getElementById(formId);
     const output = document.getElementById(outputId);
@@ -439,6 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const fd = new FormData(form);
       const payload = { mode };
+
       fd.forEach((value, key) => {
         payload[key] = value;
       });
@@ -450,13 +427,20 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data && data.message ? data.message : "Error");
+
+        if (!res.ok) {
+          const msg =
+            (data && data.message) || `Message helper error (HTTP ${res.status}).`;
+          console.error("❌ message-helper backend error:", res.status, data);
+          if (output) output.value = msg;
+          return;
+        }
+
         if (output) output.value = data.text || "";
       } catch (err) {
-        console.error("message-helper error", err);
-        if (output) {
-          output.value = "Lot Rocket hit a snag. Try again in a moment.";
-        }
+        console.error("❌ message-helper network error", err);
+        if (output)
+          output.value = "Lot Rocket hit a snag talking to AI. Try again in a moment.";
       }
     });
   }
@@ -468,9 +452,9 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
   wireMessageHelper("videoForm", "videoOutput", "video-brief");
 
-  // ======================================
-  // STEP 3 – CREATIVE LAB (Drag & Drop)
-  // ======================================
+  // ==================================================
+  // STEP 3 – CREATIVE HUB (Fabric)
+  // ==================================================
 
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
@@ -483,141 +467,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerContrast = document.getElementById("tunerContrast");
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
-
-  let localCreativePhotos = []; // URLs from drag/drop or dealer photos
-
-  function applyTunerFilters() {
-    if (!tunerPreviewImg) return;
-    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
-    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
-    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
-    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
-  }
-
-  if (tunerBrightness) tunerBrightness.addEventListener("input", applyTunerFilters);
-  if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
-  if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
-
-  if (autoEnhanceBtn) {
-    autoEnhanceBtn.addEventListener("click", () => {
-      if (tunerBrightness) tunerBrightness.value = "115";
-      if (tunerContrast) tunerContrast.value = "115";
-      if (tunerSaturation) tunerSaturation.value = "120";
-      applyTunerFilters();
-    });
-  }
-
-  function addCreativeThumb(url) {
-    if (!creativeThumbGrid) return;
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Creative photo";
-    img.loading = "lazy";
-    img.className = "creative-thumb";
-
-    img.addEventListener("click", () => {
-      document
-        .querySelectorAll(".creative-thumb.selected")
-        .forEach((el) => el.classList.remove("selected"));
-      img.classList.add("selected");
-      if (tunerPreviewImg) tunerPreviewImg.src = url;
-      applyTunerFilters();
-    });
-
-    creativeThumbGrid.appendChild(img);
-  }
-
-  function handleCreativeFiles(fileList) {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
-
-    files.forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
-      const url = URL.createObjectURL(file);
-      localCreativePhotos.push(url);
-      addCreativeThumb(url);
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
-    });
-  }
-
-  if (photoDropZone && photoFileInput) {
-    photoDropZone.addEventListener("click", () => photoFileInput.click());
-
-    photoFileInput.addEventListener("change", (e) => {
-      handleCreativeFiles(e.target.files);
-      photoFileInput.value = "";
-    });
-
-    ["dragenter", "dragover"].forEach((evt) => {
-      photoDropZone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        photoDropZone.classList.add("dragover");
-      });
-    });
-    ["dragleave", "dragend", "drop"].forEach((evt) => {
-      photoDropZone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        photoDropZone.classList.remove("dragover");
-      });
-    });
-    photoDropZone.addEventListener("drop", (e) => {
-      const dt = e.dataTransfer;
-      if (!dt || !dt.files) return;
-      handleCreativeFiles(dt.files);
-    });
-  }
-
-  // Step 1 -> Creative Lab + Design Studio 3.0
-  // Step 1 -> Creative Lab + Design Studio 3.0
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.disabled = dealerPhotos.length === 0;
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-
-      // Prefer user-selected photos, fallback to first 8
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(
-        0,
-        8
-      );
-
-      if (!chosen.length) {
-        alert("Lot Rocket didn’t find any usable photos from this page yet.");
-        return;
-      }
-
-      // 1) Feed Step 3 Creative Lab thumbnails
-      chosen.forEach((url) => {
-        if (!localCreativePhotos.includes(url)) {
-          localCreativePhotos.push(url);
-          addCreativeThumb(url);
-        }
-      });
-
-      // 2) Open Design Studio 3.0 and pipe photos in
-      openDesignStudio();
-
-      // First becomes background
-      setBackgroundFromUrl(chosen[0]);
-
-      // Others become overlay images
-      chosen.slice(1).forEach((u) => addDesignImage(u));
-    });
-  }
-
-
-
-  // ======================================
-  // CANVAS STUDIO (FABRIC)
-  // ======================================
 
   const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
   const creativeCloseBtn = document.getElementById("creativeClose");
@@ -634,6 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeCanvas = null;
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
+  let localCreativePhotos = [];
 
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
@@ -665,66 +515,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Basic image URL sanitizer + CORS-safe proxy for dealer photos
-  function getSafeImageUrl(url) {
-    if (!url) return url;
-
-    // Local object URLs or data URLs are already safe
-    if (url.startsWith("blob:") || url.startsWith("data:")) {
-      return url;
-    }
-
-    try {
-      const u = new URL(url, window.location.href);
-      const isHttp = u.protocol === "http:" || u.protocol === "https:";
-      const sameOrigin = u.origin === window.location.origin;
-
-      // For http(s) images from OTHER domains, route through backend proxy
-      if (isHttp && !sameOrigin) {
-        return `/api/image-proxy?url=${encodeURIComponent(u.toString())}`;
-      }
-
-      return u.toString();
-    } catch {
-      // If URL constructor chokes, just fall back to original
-      return url;
-    }
-  }
-
-
-
-
-
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
-    if (!canvas) return;
+    if (!canvas || !url) return;
 
-    const safeUrl = getSafeImageUrl(url);
-
-    fabric.Image.fromURL(
-      safeUrl,
-      (img) => {
-        const fitScale = Math.min(
-          canvas.width / img.width,
-          canvas.height / img.height
-        );
-        const scale = Math.min(fitScale * 0.75, 0.75);
-
-        img.set({
-          left: canvas.width / 2,
-          top: canvas.height / 2,
-          originX: "center",
-          originY: "center",
-          selectable: true,
-        });
-        img.scale(scale);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        saveCanvasState();
-      },
-      { crossOrigin: "Anonymous" }
-    );
+    fabric.Image.fromURL(url, (img) => {
+      if (!img) {
+        console.error("Fabric could not load image:", url);
+        return;
+      }
+      const scale = Math.min(
+        canvas.width / (img.width * 1.2),
+        canvas.height / (img.height * 1.2),
+        1
+      );
+      img.set({
+        left: canvas.width / 2,
+        top: canvas.height / 2,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+      });
+      img.scale(scale);
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+      saveCanvasState();
+    });
   }
 
   function addRectBanner() {
@@ -820,7 +637,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (creativeUndo) {
     creativeUndo.addEventListener("click", () => {
-      if (!creativeCanvas) return;
       if (creativeHistoryIndex > 0) {
         loadCanvasState(creativeHistoryIndex - 1);
       }
@@ -828,7 +644,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (creativeRedo) {
     creativeRedo.addEventListener("click", () => {
-      if (!creativeCanvas) return;
       if (creativeHistoryIndex < creativeHistory.length - 1) {
         loadCanvasState(creativeHistoryIndex + 1);
       }
@@ -849,11 +664,18 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeExportPng.addEventListener("click", () => {
       const canvas = ensureCanvas();
       if (!canvas) return;
-      const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "lot-rocket-creative.png";
-      a.click();
+      try {
+        const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "lot-rocket-creative.png";
+        a.click();
+      } catch (err) {
+        console.error("Export PNG error (likely CORS):", err);
+        alert(
+          "Browser blocked exporting this image (CORS). Export may be limited on some dealer images."
+        );
+      }
     });
   }
 
@@ -868,15 +690,8 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         btn.classList.add("tool-btn-active");
 
-        if (!creativeCanvas) {
-          if (tool === "uploadImage" && creativeImageInput) {
-            creativeImageInput.click();
-          }
-          return;
-        }
-
         if (tool === "select") {
-          creativeCanvas.isDrawingMode = false;
+          if (creativeCanvas) creativeCanvas.isDrawingMode = false;
         } else if (tool === "addText") {
           addTextBox();
         } else if (tool === "addRect") {
@@ -897,35 +712,158 @@ document.addEventListener("DOMContentLoaded", () => {
       Array.from(files).forEach((file) => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
-        addImageFromUrl(url);
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
       });
       creativeImageInput.value = "";
     });
   }
 
-  // Send ALL local photos to Fabric canvas
-  if (sendAllToCanvasBtn) {
-    sendAllToCanvasBtn.addEventListener("click", () => {
-      if (!localCreativePhotos.length) {
-        alert("Add or drop some photos into Step 3 first.");
-        return;
-      }
-      openCreativeStudio();
-      localCreativePhotos.forEach((url) => addImageFromUrl(url));
+  // ---- Photo tuner ----
+  function applyTunerFilters() {
+    if (!tunerPreviewImg) return;
+    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
+    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
+    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
+    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+  }
+
+  if (tunerBrightness) {
+    tunerBrightness.addEventListener("input", applyTunerFilters);
+  }
+  if (tunerContrast) {
+    tunerContrast.addEventListener("input", applyTunerFilters);
+  }
+  if (tunerSaturation) {
+    tunerSaturation.addEventListener("input", applyTunerFilters);
+  }
+  if (autoEnhanceBtn) {
+    autoEnhanceBtn.addEventListener("click", () => {
+      if (tunerBrightness) tunerBrightness.value = "115";
+      if (tunerContrast) tunerContrast.value = "115";
+      if (tunerSaturation) tunerSaturation.value = "120";
+      applyTunerFilters();
     });
   }
 
-  // ======================================
-  // DESIGN STUDIO 3.0 (KONVA) – SIMPLE, STABLE
-  // ======================================
+  // ---- Thumbnails + drag/drop ----
+  function addCreativeThumb(url) {
+    if (!creativeThumbGrid) return;
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Creative photo";
+    img.loading = "lazy";
+    img.className = "creative-thumb";
+
+    img.addEventListener("click", () => {
+      document
+        .querySelectorAll(".creative-thumb.selected")
+        .forEach((el) => el.classList.remove("selected"));
+      img.classList.add("selected");
+      if (tunerPreviewImg) tunerPreviewImg.src = url;
+      applyTunerFilters();
+    });
+
+    creativeThumbGrid.appendChild(img);
+  }
+
+  function handleCreativeFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    files.forEach((file) => {
+      if (!file || !file.type || !file.type.startsWith("image/")) return;
+      const url = URL.createObjectURL(file);
+      localCreativePhotos.push(url);
+      addCreativeThumb(url);
+
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
+      }
+    });
+  }
+
+  if (photoDropZone && photoFileInput) {
+    photoDropZone.addEventListener("click", () => {
+      photoFileInput.click();
+    });
+
+    photoFileInput.addEventListener("change", (e) => {
+      handleCreativeFiles(e.target.files);
+      photoFileInput.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach((evtName) => {
+      photoDropZone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "dragend"].forEach((evtName) => {
+      photoDropZone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.remove("dragover");
+      });
+    });
+
+    photoDropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoDropZone.classList.remove("dragover");
+
+      const dt = e.dataTransfer;
+      let files = dt && dt.files;
+
+      if ((!files || !files.length) && dt && dt.items) {
+        const collected = [];
+        for (const item of dt.items) {
+          if (item.kind === "file") {
+            const f = item.getAsFile();
+            if (f) collected.push(f);
+          }
+        }
+        files = collected;
+      }
+
+      if (!files || !files.length) return;
+      handleCreativeFiles(files);
+    });
+  }
+
+  // ---- Shared helper: gather image URLs for studios ----
+  function gatherImageUrlsForStudios() {
+    const urls = [];
+
+    if (creativeThumbGrid) {
+      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+        if (img.src) urls.push(img.src);
+      });
+    }
+
+    if (!urls.length && dealerPhotos.length) {
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const fallback = dealerPhotos.map((p) => p.src);
+      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+    }
+
+    return urls.slice(0, 8); // cap at 8
+  }
+
+  // ==================================================
+  // DESIGN STUDIO 3.0 (Konva)
+  // ==================================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
   const designLauncher = document.getElementById("designLauncher");
   const designCloseBtn = document.getElementById("designClose");
-  // reuse the Step 3 button already declared earlier
-  // const sendToDesignStudioBtn is already defined above
 
   const studioSizePreset = document.getElementById("studioSizePreset");
+  const studioUndoBtn = document.getElementById("studioUndoBtn");
+  const studioRedoBtn = document.getElementById("studioRedoBtn");
   const studioExportPng = document.getElementById("studioExportPng");
 
   const toolAddText = document.getElementById("toolAddText");
@@ -939,238 +877,384 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
-  let designStage = null;
-  let designBgLayer = null;
-  let designMainLayer = null;
-  let selectedNode = null;
+  let studioStage = null;
+  let studioLayer = null;
+  let studioSelectedNode = null;
+  let studioHistory = [];
+  let studioHistoryIndex = -1;
 
-  function ensureDesignStage() {
-    if (designStage) return designStage;
-    if (typeof Konva === "undefined") {
-      console.error("Konva not loaded");
-      return null;
+  function initDesignStudio() {
+    if (!window.Konva) {
+      console.warn("Konva not loaded – Design Studio 3.0 disabled.");
+      return;
     }
-
     const container = document.getElementById("konvaStageContainer");
     if (!container) {
-      console.error("No #konvaStageContainer found");
-      return null;
+      console.warn("konvaStageContainer not found.");
+      return;
     }
 
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 500;
+    // Use fixed logical canvas size; CSS handles visual sizing.
+    const width = 1080;
+    const height = 1080;
 
-    designStage = new Konva.Stage({
+    studioStage = new Konva.Stage({
       container: "konvaStageContainer",
       width,
       height,
     });
 
-    designBgLayer = new Konva.Layer();
-    designMainLayer = new Konva.Layer();
-    designStage.add(designBgLayer);
-    designStage.add(designMainLayer);
+    studioLayer = new Konva.Layer();
+    studioStage.add(studioLayer);
 
-    designStage.on("click", (e) => {
-      if (e.target === designStage) {
-        setSelectedNode(null);
-      } else {
-        setSelectedNode(e.target);
-      }
-    });
-
-    return designStage;
+    setStudioBackground("#111111");
+    wireDesignStudioUI();
+    saveStudioHistory();
   }
 
-  function refreshLayersList() {
-    if (!layersList || !designMainLayer) return;
+  // ---- History ----
+  function saveStudioHistory() {
+    if (!studioStage) return;
+    const json = studioStage.toJSON();
+    studioHistory = studioHistory.slice(0, studioHistoryIndex + 1);
+    studioHistory.push(json);
+    studioHistoryIndex = studioHistory.length - 1;
+  }
+
+  function restoreStudioFromHistory(index) {
+    if (!studioStage || index < 0 || index >= studioHistory.length) return;
+    const container = studioStage.container();
+    const json = studioHistory[index];
+
+    studioHistoryIndex = index;
+    studioStage.destroy();
+    studioStage = Konva.Node.create(json, container);
+    const layers = studioStage.getLayers();
+    studioLayer = layers[0] || new Konva.Layer();
+    if (!layers.length) studioStage.add(studioLayer);
+    studioSelectedNode = null;
+    rebuildLayersList();
+  }
+
+  function studioUndo() {
+    if (studioHistoryIndex > 0) {
+      restoreStudioFromHistory(studioHistoryIndex - 1);
+    }
+  }
+
+  function studioRedo() {
+    if (studioHistoryIndex < studioHistory.length - 1) {
+      restoreStudioFromHistory(studioHistoryIndex + 1);
+    }
+  }
+
+  // ---- Selection / layers ----
+  function selectStudioNode(node) {
+    studioSelectedNode = node;
+    rebuildLayersList();
+    syncLayerControlsWithSelection();
+  }
+
+  function rebuildLayersList() {
+    if (!layersList || !studioLayer) return;
     layersList.innerHTML = "";
-    const nodes = designMainLayer.getChildren();
+    const nodes = studioLayer.getChildren();
 
     nodes.forEach((node, index) => {
+      if (node.name() === "BackgroundLayer") return;
       const li = document.createElement("li");
-      li.textContent = node.name() || `Layer ${index + 1}`;
-      if (node === selectedNode) li.classList.add("active");
+      li.className = "layer-item";
+      li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
+      if (node === studioSelectedNode) li.classList.add("layer-item-selected");
       li.addEventListener("click", () => {
-        setSelectedNode(node);
+        selectStudioNode(node);
       });
       layersList.appendChild(li);
     });
   }
 
-  function setSelectedNode(node) {
-    selectedNode = node;
-    if (!layerTextInput || !layerFontSizeInput || !layerOpacityInput) return;
-
-    if (!node) {
-      layerTextInput.value = "";
-      layerFontSizeInput.value = "40";
-      layerOpacityInput.value = "1";
-      if (designStage) designStage.draw();
-      refreshLayersList();
+  function syncLayerControlsWithSelection() {
+    if (!studioSelectedNode) {
+      if (layerTextInput) layerTextInput.value = "";
+      if (layerFontSizeInput) layerFontSizeInput.value = "";
+      if (layerOpacityInput) layerOpacityInput.value = 1;
       return;
     }
 
-    if (node.text) {
-      layerTextInput.value = node.text();
+    if (studioSelectedNode.className === "Text") {
+      if (layerTextInput) layerTextInput.value = studioSelectedNode.text() || "";
+      if (layerFontSizeInput)
+        layerFontSizeInput.value = studioSelectedNode.fontSize() || 40;
     } else {
-      layerTextInput.value = "";
+      if (layerTextInput) layerTextInput.value = "";
+      if (layerFontSizeInput) layerFontSizeInput.value = "";
     }
 
-    layerFontSizeInput.value = node.fontSize ? node.fontSize() : 40;
-    layerOpacityInput.value = node.opacity ? node.opacity() : 1;
-
-    if (designStage) designStage.draw();
-    refreshLayersList();
+    if (layerOpacityInput) {
+      layerOpacityInput.value = studioSelectedNode.opacity() ?? 1;
+    }
   }
 
-  function attachDragWithSnapping(node) {
-    if (!node) return;
-    node.draggable(true);
-
-    node.on("dragmove", () => {
-      snapNodeToGuides(node);
-      const stage = node.getStage();
-      if (stage) stage.batchDraw();
+  function attachNodeInteractions(node) {
+    node.on("click tap", () => {
+      selectStudioNode(node);
+    });
+    node.on("dragend transformend", () => {
+      saveStudioHistory();
     });
   }
 
-  function snapNodeToGuides(node) {
-    const stage = node.getStage();
-    if (!stage) return;
+  // ---- Add elements ----
+  function addStudioText(text = "YOUR HEADLINE HERE") {
+    if (!studioLayer || !studioStage) return;
 
-    const SNAP = 12;
-    let { x, y } = node.position();
-
-    const centerX = stage.width() / 2;
-    const centerY = stage.height() / 2;
-    const topThirdY = stage.height() / 3;
-    const bottomThirdY = (stage.height() * 2) / 3;
-
-    if (Math.abs(x - centerX) < SNAP) x = centerX;
-    if (Math.abs(y - centerY) < SNAP) y = centerY;
-    else if (Math.abs(y - topThirdY) < SNAP) y = topThirdY;
-    else if (Math.abs(y - bottomThirdY) < SNAP) y = bottomThirdY;
-
-    node.position({ x, y });
-  }
-
-  function setBackgroundFromUrl(url) {
-    const stage = ensureDesignStage();
-    if (!stage || !designBgLayer) return;
-
-    const safeUrl = getSafeImageUrl(url);
-
-    Konva.Image.fromURL(safeUrl, (img) => {
-      const scale = Math.max(
-        stage.width() / img.width(),
-        stage.height() / img.height()
-      );
-      img.scale({ x: scale, y: scale });
-      img.position({ x: 0, y: 0 });
-      img.listening(false);
-
-      designBgLayer.destroyChildren();
-      designBgLayer.add(img);
-      designBgLayer.draw();
-    });
-  }
-
-  function addDesignImage(url) {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
-
-    const safeUrl = getSafeImageUrl(url);
-
-    Konva.Image.fromURL(safeUrl, (img) => {
-      const scaleFactor = 0.5;
-      img.scale({ x: scaleFactor, y: scaleFactor });
-      img.position({
-        x: stage.width() / 2,
-        y: stage.height() / 2,
-      });
-      img.name("Photo");
-      attachDragWithSnapping(img);
-      designMainLayer.add(img);
-      designMainLayer.draw();
-      setSelectedNode(img);
-    });
-  }
-
-  function addDesignText() {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
-
-    const text = new Konva.Text({
-      x: stage.width() / 2,
-      y: 80,
-      text: "YOUR TEXT HERE",
-      fontSize: 40,
-      fontFamily: "Arial",
-      fill: "#ffffff",
-      align: "center",
-      offsetX: 0,
-      draggable: true,
-      name: "Text",
-    });
-
-    text.offsetX(text.width() / 2);
-    attachDragWithSnapping(text);
-    designMainLayer.add(text);
-    designMainLayer.draw();
-    setSelectedNode(text);
-  }
-
-  function addDesignBanner() {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
-
-    const rect = new Konva.Rect({
-      x: stage.width() / 2,
-      y: stage.height() - 120,
-      width: stage.width() * 0.9,
-      height: 120,
-      fill: "#000000",
-      opacity: 0.75,
-      cornerRadius: 20,
-      offsetX: (stage.width() * 0.9) / 2,
-      draggable: true,
-      name: "Banner",
-    });
-
-    attachDragWithSnapping(rect);
-    designMainLayer.add(rect);
-    designMainLayer.draw();
-    setSelectedNode(rect);
-  }
-
-  function addDesignBadge() {
-    const stage = ensureDesignStage();
-    if (!stage || !designMainLayer) return;
-
-    const circle = new Konva.Circle({
-      x: stage.width() - 150,
+    const node = new Konva.Text({
+      x: studioStage.width() / 2,
       y: 120,
-      radius: 100,
-      fill: "#ef4444",
-      opacity: 0.9,
+      text,
+      fontFamily: "system-ui, sans-serif",
+      fontSize: 48,
+      fill: "#FFFFFF",
+      shadowColor: "black",
+      shadowBlur: 6,
+      shadowOffset: { x: 2, y: 2 },
+      shadowOpacity: 0.4,
+      align: "center",
+      name: "Text Layer",
       draggable: true,
-      name: "Price Badge",
     });
 
-    attachDragWithSnapping(circle);
-    designMainLayer.add(circle);
-    designMainLayer.draw();
-    setSelectedNode(circle);
+    node.offsetX(node.width() / 2);
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function addStudioShape() {
+    if (!studioLayer || !studioStage) return;
+    const width = studioStage.width() * 0.9;
+    const height = 170;
+
+    const node = new Konva.Rect({
+      x: studioStage.width() / 2,
+      y: studioStage.height() - height,
+      width,
+      height,
+      fill: "#000000",
+      opacity: 0.7,
+      cornerRadius: 18,
+      offsetX: width / 2,
+      offsetY: height / 2,
+      name: "Banner Layer",
+      draggable: true,
+    });
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function addStudioBadge() {
+    if (!studioLayer || !studioStage) return;
+
+    const node = new Konva.Ring({
+      x: studioStage.width() - 180,
+      y: 160,
+      innerRadius: 70,
+      outerRadius: 90,
+      fill: "#FFFFFF",
+      stroke: "#FF2E2E",
+      strokeWidth: 6,
+      name: "Badge Layer",
+      draggable: true,
+    });
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function setStudioBackground(color = "#111111") {
+    if (!studioLayer || !studioStage) return;
+    let bg = studioLayer.findOne(".BackgroundLayer");
+    if (!bg) {
+      bg = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: studioStage.width(),
+        height: studioStage.height(),
+        fill: color,
+        name: "BackgroundLayer",
+        listening: false,
+      });
+      studioLayer.add(bg);
+      bg.moveToBottom();
+    } else {
+      bg.fill(color);
+      bg.width(studioStage.width());
+      bg.height(studioStage.height());
+      bg.moveToBottom();
+    }
+    studioLayer.draw();
+  }
+
+  function addStudioImageFromUrl(url, asBackground = false) {
+    if (!studioLayer || !studioStage || !url) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(
+        studioStage.width() / img.width,
+        studioStage.height() / img.height
+      ) || 1;
+
+      const w = img.width * ratio;
+      const h = img.height * ratio;
+
+      const node = new Konva.Image({
+        image: img,
+        x: studioStage.width() / 2,
+        y: studioStage.height() / 2,
+        width: w,
+        height: h,
+        offsetX: w / 2,
+        offsetY: h / 2,
+        draggable: !asBackground,
+        name: asBackground ? "Background Photo" : "Photo Layer",
+      });
+
+      attachNodeInteractions(node);
+      studioLayer.add(node);
+      if (asBackground) {
+        node.moveToBottom();
+        const bg = studioLayer.findOne(".BackgroundLayer");
+        if (bg) bg.moveToBottom();
+      }
+      studioLayer.draw();
+      selectStudioNode(node);
+      saveStudioHistory();
+    };
+    img.onerror = (err) => {
+      console.error("[DesignStudio] Failed to load image:", url, err);
+    };
+    img.src = url;
+  }
+
+  function exportStudioAsPng() {
+    if (!studioStage) return;
+    const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
+    const a = document.createElement("a");
+    a.href = dataURL;
+    a.download = "lot-rocket-design.png";
+    a.click();
+  }
+
+  function applyStudioSizePreset() {
+    if (!studioStage || !studioLayer || !studioSizePreset) return;
+    const [w, h] = studioSizePreset.value.split("x").map(Number);
+    studioStage.width(w);
+    studioStage.height(h);
+
+    const bg = studioLayer.findOne(".BackgroundLayer");
+    if (bg) {
+      bg.width(w);
+      bg.height(h);
+      bg.moveToBottom();
+    }
+
+    studioStage.draw();
+    saveStudioHistory();
+  }
+
+  function wireDesignStudioUI() {
+    if (toolAddText) {
+      toolAddText.addEventListener("click", () => addStudioText());
+    }
+    if (toolAddShape) {
+      toolAddShape.addEventListener("click", () => addStudioShape());
+    }
+    if (toolAddBadge) {
+      toolAddBadge.addEventListener("click", () => addStudioBadge());
+    }
+    if (toolSetBackground) {
+      toolSetBackground.addEventListener("click", () =>
+        setStudioBackground("#111111")
+      );
+    }
+
+    if (studioExportPng) {
+      studioExportPng.addEventListener("click", exportStudioAsPng);
+    }
+    if (studioUndoBtn) {
+      studioUndoBtn.addEventListener("click", studioUndo);
+    }
+    if (studioRedoBtn) {
+      studioRedoBtn.addEventListener("click", studioRedo);
+    }
+    if (studioSizePreset) {
+      studioSizePreset.addEventListener("change", applyStudioSizePreset);
+    }
+
+    if (layerTextInput) {
+      layerTextInput.addEventListener("input", () => {
+        if (studioSelectedNode && studioSelectedNode.className === "Text") {
+          studioSelectedNode.text(layerTextInput.value);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerFontSizeInput) {
+      layerFontSizeInput.addEventListener("input", () => {
+        if (studioSelectedNode && studioSelectedNode.className === "Text") {
+          const size = Number(layerFontSizeInput.value) || 40;
+          studioSelectedNode.fontSize(size);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerOpacityInput) {
+      layerOpacityInput.addEventListener("input", () => {
+        if (studioSelectedNode) {
+          const val = Number(layerOpacityInput.value);
+          studioSelectedNode.opacity(val);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerDeleteBtn) {
+      layerDeleteBtn.addEventListener("click", () => {
+        if (!studioSelectedNode || !studioLayer) return;
+        studioSelectedNode.destroy();
+        studioSelectedNode = null;
+        studioLayer.draw();
+        rebuildLayersList();
+        saveStudioHistory();
+      });
+    }
   }
 
   function openDesignStudio() {
-    if (!designStudioOverlay) {
-      console.warn("No designStudioOverlay element found");
-      return;
-    }
+    if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
-    ensureDesignStage();
+    if (!studioStage && window.Konva) {
+      initDesignStudio();
+    } else if (studioStage) {
+      studioStage.draw();
+      rebuildLayersList();
+    }
   }
 
   function closeDesignStudio() {
@@ -1178,12 +1262,9 @@ document.addEventListener("DOMContentLoaded", () => {
     designStudioOverlay.classList.add("hidden");
   }
 
-  // Wire right-side launcher
   if (designLauncher) {
     designLauncher.addEventListener("click", openDesignStudio);
   }
-
-  // Wire close button + click outside
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
     designStudioOverlay.addEventListener("click", (e) => {
@@ -1191,171 +1272,75 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Size preset
-  if (studioSizePreset) {
-    studioSizePreset.addEventListener("change", () => {
-      const stage = ensureDesignStage();
-      if (!stage) return;
-      const [w, h] = studioSizePreset.value.split("x").map(Number);
-      stage.size({ width: w, height: h });
-      stage.draw();
+  // ---- Shared wiring from Step 1 / Step 3 into Design Studio ----
+
+  function pushUrlsIntoDesignStudio(urls) {
+    if (!urls.length) {
+      alert("No photos available. Boost a listing or add photos first.");
+      return;
+    }
+    openDesignStudio();
+    urls.forEach((url, index) => {
+      addStudioImageFromUrl(url, index === 0); // first is background
     });
   }
 
-  // Export PNG
-  if (studioExportPng) {
-    studioExportPng.addEventListener("click", () => {
-      const stage = ensureDesignStage();
-      if (!stage) return;
-      const dataUrl = stage.toDataURL({ pixelRatio: 2 });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "lot-rocket-design.png";
-      a.click();
-    });
-  }
-
-  // Tool buttons inside Design Studio
-  if (toolAddText) toolAddText.addEventListener("click", addDesignText);
-  if (toolAddShape) toolAddShape.addEventListener("click", addDesignBanner);
-  if (toolAddBadge) toolAddBadge.addEventListener("click", addDesignBadge);
-
-  if (toolSetBackground) {
-    toolSetBackground.addEventListener("click", () => {
-      const selectedThumb = document.querySelector(".creative-thumb.selected");
-      const url = selectedThumb?.getAttribute("src") || localCreativePhotos[0];
-      if (!url) {
-        alert("Select or add a photo in Step 3 first.");
-        return;
-      }
-      openDesignStudio();
-      setBackgroundFromUrl(url);
-    });
-  }
-
-  // Step 3 big button: send selected (or all) into Design Studio
-  if (sendToDesignStudioBtn) {
-    sendToDesignStudioBtn.addEventListener("click", () => {
-      const thumbs = Array.from(
-        document.querySelectorAll(".creative-thumb.selected")
-      );
-      const urls =
-        thumbs.length > 0
-          ? thumbs.map((img) => img.getAttribute("src"))
-          : localCreativePhotos;
-
-      if (!urls || !urls.length) {
-        alert("Select at least one photo (or add some to Step 3).");
+  // Step 1 button – “Send top photos to Creative Studio” (and Design Studio)
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
       }
 
-      openDesignStudio();
-      // first = background, rest = overlays
-      setBackgroundFromUrl(urls[0]);
-      urls.slice(1).forEach((u) => addDesignImage(u));
-    });
-  }
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+        .slice(0, 8);
 
-  // Layer text / font / opacity controls
-  if (layerTextInput) {
-    layerTextInput.addEventListener("input", () => {
-      if (selectedNode && selectedNode.text) {
-        selectedNode.text(layerTextInput.value);
-        if (designStage) designStage.draw();
+      if (!chosen.length) {
+        alert("No photos selected.");
+        return;
       }
-    });
-  }
 
-  if (layerFontSizeInput) {
-    layerFontSizeInput.addEventListener("input", () => {
-      if (selectedNode && selectedNode.fontSize) {
-        const size = Number(layerFontSizeInput.value || 40);
-        selectedNode.fontSize(size);
-        if (designStage) designStage.draw();
-      }
-    });
-  }
-
-  if (layerOpacityInput) {
-    layerOpacityInput.addEventListener("input", () => {
-      if (selectedNode && typeof selectedNode.opacity === "function") {
-        const val = Number(layerOpacityInput.value || 1);
-        selectedNode.opacity(val);
-        if (designStage) designStage.draw();
-      }
-    });
-  }
-
-  if (layerDeleteBtn) {
-    layerDeleteBtn.addEventListener("click", () => {
-      if (!selectedNode || !designMainLayer) return;
-      selectedNode.destroy();
-      selectedNode = null;
-      designMainLayer.draw();
-      refreshLayersList();
-    });
-  }
-// ------------------------------------------------------------
-// ---------- Video plan from current dealer listing ----------
-// ------------------------------------------------------------
-const videoPlanFromListingBtn = document.getElementById("videoPlanFromListingBtn");
-if (videoPlanFromListingBtn) {
-  videoPlanFromListingBtn.addEventListener("click", async () => {
-    if (!vehicleUrlInput) {
-      alert("Paste a dealer URL in Step 1 first.");
-      return;
-    }
-
-    const url = vehicleUrlInput.value.trim();
-    if (!url) {
-      alert("Paste a dealer URL in Step 1 first.");
-      return;
-    }
-
-    const videoOutputEl = document.getElementById("videoOutput");
-
-    const originalText = videoPlanFromListingBtn.textContent;
-    videoPlanFromListingBtn.disabled = true;
-    videoPlanFromListingBtn.textContent = "Building plan…";
-
-    try {
-      const res = await fetch(apiBase + "/api/video-from-photos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+      // Push into Creative Hub thumbnails
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(
-          (data && data.message) || "Failed to build video plan from listing."
-        );
+      // ALSO push into Design Studio
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  // Step 3 button – “Send to Design Studio 3.0”
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
       }
+      pushUrlsIntoDesignStudio(urls);
+    });
+  }
 
-      if (videoOutputEl) {
-        videoOutputEl.value = data.plan || "";
-      } else {
-        alert("Plan generated, but #videoOutput not found.");
+  // “Send All to Canvas Studio” stays Fabric-only
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
       }
-    } catch (err) {
-      console.error("video-from-photos error", err);
-      alert(
-        err && err.message
-          ? err.message
-          : "Lot Rocket couldn't generate a video plan from that listing."
-      );
-    } finally {
-      videoPlanFromListingBtn.disabled = false;
-      videoPlanFromListingBtn.textContent =
-        originalText || "Build Video Plan From This Listing";
-    }
-  });
-}
+      openCreativeStudio();
+      urls.forEach((url) => addImageFromUrl(url));
+    });
+  }
 
-// ------------------------------------------------------------
-
-console.log("Lot Rocket frontend wiring complete");
-}); // end DOMContentLoaded
-
-  console.log("Lot Rocket frontend wiring complete");
-}); // end DOMContentLoaded
+  console.log("✅ Lot Rocket frontend wiring complete");
+});
