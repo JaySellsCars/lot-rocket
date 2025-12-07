@@ -1105,14 +1105,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
   // Template + Save/Load buttons
-  const templatePaymentBtn = document.getElementById("templatePayment");
-  const templateArrivalBtn = document.getElementById("templateArrival");
-  const templateSaleBtn = document.getElementById("templateSale");
-  const saveDesignBtn = document.getElementById("saveDesignBtn");
-  const loadDesignBtn = document.getElementById("loadDesignBtn");
+1108 │ let studioStage = null;
+1109 │ let studioLayer = null;
+1110 │ let studioSelectedNode = null;
+1111 │ let studioTransformer = null;
+1112 │ let studioHistory = [];
+1113 │ let studioHistoryIndex = -1;
+1114 │ let studioUIWired = false;
+1115 │ let studioDnDWired = false;   // NEW
 
-  let studioStage = null;
-  let studioLayer = null;
   let studioSelectedNode = null;
   let studioTransformer = null;
   let studioHistory = [];
