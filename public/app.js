@@ -1932,17 +1932,27 @@ let studioDnDWired = false;  // NEW
     }
   }
 
-  // ---- Open / Close overlay ----
-  function openDesignStudio() {
-    if (!designStudioOverlay) return;
-    designStudioOverlay.classList.remove("hidden");
-    if (!studioStage && window.Konva) {
-      initDesignStudio();
-    } else if (studioStage) {
-      studioStage.draw();
-      rebuildLayersList();
-    }
+function openDesignStudio() {
+  if (!designStudioOverlay) return;
+  designStudioOverlay.classList.remove("hidden");
+
+  // Initialise Konva stage once
+  if (!studioStage && window.Konva) {
+    initDesignStudio();
+  } else if (studioStage) {
+    studioStage.draw();
+    rebuildLayersList();
   }
+
+  // If we don't have a tray source yet, pull from Step 3 / dealer photos
+  if (!studioAvailablePhotos.length) {
+    const urls = gatherImageUrlsForStudios();
+    studioAvailablePhotos = urls.slice(0, 24); // tray can show more than canvas
+  }
+
+  renderStudioPhotoTray();
+}
+
 
   function closeDesignStudio() {
     if (!designStudioOverlay) return;
