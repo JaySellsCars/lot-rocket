@@ -1061,24 +1061,114 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Shared helper: gather image URLs for studios ----
-  function gatherImageUrlsForStudios() {
-    const urls = [];
+// ---- Shared helper: gather image URLs for studios ----
+function gatherImageUrlsForStudios() {
+  const urls = [];
 
-    if (creativeThumbGrid) {
-      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
-        if (img.src) urls.push(img.src);
-      });
-    }
-
-    if (!urls.length && dealerPhotos.length) {
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const fallback = dealerPhotos.map((p) => p.src);
-      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
-    }
-
-    return urls.slice(0, 8); // cap at 8
+  if (creativeThumbGrid) {
+    creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+      if (img.src) urls.push(img.src);
+    });
   }
+
+  if (!urls.length && dealerPhotos.length) {
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const fallback = dealerPhotos.map((p) => p.src);
+    (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+  }
+
+  return urls.slice(0, 8); // cap at 8
+}
+
+/* ⬇⬇⬇  INSERT THIS WHOLE FUNCTION HERE  ⬇⬇⬇ */
+
+// ---- Shared helper: gather image URLs for studios ----
+function gatherImageUrlsForStudios() {
+  const urls = [];
+
+  if (creativeThumbGrid) {
+    creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+      if (img.src) urls.push(img.src);
+    });
+  }
+
+  if (!urls.length && dealerPhotos.length) {
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const fallback = dealerPhotos.map((p) => p.src);
+    (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+  }
+
+  return urls.slice(0, 8); // cap at 8
+}
+
+/* ⬇⬇⬇  INSERT THIS WHOLE FUNCTION HERE  ⬇⬇⬇ */
+
+function renderStudioPhotoTray() {
+  if (!studioPhotoTray) return;
+  studioPhotoTray.innerHTML = "";
+
+  // Build thumbnails
+  studioAvailablePhotos.forEach((url) => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Design photo";
+    img.loading = "lazy";
+    img.className = "studio-photo-thumb";
+    img.draggable = true;
+
+    // CLICK = normal layer
+    // SHIFT+CLICK / DOUBLE-CLICK = background
+    img.addEventListener("click", (e) => {
+      if (e.shiftKey) {
+        addStudioImageFromUrl(url, true);   // background
+      } else {
+        addStudioImageFromUrl(url, false);  // layer
+      }
+    });
+
+    img.addEventListener("dblclick", () => {
+      addStudioImageFromUrl(url, true);     // background
+    });
+
+    // Drag → Drop into Design Studio
+    img.addEventListener("dragstart", (e) => {
+      try {
+        e.dataTransfer.setData("text/plain", url);
+      } catch (_) {}
+    });
+
+    studioPhotoTray.appendChild(img);
+  });
+
+  // Make Konva canvas accept drag-and-drop (wire ONCE)
+  const konvaContainer = document.getElementById("konvaStageContainer");
+  if (konvaContainer && !studioDnDWired) {
+    studioDnDWired = true;
+
+    konvaContainer.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
+
+    konvaContainer.addEventListener("drop", (e) => {
+      e.preventDefault();
+      let url = "";
+      try {
+        url = e.dataTransfer.getData("text/plain");
+      } catch (_) {}
+
+      if (url) addStudioImageFromUrl(url, false);
+    });
+  }
+}
+
+
+/* ⬆⬆⬆  STOP HERE  ⬆⬆⬆ */
+
+// =============================================
+// DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
+// =============================================
+const designStudioOverlay = document.getElementById("designStudioOverlay");
+
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
@@ -1105,20 +1195,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
   // Template + Save/Load buttons
-1108 │ let studioStage = null;
-1109 │ let studioLayer = null;
-1110 │ let studioSelectedNode = null;
-1111 │ let studioTransformer = null;
-1112 │ let studioHistory = [];
-1113 │ let studioHistoryIndex = -1;
-1114 │ let studioUIWired = false;
-1115 │ let studioDnDWired = false;   // NEW
+const loadDesignBtn = document.getElementById("loadDesignBtn");
 
-  let studioSelectedNode = null;
-  let studioTransformer = null;
-  let studioHistory = [];
-  let studioHistoryIndex = -1;
-  let studioUIWired = false;
+const studioPhotoTray = document.getElementById("studioPhotoTray");
+let studioAvailablePhotos = [];  // NEW
+
+let studioStage = null;
+let studioLayer = null;
+let studioSelectedNode = null;
+let studioTransformer = null;
+let studioHistory = [];
+let studioHistoryIndex = -1;
+let studioUIWired = false;
+let studioDnDWired = false;  // NEW
+
+
 
   // ---- Core init ----
   function initDesignStudio() {
