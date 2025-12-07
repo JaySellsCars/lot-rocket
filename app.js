@@ -158,6 +158,19 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   // HARD CAP: only send the first 24 back to the frontend
   return Array.from(urls).slice(0, 24);
 }
+// ---------------- AI Photo Processing Helper (STUB) ----------------
+// Later this will call a real background-removal + photo enhancement API.
+// For now, it returns the original URL so the pipeline stays stable.
+async function processSinglePhoto(photoUrl) {
+  try {
+    // TODO: Replace with actual AI edit logic
+    return photoUrl;
+  } catch (err) {
+    console.error("processSinglePhoto error:", err);
+    // Fallback so your app never breaks
+    return photoUrl;
+  }
+}
 
 
 // ---------------- Helper: call GPT for structured social kit ----------------
