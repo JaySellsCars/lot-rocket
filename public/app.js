@@ -1164,11 +1164,6 @@ function renderStudioPhotoTray() {
 
 /* ⬆⬆⬆  STOP HERE  ⬆⬆⬆ */
 
-// =============================================
-// DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
-// =============================================
-const designStudioOverlay = document.getElementById("designStudioOverlay");
-
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
