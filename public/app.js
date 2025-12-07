@@ -1933,14 +1933,21 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    if (layerDeleteBtn) {
-      layerDeleteBtn.addEventListener("click", () => {
-        if (!studioSelectedNode || !studioLayer) return;
-        studioSelectedNode.destroy();
-        studioSelectedNode = null;
+if (layerDeleteBtn) {
+  layerDeleteBtn.addEventListener("click", () => {
+    if (!studioSelectedNode || !studioLayer) return;
+    studioSelectedNode.destroy();
+    studioSelectedNode = null;
 
-        if (studioTransformer) {
-          studioTransformer.nodes([]);
+    if (studioTransformer) {
+      studioTransformer.nodes([]);
+    }
+  });
+}
+
+console.log("✅ Lot Rocket frontend wiring complete");
+});
+
 
 It looks like my last message hit the length limit and got cut off near the very end, but all the carousel logic you care about **is fully included** above:
 
