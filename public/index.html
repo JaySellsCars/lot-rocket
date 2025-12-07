@@ -288,6 +288,40 @@
             </button>
           </div>
         </div>
+
+        <!-- NEW: Social-Ready Photo Carousel panel -->
+        <div class="social-ready-panel">
+          <div class="panel-header">
+            <h3>Social-ready Photo Strip</h3>
+            <p>
+              Your best edited photos, ready to post or send into Design Studio 3.0.
+            </p>
+          </div>
+
+          <div id="socialCarousel" class="social-carousel">
+            <!-- JS will inject .social-carousel-item elements here -->
+          </div>
+
+          <div class="social-carousel-actions">
+            <button
+              id="openDesignFromCarousel"
+              type="button"
+              class="secondary-btn"
+            >
+              Open Selected in Design Studio 3.0
+            </button>
+
+            <button
+              id="downloadAllEditedBtn"
+              type="button"
+              class="secondary-btn"
+            >
+              Download All Edited Photos
+            </button>
+          </div>
+        </div>
+        <!-- END Social-Ready panel -->
+
       </div>
     </section>
 
@@ -342,133 +376,132 @@
     </button>
   </aside>
 
-<!-- ####### DESIGN STUDIO 3.0 OVERLAY (Konva) ####### -->
-<div id="designStudioOverlay" class="creative-overlay hidden">
-  <div class="creative-modal">
+  <!-- ####### DESIGN STUDIO 3.0 OVERLAY (Konva) ####### -->
+  <div id="designStudioOverlay" class="creative-overlay hidden">
+    <div class="creative-modal">
 
-    <!-- HEADER -->
-    <div class="creative-header">
-      <h2>Design Studio 3.0 (Beta)</h2>
-      <button id="designClose" class="modal-close-btn">X</button>
-    </div>
-
-    <!-- TOP BAR: preset + undo/redo/export -->
-    <div class="creative-top-bar">
-      <span class="preset-label">Canvas preset</span>
-      <select id="studioSizePreset">
-        <option value="1080x1080">Square – 1080x1080</option>
-        <option value="1080x1920">Story – 1080x1920</option>
-        <option value="1920x1080">Landscape – 1920x1080</option>
-      </select>
-
-      <div class="creative-actions">
-        <button id="studioUndoBtn">Undo</button>
-        <button id="studioRedoBtn">Redo</button>
-        <button id="studioExportPng">Export PNG</button>
-      </div>
-    </div>
-
-    <!-- NEW: horizontal thumbnail strip ABOVE the canvas -->
-    <div class="studio-photo-strip">
-      <div id="studioPhotoTray" class="studio-photo-tray"></div>
-    </div>
-
-    <!-- MAIN BODY: left tools, center canvas, right properties -->
-    <div class="creative-body">
-
-      <!-- LEFT: tools + templates + save/load -->
-      <aside class="creative-tools">
-        <h3>Tools</h3>
-
-        <!-- Main tools -->
-        <button id="toolAddText" class="pill-btn">Add Text</button>
-        <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
-        <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
-        <button id="toolSetBackground" class="pill-btn">Set Background</button>
-
-        <hr class="tool-divider" />
-
-        <!-- Templates -->
-        <p class="tools-label">Templates</p>
-        <button id="templatePayment" class="pill-btn pill-btn-secondary">
-          Payment Promo
-        </button>
-        <button id="templateArrival" class="pill-btn pill-btn-secondary">
-          Just Arrived
-        </button>
-        <button id="templateSale" class="pill-btn pill-btn-secondary">
-          Sale Blast
-        </button>
-
-        <hr class="tool-divider" />
-
-        <!-- Save / load -->
-        <p class="tools-label">Design</p>
-        <button id="saveDesignBtn" class="pill-btn pill-btn-ghost">
-          Save Design
-        </button>
-        <button id="loadDesignBtn" class="pill-btn pill-btn-ghost">
-          Load Design
-        </button>
-      </aside>
-
-      <!-- CENTER: Konva stage container -->
-      <div class="creative-canvas-wrap">
-        <div
-          id="konvaStageContainer"
-          class="studio-canvas-container"
-        ></div>
+      <!-- HEADER -->
+      <div class="creative-header">
+        <h2>Design Studio 3.0 (Beta)</h2>
+        <button id="designClose" class="modal-close-btn">X</button>
       </div>
 
-      <!-- RIGHT: layers + selected-layer controls -->
-      <aside class="creative-properties">
-        <div class="prop-group">
-          <h4>Layers</h4>
-          <ul id="layersList" class="layers-list"></ul>
+      <!-- TOP BAR: preset + undo/redo/export -->
+      <div class="creative-top-bar">
+        <span class="preset-label">Canvas preset</span>
+        <select id="studioSizePreset">
+          <option value="1080x1080">Square – 1080x1080</option>
+          <option value="1080x1920">Story – 1080x1920</option>
+          <option value="1920x1080">Landscape – 1920x1080</option>
+        </select>
+
+        <div class="creative-actions">
+          <button id="studioUndoBtn">Undo</button>
+          <button id="studioRedoBtn">Redo</button>
+          <button id="studioExportPng">Export PNG</button>
         </div>
+      </div>
 
-        <div class="prop-group">
-          <h4>Selected Layer</h4>
+      <!-- NEW: horizontal thumbnail strip ABOVE the canvas -->
+      <div class="studio-photo-strip">
+        <div id="studioPhotoTray" class="studio-photo-tray"></div>
+      </div>
 
-          <label>
-            Text
-            <input
-              id="layerTextInput"
-              type="text"
-              placeholder="Edit text..."
-            />
-          </label>
+      <!-- MAIN BODY: left tools, center canvas, right properties -->
+      <div class="creative-body">
 
-          <label>
-            Font size
-            <input
-              id="layerFontSizeInput"
-              type="number"
-              min="10"
-              max="200"
-            />
-          </label>
+        <!-- LEFT: tools + templates + save/load -->
+        <aside class="creative-tools">
+          <h3>Tools</h3>
 
-          <label>
-            Opacity
-            <input
-              id="layerOpacityInput"
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-            />
-          </label>
+          <!-- Main tools -->
+          <button id="toolAddText" class="pill-btn">Add Text</button>
+          <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
+          <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
+          <button id="toolSetBackground" class="pill-btn">Set Background</button>
 
-          <button id="layerDeleteBtn" class="pill-btn pill-btn-danger">
-            Delete Layer
+          <hr class="tool-divider" />
+
+          <!-- Templates -->
+          <p class="tools-label">Templates</p>
+          <button id="templatePayment" class="pill-btn pill-btn-secondary">
+            Payment Promo
           </button>
+          <button id="templateArrival" class="pill-btn pill-btn-secondary">
+            Just Arrived
+          </button>
+          <button id="templateSale" class="pill-btn pill-btn-secondary">
+            Sale Blast
+          </button>
+
+          <hr class="tool-divider" />
+
+          <!-- Save / load -->
+          <p class="tools-label">Design</p>
+          <button id="saveDesignBtn" class="pill-btn pill-btn-ghost">
+            Save Design
+          </button>
+          <button id="loadDesignBtn" class="pill-btn pill-btn-ghost">
+            Load Design
+          </button>
+        </aside>
+
+        <!-- CENTER: Konva stage container -->
+        <div class="creative-canvas-wrap">
+          <div
+            id="konvaStageContainer"
+            class="studio-canvas-container"
+          ></div>
         </div>
-      </aside>
+
+        <!-- RIGHT: layers + selected-layer controls -->
+        <aside class="creative-properties">
+          <div class="prop-group">
+            <h4>Layers</h4>
+            <ul id="layersList" class="layers-list"></ul>
+          </div>
+
+          <div class="prop-group">
+            <h4>Selected Layer</h4>
+
+            <label>
+              Text
+              <input
+                id="layerTextInput"
+                type="text"
+                placeholder="Edit text..."
+              />
+            </label>
+
+            <label>
+              Font size
+              <input
+                id="layerFontSizeInput"
+                type="number"
+                min="10"
+                max="200"
+              />
+            </label>
+
+            <label>
+              Opacity
+              <input
+                id="layerOpacityInput"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+              />
+            </label>
+
+            <button id="layerDeleteBtn" class="pill-btn pill-btn-danger">
+              Delete Layer
+            </button>
+          </div>
+        </aside>
+      </div>
     </div>
   </div>
-</div>
-
 
   <!-- =============================== -->
   <!-- AI VIDEO SCRIPT + SHOT PLAN MODAL -->
