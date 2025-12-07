@@ -1316,36 +1316,39 @@ body.dark-theme .step2-card .copy-btn {
 }
 
 /* ============================
-   DESIGN STUDIO — PHOTO TRAY
+   DESIGN STUDIO – PHOTO STRIP
    ============================ */
 
-.studio-photo-tray {
-  margin-top: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.3);
+.studio-photo-strip {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.25rem 0;
+  max-height: 96px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-/* only the grid scrolls */
-.studio-photo-grid {
+/* the tray itself is a horizontal grid */
+.studio-photo-tray {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 96px;
   gap: 0.35rem;
-  max-height: 260px;
-  overflow-y: auto;
 }
 
 .studio-photo-thumb {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 0.35rem;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1px solid rgba(148, 163, 184, 0.6);
 }
 
 .studio-photo-thumb:hover {
   border-color: #f97316;
 }
+
 
 
 
