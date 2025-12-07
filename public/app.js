@@ -1200,13 +1200,34 @@ document.addEventListener("DOMContentLoaded", () => {
     studioLayer = layers[0] || new Konva.Layer();
     if (!layers.length) studioStage.add(studioLayer);
 
+    // Find or recreate transformer after restore
+    studioTransformer =
+      studioStage.findOne("Transformer") ||
+      new Konva.Transformer({
+        rotateEnabled: true,
+        enabledAnchors: [
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right",
+        ],
+        anchorSize: 10,
+        borderStroke: "#e5e7eb",
+        anchorFill: BRAND.primary,
+        anchorStroke: BRAND.primary,
+        anchorCornerRadius: 4,
+      });
+    if (!studioTransformer.getStage()) {
+      studioLayer.add(studioTransformer);
+    }
+
     studioSelectedNode = null;
     studioHistoryIndex = index;
 
     attachEventsToAllNodes();
     rebuildLayersList();
     wireDesignStudioUI();
-  }
+
 
   function studioUndo() {
     if (studioHistoryIndex > 0) {
