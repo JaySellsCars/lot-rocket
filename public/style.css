@@ -1315,6 +1315,36 @@ body.dark-theme .step2-card .copy-btn {
   background: rgba(15, 23, 42, 0.75);
 }
 
+/* ============================
+   DESIGN STUDIO — PHOTO TRAY
+=============================== */
+
+.studio-photo-tray {
+  margin-top: 1rem;
+}
+
+.studio-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .35rem;
+}
+
+.studio-photo-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: .35rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.studio-photo-thumb:hover {
+  border-color: #f97316;
+}
+
+/* ====== RESPONSIVE ====== */
+
+
 /* ====== RESPONSIVE ====== */
 
 /* Slightly smaller on tablet */
