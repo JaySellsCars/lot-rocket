@@ -100,7 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     boostButton.disabled = true;
-    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
+    if (statusText)
+      statusText.textContent = "Scraping dealer page and building kit…";
 
     try {
       const res = await fetch(apiBase + "/api/social-kit", {
@@ -232,14 +233,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const text = data.text || "";
         let targetId = "";
         switch (platform) {
-          case "facebook": targetId = "facebookPost"; break;
-          case "instagram": targetId = "instagramPost"; break;
-          case "tiktok": targetId = "tiktokPost"; break;
-          case "linkedin": targetId = "linkedinPost"; break;
-          case "twitter": targetId = "twitterPost"; break;
-          case "text": targetId = "textBlurb"; break;
-          case "marketplace": targetId = "marketplacePost"; break;
-          case "hashtags": targetId = "hashtags"; break;
+          case "facebook":
+            targetId = "facebookPost";
+            break;
+          case "instagram":
+            targetId = "instagramPost";
+            break;
+          case "tiktok":
+            targetId = "tiktokPost";
+            break;
+          case "linkedin":
+            targetId = "linkedinPost";
+            break;
+          case "twitter":
+            targetId = "twitterPost";
+            break;
+          case "text":
+            targetId = "textBlurb";
+            break;
+          case "marketplace":
+            targetId = "marketplacePost";
+            break;
+          case "hashtags":
+            targetId = "hashtags";
+            break;
         }
         if (targetId) {
           const ta = document.getElementById(targetId);
@@ -321,16 +338,11 @@ document.addEventListener("DOMContentLoaded", () => {
   wireModal("imageLauncher", "imageModal", ".modal-close-btn");
 
   // VIDEO: when opening, pre-fill context field (if present) with kit info
-  wireModal(
-    "videoLauncher",
-    "videoModal",
-    ".modal-close-btn",
-    () => {
-      if (videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-      }
+  wireModal("videoLauncher", "videoModal", ".modal-close-btn", () => {
+    if (videoContextField) {
+      videoContextField.value = buildVideoContextFromKit();
     }
-  );
+  });
 
   // ---------- Payment helper ----------
   const paymentForm = document.getElementById("paymentForm");
@@ -356,7 +368,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await res.json();
         if (!res.ok) {
           const msg =
-            (data && data.message) || `Error (HTTP ${res.status}) calculating payment.`;
+            (data && data.message) ||
+            `Error (HTTP ${res.status}) calculating payment.`;
           throw new Error(msg);
         }
         if (paymentOutput) paymentOutput.textContent = data.result || "";
@@ -392,7 +405,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await res.json();
         if (!res.ok) {
           const msg =
-            (data && data.message) || `Error (HTTP ${res.status}) estimating income.`;
+            (data && data.message) ||
+            `Error (HTTP ${res.status}) estimating income.`;
           throw new Error(msg);
         }
         if (incomeOutput) incomeOutput.textContent = data.result || "";
@@ -428,7 +442,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await res.json();
         if (!res.ok) {
           const msg =
-            (data && data.message) || `Error (HTTP ${res.status}) from objection coach.`;
+            (data && data.message) ||
+            `Error (HTTP ${res.status}) from objection coach.`;
           throw new Error(msg);
         }
         if (objectionOutput) objectionOutput.value = data.answer || "";
@@ -443,7 +458,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- AI Message / Workflow / Ask / Car / Image / Video ----------
+  // ---------- AI Message / Workflow / Ask / Car / Image ----------
   function wireMessageHelper(formId, outputId, mode) {
     const form = document.getElementById(formId);
     const output = document.getElementById(outputId);
@@ -468,7 +483,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!res.ok) {
           const msg =
-            (data && data.message) || `Message helper error (HTTP ${res.status}).`;
+            (data && data.message) ||
+            `Message helper error (HTTP ${res.status}).`;
           console.error("❌ message-helper backend error:", res.status, data);
           if (output) output.value = msg;
           return;
@@ -478,7 +494,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("❌ message-helper network error", err);
         if (output)
-          output.value = "Lot Rocket hit a snag talking to AI. Try again in a moment.";
+          output.value =
+            "Lot Rocket hit a snag talking to AI. Try again in a moment.";
       }
     });
   }
@@ -488,150 +505,163 @@ document.addEventListener("DOMContentLoaded", () => {
   wireMessageHelper("askForm", "askOutput", "ask");
   wireMessageHelper("carForm", "carOutput", "car");
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
-// --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ---------
-const videoFormEl = document.getElementById("videoForm");
-const videoScriptOutput = document.getElementById("videoScriptOutput");
-const videoShotListOutput = document.getElementById("videoShotListOutput");
-const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
-const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
 
-// bottom copies under Design Studio
-const videoScriptOutputBottom = document.getElementById("videoScriptOutputBottom");
-const videoShotListOutputBottom = document.getElementById("videoShotListOutputBottom");
-const videoAIPromptOutputBottom = document.getElementById("videoAIPromptOutputBottom");
-const videoThumbPromptOutputBottom = document.getElementById("videoThumbPromptOutputBottom");
+  // --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ---------
+  const videoFormEl = document.getElementById("videoForm");
+  const videoScriptOutput = document.getElementById("videoScriptOutput");
+  const videoShotListOutput = document.getElementById("videoShotListOutput");
+  const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
+  const videoThumbPromptOutput = document.getElementById(
+    "videoThumbPromptOutput"
+  );
 
-/**
- * Fill both the right-side modal textareas and the bottom copies.
- */
-function populateVideoOutputs(sections) {
-  if (!sections) return;
+  // bottom copies under Design Studio
+  const videoScriptOutputBottom = document.getElementById(
+    "videoScriptOutputBottom"
+  );
+  const videoShotListOutputBottom = document.getElementById(
+    "videoShotListOutputBottom"
+  );
+  const videoAIPromptOutputBottom = document.getElementById(
+    "videoAIPromptOutputBottom"
+  );
+  const videoThumbPromptOutputBottom = document.getElementById(
+    "videoThumbPromptOutputBottom"
+  );
 
-  const {
-    script = "",
-    shots = "",
-    aiPrompt = "",
-    thumbPrompt = "",
-  } = sections;
+  /**
+   * Fill both the right-side modal textareas and the bottom copies.
+   */
+  function populateVideoOutputs(sections) {
+    if (!sections) return;
 
-  // Right-side modal
-  if (videoScriptOutput) videoScriptOutput.value = script;
-  if (videoShotListOutput) videoShotListOutput.value = shots;
-  if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt;
-  if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt;
+    const {
+      script = "",
+      shots = "",
+      aiPrompt = "",
+      thumbPrompt = "",
+    } = sections;
 
-  // Bottom under Design Studio
-  if (videoScriptOutputBottom) videoScriptOutputBottom.value = script;
-  if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots;
-  if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt;
-  if (videoThumbPromptOutputBottom) videoThumbPromptOutputBottom.value = thumbPrompt;
-}
+    // Right-side modal
+    if (videoScriptOutput) videoScriptOutput.value = script;
+    if (videoShotListOutput) videoShotListOutput.value = shots;
+    if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt;
+    if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt;
 
-/**
- * Given the full markdown text from AI, split it into the 4 sections.
- */
-function parseVideoSections(full) {
-  if (!full || typeof full !== "string") {
-    return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
+    // Bottom under Design Studio
+    if (videoScriptOutputBottom) videoScriptOutputBottom.value = script;
+    if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots;
+    if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt;
+    if (videoThumbPromptOutputBottom)
+      videoThumbPromptOutputBottom.value = thumbPrompt;
   }
 
-  const h1 = "### 1. Video Script";
-  const h2 = "### 2. Shot List";
-  const h3 = "### 3. AI Video Generator Prompt";
-  const h4 = "### 4. Thumbnail Prompt";
-
-  function getSection(startMarker, endMarker) {
-    const startIdx = full.indexOf(startMarker);
-    if (startIdx === -1) return "";
-    const fromStart = full.slice(startIdx + startMarker.length);
-
-    if (!endMarker) {
-      return fromStart.trim();
+  /**
+   * Given the full markdown text from AI, split it into the 4 sections.
+   */
+  function parseVideoSections(full) {
+    if (!full || typeof full !== "string") {
+      return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
     }
 
-    const endIdx = fromStart.indexOf(endMarker);
-    if (endIdx === -1) {
-      return fromStart.trim();
-    }
+    const h1 = "### 1. Video Script";
+    const h2 = "### 2. Shot List";
+    const h3 = "### 3. AI Video Generator Prompt";
+    const h4 = "### 4. Thumbnail Prompt";
 
-    return fromStart.slice(0, endIdx).trim();
-  }
+    function getSection(startMarker, endMarker) {
+      const startIdx = full.indexOf(startMarker);
+      if (startIdx === -1) return "";
+      const fromStart = full.slice(startIdx + startMarker.length);
 
-  return {
-    script: getSection(h1, h2),
-    shots: getSection(h2, h3),
-    aiPrompt: getSection(h3, h4),
-    thumbPrompt: getSection(h4, null),
-  };
-}
-
-/**
- * Custom submit wiring for the Video Shot Plan builder.
- * Calls /api/message-helper with mode="video-brief",
- * then parses and fills all four output boxes (right panel + bottom).
- */
-if (
-  videoFormEl &&
-  videoScriptOutput &&
-  videoShotListOutput &&
-  videoAIPromptOutput &&
-  videoThumbPromptOutput
-) {
-  videoFormEl.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const submitBtn = videoFormEl.querySelector("button[type='submit']");
-    const originalLabel = submitBtn ? submitBtn.textContent : "";
-
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Building plan…";
-    }
-
-    try {
-      const fd = new FormData(videoFormEl);
-      const payload = { mode: "video-brief" };
-
-      fd.forEach((value, key) => {
-        payload[key] = value;
-      });
-
-      const res = await fetch(apiBase + "/api/message-helper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const msg =
-          (data && data.message) ||
-          `Video builder error (HTTP ${res.status}).`;
-        console.error("❌ /api/message-helper (video) error:", res.status, data);
-        alert(msg);
-        return;
+      if (!endMarker) {
+        return fromStart.trim();
       }
 
-      const full = data.text || "";
-      const sections = parseVideoSections(full);
-      populateVideoOutputs(sections);
-    } catch (err) {
-      console.error("❌ Video builder network/error:", err);
-      alert(
-        "Lot Rocket hit a snag building that video shot plan. Try again in a moment."
-      );
-    } finally {
+      const endIdx = fromStart.indexOf(endMarker);
+      if (endIdx === -1) {
+        return fromStart.trim();
+      }
+
+      return fromStart.slice(0, endIdx).trim();
+    }
+
+    return {
+      script: getSection(h1, h2),
+      shots: getSection(h2, h3),
+      aiPrompt: getSection(h3, h4),
+      thumbPrompt: getSection(h4, null),
+    };
+  }
+
+  /**
+   * Custom submit wiring for the Video Shot Plan builder.
+   * Calls /api/message-helper with mode="video-brief",
+   * then parses and fills all four output boxes (right panel + bottom).
+   */
+  if (
+    videoFormEl &&
+    videoScriptOutput &&
+    videoShotListOutput &&
+    videoAIPromptOutput &&
+    videoThumbPromptOutput
+  ) {
+    videoFormEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const submitBtn = videoFormEl.querySelector("button[type='submit']");
+      const originalLabel = submitBtn ? submitBtn.textContent : "";
+
       if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalLabel || "Build Video Shot Plan";
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Building plan…";
       }
-    }
-  });
-}
 
+      try {
+        const fd = new FormData(videoFormEl);
+        const payload = { mode: "video-brief" };
 
+        fd.forEach((value, key) => {
+          payload[key] = value;
+        });
 
+        const res = await fetch(apiBase + "/api/message-helper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          const msg =
+            (data && data.message) ||
+            `Video builder error (HTTP ${res.status}).`;
+          console.error(
+            "❌ /api/message-helper (video) error:",
+            res.status,
+            data
+          );
+          alert(msg);
+          return;
+        }
+
+        const full = data.text || "";
+        const sections = parseVideoSections(full);
+        populateVideoOutputs(sections);
+      } catch (err) {
+        console.error("❌ Video builder network/error:", err);
+        alert(
+          "Lot Rocket hit a snag building that video shot plan. Try again in a moment."
+        );
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel || "Build Video Shot Plan";
+        }
+      }
+    });
+  }
 
   // ==================================================
   // STEP 3 – CREATIVE HUB (Fabric)
@@ -649,7 +679,9 @@ if (
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 
-  const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
+  const creativeStudioOverlay = document.getElementById(
+    "creativeStudioOverlay"
+  );
   const creativeCloseBtn = document.getElementById("creativeClose");
   const canvasLauncher = document.getElementById("canvasLauncher");
 
@@ -1290,19 +1322,17 @@ if (
     if (!studioLayer || !studioStage || !url) return;
 
     const img = new Image();
-  img.onload = () => {
-    // Fit image to stage, then shrink a bit so it isn't edge-to-edge
-    const fitRatio =
-      Math.min(
-        studioStage.width() / img.width,
-        studioStage.height() / img.height
-      ) || 1;
+    img.onload = () => {
+      // Fit image to stage, then shrink a bit so it isn't edge-to-edge
+      const fitRatio =
+        Math.min(
+          studioStage.width() / img.width,
+          studioStage.height() / img.height
+        ) || 1;
 
-    const finalRatio = fitRatio * 0.9; // 0.9 = 90% of full size; tweak if you want
-
-    const w = img.width * finalRatio;
-    const h = img.height * finalRatio;
-
+      const finalRatio = fitRatio * 0.9; // 0.9 = 90% of full size
+      const w = img.width * finalRatio;
+      const h = img.height * finalRatio;
 
       const node = new Konva.Image({
         image: img,
@@ -1480,8 +1510,10 @@ if (
       }
 
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-        .slice(0, 8);
+      const chosen = (selected.length
+        ? selected
+        : dealerPhotos.map((p) => p.src)
+      ).slice(0, 8);
 
       if (!chosen.length) {
         alert("No photos selected.");
