@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.5
+// public/app.js – Lot Rocket frontend logic v2.5.6
 // Stable: theme toggle, Boost, calculators, side tools.
-// Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva).
+// Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva) + Social Strip.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.5");
+  console.log("✅ Lot Rocket frontend loaded v2.5.6");
   const apiBase = "";
 
   // Brand palette for Design Studio 3.5
@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==================================================
-  // STEP 3 – CREATIVE HUB (Fabric)
+  // STEP 3 – CREATIVE HUB (Fabric) + SOCIAL STRIP
   // ==================================================
 
   const photoDropZone = document.getElementById("photoDropZone");
@@ -690,6 +690,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerContrast = document.getElementById("tunerContrast");
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
+
+  // NEW: Social-ready photo strip elements
+  const socialCarousel = document.getElementById("socialCarousel");
+  const openDesignFromCarouselBtn = document.getElementById(
+    "openDesignFromCarousel"
+  );
+  const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
 
   const creativeStudioOverlay = document.getElementById(
     "creativeStudioOverlay"
@@ -709,6 +716,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
   let localCreativePhotos = [];
+
+  // NEW: Social-ready photos state: [{ url, selected }]
+  let socialReadyPhotos = [];
 
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
@@ -971,6 +981,64 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- Social-ready strip helpers ----
+  function renderSocialCarousel() {
+    if (!socialCarousel) return;
+    socialCarousel.innerHTML = "";
+
+    if (!socialReadyPhotos.length) {
+      const note = document.createElement("p");
+      note.className = "small-note";
+      note.textContent =
+        "Double-click a photo in the grid above to mark it social-ready.";
+      socialCarousel.appendChild(note);
+      return;
+    }
+
+    socialReadyPhotos.forEach((photo, index) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "social-carousel-item" +
+        (photo.selected ? " social-carousel-item-selected" : "");
+      btn.dataset.index = String(index);
+
+      const img = document.createElement("img");
+      img.src = photo.url;
+      img.alt = `Social-ready photo ${index + 1}`;
+      img.loading = "lazy";
+      img.className = "social-carousel-img";
+
+      btn.appendChild(img);
+      socialCarousel.appendChild(btn);
+    });
+
+    // Toggle selection on click
+    socialCarousel
+      .querySelectorAll(".social-carousel-item")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.index || "0");
+          socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+          renderSocialCarousel();
+        });
+      });
+  }
+
+  function addPhotoToSocialReady(url) {
+    if (!url) return;
+    const exists = socialReadyPhotos.some((p) => p.url === url);
+    if (exists) {
+      // Already in the strip; just flash selection
+      socialReadyPhotos = socialReadyPhotos.map((p) =>
+        p.url === url ? { ...p, selected: true } : p
+      );
+    } else {
+      socialReadyPhotos.push({ url, selected: true });
+    }
+    renderSocialCarousel();
+  }
+
   // ---- Thumbnails + drag/drop ----
   function addCreativeThumb(url) {
     if (!creativeThumbGrid) return;
@@ -987,6 +1055,11 @@ document.addEventListener("DOMContentLoaded", () => {
       img.classList.add("selected");
       if (tunerPreviewImg) tunerPreviewImg.src = url;
       applyTunerFilters();
+    });
+
+    // NEW: double-click = send to Social Strip
+    img.addEventListener("dblclick", () => {
+      addPhotoToSocialReady(url);
     });
 
     creativeThumbGrid.appendChild(img);
@@ -1058,6 +1131,9 @@ document.addEventListener("DOMContentLoaded", () => {
       handleCreativeFiles(files);
     });
   }
+
+  // Initial empty strip render
+  renderSocialCarousel();
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
@@ -2052,6 +2128,51 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       openCreativeStudio();
       urls.forEach((url) => addImageFromUrl(url));
+    });
+  }
+
+  // ============================
+  // SOCIAL STRIP → DESIGN STUDIO / DOWNLOAD
+  // ============================
+
+  if (openDesignFromCarouselBtn) {
+    openDesignFromCarouselBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos yet. Double-click a photo in the grid above to add it."
+        );
+        return;
+      }
+
+      const selected = socialReadyPhotos
+        .filter((p) => p.selected)
+        .map((p) => p.url);
+      const chosen = (selected.length
+        ? selected
+        : socialReadyPhotos.map((p) => p.url)
+      ).slice(0, 8);
+
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  if (downloadAllEditedBtn) {
+    downloadAllEditedBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos to download. Double-click a photo in the grid above first."
+        );
+        return;
+      }
+
+      socialReadyPhotos.forEach((photo, index) => {
+        const a = document.createElement("a");
+        a.href = photo.url;
+        a.download = `lot-rocket-photo-${index + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
     });
   }
 
