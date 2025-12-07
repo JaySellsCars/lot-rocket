@@ -116,7 +116,7 @@ body {
   margin: 0 auto 1rem;
 }
 
-/* Step 3 two-column layout (optional inner grid) */
+/* Optional Step 3 inner grid */
 .step3-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -980,7 +980,7 @@ body.dark-theme .step2-card .copy-btn {
   gap: 0.35rem;
 }
 
-/* ====== DESIGN STUDIO 3.0 OVERLAY (KONVA) ====== */
+/* ====== CREATIVE STUDIO OVERLAY (Fabric) ====== */
 
 .creative-overlay {
   position: fixed;
@@ -992,10 +992,10 @@ body.dark-theme .step2-card .copy-btn {
   padding: 1.25rem;
   z-index: 70;
 }
+
 .creative-overlay.hidden {
   display: none !important;
 }
-
 
 .creative-modal {
   width: min(1420px, 98vw);
@@ -1008,7 +1008,6 @@ body.dark-theme .step2-card .copy-btn {
   flex-direction: column;
   overflow: hidden;
 }
-
 
 .creative-header {
   padding: 0.9rem 1rem;
@@ -1048,14 +1047,7 @@ body.dark-theme .step2-card .copy-btn {
   overflow: hidden;
 }
 
-
 /* Left + Right tool columns */
-.creative-tools,
-.creative-properties {
-  font-size: 0.85rem;
-  overflow-y: auto;
-}
-
 .creative-tools,
 .creative-properties {
   font-size: 0.85rem;
@@ -1084,6 +1076,7 @@ body.dark-theme .step2-card .copy-btn {
   border-color: transparent;
   color: #020617;
 }
+
 .tools-label {
   margin: 0.5rem 0 0.25rem;
   font-size: 0.75rem;
@@ -1156,7 +1149,6 @@ body.dark-theme .step2-card .copy-btn {
   min-height: 520px;
 }
 
-
 /* In case Konva injects canvases directly */
 .creative-canvas-wrap canvas {
   display: block;
@@ -1167,7 +1159,6 @@ body.dark-theme .step2-card .copy-btn {
 .prop-group {
   margin-bottom: 0.8rem;
 }
-
 
 .prop-group h4 {
   margin: 0 0 0.5rem;
@@ -1203,7 +1194,8 @@ body.dark-theme .step2-card .copy-btn {
   display: grid;
   gap: 0.4rem;
 }
-/* ====== DESIGN STUDIO 3.0 LAYOUT ====== */
+
+/* ====== DESIGN STUDIO 3.0 LAYOUT (Konva) ====== */
 
 .design-studio-overlay {
   position: fixed;
@@ -1252,7 +1244,11 @@ body.dark-theme .step2-card .copy-btn {
   flex: 1;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 260px;
-/* ===== Video Brief Output UI ===== */
+  gap: 1rem;
+  padding: 1rem 1.4rem 1.3rem;
+}
+
+/* ===== Video Brief Output UI (shared styles) ===== */
 
 .video-output-header {
   display: flex;
@@ -1349,12 +1345,6 @@ body.dark-theme .step2-card .copy-btn {
   border-color: #f97316;
 }
 
-
-
-
-/* ====== RESPONSIVE ====== */
-
-
 /* ====== RESPONSIVE ====== */
 
 /* Slightly smaller on tablet */
@@ -1415,9 +1405,10 @@ body.dark-theme .step2-card .copy-btn {
     overflow-y: auto;
   }
 
-.creative-canvas-wrap {
-  height: auto;
-  max-height: 70vh;
+  .creative-canvas-wrap {
+    height: auto;
+    max-height: 70vh;
+  }
 }
 
 /* ======================================
@@ -1426,9 +1417,9 @@ body.dark-theme .step2-card .copy-btn {
 
 .video-output-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.75rem;
-  margin-top: 1rem;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 @media (min-width: 1024px) {
@@ -1438,10 +1429,11 @@ body.dark-theme .step2-card .copy-btn {
 }
 
 .video-output-card {
-  border-radius: 0.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: rgba(15, 23, 42, 0.9);
-  padding: 0.75rem;
+  background: #0d1126;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
 }
 
 body.light-theme .video-output-card {
@@ -1449,33 +1441,31 @@ body.light-theme .video-output-card {
   border-color: rgba(148, 163, 184, 0.6);
 }
 
-.video-output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.35rem;
-}
-
 .video-output-card h4 {
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
 .video-output-card textarea {
   width: 100%;
-  min-height: 110px;
+  background: #050816;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
   resize: vertical;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.95);
-  color: inherit;
-  font-size: 0.85rem;
-  padding: 0.5rem 0.6rem;
+  min-height: 140px;
 }
 
 body.light-theme .video-output-card textarea {
   background: #ffffff;
+  color: #020617;
 }
+
+/* --- extra video modal helpers --- */
 
 .video-note {
   margin-top: 0.5rem;
@@ -1487,7 +1477,7 @@ body.light-theme .video-output-card textarea {
   font-size: 0.8rem;
   opacity: 0.8;
 }
-/* ----- AI Video Modal Cleanup ----- */
+
 .wide-video-modal {
   max-width: 650px;
 }
@@ -1509,54 +1499,13 @@ body.light-theme .video-output-card textarea {
   font-size: 0.85rem;
   margin-top: 8px;
 }
-/* === VIDEO OUTPUT GRID (New) ========================== */
-
-.video-output-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.video-output-card {
-  background: #0d1126;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1.25rem;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.25);
-}
-
-.video-output-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.video-output-header h4 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.video-output-card textarea {
-  width: 100%;
-  background: #050816;
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #fff;
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  resize: vertical;
-  min-height: 140px;
-}
 
 .video-integrations {
   margin-top: 2.5rem;
   padding: 1.5rem;
   background: #0d1126;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .video-integrations .video-note {
