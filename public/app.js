@@ -1189,11 +1189,18 @@ function renderStudioPhotoTray() {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
-  // Template + Save/Load buttons
-const loadDesignBtn = document.getElementById("loadDesignBtn");
+ 
+// Template + Save/Load buttons
+const loadDesignBtn       = document.getElementById("loadDesignBtn");
 
-const studioPhotoTray = document.getElementById("studioPhotoTray");
+
+const templatePaymentBtn  = document.getElementById("templatePayment");
+const templateArrivalBtn  = document.getElementById("templateArrival");
+const templateSaleBtn     = document.getElementById("templateSale");
+
+const studioPhotoTray     = document.getElementById("studioPhotoTray");
 let studioAvailablePhotos = [];  // NEW
+
 
 let studioStage = null;
 let studioLayer = null;
