@@ -98,7 +98,6 @@ function sendAIError(res, err, friendlyMessage) {
   });
 }
 
-
 // ---------------- Helper: scrape page text ----------------
 
 async function scrapePage(url) {
@@ -158,6 +157,7 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   // HARD CAP: only send the first 24 back to the frontend
   return Array.from(urls).slice(0, 24);
 }
+
 // ---------------- AI Photo Processing Helper (STUB) ----------------
 // Later this will call a real background-removal + photo enhancement API.
 // For now, it returns the original URL so the pipeline stays stable.
@@ -171,7 +171,6 @@ async function processSinglePhoto(photoUrl) {
     return photoUrl;
   }
 }
-
 
 // ---------------- Helper: call GPT for structured social kit ----------------
 
@@ -294,6 +293,58 @@ app.post("/api/process-photos", async (req, res) => {
   }
 });
 
+// Full social kit from dealer URL
+app.post("/api/social-kit", async (req, res) => {
+  try {
+    const pageUrl = normalizeUrl(req.body?.url);
+    const labelOverride = req.body?.labelOverride || "";
+    const priceOverride = req.body?.priceOverride || "";
+
+    if (!pageUrl) {
+      return res
+        .status(400)
+        .json({ error: "Invalid or missing URL. Please paste a full dealer link." });
+    }
+
+    const pageInfo = await scrapePage(pageUrl);
+    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+
+    const kit = await buildSocialKit({
+      pageInfo,
+      labelOverride,
+      priceOverride,
+      photos,
+    });
+
+    // -----------------------------------
+    // AI Photo Processing Pipeline
+    // -----------------------------------
+    let editedPhotos = [];
+
+    try {
+      if (Array.isArray(photos) && photos.length > 0) {
+        for (const url of photos) {
+          try {
+            const processedUrl = await processSinglePhoto(url);
+            editedPhotos.push({ originalUrl: url, processedUrl });
+          } catch (innerErr) {
+            console.error("Photo processing failed for", url, innerErr);
+            editedPhotos.push({ originalUrl: url, processedUrl: url });
+          }
+        }
+      }
+    } catch (err2) {
+      console.error("Photo processing pipeline error:", err2);
+    }
+
+    kit.editedPhotos = editedPhotos;
+
+    // Respond with full kit
+    res.json(kit);
+  } catch (err) {
+    return sendAIError(res, err, "Failed to build social kit.");
+  }
+});
 
 // New content for a single platform (regen buttons)
 app.post("/api/new-post", async (req, res) => {
