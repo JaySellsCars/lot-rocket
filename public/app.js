@@ -1,6 +1,6 @@
 // public/app.js – Lot Rocket frontend logic v2.5.6
 // Stable: theme toggle, Boost, calculators, side tools.
-// Step 3: Creative Hub (Fabric) + Design Studio 3.0 (Konva) + Social Strip.
+// Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5.6");
@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Brand palette for Design Studio 3.5
   const BRAND = {
-    primary: "#f97316",   // accent-1
+    primary: "#f97316", // accent-1
     secondary: "#ec4899", // accent-2
     dark: "#020617",
     light: "#f9fafb",
@@ -541,9 +541,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "videoThumbPromptOutputBottom"
   );
 
-  /**
-   * Fill both the right-side modal textareas and the bottom copies.
-   */
   function populateVideoOutputs(sections) {
     if (!sections) return;
 
@@ -568,9 +565,6 @@ document.addEventListener("DOMContentLoaded", () => {
       videoThumbPromptOutputBottom.value = thumbPrompt;
   }
 
-  /**
-   * Given the full markdown text from AI, split it into the 4 sections.
-   */
   function parseVideoSections(full) {
     if (!full || typeof full !== "string") {
       return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
@@ -606,11 +600,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  /**
-   * Custom submit wiring for the Video Shot Plan builder.
-   * Calls /api/message-helper with mode="video-brief",
-   * then parses and fills all four output boxes (right panel + bottom).
-   */
   if (
     videoFormEl &&
     videoScriptOutput &&
@@ -698,10 +687,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
 
-  // NEW: optional prev/next buttons for the carousel
-  const socialPrevBtn = document.getElementById("socialPrevBtn");
-  const socialNextBtn = document.getElementById("socialNextBtn");
-
   const creativeStudioOverlay = document.getElementById(
     "creativeStudioOverlay"
   );
@@ -723,8 +708,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // NEW: Social-ready photos state: [{ url, selected }]
   let socialReadyPhotos = [];
-  // NEW: which item is the "active" one in the carousel
-  let socialActiveIndex = 0;
 
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
@@ -988,19 +971,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- Social-ready strip helpers ----
-
-  function scrollActiveSocialItemIntoView() {
-    if (!socialCarousel) return;
-    const active = socialCarousel.querySelector(".social-carousel-item-active");
-    if (active && typeof active.scrollIntoView === "function") {
-      active.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
-    }
-  }
-
   function renderSocialCarousel() {
     if (!socialCarousel) return;
     socialCarousel.innerHTML = "";
@@ -1014,19 +984,12 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Ensure active index is in range
-    if (socialActiveIndex < 0) socialActiveIndex = 0;
-    if (socialActiveIndex >= socialReadyPhotos.length) {
-      socialActiveIndex = socialReadyPhotos.length - 1;
-    }
-
     socialReadyPhotos.forEach((photo, index) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className =
         "social-carousel-item" +
-        (photo.selected ? " social-carousel-item-selected" : "") +
-        (index === socialActiveIndex ? " social-carousel-item-active" : "");
+        (photo.selected ? " social-carousel-item-selected" : "");
       btn.dataset.index = String(index);
 
       const img = document.createElement("img");
@@ -1039,39 +1002,30 @@ document.addEventListener("DOMContentLoaded", () => {
       socialCarousel.appendChild(btn);
     });
 
-    // Toggle selection + set active on click
     socialCarousel
       .querySelectorAll(".social-carousel-item")
       .forEach((btn) => {
         btn.addEventListener("click", () => {
           const idx = Number(btn.dataset.index || "0");
           socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
-          socialActiveIndex = idx; // make this the focused slide
           renderSocialCarousel();
         });
       });
-
-    // After render, make sure active item is centered / visible
-    scrollActiveSocialItemIntoView();
   }
 
   function addPhotoToSocialReady(url) {
     if (!url) return;
-    const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
-    if (existingIndex !== -1) {
-      // Already in the strip; mark selected and make active
-      socialReadyPhotos = socialReadyPhotos.map((p, i) =>
+    const exists = socialReadyPhotos.some((p) => p.url === url);
+    if (exists) {
+      socialReadyPhotos = socialReadyPhotos.map((p) =>
         p.url === url ? { ...p, selected: true } : p
       );
-      socialActiveIndex = existingIndex;
     } else {
       socialReadyPhotos.push({ url, selected: true });
-      socialActiveIndex = socialReadyPhotos.length - 1;
     }
     renderSocialCarousel();
   }
 
-  // ---- Thumbnails + drag/drop ----
   function addCreativeThumb(url) {
     if (!creativeThumbGrid) return;
     const img = document.createElement("img");
@@ -1167,25 +1121,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial empty strip render
   renderSocialCarousel();
 
-  // Optional prev/next carousel controls
-  if (socialPrevBtn) {
-    socialPrevBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) return;
-      socialActiveIndex = Math.max(0, socialActiveIndex - 1);
-      renderSocialCarousel();
-    });
-  }
-  if (socialNextBtn) {
-    socialNextBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) return;
-      socialActiveIndex = Math.min(
-        socialReadyPhotos.length - 1,
-        socialActiveIndex + 1
-      );
-      renderSocialCarousel();
-    });
-  }
-
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
@@ -1210,7 +1145,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
-  // Template + Save/Load buttons
   const saveDesignBtn = document.getElementById("saveDesignBtn");
   const loadDesignBtn = document.getElementById("loadDesignBtn");
 
@@ -1230,7 +1164,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let studioUIWired = false;
   let studioDnDWired = false;
 
-  // ---- Core init ----
   function initDesignStudio() {
     if (!window.Konva) {
       console.warn("Konva not loaded – Design Studio 3.5 disabled.");
@@ -1256,7 +1189,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setStudioBackground(BRAND.dark);
 
-    // Single transformer for all selections
     studioTransformer = new Konva.Transformer({
       rotateEnabled: true,
       enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
@@ -1268,7 +1200,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     studioLayer.add(studioTransformer);
 
-    // Clicking empty canvas / background clears selection
     studioStage.on("click tap", (e) => {
       const target = e.target;
       if (
@@ -1286,7 +1217,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 
-  // ---- History ----
   function saveStudioHistory() {
     if (!studioStage) return;
     const json = studioStage.toJSON();
@@ -1316,7 +1246,6 @@ document.addEventListener("DOMContentLoaded", () => {
     studioLayer = layers[0] || new Konva.Layer();
     if (!layers.length) studioStage.add(studioLayer);
 
-    // Find or recreate transformer
     studioTransformer =
       studioStage.findOne("Transformer") ||
       new Konva.Transformer({
@@ -1357,11 +1286,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---- Selection / layers ----
   function selectStudioNode(node) {
     studioSelectedNode = node;
 
-    // Hook transformer
     if (studioTransformer && studioLayer) {
       if (node) {
         studioTransformer.nodes([node]);
@@ -1437,7 +1364,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Add elements ----
   function addStudioText(text = "YOUR HEADLINE HERE") {
     if (!studioLayer || !studioStage) return;
 
@@ -1615,7 +1541,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 
-  // ---- Templates ----
   function clearStudioNonBackgroundNodes() {
     if (!studioLayer) return;
     studioLayer.getChildren().forEach((node) => {
@@ -1789,7 +1714,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 
-  // ---- Save / Load ----
   function saveDesignToLocal() {
     if (!studioStage) {
       alert("Open Design Studio first, then save.");
@@ -1830,7 +1754,6 @@ document.addEventListener("DOMContentLoaded", () => {
       studioLayer = layers[0] || new Konva.Layer();
       if (!layers.length) studioStage.add(studioLayer);
 
-      // Find or recreate transformer
       studioTransformer =
         studioStage.findOne("Transformer") ||
         new Konva.Transformer({
@@ -1868,7 +1791,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---- UI wiring for toolbar + controls ----
   function wireDesignStudioUI() {
     if (studioUIWired) return;
     studioUIWired = true;
@@ -1933,20 +1855,262 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-if (layerDeleteBtn) {
-  layerDeleteBtn.addEventListener("click", () => {
-    if (!studioSelectedNode || !studioLayer) return;
-    studioSelectedNode.destroy();
-    studioSelectedNode = null;
+    if (layerDeleteBtn) {
+      layerDeleteBtn.addEventListener("click", () => {
+        if (!studioSelectedNode || !studioLayer) return;
+        studioSelectedNode.destroy();
+        studioSelectedNode = null;
 
-    if (studioTransformer) {
-      studioTransformer.nodes([]);
+        if (studioTransformer) {
+          studioTransformer.nodes([]);
+          studioTransformer.visible(false);
+        }
+
+        studioLayer.draw();
+        rebuildLayersList();
+        saveStudioHistory();
+      });
     }
-  });
-}
+  }
 
-console.log("✅ Lot Rocket frontend wiring complete");
+  function gatherImageUrlsForStudios() {
+    const urls = [];
+
+    if (creativeThumbGrid) {
+      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+        if (img.src) urls.push(img.src);
+      });
+    }
+
+    if (!urls.length && dealerPhotos.length) {
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const fallback = dealerPhotos.map((p) => p.src);
+      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+    }
+
+    return urls.slice(0, 24);
+  }
+
+  function renderStudioPhotoTray() {
+    if (!studioPhotoTray) return;
+    studioPhotoTray.innerHTML = "";
+
+    studioAvailablePhotos.forEach((url) => {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Design photo";
+      img.loading = "lazy";
+      img.className = "studio-photo-thumb";
+      img.draggable = true;
+
+      img.addEventListener("click", (e) => {
+        if (e.shiftKey) {
+          addStudioImageFromUrl(url, true);
+        } else {
+          addStudioImageFromUrl(url, false);
+        }
+      });
+
+      img.addEventListener("dblclick", () => {
+        addStudioImageFromUrl(url, true);
+      });
+
+      img.addEventListener("dragstart", (e) => {
+        try {
+          e.dataTransfer.setData("text/plain", url);
+        } catch (_) {}
+      });
+
+      studioPhotoTray.appendChild(img);
+    });
+
+    const konvaContainer = document.getElementById("konvaStageContainer");
+    if (konvaContainer && !studioDnDWired) {
+      studioDnDWired = true;
+
+      konvaContainer.addEventListener("dragover", (e) => {
+        e.preventDefault();
+      });
+
+      konvaContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        let url = "";
+        try {
+          url = e.dataTransfer.getData("text/plain");
+        } catch (_) {}
+
+        if (url) addStudioImageFromUrl(url, false);
+      });
+    }
+  }
+
+  function openDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.remove("hidden");
+
+    if (!studioStage && window.Konva) {
+      initDesignStudio();
+    } else if (studioStage) {
+      studioStage.draw();
+    }
+
+    rebuildLayersList();
+
+    if (!studioAvailablePhotos.length) {
+      const urls = gatherImageUrlsForStudios();
+      studioAvailablePhotos = urls.slice(0, 24);
+    }
+
+    renderStudioPhotoTray();
+  }
+
+  function closeDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.add("hidden");
+  }
+
+  if (designLauncher) {
+    designLauncher.addEventListener("click", openDesignStudio);
+  }
+  if (designCloseBtn && designStudioOverlay) {
+    designCloseBtn.addEventListener("click", closeDesignStudio);
+    designStudioOverlay.addEventListener("click", (e) => {
+      if (e.target === designStudioOverlay) closeDesignStudio();
+    });
+  }
+
+  if (templatePaymentBtn) {
+    templatePaymentBtn.addEventListener("click", () =>
+      applyTemplate("payment")
+    );
+  }
+  if (templateArrivalBtn) {
+    templateArrivalBtn.addEventListener("click", () =>
+      applyTemplate("arrival")
+    );
+  }
+  if (templateSaleBtn) {
+    templateSaleBtn.addEventListener("click", () => applyTemplate("sale"));
+  }
+  if (saveDesignBtn) {
+    saveDesignBtn.addEventListener("click", saveDesignToLocal);
+  }
+  if (loadDesignBtn) {
+    loadDesignBtn.addEventListener("click", loadDesignFromLocal);
+  }
+
+  function pushUrlsIntoDesignStudio(urls) {
+    const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
+
+    if (!list.length) {
+      alert("No photos available. Boost a listing or add photos first.");
+      return;
+    }
+
+    studioAvailablePhotos = list.slice(0, 24);
+    renderStudioPhotoTray();
+
+    openDesignStudio();
+
+    list.slice(0, 8).forEach((url, index) => {
+      addStudioImageFromUrl(url, index === 0);
+    });
+  }
+
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
+
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length
+        ? selected
+        : dealerPhotos.map((p) => p.src)
+      ).slice(0, 8);
+
+      if (!chosen.length) {
+        alert("No photos selected.");
+        return;
+      }
+
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
+      });
+
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
+      }
+      pushUrlsIntoDesignStudio(urls);
+    });
+  }
+
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
+      }
+      openCreativeStudio();
+      urls.forEach((url) => addImageFromUrl(url));
+    });
+  }
+
+  if (openDesignFromCarouselBtn) {
+    openDesignFromCarouselBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos yet. Double-click a photo in the grid above to add it."
+        );
+        return;
+      }
+
+      const selected = socialReadyPhotos
+        .filter((p) => p.selected)
+        .map((p) => p.url);
+      const chosen = (selected.length
+        ? selected
+        : socialReadyPhotos.map((p) => p.url)
+      ).slice(0, 8);
+
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  if (downloadAllEditedBtn) {
+    downloadAllEditedBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos to download. Double-click a photo in the grid above first."
+        );
+        return;
+      }
+
+      socialReadyPhotos.forEach((photo, index) => {
+        const a = document.createElement("a");
+        a.href = photo.url;
+        a.download = `lot-rocket-photo-${index + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+    });
+  }
+
+  console.log("✅ Lot Rocket frontend wiring complete");
 });
-
-
-
