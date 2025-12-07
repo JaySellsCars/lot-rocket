@@ -1994,21 +1994,27 @@ function openDesignStudio() {
 
   // ---- Shared wiring from Step 1 / Step 3 into Design Studio ----
 
-  function pushUrlsIntoDesignStudio(urls) {
-    if (!urls.length) {
-      alert("No photos available. Boost a listing or add photos first.");
-      return;
-    }
-    openDesignStudio();
-    urls.forEach((url, index) => {
-      addStudioImageFromUrl(url, index === 0); // first is background
-    });
+function pushUrlsIntoDesignStudio(urls) {
+  const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
+
+  if (!list.length) {
+    alert("No photos available. Boost a listing or add photos first.");
+    return;
   }
-  // Allow other scripts to open Design Studio with photos
-  window.openDesignStudioWithPhotos = function (urls = []) {
-    const list = Array.isArray(urls) ? urls : [];
-    pushUrlsIntoDesignStudio(list);
-  };
+
+  // Update tray source (up to 24)
+  studioAvailablePhotos = list.slice(0, 24);
+  renderStudioPhotoTray();
+
+  // Open Design Studio
+  openDesignStudio();
+
+  // First = background, rest = layers (max 8)
+  list.slice(0, 8).forEach((url, index) => {
+    addStudioImageFromUrl(url, index === 0);
+  });
+}
+
 
   // Step 1 button – “Send top photos to Creative Studio” (and Design Studio)
   if (sendPhotosToStudioBtn) {
