@@ -1104,7 +1104,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
-  // NEW: Template + Save/Load buttons (already in your HTML)
+  // Template + Save/Load buttons
   const templatePaymentBtn = document.getElementById("templatePayment");
   const templateArrivalBtn = document.getElementById("templateArrival");
   const templateSaleBtn = document.getElementById("templateSale");
@@ -1114,11 +1114,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let studioStage = null;
   let studioLayer = null;
   let studioSelectedNode = null;
-  let studioTransformer = null;   // NEW
+  let studioTransformer = null;
   let studioHistory = [];
   let studioHistoryIndex = -1;
   let studioUIWired = false;
-
 
   // ---- Core init ----
   function initDesignStudio() {
@@ -1132,7 +1131,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Fixed logical canvas; CSS handles scaling.
     const width = 1080;
     const height = 1080;
 
@@ -1147,15 +1145,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setStudioBackground(BRAND.dark);
 
-    // Create a single Transformer used for all selected nodes
+    // Single transformer for all selections
     studioTransformer = new Konva.Transformer({
       rotateEnabled: true,
-      enabledAnchors: [
-        "top-left",
-        "top-right",
-        "bottom-left",
-        "bottom-right",
-      ],
+      enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
       anchorSize: 10,
       borderStroke: "#e5e7eb",
       anchorFill: BRAND.primary,
@@ -1164,11 +1157,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     studioLayer.add(studioTransformer);
 
+    // Clicking empty canvas / background clears selection
+    studioStage.on("click tap", (e) => {
+      const target = e.target;
+      if (
+        target === studioStage ||
+        target === studioLayer ||
+        target.name() === "BackgroundLayer"
+      ) {
+        selectStudioNode(null);
+      }
+    });
+
     wireDesignStudioUI();
     attachEventsToAllNodes();
     rebuildLayersList();
     saveStudioHistory();
-
+  }
 
   // ---- History ----
   function saveStudioHistory() {
@@ -1200,7 +1205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     studioLayer = layers[0] || new Konva.Layer();
     if (!layers.length) studioStage.add(studioLayer);
 
-    // Find or recreate transformer after restore
+    // Find or recreate transformer
     studioTransformer =
       studioStage.findOne("Transformer") ||
       new Konva.Transformer({
@@ -1227,7 +1232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     attachEventsToAllNodes();
     rebuildLayersList();
     wireDesignStudioUI();
-
+  }
 
   function studioUndo() {
     if (studioHistoryIndex > 0) {
@@ -1244,6 +1249,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---- Selection / layers ----
   function selectStudioNode(node) {
     studioSelectedNode = node;
+
+    // Hook transformer
+    if (studioTransformer && studioLayer) {
+      if (node) {
+        studioTransformer.nodes([node]);
+        studioTransformer.visible(true);
+      } else {
+        studioTransformer.nodes([]);
+        studioTransformer.visible(false);
+      }
+      studioLayer.batchDraw();
+    }
+
     rebuildLayersList();
     syncLayerControlsWithSelection();
   }
@@ -1255,6 +1273,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     nodes.forEach((node, index) => {
       if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
+
       const li = document.createElement("li");
       li.className = "layer-item";
       li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
@@ -1301,6 +1321,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!studioLayer) return;
     studioLayer.getChildren().forEach((node) => {
       if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
       attachNodeInteractions(node);
     });
   }
@@ -1421,18 +1442,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const w = img.width * finalRatio;
       const h = img.height * finalRatio;
 
-    const node = new Konva.Image({
-      image: img,
-      x: studioStage.width() / 2,
-      y: studioStage.height() / 2,
-      width: w,
-      height: h,
-      offsetX: w / 2,
-      offsetY: h / 2,
-      draggable: true,
-      name: asBackground ? "Background Photo" : "Photo Layer",
-    });
-
+      const node = new Konva.Image({
+        image: img,
+        x: studioStage.width() / 2,
+        y: studioStage.height() / 2,
+        width: w,
+        height: h,
+        offsetX: w / 2,
+        offsetY: h / 2,
+        draggable: true,
+        name: asBackground ? "Background Photo" : "Photo Layer",
+      });
 
       attachNodeInteractions(node);
       studioLayer.add(node);
@@ -1488,12 +1508,16 @@ document.addEventListener("DOMContentLoaded", () => {
   function clearStudioNonBackgroundNodes() {
     if (!studioLayer) return;
     studioLayer.getChildren().forEach((node) => {
-      if (node.name() !== "BackgroundLayer") {
-        node.destroy();
-      }
+      if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
+      node.destroy();
     });
     studioLayer.draw();
     studioSelectedNode = null;
+    if (studioTransformer) {
+      studioTransformer.nodes([]);
+      studioTransformer.visible(false);
+    }
   }
 
   function applyTemplate(type) {
@@ -1646,7 +1670,6 @@ document.addEventListener("DOMContentLoaded", () => {
       attachNodeInteractions(congrats);
       studioLayer.add(congrats);
     } else {
-      // fallback: just add default text
       addStudioText();
     }
 
@@ -1695,6 +1718,27 @@ document.addEventListener("DOMContentLoaded", () => {
       const layers = studioStage.getLayers();
       studioLayer = layers[0] || new Konva.Layer();
       if (!layers.length) studioStage.add(studioLayer);
+
+      // Find or recreate transformer
+      studioTransformer =
+        studioStage.findOne("Transformer") ||
+        new Konva.Transformer({
+          rotateEnabled: true,
+          enabledAnchors: [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+          ],
+          anchorSize: 10,
+          borderStroke: "#e5e7eb",
+          anchorFill: BRAND.primary,
+          anchorStroke: BRAND.primary,
+          anchorCornerRadius: 4,
+        });
+      if (!studioTransformer.getStage()) {
+        studioLayer.add(studioTransformer);
+      }
 
       studioSelectedNode = null;
       studioHistory = [stored];
@@ -1783,6 +1827,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!studioSelectedNode || !studioLayer) return;
         studioSelectedNode.destroy();
         studioSelectedNode = null;
+
+        if (studioTransformer) {
+          studioTransformer.nodes([]);
+          studioTransformer.visible(false);
+        }
+
         studioLayer.draw();
         rebuildLayersList();
         saveStudioHistory();
@@ -1837,6 +1887,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (loadDesignBtn) {
     loadDesignBtn.addEventListener("click", loadDesignFromLocal);
   }
+
 
 
   // ---- Shared wiring from Step 1 / Step 3 into Design Studio ----
