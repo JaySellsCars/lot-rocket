@@ -1114,9 +1114,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let studioStage = null;
   let studioLayer = null;
   let studioSelectedNode = null;
+  let studioTransformer = null;   // NEW
   let studioHistory = [];
   let studioHistoryIndex = -1;
   let studioUIWired = false;
+
 
   // ---- Core init ----
   function initDesignStudio() {
@@ -1144,11 +1146,29 @@ document.addEventListener("DOMContentLoaded", () => {
     studioStage.add(studioLayer);
 
     setStudioBackground(BRAND.dark);
+
+    // Create a single Transformer used for all selected nodes
+    studioTransformer = new Konva.Transformer({
+      rotateEnabled: true,
+      enabledAnchors: [
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+      ],
+      anchorSize: 10,
+      borderStroke: "#e5e7eb",
+      anchorFill: BRAND.primary,
+      anchorStroke: BRAND.primary,
+      anchorCornerRadius: 4,
+    });
+    studioLayer.add(studioTransformer);
+
     wireDesignStudioUI();
     attachEventsToAllNodes();
     rebuildLayersList();
     saveStudioHistory();
-  }
+
 
   // ---- History ----
   function saveStudioHistory() {
