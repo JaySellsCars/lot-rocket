@@ -350,27 +350,28 @@
         <button id="designClose" class="modal-close-btn">✕</button>
       </div>
 
-      <div class="creative-top-bar">
-        <div class="preset-label">
-          <span>Canvas preset</span>
-          <select id="studioSizePreset">
-            <option value="1080x1080">Square – 1080x1080</option>
-            <option value="1080x1920">Story – 1080x1920</option>
-            <option value="1920x1080">Landscape – 1920x1080</option>
-          </select>
-        </div>
+    <div class="creative-top-bar">
+      <span class="preset-label">Canvas preset</span>
+      <select id="studioSizePreset">
+        <option value="1080x1080">Square – 1080x1080</option>
+        <option value="1080x1920">Story – 1080x1920</option>
+        <option value="1920x1080">Landscape – 1920x1080</option>
+      </select>
 
-        <div class="creative-actions">
-          <button id="studioUndoBtn">Undo</button>
-          <button id="studioRedoBtn">Redo</button>
-          <button id="studioExportPng">Export PNG</button>
-        </div>
+      <div class="creative-actions">
+        <button id="studioUndoBtn">Undo</button>
+        <button id="studioRedoBtn">Redo</button>
+        <button id="studioExportPng">Export PNG</button>
       </div>
+    </div>
 
-      <div class="creative-body">
-        <!-- LEFT: tools -->
-        <aside class="creative-tools">
-          <h3>Tools</h3>
+    <!-- NEW: horizontal photo strip above the canvas -->
+    <div class="studio-photo-strip">
+      <div id="studioPhotoTray" class="studio-photo-tray"></div>
+    </div>
+
+    <div class="creative-body">
+
 
           <!-- Main tools -->
           <button id="toolAddText" class="pill-btn">Add Text</button>
