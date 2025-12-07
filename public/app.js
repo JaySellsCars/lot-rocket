@@ -6,6 +6,20 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5.5");
   const apiBase = "";
 
+  // Brand palette for Design Studio 3.5
+  const BRAND = {
+    primary: "#f97316",   // accent-1
+    secondary: "#ec4899", // accent-2
+    dark: "#020617",
+    light: "#f9fafb",
+    textLight: "#f9fafb",
+    textDark: "#020617",
+  };
+
+  const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
+
+
+
   // --------------------------------------------------
   // THEME TOGGLE
   // --------------------------------------------------
@@ -1067,7 +1081,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==================================================
-  // DESIGN STUDIO 3.0 (Konva)
+  // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
@@ -1090,15 +1104,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
+  // NEW: Template + Save/Load buttons (already in your HTML)
+  const templatePaymentBtn = document.getElementById("templatePayment");
+  const templateArrivalBtn = document.getElementById("templateArrival");
+  const templateSaleBtn = document.getElementById("templateSale");
+  const saveDesignBtn = document.getElementById("saveDesignBtn");
+  const loadDesignBtn = document.getElementById("loadDesignBtn");
+
   let studioStage = null;
   let studioLayer = null;
   let studioSelectedNode = null;
   let studioHistory = [];
   let studioHistoryIndex = -1;
+  let studioUIWired = false;
 
+  // ---- Core init ----
   function initDesignStudio() {
     if (!window.Konva) {
-      console.warn("Konva not loaded – Design Studio 3.0 disabled.");
+      console.warn("Konva not loaded – Design Studio 3.5 disabled.");
       return;
     }
     const container = document.getElementById("konvaStageContainer");
@@ -1107,7 +1130,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Use fixed logical canvas size; CSS handles visual sizing.
+    // Fixed logical canvas; CSS handles scaling.
     const width = 1080;
     const height = 1080;
 
@@ -1120,8 +1143,10 @@ document.addEventListener("DOMContentLoaded", () => {
     studioLayer = new Konva.Layer();
     studioStage.add(studioLayer);
 
-    setStudioBackground("#111111");
+    setStudioBackground(BRAND.dark);
     wireDesignStudioUI();
+    attachEventsToAllNodes();
+    rebuildLayersList();
     saveStudioHistory();
   }
 
@@ -1135,18 +1160,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function restoreStudioFromHistory(index) {
-    if (!studioStage || index < 0 || index >= studioHistory.length) return;
-    const container = studioStage.container();
+    if (!window.Konva) return;
+    if (!studioHistory.length) return;
+    if (index < 0 || index >= studioHistory.length) return;
+
+    const container =
+      (studioStage && studioStage.container()) ||
+      document.getElementById("konvaStageContainer");
+    if (!container) return;
+
     const json = studioHistory[index];
 
-    studioHistoryIndex = index;
-    studioStage.destroy();
+    if (studioStage) {
+      studioStage.destroy();
+    }
+
     studioStage = Konva.Node.create(json, container);
     const layers = studioStage.getLayers();
     studioLayer = layers[0] || new Konva.Layer();
     if (!layers.length) studioStage.add(studioLayer);
+
     studioSelectedNode = null;
+    studioHistoryIndex = index;
+
+    attachEventsToAllNodes();
     rebuildLayersList();
+    wireDesignStudioUI();
   }
 
   function studioUndo() {
@@ -1217,6 +1256,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function attachEventsToAllNodes() {
+    if (!studioLayer) return;
+    studioLayer.getChildren().forEach((node) => {
+      if (node.name() === "BackgroundLayer") return;
+      attachNodeInteractions(node);
+    });
+  }
+
   // ---- Add elements ----
   function addStudioText(text = "YOUR HEADLINE HERE") {
     if (!studioLayer || !studioStage) return;
@@ -1227,7 +1274,7 @@ document.addEventListener("DOMContentLoaded", () => {
       text,
       fontFamily: "system-ui, sans-serif",
       fontSize: 48,
-      fill: "#FFFFFF",
+      fill: BRAND.textLight,
       shadowColor: "black",
       shadowBlur: 6,
       shadowOffset: { x: 2, y: 2 },
@@ -1280,7 +1327,7 @@ document.addEventListener("DOMContentLoaded", () => {
       y: 160,
       innerRadius: 70,
       outerRadius: 90,
-      fill: "#FFFFFF",
+      fill: BRAND.light,
       stroke: "#FF2E2E",
       strokeWidth: 6,
       name: "Badge Layer",
@@ -1294,7 +1341,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 
-  function setStudioBackground(color = "#111111") {
+  function setStudioBackground(color = BRAND.dark) {
     if (!studioLayer || !studioStage) return;
     let bg = studioLayer.findOne(".BackgroundLayer");
     if (!bg) {
@@ -1323,14 +1370,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const img = new Image();
     img.onload = () => {
-      // Fit image to stage, then shrink a bit so it isn't edge-to-edge
       const fitRatio =
         Math.min(
           studioStage.width() / img.width,
           studioStage.height() / img.height
         ) || 1;
 
-      const finalRatio = fitRatio * 0.9; // 0.9 = 90% of full size
+      const finalRatio = fitRatio * 0.9;
       const w = img.width * finalRatio;
       const h = img.height * finalRatio;
 
@@ -1365,11 +1411,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function exportStudioAsPng() {
     if (!studioStage) return;
-    const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = "lot-rocket-design.png";
-    a.click();
+    try {
+      const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
+      const a = document.createElement("a");
+      a.href = dataURL;
+      a.download = "lot-rocket-design.png";
+      a.click();
+    } catch (err) {
+      console.error("Export PNG error (likely CORS):", err);
+      alert(
+        "Browser blocked exporting this design (CORS). Some dealer images may not export."
+      );
+    }
   }
 
   function applyStudioSizePreset() {
@@ -1389,7 +1442,240 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 
+  // ---- Templates ----
+  function clearStudioNonBackgroundNodes() {
+    if (!studioLayer) return;
+    studioLayer.getChildren().forEach((node) => {
+      if (node.name() !== "BackgroundLayer") {
+        node.destroy();
+      }
+    });
+    studioLayer.draw();
+    studioSelectedNode = null;
+  }
+
+  function applyTemplate(type) {
+    if (!studioStage || !studioLayer) {
+      initDesignStudio();
+    }
+    if (!studioStage || !studioLayer) return;
+
+    clearStudioNonBackgroundNodes();
+
+    const cx = studioStage.width() / 2;
+    const cy = studioStage.height() / 2;
+
+    if (type === "payment") {
+      const barHeight = 220;
+      const barWidth = studioStage.width() * 0.95;
+
+      const bar = new Konva.Rect({
+        x: cx,
+        y: studioStage.height() - barHeight / 2 - 20,
+        width: barWidth,
+        height: barHeight,
+        fill: BRAND.primary,
+        cornerRadius: 32,
+        offsetX: barWidth / 2,
+        offsetY: barHeight / 2,
+        name: "Payment Banner",
+        draggable: true,
+      });
+
+      attachNodeInteractions(bar);
+      studioLayer.add(bar);
+
+      const priceText = new Konva.Text({
+        x: cx,
+        y: studioStage.height() - barHeight + 40,
+        text: "ONLY $___ / MO",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 72,
+        fontStyle: "bold",
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Payment Headline",
+        draggable: true,
+      });
+      priceText.offsetX(priceText.width() / 2);
+      attachNodeInteractions(priceText);
+      studioLayer.add(priceText);
+
+      const detailsText = new Konva.Text({
+        x: cx,
+        y: studioStage.height() - barHeight / 2 + 30,
+        text: "With $___ down | O.A.C.",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 32,
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Payment Details",
+        draggable: true,
+      });
+      detailsText.offsetX(detailsText.width() / 2);
+      attachNodeInteractions(detailsText);
+      studioLayer.add(detailsText);
+    } else if (type === "arrival") {
+      const barHeight = 150;
+      const barWidth = studioStage.width() * 0.9;
+
+      const bar = new Konva.Rect({
+        x: cx,
+        y: barHeight / 2 + 30,
+        width: barWidth,
+        height: barHeight,
+        fill: BRAND.secondary,
+        cornerRadius: 28,
+        offsetX: barWidth / 2,
+        offsetY: barHeight / 2,
+        name: "Arrival Banner",
+        draggable: true,
+      });
+      attachNodeInteractions(bar);
+      studioLayer.add(bar);
+
+      const headline = new Konva.Text({
+        x: cx,
+        y: bar.y(),
+        text: "JUST ARRIVED",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 72,
+        fontStyle: "bold",
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Arrival Headline",
+        draggable: true,
+      });
+      headline.offsetX(headline.width() / 2);
+      attachNodeInteractions(headline);
+      studioLayer.add(headline);
+
+      const sub = new Konva.Text({
+        x: cx,
+        y: bar.y() + 70,
+        text: "Be the first to drive it.",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 32,
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Arrival Subline",
+        draggable: true,
+      });
+      sub.offsetX(sub.width() / 2);
+      attachNodeInteractions(sub);
+      studioLayer.add(sub);
+    } else if (type === "sale") {
+      const sold = new Konva.Text({
+        x: cx,
+        y: cy,
+        text: "SOLD",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 180,
+        fontStyle: "bold",
+        fill: BRAND.textLight,
+        stroke: "#DC2626",
+        strokeWidth: 8,
+        shadowColor: "black",
+        shadowBlur: 10,
+        shadowOffset: { x: 4, y: 4 },
+        shadowOpacity: 0.5,
+        rotation: -18,
+        align: "center",
+        name: "Sold Stamp",
+        draggable: true,
+      });
+      sold.offsetX(sold.width() / 2);
+      sold.offsetY(sold.height() / 2);
+      attachNodeInteractions(sold);
+      studioLayer.add(sold);
+
+      const congrats = new Konva.Text({
+        x: cx,
+        y: cy + 160,
+        text: "Congrats [Customer Name]!",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 44,
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Sold Congrats",
+        draggable: true,
+      });
+      congrats.offsetX(congrats.width() / 2);
+      attachNodeInteractions(congrats);
+      studioLayer.add(congrats);
+    } else {
+      // fallback: just add default text
+      addStudioText();
+    }
+
+    studioLayer.draw();
+    rebuildLayersList();
+    saveStudioHistory();
+  }
+
+  // ---- Save / Load ----
+  function saveDesignToLocal() {
+    if (!studioStage) {
+      alert("Open Design Studio first, then save.");
+      return;
+    }
+    try {
+      const json = studioStage.toJSON();
+      localStorage.setItem(STUDIO_STORAGE_KEY, json);
+      alert("Design saved on this device.");
+    } catch (err) {
+      console.error("Error saving design:", err);
+      alert("Could not save this design. Check storage permissions.");
+    }
+  }
+
+  function loadDesignFromLocal() {
+    const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
+    if (!stored) {
+      alert("No saved design found yet.");
+      return;
+    }
+    if (!window.Konva) {
+      alert("Design Studio is not available (Konva missing).");
+      return;
+    }
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) {
+      alert("Design Studio area not found.");
+      return;
+    }
+
+    try {
+      if (studioStage) {
+        studioStage.destroy();
+      }
+      studioStage = Konva.Node.create(stored, container);
+      const layers = studioStage.getLayers();
+      studioLayer = layers[0] || new Konva.Layer();
+      if (!layers.length) studioStage.add(studioLayer);
+
+      studioSelectedNode = null;
+      studioHistory = [stored];
+      studioHistoryIndex = 0;
+
+      attachEventsToAllNodes();
+      rebuildLayersList();
+      wireDesignStudioUI();
+
+      if (designStudioOverlay) {
+        designStudioOverlay.classList.remove("hidden");
+      }
+    } catch (err) {
+      console.error("Error loading design:", err);
+      alert("Could not load saved design. Save a new one and try again.");
+    }
+  }
+
+  // ---- UI wiring for toolbar + controls ----
   function wireDesignStudioUI() {
+    if (studioUIWired) return;
+    studioUIWired = true;
+
     if (toolAddText) {
       toolAddText.addEventListener("click", () => addStudioText());
     }
@@ -1401,7 +1687,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (toolSetBackground) {
       toolSetBackground.addEventListener("click", () =>
-        setStudioBackground("#111111")
+        setStudioBackground(BRAND.dark)
       );
     }
 
@@ -1462,6 +1748,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ---- Open / Close overlay ----
   function openDesignStudio() {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
@@ -1488,6 +1775,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- Wire template + save/load buttons ----
+  if (templatePaymentBtn) {
+    templatePaymentBtn.addEventListener("click", () =>
+      applyTemplate("payment")
+    );
+  }
+  if (templateArrivalBtn) {
+    templateArrivalBtn.addEventListener("click", () =>
+      applyTemplate("arrival")
+    );
+  }
+  if (templateSaleBtn) {
+    templateSaleBtn.addEventListener("click", () => applyTemplate("sale"));
+  }
+  if (saveDesignBtn) {
+    saveDesignBtn.addEventListener("click", saveDesignToLocal);
+  }
+  if (loadDesignBtn) {
+    loadDesignBtn.addEventListener("click", loadDesignFromLocal);
+  }
+
+
   // ---- Shared wiring from Step 1 / Step 3 into Design Studio ----
 
   function pushUrlsIntoDesignStudio(urls) {
@@ -1500,6 +1809,11 @@ document.addEventListener("DOMContentLoaded", () => {
       addStudioImageFromUrl(url, index === 0); // first is background
     });
   }
+  // Allow other scripts to open Design Studio with photos
+  window.openDesignStudioWithPhotos = function (urls = []) {
+    const list = Array.isArray(urls) ? urls : [];
+    pushUrlsIntoDesignStudio(list);
+  };
 
   // Step 1 button – “Send top photos to Creative Studio” (and Design Studio)
   if (sendPhotosToStudioBtn) {
