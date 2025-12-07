@@ -18,8 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
 
-
-
   // --------------------------------------------------
   // THEME TOGGLE
   // --------------------------------------------------
@@ -1061,110 +1059,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-// ---- Shared helper: gather image URLs for studios ----
-function gatherImageUrlsForStudios() {
-  const urls = [];
-
-  if (creativeThumbGrid) {
-    creativeThumbGrid.querySelectorAll("img").forEach((img) => {
-      if (img.src) urls.push(img.src);
-    });
-  }
-
-  if (!urls.length && dealerPhotos.length) {
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const fallback = dealerPhotos.map((p) => p.src);
-    (selected.length ? selected : fallback).forEach((u) => urls.push(u));
-  }
-
-  return urls.slice(0, 8); // cap at 8
-}
-
-/* ⬇⬇⬇  INSERT THIS WHOLE FUNCTION HERE  ⬇⬇⬇ */
-
-// ---- Shared helper: gather image URLs for studios ----
-function gatherImageUrlsForStudios() {
-  const urls = [];
-
-  if (creativeThumbGrid) {
-    creativeThumbGrid.querySelectorAll("img").forEach((img) => {
-      if (img.src) urls.push(img.src);
-    });
-  }
-
-  if (!urls.length && dealerPhotos.length) {
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const fallback = dealerPhotos.map((p) => p.src);
-    (selected.length ? selected : fallback).forEach((u) => urls.push(u));
-  }
-
-  return urls.slice(0, 8); // cap at 8
-}
-
-/* ⬇⬇⬇  INSERT THIS WHOLE FUNCTION HERE  ⬇⬇⬇ */
-
-function renderStudioPhotoTray() {
-  if (!studioPhotoTray) return;
-  studioPhotoTray.innerHTML = "";
-
-  // Build thumbnails
-  studioAvailablePhotos.forEach((url) => {
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Design photo";
-    img.loading = "lazy";
-    img.className = "studio-photo-thumb";
-    img.draggable = true;
-
-    // CLICK = normal layer
-    // SHIFT+CLICK / DOUBLE-CLICK = background
-    img.addEventListener("click", (e) => {
-      if (e.shiftKey) {
-        addStudioImageFromUrl(url, true);   // background
-      } else {
-        addStudioImageFromUrl(url, false);  // layer
-      }
-    });
-
-    img.addEventListener("dblclick", () => {
-      addStudioImageFromUrl(url, true);     // background
-    });
-
-    // Drag → Drop into Design Studio
-    img.addEventListener("dragstart", (e) => {
-      try {
-        e.dataTransfer.setData("text/plain", url);
-      } catch (_) {}
-    });
-
-    studioPhotoTray.appendChild(img);
-  });
-
-  // Make Konva canvas accept drag-and-drop (wire ONCE)
-  const konvaContainer = document.getElementById("konvaStageContainer");
-  if (konvaContainer && !studioDnDWired) {
-    studioDnDWired = true;
-
-    konvaContainer.addEventListener("dragover", (e) => {
-      e.preventDefault();
-    });
-
-    konvaContainer.addEventListener("drop", (e) => {
-      e.preventDefault();
-      let url = "";
-      try {
-        url = e.dataTransfer.getData("text/plain");
-      } catch (_) {}
-
-      if (url) addStudioImageFromUrl(url, false);
-    });
-  }
-}
-
-
-/* ⬆⬆⬆  STOP HERE  ⬆⬆⬆ */
-
-
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
@@ -1189,29 +1083,25 @@ function renderStudioPhotoTray() {
   const layerOpacityInput = document.getElementById("layerOpacityInput");
   const layerDeleteBtn = document.getElementById("layerDeleteBtn");
 
- 
-// Template + Save/Load buttons
-const loadDesignBtn       = document.getElementById("loadDesignBtn");
+  // Template + Save/Load buttons
+  const saveDesignBtn = document.getElementById("saveDesignBtn");
+  const loadDesignBtn = document.getElementById("loadDesignBtn");
 
+  const templatePaymentBtn = document.getElementById("templatePayment");
+  const templateArrivalBtn = document.getElementById("templateArrival");
+  const templateSaleBtn = document.getElementById("templateSale");
 
-const templatePaymentBtn  = document.getElementById("templatePayment");
-const templateArrivalBtn  = document.getElementById("templateArrival");
-const templateSaleBtn     = document.getElementById("templateSale");
+  const studioPhotoTray = document.getElementById("studioPhotoTray");
+  let studioAvailablePhotos = [];
 
-const studioPhotoTray     = document.getElementById("studioPhotoTray");
-let studioAvailablePhotos = [];  // NEW
-
-
-let studioStage = null;
-let studioLayer = null;
-let studioSelectedNode = null;
-let studioTransformer = null;
-let studioHistory = [];
-let studioHistoryIndex = -1;
-let studioUIWired = false;
-let studioDnDWired = false;  // NEW
-
-
+  let studioStage = null;
+  let studioLayer = null;
+  let studioSelectedNode = null;
+  let studioTransformer = null;
+  let studioHistory = [];
+  let studioHistoryIndex = -1;
+  let studioUIWired = false;
+  let studioDnDWired = false;
 
   // ---- Core init ----
   function initDesignStudio() {
@@ -1934,33 +1824,122 @@ let studioDnDWired = false;  // NEW
     }
   }
 
-function openDesignStudio() {
-  if (!designStudioOverlay) return;
-  designStudioOverlay.classList.remove("hidden");
+  // ---- Shared helper: gather image URLs for studios ----
+  function gatherImageUrlsForStudios() {
+    const urls = [];
 
-  // Initialise Konva stage once
-  if (!studioStage && window.Konva) {
-    initDesignStudio();
-  } else if (studioStage) {
-    studioStage.draw();
+    // Prefer the Creative Hub thumbnails (Step 3)
+    if (creativeThumbGrid) {
+      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+        if (img.src) urls.push(img.src);
+      });
+    }
+
+    // Fallback to dealerPhotos from Step 1
+    if (!urls.length && dealerPhotos.length) {
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const fallback = dealerPhotos.map((p) => p.src);
+      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+    }
+
+    return urls.slice(0, 24); // tray can show more than canvas
+  }
+
+  /* ============================
+     DESIGN STUDIO PHOTO TRAY
+     ============================ */
+
+  function renderStudioPhotoTray() {
+    if (!studioPhotoTray) return;
+    studioPhotoTray.innerHTML = "";
+
+    // Build thumbnails from studioAvailablePhotos
+    studioAvailablePhotos.forEach((url) => {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Design photo";
+      img.loading = "lazy";
+      img.className = "studio-photo-thumb";
+      img.draggable = true;
+
+      // CLICK = normal layer
+      // SHIFT+CLICK / DOUBLE-CLICK = background
+      img.addEventListener("click", (e) => {
+        if (e.shiftKey) {
+          addStudioImageFromUrl(url, true); // background
+        } else {
+          addStudioImageFromUrl(url, false); // foreground layer
+        }
+      });
+
+      img.addEventListener("dblclick", () => {
+        addStudioImageFromUrl(url, true); // background
+      });
+
+      // Drag → drop into Design Studio canvas
+      img.addEventListener("dragstart", (e) => {
+        try {
+          e.dataTransfer.setData("text/plain", url);
+        } catch (_) {}
+      });
+
+      studioPhotoTray.appendChild(img);
+    });
+
+    // Make Konva canvas accept drag-and-drop (wire ONCE)
+    const konvaContainer = document.getElementById("konvaStageContainer");
+    if (konvaContainer && !studioDnDWired) {
+      studioDnDWired = true;
+
+      konvaContainer.addEventListener("dragover", (e) => {
+        e.preventDefault();
+      });
+
+      konvaContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        let url = "";
+        try {
+          url = e.dataTransfer.getData("text/plain");
+        } catch (_) {}
+
+        if (url) addStudioImageFromUrl(url, false); // dropped = layer
+      });
+    }
+  }
+
+  /* ============================
+     OPEN / CLOSE DESIGN STUDIO
+     ============================ */
+
+  function openDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.remove("hidden");
+
+    // Initialise Konva stage once
+    if (!studioStage && window.Konva) {
+      initDesignStudio();
+    } else if (studioStage) {
+      studioStage.draw();
+    }
+
     rebuildLayersList();
+
+    // If we don’t have a tray source yet, pull from Step 3 / dealer photos
+    if (!studioAvailablePhotos.length) {
+      const urls = gatherImageUrlsForStudios();
+      studioAvailablePhotos = urls.slice(0, 24); // tray can show more than canvas
+    }
+
+    // Render thumbnails into the tray
+    renderStudioPhotoTray();
   }
-
-  // If we don't have a tray source yet, pull from Step 3 / dealer photos
-  if (!studioAvailablePhotos.length) {
-    const urls = gatherImageUrlsForStudios();
-    studioAvailablePhotos = urls.slice(0, 24); // tray can show more than canvas
-  }
-
-  renderStudioPhotoTray();
-}
-
 
   function closeDesignStudio() {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.add("hidden");
   }
 
+  // Launcher & close button wiring
   if (designLauncher) {
     designLauncher.addEventListener("click", openDesignStudio);
   }
@@ -1992,149 +1971,30 @@ function openDesignStudio() {
     loadDesignBtn.addEventListener("click", loadDesignFromLocal);
   }
 
+  /* ============================
+     PUSH URLS INTO DESIGN STUDIO
+     ============================ */
 
+  function pushUrlsIntoDesignStudio(urls) {
+    const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
 
-// ---- Shared helper: gather image URLs for studios ----
-function gatherImageUrlsForStudios() {
-  const urls = [];
+    if (!list.length) {
+      alert("No photos available. Boost a listing or add photos first.");
+      return;
+    }
 
-  // Prefer the Creative Hub thumbnails (Step 3)
-  if (creativeThumbGrid) {
-    creativeThumbGrid.querySelectorAll("img").forEach((img) => {
-      if (img.src) urls.push(img.src);
+    // Update tray source (up to 24)
+    studioAvailablePhotos = list.slice(0, 24);
+    renderStudioPhotoTray();
+
+    // Open Design Studio
+    openDesignStudio();
+
+    // First image is background, rest are layers (max 8 to keep it usable)
+    list.slice(0, 8).forEach((url, index) => {
+      addStudioImageFromUrl(url, index === 0);
     });
   }
-
-  // Fallback to dealerPhotos from Step 1
-  if (!urls.length && dealerPhotos.length) {
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const fallback = dealerPhotos.map((p) => p.src);
-    (selected.length ? selected : fallback).forEach((u) => urls.push(u));
-  }
-
-  return urls.slice(0, 24); // tray can show more than canvas
-}
-
-/* ============================
-   DESIGN STUDIO PHOTO TRAY
-   ============================ */
-
-function renderStudioPhotoTray() {
-  if (!studioPhotoTray) return;
-  studioPhotoTray.innerHTML = "";
-
-  // Build thumbnails from studioAvailablePhotos
-  studioAvailablePhotos.forEach((url) => {
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Design photo";
-    img.loading = "lazy";
-    img.className = "studio-photo-thumb";
-    img.draggable = true;
-
-    // CLICK = normal layer
-    // SHIFT+CLICK / DOUBLE-CLICK = background
-    img.addEventListener("click", (e) => {
-      if (e.shiftKey) {
-        addStudioImageFromUrl(url, true);   // background
-      } else {
-        addStudioImageFromUrl(url, false);  // foreground layer
-      }
-    });
-
-    img.addEventListener("dblclick", () => {
-      addStudioImageFromUrl(url, true);     // background
-    });
-
-    // Drag → drop into Design Studio canvas
-    img.addEventListener("dragstart", (e) => {
-      try {
-        e.dataTransfer.setData("text/plain", url);
-      } catch (_) {}
-    });
-
-    studioPhotoTray.appendChild(img);
-  });
-
-  // Make Konva canvas accept drag-and-drop (wire ONCE)
-  const konvaContainer = document.getElementById("konvaStageContainer");
-  if (konvaContainer && !studioDnDWired) {
-    studioDnDWired = true;
-
-    konvaContainer.addEventListener("dragover", (e) => {
-      e.preventDefault();
-    });
-
-    konvaContainer.addEventListener("drop", (e) => {
-      e.preventDefault();
-      let url = "";
-      try {
-        url = e.dataTransfer.getData("text/plain");
-      } catch (_) {}
-
-      if (url) addStudioImageFromUrl(url, false); // dropped = layer
-    });
-  }
-}
-
-/* ============================
-   OPEN / CLOSE DESIGN STUDIO
-   ============================ */
-
-function openDesignStudio() {
-  if (!designStudioOverlay) return;
-  designStudioOverlay.classList.remove("hidden");
-
-  // Initialise Konva stage once
-  if (!studioStage && window.Konva) {
-    initDesignStudio();
-  } else if (studioStage) {
-    studioStage.draw();
-  }
-
-  rebuildLayersList();
-
-  // If we don’t have a tray source yet, pull from Step 3 / dealer photos
-  if (!studioAvailablePhotos.length) {
-    const urls = gatherImageUrlsForStudios();
-    studioAvailablePhotos = urls.slice(0, 24); // tray can show more than canvas
-  }
-
-  // Render thumbnails into the tray
-  renderStudioPhotoTray();
-}
-
-function closeDesignStudio() {
-  if (!designStudioOverlay) return;
-  designStudioOverlay.classList.add("hidden");
-}
-
-/* ============================
-   PUSH URLS INTO DESIGN STUDIO
-   ============================ */
-
-function pushUrlsIntoDesignStudio(urls) {
-  const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
-
-  if (!list.length) {
-    alert("No photos available. Boost a listing or add photos first.");
-    return;
-  }
-
-  // Update tray source (up to 24)
-  studioAvailablePhotos = list.slice(0, 24);
-  renderStudioPhotoTray();
-
-  // Open Design Studio
-  openDesignStudio();
-
-  // First image is background, rest are layers (max 8 to keep it usable)
-  list.slice(0, 8).forEach((url, index) => {
-    addStudioImageFromUrl(url, index === 0);
-  });
-}
-
-
 
   // Step 1 button – “Send top photos to Creative Studio” (and Design Studio)
   if (sendPhotosToStudioBtn) {
