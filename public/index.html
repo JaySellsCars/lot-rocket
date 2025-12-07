@@ -1,14 +1,16 @@
 <!--
   Lot Rocket – AI Social Media Kit & Creative Lab
-  Version: 2.5 STABLE (Cleaned v2.5.5)
+  Version: 2.5.6 (JS-aligned)
   Layout: Step 1 (left), Step 2 (middle), Step 3 (under Step 1),
           tools floating on the right.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- KONVA LIBRARY (for Design Studio 3.0) -->
+  <!-- KONVA LIBRARY (for Design Studio 3.0 / 3.5) -->
   <script src="https://unpkg.com/konva/konva.min.js"></script>
+  <!-- FABRIC LIBRARY (for Canvas Creative Studio) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
   <meta charset="UTF-8" />
   <title>Lot Rocket</title>
@@ -237,7 +239,12 @@
 
             <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-            <button id="sendToDesignStudio" class="primary-btn full">
+            <!-- NEW: send to both studios -->
+            <button id="sendAllToCanvas" class="primary-btn full">
+              Send All to Canvas Studio
+            </button>
+
+            <button id="sendToDesignStudio" class="secondary-btn full">
               Send Selected to Design Studio 3.0
             </button>
           </div>
@@ -369,12 +376,87 @@
       <span class="tool-icon">🎬</span>
       <span class="tool-label">AI Video Generation</span>
     </button>
+    <!-- NEW: Canvas Studio (Fabric) launcher -->
+    <button id="canvasLauncher" class="tool-button">
+      <span class="tool-icon">🎨</span>
+      <span class="tool-label">Canvas Studio</span>
+    </button>
     <!-- Dedicated Design Studio 3.0 launcher (Konva studio) -->
     <button id="designLauncher" class="tool-button">
       <span class="tool-icon">🧪</span>
       <span class="tool-label">Design Studio 3.0</span>
     </button>
   </aside>
+
+  <!-- ####### CANVAS CREATIVE STUDIO OVERLAY (Fabric.js) ####### -->
+  <div id="creativeStudioOverlay" class="creative-overlay hidden">
+    <div class="creative-modal">
+
+      <!-- HEADER -->
+      <div class="creative-header">
+        <h2>Canvas Studio – Creative Overlay</h2>
+        <button id="creativeClose" class="modal-close-btn">X</button>
+      </div>
+
+      <!-- TOP BAR: preset + undo/redo/export -->
+      <div class="creative-top-bar">
+        <span class="preset-label">Canvas preset</span>
+        <select id="creativeCanvasPreset">
+          <option value="1080x1080">Square – 1080x1080</option>
+          <option value="1080x1920">Story – 1080x1920</option>
+          <option value="1920x1080">Landscape – 1920x1080</option>
+        </select>
+
+        <div class="creative-actions">
+          <button id="creativeUndo">Undo</button>
+          <button id="creativeRedo">Redo</button>
+          <button id="creativeDelete">Delete</button>
+          <button id="creativeExportPng">Export PNG</button>
+        </div>
+      </div>
+
+      <!-- MAIN BODY: left tools, center Fabric canvas -->
+      <div class="creative-body">
+        <!-- LEFT: tools -->
+        <aside class="creative-tools">
+          <h3>Canvas Tools</h3>
+
+          <button class="pill-btn tool-btn" data-tool="select">
+            Select / Move
+          </button>
+          <button class="pill-btn tool-btn" data-tool="addText">
+            Add Text
+          </button>
+          <button class="pill-btn tool-btn" data-tool="addRect">
+            Add Banner Bar
+          </button>
+          <button class="pill-btn tool-btn" data-tool="addBadge">
+            Add Badge
+          </button>
+          <button class="pill-btn tool-btn" data-tool="uploadImage">
+            Upload Image
+          </button>
+
+          <input
+            type="file"
+            id="creativeImageInput"
+            accept="image/*"
+            multiple
+            hidden
+          />
+        </aside>
+
+        <!-- CENTER: Fabric canvas -->
+        <div class="creative-canvas-wrap">
+          <canvas
+            id="creativeCanvas"
+            width="1080"
+            height="1080"
+          ></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ####### DESIGN STUDIO 3.0 OVERLAY (Konva) ####### -->
   <div id="designStudioOverlay" class="creative-overlay hidden">
