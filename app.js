@@ -264,34 +264,36 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-// Full social kit from dealer URL
-app.post("/api/social-kit", async (req, res) => {
-  try {
-    const pageUrl = normalizeUrl(req.body?.url);
-    const labelOverride = req.body?.labelOverride || "";
-    const priceOverride = req.body?.priceOverride || "";
+// ---------------- /api/process-photos ----------------
 
-    if (!pageUrl) {
-      return res
-        .status(400)
-        .json({ error: "Invalid or missing URL. Please paste a full dealer link." });
+app.post("/api/process-photos", async (req, res) => {
+  try {
+    const { photoUrls } = req.body;
+
+    if (!Array.isArray(photoUrls) || photoUrls.length === 0) {
+      return res.status(400).json({ error: "No photoUrls provided" });
     }
 
-    const pageInfo = await scrapePage(pageUrl);
-    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+    const results = [];
 
-    const kit = await buildSocialKit({
-      pageInfo,
-      labelOverride,
-      priceOverride,
-      photos,
-    });
+    for (const url of photoUrls) {
+      try {
+        const processedUrl = await processSinglePhoto(url);
+        results.push({ originalUrl: url, processedUrl });
+      } catch (innerErr) {
+        console.error("Photo processing failed for", url, innerErr);
+        // Fallback: keep original URL so the app never breaks
+        results.push({ originalUrl: url, processedUrl: url });
+      }
+    }
 
-    res.json(kit);
+    res.json({ editedPhotos: results });
   } catch (err) {
-    return sendAIError(res, err, "Failed to build social kit.");
+    console.error("❌ /api/process-photos error:", err);
+    res.status(500).json({ error: "Photo processing failed" });
   }
 });
+
 
 // New content for a single platform (regen buttons)
 app.post("/api/new-post", async (req, res) => {
