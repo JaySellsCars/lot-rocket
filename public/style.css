@@ -890,91 +890,6 @@ body.dark-theme .step2-card .copy-btn {
   margin-top: 0.8rem;
 }
 
-/* ========================================= */
-/* STEP 3 – SOCIAL-READY PHOTO CAROUSEL      */
-/* ========================================= */
-
-.social-ready-panel {
-  width: 100%;
-  margin-top: 0.5rem;
-  border-radius: 1.1rem;
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  background: radial-gradient(circle at top left, #020617, #020617 55%, #020617 100%);
-  padding: 0.9rem 1.1rem 1rem;
-  box-shadow:
-    0 18px 40px rgba(15, 23, 42, 0.7),
-    0 0 0 1px rgba(15, 23, 42, 0.7);
-}
-
-.social-ready-panel .panel-header h3 {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #e5e7eb;
-}
-
-.social-ready-panel .panel-header p {
-  margin: 0.25rem 0 0;
-  font-size: 0.78rem;
-  color: #9ca3af;
-}
-
-.social-carousel {
-  margin-top: 0.7rem;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 160px;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.35rem;
-}
-
-.social-carousel::-webkit-scrollbar {
-  height: 6px;
-}
-
-.social-carousel::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.7);
-  border-radius: 999px;
-}
-
-.social-carousel-item {
-  border-radius: 0.7rem;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.65);
-  cursor: pointer;
-  flex-shrink: 0;
-  background: radial-gradient(circle at top, #020617, #020617 50%, #020617 100%);
-  transition:
-    transform 0.14s ease,
-    box-shadow 0.14s ease,
-    border-color 0.14s ease;
-}
-
-.social-carousel-item img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-}
-
-.social-carousel-item:hover {
-  border-color: #f97316;
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 0 1px rgba(249, 115, 22, 0.7),
-    0 0 16px rgba(249, 115, 22, 0.9);
-}
-
-.social-carousel-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  flex-wrap: wrap;
-}
-
 /* ====== MODALS (RIGHT-SIDE) ====== */
 
 .side-modal {
@@ -1208,6 +1123,13 @@ body.dark-theme .step2-card .copy-btn {
   background: transparent;
 }
 
+/* Extra: danger pill */
+.pill-btn-danger {
+  border-color: #b91c1c;
+  background: #7f1d1d;
+  color: #fee2e2;
+}
+
 /* ====== SCROLLABLE CANVAS WRAPPER / KONVA CONTAINER ====== */
 
 .creative-canvas-wrap {
@@ -1430,6 +1352,74 @@ body.dark-theme .step2-card .copy-btn {
   border-color: #f97316;
 }
 
+/* ============================
+   AI SOCIAL-READY PHOTO STRIP
+   ============================ */
+
+.ai-photos-grid {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.ai-photo-card {
+  background: #020617;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  overflow: hidden;
+  box-shadow:
+    0 10px 26px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.8);
+}
+
+.ai-photo-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.ai-photos-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Optional bottom video output section styling */
+.video-output-bottom {
+  max-width: 1180px;
+  margin: 2rem auto 3rem;
+  padding: 1.25rem 1.4rem;
+  border-radius: 1.2rem;
+  background: radial-gradient(circle at top left, var(--bg-panel), var(--bg-panel-soft));
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  box-shadow:
+    0 18px 40px rgba(15, 23, 42, 0.7),
+    0 0 0 1px rgba(15, 23, 42, 0.7);
+}
+
+.video-output-bottom h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.video-output-bottom textarea {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #020617;
+  color: #e5e7eb;
+  resize: vertical;
+  padding: 0.7rem 0.85rem;
+  min-height: 120px;
+  font-size: 0.86rem;
+}
+
 /* ====== RESPONSIVE ====== */
 
 /* Slightly smaller on tablet */
@@ -1449,7 +1439,7 @@ body.dark-theme .step2-card .copy-btn {
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
-  padding: 1.5rem 1.25rem 2.5rem;
+    padding: 1.5rem 1.25rem 2.5rem;
   }
 
   .column-left,
