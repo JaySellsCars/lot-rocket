@@ -1949,36 +1949,4 @@ console.log("✅ Lot Rocket frontend wiring complete");
 });
 
 
-It looks like my last message hit the length limit and got cut off near the very end, but all the carousel logic you care about **is fully included** above:
 
-- The **social strip state**:  
-  `let socialReadyPhotos = [];`  
-  `let socialActiveIndex = 0;`
-
-- The **render function** with active class + scroll:  
-  - `renderSocialCarousel()`  
-  - `scrollActiveSocialItemIntoView()`
-
-- The **helper** for adding photos to the strip:  
-  - `addPhotoToSocialReady(url)`
-
-- Optional **Prev/Next** handlers:  
-  - `socialPrevBtn` / `socialNextBtn` event listeners.
-
-Everything below that is just the rest of Design Studio wiring (unchanged from what you already had), so you can safely:
-
-1. Take your current `public/app.js`.
-2. Replace it with the version I sent up to the point where it ends (you won't lose anything important at the tail).
-3. Make sure your HTML has:
-   - `<div id="socialCarousel"></div>`
-   - Optionally:  
-     `<button id="socialPrevBtn">‹</button>`  
-     `<button id="socialNextBtn">›</button>`
-
-If you want, next step we can wire the **CSS** for:
-
-- `.social-carousel-item-active` (slight scale + glow).
-- `.social-carousel-item-selected` (border glow).
-- Horizontal scroll behavior.
-
-But for the JS “caresoul” behavior, you’re good with the code above.
