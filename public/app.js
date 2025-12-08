@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.7
+// public/app.js – Lot Rocket frontend logic v2.5.8
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.7");
+  console.log("✅ Lot Rocket frontend loaded v2.5.8");
   const apiBase = "";
 
   // Brand palette for Design Studio 3.5
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const photosGrid = document.getElementById("photosGrid");
 
-  // Works with several possible IDs for the Step 1 → Design Studio button
+  // Works with several possible IDs for the Step 1 → photo button
   const sendPhotosToStudioBtn =
     document.getElementById("sendPhotosToCreative") ||
     document.getElementById("sendPhotosToStudio") ||
@@ -733,7 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
 
-  // Small utility to actually trigger a browser download for a single image
+  // Small utility to actually trigger a browser download
   function triggerSocialDownload(url, index) {
     if (!url) return;
     const a = document.createElement("a");
@@ -744,12 +744,14 @@ document.addEventListener("DOMContentLoaded", () => {
     a.remove();
   }
 
-  // Download the "current" social-ready image (or a specific index)
+  // Download the "current" social-ready image (or by explicit index)
   function downloadSocialImage(index) {
     if (!socialReadyPhotos.length) return;
 
     let idx =
-      typeof index === "number" ? index : socialCurrentIndex || 0;
+      typeof index === "number"
+        ? index
+        : socialCurrentIndex || 0;
 
     if (idx < 0) idx = 0;
     if (idx >= socialReadyPhotos.length) {
@@ -762,7 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
     triggerSocialDownload(photo.url, idx);
   }
 
-  // Expose for any inline HTML like onclick="downloadSocialImage(0)"
+  // Expose for inline onclicks in HTML if needed
   window.downloadSocialImage = downloadSocialImage;
 
   // ---------------- PHOTO TUNER ----------------
@@ -2371,6 +2373,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
+  // and does NOT auto-open Design Studio.
   if (sendPhotosToStudioBtn) {
     sendPhotosToStudioBtn.addEventListener("click", () => {
       if (!dealerPhotos.length) {
@@ -2389,17 +2393,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Mirror into Creative Lab for consistency
+      // Mirror into Creative Lab + Social Strip (no Design Studio auto-open)
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
+        addPhotoToSocialReady(url);
         if (tunerPreviewImg && !tunerPreviewImg.src) {
           tunerPreviewImg.src = url;
           applyTunerFilters();
         }
       });
 
-      pushUrlsIntoDesignStudio(chosen);
+      // Ensure the social carousel UI reflects the new photos
+      renderSocialCarousel();
     });
   }
 
