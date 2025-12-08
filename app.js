@@ -162,36 +162,36 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 // Uses OpenAI's image model to generate a cinematic, dealer-ready photo.
 // NOTE: This will consume image credits on your OpenAI account.
 async function processSinglePhoto(photoUrl) {
-  try {
-    const prompt = `
-Ultra-realistic, cinematic dealership marketing photo of a clean car
-on a dramatic but clean showroom-style background.
-Soft reflections, high dynamic range, subtle vignette, sharp detail.
-No people, no text, no logos, no watermarks.
-    `.trim();
+  const prompt = `
+Ultra-realistic, cinematic dealership marketing photo of THIS car,
+isolated on a dramatic but clean showroom-style background.
+Soft reflections, high dynamic range, subtle vignette, sharp detail,
+movie-quality lighting. No people, no text, no dealer logos or watermarks.
+  `.trim();
 
-    const result = await client.images.generate({
-      model: "gpt-image-1",
-      prompt,
-      size: "1024x1024",
-      n: 1,
-      // you can add quality: "high" if your account supports it
-    });
+  console.log("[LotRocket] Calling gpt-image-1 for photo:", photoUrl);
 
-    const base64 = result.data?.[0]?.b64_json;
-    if (!base64) {
-      console.error("processSinglePhoto: no image data, using original URL");
-      return photoUrl;
-    }
+  const result = await client.images.generate({
+    model: "gpt-image-1",
+    prompt,
+    size: "1024x1024",
+    n: 1,
+  });
 
-    // Return a data URL so the browser can display it directly
-    return `data:image/png;base64,${base64}`;
-  } catch (err) {
-    console.error("processSinglePhoto error:", err);
-    // Fallback: keep original URL so nothing breaks
-    return photoUrl;
+  const base64 = result.data?.[0]?.b64_json;
+  if (!base64) {
+    console.error(
+      "[LotRocket] processSinglePhoto: no image data returned from gpt-image-1"
+    );
+    // If this happens, throw so /api/process-photos returns an error
+    throw new Error("AI image model returned no data");
   }
+
+  const dataUrl = `data:image/png;base64,${base64}`;
+  console.log("[LotRocket] AI photo generated successfully.");
+  return dataUrl;
 }
+
 
 
 // ---------------- Helper: call GPT for structured social kit ----------------
