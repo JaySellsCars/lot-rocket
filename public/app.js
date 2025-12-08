@@ -730,15 +730,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Social-ready photos state: [{ url, selected }]
   let socialReadyPhotos = [];
+
   // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
 
-  // Small utility to actually trigger a browser download
+  // Small utility to actually trigger a browser download for a single image
   function triggerSocialDownload(url, index) {
     if (!url) return;
-
     const a = document.createElement("a");
     a.href = url;
-    // give each file a sensible name
     a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
     document.body.appendChild(a);
     a.click();
@@ -750,9 +749,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!socialReadyPhotos.length) return;
 
     let idx =
-      typeof index === "number"
-        ? index
-        : socialCurrentIndex || 0;
+      typeof index === "number" ? index : socialCurrentIndex || 0;
 
     if (idx < 0) idx = 0;
     if (idx >= socialReadyPhotos.length) {
@@ -765,8 +762,7 @@ document.addEventListener("DOMContentLoaded", () => {
     triggerSocialDownload(photo.url, idx);
   }
 
-  // If you have inline HTML like onclick="downloadSocialImage(0)"
-  // this makes it visible globally:
+  // Expose for any inline HTML like onclick="downloadSocialImage(0)"
   window.downloadSocialImage = downloadSocialImage;
 
   // ---------------- PHOTO TUNER ----------------
@@ -1206,79 +1202,6 @@ document.addEventListener("DOMContentLoaded", () => {
       updateSocialPreview();
       return;
     }
-// Safely download a single social-ready image.
-// Tries to re-encode as a local JPEG (data URL). If CORS blocks it, falls back to raw URL.
-function downloadSocialImage(url, index) {
-  return new Promise((resolve) => {
-    if (!url) {
-      resolve();
-      return;
-    }
-
-    const img = new Image();
-
-    // Allow data/blob and same-origin URLs to be drawn to canvas
-    if (
-      url.startsWith("data:") ||
-      url.startsWith("blob:") ||
-      url.startsWith(window.location.origin)
-    ) {
-      img.crossOrigin = "anonymous";
-    }
-
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        const w = img.naturalWidth || img.width || 800;
-        const h = img.naturalHeight || img.height || 600;
-        canvas.width = w;
-        canvas.height = h;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          // Fallback: just trigger download on original URL
-          triggerSocialDownload(url, index);
-          resolve();
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, w, h);
-
-        let href = url;
-        try {
-          href = canvas.toDataURL("image/jpeg", 0.95);
-        } catch (err) {
-          console.warn("[LotRocket] toDataURL blocked, using original URL", err);
-          href = url;
-        }
-
-        triggerSocialDownload(href, index);
-      } catch (err) {
-        console.warn("[LotRocket] downloadSocialImage error, falling back:", err);
-        triggerSocialDownload(url, index);
-      } finally {
-        resolve();
-      }
-    };
-
-    img.onerror = (err) => {
-      console.warn("[LotRocket] Failed to load image for download:", err);
-      triggerSocialDownload(url, index);
-      resolve();
-    };
-
-    img.src = url;
-  });
-}
-
-function triggerSocialDownload(href, index) {
-  const a = document.createElement("a");
-  a.href = href;
-  a.download = `lot-rocket-photo-${index + 1}.jpg`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
 
     socialReadyPhotos.forEach((photo, index) => {
       const btn = document.createElement("button");
@@ -2503,132 +2426,93 @@ function triggerSocialDownload(href, index) {
     });
   }
 
-// --------------------------------------------------
-// Social-ready Photo Strip (Carousel) Actions
-// --------------------------------------------------
+  // --------------------------------------------------
+  // Social-ready Photo Strip (Carousel) Actions
+  // --------------------------------------------------
 
-const openDesignFromCarouselBtn = document.getElementById("openDesignFromCarousel");
-const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
-
-if (openDesignFromCarouselBtn) {
-  openDesignFromCarouselBtn.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) {
-      alert(
-        "No social-ready photos yet. Double-click a photo in the grid above to add it."
-      );
-      return;
-    }
-
-    const selected = socialReadyPhotos
-      .filter((p) => p.selected)
-      .map((p) => p.url);
-
-    const chosen = (selected.length
-      ? selected
-      : socialReadyPhotos.map((p) => p.url)
-    ).slice(0, 8);
-
-    pushUrlsIntoDesignStudio(chosen);
-  });
-}
-
-if (downloadAllEditedBtn) {
-  downloadAllEditedBtn.addEventListener("click", async () => {
-    if (!socialReadyPhotos.length) {
-      alert(
-        "No social-ready photos to download. Double-click a photo in the grid above first."
-      );
-      return;
-    }
-
-    const urls = socialReadyPhotos
-      .map((p) => (p && p.url ? p.url : null))
-      .filter(Boolean);
-
-    if (!urls.length) {
-      alert("No valid photo URLs to download.");
-      return;
-    }
-
-    const originalLabel = downloadAllEditedBtn.textContent;
-    downloadAllEditedBtn.disabled = true;
-    downloadAllEditedBtn.textContent = "Preparing download…";
-
-    try {
-      const res = await fetch(apiBase + "/api/social-photos-zip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("ZIP download error:", res.status, text);
+  if (openDesignFromCarouselBtn) {
+    openDesignFromCarouselBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
         alert(
-          `Couldn't build the photo bundle (HTTP ${res.status}). Try again in a moment.`
+          "No social-ready photos yet. Double-click a photo in the grid above to add it."
         );
         return;
       }
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const selected = socialReadyPhotos
+        .filter((p) => p.selected)
+        .map((p) => p.url);
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "lot-rocket-photos.zip";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const chosen = (selected.length
+        ? selected
+        : socialReadyPhotos.map((p) => p.url)
+      ).slice(0, 8);
 
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("ZIP download network error:", err);
-      alert(
-        "Lot Rocket hit a snag downloading your photos. Check your connection and try again."
-      );
-    } finally {
-      downloadAllEditedBtn.disabled = false;
-      downloadAllEditedBtn.textContent =
-        originalLabel || "Download All Edited Photos";
-    }
-  });
-}
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
 
-
-if (downloadAllEditedBtn) {
-  downloadAllEditedBtn.addEventListener("click", async () => {
-    if (!socialReadyPhotos.length) {
-      alert(
-        "No social-ready photos to download. Double-click a photo in the grid above first."
-      );
-      return;
-    }
-
-    const originalLabel = downloadAllEditedBtn.textContent;
-    downloadAllEditedBtn.disabled = true;
-    downloadAllEditedBtn.textContent = "Downloading…";
-
-    try {
-      // Download one at a time to avoid popup/download blocking
-      for (let i = 0; i < socialReadyPhotos.length; i++) {
-        const photo = socialReadyPhotos[i];
-        await downloadSocialImage(photo.url, i);
-
-        // Tiny pause between downloads
-        await new Promise((r) => setTimeout(r, 150));
+  if (downloadAllEditedBtn) {
+    downloadAllEditedBtn.addEventListener("click", async () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos to download. Double-click a photo in the grid above first."
+        );
+        return;
       }
-    } catch (err) {
-      console.error("❌ Social photo download error:", err);
-      alert(
-        "Lot Rocket hit a snag downloading those photos. Some images may be blocked by the dealer website."
-      );
-    } finally {
-      downloadAllEditedBtn.disabled = false;
-      downloadAllEditedBtn.textContent = originalLabel || "Download All";
-    }
-  });
-}
 
+      const urls = socialReadyPhotos
+        .map((p) => (p && p.url ? p.url : null))
+        .filter(Boolean);
+
+      if (!urls.length) {
+        alert("No valid photo URLs to download.");
+        return;
+      }
+
+      const originalLabel = downloadAllEditedBtn.textContent;
+      downloadAllEditedBtn.disabled = true;
+      downloadAllEditedBtn.textContent = "Preparing download…";
+
+      try {
+        const res = await fetch(apiBase + "/api/social-photos-zip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ urls }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("ZIP download error:", res.status, text);
+          alert(
+            `Couldn't build the photo bundle (HTTP ${res.status}). Try again in a moment.`
+          );
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "lot-rocket-photos.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("ZIP download network error:", err);
+        alert(
+          "Lot Rocket hit a snag downloading your photos. Check your connection and try again."
+        );
+      } finally {
+        downloadAllEditedBtn.disabled = false;
+        downloadAllEditedBtn.textContent =
+          originalLabel || "Download All Edited Photos";
+      }
+    });
+  }
 
   // Initialize social strip UI on load so status text isn't blank
   renderSocialCarousel();
