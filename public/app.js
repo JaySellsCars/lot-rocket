@@ -2503,26 +2503,6 @@ function triggerSocialDownload(href, index) {
     });
   }
 
-  if (openDesignFromCarouselBtn) {
-    openDesignFromCarouselBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) {
-        alert(
-          "No social-ready photos yet. Double-click a photo in the grid above to add it."
-        );
-        return;
-      }
-
-      const selected = socialReadyPhotos
-        .filter((p) => p.selected)
-        .map((p) => p.url);
-      const chosen = (selected.length
-        ? selected
-        : socialReadyPhotos.map((p) => p.url)
-      ).slice(0, 8);
-
-      pushUrlsIntoDesignStudio(chosen);
-    });
-  }
 // --------------------------------------------------
 // Social-ready Photo Strip (Carousel) Actions
 // --------------------------------------------------
@@ -2530,7 +2510,28 @@ function triggerSocialDownload(href, index) {
 const openDesignFromCarouselBtn = document.getElementById("openDesignFromCarousel");
 const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
 
-// ⬇️ PASTE YOUR DOWNLOAD HANDLER RIGHT HERE ⬇️
+if (openDesignFromCarouselBtn) {
+  openDesignFromCarouselBtn.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) {
+      alert(
+        "No social-ready photos yet. Double-click a photo in the grid above to add it."
+      );
+      return;
+    }
+
+    const selected = socialReadyPhotos
+      .filter((p) => p.selected)
+      .map((p) => p.url);
+
+    const chosen = (selected.length
+      ? selected
+      : socialReadyPhotos.map((p) => p.url)
+    ).slice(0, 8);
+
+    pushUrlsIntoDesignStudio(chosen);
+  });
+}
+
 if (downloadAllEditedBtn) {
   downloadAllEditedBtn.addEventListener("click", async () => {
     if (!socialReadyPhotos.length) {
@@ -2592,7 +2593,7 @@ if (downloadAllEditedBtn) {
     }
   });
 }
-// ⬆️ END OF DOWNLOAD HANDLER ⬆️
+
 
 if (downloadAllEditedBtn) {
   downloadAllEditedBtn.addEventListener("click", async () => {
