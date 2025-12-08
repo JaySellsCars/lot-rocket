@@ -300,33 +300,56 @@
           </div> <!-- end .creative-right -->
         </div> <!-- end .creative-hub -->
 
-        <!-- NEW: Social-Ready Photo Carousel panel -->
-        <div class="social-ready-panel">
-          <div class="panel-header">
-            <h3>Social-ready Photo Strip</h3>
-            <p>
-              Your best edited photos, ready to post or send into Design Studio 3.0.
-            </p>
-          </div>
+<!-- NEW: Social-ready Photo Carousel Panel -->
+<section class="panel social-ready-panel">
+  <div class="panel-header">
+    <h3>Social-ready Photo Strip</h3>
+    <p>Your best edited photos, ready to post as an IG/FB carousel or send into Design Studio 3.5.</p>
+  </div>
 
-          <div id="socialCarousel" class="social-carousel">
-            <!-- JS will inject .social-carousel-item elements here -->
-          </div>
+  <div class="social-carousel-shell">
 
-          <div class="social-carousel-actions">
-            <button
-              id="openDesignFromCarousel"
-              type="button"
-              class="secondary-btn"
-            >
-              Open Selected in Design Studio 3.0
-            </button>
+    <!-- Big preview carousel -->
+    <div class="social-carousel-preview">
+      <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
 
-            <button
-              id="downloadAllEditedBtn"
-              type="button"
-              class="secondary-btn"
-            >
+      <img
+        id="socialCarouselPreviewImg"
+        alt="Selected social-ready photo"
+      />
+
+      <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
+    </div>
+
+    <!-- Status text -->
+    <p id="socialCarouselStatus" class="small-note"></p>
+
+    <!-- Thumbs row -->
+    <div id="socialCarousel" class="social-carousel">
+      <!-- JS will inject .social-carousel-item elements here -->
+    </div>
+
+    <div class="social-carousel-actions">
+      <button
+        id="openDesignFromCarousel"
+        type="button"
+        class="primary-btn"
+      >
+        Open Selected in Design Studio 3.5
+      </button>
+
+      <button
+        id="downloadAllEditedBtn"
+        type="button"
+        class="secondary-btn"
+      >
+        Download JPGs for IG / FB Carousel
+      </button>
+    </div>
+
+  </div>
+</section>
+
               Download All Edited Photos
             </button>
           </div>
