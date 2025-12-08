@@ -2523,6 +2523,76 @@ function triggerSocialDownload(href, index) {
       pushUrlsIntoDesignStudio(chosen);
     });
   }
+// --------------------------------------------------
+// Social-ready Photo Strip (Carousel) Actions
+// --------------------------------------------------
+
+const openDesignFromCarouselBtn = document.getElementById("openDesignFromCarousel");
+const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+
+// ⬇️ PASTE YOUR DOWNLOAD HANDLER RIGHT HERE ⬇️
+if (downloadAllEditedBtn) {
+  downloadAllEditedBtn.addEventListener("click", async () => {
+    if (!socialReadyPhotos.length) {
+      alert(
+        "No social-ready photos to download. Double-click a photo in the grid above first."
+      );
+      return;
+    }
+
+    const urls = socialReadyPhotos
+      .map((p) => (p && p.url ? p.url : null))
+      .filter(Boolean);
+
+    if (!urls.length) {
+      alert("No valid photo URLs to download.");
+      return;
+    }
+
+    const originalLabel = downloadAllEditedBtn.textContent;
+    downloadAllEditedBtn.disabled = true;
+    downloadAllEditedBtn.textContent = "Preparing download…";
+
+    try {
+      const res = await fetch(apiBase + "/api/social-photos-zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("ZIP download error:", res.status, text);
+        alert(
+          `Couldn't build the photo bundle (HTTP ${res.status}). Try again in a moment.`
+        );
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "lot-rocket-photos.zip";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("ZIP download network error:", err);
+      alert(
+        "Lot Rocket hit a snag downloading your photos. Check your connection and try again."
+      );
+    } finally {
+      downloadAllEditedBtn.disabled = false;
+      downloadAllEditedBtn.textContent =
+        originalLabel || "Download All Edited Photos";
+    }
+  });
+}
+// ⬆️ END OF DOWNLOAD HANDLER ⬆️
 
 if (downloadAllEditedBtn) {
   downloadAllEditedBtn.addEventListener("click", async () => {
