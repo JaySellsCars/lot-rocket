@@ -947,48 +947,42 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!file.type.startsWith("image/")) return;
         const url = URL.createObjectURL(file);
         localCreativePhotos.push(url);
-        addCreativeThumb(url);
-      });
-      creativeImageInput.value = "";
-    });
-  }
+function addCreativeThumb(url) {
+  if (!creativeThumbGrid) return;
 
-// ---- Photo tuner ----
-// NOTE: this now updates both the live preview AND the filter string
-// used when we bake real pixels for the Social Strip + Design Studio.
-function applyTunerFilters() {
-  if (!tunerPreviewImg) return;
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = "Creative photo";
+  img.loading = "lazy";
+  img.className = "creative-thumb";
 
-  const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
-  const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
-  const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
+  // Single click – load into tuner + select
+  img.addEventListener("click", () => {
+    document
+      .querySelectorAll(".creative-thumb.selected")
+      .forEach((el) => el.classList.remove("selected"));
 
-  // Store the current filter string so canvas can use it too
-  currentTunerFilter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+    img.classList.add("selected");
 
-  // Live preview on the right
-  tunerPreviewImg.style.filter = currentTunerFilter;
-}
-
-if (tunerBrightness) {
-  tunerBrightness.addEventListener("input", applyTunerFilters);
-}
-if (tunerContrast) {
-  tunerContrast.addEventListener("input", applyTunerFilters);
-}
-if (tunerSaturation) {
-  tunerSaturation.addEventListener("input", applyTunerFilters);
-}
-
-if (autoEnhanceBtn) {
-  autoEnhanceBtn.addEventListener("click", () => {
-    if (tunerBrightness) tunerBrightness.value = "115";
-    if (tunerContrast) tunerContrast.value = "115";
-    if (tunerSaturation) tunerSaturation.value = "120";
-    applyTunerFilters();
+    if (tunerPreviewImg) {
+      tunerPreviewImg.src = url;
+      applyTunerFilters();
+    }
   });
+
+  // Double-click – bake edited JPEG + send to Social Strip
+  img.addEventListener("dblclick", async () => {
+    const editedUrl = await buildEditedDataUrl(url);
+    addPhotoToSocialReady(editedUrl);
+  });
+
+  creativeThumbGrid.appendChild(img);
 }
-// Bake tuner edits into a real JPEG using a hidden canvas
+
+/**
+ * Build a filtered JPEG data URL using a hidden canvas.
+ * Used for sending tuned photos to the Social-ready strip.
+ */
 async function buildEditedDataUrl(src) {
   if (!src) return src;
   if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
@@ -1000,10 +994,11 @@ async function buildEditedDataUrl(src) {
     img.onload = () => {
       const maxW = 1920;
       const maxH = 1920;
+
       let w = img.naturalWidth || img.width || 800;
       let h = img.naturalHeight || img.height || 600;
 
-      const scale = Math.min(maxW / w, maxH / h, 1);
+      const scale = Math.min(1, maxW / w, maxH / h);
       w = Math.round(w * scale);
       h = Math.round(h * scale);
 
@@ -1031,11 +1026,7 @@ async function buildEditedDataUrl(src) {
     img.src = src;
   });
 }
-// NEW: double-click → send edited JPEG to Social Strip
-img.addEventListener("dblclick", async () => {
-    const editedUrl = await buildEditedDataUrl(url);
-    addPhotoToSocialReady(editedUrl);
-});
+
 
 
   // ---- Social-ready strip helpers ----
