@@ -1602,3 +1602,12 @@ body.light-theme .video-output-card textarea {
   font-size: 0.9rem;
   opacity: 0.7;
 }
+/* ====== TEMP: hide unfinished AI image features for V1 ====== */
+.lr-v1-hidden {
+  display: none !important;
+}
+
+/* Also hard-hide the Cinematic button by ID if it exists */
+#aiCinematicBtn {
+  display: none !important;
+}
