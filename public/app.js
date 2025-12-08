@@ -676,14 +676,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
-const tunerPreviewImg = document.getElementById("tunerPreviewImg");
-const tunerBrightness = document.getElementById("tunerBrightness");
-const tunerContrast = document.getElementById("tunerContrast");
-const tunerSaturation = document.getElementById("tunerSaturation");
-const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
-const aiCinematicBtn = document.getElementById("aiCinematicBtn");
-
-
+  const tunerPreviewImg = document.getElementById("tunerPreviewImg");
+  const tunerBrightness = document.getElementById("tunerBrightness");
+  const tunerContrast = document.getElementById("tunerContrast");
+  const tunerSaturation = document.getElementById("tunerSaturation");
+  const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
+  const aiCinematicBtn = document.getElementById("aiCinematicBtn");
 
   // Hidden canvas used to bake tuner edits into real pixels
   const hiddenTunerCanvas = document.createElement("canvas");
@@ -720,7 +718,7 @@ const aiCinematicBtn = document.getElementById("aiCinematicBtn");
   let creativeHistoryIndex = -1;
   let localCreativePhotos = [];
 
-  // NEW: Social-ready photos state: [{ url, selected }]
+  // Social-ready photos state: [{ url, selected }]
   let socialReadyPhotos = [];
 
   // ---------------- PHOTO TUNER ----------------
@@ -753,162 +751,6 @@ const aiCinematicBtn = document.getElementById("aiCinematicBtn");
       applyTunerFilters();
     });
   }
-  // ---------------- PHOTO TUNER ----------------
-
-function applyTunerFilters() {
-  ...
-}
-
-if (tunerBrightness) tunerBrightness.addEventListener("input", applyTunerFilters);
-if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
-if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
-
-if (autoEnhanceBtn) {
-  autoEnhanceBtn.addEventListener("click", () => {
-    ...
-  });
-}
-
-//
-// ⭐⭐ PLACE THE NEW HANDLER HERE⭐⭐
-//
-
-if (aiCinematicBtn) {
-  aiCinematicBtn.addEventListener("click", async () => {
-
-    // Entire handler you pasted
-    ...
-  });
-}
-
-//
-// DO NOT PLACE BELOW THIS — Next section starts Fabric.js Canvas
-//
-
-// ---------------- FABRIC CANVAS (Creative Studio) ----------------
-
-// AI Cinematic Background – sends current photo to backend for a "movie quality" pass
-if (aiCinematicBtn) {
-  aiCinematicBtn.addEventListener("click", async () => {
-    if (!tunerPreviewImg || !tunerPreviewImg.src) {
-      alert("Pick a photo first, then try AI Cinematic Background.");
-      return;
-    }
-
-    const currentUrl = tunerPreviewImg.src;
-
-    aiCinematicBtn.disabled = true;
-    const originalLabel = aiCinematicBtn.textContent;
-    aiCinematicBtn.textContent = "Cinematic pass…";
-
-    try {
-      const res = await fetch(apiBase + "/api/ai-cinematic-photo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          photoUrl: currentUrl,
-          vehicleLabel:
-            (vehicleLabelInput && vehicleLabelInput.value) ||
-            (summaryLabel && summaryLabel.textContent) ||
-            "",
-        }),
-      });
-  // AI Cinematic Background: send current photo to backend, then push result
-  if (aiCinematicBtn) {
-    aiCinematicBtn.addEventListener("click", async () => {
-      const src = getActivePhotoUrlForCinematic();
-      if (!src) {
-        alert("Pick or load a photo in the Creative Lab first.");
-        return;
-      }
-
-      const originalLabel = aiCinematicBtn.textContent;
-      aiCinematicBtn.disabled = true;
-      aiCinematicBtn.textContent = "AI Enhancing…";
-
-      try {
-        const res = await fetch(apiBase + "/api/process-photos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ photoUrls: [src] }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          const msg =
-            (data && data.error) ||
-            `AI photo enhancement failed (HTTP ${res.status}).`;
-          console.error("❌ /api/process-photos error:", msg, data);
-          alert(msg);
-          return;
-        }
-
-        const processed =
-          data.editedPhotos &&
-          data.editedPhotos[0] &&
-          (data.editedPhotos[0].processedUrl ||
-            data.editedPhotos[0].originalUrl);
-
-        const finalUrl = processed || src;
-
-        // Update tuner preview
-        if (tunerPreviewImg) {
-          tunerPreviewImg.src = finalUrl;
-          // reset filters so you see the raw AI output
-          if (tunerBrightness) tunerBrightness.value = "100";
-          if (tunerContrast) tunerContrast.value = "100";
-          if (tunerSaturation) tunerSaturation.value = "100";
-          applyTunerFilters();
-        }
-
-        // Add into Social-ready strip
-        addPhotoToSocialReady(finalUrl);
-
-        // Optionally add a new thumb into the Creative grid too
-        addCreativeThumb(finalUrl);
-      } catch (err) {
-        console.error("❌ AI Cinematic network error:", err);
-        alert(
-          "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
-        );
-      } finally {
-        aiCinematicBtn.disabled = false;
-        aiCinematicBtn.textContent = originalLabel || "AI Cinematic Background";
-      }
-    });
-  }
-
-      const data = await res.json();
-      if (!res.ok) {
-        const msg =
-          (data && data.message) ||
-          `AI Cinematic edit failed (HTTP ${res.status}).`;
-        throw new Error(msg);
-      }
-
-      const processedUrl = data.processedUrl || currentUrl;
-
-      // Update tuner preview
-      tunerPreviewImg.src = processedUrl;
-      applyTunerFilters();
-
-      // Drop straight into Social-ready strip so it shows up in the orange row
-      addPhotoToSocialReady(processedUrl);
-    } catch (err) {
-      console.error("❌ AI cinematic error:", err);
-      alert(
-        err && err.message
-          ? err.message
-          : "Lot Rocket couldn't complete the cinematic edit. Try again in a moment."
-      );
-    } finally {
-      aiCinematicBtn.disabled = false;
-      aiCinematicBtn.textContent =
-        originalLabel || "AI Cinematic Background";
-    }
-  });
-}
 
   // ---------------- FABRIC CANVAS (Creative Studio) ----------------
 
@@ -1142,33 +984,6 @@ if (aiCinematicBtn) {
       creativeImageInput.value = "";
     });
   }
-  // Pick the best "current" photo to send to AI Cinematic
-  function getActivePhotoUrlForCinematic() {
-    // 1) If tuner has something loaded, prefer that
-    if (tunerPreviewImg && tunerPreviewImg.src) {
-      return tunerPreviewImg.src;
-    }
-
-    // 2) Any selected creative thumb
-    if (creativeThumbGrid) {
-      const selected = creativeThumbGrid.querySelector(
-        ".creative-thumb.selected"
-      );
-      if (selected && selected.src) return selected.src;
-    }
-
-    // 3) First creative photo
-    if (localCreativePhotos && localCreativePhotos.length) {
-      return localCreativePhotos[0];
-    }
-
-    // 4) Fall back to dealer photos
-    if (dealerPhotos && dealerPhotos.length) {
-      return dealerPhotos[0].src;
-    }
-
-    return "";
-  }
 
   function addCreativeThumb(url) {
     if (!creativeThumbGrid) return;
@@ -1206,66 +1021,64 @@ if (aiCinematicBtn) {
    * Build a filtered JPEG data URL using a hidden canvas.
    * Used for sending tuned photos to the Social-ready strip.
    */
-// Replace your existing buildEditedDataUrl with THIS:
-async function buildEditedDataUrl(src) {
-  if (!src) return src;
-  if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
+  async function buildEditedDataUrl(src) {
+    if (!src) return src;
+    if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
 
-  return new Promise((resolve) => {
-    const img = new Image();
+    return new Promise((resolve) => {
+      const img = new Image();
 
-    // Only try CORS-clean loading for same-origin or blob: URLs
-    // (local uploads, or anything you proxy later)
-    const isSameOrigin =
-      src.startsWith(window.location.origin) || src.startsWith("blob:");
-    if (isSameOrigin) {
-      img.crossOrigin = "anonymous";
-    }
+      // Only try CORS-clean loading for same-origin or blob: URLs
+      // (local uploads, or anything you proxy later)
+      const isSameOrigin =
+        src.startsWith(window.location.origin) || src.startsWith("blob:");
+      if (isSameOrigin) {
+        img.crossOrigin = "anonymous";
+      }
 
-    img.onload = () => {
-      const maxW = 1920;
-      const maxH = 1920;
+      img.onload = () => {
+        const maxW = 1920;
+        const maxH = 1920;
 
-      let w = img.naturalWidth || img.width || 800;
-      let h = img.naturalHeight || img.height || 600;
+        let w = img.naturalWidth || img.width || 800;
+        let h = img.naturalHeight || img.height || 600;
 
-      const scale = Math.min(1, maxW / w, maxH / h);
-      w = Math.round(w * scale);
-      h = Math.round(h * scale);
+        const scale = Math.min(1, maxW / w, maxH / h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
 
-      hiddenTunerCanvas.width = w;
-      hiddenTunerCanvas.height = h;
+        hiddenTunerCanvas.width = w;
+        hiddenTunerCanvas.height = h;
 
-      hiddenTunerCtx.clearRect(0, 0, w, h);
-      hiddenTunerCtx.filter = currentTunerFilter || "none";
-      hiddenTunerCtx.drawImage(img, 0, 0, w, h);
+        hiddenTunerCtx.clearRect(0, 0, w, h);
+        hiddenTunerCtx.filter = currentTunerFilter || "none";
+        hiddenTunerCtx.drawImage(img, 0, 0, w, h);
 
-      try {
-        const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
-        resolve(dataUrl);
-      } catch (err) {
+        try {
+          const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
+          resolve(dataUrl);
+        } catch (err) {
+          console.warn(
+            "[LotRocket] Canvas tainted, falling back to original URL.",
+            err
+          );
+          // Dealer sites without CORS: just use the original URL,
+          // carousel still works.
+          resolve(src);
+        }
+      };
+
+      img.onerror = (err) => {
         console.warn(
-          "[LotRocket] Canvas tainted, falling back to original URL.",
+          "[LotRocket] Failed to load image for tuner, falling back:",
           err
         );
-        // Dealer sites without CORS: just use the original URL,
-        // carousel still works.
         resolve(src);
-      }
-    };
+      };
 
-    img.onerror = (err) => {
-      console.warn(
-        "[LotRocket] Failed to load image for tuner, falling back:",
-        err
-      );
-      resolve(src);
-    };
-
-    img.src = src;
-  });
-}
-
+      img.src = src;
+    });
+  }
 
   // ---- Social-ready strip helpers ----
   function renderSocialCarousel() {
@@ -1378,21 +1191,8 @@ async function buildEditedDataUrl(src) {
       if ((!files || !files.length) && dt && dt.items) {
         const collected = [];
         for (const item of dt.items) {
-          if (item.kind === "file") {
-            const f = item.getAsFile();
-            if (f) collected.push(f);
-          }
-        }
-        files = collected;
-      }
+          if (item.kind ==
 
-      if (!files || !files.length) return;
-      handleCreativeFiles(files);
-    });
-  }
-
-  // Initial empty strip render
-  renderSocialCarousel();
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
