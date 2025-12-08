@@ -1347,7 +1347,6 @@ if (aiCinematicBtn) {
   const templateSaleBtn = document.getElementById("templateSale");
 
   const studioPhotoTray = document.getElementById("studioPhotoTray");
-  let studioAvailablePhotos = [];
 
   let studioStage = null;
   let studioLayer = null;
@@ -1357,6 +1356,7 @@ if (aiCinematicBtn) {
   let studioHistoryIndex = -1;
   let studioUIWired = false;
   let studioDnDWired = false;
+  let studioAvailablePhotos = [];
 
   function initDesignStudio() {
     if (!window.Konva) {
@@ -1371,6 +1371,10 @@ if (aiCinematicBtn) {
 
     const width = 1080;
     const height = 1080;
+
+    if (studioStage) {
+      studioStage.destroy();
+    }
 
     studioStage = new Konva.Stage({
       container: "konvaStageContainer",
@@ -1503,13 +1507,13 @@ if (aiCinematicBtn) {
     layersList.innerHTML = "";
     const nodes = studioLayer.getChildren();
 
-    nodes.forEach((node, index) => {
+    nodes.forEach((node) => {
       if (node.name() === "BackgroundLayer") return;
       if (node.getClassName && node.getClassName() === "Transformer") return;
 
       const li = document.createElement("li");
       li.className = "layer-item";
-      li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
+      li.textContent = node.name() || node.getClassName();
       if (node === studioSelectedNode) li.classList.add("layer-item-selected");
       li.addEventListener("click", () => {
         selectStudioNode(node);
@@ -2068,26 +2072,44 @@ if (aiCinematicBtn) {
   }
 
   function gatherImageUrlsForStudios() {
-    const urls = [];
+    const urls = new Set();
 
+    // 1) Creative Lab thumbs
     if (creativeThumbGrid) {
       creativeThumbGrid.querySelectorAll("img").forEach((img) => {
-        if (img.src) urls.push(img.src);
+        if (img.src) urls.add(img.src);
       });
     }
 
-    if (!urls.length && dealerPhotos.length) {
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const fallback = dealerPhotos.map((p) => p.src);
-      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+    // 2) Social-ready strip
+    if (Array.isArray(socialReadyPhotos) && socialReadyPhotos.length) {
+      socialReadyPhotos.forEach((p) => {
+        if (p && p.url) urls.add(p.url);
+      });
     }
 
-    return urls.slice(0, 24);
+    // 3) Dealer photos (selected first, then all)
+    if (dealerPhotos && dealerPhotos.length) {
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const fallback = dealerPhotos.map((p) => p.src);
+      (selected.length ? selected : fallback).forEach((u) => urls.add(u));
+    }
+
+    return Array.from(urls).slice(0, 24);
   }
 
   function renderStudioPhotoTray() {
     if (!studioPhotoTray) return;
     studioPhotoTray.innerHTML = "";
+
+    if (!studioAvailablePhotos || !studioAvailablePhotos.length) {
+      const msg = document.createElement("p");
+      msg.className = "small-note";
+      msg.textContent =
+        "No photos loaded yet. Boost a listing or load/edit photos in the Creative Lab, then open Design Studio.";
+      studioPhotoTray.appendChild(msg);
+      return;
+    }
 
     studioAvailablePhotos.forEach((url) => {
       const img = document.createElement("img");
@@ -2097,18 +2119,21 @@ if (aiCinematicBtn) {
       img.className = "studio-photo-thumb";
       img.draggable = true;
 
+      // CLICK = drop onto canvas
       img.addEventListener("click", (e) => {
         if (e.shiftKey) {
-          addStudioImageFromUrl(url, true);
+          addStudioImageFromUrl(url, true); // shift+click = background
         } else {
           addStudioImageFromUrl(url, false);
         }
       });
 
+      // DOUBLE-CLICK = force background
       img.addEventListener("dblclick", () => {
         addStudioImageFromUrl(url, true);
       });
 
+      // Optional drag → drop into canvas
       img.addEventListener("dragstart", (e) => {
         try {
           e.dataTransfer.setData("text/plain", url);
@@ -2138,7 +2163,7 @@ if (aiCinematicBtn) {
     }
   }
 
-  function openDesignStudio() {
+  function openDesignStudio(forceSources) {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
 
@@ -2148,11 +2173,11 @@ if (aiCinematicBtn) {
       studioStage.draw();
     }
 
-    rebuildLayersList();
-
-    if (!studioAvailablePhotos.length) {
-      const urls = gatherImageUrlsForStudios();
-      studioAvailablePhotos = urls.slice(0, 24);
+    // Decide photos
+    if (Array.isArray(forceSources) && forceSources.length) {
+      studioAvailablePhotos = forceSources.slice(0, 24);
+    } else {
+      studioAvailablePhotos = gatherImageUrlsForStudios();
     }
 
     renderStudioPhotoTray();
@@ -2164,7 +2189,7 @@ if (aiCinematicBtn) {
   }
 
   if (designLauncher) {
-    designLauncher.addEventListener("click", openDesignStudio);
+    designLauncher.addEventListener("click", () => openDesignStudio());
   }
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
@@ -2202,10 +2227,9 @@ if (aiCinematicBtn) {
     }
 
     studioAvailablePhotos = list.slice(0, 24);
-    renderStudioPhotoTray();
+    openDesignStudio(list);
 
-    openDesignStudio();
-
+    // Auto-drop first few onto canvas (first as background)
     list.slice(0, 8).forEach((url, index) => {
       addStudioImageFromUrl(url, index === 0);
     });
@@ -2229,6 +2253,7 @@ if (aiCinematicBtn) {
         return;
       }
 
+      // Mirror into Creative Lab for consistency
       chosen.forEach((url) => {
         localCreativePhotos.push(url);
         addCreativeThumb(url);
@@ -2294,6 +2319,21 @@ if (aiCinematicBtn) {
         );
         return;
       }
+
+      socialReadyPhotos.forEach((photo, index) => {
+        const a = document.createElement("a");
+        a.href = photo.url;
+        a.download = `lot-rocket-photo-${index + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+    });
+  }
+
+  console.log("✅ Lot Rocket frontend wiring complete");
+});
+
 
       socialReadyPhotos.forEach((photo, index) => {
         const a = document.createElement("a");
