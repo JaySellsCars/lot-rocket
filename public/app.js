@@ -779,6 +779,71 @@ if (aiCinematicBtn) {
             "",
         }),
       });
+  // AI Cinematic Background: send current photo to backend, then push result
+  if (aiCinematicBtn) {
+    aiCinematicBtn.addEventListener("click", async () => {
+      const src = getActivePhotoUrlForCinematic();
+      if (!src) {
+        alert("Pick or load a photo in the Creative Lab first.");
+        return;
+      }
+
+      const originalLabel = aiCinematicBtn.textContent;
+      aiCinematicBtn.disabled = true;
+      aiCinematicBtn.textContent = "AI Enhancing…";
+
+      try {
+        const res = await fetch(apiBase + "/api/process-photos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoUrls: [src] }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          const msg =
+            (data && data.error) ||
+            `AI photo enhancement failed (HTTP ${res.status}).`;
+          console.error("❌ /api/process-photos error:", msg, data);
+          alert(msg);
+          return;
+        }
+
+        const processed =
+          data.editedPhotos &&
+          data.editedPhotos[0] &&
+          (data.editedPhotos[0].processedUrl ||
+            data.editedPhotos[0].originalUrl);
+
+        const finalUrl = processed || src;
+
+        // Update tuner preview
+        if (tunerPreviewImg) {
+          tunerPreviewImg.src = finalUrl;
+          // reset filters so you see the raw AI output
+          if (tunerBrightness) tunerBrightness.value = "100";
+          if (tunerContrast) tunerContrast.value = "100";
+          if (tunerSaturation) tunerSaturation.value = "100";
+          applyTunerFilters();
+        }
+
+        // Add into Social-ready strip
+        addPhotoToSocialReady(finalUrl);
+
+        // Optionally add a new thumb into the Creative grid too
+        addCreativeThumb(finalUrl);
+      } catch (err) {
+        console.error("❌ AI Cinematic network error:", err);
+        alert(
+          "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
+        );
+      } finally {
+        aiCinematicBtn.disabled = false;
+        aiCinematicBtn.textContent = originalLabel || "AI Cinematic Background";
+      }
+    });
+  }
 
       const data = await res.json();
       if (!res.ok) {
