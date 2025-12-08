@@ -676,11 +676,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
-  const tunerPreviewImg = document.getElementById("tunerPreviewImg");
-  const tunerBrightness = document.getElementById("tunerBrightness");
-  const tunerContrast = document.getElementById("tunerContrast");
-  const tunerSaturation = document.getElementById("tunerSaturation");
-  const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
+const tunerPreviewImg = document.getElementById("tunerPreviewImg");
+const tunerBrightness = document.getElementById("tunerBrightness");
+const tunerContrast = document.getElementById("tunerContrast");
+const tunerSaturation = document.getElementById("tunerSaturation");
+const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
+const aiCinematicBtn = document.getElementById("aiCinematicBtn");
+
 
   // Hidden canvas used to bake tuner edits into real pixels
   const hiddenTunerCanvas = document.createElement("canvas");
