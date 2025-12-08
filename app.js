@@ -158,19 +158,41 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   return Array.from(urls).slice(0, 24);
 }
 
-// ---------------- AI Photo Processing Helper (STUB) ----------------
-// Later this will call a real background-removal + photo enhancement API.
-// For now, it returns the original URL so the pipeline stays stable.
+// ---------------- AI Photo Processing Helper (GPT-Image-1) ----------------
+// Uses OpenAI's image model to generate a cinematic, dealer-ready photo.
+// NOTE: This will consume image credits on your OpenAI account.
 async function processSinglePhoto(photoUrl) {
   try {
-    // TODO: Replace with actual AI edit logic
-    return photoUrl;
+    const prompt = `
+Ultra-realistic, cinematic dealership marketing photo of a clean car
+on a dramatic but clean showroom-style background.
+Soft reflections, high dynamic range, subtle vignette, sharp detail.
+No people, no text, no logos, no watermarks.
+    `.trim();
+
+    const result = await client.images.generate({
+      model: "gpt-image-1",
+      prompt,
+      size: "1024x1024",
+      n: 1,
+      // you can add quality: "high" if your account supports it
+    });
+
+    const base64 = result.data?.[0]?.b64_json;
+    if (!base64) {
+      console.error("processSinglePhoto: no image data, using original URL");
+      return photoUrl;
+    }
+
+    // Return a data URL so the browser can display it directly
+    return `data:image/png;base64,${base64}`;
   } catch (err) {
     console.error("processSinglePhoto error:", err);
-    // Fallback so your app never breaks
+    // Fallback: keep original URL so nothing breaks
     return photoUrl;
   }
 }
+
 
 // ---------------- Helper: call GPT for structured social kit ----------------
 
