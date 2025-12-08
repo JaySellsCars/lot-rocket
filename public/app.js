@@ -1117,60 +1117,59 @@ function updateSocialPreview() {
   }
 }
 
-  function renderSocialCarousel() {
-    if (!socialCarousel) return;
-    socialCarousel.innerHTML = "";
+function renderSocialCarousel() {
+  if (!socialCarousel) return;
+  socialCarousel.innerHTML = "";
 
-    if (!socialReadyPhotos.length) {
-      const note = document.createElement("p");
-      note.className = "small-note";
-      note.textContent =
-        "Double-click a photo in the grid above to mark it social-ready.";
-      socialCarousel.appendChild(note);
-      return;
-    }
+  if (!socialReadyPhotos.length) {
+    const note = document.createElement("p");
+    note.className = "small-note";
+    note.textContent =
+      "Double-click a photo in the grid above to mark it social-ready.";
+    socialCarousel.appendChild(note);
 
-    socialReadyPhotos.forEach((photo, index) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className =
-        "social-carousel-item" +
-        (photo.selected ? " social-carousel-item-selected" : "");
-      btn.dataset.index = String(index);
+    updateSocialPreview();
+    return;
+  }
 
-      const img = document.createElement("img");
-      img.src = photo.url;
-      img.alt = `Social-ready photo ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "social-carousel-img";
+  socialReadyPhotos.forEach((photo, index) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "social-carousel-item" +
+      (photo.selected ? " social-carousel-item-selected" : "");
+    btn.dataset.index = String(index);
 
-      btn.appendChild(img);
-      socialCarousel.appendChild(btn);
+    const img = document.createElement("img");
+    img.src = photo.url;
+    img.alt = `Social-ready photo ${index + 1}`;
+    img.loading = "lazy";
+    img.className = "social-carousel-img";
+
+    btn.appendChild(img);
+    socialCarousel.appendChild(btn);
+  });
+
+  socialCarousel
+    .querySelectorAll(".social-carousel-item")
+    .forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.index || "0");
+
+        // Toggle selected
+        socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+
+        // Make this the active preview
+        socialCurrentIndex = idx;
+
+        renderSocialCarousel(); // re-render buttons + preview
+      });
     });
 
-    socialCarousel
-      .querySelectorAll(".social-carousel-item")
-      .forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const idx = Number(btn.dataset.index || "0");
-          socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
-          renderSocialCarousel();
-        });
-      });
-  }
+  // Ensure preview matches current index
+  updateSocialPreview();
+}
 
-  function addPhotoToSocialReady(url) {
-    if (!url) return;
-    const exists = socialReadyPhotos.some((p) => p.url === url);
-    if (exists) {
-      socialReadyPhotos = socialReadyPhotos.map((p) =>
-        p.url === url ? { ...p, selected: true } : p
-      );
-    } else {
-      socialReadyPhotos.push({ url, selected: true });
-    }
-    renderSocialCarousel();
-  }
 
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
