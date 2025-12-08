@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.6
+// public/app.js – Lot Rocket frontend logic v2.5.7
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.6");
+  console.log("✅ Lot Rocket frontend loaded v2.5.7");
   const apiBase = "";
 
   // Brand palette for Design Studio 3.5
@@ -294,7 +294,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // MODALS + TOOLS
   // ==================================================
 
-  // Optional: field inside video modal to auto-fill with context
   const videoContextField = document.getElementById("videoContext");
 
   function buildVideoContextFromKit() {
@@ -994,7 +993,6 @@ document.addEventListener("DOMContentLoaded", () => {
     img.loading = "lazy";
     img.className = "creative-thumb";
 
-    // Single click – load into tuner + select
     img.addEventListener("click", () => {
       document
         .querySelectorAll(".creative-thumb.selected")
@@ -1008,7 +1006,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Double-click – bake edited JPEG + send to Social Strip
     img.addEventListener("dblclick", async () => {
       const editedUrl = await buildEditedDataUrl(url);
       addPhotoToSocialReady(editedUrl);
@@ -1017,10 +1014,6 @@ document.addEventListener("DOMContentLoaded", () => {
     creativeThumbGrid.appendChild(img);
   }
 
-  /**
-   * Build a filtered JPEG data URL using a hidden canvas.
-   * Used for sending tuned photos to the Social-ready strip.
-   */
   async function buildEditedDataUrl(src) {
     if (!src) return src;
     if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
@@ -1028,8 +1021,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return new Promise((resolve) => {
       const img = new Image();
 
-      // Only try CORS-clean loading for same-origin or blob: URLs
-      // (local uploads, or anything you proxy later)
       const isSameOrigin =
         src.startsWith(window.location.origin) || src.startsWith("blob:");
       if (isSameOrigin) {
@@ -1062,8 +1053,6 @@ document.addEventListener("DOMContentLoaded", () => {
             "[LotRocket] Canvas tainted, falling back to original URL.",
             err
           );
-          // Dealer sites without CORS: just use the original URL,
-          // carousel still works.
           resolve(src);
         }
       };
@@ -1080,7 +1069,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Social-ready strip helpers ----
   function renderSocialCarousel() {
     if (!socialCarousel) return;
     socialCarousel.innerHTML = "";
@@ -1153,7 +1141,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Drag & drop / click upload wiring
   if (photoDropZone && photoFileInput) {
     photoDropZone.addEventListener("click", () => {
       photoFileInput.click();
@@ -1191,8 +1178,104 @@ document.addEventListener("DOMContentLoaded", () => {
       if ((!files || !files.length) && dt && dt.items) {
         const collected = [];
         for (const item of dt.items) {
-          if (item.kind ==
+          if (item.kind === "file") {
+            const f = item.getAsFile();
+            if (f) collected.push(f);
+          }
+        }
+        files = collected;
+      }
 
+      if (!files || !files.length) return;
+      handleCreativeFiles(files);
+    });
+  }
+
+  function getActivePhotoUrlForCinematic() {
+    if (tunerPreviewImg && tunerPreviewImg.src) {
+      return tunerPreviewImg.src;
+    }
+
+    if (creativeThumbGrid) {
+      const selected = creativeThumbGrid.querySelector(
+        ".creative-thumb.selected"
+      );
+      if (selected && selected.src) return selected.src;
+    }
+
+    if (localCreativePhotos && localCreativePhotos.length) {
+      return localCreativePhotos[0];
+    }
+
+    if (dealerPhotos && dealerPhotos.length) {
+      return dealerPhotos[0].src;
+    }
+
+    return "";
+  }
+
+  if (aiCinematicBtn) {
+    aiCinematicBtn.addEventListener("click", async () => {
+      const src = getActivePhotoUrlForCinematic();
+      if (!src) {
+        alert("Pick or load a photo in the Creative Lab first.");
+        return;
+      }
+
+      const originalLabel = aiCinematicBtn.textContent;
+      aiCinematicBtn.disabled = true;
+      aiCinematicBtn.textContent = "Cinematic pass…";
+
+      try {
+        const res = await fetch(apiBase + "/api/process-photos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoUrls: [src] }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          const msg =
+            (data && data.error) ||
+            `AI photo enhancement failed (HTTP ${res.status}).`;
+          console.error("❌ /api/process-photos error:", msg, data);
+          alert(msg);
+          return;
+        }
+
+        const processed =
+          data.editedPhotos &&
+          data.editedPhotos[0] &&
+          (data.editedPhotos[0].processedUrl ||
+            data.editedPhotos[0].originalUrl);
+
+        const finalUrl = processed || src;
+
+        if (tunerPreviewImg) {
+          tunerPreviewImg.src = finalUrl;
+          if (tunerBrightness) tunerBrightness.value = "100";
+          if (tunerContrast) tunerContrast.value = "100";
+          if (tunerSaturation) tunerSaturation.value = "100";
+          applyTunerFilters();
+        }
+
+        addPhotoToSocialReady(finalUrl);
+        addCreativeThumb(finalUrl);
+      } catch (err) {
+        console.error("❌ AI Cinematic network error:", err);
+        alert(
+          "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
+        );
+      } finally {
+        aiCinematicBtn.disabled = false;
+        aiCinematicBtn.textContent =
+          originalLabel || "AI Cinematic Background";
+      }
+    });
+  }
+
+  renderSocialCarousel();
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
