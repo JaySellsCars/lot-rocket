@@ -1214,68 +1214,106 @@ document.addEventListener("DOMContentLoaded", () => {
     return "";
   }
 
-  if (aiCinematicBtn) {
-    aiCinematicBtn.addEventListener("click", async () => {
-      const src = getActivePhotoUrlForCinematic();
-      if (!src) {
-        alert("Pick or load a photo in the Creative Lab first.");
+if (aiCinematicBtn) {
+  aiCinematicBtn.addEventListener("click", async () => {
+    const src = getActivePhotoUrlForCinematic();
+    if (!src) {
+      alert("Pick or load a photo in the Creative Lab first.");
+      return;
+    }
+
+    const originalLabel = aiCinematicBtn.textContent;
+    aiCinematicBtn.disabled = true;
+    aiCinematicBtn.textContent = "AI Enhancing…";
+
+    try {
+      const res = await fetch(apiBase + "/api/process-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrls: [src] }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msg =
+          (data && data.error) ||
+          `AI photo enhancement failed (HTTP ${res.status}).`;
+        console.error("❌ /api/process-photos error:", msg, data);
+        alert(msg);
         return;
       }
 
-      const originalLabel = aiCinematicBtn.textContent;
-      aiCinematicBtn.disabled = true;
-      aiCinematicBtn.textContent = "Cinematic pass…";
+      const processed =
+        data.editedPhotos &&
+        data.editedPhotos[0] &&
+        (data.editedPhotos[0].processedUrl ||
+          data.editedPhotos[0].originalUrl);
 
-      try {
-        const res = await fetch(apiBase + "/api/process-photos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ photoUrls: [src] }),
-        });
+      const finalUrl = processed || src;
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          const msg =
-            (data && data.error) ||
-            `AI photo enhancement failed (HTTP ${res.status}).`;
-          console.error("❌ /api/process-photos error:", msg, data);
-          alert(msg);
-          return;
-        }
-
-        const processed =
-          data.editedPhotos &&
-          data.editedPhotos[0] &&
-          (data.editedPhotos[0].processedUrl ||
-            data.editedPhotos[0].originalUrl);
-
-        const finalUrl = processed || src;
-
-        if (tunerPreviewImg) {
-          tunerPreviewImg.src = finalUrl;
-          if (tunerBrightness) tunerBrightness.value = "100";
-          if (tunerContrast) tunerContrast.value = "100";
-          if (tunerSaturation) tunerSaturation.value = "100";
-          applyTunerFilters();
-        }
-
-        addPhotoToSocialReady(finalUrl);
-        addCreativeThumb(finalUrl);
-      } catch (err) {
-        console.error("❌ AI Cinematic network error:", err);
-        alert(
-          "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
-        );
-      } finally {
-        aiCinematicBtn.disabled = false;
-        aiCinematicBtn.textContent =
-          originalLabel || "AI Cinematic Background";
+      // 1) Update tuner preview
+      if (tunerPreviewImg) {
+        tunerPreviewImg.src = finalUrl;
+        if (tunerBrightness) tunerBrightness.value = "100";
+        if (tunerContrast) tunerContrast.value = "100";
+        if (tunerSaturation) tunerSaturation.value = "100";
+        applyTunerFilters();
       }
-    });
-  }
 
-  renderSocialCarousel();
+      // 2) Update creative thumb grid so you SEE the new AI version
+      if (creativeThumbGrid) {
+        let updated = false;
+
+        // Prefer selected thumb
+        const selectedThumb = creativeThumbGrid.querySelector(
+          ".creative-thumb.selected"
+        );
+        if (selectedThumb) {
+          selectedThumb.src = finalUrl;
+          updated = true;
+        } else {
+          // Otherwise, update the first thumb that matches the old src
+          const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
+          thumbs.forEach((imgEl) => {
+            if (!updated && imgEl.src === src) {
+              imgEl.src = finalUrl;
+              updated = true;
+            }
+          });
+        }
+      }
+
+      // 3) Update localCreativePhotos state
+      localCreativePhotos = (localCreativePhotos || []).map((u) =>
+        u === src ? finalUrl : u
+      );
+
+      // 4) Add into Social-ready strip
+      addPhotoToSocialReady(finalUrl);
+
+      // 5) Also add as a fresh thumb if it's not already there
+      const alreadyInThumbs =
+        creativeThumbGrid &&
+        !!Array.from(creativeThumbGrid.querySelectorAll(".creative-thumb")).find(
+          (imgEl) => imgEl.src === finalUrl
+        );
+      if (!alreadyInThumbs) {
+        addCreativeThumb(finalUrl);
+      }
+    } catch (err) {
+      console.error("❌ AI Cinematic network error:", err);
+      alert(
+        "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
+      );
+    } finally {
+      aiCinematicBtn.disabled = false;
+      aiCinematicBtn.textContent =
+        originalLabel || "AI Cinematic Background";
+    }
+  });
+}
+
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
