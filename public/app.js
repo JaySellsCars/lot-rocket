@@ -1031,6 +1031,11 @@ async function buildEditedDataUrl(src) {
     img.src = src;
   });
 }
+// NEW: double-click → send edited JPEG to Social Strip
+img.addEventListener("dblclick", async () => {
+    const editedUrl = await buildEditedDataUrl(url);
+    addPhotoToSocialReady(editedUrl);
+});
 
 
   // ---- Social-ready strip helpers ----
