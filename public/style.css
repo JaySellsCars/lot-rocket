@@ -1611,3 +1611,62 @@ body.light-theme .video-output-card textarea {
 #aiCinematicBtn {
   display: none !important;
 }
+/* ===== Social-ready Carousel Viewer ===== */
+
+.social-carousel-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.social-carousel-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+#socialCarouselPreviewImg {
+  max-height: 220px;
+  max-width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--border-soft);
+  object-fit: cover;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.6);
+}
+
+.ghost-circle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: radial-gradient(circle at top, #020617, #020617 60%, #020617);
+  color: #e5e7eb;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.ghost-circle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.7);
+  border-color: var(--accent-1);
+}
+
+.social-carousel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.social-carousel {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+}
