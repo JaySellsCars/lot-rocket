@@ -692,11 +692,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTunerFilter = "";
 
   // NEW: Social-ready photo strip elements
-  const socialCarousel = document.getElementById("socialCarousel");
-  const openDesignFromCarouselBtn = document.getElementById(
-    "openDesignFromCarousel"
-  );
-  const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+const socialCarousel = document.getElementById("socialCarousel");
+const openDesignFromCarouselBtn = document.getElementById(
+  "openDesignFromCarousel"
+);
+const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+
+// NEW: big preview + nav + status
+const socialCarouselPreviewImg = document.getElementById(
+  "socialCarouselPreviewImg"
+);
+const socialPrevBtn = document.getElementById("socialPrevBtn");
+const socialNextBtn = document.getElementById("socialNextBtn");
+const socialCarouselStatus = document.getElementById("socialCarouselStatus");
+
+// Track which social-ready photo is “active” in the viewer
+let socialCurrentIndex = 0;
+
 
   const creativeStudioOverlay = document.getElementById(
     "creativeStudioOverlay"
