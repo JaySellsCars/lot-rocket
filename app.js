@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
 const fetch = require("node-fetch"); // if you want to use global fetch instead, remove this
+const archiver = require("archiver");
 
 const app = express();
 const port = process.env.PORT || 3000;
