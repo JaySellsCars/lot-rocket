@@ -2335,16 +2335,4 @@ if (aiCinematicBtn) {
 });
 
 
-      socialReadyPhotos.forEach((photo, index) => {
-        const a = document.createElement("a");
-        a.href = photo.url;
-        a.download = `lot-rocket-photo-${index + 1}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      });
-    });
-  }
 
-  console.log("✅ Lot Rocket frontend wiring complete");
-});
