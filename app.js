@@ -292,6 +292,36 @@ app.post("/api/process-photos", async (req, res) => {
     res.status(500).json({ error: "Photo processing failed" });
   }
 });
+// Single-photo cinematic background / enhancement
+app.post("/api/ai-cinematic-photo", async (req, res) => {
+  try {
+    const photoUrl = req.body?.photoUrl;
+    const vehicleLabel = req.body?.vehicleLabel || "";
+
+    if (!photoUrl) {
+      return res.status(400).json({
+        error: "missing_photo",
+        message: "No photo selected for AI Cinematic Background.",
+      });
+    }
+
+    // TODO: plug in real AI background-removal / cinematic enhancer here.
+    // For now we reuse processSinglePhoto so the flow is stable.
+    const processedUrl = await processSinglePhoto(photoUrl);
+
+    return res.json({
+      processedUrl,
+      vehicleLabel,
+    });
+  } catch (err) {
+    console.error("❌ /api/ai-cinematic-photo error:", err);
+    return res.status(500).json({
+      error: "server_error",
+      message:
+        "Lot Rocket couldn't complete the cinematic background edit. Try again in a moment.",
+    });
+  }
+});
 
 // Full social kit from dealer URL
 app.post("/api/social-kit", async (req, res) => {
