@@ -753,6 +753,40 @@ const aiCinematicBtn = document.getElementById("aiCinematicBtn");
       applyTunerFilters();
     });
   }
+  // ---------------- PHOTO TUNER ----------------
+
+function applyTunerFilters() {
+  ...
+}
+
+if (tunerBrightness) tunerBrightness.addEventListener("input", applyTunerFilters);
+if (tunerContrast) tunerContrast.addEventListener("input", applyTunerFilters);
+if (tunerSaturation) tunerSaturation.addEventListener("input", applyTunerFilters);
+
+if (autoEnhanceBtn) {
+  autoEnhanceBtn.addEventListener("click", () => {
+    ...
+  });
+}
+
+//
+// ⭐⭐ PLACE THE NEW HANDLER HERE⭐⭐
+//
+
+if (aiCinematicBtn) {
+  aiCinematicBtn.addEventListener("click", async () => {
+
+    // Entire handler you pasted
+    ...
+  });
+}
+
+//
+// DO NOT PLACE BELOW THIS — Next section starts Fabric.js Canvas
+//
+
+// ---------------- FABRIC CANVAS (Creative Studio) ----------------
+
 // AI Cinematic Background – sends current photo to backend for a "movie quality" pass
 if (aiCinematicBtn) {
   aiCinematicBtn.addEventListener("click", async () => {
