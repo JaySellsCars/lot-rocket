@@ -368,6 +368,65 @@ app.post("/api/social-kit", async (req, res) => {
       priceOverride,
       photos,
     });
+// POST /api/social-photos-zip
+// Body: { urls: [ "https://...", "https://..." ] }
+// Returns: ZIP stream with all photos inside.
+app.post("/api/social-photos-zip", async (req, res) => {
+  try {
+    const urls = Array.isArray(req.body.urls) ? req.body.urls.filter(Boolean) : [];
+
+    if (!urls.length) {
+      return res.status(400).json({ message: "No photo URLs provided." });
+    }
+
+    // Set headers for a download
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="lot-rocket-photos.zip"'
+    );
+
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    archive.on("error", (err) => {
+      console.error("ZIP archive error:", err);
+      // If headers not sent yet, send error; otherwise just destroy stream
+      if (!res.headersSent) {
+        res.status(500).end("Error creating ZIP.");
+      } else {
+        res.destroy(err);
+      }
+    });
+
+    // Stream zip to response
+    archive.pipe(res);
+
+    // Fetch each image and append to zip
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok || !resp.body) {
+          console.warn("Skipping bad photo URL:", url, resp.status);
+          continue;
+        }
+
+        const filename = `photo-${i + 1}.jpg`;
+        archive.append(resp.body, { name: filename });
+      } catch (err) {
+        console.warn("Error fetching photo for zip:", url, err);
+      }
+    }
+
+    // Finalize zip (sends it to client)
+    archive.finalize();
+  } catch (err) {
+    console.error("social-photos-zip handler error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Failed to build ZIP of photos." });
+    }
+  }
+});
 
     // -----------------------------------
     // AI Photo Processing Pipeline
