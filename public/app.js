@@ -752,6 +752,63 @@ const aiCinematicBtn = document.getElementById("aiCinematicBtn");
       applyTunerFilters();
     });
   }
+// AI Cinematic Background – sends current photo to backend for a "movie quality" pass
+if (aiCinematicBtn) {
+  aiCinematicBtn.addEventListener("click", async () => {
+    if (!tunerPreviewImg || !tunerPreviewImg.src) {
+      alert("Pick a photo first, then try AI Cinematic Background.");
+      return;
+    }
+
+    const currentUrl = tunerPreviewImg.src;
+
+    aiCinematicBtn.disabled = true;
+    const originalLabel = aiCinematicBtn.textContent;
+    aiCinematicBtn.textContent = "Cinematic pass…";
+
+    try {
+      const res = await fetch(apiBase + "/api/ai-cinematic-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photoUrl: currentUrl,
+          vehicleLabel:
+            (vehicleLabelInput && vehicleLabelInput.value) ||
+            (summaryLabel && summaryLabel.textContent) ||
+            "",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const msg =
+          (data && data.message) ||
+          `AI Cinematic edit failed (HTTP ${res.status}).`;
+        throw new Error(msg);
+      }
+
+      const processedUrl = data.processedUrl || currentUrl;
+
+      // Update tuner preview
+      tunerPreviewImg.src = processedUrl;
+      applyTunerFilters();
+
+      // Drop straight into Social-ready strip so it shows up in the orange row
+      addPhotoToSocialReady(processedUrl);
+    } catch (err) {
+      console.error("❌ AI cinematic error:", err);
+      alert(
+        err && err.message
+          ? err.message
+          : "Lot Rocket couldn't complete the cinematic edit. Try again in a moment."
+      );
+    } finally {
+      aiCinematicBtn.disabled = false;
+      aiCinematicBtn.textContent =
+        originalLabel || "AI Cinematic Background";
+    }
+  });
+}
 
   // ---------------- FABRIC CANVAS (Creative Studio) ----------------
 
