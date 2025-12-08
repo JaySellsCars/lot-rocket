@@ -1094,24 +1094,35 @@ img.addEventListener("dblclick", async () => {
     renderSocialCarousel();
   }
 
-  function addCreativeThumb(url) {
-    if (!creativeThumbGrid) return;
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Creative photo";
-    img.loading = "lazy";
-    img.className = "creative-thumb";
+function addCreativeThumb(url) {
+  if (!creativeThumbGrid) return;
 
-    img.addEventListener("click", () => {
-      document
-        .querySelectorAll(".creative-thumb.selected")
-        .forEach((el) => el.classList.remove("selected"));
-      img.classList.add("selected");
-      if (tunerPreviewImg) tunerPreviewImg.src = url;
-      applyTunerFilters();
-    });
-// Bake tuner edits into a real JPEG using a hidden canvas
-async function buildEditedDataUrl(src) {
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = "Creative photo";
+  img.loading = "lazy";
+  img.className = "creative-thumb";
+
+  // Single click = load into tuner + select
+  img.addEventListener("click", () => {
+    document
+      .querySelectorAll(".creative-thumb.selected")
+      .forEach((el) => el.classList.remove("selected"));
+
+    img.classList.add("selected");
+    tunerPreviewImg.src = url;
+    applyTunerFilters();
+  });
+
+  // NEW: Double-click = bake edited JPEG + send to Social Strip
+  img.addEventListener("dblclick", async () => {
+    const editedUrl = await buildEditedDataUrl(url);
+    addPhotoToSocialReady(editedUrl);
+  });
+
+  creativeThumbGrid.appendChild(img);
+}
+
   if (!src) return src;
   if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
 
