@@ -1168,6 +1168,79 @@ document.addEventListener("DOMContentLoaded", () => {
       updateSocialPreview();
       return;
     }
+// Safely download a single social-ready image.
+// Tries to re-encode as a local JPEG (data URL). If CORS blocks it, falls back to raw URL.
+function downloadSocialImage(url, index) {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve();
+      return;
+    }
+
+    const img = new Image();
+
+    // Allow data/blob and same-origin URLs to be drawn to canvas
+    if (
+      url.startsWith("data:") ||
+      url.startsWith("blob:") ||
+      url.startsWith(window.location.origin)
+    ) {
+      img.crossOrigin = "anonymous";
+    }
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const w = img.naturalWidth || img.width || 800;
+        const h = img.naturalHeight || img.height || 600;
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          // Fallback: just trigger download on original URL
+          triggerSocialDownload(url, index);
+          resolve();
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, w, h);
+
+        let href = url;
+        try {
+          href = canvas.toDataURL("image/jpeg", 0.95);
+        } catch (err) {
+          console.warn("[LotRocket] toDataURL blocked, using original URL", err);
+          href = url;
+        }
+
+        triggerSocialDownload(href, index);
+      } catch (err) {
+        console.warn("[LotRocket] downloadSocialImage error, falling back:", err);
+        triggerSocialDownload(url, index);
+      } finally {
+        resolve();
+      }
+    };
+
+    img.onerror = (err) => {
+      console.warn("[LotRocket] Failed to load image for download:", err);
+      triggerSocialDownload(url, index);
+      resolve();
+    };
+
+    img.src = url;
+  });
+}
+
+function triggerSocialDownload(href, index) {
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = `lot-rocket-photo-${index + 1}.jpg`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
     socialReadyPhotos.forEach((photo, index) => {
       const btn = document.createElement("button");
