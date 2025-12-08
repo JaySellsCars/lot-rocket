@@ -684,6 +684,7 @@ const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 const aiCinematicBtn = document.getElementById("aiCinematicBtn");
 
 
+
   // Hidden canvas used to bake tuner edits into real pixels
   const hiddenTunerCanvas = document.createElement("canvas");
   const hiddenTunerCtx = hiddenTunerCanvas.getContext
@@ -1041,6 +1042,33 @@ if (aiCinematicBtn) {
       handleCreativeFiles(files);
       creativeImageInput.value = "";
     });
+  }
+  // Pick the best "current" photo to send to AI Cinematic
+  function getActivePhotoUrlForCinematic() {
+    // 1) If tuner has something loaded, prefer that
+    if (tunerPreviewImg && tunerPreviewImg.src) {
+      return tunerPreviewImg.src;
+    }
+
+    // 2) Any selected creative thumb
+    if (creativeThumbGrid) {
+      const selected = creativeThumbGrid.querySelector(
+        ".creative-thumb.selected"
+      );
+      if (selected && selected.src) return selected.src;
+    }
+
+    // 3) First creative photo
+    if (localCreativePhotos && localCreativePhotos.length) {
+      return localCreativePhotos[0];
+    }
+
+    // 4) Fall back to dealer photos
+    if (dealerPhotos && dealerPhotos.length) {
+      return dealerPhotos[0].src;
+    }
+
+    return "";
   }
 
   function addCreativeThumb(url) {
