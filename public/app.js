@@ -1080,6 +1080,42 @@ let socialCurrentIndex = 0;
       img.src = src;
     });
   }
+function updateSocialPreview() {
+  if (!socialCarouselPreviewImg) return;
+
+  if (!socialReadyPhotos.length) {
+    socialCarouselPreviewImg.src = "";
+    socialCarouselPreviewImg.alt = "";
+    if (socialCarouselStatus) {
+      socialCarouselStatus.textContent =
+        "No social-ready photos yet. Double-click a photo above to add it.";
+    }
+    return;
+  }
+
+  // Clamp index
+  if (socialCurrentIndex < 0) {
+    socialCurrentIndex = socialReadyPhotos.length - 1;
+  }
+  if (socialCurrentIndex >= socialReadyPhotos.length) {
+    socialCurrentIndex = 0;
+  }
+
+  const current = socialReadyPhotos[socialCurrentIndex];
+  socialCarouselPreviewImg.src = current.url;
+  socialCarouselPreviewImg.alt = `Social-ready photo ${socialCurrentIndex + 1}`;
+
+  if (socialCarouselStatus) {
+    const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
+    const total = socialReadyPhotos.length;
+
+    let label = `${socialCurrentIndex + 1} of ${total}`;
+    if (selectedCount && selectedCount !== total) {
+      label += ` • ${selectedCount} selected`;
+    }
+    socialCarouselStatus.textContent = label;
+  }
+}
 
   function renderSocialCarousel() {
     if (!socialCarousel) return;
