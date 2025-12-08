@@ -1105,6 +1105,49 @@ async function buildEditedDataUrl(src) {
       if (tunerPreviewImg) tunerPreviewImg.src = url;
       applyTunerFilters();
     });
+// Bake tuner edits into a real JPEG using a hidden canvas
+async function buildEditedDataUrl(src) {
+  if (!src) return src;
+  if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      const maxW = 1920;
+      const maxH = 1920;
+      let w = img.naturalWidth || img.width || 800;
+      let h = img.naturalHeight || img.height || 600;
+
+      const scale = Math.min(maxW / w, maxH / h, 1);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+
+      hiddenTunerCanvas.width = w;
+      hiddenTunerCanvas.height = h;
+
+      hiddenTunerCtx.clearRect(0, 0, w, h);
+      hiddenTunerCtx.filter = currentTunerFilter || "none";
+      hiddenTunerCtx.drawImage(img, 0, 0, w, h);
+
+      try {
+        const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
+        resolve(dataUrl);
+      } catch (err) {
+        console.error("[LotRocket] toDataURL failed:", err);
+        resolve(src);
+      }
+    };
+
+    img.onerror = (err) => {
+      console.error("[LotRocket] Failed to load image for tuner:", err);
+      resolve(src);
+    };
+
+    img.src = src;
+  });
+}
 
     // NEW: double-click = send to Social Strip
     img.addEventListener("dblclick", () => {
