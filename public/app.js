@@ -2486,25 +2486,40 @@ function triggerSocialDownload(href, index) {
     });
   }
 
-  if (downloadAllEditedBtn) {
-    downloadAllEditedBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) {
-        alert(
-          "No social-ready photos to download. Double-click a photo in the grid above first."
-        );
-        return;
-      }
+if (downloadAllEditedBtn) {
+  downloadAllEditedBtn.addEventListener("click", async () => {
+    if (!socialReadyPhotos.length) {
+      alert(
+        "No social-ready photos to download. Double-click a photo in the grid above first."
+      );
+      return;
+    }
 
-      socialReadyPhotos.forEach((photo, index) => {
-        const a = document.createElement("a");
-        a.href = photo.url;
-        a.download = `lot-rocket-photo-${index + 1}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      });
-    });
-  }
+    const originalLabel = downloadAllEditedBtn.textContent;
+    downloadAllEditedBtn.disabled = true;
+    downloadAllEditedBtn.textContent = "Downloading…";
+
+    try {
+      // Download one at a time to avoid popup/download blocking
+      for (let i = 0; i < socialReadyPhotos.length; i++) {
+        const photo = socialReadyPhotos[i];
+        await downloadSocialImage(photo.url, i);
+
+        // Tiny pause between downloads
+        await new Promise((r) => setTimeout(r, 150));
+      }
+    } catch (err) {
+      console.error("❌ Social photo download error:", err);
+      alert(
+        "Lot Rocket hit a snag downloading those photos. Some images may be blocked by the dealer website."
+      );
+    } finally {
+      downloadAllEditedBtn.disabled = false;
+      downloadAllEditedBtn.textContent = originalLabel || "Download All";
+    }
+  });
+}
+
 
   // Initialize social strip UI on load so status text isn't blank
   renderSocialCarousel();
