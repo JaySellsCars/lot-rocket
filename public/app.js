@@ -1020,49 +1020,66 @@ document.addEventListener("DOMContentLoaded", () => {
    * Build a filtered JPEG data URL using a hidden canvas.
    * Used for sending tuned photos to the Social-ready strip.
    */
-  async function buildEditedDataUrl(src) {
-    if (!src) return src;
-    if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
+// Replace your existing buildEditedDataUrl with THIS:
+async function buildEditedDataUrl(src) {
+  if (!src) return src;
+  if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
 
-    return new Promise((resolve) => {
-      const img = new Image();
+  return new Promise((resolve) => {
+    const img = new Image();
+
+    // Only try CORS-clean loading for same-origin or blob: URLs
+    // (local uploads, or anything you proxy later)
+    const isSameOrigin =
+      src.startsWith(window.location.origin) || src.startsWith("blob:");
+    if (isSameOrigin) {
       img.crossOrigin = "anonymous";
+    }
 
-      img.onload = () => {
-        const maxW = 1920;
-        const maxH = 1920;
+    img.onload = () => {
+      const maxW = 1920;
+      const maxH = 1920;
 
-        let w = img.naturalWidth || img.width || 800;
-        let h = img.naturalHeight || img.height || 600;
+      let w = img.naturalWidth || img.width || 800;
+      let h = img.naturalHeight || img.height || 600;
 
-        const scale = Math.min(1, maxW / w, maxH / h);
-        w = Math.round(w * scale);
-        h = Math.round(h * scale);
+      const scale = Math.min(1, maxW / w, maxH / h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
 
-        hiddenTunerCanvas.width = w;
-        hiddenTunerCanvas.height = h;
+      hiddenTunerCanvas.width = w;
+      hiddenTunerCanvas.height = h;
 
-        hiddenTunerCtx.clearRect(0, 0, w, h);
-        hiddenTunerCtx.filter = currentTunerFilter || "none";
-        hiddenTunerCtx.drawImage(img, 0, 0, w, h);
+      hiddenTunerCtx.clearRect(0, 0, w, h);
+      hiddenTunerCtx.filter = currentTunerFilter || "none";
+      hiddenTunerCtx.drawImage(img, 0, 0, w, h);
 
-        try {
-          const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
-          resolve(dataUrl);
-        } catch (err) {
-          console.error("[LotRocket] toDataURL failed:", err);
-          resolve(src);
-        }
-      };
-
-      img.onerror = (err) => {
-        console.error("[LotRocket] Failed to load image for tuner:", err);
+      try {
+        const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
+        resolve(dataUrl);
+      } catch (err) {
+        console.warn(
+          "[LotRocket] Canvas tainted, falling back to original URL.",
+          err
+        );
+        // Dealer sites without CORS: just use the original URL,
+        // carousel still works.
         resolve(src);
-      };
+      }
+    };
 
-      img.src = src;
-    });
-  }
+    img.onerror = (err) => {
+      console.warn(
+        "[LotRocket] Failed to load image for tuner, falling back:",
+        err
+      );
+      resolve(src);
+    };
+
+    img.src = src;
+  });
+}
+
 
   // ---- Social-ready strip helpers ----
   function renderSocialCarousel() {
