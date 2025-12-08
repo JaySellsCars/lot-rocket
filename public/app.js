@@ -680,6 +680,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const tunerSaturation = document.getElementById("tunerSaturation");
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
 
+  // Hidden canvas used to bake tuner edits into real pixels
+  const hiddenTunerCanvas = document.createElement("canvas");
+  const hiddenTunerCtx = hiddenTunerCanvas.getContext
+    ? hiddenTunerCanvas.getContext("2d")
+    : null;
+
+  // Current filter used by both CSS preview and canvas drawing
+  let currentTunerFilter = "";
+
+
   // NEW: Social-ready photo strip elements
   const socialCarousel = document.getElementById("socialCarousel");
   const openDesignFromCarouselBtn = document.getElementById(
