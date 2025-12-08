@@ -1190,58 +1190,70 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function renderSocialCarousel() {
-    if (!socialCarousel) return;
-    socialCarousel.innerHTML = "";
+function renderSocialCarousel() {
+  if (!socialCarousel) return;
+  socialCarousel.innerHTML = "";
 
-    if (!socialReadyPhotos.length) {
-      const note = document.createElement("p");
-      note.className = "small-note";
-      note.textContent =
-        "Double-click a photo in the grid above to mark it social-ready.";
-      socialCarousel.appendChild(note);
+  if (!socialReadyPhotos.length) {
+    const note = document.createElement("p");
+    note.className = "small-note";
+    note.textContent =
+      "Double-click a photo in the grid above to mark it social-ready.";
+    socialCarousel.appendChild(note);
 
-      updateSocialPreview();
-      return;
-    }
+    updateSocialPreview();
+    return;
+  }
 
-    socialReadyPhotos.forEach((photo, index) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className =
-        "social-carousel-item" +
-        (photo.selected ? " social-carousel-item-selected" : "");
-      btn.dataset.index = String(index);
+  socialReadyPhotos.forEach((photo, index) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "social-carousel-item" +
+      (photo.selected ? " social-carousel-item-selected" : "");
+    btn.dataset.index = String(index);
 
-      const img = document.createElement("img");
-      img.src = photo.url;
-      img.alt = `Social-ready photo ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "social-carousel-img";
+    const img = document.createElement("img");
+    img.src = photo.url;
+    img.alt = `Social-ready photo ${index + 1}`;
+    img.loading = "lazy";
+    img.className = "social-carousel-img";
 
-      btn.appendChild(img);
-      socialCarousel.appendChild(btn);
+    btn.appendChild(img);
+    socialCarousel.appendChild(btn);
+
+    // ✅ Single-click = select + activate preview
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.index || "0");
+      socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+      socialCurrentIndex = idx;
+      renderSocialCarousel();
     });
 
-    socialCarousel
-      .querySelectorAll(".social-carousel-item")
-      .forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const idx = Number(btn.dataset.index || "0");
+    // ✅ Double-click = REMOVE THIS PHOTO from Step 3
+    btn.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      const idx = Number(btn.dataset.index || "0");
 
-          // Toggle selected
-          socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+      // Remove from array
+      socialReadyPhotos.splice(idx, 1);
 
-          // Make this the active preview
-          socialCurrentIndex = idx;
+      // Fix preview index so it doesn't break
+      if (socialCurrentIndex >= socialReadyPhotos.length) {
+        socialCurrentIndex = socialReadyPhotos.length - 1;
+      }
+      if (socialCurrentIndex < 0) {
+        socialCurrentIndex = 0;
+      }
 
-          renderSocialCarousel(); // re-render buttons + preview
-        });
-      });
+      renderSocialCarousel();
+    });
+  });
 
-    // Ensure preview matches current index
-    updateSocialPreview();
-  }
+  // Refresh preview after rendering
+  updateSocialPreview();
+}
+
 
   // Prev/Next buttons for the big preview
   if (socialPrevBtn) {
