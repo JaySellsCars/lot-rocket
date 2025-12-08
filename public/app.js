@@ -692,23 +692,22 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTunerFilter = "";
 
   // NEW: Social-ready photo strip elements
-const socialCarousel = document.getElementById("socialCarousel");
-const openDesignFromCarouselBtn = document.getElementById(
-  "openDesignFromCarousel"
-);
-const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+  const socialCarousel = document.getElementById("socialCarousel");
+  const openDesignFromCarouselBtn = document.getElementById(
+    "openDesignFromCarousel"
+  );
+  const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
 
-// NEW: big preview + nav + status
-const socialCarouselPreviewImg = document.getElementById(
-  "socialCarouselPreviewImg"
-);
-const socialPrevBtn = document.getElementById("socialPrevBtn");
-const socialNextBtn = document.getElementById("socialNextBtn");
-const socialCarouselStatus = document.getElementById("socialCarouselStatus");
+  // NEW: big preview + nav + status
+  const socialCarouselPreviewImg = document.getElementById(
+    "socialCarouselPreviewImg"
+  );
+  const socialPrevBtn = document.getElementById("socialPrevBtn");
+  const socialNextBtn = document.getElementById("socialNextBtn");
+  const socialCarouselStatus = document.getElementById("socialCarouselStatus");
 
-// Track which social-ready photo is “active” in the viewer
-let socialCurrentIndex = 0;
-
+  // Track which social-ready photo is “active” in the viewer
+  let socialCurrentIndex = 0;
 
   const creativeStudioOverlay = document.getElementById(
     "creativeStudioOverlay"
@@ -1080,96 +1079,152 @@ let socialCurrentIndex = 0;
       img.src = src;
     });
   }
-function updateSocialPreview() {
-  if (!socialCarouselPreviewImg) return;
 
-  if (!socialReadyPhotos.length) {
-    socialCarouselPreviewImg.src = "";
-    socialCarouselPreviewImg.alt = "";
-    if (socialCarouselStatus) {
-      socialCarouselStatus.textContent =
-        "No social-ready photos yet. Double-click a photo above to add it.";
+  // ------------ SOCIAL-READY STRIP HELPERS + CAROUSEL ------------
+
+  function addPhotoToSocialReady(url) {
+    if (!url) return;
+
+    // If it already exists, just select it and move preview there
+    const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
+    if (existingIndex !== -1) {
+      socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
+        ...p,
+        selected: idx === existingIndex ? true : p.selected,
+      }));
+      socialCurrentIndex = existingIndex;
+      renderSocialCarousel();
+      return;
     }
-    return;
-  }
 
-  // Clamp index
-  if (socialCurrentIndex < 0) {
+    // Push new photo, mark selected
+    socialReadyPhotos.push({ url, selected: true });
+
+    // Optional cap (keep latest 24)
+    const MAX_SOCIAL = 24;
+    if (socialReadyPhotos.length > MAX_SOCIAL) {
+      socialReadyPhotos = socialReadyPhotos.slice(
+        socialReadyPhotos.length - MAX_SOCIAL
+      );
+    }
+
+    // Newly added is last
     socialCurrentIndex = socialReadyPhotos.length - 1;
+
+    // Re-render strip + preview
+    renderSocialCarousel();
   }
-  if (socialCurrentIndex >= socialReadyPhotos.length) {
-    socialCurrentIndex = 0;
-  }
 
-  const current = socialReadyPhotos[socialCurrentIndex];
-  socialCarouselPreviewImg.src = current.url;
-  socialCarouselPreviewImg.alt = `Social-ready photo ${socialCurrentIndex + 1}`;
+  function updateSocialPreview() {
+    if (!socialCarouselPreviewImg) return;
 
-  if (socialCarouselStatus) {
-    const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
-    const total = socialReadyPhotos.length;
-
-    let label = `${socialCurrentIndex + 1} of ${total}`;
-    if (selectedCount && selectedCount !== total) {
-      label += ` • ${selectedCount} selected`;
+    if (!socialReadyPhotos.length) {
+      socialCarouselPreviewImg.src = "";
+      socialCarouselPreviewImg.alt = "";
+      if (socialCarouselStatus) {
+        socialCarouselStatus.textContent =
+          "No social-ready photos yet. Double-click a photo above to add it.";
+      }
+      return;
     }
-    socialCarouselStatus.textContent = label;
+
+    // Clamp index
+    if (socialCurrentIndex < 0) {
+      socialCurrentIndex = socialReadyPhotos.length - 1;
+    }
+    if (socialCurrentIndex >= socialReadyPhotos.length) {
+      socialCurrentIndex = 0;
+    }
+
+    const current = socialReadyPhotos[socialCurrentIndex];
+    socialCarouselPreviewImg.src = current.url;
+    socialCarouselPreviewImg.alt = `Social-ready photo ${
+      socialCurrentIndex + 1
+    }`;
+
+    if (socialCarouselStatus) {
+      const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
+      const total = socialReadyPhotos.length;
+
+      let label = `${socialCurrentIndex + 1} of ${total}`;
+      if (selectedCount && selectedCount !== total) {
+        label += ` • ${selectedCount} selected`;
+      }
+      socialCarouselStatus.textContent = label;
+    }
   }
-}
 
-function renderSocialCarousel() {
-  if (!socialCarousel) return;
-  socialCarousel.innerHTML = "";
+  function renderSocialCarousel() {
+    if (!socialCarousel) return;
+    socialCarousel.innerHTML = "";
 
-  if (!socialReadyPhotos.length) {
-    const note = document.createElement("p");
-    note.className = "small-note";
-    note.textContent =
-      "Double-click a photo in the grid above to mark it social-ready.";
-    socialCarousel.appendChild(note);
+    if (!socialReadyPhotos.length) {
+      const note = document.createElement("p");
+      note.className = "small-note";
+      note.textContent =
+        "Double-click a photo in the grid above to mark it social-ready.";
+      socialCarousel.appendChild(note);
 
-    updateSocialPreview();
-    return;
-  }
+      updateSocialPreview();
+      return;
+    }
 
-  socialReadyPhotos.forEach((photo, index) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className =
-      "social-carousel-item" +
-      (photo.selected ? " social-carousel-item-selected" : "");
-    btn.dataset.index = String(index);
+    socialReadyPhotos.forEach((photo, index) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "social-carousel-item" +
+        (photo.selected ? " social-carousel-item-selected" : "");
+      btn.dataset.index = String(index);
 
-    const img = document.createElement("img");
-    img.src = photo.url;
-    img.alt = `Social-ready photo ${index + 1}`;
-    img.loading = "lazy";
-    img.className = "social-carousel-img";
+      const img = document.createElement("img");
+      img.src = photo.url;
+      img.alt = `Social-ready photo ${index + 1}`;
+      img.loading = "lazy";
+      img.className = "social-carousel-img";
 
-    btn.appendChild(img);
-    socialCarousel.appendChild(btn);
-  });
-
-  socialCarousel
-    .querySelectorAll(".social-carousel-item")
-    .forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.dataset.index || "0");
-
-        // Toggle selected
-        socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
-
-        // Make this the active preview
-        socialCurrentIndex = idx;
-
-        renderSocialCarousel(); // re-render buttons + preview
-      });
+      btn.appendChild(img);
+      socialCarousel.appendChild(btn);
     });
 
-  // Ensure preview matches current index
-  updateSocialPreview();
-}
+    socialCarousel
+      .querySelectorAll(".social-carousel-item")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.index || "0");
 
+          // Toggle selected
+          socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+
+          // Make this the active preview
+          socialCurrentIndex = idx;
+
+          renderSocialCarousel(); // re-render buttons + preview
+        });
+      });
+
+    // Ensure preview matches current index
+    updateSocialPreview();
+  }
+
+  // Prev/Next buttons for the big preview
+  if (socialPrevBtn) {
+    socialPrevBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) return;
+      socialCurrentIndex =
+        (socialCurrentIndex - 1 + socialReadyPhotos.length) %
+        socialReadyPhotos.length;
+      updateSocialPreview();
+    });
+  }
+
+  if (socialNextBtn) {
+    socialNextBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) return;
+      socialCurrentIndex = (socialCurrentIndex + 1) % socialReadyPhotos.length;
+      updateSocialPreview();
+    });
+  }
 
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
@@ -1261,106 +1316,106 @@ function renderSocialCarousel() {
     return "";
   }
 
-if (aiCinematicBtn) {
-  aiCinematicBtn.addEventListener("click", async () => {
-    const src = getActivePhotoUrlForCinematic();
-    if (!src) {
-      alert("Pick or load a photo in the Creative Lab first.");
-      return;
-    }
-
-    const originalLabel = aiCinematicBtn.textContent;
-    aiCinematicBtn.disabled = true;
-    aiCinematicBtn.textContent = "AI Enhancing…";
-
-    try {
-      const res = await fetch(apiBase + "/api/process-photos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrls: [src] }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const msg =
-          (data && data.error) ||
-          `AI photo enhancement failed (HTTP ${res.status}).`;
-        console.error("❌ /api/process-photos error:", msg, data);
-        alert(msg);
+  if (aiCinematicBtn) {
+    aiCinematicBtn.addEventListener("click", async () => {
+      const src = getActivePhotoUrlForCinematic();
+      if (!src) {
+        alert("Pick or load a photo in the Creative Lab first.");
         return;
       }
 
-      const processed =
-        data.editedPhotos &&
-        data.editedPhotos[0] &&
-        (data.editedPhotos[0].processedUrl ||
-          data.editedPhotos[0].originalUrl);
+      const originalLabel = aiCinematicBtn.textContent;
+      aiCinematicBtn.disabled = true;
+      aiCinematicBtn.textContent = "AI Enhancing…";
 
-      const finalUrl = processed || src;
+      try {
+        const res = await fetch(apiBase + "/api/process-photos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoUrls: [src] }),
+        });
 
-      // 1) Update tuner preview
-      if (tunerPreviewImg) {
-        tunerPreviewImg.src = finalUrl;
-        if (tunerBrightness) tunerBrightness.value = "100";
-        if (tunerContrast) tunerContrast.value = "100";
-        if (tunerSaturation) tunerSaturation.value = "100";
-        applyTunerFilters();
-      }
+        const data = await res.json();
 
-      // 2) Update creative thumb grid so you SEE the new AI version
-      if (creativeThumbGrid) {
-        let updated = false;
-
-        // Prefer selected thumb
-        const selectedThumb = creativeThumbGrid.querySelector(
-          ".creative-thumb.selected"
-        );
-        if (selectedThumb) {
-          selectedThumb.src = finalUrl;
-          updated = true;
-        } else {
-          // Otherwise, update the first thumb that matches the old src
-          const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
-          thumbs.forEach((imgEl) => {
-            if (!updated && imgEl.src === src) {
-              imgEl.src = finalUrl;
-              updated = true;
-            }
-          });
+        if (!res.ok) {
+          const msg =
+            (data && data.error) ||
+            `AI photo enhancement failed (HTTP ${res.status}).`;
+          console.error("❌ /api/process-photos error:", msg, data);
+          alert(msg);
+          return;
         }
-      }
 
-      // 3) Update localCreativePhotos state
-      localCreativePhotos = (localCreativePhotos || []).map((u) =>
-        u === src ? finalUrl : u
-      );
+        const processed =
+          data.editedPhotos &&
+          data.editedPhotos[0] &&
+          (data.editedPhotos[0].processedUrl ||
+            data.editedPhotos[0].originalUrl);
 
-      // 4) Add into Social-ready strip
-      addPhotoToSocialReady(finalUrl);
+        const finalUrl = processed || src;
 
-      // 5) Also add as a fresh thumb if it's not already there
-      const alreadyInThumbs =
-        creativeThumbGrid &&
-        !!Array.from(creativeThumbGrid.querySelectorAll(".creative-thumb")).find(
-          (imgEl) => imgEl.src === finalUrl
+        // 1) Update tuner preview
+        if (tunerPreviewImg) {
+          tunerPreviewImg.src = finalUrl;
+          if (tunerBrightness) tunerBrightness.value = "100";
+          if (tunerContrast) tunerContrast.value = "100";
+          if (tunerSaturation) tunerSaturation.value = "100";
+          applyTunerFilters();
+        }
+
+        // 2) Update creative thumb grid so you SEE the new AI version
+        if (creativeThumbGrid) {
+          let updated = false;
+
+          // Prefer selected thumb
+          const selectedThumb = creativeThumbGrid.querySelector(
+            ".creative-thumb.selected"
+          );
+          if (selectedThumb) {
+            selectedThumb.src = finalUrl;
+            updated = true;
+          } else {
+            // Otherwise, update the first thumb that matches the old src
+            const thumbs =
+              creativeThumbGrid.querySelectorAll(".creative-thumb");
+            thumbs.forEach((imgEl) => {
+              if (!updated && imgEl.src === src) {
+                imgEl.src = finalUrl;
+                updated = true;
+              }
+            });
+          }
+        }
+
+        // 3) Update localCreativePhotos state
+        localCreativePhotos = (localCreativePhotos || []).map((u) =>
+          u === src ? finalUrl : u
         );
-      if (!alreadyInThumbs) {
-        addCreativeThumb(finalUrl);
-      }
-    } catch (err) {
-      console.error("❌ AI Cinematic network error:", err);
-      alert(
-        "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
-      );
-    } finally {
-      aiCinematicBtn.disabled = false;
-      aiCinematicBtn.textContent =
-        originalLabel || "AI Cinematic Background";
-    }
-  });
-}
 
+        // 4) Add into Social-ready strip
+        addPhotoToSocialReady(finalUrl);
+
+        // 5) Also add as a fresh thumb if it's not already there
+        const alreadyInThumbs =
+          creativeThumbGrid &&
+          !!Array.from(
+            creativeThumbGrid.querySelectorAll(".creative-thumb")
+          ).find((imgEl) => imgEl.src === finalUrl);
+        if (!alreadyInThumbs) {
+          addCreativeThumb(finalUrl);
+        }
+      } catch (err) {
+        console.error("❌ AI Cinematic network error:", err);
+        alert(
+          "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
+        );
+      } finally {
+        aiCinematicBtn.disabled = false;
+        aiCinematicBtn.textContent =
+          originalLabel || "AI Cinematic Background";
+      }
+    });
+  }
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
@@ -2378,8 +2433,8 @@ if (aiCinematicBtn) {
     });
   }
 
+  // Initialize social strip UI on load so status text isn't blank
+  renderSocialCarousel();
+
   console.log("✅ Lot Rocket frontend wiring complete");
 });
-
-
-
