@@ -730,6 +730,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Social-ready photos state: [{ url, selected }]
   let socialReadyPhotos = [];
+  // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
+
+  // Small utility to actually trigger a browser download
+  function triggerSocialDownload(url, index) {
+    if (!url) return;
+
+    const a = document.createElement("a");
+    a.href = url;
+    // give each file a sensible name
+    a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  // Download the "current" social-ready image (or a specific index)
+  function downloadSocialImage(index) {
+    if (!socialReadyPhotos.length) return;
+
+    let idx =
+      typeof index === "number"
+        ? index
+        : socialCurrentIndex || 0;
+
+    if (idx < 0) idx = 0;
+    if (idx >= socialReadyPhotos.length) {
+      idx = socialReadyPhotos.length - 1;
+    }
+
+    const photo = socialReadyPhotos[idx];
+    if (!photo || !photo.url) return;
+
+    triggerSocialDownload(photo.url, idx);
+  }
+
+  // If you have inline HTML like onclick="downloadSocialImage(0)"
+  // this makes it visible globally:
+  window.downloadSocialImage = downloadSocialImage;
 
   // ---------------- PHOTO TUNER ----------------
 
