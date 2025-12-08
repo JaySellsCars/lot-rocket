@@ -953,32 +953,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- Photo tuner ----
-  function applyTunerFilters() {
-    if (!tunerPreviewImg) return;
-    const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
-    const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
-    const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
-    tunerPreviewImg.style.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
-  }
+// ---- Photo tuner ----
+// NOTE: this now updates both the live preview AND the filter string
+// used when we bake real pixels for the Social Strip + Design Studio.
+function applyTunerFilters() {
+  if (!tunerPreviewImg) return;
 
-  if (tunerBrightness) {
-    tunerBrightness.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerContrast) {
-    tunerContrast.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerSaturation) {
-    tunerSaturation.addEventListener("input", applyTunerFilters);
-  }
-  if (autoEnhanceBtn) {
-    autoEnhanceBtn.addEventListener("click", () => {
-      if (tunerBrightness) tunerBrightness.value = "115";
-      if (tunerContrast) tunerContrast.value = "115";
-      if (tunerSaturation) tunerSaturation.value = "120";
-      applyTunerFilters();
-    });
-  }
+  const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
+  const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
+  const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
+
+  // Store the current filter string so canvas can use it too
+  currentTunerFilter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+
+  // Live preview on the right
+  tunerPreviewImg.style.filter = currentTunerFilter;
+}
+
+if (tunerBrightness) {
+  tunerBrightness.addEventListener("input", applyTunerFilters);
+}
+if (tunerContrast) {
+  tunerContrast.addEventListener("input", applyTunerFilters);
+}
+if (tunerSaturation) {
+  tunerSaturation.addEventListener("input", applyTunerFilters);
+}
+
+if (autoEnhanceBtn) {
+  autoEnhanceBtn.addEventListener("click", () => {
+    if (tunerBrightness) tunerBrightness.value = "115";
+    if (tunerContrast) tunerContrast.value = "115";
+    if (tunerSaturation) tunerSaturation.value = "120";
+    applyTunerFilters();
+  });
+}
+
 
   // ---- Social-ready strip helpers ----
   function renderSocialCarousel() {
