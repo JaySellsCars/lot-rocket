@@ -61,10 +61,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const photosGrid = document.getElementById("photosGrid");
 
-  // Works with either id="sendPhotosToCreative" or id="sendPhotosToStudio"
+  // Works with several possible IDs for the Step 1 → Design Studio button
   const sendPhotosToStudioBtn =
     document.getElementById("sendPhotosToCreative") ||
-    document.getElementById("sendPhotosToStudio");
+    document.getElementById("sendPhotosToStudio") ||
+    document.getElementById("sendPhotosToDesignStudio") ||
+    document.getElementById("sendTopPhotosToDesignStudio");
 
   // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
@@ -1193,7 +1195,992 @@ document.addEventListener("DOMContentLoaded", () => {
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
 
-  // ... (rest of file unchanged — same as I sent in previous message) ...
+  const designStudioOverlay = document.getElementById("designStudioOverlay");
+  const designLauncher = document.getElementById("designLauncher");
+  const designCloseBtn = document.getElementById("designClose");
+
+  const studioSizePreset = document.getElementById("studioSizePreset");
+  const studioUndoBtn = document.getElementById("studioUndoBtn");
+  const studioRedoBtn = document.getElementById("studioRedoBtn");
+  const studioExportPng = document.getElementById("studioExportPng");
+
+  const toolAddText = document.getElementById("toolAddText");
+  const toolAddShape = document.getElementById("toolAddShape");
+  const toolAddBadge = document.getElementById("toolAddBadge");
+  const toolSetBackground = document.getElementById("toolSetBackground");
+
+  const layersList = document.getElementById("layersList");
+  const layerTextInput = document.getElementById("layerTextInput");
+  const layerFontSizeInput = document.getElementById("layerFontSizeInput");
+  const layerOpacityInput = document.getElementById("layerOpacityInput");
+  const layerDeleteBtn = document.getElementById("layerDeleteBtn");
+
+  const saveDesignBtn = document.getElementById("saveDesignBtn");
+  const loadDesignBtn = document.getElementById("loadDesignBtn");
+
+  const templatePaymentBtn = document.getElementById("templatePayment");
+  const templateArrivalBtn = document.getElementById("templateArrival");
+  const templateSaleBtn = document.getElementById("templateSale");
+
+  const studioPhotoTray = document.getElementById("studioPhotoTray");
+  let studioAvailablePhotos = [];
+
+  let studioStage = null;
+  let studioLayer = null;
+  let studioSelectedNode = null;
+  let studioTransformer = null;
+  let studioHistory = [];
+  let studioHistoryIndex = -1;
+  let studioUIWired = false;
+  let studioDnDWired = false;
+
+  function initDesignStudio() {
+    if (!window.Konva) {
+      console.warn("Konva not loaded – Design Studio 3.5 disabled.");
+      return;
+    }
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) {
+      console.warn("konvaStageContainer not found.");
+      return;
+    }
+
+    const width = 1080;
+    const height = 1080;
+
+    studioStage = new Konva.Stage({
+      container: "konvaStageContainer",
+      width,
+      height,
+    });
+
+    studioLayer = new Konva.Layer();
+    studioStage.add(studioLayer);
+
+    setStudioBackground(BRAND.dark);
+
+    studioTransformer = new Konva.Transformer({
+      rotateEnabled: true,
+      enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
+      anchorSize: 10,
+      borderStroke: "#e5e7eb",
+      anchorFill: BRAND.primary,
+      anchorStroke: BRAND.primary,
+      anchorCornerRadius: 4,
+    });
+    studioLayer.add(studioTransformer);
+
+    studioStage.on("click tap", (e) => {
+      const target = e.target;
+      if (
+        target === studioStage ||
+        target === studioLayer ||
+        target.name() === "BackgroundLayer"
+      ) {
+        selectStudioNode(null);
+      }
+    });
+
+    wireDesignStudioUI();
+    attachEventsToAllNodes();
+    rebuildLayersList();
+    saveStudioHistory();
+  }
+
+  function saveStudioHistory() {
+    if (!studioStage) return;
+    const json = studioStage.toJSON();
+    studioHistory = studioHistory.slice(0, studioHistoryIndex + 1);
+    studioHistory.push(json);
+    studioHistoryIndex = studioHistory.length - 1;
+  }
+
+  function restoreStudioFromHistory(index) {
+    if (!window.Konva) return;
+    if (!studioHistory.length) return;
+    if (index < 0 || index >= studioHistory.length) return;
+
+    const container =
+      (studioStage && studioStage.container()) ||
+      document.getElementById("konvaStageContainer");
+    if (!container) return;
+
+    const json = studioHistory[index];
+
+    if (studioStage) {
+      studioStage.destroy();
+    }
+
+    studioStage = Konva.Node.create(json, container);
+    const layers = studioStage.getLayers();
+    studioLayer = layers[0] || new Konva.Layer();
+    if (!layers.length) studioStage.add(studioLayer);
+
+    studioTransformer =
+      studioStage.findOne("Transformer") ||
+      new Konva.Transformer({
+        rotateEnabled: true,
+        enabledAnchors: [
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right",
+        ],
+        anchorSize: 10,
+        borderStroke: "#e5e7eb",
+        anchorFill: BRAND.primary,
+        anchorStroke: BRAND.primary,
+        anchorCornerRadius: 4,
+      });
+    if (!studioTransformer.getStage()) {
+      studioLayer.add(studioTransformer);
+    }
+
+    studioSelectedNode = null;
+    studioHistoryIndex = index;
+
+    attachEventsToAllNodes();
+    rebuildLayersList();
+    wireDesignStudioUI();
+  }
+
+  function studioUndo() {
+    if (studioHistoryIndex > 0) {
+      restoreStudioFromHistory(studioHistoryIndex - 1);
+    }
+  }
+
+  function studioRedo() {
+    if (studioHistoryIndex < studioHistory.length - 1) {
+      restoreStudioFromHistory(studioHistoryIndex + 1);
+    }
+  }
+
+  function selectStudioNode(node) {
+    studioSelectedNode = node;
+
+    if (studioTransformer && studioLayer) {
+      if (node) {
+        studioTransformer.nodes([node]);
+        studioTransformer.visible(true);
+      } else {
+        studioTransformer.nodes([]);
+        studioTransformer.visible(false);
+      }
+      studioLayer.batchDraw();
+    }
+
+    rebuildLayersList();
+    syncLayerControlsWithSelection();
+  }
+
+  function rebuildLayersList() {
+    if (!layersList || !studioLayer) return;
+    layersList.innerHTML = "";
+    const nodes = studioLayer.getChildren();
+
+    nodes.forEach((node, index) => {
+      if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
+
+      const li = document.createElement("li");
+      li.className = "layer-item";
+      li.textContent = `${index + 1} — ${node.name() || node.getClassName()}`;
+      if (node === studioSelectedNode) li.classList.add("layer-item-selected");
+      li.addEventListener("click", () => {
+        selectStudioNode(node);
+      });
+      layersList.appendChild(li);
+    });
+  }
+
+  function syncLayerControlsWithSelection() {
+    if (!studioSelectedNode) {
+      if (layerTextInput) layerTextInput.value = "";
+      if (layerFontSizeInput) layerFontSizeInput.value = "";
+      if (layerOpacityInput) layerOpacityInput.value = 1;
+      return;
+    }
+
+    if (studioSelectedNode.className === "Text") {
+      if (layerTextInput) layerTextInput.value = studioSelectedNode.text() || "";
+      if (layerFontSizeInput)
+        layerFontSizeInput.value = studioSelectedNode.fontSize() || 40;
+    } else {
+      if (layerTextInput) layerTextInput.value = "";
+      if (layerFontSizeInput) layerFontSizeInput.value = "";
+    }
+
+    if (layerOpacityInput) {
+      layerOpacityInput.value = studioSelectedNode.opacity() ?? 1;
+    }
+  }
+
+  function attachNodeInteractions(node) {
+    node.on("click tap", () => {
+      selectStudioNode(node);
+    });
+    node.on("dragend transformend", () => {
+      saveStudioHistory();
+    });
+  }
+
+  function attachEventsToAllNodes() {
+    if (!studioLayer) return;
+    studioLayer.getChildren().forEach((node) => {
+      if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
+      attachNodeInteractions(node);
+    });
+  }
+
+  function addStudioText(text = "YOUR HEADLINE HERE") {
+    if (!studioLayer || !studioStage) return;
+
+    const node = new Konva.Text({
+      x: studioStage.width() / 2,
+      y: 120,
+      text,
+      fontFamily: "system-ui, sans-serif",
+      fontSize: 48,
+      fill: BRAND.textLight,
+      shadowColor: "black",
+      shadowBlur: 6,
+      shadowOffset: { x: 2, y: 2 },
+      shadowOpacity: 0.4,
+      align: "center",
+      name: "Text Layer",
+      draggable: true,
+    });
+
+    node.offsetX(node.width() / 2);
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function addStudioShape() {
+    if (!studioLayer || !studioStage) return;
+    const width = studioStage.width() * 0.9;
+    const height = 170;
+
+    const node = new Konva.Rect({
+      x: studioStage.width() / 2,
+      y: studioStage.height() - height,
+      width,
+      height,
+      fill: "#000000",
+      opacity: 0.7,
+      cornerRadius: 18,
+      offsetX: width / 2,
+      offsetY: height / 2,
+      name: "Banner Layer",
+      draggable: true,
+    });
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function addStudioBadge() {
+    if (!studioLayer || !studioStage) return;
+
+    const node = new Konva.Ring({
+      x: studioStage.width() - 180,
+      y: 160,
+      innerRadius: 70,
+      outerRadius: 90,
+      fill: BRAND.light,
+      stroke: "#FF2E2E",
+      strokeWidth: 6,
+      name: "Badge Layer",
+      draggable: true,
+    });
+
+    attachNodeInteractions(node);
+    studioLayer.add(node);
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  }
+
+  function setStudioBackground(color = BRAND.dark) {
+    if (!studioLayer || !studioStage) return;
+    let bg = studioLayer.findOne(".BackgroundLayer");
+    if (!bg) {
+      bg = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: studioStage.width(),
+        height: studioStage.height(),
+        fill: color,
+        name: "BackgroundLayer",
+        listening: false,
+      });
+      studioLayer.add(bg);
+      bg.moveToBottom();
+    } else {
+      bg.fill(color);
+      bg.width(studioStage.width());
+      bg.height(studioStage.height());
+      bg.moveToBottom();
+    }
+    studioLayer.draw();
+  }
+
+  function addStudioImageFromUrl(url, asBackground = false) {
+    if (!studioLayer || !studioStage || !url) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const fitRatio =
+        Math.min(
+          studioStage.width() / img.width,
+          studioStage.height() / img.height
+        ) || 1;
+
+      const finalRatio = fitRatio * 0.9;
+      const w = img.width * finalRatio;
+      const h = img.height * finalRatio;
+
+      const node = new Konva.Image({
+        image: img,
+        x: studioStage.width() / 2,
+        y: studioStage.height() / 2,
+        width: w,
+        height: h,
+        offsetX: w / 2,
+        offsetY: h / 2,
+        draggable: true,
+        name: asBackground ? "Background Photo" : "Photo Layer",
+      });
+
+      attachNodeInteractions(node);
+      studioLayer.add(node);
+      if (asBackground) {
+        node.moveToBottom();
+        const bg = studioLayer.findOne(".BackgroundLayer");
+        if (bg) bg.moveToBottom();
+      }
+      studioLayer.draw();
+      selectStudioNode(node);
+      saveStudioHistory();
+    };
+    img.onerror = (err) => {
+      console.error("[DesignStudio] Failed to load image:", url, err);
+    };
+    img.src = url;
+  }
+
+  function exportStudioAsPng() {
+    if (!studioStage) return;
+    try {
+      const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
+      const a = document.createElement("a");
+      a.href = dataURL;
+      a.download = "lot-rocket-design.png";
+      a.click();
+    } catch (err) {
+      console.error("Export PNG error (likely CORS):", err);
+      alert(
+        "Browser blocked exporting this design (CORS). Some dealer images may not export."
+      );
+    }
+  }
+
+  function applyStudioSizePreset() {
+    if (!studioStage || !studioLayer || !studioSizePreset) return;
+    const [w, h] = studioSizePreset.value.split("x").map(Number);
+    studioStage.width(w);
+    studioStage.height(h);
+
+    const bg = studioLayer.findOne(".BackgroundLayer");
+    if (bg) {
+      bg.width(w);
+      bg.height(h);
+      bg.moveToBottom();
+    }
+
+    studioStage.draw();
+    saveStudioHistory();
+  }
+
+  function clearStudioNonBackgroundNodes() {
+    if (!studioLayer) return;
+    studioLayer.getChildren().forEach((node) => {
+      if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
+      node.destroy();
+    });
+    studioLayer.draw();
+    studioSelectedNode = null;
+    if (studioTransformer) {
+      studioTransformer.nodes([]);
+      studioTransformer.visible(false);
+    }
+  }
+
+  function applyTemplate(type) {
+    if (!studioStage || !studioLayer) {
+      initDesignStudio();
+    }
+    if (!studioStage || !studioLayer) return;
+
+    clearStudioNonBackgroundNodes();
+
+    const cx = studioStage.width() / 2;
+    const cy = studioStage.height() / 2;
+
+    if (type === "payment") {
+      const barHeight = 220;
+      const barWidth = studioStage.width() * 0.95;
+
+      const bar = new Konva.Rect({
+        x: cx,
+        y: studioStage.height() - barHeight / 2 - 20,
+        width: barWidth,
+        height: barHeight,
+        fill: BRAND.primary,
+        cornerRadius: 32,
+        offsetX: barWidth / 2,
+        offsetY: barHeight / 2,
+        name: "Payment Banner",
+        draggable: true,
+      });
+
+      attachNodeInteractions(bar);
+      studioLayer.add(bar);
+
+      const priceText = new Konva.Text({
+        x: cx,
+        y: studioStage.height() - barHeight + 40,
+        text: "ONLY $___ / MO",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 72,
+        fontStyle: "bold",
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Payment Headline",
+        draggable: true,
+      });
+      priceText.offsetX(priceText.width() / 2);
+      attachNodeInteractions(priceText);
+      studioLayer.add(priceText);
+
+      const detailsText = new Konva.Text({
+        x: cx,
+        y: studioStage.height() - barHeight / 2 + 30,
+        text: "With $___ down | O.A.C.",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 32,
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Payment Details",
+        draggable: true,
+      });
+      detailsText.offsetX(detailsText.width() / 2);
+      attachNodeInteractions(detailsText);
+      studioLayer.add(detailsText);
+    } else if (type === "arrival") {
+      const barHeight = 150;
+      const barWidth = studioStage.width() * 0.9;
+
+      const bar = new Konva.Rect({
+        x: cx,
+        y: barHeight / 2 + 30,
+        width: barWidth,
+        height: barHeight,
+        fill: BRAND.secondary,
+        cornerRadius: 28,
+        offsetX: barWidth / 2,
+        offsetY: barHeight / 2,
+        name: "Arrival Banner",
+        draggable: true,
+      });
+      attachNodeInteractions(bar);
+      studioLayer.add(bar);
+
+      const headline = new Konva.Text({
+        x: cx,
+        y: bar.y(),
+        text: "JUST ARRIVED",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 72,
+        fontStyle: "bold",
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Arrival Headline",
+        draggable: true,
+      });
+      headline.offsetX(headline.width() / 2);
+      attachNodeInteractions(headline);
+      studioLayer.add(headline);
+
+      const sub = new Konva.Text({
+        x: cx,
+        y: bar.y() + 70,
+        text: "Be the first to drive it.",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 32,
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Arrival Subline",
+        draggable: true,
+      });
+      sub.offsetX(sub.width() / 2);
+      attachNodeInteractions(sub);
+      studioLayer.add(sub);
+    } else if (type === "sale") {
+      const sold = new Konva.Text({
+        x: cx,
+        y: cy,
+        text: "SOLD",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 180,
+        fontStyle: "bold",
+        fill: BRAND.textLight,
+        stroke: "#DC2626",
+        strokeWidth: 8,
+        shadowColor: "black",
+        shadowBlur: 10,
+        shadowOffset: { x: 4, y: 4 },
+        shadowOpacity: 0.5,
+        rotation: -18,
+        align: "center",
+        name: "Sold Stamp",
+        draggable: true,
+      });
+      sold.offsetX(sold.width() / 2);
+      sold.offsetY(sold.height() / 2);
+      attachNodeInteractions(sold);
+      studioLayer.add(sold);
+
+      const congrats = new Konva.Text({
+        x: cx,
+        y: cy + 160,
+        text: "Congrats [Customer Name]!",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 44,
+        align: "center",
+        fill: BRAND.textLight,
+        name: "Sold Congrats",
+        draggable: true,
+      });
+      congrats.offsetX(congrats.width() / 2);
+      attachNodeInteractions(congrats);
+      studioLayer.add(congrats);
+    } else {
+      addStudioText();
+    }
+
+    studioLayer.draw();
+    rebuildLayersList();
+    saveStudioHistory();
+  }
+
+  function saveDesignToLocal() {
+    if (!studioStage) {
+      alert("Open Design Studio first, then save.");
+      return;
+    }
+    try {
+      const json = studioStage.toJSON();
+      localStorage.setItem(STUDIO_STORAGE_KEY, json);
+      alert("Design saved on this device.");
+    } catch (err) {
+      console.error("Error saving design:", err);
+      alert("Could not save this design. Check storage permissions.");
+    }
+  }
+
+  function loadDesignFromLocal() {
+    const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
+    if (!stored) {
+      alert("No saved design found yet.");
+      return;
+    }
+    if (!window.Konva) {
+      alert("Design Studio is not available (Konva missing).");
+      return;
+    }
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) {
+      alert("Design Studio area not found.");
+      return;
+    }
+
+    try {
+      if (studioStage) {
+        studioStage.destroy();
+      }
+      studioStage = Konva.Node.create(stored, container);
+      const layers = studioStage.getLayers();
+      studioLayer = layers[0] || new Konva.Layer();
+      if (!layers.length) studioStage.add(studioLayer);
+
+      studioTransformer =
+        studioStage.findOne("Transformer") ||
+        new Konva.Transformer({
+          rotateEnabled: true,
+          enabledAnchors: [
+            "top-left",
+            "top-right",
+            "bottom-left",
+            "bottom-right",
+          ],
+          anchorSize: 10,
+          borderStroke: "#e5e7eb",
+          anchorFill: BRAND.primary,
+          anchorStroke: BRAND.primary,
+          anchorCornerRadius: 4,
+        });
+      if (!studioTransformer.getStage()) {
+        studioLayer.add(studioTransformer);
+      }
+
+      studioSelectedNode = null;
+      studioHistory = [stored];
+      studioHistoryIndex = 0;
+
+      attachEventsToAllNodes();
+      rebuildLayersList();
+      wireDesignStudioUI();
+
+      if (designStudioOverlay) {
+        designStudioOverlay.classList.remove("hidden");
+      }
+    } catch (err) {
+      console.error("Error loading design:", err);
+      alert("Could not load saved design. Save a new one and try again.");
+    }
+  }
+
+  function wireDesignStudioUI() {
+    if (studioUIWired) return;
+    studioUIWired = true;
+
+    if (toolAddText) {
+      toolAddText.addEventListener("click", () => addStudioText());
+    }
+    if (toolAddShape) {
+      toolAddShape.addEventListener("click", () => addStudioShape());
+    }
+    if (toolAddBadge) {
+      toolAddBadge.addEventListener("click", () => addStudioBadge());
+    }
+    if (toolSetBackground) {
+      toolSetBackground.addEventListener("click", () =>
+        setStudioBackground(BRAND.dark)
+      );
+    }
+
+    if (studioExportPng) {
+      studioExportPng.addEventListener("click", exportStudioAsPng);
+    }
+    if (studioUndoBtn) {
+      studioUndoBtn.addEventListener("click", studioUndo);
+    }
+    if (studioRedoBtn) {
+      studioRedoBtn.addEventListener("click", studioRedo);
+    }
+    if (studioSizePreset) {
+      studioSizePreset.addEventListener("change", applyStudioSizePreset);
+    }
+
+    if (layerTextInput) {
+      layerTextInput.addEventListener("input", () => {
+        if (studioSelectedNode && studioSelectedNode.className === "Text") {
+          studioSelectedNode.text(layerTextInput.value);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerFontSizeInput) {
+      layerFontSizeInput.addEventListener("input", () => {
+        if (studioSelectedNode && studioSelectedNode.className === "Text") {
+          const size = Number(layerFontSizeInput.value) || 40;
+          studioSelectedNode.fontSize(size);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerOpacityInput) {
+      layerOpacityInput.addEventListener("input", () => {
+        if (studioSelectedNode) {
+          const val = Number(layerOpacityInput.value);
+          studioSelectedNode.opacity(val);
+          studioLayer.batchDraw();
+          saveStudioHistory();
+        }
+      });
+    }
+
+    if (layerDeleteBtn) {
+      layerDeleteBtn.addEventListener("click", () => {
+        if (!studioSelectedNode || !studioLayer) return;
+        studioSelectedNode.destroy();
+        studioSelectedNode = null;
+
+        if (studioTransformer) {
+          studioTransformer.nodes([]);
+          studioTransformer.visible(false);
+        }
+
+        studioLayer.draw();
+        rebuildLayersList();
+        saveStudioHistory();
+      });
+    }
+  }
+
+  function gatherImageUrlsForStudios() {
+    const urls = [];
+
+    if (creativeThumbGrid) {
+      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
+        if (img.src) urls.push(img.src);
+      });
+    }
+
+    if (!urls.length && dealerPhotos.length) {
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const fallback = dealerPhotos.map((p) => p.src);
+      (selected.length ? selected : fallback).forEach((u) => urls.push(u));
+    }
+
+    return urls.slice(0, 24);
+  }
+
+  function renderStudioPhotoTray() {
+    if (!studioPhotoTray) return;
+    studioPhotoTray.innerHTML = "";
+
+    studioAvailablePhotos.forEach((url) => {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Design photo";
+      img.loading = "lazy";
+      img.className = "studio-photo-thumb";
+      img.draggable = true;
+
+      img.addEventListener("click", (e) => {
+        if (e.shiftKey) {
+          addStudioImageFromUrl(url, true);
+        } else {
+          addStudioImageFromUrl(url, false);
+        }
+      });
+
+      img.addEventListener("dblclick", () => {
+        addStudioImageFromUrl(url, true);
+      });
+
+      img.addEventListener("dragstart", (e) => {
+        try {
+          e.dataTransfer.setData("text/plain", url);
+        } catch (_) {}
+      });
+
+      studioPhotoTray.appendChild(img);
+    });
+
+    const konvaContainer = document.getElementById("konvaStageContainer");
+    if (konvaContainer && !studioDnDWired) {
+      studioDnDWired = true;
+
+      konvaContainer.addEventListener("dragover", (e) => {
+        e.preventDefault();
+      });
+
+      konvaContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        let url = "";
+        try {
+          url = e.dataTransfer.getData("text/plain");
+        } catch (_) {}
+
+        if (url) addStudioImageFromUrl(url, false);
+      });
+    }
+  }
+
+  function openDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.remove("hidden");
+
+    if (!studioStage && window.Konva) {
+      initDesignStudio();
+    } else if (studioStage) {
+      studioStage.draw();
+    }
+
+    rebuildLayersList();
+
+    if (!studioAvailablePhotos.length) {
+      const urls = gatherImageUrlsForStudios();
+      studioAvailablePhotos = urls.slice(0, 24);
+    }
+
+    renderStudioPhotoTray();
+  }
+
+  function closeDesignStudio() {
+    if (!designStudioOverlay) return;
+    designStudioOverlay.classList.add("hidden");
+  }
+
+  if (designLauncher) {
+    designLauncher.addEventListener("click", openDesignStudio);
+  }
+  if (designCloseBtn && designStudioOverlay) {
+    designCloseBtn.addEventListener("click", closeDesignStudio);
+    designStudioOverlay.addEventListener("click", (e) => {
+      if (e.target === designStudioOverlay) closeDesignStudio();
+    });
+  }
+
+  if (templatePaymentBtn) {
+    templatePaymentBtn.addEventListener("click", () =>
+      applyTemplate("payment")
+    );
+  }
+  if (templateArrivalBtn) {
+    templateArrivalBtn.addEventListener("click", () =>
+      applyTemplate("arrival")
+    );
+  }
+  if (templateSaleBtn) {
+    templateSaleBtn.addEventListener("click", () => applyTemplate("sale"));
+  }
+  if (saveDesignBtn) {
+    saveDesignBtn.addEventListener("click", saveDesignToLocal);
+  }
+  if (loadDesignBtn) {
+    loadDesignBtn.addEventListener("click", loadDesignFromLocal);
+  }
+
+  function pushUrlsIntoDesignStudio(urls) {
+    const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
+
+    if (!list.length) {
+      alert("No photos available. Boost a listing or add photos first.");
+      return;
+    }
+
+    studioAvailablePhotos = list.slice(0, 24);
+    renderStudioPhotoTray();
+
+    openDesignStudio();
+
+    list.slice(0, 8).forEach((url, index) => {
+      addStudioImageFromUrl(url, index === 0);
+    });
+  }
+
+  if (sendPhotosToStudioBtn) {
+    sendPhotosToStudioBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
+
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length
+        ? selected
+        : dealerPhotos.map((p) => p.src)
+      ).slice(0, 8);
+
+      if (!chosen.length) {
+        alert("No photos selected.");
+        return;
+      }
+
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
+      });
+
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
+      }
+      pushUrlsIntoDesignStudio(urls);
+    });
+  }
+
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
+      const urls = gatherImageUrlsForStudios();
+      if (!urls.length) {
+        alert("Add or select some photos first.");
+        return;
+      }
+      openCreativeStudio();
+      urls.forEach((url) => addImageFromUrl(url));
+    });
+  }
+
+  if (openDesignFromCarouselBtn) {
+    openDesignFromCarouselBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos yet. Double-click a photo in the grid above to add it."
+        );
+        return;
+      }
+
+      const selected = socialReadyPhotos
+        .filter((p) => p.selected)
+        .map((p) => p.url);
+      const chosen = (selected.length
+        ? selected
+        : socialReadyPhotos.map((p) => p.url)
+      ).slice(0, 8);
+
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  if (downloadAllEditedBtn) {
+    downloadAllEditedBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos to download. Double-click a photo in the grid above first."
+        );
+        return;
+      }
+
+      socialReadyPhotos.forEach((photo, index) => {
+        const a = document.createElement("a");
+        a.href = photo.url;
+        a.download = `lot-rocket-photo-${index + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+    });
+  }
 
   console.log("✅ Lot Rocket frontend wiring complete");
 });
