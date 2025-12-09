@@ -1353,6 +1353,86 @@ body.dark-theme .step2-card .copy-btn {
 }
 
 /* === Social-ready Photo Strip (Step 3) === */
+/* === Social-ready Photo Strip (Step 3) === */
+
+.social-ready-panel {
+   ...
+}
+
+/* -------------------------------------- */
+/* STEP 3 – Social-ready strip controls   */
+/* -------------------------------------- */
+
+.social-carousel-item {
+  position: relative;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    opacity 0.15s ease-out;
+}
+
+.social-carousel-item-selected {
+  box-shadow: 0 0 0 2px var(--accent-1), 0 0 18px rgba(249, 115, 22, 0.45);
+}
+
+.social-carousel-item-locked {
+  box-shadow: 0 0 0 2px #38bdf8;
+}
+
+.social-carousel-item-removing {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.social-carousel-img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 0.85rem;
+}
+
+.social-carousel-controls {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.social-carousel-control-btn {
+  border: none;
+  padding: 2px 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.9;
+  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.7);
+  color: #e5e7eb;
+  transition: background 0.12s ease-out, transform 0.12s ease-out, opacity 0.12s ease-out;
+}
+
+.social-carousel-control-btn:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.social-carousel-control-btn.lock-btn {
+  border: 1px solid #38bdf8;
+}
+
+.social-carousel-control-btn.delete-btn {
+  border: 1px solid #f97373;
+}
+
+.small-note {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0.25rem 0 0;
+}
 
 .social-ready-panel {
   margin-top: 1.5rem;
