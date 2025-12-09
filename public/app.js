@@ -1979,6 +1979,35 @@ if (sendDesignToStripBtn) {
     }
     studioLayer.draw();
   }
+  // CORS-safe wrapper for images used in Design Studio.
+  // Routes external URLs through our /api/proxy-image endpoint.
+  function getProxiedImageUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
+
+    try {
+      const u = new URL(rawUrl, window.location.origin);
+
+      // Same-origin, blob: or data: URLs do NOT need proxying.
+      if (
+        u.origin === window.location.origin ||
+        u.protocol === "blob:" ||
+        u.protocol === "data:"
+      ) {
+        return rawUrl;
+      }
+
+      // Already going through our proxy
+      if (u.pathname.startsWith("/api/proxy-image")) {
+        return rawUrl;
+      }
+
+      // Everything else → send through backend proxy
+      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
+    } catch (e) {
+      console.warn("[DesignStudio] Could not parse URL for proxy:", rawUrl, e);
+      return rawUrl;
+    }
+  }
 
 function addStudioImageFromUrl(url, asBackground = false) {
   if (!studioLayer || !studioStage || !url) return;
