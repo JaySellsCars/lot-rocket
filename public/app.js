@@ -1979,6 +1979,7 @@ if (sendDesignToStripBtn) {
     }
     studioLayer.draw();
   }
+
   // CORS-safe wrapper for images used in Design Studio.
   // Routes external URLs through our /api/proxy-image endpoint.
   function getProxiedImageUrl(rawUrl) {
@@ -2009,58 +2010,59 @@ if (sendDesignToStripBtn) {
     }
   }
 
-function addStudioImageFromUrl(url, asBackground = false) {
-  if (!studioLayer || !studioStage || !url) return;
+  function addStudioImageFromUrl(url, asBackground = false) {
+    if (!studioLayer || !studioStage || !url) return;
 
-  const img = new Image();
+    const img = new Image();
 
-  // VERY IMPORTANT: allow CORS-safe pixel access
-  img.crossOrigin = "anonymous";
+    // VERY IMPORTANT: allow CORS-safe pixel access
+    img.crossOrigin = "anonymous";
 
-  // Route external images through our backend proxy
-  const safeUrl = getProxiedImageUrl(url);
+    // Route external images through our backend proxy
+    const safeUrl = getProxiedImageUrl(url);
 
-  img.onload = () => {
-    const fitRatio =
-      Math.min(
-        studioStage.width() / img.width,
-        studioStage.height() / img.height
-      ) || 1;
+    img.onload = () => {
+      const fitRatio =
+        Math.min(
+          studioStage.width() / img.width,
+          studioStage.height() / img.height
+        ) || 1;
 
-    const finalRatio = fitRatio * 0.9;
-    const w = img.width * finalRatio;
-    const h = img.height * finalRatio;
+      const finalRatio = fitRatio * 0.9;
+      const w = img.width * finalRatio;
+      const h = img.height * finalRatio;
 
-    const node = new Konva.Image({
-      image: img,
-      x: studioStage.width() / 2,
-      y: studioStage.height() / 2,
-      width: w,
-      height: h,
-      offsetX: w / 2,
-      offsetY: h / 2,
-      draggable: true,
-      name: asBackground ? "Background Photo" : "Photo Layer",
-    });
+      const node = new Konva.Image({
+        image: img,
+        x: studioStage.width() / 2,
+        y: studioStage.height() / 2,
+        width: w,
+        height: h,
+        offsetX: w / 2,
+        offsetY: h / 2,
+        draggable: true,
+        name: asBackground ? "Background Photo" : "Photo Layer",
+      });
 
-    attachNodeInteractions(node);
-    studioLayer.add(node);
-    if (asBackground) {
-      node.moveToBottom();
-      const bg = studioLayer.findOne(".BackgroundLayer");
-      if (bg) bg.moveToBottom();
-    }
-    studioLayer.draw();
-    selectStudioNode(node);
-    saveStudioHistory();
-  };
+      attachNodeInteractions(node);
+      studioLayer.add(node);
+      if (asBackground) {
+        node.moveToBottom();
+        const bg = studioLayer.findOne(".BackgroundLayer");
+        if (bg) bg.moveToBottom();
+      }
+      studioLayer.draw();
+      selectStudioNode(node);
+      saveStudioHistory();
+    };
 
-  img.onerror = (err) => {
-    console.error("[DesignStudio] Failed to load image:", safeUrl, err);
-  };
+    img.onerror = (err) => {
+      console.error("[DesignStudio] Failed to load image:", safeUrl, err);
+    };
 
-  img.src = safeUrl;
-}
+    img.src = safeUrl;
+  }
+
 
 
 
