@@ -2440,7 +2440,8 @@ function renderSocialCarousel() {
     openDesignStudio(list);
 
     // Auto-drop first few onto canvas (first as background)
-    list.slice(0, 8).forEach((url, index) => {
+   list.slice(0, 24).forEach((url, index) => {
+
       addStudioImageFromUrl(url, index === 0);
     });
   }
