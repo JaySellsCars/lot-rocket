@@ -1,9 +1,9 @@
-// public/app.js – Lot Rocket frontend logic v2.5.8
+// public/app.js – Lot Rocket frontend logic v2.5.9 (cleaned)
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.8");
+  console.log("✅ Lot Rocket frontend loaded v2.5.9");
   const apiBase = "";
 
   // Brand palette for Design Studio 3.5
@@ -672,7 +672,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
   const creativeThumbGrid = document.getElementById("creativeThumbGrid");
- 
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
   const tunerPreviewImg = document.getElementById("tunerPreviewImg");
@@ -691,13 +690,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Current filter used by both CSS preview and canvas drawing
   let currentTunerFilter = "";
 
-// NEW: Social-ready photo strip elements
-const socialCarousel = document.getElementById("socialCarousel");
-
-const openCanvasFromCarouselBtn = document.getElementById("openCanvasFromCarousel");
-const revertSocialPhotoBtn = document.getElementById("revertSocialPhotoBtn");
-const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
-
+  // NEW: Social-ready photo strip elements
+  const socialCarousel = document.getElementById("socialCarousel");
+  const openCanvasFromCarouselBtn = document.getElementById(
+    "openCanvasFromCarousel"
+  );
+  const openDesignFromCarouselBtn = document.getElementById(
+    "openDesignFromCarousel"
+  );
+  const revertSocialPhotoBtn = document.getElementById("revertSocialPhotoBtn");
+  const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
 
   // NEW: big preview + nav + status
   const socialCarouselPreviewImg = document.getElementById(
@@ -729,7 +732,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
   let creativeHistoryIndex = -1;
   let localCreativePhotos = [];
 
-  // Social-ready photos state: [{ url, selected }]
+  // Social-ready photos state: [{ url, selected, originalUrl, locked }]
   let socialReadyPhotos = [];
 
   // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
@@ -1172,12 +1175,10 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     renderSocialCarousel();
   }
 
-  // Replace only the current *active* photo in Step 3
   function replaceCurrentSocialImage(newUrl) {
     if (!newUrl) return;
 
     if (!socialReadyPhotos.length) {
-      // Nothing yet? just add as new
       addPhotoToSocialReady(newUrl);
       return;
     }
@@ -1255,7 +1256,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     }
 
     socialReadyPhotos.forEach((photo, index) => {
-      // Make sure every photo has a locked flag
+      // Ensure every photo has a locked flag
       if (typeof photo.locked !== "boolean") {
         photo.locked = false;
       }
@@ -1459,174 +1460,6 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
       handleCreativeFiles(files);
     });
   }
-  // ---- STEP 3 → STUDIO BRIDGE HELPERS ----
-
-  
-
-  const openDesignFromCarouselBtn =
-    document.getElementById("openDesignFromCarousel");
-  const canvasLauncher = document.getElementById("canvasLauncher");
-  const designLauncher = document.getElementById("designLauncher");
-  const studioPhotoTray = document.getElementById("studioPhotoTray");
-
-  // Collect all candidate photo URLs from Step 3 state
-  function collectStep3Urls() {
-    const urls = [];
-
-    // 1) Social-ready strip (preferred)
-    if (Array.isArray(socialReadyPhotos) && socialReadyPhotos.length) {
-      socialReadyPhotos.forEach((p) => {
-        if (p && p.url) urls.push(p.url);
-      });
-    }
-
-    // 2) Local Creative Lab uploads
-    if (Array.isArray(localCreativePhotos) && localCreativePhotos.length) {
-      localCreativePhotos.forEach((u) => {
-        if (u) urls.push(u);
-      });
-    }
-
-    // 3) Dealer photos (fallback)
-    if (Array.isArray(dealerPhotos) && dealerPhotos.length) {
-      dealerPhotos.forEach((p) => {
-        if (!p) return;
-        if (typeof p === "string" && p) {
-          urls.push(p);
-        } else if (p.src) {
-          urls.push(p.src);
-        }
-      });
-    }
-
-    // De-dupe
-    return [...new Set(urls)];
-  }
-
-  // Open Canvas Studio (Fabric) with a list of URLs
-  function openCanvasWithUrls(urls) {
-    if (!urls || !urls.length) {
-      alert("No photos available yet. Boost a listing or upload photos first.");
-      return;
-    }
-
-    if (creativeStudioOverlay) {
-      creativeStudioOverlay.classList.remove("hidden");
-    }
-
-    // If you already have a helper, use it. Otherwise just drop first image on canvas.
-    if (typeof openCreativeStudio === "function") {
-      // existing helper in your code
-      openCreativeStudio(urls);
-    } else if (typeof initCreativeCanvas === "function") {
-      initCreativeCanvas(urls);
-    } else if (typeof ensureCanvas === "function") {
-      const canvas = ensureCanvas();
-      if (canvas) {
-        urls.forEach((u) => {
-          fabric.Image.fromURL(u, (img) => {
-            img.scaleToWidth(canvas.width * 0.9);
-            img.set({
-              left: canvas.width / 2,
-              top: canvas.height / 2,
-              originX: "center",
-              originY: "center",
-            });
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            canvas.requestRenderAll();
-          });
-        });
-      }
-    }
-  }
-
-  // Open Design Studio 3.x (Konva) with a list of URLs
-  function openDesignStudioWithUrls(urls) {
-    if (!urls || !urls.length) {
-      alert("No photos available yet. Boost a listing or upload photos first.");
-      return;
-    }
-
-    if (designStudioOverlay) {
-      designStudioOverlay.classList.remove("hidden");
-    }
-
-    // Fill the top tray thumbnails if it exists
-    if (studioPhotoTray) {
-      studioPhotoTray.innerHTML = "";
-      urls.forEach((u) => {
-        const img = document.createElement("img");
-        img.src = u;
-        img.alt = "Design Studio source";
-        img.className = "studio-photo-thumb";
-        studioPhotoTray.appendChild(img);
-      });
-    }
-
-    if (typeof initDesignStudio === "function") {
-      // your existing Konva initializer
-      initDesignStudio(urls);
-    } else if (typeof pushUrlsIntoDesignStudio === "function") {
-      pushUrlsIntoDesignStudio(urls);
-    }
-  }
-
-  // Wire buttons for sending photos → studios
-
-  // Step 3 button: "Send All to Canvas Studio"
-  if (sendAllToCanvasBtn) {
-    sendAllToCanvasBtn.addEventListener("click", () => {
-      const urls = collectStep3Urls();
-      openCanvasWithUrls(urls);
-    });
-  }
-
-  // Floating launcher: Canvas Studio
-  if (canvasLauncher) {
-    canvasLauncher.addEventListener("click", () => {
-      const urls = collectStep3Urls();
-      openCanvasWithUrls(urls);
-    });
-  }
-
-  // Step 3 button: "Send Selected to Design Studio 3.0"
-  if (sendToDesignStudioBtn) {
-    sendToDesignStudioBtn.addEventListener("click", () => {
-      const urls = collectStep3Urls();
-      openDesignStudioWithUrls(urls);
-    });
-  }
-
-  // Button under the social-ready strip: "Open Selected in Design Studio 3.5"
-  if (openDesignFromCarouselBtn) {
-    openDesignFromCarouselBtn.addEventListener("click", () => {
-      let urls = [];
-
-      if (Array.isArray(socialReadyPhotos) && socialReadyPhotos.length) {
-        const selected = socialReadyPhotos.filter((p) => p.selected && p.url);
-        if (selected.length) {
-          urls = selected.map((p) => p.url);
-        } else {
-          urls = socialReadyPhotos.map((p) => p.url).filter(Boolean);
-        }
-      }
-
-      if (!urls.length) {
-        urls = collectStep3Urls();
-      }
-
-      openDesignStudioWithUrls(urls);
-    });
-  }
-
-  // Floating launcher: Design Studio
-  if (designLauncher) {
-    designLauncher.addEventListener("click", () => {
-      const urls = collectStep3Urls();
-      openDesignStudioWithUrls(urls);
-    });
-  }
 
   function getActivePhotoUrlForCinematic() {
     if (tunerPreviewImg && tunerPreviewImg.src) {
@@ -1754,7 +1587,6 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
-
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
   const designLauncher = document.getElementById("designLauncher");
@@ -2186,7 +2018,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     studioLayer.draw();
     studioSelectedNode = null;
     if (studioTransformer) {
-      studioTransformer.nodes([]);
+      studioTransformer.nodes([]); 
       studioTransformer.visible(false);
     }
   }
@@ -2667,11 +2499,14 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     openDesignStudio(list);
 
     // Auto-drop first few onto canvas (first as background)
-   list.slice(0, 24).forEach((url, index) => {
-
+    list.slice(0, 24).forEach((url, index) => {
       addStudioImageFromUrl(url, index === 0);
     });
   }
+
+  // ==================================================
+  // STEP 1 → STEP 3 + STUDIO BRIDGES
+  // ==================================================
 
   // 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
   // and does NOT auto-open Design Studio.
@@ -2709,6 +2544,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     });
   }
 
+  // Step 3 button: "Send photos to Design Studio 3.x"
   if (sendToDesignStudioBtn) {
     sendToDesignStudioBtn.addEventListener("click", () => {
       const urls = gatherImageUrlsForStudios();
@@ -2720,7 +2556,9 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     });
   }
 
-
+  // Optional: "Send ALL to Canvas" button (if present)
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
       const urls = gatherImageUrlsForStudios();
       if (!urls.length) {
         alert("Add or select some photos first.");
@@ -2735,6 +2573,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
   // Social-ready Photo Strip (Carousel) Actions
   // --------------------------------------------------
 
+  // Open selected (or all) social-ready photos in Design Studio
   if (openDesignFromCarouselBtn) {
     openDesignFromCarouselBtn.addEventListener("click", () => {
       if (!socialReadyPhotos.length) {
@@ -2751,10 +2590,51 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
       const chosen = (selected.length
         ? selected
         : socialReadyPhotos.map((p) => p.url)
-).slice(0, 24);
-
+      ).slice(0, 24);
 
       pushUrlsIntoDesignStudio(chosen);
+    });
+  }
+
+  // Open selected (or all) social-ready photos in Canvas Studio
+  if (openCanvasFromCarouselBtn) {
+    openCanvasFromCarouselBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert(
+          "No social-ready photos yet. Double-click a photo in the grid above to add it."
+        );
+        return;
+      }
+
+      const selected = socialReadyPhotos
+        .filter((p) => p.selected)
+        .map((p) => p.url);
+
+      const urls = (selected.length
+        ? selected
+        : socialReadyPhotos.map((p) => p.url)
+      ).slice(0, 24);
+
+      openCreativeStudio();
+      urls.forEach((url) => addImageFromUrl(url));
+    });
+  }
+
+  // Revert current social photo back to original (first version)
+  if (revertSocialPhotoBtn) {
+    revertSocialPhotoBtn.addEventListener("click", () => {
+      if (!socialReadyPhotos.length) {
+        alert("No social-ready photos to revert.");
+        return;
+      }
+      const idx = socialCurrentIndex;
+      const photo = socialReadyPhotos[idx];
+      if (!photo || !photo.originalUrl) {
+        alert("No original version saved for this photo.");
+        return;
+      }
+      photo.url = photo.originalUrl;
+      renderSocialCarousel();
     });
   }
 
