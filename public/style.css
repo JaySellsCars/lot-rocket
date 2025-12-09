@@ -1700,11 +1700,21 @@ body.light-theme .video-output-card textarea {
 }
 
 .social-carousel-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+  /* Make the preview box a square so it matches 1080x1080 */
+  aspect-ratio: 1 / 1;
+  width: 320px;          /* or whatever size you like */
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
 }
+
+.social-carousel-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* IMPORTANT: show whole design, don’t crop */
+  display: block;
+}
+
 
 #socialCarouselPreviewImg {
   max-height: 220px;
