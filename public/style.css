@@ -1745,8 +1745,11 @@ body.light-theme .video-output-card textarea {
 
 .social-carousel {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;         /* allows multiple rows */
   gap: 0.5rem;
   padding: 0.35rem 0;
+  max-height: 260px;       /* enough height for 2 rows */
+  overflow-y: auto;        /* scroll if needed */
+  overflow-x: hidden;      /* prevent sideways scrolling */
 }
+
