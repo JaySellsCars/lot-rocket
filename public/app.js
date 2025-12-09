@@ -1722,14 +1722,17 @@ if (sendDesignToStripBtn) {
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-      // 3) Push into Social-Ready strip using our helper
-      if (typeof addPhotoToSocialReady === "function") {
-        addPhotoToSocialReady(objectUrl);
-      } else {
-        console.warn(
-          "addPhotoToSocialReady not defined; design image cannot be added to strip."
-        );
-      }
+// 3) Use helper to wire into Social-Ready strip + focus preview
+if (typeof addDesignImageToSocialStrip === "function") {
+  addDesignImageToSocialStrip(objectUrl);
+} else if (typeof addPhotoToSocialReady === "function") {
+  addPhotoToSocialReady(objectUrl);
+} else {
+  console.warn(
+    "No social-strip helper defined; design image cannot be added to strip."
+  );
+}
+
 
       // 4) ALSO mirror the design into Step 3 Creative Lab thumbs
       //    so it behaves like any other edited photo.
