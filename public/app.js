@@ -1461,7 +1461,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
   }
   // ---- STEP 3 → STUDIO BRIDGE HELPERS ----
 
-  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
+  
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
   const openDesignFromCarouselBtn =
     document.getElementById("openDesignFromCarousel");
