@@ -1133,8 +1133,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Push new photo, mark selected
-    socialReadyPhotos.push({ url, selected: true });
+// Push new photo, mark selected (unlocked by default)
+socialReadyPhotos.push({ url, selected: true, locked: false });
+
 
     // Optional cap (keep latest 24)
     const MAX_SOCIAL = 24;
