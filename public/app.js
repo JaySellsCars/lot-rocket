@@ -1683,6 +1683,31 @@ document.addEventListener("DOMContentLoaded", () => {
     rebuildLayersList();
     saveStudioHistory();
   }
+// --------------------------------------------------
+// DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP)
+// --------------------------------------------------
+const sendDesignToStripBtn = document.getElementById("sendDesignToStripBtn");
+
+if (sendDesignToStripBtn) {
+  sendDesignToStripBtn.addEventListener("click", async () => {
+    try {
+      if (!window.studioStage) {
+        console.warn("⚠️ Design Studio stage not initialized.");
+        return;
+      }
+
+      // 1) Export Konva stage to PNG
+      const dataUrl = window.studioStage.toDataURL({
+        pixelRatio: 2, // sharper output
+      });
+
+      // 2) Convert dataURL → Blob → Object URL
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      // 3) Build social-ready entry
+      const photoObj = {
 
   function saveStudioHistory() {
     if (!studioStage) return;
