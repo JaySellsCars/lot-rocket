@@ -1708,6 +1708,33 @@ if (sendDesignToStripBtn) {
 
       // 3) Build social-ready entry
       const photoObj = {
+        id: `design-${Date.now()}`,
+        src: objectUrl,
+        origin: "design-studio",
+        locked: false,
+      };
+
+      // 4) Add to global state
+      if (!Array.isArray(window.socialReadyPhotos)) {
+        window.socialReadyPhotos = [];
+      }
+
+      window.socialReadyPhotos.push(photoObj);
+      window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
+
+      // 5) Re-render strip
+      if (typeof window.renderSocialStrip === "function") {
+        window.renderSocialStrip();
+      }
+
+      console.log("✅ Design sent to Step 3 social strip:", photoObj);
+    } catch (err) {
+      console.error("❌ Failed to send design to Step 3:", err);
+    }
+  });
+}
+
+
 
   function saveStudioHistory() {
     if (!studioStage) return;
