@@ -1150,9 +1150,14 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     }
 
     // Push new photo, mark selected (unlocked by default)
-    socialReadyPhotos.push({ url, selected: true, locked: false });
+    socialReadyPhotos.push({
+      url,
+      originalUrl: url, // remember the first/original version
+      selected: true,
+      locked: false,
+    });
 
-    // Optional cap (keep latest 24)
+    // Optional cap (keep latest MAX_STEP3_PHOTOS – 24)
     const MAX_SOCIAL = MAX_STEP3_PHOTOS;
     if (socialReadyPhotos.length > MAX_SOCIAL) {
       socialReadyPhotos = socialReadyPhotos.slice(
@@ -1164,6 +1169,34 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     socialCurrentIndex = socialReadyPhotos.length - 1;
 
     // Re-render strip + preview
+    renderSocialCarousel();
+  }
+
+  // Replace only the current *active* photo in Step 3
+  function replaceCurrentSocialImage(newUrl) {
+    if (!newUrl) return;
+
+    if (!socialReadyPhotos.length) {
+      // Nothing yet? just add as new
+      addPhotoToSocialReady(newUrl);
+      return;
+    }
+
+    const idx = socialCurrentIndex;
+    if (idx < 0 || idx >= socialReadyPhotos.length) {
+      addPhotoToSocialReady(newUrl);
+      return;
+    }
+
+    const photo = socialReadyPhotos[idx];
+    if (!photo) {
+      addPhotoToSocialReady(newUrl);
+      return;
+    }
+
+    photo.url = newUrl;
+    photo.selected = true;
+
     renderSocialCarousel();
   }
 
@@ -1346,7 +1379,8 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
   if (socialNextBtn) {
     socialNextBtn.addEventListener("click", () => {
       if (!socialReadyPhotos.length) return;
-      socialCurrentIndex = (socialCurrentIndex + 1) % socialReadyPhotos.length;
+      socialCurrentIndex =
+        (socialCurrentIndex + 1) % socialReadyPhotos.length;
       updateSocialPreview();
     });
   }
@@ -1375,7 +1409,6 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
       }
     });
   }
-
 
   if (photoDropZone && photoFileInput) {
     photoDropZone.addEventListener("click", () => {
@@ -1501,7 +1534,6 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
         if (creativeThumbGrid) {
           let updated = false;
 
-          // Prefer selected thumb
           const selectedThumb = creativeThumbGrid.querySelector(
             ".creative-thumb.selected"
           );
@@ -1509,7 +1541,6 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
             selectedThumb.src = finalUrl;
             updated = true;
           } else {
-            // Otherwise, update the first thumb that matches the old src
             const thumbs =
               creativeThumbGrid.querySelectorAll(".creative-thumb");
             thumbs.forEach((imgEl) => {
@@ -1526,7 +1557,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
           u === src ? finalUrl : u
         );
 
-        // 4) Add into Social-ready strip
+        // 4) Add into Social-ready strip (helper handles push + cap + preview)
         addPhotoToSocialReady(finalUrl);
 
         // 5) Also add as a fresh thumb if it's not already there
@@ -1535,6 +1566,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
           !!Array.from(
             creativeThumbGrid.querySelectorAll(".creative-thumb")
           ).find((imgEl) => imgEl.src === finalUrl);
+
         if (!alreadyInThumbs) {
           addCreativeThumb(finalUrl);
         }
@@ -1554,6 +1586,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
+
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
   const designLauncher = document.getElementById("designLauncher");
