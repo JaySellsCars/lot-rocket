@@ -1712,16 +1712,10 @@ if (sendDesignToStripBtn) {
       // 2) Convert dataURL → Blob → object URL
       const res = await fetch(dataUrl);
       const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);  // <- THIS is what was missing
+      const objectUrl = URL.createObjectURL(blob);
 
-      // 3) Use existing helper to wire into Social-Ready strip
-      if (typeof addPhotoToSocialReady === "function") {
-        addPhotoToSocialReady(objectUrl);
-      } else {
-        console.warn(
-          "addPhotoToSocialReady not defined; design image cannot be added to strip."
-        );
-      }
+      // 3) Push into Social-Ready strip using our helper
+      addPhotoToSocialReady(objectUrl);
 
       console.log(
         "✅ Design sent to Step 3 social strip from Design Studio:",
@@ -1732,6 +1726,7 @@ if (sendDesignToStripBtn) {
     }
   });
 }
+
 
 
 
