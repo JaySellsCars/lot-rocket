@@ -1721,11 +1721,8 @@ if (sendDesignToStripBtn) {
       window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
 
 // 5) Re-render carousel
-if (typeof window.renderSocialCarousel === "function") {
-  window.renderSocialCarousel();
-} else if (typeof window.renderSocialStrip === "function") {
-  window.renderSocialStrip(); // fallback if older name
-}
+renderSocialCarousel();
+
 
 
       console.log("✅ Design sent to Step 3 social strip:", photoObj);
