@@ -1683,35 +1683,25 @@ document.addEventListener("DOMContentLoaded", () => {
     rebuildLayersList();
     saveStudioHistory();
   }
-// --------------------------------------------------
 // DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP)
-// --------------------------------------------------
 const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
-sendDesignToStripBtn.addEventListener("click", async () => {
-  console.log("▶️ Send to Step 3 clicked");
-  try {
-    // ...
-
 
 if (sendDesignToStripBtn) {
   sendDesignToStripBtn.addEventListener("click", async () => {
+    console.log("▶️ Send to Step 3 clicked");
     try {
       if (!window.studioStage) {
         console.warn("⚠️ Design Studio stage not initialized.");
         return;
       }
 
-      // 1) Export Konva stage to PNG
-      const dataUrl = window.studioStage.toDataURL({
-        pixelRatio: 2, // sharper output
-      });
-
-      // 2) Convert dataURL → Blob → Object URL
+      // 1) export Konva stage to PNG
+      const dataUrl = window.studioStage.toDataURL({ pixelRatio: 2 });
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-      // 3) Build social-ready entry
+      // 2) Build the social-ready object
       const photoObj = {
         id: `design-${Date.now()}`,
         src: objectUrl,
@@ -1719,7 +1709,7 @@ if (sendDesignToStripBtn) {
         locked: false,
       };
 
-      // 4) Add to global state
+      // 3) Push into global strip
       if (!Array.isArray(window.socialReadyPhotos)) {
         window.socialReadyPhotos = [];
       }
@@ -1727,7 +1717,7 @@ if (sendDesignToStripBtn) {
       window.socialReadyPhotos.push(photoObj);
       window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
 
-      // 5) Re-render strip
+      // 4) Re-render carousel
       if (typeof window.renderSocialStrip === "function") {
         window.renderSocialStrip();
       }
@@ -1738,6 +1728,7 @@ if (sendDesignToStripBtn) {
     }
   });
 }
+
 
 
 
