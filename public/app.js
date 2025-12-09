@@ -2634,7 +2634,7 @@ if (typeof addDesignImageToSocialStrip === "function") {
 
   // 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
   // and does NOT auto-open Design Studio.
-// Step 1 button: send dealer photos into Step 3 AND Design Studio 3.5
+// Step 1 button: send dealer photos into Step 3 (Creative Lab + Social Strip ONLY)
 if (sendPhotosToStudioBtn) {
   sendPhotosToStudioBtn.addEventListener("click", () => {
     if (!dealerPhotos.length) {
@@ -2653,7 +2653,7 @@ if (sendPhotosToStudioBtn) {
       return;
     }
 
-    // 1) Mirror into Creative Lab + Social Strip
+    // Mirror into Creative Lab + Social Strip ONLY
     chosen.forEach((url) => {
       localCreativePhotos.push(url);
       addCreativeThumb(url);
@@ -2663,7 +2663,12 @@ if (sendPhotosToStudioBtn) {
         applyTunerFilters();
       }
     });
+
+    // Ensure the social carousel UI reflects the new photos
     renderSocialCarousel();
+  });
+}
+
 
     // 2) ALSO push the same photos directly into Design Studio 3.5
     console.log("[LotRocket] Sending photos into Design Studio:", chosen);
