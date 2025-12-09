@@ -1022,6 +1022,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------- CREATIVE THUMBS + TUNER + SOCIAL STRIP ----------------
 
+  // One global cap so all Step 3 areas behave the same
+  const MAX_STEP3_PHOTOS = 24;
+
   if (creativeImageInput) {
     creativeImageInput.addEventListener("change", (e) => {
       const files = e.target.files;
@@ -1039,6 +1042,9 @@ document.addEventListener("DOMContentLoaded", () => {
     img.alt = "Creative photo";
     img.loading = "lazy";
     img.className = "creative-thumb";
+
+    img.title =
+      "Click to tune this photo. Double-click to send a tuned copy into Step 3.";
 
     img.addEventListener("click", () => {
       document
@@ -1059,6 +1065,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     creativeThumbGrid.appendChild(img);
+
+    // 🔢 Keep only the most recent MAX_STEP3_PHOTOS thumbs visible
+    const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
+    if (thumbs.length > MAX_STEP3_PHOTOS) {
+      const extra = thumbs.length - MAX_STEP3_PHOTOS;
+      for (let i = 0; i < extra; i++) {
+        creativeThumbGrid.removeChild(thumbs[i]);
+      }
+    }
   }
 
   async function buildEditedDataUrl(src) {
@@ -1133,12 +1148,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-// Push new photo, mark selected (unlocked by default)
-socialReadyPhotos.push({ url, selected: true, locked: false });
-
+    // Push new photo, mark selected (unlocked by default)
+    socialReadyPhotos.push({ url, selected: true, locked: false });
 
     // Optional cap (keep latest 24)
-    const MAX_SOCIAL = 24;
+    const MAX_SOCIAL = MAX_STEP3_PHOTOS;
     if (socialReadyPhotos.length > MAX_SOCIAL) {
       socialReadyPhotos = socialReadyPhotos.slice(
         socialReadyPhotos.length - MAX_SOCIAL
@@ -1191,129 +1205,131 @@ socialReadyPhotos.push({ url, selected: true, locked: false });
     }
   }
 
-function renderSocialCarousel() {
-  if (!socialCarousel) return;
-  socialCarousel.innerHTML = "";
+  function renderSocialCarousel() {
+    if (!socialCarousel) return;
+    socialCarousel.innerHTML = "";
 
-  if (!socialReadyPhotos.length) {
-    const note = document.createElement("p");
-    note.className = "small-note";
-    note.textContent =
-      "Double-click a photo in the grid above to mark it social-ready. Use the trash icon here to remove.";
-    socialCarousel.appendChild(note);
+    if (!socialReadyPhotos.length) {
+      const note = document.createElement("p");
+      note.className = "small-note";
+      note.textContent =
+        "Double-click a photo in the grid above to mark it social-ready. Use the trash icon here to remove.";
+      socialCarousel.appendChild(note);
 
-    updateSocialPreview();
-    return;
-  }
-
-  socialReadyPhotos.forEach((photo, index) => {
-    // Make sure every photo has a locked flag
-    if (typeof photo.locked !== "boolean") {
-      photo.locked = false;
+      updateSocialPreview();
+      return;
     }
 
-    const item = document.createElement("div");
-    item.className =
-      "social-carousel-item" +
-      (photo.selected ? " social-carousel-item-selected" : "") +
-      (photo.locked ? " social-carousel-item-locked" : "");
-    item.dataset.index = String(index);
-
-    const img = document.createElement("img");
-    img.src = photo.url;
-    img.alt = `Social-ready photo ${index + 1}`;
-    img.loading = "lazy";
-    img.className = "social-carousel-img";
-
-    // Controls bar (lock + trash)
-    const controls = document.createElement("div");
-    controls.className = "social-carousel-controls";
-
-    // 🔒 Lock / unlock button
-    const lockBtn = document.createElement("button");
-    lockBtn.type = "button";
-    lockBtn.className = "social-carousel-control-btn lock-btn";
-    lockBtn.title = photo.locked
-      ? "Unlock this photo so it can be removed"
-      : "Lock this photo so it can't be removed";
-    lockBtn.textContent = photo.locked ? "🔒" : "🔓";
-
-    lockBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const idx = Number(item.dataset.index || "0");
-      const p = socialReadyPhotos[idx];
-      if (!p) return;
-      p.locked = !p.locked;
-      renderSocialCarousel();
-    });
-
-    // 🗑️ Delete button
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "social-carousel-control-btn delete-btn";
-    deleteBtn.title = "Remove this photo from Step 3";
-    deleteBtn.textContent = "🗑️";
-
-    function removePhotoWithAnimation() {
-      const idx = Number(item.dataset.index || "0");
-      const p = socialReadyPhotos[idx];
-      if (!p) return;
-
-      if (p.locked) {
-        alert("This photo is locked. Unlock it first if you want to remove it.");
-        return;
+    socialReadyPhotos.forEach((photo, index) => {
+      // Make sure every photo has a locked flag
+      if (typeof photo.locked !== "boolean") {
+        photo.locked = false;
       }
 
-      // Animation class
-      item.classList.add("social-carousel-item-removing");
+      const item = document.createElement("div");
+      item.className =
+        "social-carousel-item" +
+        (photo.selected ? " social-carousel-item-selected" : "") +
+        (photo.locked ? " social-carousel-item-locked" : "");
+      item.dataset.index = String(index);
 
-      setTimeout(() => {
-        socialReadyPhotos.splice(idx, 1);
+      const img = document.createElement("img");
+      img.src = photo.url;
+      img.alt = `Social-ready photo ${index + 1}`;
+      img.loading = "lazy";
+      img.className = "social-carousel-img";
+      img.title =
+        "Click to select / deselect. Double-click the card or use the trash icon to remove.";
 
-        if (socialCurrentIndex >= socialReadyPhotos.length) {
-          socialCurrentIndex = socialReadyPhotos.length - 1;
-        }
-        if (socialCurrentIndex < 0) socialCurrentIndex = 0;
+      // Controls bar (lock + trash)
+      const controls = document.createElement("div");
+      controls.className = "social-carousel-controls";
 
+      // 🔒 Lock / unlock button
+      const lockBtn = document.createElement("button");
+      lockBtn.type = "button";
+      lockBtn.className = "social-carousel-control-btn lock-btn";
+      lockBtn.title = photo.locked
+        ? "Unlock this photo so it can be removed"
+        : "Lock this photo so it can't be removed";
+      lockBtn.textContent = photo.locked ? "🔒" : "🔓";
+
+      lockBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = Number(item.dataset.index || "0");
+        const p = socialReadyPhotos[idx];
+        if (!p) return;
+        p.locked = !p.locked;
         renderSocialCarousel();
-      }, 160); // keep in sync with CSS transition
-    }
+      });
 
-    deleteBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      removePhotoWithAnimation();
+      // 🗑️ Delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "social-carousel-control-btn delete-btn";
+      deleteBtn.title = "Remove this photo from Step 3";
+      deleteBtn.textContent = "🗑️";
+
+      function removePhotoWithAnimation() {
+        const idx = Number(item.dataset.index || "0");
+        const p = socialReadyPhotos[idx];
+        if (!p) return;
+
+        if (p.locked) {
+          alert(
+            "This photo is locked. Unlock it first if you want to remove it."
+          );
+          return;
+        }
+
+        // Animation class
+        item.classList.add("social-carousel-item-removing");
+
+        setTimeout(() => {
+          socialReadyPhotos.splice(idx, 1);
+
+          if (socialCurrentIndex >= socialReadyPhotos.length) {
+            socialCurrentIndex = socialReadyPhotos.length - 1;
+          }
+          if (socialCurrentIndex < 0) socialCurrentIndex = 0;
+
+          renderSocialCarousel();
+        }, 160); // keep in sync with CSS transition
+      }
+
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removePhotoWithAnimation();
+      });
+
+      controls.appendChild(lockBtn);
+      controls.appendChild(deleteBtn);
+
+      item.appendChild(img);
+      item.appendChild(controls);
+      socialCarousel.appendChild(item);
+
+      // 🖱️ Single-click = select + make active preview
+      item.addEventListener("click", (e) => {
+        // Ignore clicks directly on control buttons (handled above)
+        if (e.target.closest(".social-carousel-control-btn")) return;
+
+        const idx = Number(item.dataset.index || "0");
+        socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+        socialCurrentIndex = idx;
+        renderSocialCarousel();
+      });
+
+      // 🖱️ Double-click anywhere on the card = quick delete
+      item.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        removePhotoWithAnimation();
+      });
     });
 
-    controls.appendChild(lockBtn);
-    controls.appendChild(deleteBtn);
-
-    item.appendChild(img);
-    item.appendChild(controls);
-    socialCarousel.appendChild(item);
-
-    // 🖱️ Single-click = select + make active preview
-    item.addEventListener("click", (e) => {
-      // Ignore clicks directly on control buttons (handled above)
-      if ((e.target).closest(".social-carousel-control-btn")) return;
-
-      const idx = Number(item.dataset.index || "0");
-      socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
-      socialCurrentIndex = idx;
-      renderSocialCarousel();
-    });
-
-    // 🖱️ Double-click anywhere on the card = quick delete
-    item.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      removePhotoWithAnimation();
-    });
-  });
-
-  // Refresh preview
-  updateSocialPreview();
-}
-
-
+    // Refresh preview
+    updateSocialPreview();
+  }
 
   // Prev/Next buttons for the big preview
   if (socialPrevBtn) {
@@ -1342,6 +1358,14 @@ function renderSocialCarousel() {
       if (!file || !file.type || !file.type.startsWith("image/")) return;
       const url = URL.createObjectURL(file);
       localCreativePhotos.push(url);
+
+      // Keep only latest MAX_STEP3_PHOTOS in state
+      if (localCreativePhotos.length > MAX_STEP3_PHOTOS) {
+        localCreativePhotos = localCreativePhotos.slice(
+          localCreativePhotos.length - MAX_STEP3_PHOTOS
+        );
+      }
+
       addCreativeThumb(url);
 
       if (tunerPreviewImg && !tunerPreviewImg.src) {
@@ -1350,6 +1374,7 @@ function renderSocialCarousel() {
       }
     });
   }
+
 
   if (photoDropZone && photoFileInput) {
     photoDropZone.addEventListener("click", () => {
