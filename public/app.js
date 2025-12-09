@@ -691,12 +691,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Current filter used by both CSS preview and canvas drawing
   let currentTunerFilter = "";
 
-  // NEW: Social-ready photo strip elements
-  const socialCarousel = document.getElementById("socialCarousel");
-  const openDesignFromCarouselBtn = document.getElementById(
-    "openDesignFromCarousel"
-  );
-  const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+// NEW: Social-ready photo strip elements
+const socialCarousel = document.getElementById("socialCarousel");
+const openDesignFromCarouselBtn = document.getElementById("openDesignFromCarousel");
+const openCanvasFromCarouselBtn = document.getElementById("openCanvasFromCarousel");
+const revertSocialPhotoBtn = document.getElementById("revertSocialPhotoBtn");
+const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
+
 
   // NEW: big preview + nav + status
   const socialCarouselPreviewImg = document.getElementById(
