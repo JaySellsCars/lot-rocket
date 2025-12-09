@@ -1725,6 +1725,8 @@ renderSocialCarousel();
 
 
 
+
+
       console.log("✅ Design sent to Step 3 social strip:", photoObj);
     } catch (err) {
       console.error("❌ Failed to send design to Step 3:", err);
