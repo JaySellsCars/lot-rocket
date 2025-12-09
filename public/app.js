@@ -1698,30 +1698,28 @@ if (sendDesignToStripBtn) {
       // 1) export Konva stage to PNG
       const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
 
-      // 2) Convert dataURL → Blob → Object URL
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
+// 2) Build the social-ready object
+const photoObj = {
+  id: `design-${Date.now()}`,
+  src: objectUrl,
+  url: objectUrl,
+  origin: "design-studio",
+  locked: false,
+};
 
-      // 3) Build the social-ready object
-      const photoObj = {
-        id: `design-${Date.now()}`,
-        src: objectUrl,
-        url: objectUrl,              // <- add url field too
-        origin: "design-studio",
-        locked: false,
-      };
+// 3) Push into global strip
+if (!Array.isArray(window.socialReadyPhotos)) {
+  window.socialReadyPhotos = [];
+}
 
-      // 4) Push into global strip
-      if (!Array.isArray(window.socialReadyPhotos)) {
-        window.socialReadyPhotos = [];
-      }
-
-      window.socialReadyPhotos.push(photoObj);
-      window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
+window.socialReadyPhotos.push(photoObj);
+window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
 
 // 5) Re-render carousel
 renderSocialCarousel();
+
+console.log("✅ Design sent to Step 3 social strip:", photoObj);
+
 
 
 
