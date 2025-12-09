@@ -20,6 +20,49 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+// --------------------------------------------------
+// IMAGE PROXY for Design Studio (Fixes CORS tainted canvas)
+// --------------------------------------------------
+app.get("/api/proxy-image", async (req, res) => {
+  try {
+    const target = req.query.url;
+    if (!target) {
+      return res.status(400).json({ error: "Missing url parameter" });
+    }
+
+    let parsed;
+    try {
+      parsed = new URL(target);
+    } catch (_) {
+      return res.status(400).json({ error: "Invalid URL" });
+    }
+
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return res.status(400).json({ error: "Invalid protocol" });
+    }
+
+    const upstream = await fetch(target);
+
+    if (!upstream.ok) {
+      console.error("proxy-image upstream error:", upstream.status, target);
+      return res
+        .status(502)
+        .json({ error: `Upstream error ${upstream.status}` });
+    }
+
+    const contentType = upstream.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    upstream.body.pipe(res);
+  } catch (err) {
+    console.error("proxy-image error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Image proxy error" });
+    }
+  }
+});
 
 /**
  * Normalize whatever the user pasted into a *real* absolute URL.
