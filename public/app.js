@@ -672,7 +672,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
   const creativeThumbGrid = document.getElementById("creativeThumbGrid");
-  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
+ 
   const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
 
   const tunerPreviewImg = document.getElementById("tunerPreviewImg");
@@ -2720,8 +2720,7 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
     });
   }
 
-  if (sendAllToCanvasBtn) {
-    sendAllToCanvasBtn.addEventListener("click", () => {
+
       const urls = gatherImageUrlsForStudios();
       if (!urls.length) {
         alert("Add or select some photos first.");
