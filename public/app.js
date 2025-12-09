@@ -2634,51 +2634,43 @@ if (typeof addDesignImageToSocialStrip === "function") {
 
   // 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
   // and does NOT auto-open Design Studio.
-  if (sendPhotosToStudioBtn) {
-    sendPhotosToStudioBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
+// Step 1 button: send dealer photos into Step 3 AND Design Studio 3.5
+if (sendPhotosToStudioBtn) {
+  sendPhotosToStudioBtn.addEventListener("click", () => {
+    if (!dealerPhotos.length) {
+      alert("Boost a listing first so Lot Rocket can grab photos.");
+      return;
+    }
+
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const chosen = (selected.length
+      ? selected
+      : dealerPhotos.map((p) => p.src)
+    ).slice(0, 24);
+
+    if (!chosen.length) {
+      alert("No photos selected.");
+      return;
+    }
+
+    // 1) Mirror into Creative Lab + Social Strip
+    chosen.forEach((url) => {
+      localCreativePhotos.push(url);
+      addCreativeThumb(url);
+      addPhotoToSocialReady(url);
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
       }
-
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length
-        ? selected
-        : dealerPhotos.map((p) => p.src)
-      ).slice(0, 24);
-
-      if (!chosen.length) {
-        alert("No photos selected.");
-        return;
-      }
-
-      // Mirror into Creative Lab + Social Strip (no Design Studio auto-open)
-      chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-        addPhotoToSocialReady(url);
-        if (tunerPreviewImg && !tunerPreviewImg.src) {
-          tunerPreviewImg.src = url;
-          applyTunerFilters();
-        }
-      });
-
-      // Ensure the social carousel UI reflects the new photos
-      renderSocialCarousel();
     });
-  }
+    renderSocialCarousel();
 
-  // Step 3 button: "Send photos to Design Studio 3.x"
-  if (sendToDesignStudioBtn) {
-    sendToDesignStudioBtn.addEventListener("click", () => {
-      const urls = gatherImageUrlsForStudios();
-      if (!urls.length) {
-        alert("Add or select some photos first.");
-        return;
-      }
-      pushUrlsIntoDesignStudio(urls);
-    });
-  }
+    // 2) ALSO push the same photos directly into Design Studio 3.5
+    console.log("[LotRocket] Sending photos into Design Studio:", chosen);
+    pushUrlsIntoDesignStudio(chosen);
+  });
+}
+
 
   // Optional: "Send ALL to Canvas" button (if present)
   if (sendAllToCanvasBtn) {
