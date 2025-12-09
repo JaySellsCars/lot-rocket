@@ -1151,6 +1151,14 @@ document.addEventListener("DOMContentLoaded", () => {
       renderSocialCarousel();
       return;
     }
+// Helper: force preview to show a freshly added design image
+function addDesignImageToSocialStrip(url) {
+  if (!url) return;
+  addPhotoToSocialReady(url);
+  // make sure the preview is pointed at the newest image
+  socialCurrentIndex = socialReadyPhotos.length - 1;
+  renderSocialCarousel();
+}
 
     // Push new photo, mark selected (unlocked by default)
     socialReadyPhotos.push({
