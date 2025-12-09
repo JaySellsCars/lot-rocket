@@ -1459,6 +1459,174 @@ const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
       handleCreativeFiles(files);
     });
   }
+  // ---- STEP 3 → STUDIO BRIDGE HELPERS ----
+
+  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
+  const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
+  const openDesignFromCarouselBtn =
+    document.getElementById("openDesignFromCarousel");
+  const canvasLauncher = document.getElementById("canvasLauncher");
+  const designLauncher = document.getElementById("designLauncher");
+  const studioPhotoTray = document.getElementById("studioPhotoTray");
+
+  // Collect all candidate photo URLs from Step 3 state
+  function collectStep3Urls() {
+    const urls = [];
+
+    // 1) Social-ready strip (preferred)
+    if (Array.isArray(socialReadyPhotos) && socialReadyPhotos.length) {
+      socialReadyPhotos.forEach((p) => {
+        if (p && p.url) urls.push(p.url);
+      });
+    }
+
+    // 2) Local Creative Lab uploads
+    if (Array.isArray(localCreativePhotos) && localCreativePhotos.length) {
+      localCreativePhotos.forEach((u) => {
+        if (u) urls.push(u);
+      });
+    }
+
+    // 3) Dealer photos (fallback)
+    if (Array.isArray(dealerPhotos) && dealerPhotos.length) {
+      dealerPhotos.forEach((p) => {
+        if (!p) return;
+        if (typeof p === "string" && p) {
+          urls.push(p);
+        } else if (p.src) {
+          urls.push(p.src);
+        }
+      });
+    }
+
+    // De-dupe
+    return [...new Set(urls)];
+  }
+
+  // Open Canvas Studio (Fabric) with a list of URLs
+  function openCanvasWithUrls(urls) {
+    if (!urls || !urls.length) {
+      alert("No photos available yet. Boost a listing or upload photos first.");
+      return;
+    }
+
+    if (creativeStudioOverlay) {
+      creativeStudioOverlay.classList.remove("hidden");
+    }
+
+    // If you already have a helper, use it. Otherwise just drop first image on canvas.
+    if (typeof openCreativeStudio === "function") {
+      // existing helper in your code
+      openCreativeStudio(urls);
+    } else if (typeof initCreativeCanvas === "function") {
+      initCreativeCanvas(urls);
+    } else if (typeof ensureCanvas === "function") {
+      const canvas = ensureCanvas();
+      if (canvas) {
+        urls.forEach((u) => {
+          fabric.Image.fromURL(u, (img) => {
+            img.scaleToWidth(canvas.width * 0.9);
+            img.set({
+              left: canvas.width / 2,
+              top: canvas.height / 2,
+              originX: "center",
+              originY: "center",
+            });
+            canvas.add(img);
+            canvas.setActiveObject(img);
+            canvas.requestRenderAll();
+          });
+        });
+      }
+    }
+  }
+
+  // Open Design Studio 3.x (Konva) with a list of URLs
+  function openDesignStudioWithUrls(urls) {
+    if (!urls || !urls.length) {
+      alert("No photos available yet. Boost a listing or upload photos first.");
+      return;
+    }
+
+    if (designStudioOverlay) {
+      designStudioOverlay.classList.remove("hidden");
+    }
+
+    // Fill the top tray thumbnails if it exists
+    if (studioPhotoTray) {
+      studioPhotoTray.innerHTML = "";
+      urls.forEach((u) => {
+        const img = document.createElement("img");
+        img.src = u;
+        img.alt = "Design Studio source";
+        img.className = "studio-photo-thumb";
+        studioPhotoTray.appendChild(img);
+      });
+    }
+
+    if (typeof initDesignStudio === "function") {
+      // your existing Konva initializer
+      initDesignStudio(urls);
+    } else if (typeof pushUrlsIntoDesignStudio === "function") {
+      pushUrlsIntoDesignStudio(urls);
+    }
+  }
+
+  // Wire buttons for sending photos → studios
+
+  // Step 3 button: "Send All to Canvas Studio"
+  if (sendAllToCanvasBtn) {
+    sendAllToCanvasBtn.addEventListener("click", () => {
+      const urls = collectStep3Urls();
+      openCanvasWithUrls(urls);
+    });
+  }
+
+  // Floating launcher: Canvas Studio
+  if (canvasLauncher) {
+    canvasLauncher.addEventListener("click", () => {
+      const urls = collectStep3Urls();
+      openCanvasWithUrls(urls);
+    });
+  }
+
+  // Step 3 button: "Send Selected to Design Studio 3.0"
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      const urls = collectStep3Urls();
+      openDesignStudioWithUrls(urls);
+    });
+  }
+
+  // Button under the social-ready strip: "Open Selected in Design Studio 3.5"
+  if (openDesignFromCarouselBtn) {
+    openDesignFromCarouselBtn.addEventListener("click", () => {
+      let urls = [];
+
+      if (Array.isArray(socialReadyPhotos) && socialReadyPhotos.length) {
+        const selected = socialReadyPhotos.filter((p) => p.selected && p.url);
+        if (selected.length) {
+          urls = selected.map((p) => p.url);
+        } else {
+          urls = socialReadyPhotos.map((p) => p.url).filter(Boolean);
+        }
+      }
+
+      if (!urls.length) {
+        urls = collectStep3Urls();
+      }
+
+      openDesignStudioWithUrls(urls);
+    });
+  }
+
+  // Floating launcher: Design Studio
+  if (designLauncher) {
+    designLauncher.addEventListener("click", () => {
+      const urls = collectStep3Urls();
+      openDesignStudioWithUrls(urls);
+    });
+  }
 
   function getActivePhotoUrlForCinematic() {
     if (tunerPreviewImg && tunerPreviewImg.src) {
