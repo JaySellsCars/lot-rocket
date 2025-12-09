@@ -1985,16 +1985,11 @@ function addStudioImageFromUrl(url, asBackground = false) {
 
   const img = new Image();
 
-  // 🚧 Try to keep the canvas from being tainted
-  const sameOrigin =
-    url.startsWith(window.location.origin) ||
-    url.startsWith("blob:") ||
-    url.startsWith("data:");
+  // VERY IMPORTANT: allow CORS-safe pixel access
+  img.crossOrigin = "anonymous";
 
-  if (!sameOrigin) {
-    // Only helps if the remote server sends proper CORS headers
-    img.crossOrigin = "anonymous";
-  }
+  // Route external images through our backend proxy
+  const safeUrl = getProxiedImageUrl(url);
 
   img.onload = () => {
     const fitRatio =
@@ -2021,24 +2016,23 @@ function addStudioImageFromUrl(url, asBackground = false) {
 
     attachNodeInteractions(node);
     studioLayer.add(node);
-
     if (asBackground) {
       node.moveToBottom();
       const bg = studioLayer.findOne(".BackgroundLayer");
       if (bg) bg.moveToBottom();
     }
-
     studioLayer.draw();
     selectStudioNode(node);
     saveStudioHistory();
   };
 
   img.onerror = (err) => {
-    console.error("[DesignStudio] Failed to load image:", url, err);
+    console.error("[DesignStudio] Failed to load image:", safeUrl, err);
   };
 
-  img.src = url;
+  img.src = safeUrl;
 }
+
 
 
   function exportStudioAsPng() {
