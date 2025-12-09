@@ -2524,7 +2524,8 @@ function renderSocialCarousel() {
       const chosen = (selected.length
         ? selected
         : socialReadyPhotos.map((p) => p.url)
-      ).slice(0, 8);
+).slice(0, 24);
+
 
       pushUrlsIntoDesignStudio(chosen);
     });
