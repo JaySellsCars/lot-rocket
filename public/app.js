@@ -1684,7 +1684,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStudioHistory();
   }
 // --------------------------------------------------
-// DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP)
+// DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP + CREATIVE LAB)
 // --------------------------------------------------
 const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
 
@@ -1714,11 +1714,37 @@ if (sendDesignToStripBtn) {
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-      // 3) Push into Social-Ready strip using our helper
-      addPhotoToSocialReady(objectUrl);
+      // 3) Push into Social-Ready strip
+      if (typeof addPhotoToSocialReady === "function") {
+        addPhotoToSocialReady(objectUrl);
+      } else {
+        console.warn(
+          "addPhotoToSocialReady not defined; design image cannot be added to strip."
+        );
+      }
+
+      // 4) ALSO mirror into Creative Lab grid + state
+      if (typeof addCreativeThumb === "function") {
+        addCreativeThumb(objectUrl);
+      }
+
+      if (Array.isArray(localCreativePhotos)) {
+        localCreativePhotos.push(objectUrl);
+        if (localCreativePhotos.length > MAX_STEP3_PHOTOS) {
+          localCreativePhotos = localCreativePhotos.slice(
+            localCreativePhotos.length - MAX_STEP3_PHOTOS
+          );
+        }
+      }
+
+      // 5) If tuner preview is empty, use this design as active preview
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = objectUrl;
+        applyTunerFilters && applyTunerFilters();
+      }
 
       console.log(
-        "✅ Design sent to Step 3 social strip from Design Studio:",
+        "✅ Design sent to Step 3 (social strip + creative grid):",
         objectUrl
       );
     } catch (err) {
@@ -1726,6 +1752,7 @@ if (sendDesignToStripBtn) {
     }
   });
 }
+
 
 
 
