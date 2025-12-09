@@ -1690,27 +1690,29 @@ if (sendDesignToStripBtn) {
   sendDesignToStripBtn.addEventListener("click", async () => {
     console.log("▶️ Send to Step 3 clicked");
     try {
-if (!studioStage) {
-  console.warn("⚠️ Design Studio stage not initialized.");
-  return;
-}
+      if (!studioStage) {
+        console.warn("⚠️ Design Studio stage not initialized.");
+        return;
+      }
 
-// 1) export Konva stage to PNG
-const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
+      // 1) export Konva stage to PNG
+      const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
 
+      // 2) Convert dataURL → Blob → Object URL
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-      // 2) Build the social-ready object
+      // 3) Build the social-ready object
       const photoObj = {
         id: `design-${Date.now()}`,
         src: objectUrl,
+        url: objectUrl,              // <- add url field too
         origin: "design-studio",
         locked: false,
       };
 
-      // 3) Push into global strip
+      // 4) Push into global strip
       if (!Array.isArray(window.socialReadyPhotos)) {
         window.socialReadyPhotos = [];
       }
@@ -1718,9 +1720,11 @@ const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
       window.socialReadyPhotos.push(photoObj);
       window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
 
-      // 4) Re-render carousel
-      if (typeof window.renderSocialStrip === "function") {
-        window.renderSocialStrip();
+      // 5) Re-render carousel
+      if (typeof window.renderSocialCarousel === "function") {
+        window.renderSocialCarousel();
+      } else if (typeof window.renderSocialStrip === "function") {
+        window.renderSocialStrip(); // fallback if older name
       }
 
       console.log("✅ Design sent to Step 3 social strip:", photoObj);
@@ -1729,6 +1733,7 @@ const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
     }
   });
 }
+
 
 
 
