@@ -2484,7 +2484,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const chosen = (selected.length
         ? selected
         : dealerPhotos.map((p) => p.src)
-      ).slice(0, 8);
+      ).slice(0, 24);
 
       if (!chosen.length) {
         alert("No photos selected.");
