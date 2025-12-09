@@ -1683,7 +1683,9 @@ document.addEventListener("DOMContentLoaded", () => {
     rebuildLayersList();
     saveStudioHistory();
   }
+// --------------------------------------------------
 // DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP)
+// --------------------------------------------------
 const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
 
 if (sendDesignToStripBtn) {
@@ -1695,42 +1697,42 @@ if (sendDesignToStripBtn) {
         return;
       }
 
-      // 1) export Konva stage to PNG
-      const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
+      // 1) Export Konva stage to PNG
+      let dataUrl;
+      try {
+        dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
+      } catch (e) {
+        console.error("❌ Konva toDataURL failed:", e);
+        alert(
+          "Design export failed because one of the images on the canvas does not allow download. Try using only dealer/Creative Lab images."
+        );
+        return;
+      }
 
-// 2) Build the social-ready object
-const photoObj = {
-  id: `design-${Date.now()}`,
-  src: objectUrl,
-  url: objectUrl,
-  origin: "design-studio",
-  locked: false,
-};
+      // 2) Convert dataURL → Blob → object URL
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);  // <- THIS is what was missing
 
-// 3) Push into global strip
-if (!Array.isArray(window.socialReadyPhotos)) {
-  window.socialReadyPhotos = [];
-}
+      // 3) Use existing helper to wire into Social-Ready strip
+      if (typeof addPhotoToSocialReady === "function") {
+        addPhotoToSocialReady(objectUrl);
+      } else {
+        console.warn(
+          "addPhotoToSocialReady not defined; design image cannot be added to strip."
+        );
+      }
 
-window.socialReadyPhotos.push(photoObj);
-window.socialCurrentIndex = window.socialReadyPhotos.length - 1;
-
-// 5) Re-render carousel
-renderSocialCarousel();
-
-console.log("✅ Design sent to Step 3 social strip:", photoObj);
-
-
-
-
-
-
-      console.log("✅ Design sent to Step 3 social strip:", photoObj);
+      console.log(
+        "✅ Design sent to Step 3 social strip from Design Studio:",
+        objectUrl
+      );
     } catch (err) {
       console.error("❌ Failed to send design to Step 3:", err);
     }
   });
 }
+
 
 
 
