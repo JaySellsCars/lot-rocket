@@ -2752,4 +2752,5 @@ if (sendDesignToStripBtn) {
   renderSocialCarousel();
 
   console.log("✅ Lot Rocket frontend wiring complete");
-});
+}); // end DOMContentLoaded
+
