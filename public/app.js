@@ -1690,13 +1690,14 @@ if (sendDesignToStripBtn) {
   sendDesignToStripBtn.addEventListener("click", async () => {
     console.log("▶️ Send to Step 3 clicked");
     try {
-      if (!window.studioStage) {
-        console.warn("⚠️ Design Studio stage not initialized.");
-        return;
-      }
+if (!studioStage) {
+  console.warn("⚠️ Design Studio stage not initialized.");
+  return;
+}
 
-      // 1) export Konva stage to PNG
-      const dataUrl = window.studioStage.toDataURL({ pixelRatio: 2 });
+// 1) export Konva stage to PNG
+const dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
+
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
