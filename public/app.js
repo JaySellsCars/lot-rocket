@@ -1686,7 +1686,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // --------------------------------------------------
 // DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP)
 // --------------------------------------------------
-const sendDesignToStripBtn = document.getElementById("sendDesignToStripBtn");
+const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
+sendDesignToStripBtn.addEventListener("click", async () => {
+  console.log("▶️ Send to Step 3 clicked");
+  try {
+    // ...
+
 
 if (sendDesignToStripBtn) {
   sendDesignToStripBtn.addEventListener("click", async () => {
