@@ -1714,7 +1714,7 @@ if (sendDesignToStripBtn) {
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-      // 3) Push into Social-Ready strip
+      // 3) Push into Social-Ready strip using our helper
       if (typeof addPhotoToSocialReady === "function") {
         addPhotoToSocialReady(objectUrl);
       } else {
@@ -1723,30 +1723,25 @@ if (sendDesignToStripBtn) {
         );
       }
 
-      // 4) ALSO mirror into Creative Lab grid + state
-      if (typeof addCreativeThumb === "function") {
-        addCreativeThumb(objectUrl);
-      }
-
-      if (Array.isArray(localCreativePhotos)) {
+      // 4) ALSO mirror the design into Step 3 Creative Lab thumbs
+      //    so it behaves like any other edited photo.
+      if (creativeThumbGrid) {
+        // track it in localCreativePhotos (with global cap logic elsewhere)
         localCreativePhotos.push(objectUrl);
-        if (localCreativePhotos.length > MAX_STEP3_PHOTOS) {
-          localCreativePhotos = localCreativePhotos.slice(
-            localCreativePhotos.length - MAX_STEP3_PHOTOS
-          );
+        addCreativeThumb(objectUrl);
+
+        // if tuner preview is empty, show this design there too
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = objectUrl;
+          applyTunerFilters();
         }
       }
 
-      // 5) If tuner preview is empty, use this design as active preview
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = objectUrl;
-        applyTunerFilters && applyTunerFilters();
-      }
-
       console.log(
-        "✅ Design sent to Step 3 (social strip + creative grid):",
+        "✅ Design sent to Step 3 social strip + Creative Lab from Design Studio:",
         objectUrl
       );
+
     } catch (err) {
       console.error("❌ Failed to send design to Step 3:", err);
     }
