@@ -2171,4 +2171,7 @@ body.light-theme .video-output-card textarea {
     display: none;
   }
 }
+#replaceInCanvasStudioBtn {
+  display: none !important;
+}
 
