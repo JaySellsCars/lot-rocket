@@ -2355,67 +2355,66 @@ function addStudioImageFromUrl(url, asBackground = false) {
     }
   }
 
-  function loadDesignFromLocal() {
-    const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
-    if (!stored) {
-      alert("No saved design found yet.");
-      return;
-    }
-    if (!window.Konva) {
-      alert("Design Studio is not available (Konva missing).");
-      return;
-    }
-    const container = document.getElementById("konvaStageContainer");
-    if (!container) {
-      alert("Design Studio area not found.");
-      return;
-    }
-
-    try {
-      if (studioStage) {
-        studioStage.destroy();
-      }
-      studioStage = Konva.Node.create(stored, container);
-      const layers = studioStage.getLayers();
-      studioLayer = layers[0] || new Konva.Layer();
-      if (!layers.length) studioStage.add(studioLayer);
-
-      studioTransformer =
-        studioStage.findOne("Transformer") ||
-        new Konva.Transformer({
-          rotateEnabled: true,
-          enabledAnchors: [
-            "top-left",
-            "top-right",
-            "bottom-left",
-            "bottom-right",
-          ],
-          anchorSize: 10,
-          borderStroke: "#e5e7eb",
-          anchorFill: BRAND.primary,
-          anchorStroke: BRAND.primary,
-          anchorCornerRadius: 4,
-        });
-      if (!studioTransformer.getStage()) {
-        studioLayer.add(studioTransformer);
-      }
-
-      studioSelectedNode = null;
-      studioHistory = [stored];
-      studioHistoryIndex = 0;
-
-      attachEventsToAllNodes();
-      rebuildLayersList();
-      wireDesignStudioUI();
-
-      if (designStudioOverlay) {
-        designStudioOverlay.classList.remove("hidden");
-      }
-    } catch (err) {
-      console.error("Error loading design:", err);
-      alert("Could not load saved design. Save a new one and try again.");
-    }
+function loadDesignFromLocal() {
+  const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
+  if (!stored) {
+    alert("No saved design found yet.");
+    return;
   }
+  if (!window.Konva) {
+    alert("Design Studio is not available (Konva missing).");
+    return;
+  }
+  const container = document.getElementById("konvaStageContainer");
+  if (!container) {
+    alert("Design Studio area not found.");
+    return;
+  }
+
+  try {
+    if (studioStage) {
+      studioStage.destroy();
+    }
+
+    studioStage = Konva.Node.create(stored, container);
+    const layers = studioStage.getLayers();
+    studioLayer = layers[0] || new Konva.Layer();
+    if (!layers.length) studioStage.add(studioLayer);
+
+    studioTransformer =
+      studioStage.findOne("Transformer") ||
+      new Konva.Transformer({
+        rotateEnabled: true,
+        enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
+        anchorSize: 10,
+        borderStroke: "#e5e7eb",
+        anchorFill: BRAND.primary,
+        anchorStroke: BRAND.primary,
+        anchorCornerRadius: 4,
+      });
+
+    if (!studioTransformer.getStage()) {
+      studioLayer.add(studioTransformer);
+    }
+
+    studioSelectedNode = null;
+    studioHistory = [stored];
+    studioHistoryIndex = 0;
+
+    attachEventsToAllNodes();
+    rebuildLayersList();
+    wireDesignStudioUI();
+    saveStudioHistory();
+
+    if (designStudioOverlay) {
+      designStudioOverlay.classList.remove("hidden");
+    }
+  } catch (err) {
+    console.error("Error loading design:", err);
+    alert("Could not load saved design. Save a new one and try again.");
+  }
+}
+
 
   function wireDesignStudioUI() {
     if (studioUIWired) return;
