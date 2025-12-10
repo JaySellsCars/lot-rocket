@@ -2721,39 +2721,7 @@ function pushUrlsIntoDesignStudio(urls) {
 }
 
 
-  // ==================================================
-  // STEP 1 → STEP 3 + STUDIO BRIDGES
-  // ==================================================
 
-
-
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const chosen = (selected.length
-      ? selected
-      : dealerPhotos.map((p) => p.src)
-    ).slice(0, 24);
-
-    if (!chosen.length) {
-      alert("No photos selected.");
-      return;
-    }
-
-    // Mirror into Creative Lab + Social Strip ONLY
-    chosen.forEach((url) => {
-      localCreativePhotos.push(url);
-      addCreativeThumb(url);
-      addPhotoToSocialReady(url);
-
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
-    });
-
-    // Ensure the social carousel UI reflects the new photos
-    renderSocialCarousel();
-  });
-}
 
 
 
