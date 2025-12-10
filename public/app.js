@@ -2827,14 +2827,49 @@ function pushUrlsIntoDesignStudio(urls) {
     });
   }
 
-  if (downloadAllEditedBtn) {
-    downloadAllEditedBtn.addEventListener("click", async () => {
-      if (!socialReadyPhotos.length) {
-        alert(
-          "No social-ready photos to download. Double-click a photo in the grid above first."
-        );
-        return;
-      }
+if (downloadAllEditedBtn) {
+  downloadAllEditedBtn.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) {
+      alert(
+        "No social-ready photos to download. Double-click a photo in the grid above first."
+      );
+      return;
+    }
+
+    const urls = socialReadyPhotos
+      .map((p) => (p && p.url ? p.url : null))
+      .filter(Boolean);
+
+    if (!urls.length) {
+      alert("No valid photo URLs to download.");
+      return;
+    }
+
+    const originalLabel = downloadAllEditedBtn.textContent;
+    downloadAllEditedBtn.disabled = true;
+    downloadAllEditedBtn.textContent = "Downloading JPGs…";
+
+    // Fire one download per photo. Small delay helps browsers keep up.
+    urls.forEach((url, index) => {
+      setTimeout(() => {
+        try {
+          triggerSocialDownload(url, index);
+        } catch (e) {
+          console.error("Download failed for", url, e);
+        }
+      }, index * 200); // 0ms, 200ms, 400ms, ...
+    });
+
+    // Re-enable button after the last download is triggered
+    const totalDelay = urls.length * 200 + 400;
+    setTimeout(() => {
+      downloadAllEditedBtn.disabled = false;
+      downloadAllEditedBtn.textContent =
+        originalLabel || "Download JPGs for IG / FB Carousel";
+    }, totalDelay);
+  });
+}
+
 
       const urls = socialReadyPhotos
         .map((p) => (p && p.url ? p.url : null))
