@@ -2045,58 +2045,71 @@ if (typeof addDesignImageToSocialStrip === "function") {
     }
   }
 
-  function addStudioImageFromUrl(url, asBackground = false) {
-    if (!studioLayer || !studioStage || !url) return;
+function addStudioImageFromUrl(url, asBackground = false) {
+  if (!studioLayer || !studioStage || !url) return;
 
-    const img = new Image();
+  // 🔥 NEW: Always keep ONLY ONE photo on the canvas
+  // (remove any old photo/background photo before adding a new one)
+  studioLayer
+    .find(node => {
+      if (!node.name) return false;
+      const n = node.name();
+      return n === "Background Photo" || n === "Photo Layer";
+    })
+    .forEach(node => node.destroy());
 
-    // VERY IMPORTANT: allow CORS-safe pixel access
-    img.crossOrigin = "anonymous";
+  const img = new Image();
 
-    // Route external images through our backend proxy
-    const safeUrl = getProxiedImageUrl(url);
+  // important for CORS-safe export + filters
+  img.crossOrigin = "anonymous";
 
-    img.onload = () => {
-      const fitRatio =
-        Math.min(
-          studioStage.width() / img.width,
-          studioStage.height() / img.height
-        ) || 1;
+  // route external image through our proxy when needed
+  const safeUrl = getProxiedImageUrl(url);
 
-      const finalRatio = fitRatio * 0.9;
-      const w = img.width * finalRatio;
-      const h = img.height * finalRatio;
+  img.onload = () => {
+    const fitRatio =
+      Math.min(
+        studioStage.width() / img.width,
+        studioStage.height() / img.height
+      ) || 1;
 
-      const node = new Konva.Image({
-        image: img,
-        x: studioStage.width() / 2,
-        y: studioStage.height() / 2,
-        width: w,
-        height: h,
-        offsetX: w / 2,
-        offsetY: h / 2,
-        draggable: true,
-        name: asBackground ? "Background Photo" : "Photo Layer",
-      });
+    const finalRatio = fitRatio * 0.9;
+    const w = img.width * finalRatio;
+    const h = img.height * finalRatio;
 
-      attachNodeInteractions(node);
-      studioLayer.add(node);
-      if (asBackground) {
-        node.moveToBottom();
-        const bg = studioLayer.findOne(".BackgroundLayer");
-        if (bg) bg.moveToBottom();
-      }
-      studioLayer.draw();
-      selectStudioNode(node);
-      saveStudioHistory();
-    };
+    const node = new Konva.Image({
+      image: img,
+      x: studioStage.width() / 2,
+      y: studioStage.height() / 2,
+      width: w,
+      height: h,
+      offsetX: w / 2,
+      offsetY: h / 2,
+      draggable: true,
+      name: asBackground ? "Background Photo" : "Photo Layer",
+    });
 
-    img.onerror = (err) => {
-      console.error("[DesignStudio] Failed to load image:", safeUrl, err);
-    };
+    attachNodeInteractions(node);
+    studioLayer.add(node);
 
-    img.src = safeUrl;
-  }
+    if (asBackground) {
+      node.moveToBottom();
+      const bg = studioLayer.findOne(".BackgroundLayer");
+      if (bg) bg.moveToBottom();
+    }
+
+    studioLayer.draw();
+    selectStudioNode(node);
+    saveStudioHistory();
+  };
+
+  img.onerror = (err) => {
+    console.error("[DesignStudio] Failed to load image:", safeUrl, err);
+  };
+
+  img.src = safeUrl;
+}
+
 
 
 
