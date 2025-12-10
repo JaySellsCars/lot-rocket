@@ -1144,37 +1144,40 @@ if (step1SendTopBtn) {
     });
   }
 
-  function addCreativeThumb(url) {
-    if (!creativeThumbGrid) return;
+function addCreativeThumb(url) {
+  if (!creativeThumbGrid) return;
 
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Creative photo";
-    img.loading = "lazy";
-    img.className = "creative-thumb";
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = "Creative photo";
+  img.loading = "lazy";
+  img.className = "creative-thumb";
 
-    img.title =
-      "Click to tune this photo. Double-click to send a tuned copy into Step 3.";
+  img.title =
+    "Click to select/deselect. Double-click to send a tuned copy into the social strip.";
 
-    img.addEventListener("click", () => {
-      document
-        .querySelectorAll(".creative-thumb.selected")
-        .forEach((el) => el.classList.remove("selected"));
+  // ✅ CLICK = toggle selection (supports multi-select)
+  img.addEventListener("click", () => {
+    img.classList.toggle("selected");
 
-      img.classList.add("selected");
+    // Always show this image in the tuner when clicked
+    if (tunerPreviewImg) {
+      tunerPreviewImg.src = url;
+      applyTunerFilters();
+    }
+  });
 
-      if (tunerPreviewImg) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
-    });
+  // ⬇ keep your existing double-click handler the same
+  img.addEventListener("dblclick", async () => {
+    const editedUrl = await buildEditedDataUrl(url);
+    addPhotoToSocialReady(editedUrl);
+  });
 
-    img.addEventListener("dblclick", async () => {
-      const editedUrl = await buildEditedDataUrl(url);
-      addPhotoToSocialReady(editedUrl);
-    });
+  creativeThumbGrid.appendChild(img);
 
-    creativeThumbGrid.appendChild(img);
+  // ...keep the MAX_STEP3_PHOTOS trimming logic as-is
+}
+
 
     // 🔢 Keep only the most recent MAX_STEP3_PHOTOS thumbs visible
     const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
