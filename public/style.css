@@ -1722,6 +1722,12 @@ body.light-theme .video-output-card textarea {
 }
 
 /* ====== STEP 3 – PHOTO TUNER MAIN PREVIEW (square 1080x1080) ====== */
+.social-carousel-preview img#socialCarouselPreviewImg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;   /* fills the square; use 'contain' if you want full car with letterboxing */
+}
 
 .photo-tuner-main {
   position: relative;
