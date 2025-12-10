@@ -1641,76 +1641,48 @@ function initDesignStudio() {
   const container = document.getElementById("konvaStageContainer");
   if (!container || !window.Konva) return;
 
-  const size = Math.min(container.clientWidth, container.clientHeight || container.clientWidth);
+  const width = container.clientWidth || 1080;
+  const height = container.clientHeight || width;
 
   studioStage = new Konva.Stage({
     container: "konvaStageContainer",
-    width: size,
-    height: size,
+    width,
+    height,
   });
 
   studioLayer = new Konva.Layer();
   studioStage.add(studioLayer);
 
-  // ... your existing background rect + transformer + wiring ...
-}
-function initDesignStudio() {
-  const container = document.getElementById("konvaStageContainer");
-  if (!container || !window.Konva) return;
+  setStudioBackground(BRAND.dark);
 
-  const size = Math.min(container.clientWidth, container.clientHeight || container.clientWidth);
+  studioTransformer = new Konva.Transformer({
+    rotateEnabled: true,
+    enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
+    anchorSize: 10,
+    borderStroke: "#e5e7eb",
+    anchorFill: BRAND.primary,
+    anchorStroke: BRAND.primary,
+    anchorCornerRadius: 4,
+  });
+  studioLayer.add(studioTransformer);
 
-  studioStage = new Konva.Stage({
-    container: "konvaStageContainer",
-    width: size,
-    height: size,
+  studioStage.on("click tap", (e) => {
+    const target = e.target;
+    if (
+      target === studioStage ||
+      target === studioLayer ||
+      target.name() === "BackgroundLayer"
+    ) {
+      selectStudioNode(null);
+    }
   });
 
-  studioLayer = new Konva.Layer();
-  studioStage.add(studioLayer);
-
-  // ... your existing background rect + transformer + wiring ...
+  wireDesignStudioUI();
+  attachEventsToAllNodes();
+  rebuildLayersList();
+  saveStudioHistory();
 }
 
-
-    studioStage = new Konva.Stage({
-      container: "konvaStageContainer",
-      width,
-      height,
-    });
-
-    studioLayer = new Konva.Layer();
-    studioStage.add(studioLayer);
-
-    setStudioBackground(BRAND.dark);
-
-    studioTransformer = new Konva.Transformer({
-      rotateEnabled: true,
-      enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
-      anchorSize: 10,
-      borderStroke: "#e5e7eb",
-      anchorFill: BRAND.primary,
-      anchorStroke: BRAND.primary,
-      anchorCornerRadius: 4,
-    });
-    studioLayer.add(studioTransformer);
-
-    studioStage.on("click tap", (e) => {
-      const target = e.target;
-      if (
-        target === studioStage ||
-        target === studioLayer ||
-        target.name() === "BackgroundLayer"
-      ) {
-        selectStudioNode(null);
-      }
-    });
-
-    wireDesignStudioUI();
-    attachEventsToAllNodes();
-    rebuildLayersList();
-    saveStudioHistory();
-  }
 // --------------------------------------------------
 // DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP + CREATIVE LAB)
 // --------------------------------------------------
