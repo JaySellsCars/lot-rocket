@@ -2725,15 +2725,7 @@ function pushUrlsIntoDesignStudio(urls) {
   // STEP 1 → STEP 3 + STUDIO BRIDGES
   // ==================================================
 
-// 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
-// and does NOT auto-open Design Studio.
-// Step 1 button: send dealer photos into Step 3 (Creative Lab + Social Strip ONLY)
-if (sendPhotosToStudioBtn) {
-  sendPhotosToStudioBtn.addEventListener("click", () => {
-    if (!dealerPhotos.length) {
-      alert("Boost a listing first so Lot Rocket can grab photos.");
-      return;
-    }
+
 
     const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
     const chosen = (selected.length
