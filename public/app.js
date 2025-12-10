@@ -1,4 +1,4 @@
-// public/app.js – Lot Rocket frontend logic v2.5.9 (cleaned)
+sendpho// public/app.js – Lot Rocket frontend logic v2.5.9 (cleaned)
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
@@ -2632,8 +2632,8 @@ if (typeof addDesignImageToSocialStrip === "function") {
   // STEP 1 → STEP 3 + STUDIO BRIDGES
   // ==================================================
 
-  // 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
-  // and does NOT auto-open Design Studio.
+// 🔥 UPDATED: sendPhotosToStudioBtn now ONLY sends to Step 3 (Creative Lab + Social Strip),
+// and does NOT auto-open Design Studio.
 // Step 1 button: send dealer photos into Step 3 (Creative Lab + Social Strip ONLY)
 if (sendPhotosToStudioBtn) {
   sendPhotosToStudioBtn.addEventListener("click", () => {
@@ -2658,6 +2658,7 @@ if (sendPhotosToStudioBtn) {
       localCreativePhotos.push(url);
       addCreativeThumb(url);
       addPhotoToSocialReady(url);
+
       if (tunerPreviewImg && !tunerPreviewImg.src) {
         tunerPreviewImg.src = url;
         applyTunerFilters();
@@ -2670,25 +2671,8 @@ if (sendPhotosToStudioBtn) {
 }
 
 
-    // 2) ALSO push the same photos directly into Design Studio 3.5
-    console.log("[LotRocket] Sending photos into Design Studio:", chosen);
-    pushUrlsIntoDesignStudio(chosen);
-  });
-}
 
 
-  // Optional: "Send ALL to Canvas" button (if present)
-  if (sendAllToCanvasBtn) {
-    sendAllToCanvasBtn.addEventListener("click", () => {
-      const urls = gatherImageUrlsForStudios();
-      if (!urls.length) {
-        alert("Add or select some photos first.");
-        return;
-      }
-      openCreativeStudio();
-      urls.forEach((url) => addImageFromUrl(url));
-    });
-  }
 
   // --------------------------------------------------
   // Social-ready Photo Strip (Carousel) Actions
