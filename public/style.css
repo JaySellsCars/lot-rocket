@@ -1729,6 +1729,15 @@ body.light-theme .video-output-card textarea {
   display: block;
   object-fit: cover;   /* fills the square; use 'contain' if you want full car with letterboxing */
 }
+/* Konva stage container inside Design Studio 3.5 overlay */
+#konvaStageContainer {
+  position: relative;
+  width: min(900px, 100%);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  background: #020617;
+  overflow: hidden;
+}
 
 .photo-tuner-main {
   position: relative;
