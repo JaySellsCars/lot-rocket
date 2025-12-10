@@ -1721,6 +1721,24 @@ body.light-theme .video-output-card textarea {
     pointer-events: none;  /* So clicks go to next/prev buttons */
 }
 
+/* ====== STEP 3 – PHOTO TUNER MAIN PREVIEW (square 1080x1080) ====== */
+
+.photo-tuner-main {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;      /* make the box a perfect square */
+  overflow: hidden;
+  background: #020617;      /* dark background behind image */
+}
+
+/* Make the tuner image fit inside without cropping */
+.photo-tuner-main img,
+#tunerPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;      /* no more chopping off top/bottom */
+  display: block;
+}
 
 
 #socialCarouselPreviewImg {
