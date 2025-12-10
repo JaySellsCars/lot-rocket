@@ -1737,6 +1737,16 @@ body.light-theme .video-output-card textarea {
   overflow: hidden;
   background: #020617;      /* dark background behind image */
 }
+/* Big image inside the social-ready preview */
+#socialCarouselPreviewImg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;      /* show full design, no cropping */
+  object-position: center;  /* keep it centered */
+  display: block;
+}
 
 /* Make the tuner image fit inside without cropping */
 .photo-tuner-main img,
