@@ -1597,7 +1597,9 @@ function addDesignImageToSocialStrip(url) {
   // ==================================================
 
   const designStudioOverlay = document.getElementById("designStudioOverlay");
-  const designLauncher = document.getElementById("designLauncher");
+const designLauncher =
+  document.getElementById("sendToDesignStudio") ||
+  document.getElementById("designLauncher");
   const designCloseBtn = document.getElementById("designClose");
 
   const studioSizePreset = document.getElementById("studioSizePreset");
