@@ -1699,18 +1699,19 @@ body.light-theme .video-output-card textarea {
   gap: 0.75rem;
 }
 
-/* Ensure the Step 3 main preview box stays a perfect square (1080x1080) */
 .social-carousel-preview {
-    aspect-ratio: 1 / 1;
-    width: 100%;
-    max-width: 420px;   /* You can adjust this */
-    margin: 0 auto;
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* Square frame that matches 1080x1080 PNG from Design Studio */
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: min(480px, 100%);
+  margin: 0 auto;
+  background: #020617;   /* same dark background as app */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
+
 
 /* Fix the image scaling inside the square preview */
 #socialCarouselPreviewImg {
