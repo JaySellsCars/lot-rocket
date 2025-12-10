@@ -2628,22 +2628,23 @@ function addStudioImageFromUrl(url, asBackground = false) {
     loadDesignBtn.addEventListener("click", loadDesignFromLocal);
   }
 
-  function pushUrlsIntoDesignStudio(urls) {
-    const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
+function pushUrlsIntoDesignStudio(urls) {
+  const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
 
-    if (!list.length) {
-      alert("No photos available. Boost a listing or add photos first.");
-      return;
-    }
-
-    studioAvailablePhotos = list.slice(0, 24);
-    openDesignStudio(list);
-
-    // Auto-drop first few onto canvas (first as background)
-    list.slice(0, 24).forEach((url, index) => {
-      addStudioImageFromUrl(url, index === 0);
-    });
+  if (!list.length) {
+    alert("No photos available. Boost a listing or add photos first.");
+    return;
   }
+
+  studioAvailablePhotos = list.slice(0, 24);
+  openDesignStudio(list);
+
+  // Auto-drop first few onto canvas (first as background)
+  list.slice(0, 24).forEach((url, index) => {
+    addStudioImageFromUrl(url, index === 0);
+  });
+}
+
 
   // ==================================================
   // STEP 1 → STEP 3 + STUDIO BRIDGES
