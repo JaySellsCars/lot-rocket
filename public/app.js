@@ -1156,7 +1156,7 @@ function addCreativeThumb(url) {
   img.title =
     "Click to select/deselect. Double-click to send a tuned copy into the social strip.";
 
-  // ✅ CLICK = toggle selection (supports multi-select)
+  // ✅ CLICK = toggle selection (multi-select)
   img.addEventListener("click", () => {
     img.classList.toggle("selected");
 
@@ -1167,7 +1167,7 @@ function addCreativeThumb(url) {
     }
   });
 
-  // ⬇ keep your existing double-click handler the same
+  // ✅ DOUBLE-CLICK = send edited copy to Social-ready strip
   img.addEventListener("dblclick", async () => {
     const editedUrl = await buildEditedDataUrl(url);
     addPhotoToSocialReady(editedUrl);
@@ -1175,8 +1175,24 @@ function addCreativeThumb(url) {
 
   creativeThumbGrid.appendChild(img);
 
-  // ...keep the MAX_STEP3_PHOTOS trimming logic as-is
+  // 🔢 Keep only the most recent MAX_STEP3_PHOTOS thumbs visible
+  const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
+  if (thumbs.length > MAX_STEP3_PHOTOS) {
+    const extra = thumbs.length - MAX_STEP3_PHOTOS;
+    for (let i = 0; i < extra; i++) {
+      creativeThumbGrid.removeChild(thumbs[i]);
+    }
+  }
 }
+
+
+
+}  // ← end of addCreativeThumb
+
+async function buildEditedDataUrl(src) {
+  ...
+}
+
 
 
     // 🔢 Keep only the most recent MAX_STEP3_PHOTOS thumbs visible
