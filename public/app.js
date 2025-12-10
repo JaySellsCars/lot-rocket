@@ -1,4 +1,4 @@
-sendpho// public/app.js – Lot Rocket frontend logic v2.5.9 (cleaned)
+// public/app.js – Lot Rocket frontend logic v2.5.9 (cleaned)
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
