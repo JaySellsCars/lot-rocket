@@ -670,6 +670,47 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==================================================
   // STEP 3 – CREATIVE HUB (Fabric) + SOCIAL STRIP
   // ==================================================
+  // --------------------------------------------------
+  // STEP 3 → SEND SELECTED PHOTO(S) INTO DESIGN STUDIO
+  // --------------------------------------------------
+  if (sendToDesignStudioBtn) {
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      // 1) Try to grab the selected Creative Lab thumb
+      let urls = [];
+
+      if (creativeThumbGrid) {
+        const selectedThumbs = creativeThumbGrid.querySelectorAll(
+          ".creative-thumb.selected"
+        );
+
+        if (selectedThumbs.length) {
+          selectedThumbs.forEach((img) => {
+            if (img.src) urls.push(img.src);
+          });
+        }
+      }
+
+      // 2) If nothing explicitly selected, fall back to localCreativePhotos
+      if (!urls.length && Array.isArray(localCreativePhotos)) {
+        urls = localCreativePhotos.slice(0, 24);
+      }
+
+      // 3) If still nothing, fall back to dealer photos
+      if (!urls.length && dealerPhotos && dealerPhotos.length) {
+        urls = dealerPhotos.map((p) => p.src).slice(0, 24);
+      }
+
+      if (!urls.length) {
+        alert(
+          "Load or select a photo in the Creative Lab first before sending to Design Studio."
+        );
+        return;
+      }
+
+      // 4) Push into Design Studio (auto-opens overlay + drops onto canvas)
+      pushUrlsIntoDesignStudio(urls);
+    });
+  }
 
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
