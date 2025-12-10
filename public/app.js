@@ -1193,60 +1193,61 @@ function addCreativeThumb(url) {
 
 
 
-  async function buildEditedDataUrl(src) {
-    if (!src) return src;
-    if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
+async function buildEditedDataUrl(src) {
+  if (!src) return src;
+  if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
 
-    return new Promise((resolve) => {
-      const img = new Image();
+  return new Promise((resolve) => {
+    const img = new Image();
 
-      const isSameOrigin =
-        src.startsWith(window.location.origin) || src.startsWith("blob:");
-      if (isSameOrigin) {
-        img.crossOrigin = "anonymous";
-      }
+    const isSameOrigin =
+      src.startsWith(window.location.origin) || src.startsWith("blob:");
+    if (isSameOrigin) {
+      img.crossOrigin = "anonymous";
+    }
 
-      img.onload = () => {
-        const maxW = 1920;
-        const maxH = 1920;
+    img.onload = () => {
+      const maxW = 1920;
+      const maxH = 1920;
 
-        let w = img.naturalWidth || img.width || 800;
-        let h = img.naturalHeight || img.height || 600;
+      let w = img.naturalWidth || img.width || 800;
+      let h = img.naturalHeight || img.height || 600;
 
-        const scale = Math.min(1, maxW / w, maxH / h);
-        w = Math.round(w * scale);
-        h = Math.round(h * scale);
+      const scale = Math.min(1, maxW / w, maxH / h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
 
-        hiddenTunerCanvas.width = w;
-        hiddenTunerCanvas.height = h;
+      hiddenTunerCanvas.width = w;
+      hiddenTunerCanvas.height = h;
 
-        hiddenTunerCtx.clearRect(0, 0, w, h);
-        hiddenTunerCtx.filter = currentTunerFilter || "none";
-        hiddenTunerCtx.drawImage(img, 0, 0, w, h);
+      hiddenTunerCtx.clearRect(0, 0, w, h);
+      hiddenTunerCtx.filter = currentTunerFilter || "none";
+      hiddenTunerCtx.drawImage(img, 0, 0, w, h);
 
-        try {
-          const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
-          resolve(dataUrl);
-        } catch (err) {
-          console.warn(
-            "[LotRocket] Canvas tainted, falling back to original URL.",
-            err
-          );
-          resolve(src);
-        }
-      };
-
-      img.onerror = (err) => {
+      try {
+        const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
+        resolve(dataUrl);
+      } catch (err) {
         console.warn(
-          "[LotRocket] Failed to load image for tuner, falling back:",
+          "[LotRocket] Canvas tainted, falling back to original URL.",
           err
         );
         resolve(src);
-      };
+      }
+    };
 
-      img.src = src;
-    });
-  }
+    img.onerror = (err) => {
+      console.warn(
+        "[LotRocket] Failed to load image for tuner, falling back:",
+        err
+      );
+      resolve(src);
+    };
+
+    img.src = src;
+  });
+}
+
 
   // ------------ SOCIAL-READY STRIP HELPERS + CAROUSEL ------------
 
