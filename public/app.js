@@ -66,19 +66,23 @@ document.addEventListener("DOMContentLoaded", () => {
 // STEP 1 → SEND TOP PHOTOS INTO CREATIVE LAB + STRIP
 // ----------------------------------------------------
 
-// Grab ALL possible buttons that might be used for this action
+// 1) Grab ALL possible buttons that might be used for this action
 const sendTopButtons = [
   "sendPhotosToCreative",
   "sendPhotosToStudio",
   "sendPhotosToDesignStudio",
-  "sendTopPhotosToDesignStudio",
+  "sendTopPhotosToDesignStudio", // <- the orange button in Step 1
 ]
   .map((id) => document.getElementById(id))
-  .filter(Boolean);
+  .filter(Boolean); // strip out nulls if an ID doesn’t exist
 
-// ----------------------------
-// STEP 1 → SEND TOP PHOTOS
-// ----------------------------
+console.log(
+  "[LotRocket] top-photo buttons found:",
+  sendTopButtons.map((b) => b.id)
+);
+
+// 2) Shared click handler for “Send Top Photos …”
+//    Pushes into Step 3 Creative Lab, Photo Tuner, and Social-ready strip
 function handleSendTopPhotosClick(evt) {
   const btn = evt.currentTarget;
 
@@ -92,8 +96,10 @@ function handleSendTopPhotosClick(evt) {
 
   // 2) Decide which photos to send
   const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+
+  // If nothing explicitly selected → use all dealer photos
   const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-    .slice(0, 12);
+    .slice(0, 12); // cap at 12
 
   if (!chosen.length) {
     alert("No photos available to send.");
@@ -106,15 +112,22 @@ function handleSendTopPhotosClick(evt) {
 
   // 4) Pipe them into Creative Lab + Social Strip + Tuner
   chosen.forEach((url) => {
+    // Creative Lab memory
     if (Array.isArray(localCreativePhotos)) {
       localCreativePhotos.push(url);
     }
+
+    // Creative Lab thumbnails (Step 3 Photos grid)
     if (typeof addCreativeThumb === "function") {
       addCreativeThumb(url);
     }
+
+    // Social-ready strip
     if (typeof addPhotoToSocialReady === "function") {
       addPhotoToSocialReady(url);
     }
+
+    // First photo also populates the Photo Tuner preview if empty
     if (tunerPreviewImg && !tunerPreviewImg.src) {
       tunerPreviewImg.src = url;
       if (typeof applyTunerFilters === "function") {
@@ -123,24 +136,27 @@ function handleSendTopPhotosClick(evt) {
     }
   });
 
+  // Re-render social carousel if helper exists
   if (typeof renderSocialCarousel === "function") {
     renderSocialCarousel();
   }
 
-  // 5) Success feedback
+  // 5) Success feedback + reset
   btn.classList.remove("loading");
   btn.classList.add("success");
+
   setTimeout(() => {
     btn.classList.remove("success");
     btn.disabled = false;
   }, 900);
 }
 
-// Attach the handler to every existing "send top photos" button
+// 3) Attach the handler to every existing button we found
 sendTopButtons.forEach((btn) => {
   console.log("[LotRocket] wiring top-photos button:", btn.id);
   btn.addEventListener("click", handleSendTopPhotosClick);
 });
+
 
 
 
