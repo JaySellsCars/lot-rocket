@@ -1890,4 +1890,270 @@ body.light-theme .video-output-card textarea {
   transition: 0.25s ease-in-out;
 }
 
+/* ====== DESIGN STUDIO 3.0 LAYOUT (matches old look) ====== */
+
+.ds3-shell {
+  position: relative;
+  width: 96vw;
+  max-width: 1400px;
+  height: 90vh;
+  margin: 3vh auto;
+  background: #020617;
+  border-radius: 24px;
+  box-shadow: 0 0 60px rgba(15, 23, 42, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.ds3-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 16px 22px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  background: #020617;
+  column-gap: 18px;
+}
+
+.ds3-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #e5e7eb;
+}
+
+.ds3-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ds3-preset-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+}
+
+.ds3-preset-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.ds3-preset-label select {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #020617;
+  color: #e5e7eb;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.ds3-header-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.ds3-photo-tray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 10px;
+  background: #020617;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.ds3-photo-tray::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ds3-photo-tray::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.8);
+  border-radius: 999px;
+}
+
+/* reuse existing thumb class from JS if present */
+.ds3-photo-tray img,
+.studio-photo-thumb {
+  width: 70px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(248, 250, 252, 0.5);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.ds3-close {
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  font-size: 1.6rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* BODY LAYOUT */
+.ds3-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 260px;
+  gap: 0;
+  height: 100%;
+}
+
+/* LEFT SIDEBAR */
+.ds3-left {
+  padding: 14px 14px 18px;
+  border-right: 1px solid rgba(148, 163, 184, 0.3);
+  overflow-y: auto;
+}
+
+/* CENTER */
+.ds3-center {
+  padding: 18px 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds3-stage {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: radial-gradient(circle at top, #020617, #020617 70%, #000);
+  border: 1px solid rgba(55, 65, 81, 0.8);
+  overflow: hidden;
+}
+
+/* make Konva canvas stretch */
+#konvaStageContainer > div,
+#konvaStageContainer canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* RIGHT SIDEBAR */
+.ds3-right {
+  padding: 14px 14px 18px;
+  border-left: 1px solid rgba(148, 163, 184, 0.3);
+  overflow-y: auto;
+}
+
+/* PANELS + CONTROLS */
+.ds3-panel {
+  border-radius: 18px;
+  background: radial-gradient(
+    circle at top,
+    rgba(15, 23, 42, 0.97),
+    rgba(15, 23, 42, 1)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 10px 12px 12px;
+  margin-bottom: 10px;
+}
+
+.ds3-panel-title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+}
+
+.ds3-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: #020617;
+  color: #e5e7eb;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ds3-btn-accent {
+  background: linear-gradient(90deg, #f97316, #ec4899);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.ds3-btn-danger {
+  border-color: rgba(248, 113, 113, 0.9);
+  color: #fecaca;
+}
+
+.ds3-btn:hover {
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.45);
+}
+
+.ds3-btn-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ds3-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.ds3-field input[type="text"],
+.ds3-field input[type="number"],
+.ds3-field input[type="range"] {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #020617;
+  color: #e5e7eb;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.ds3-field input[type="range"] {
+  padding: 0;
+}
+
+.ds3-layers-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+}
+
+.layer-item {
+  padding: 4px 8px;
+  border-radius: 10px;
+  margin-bottom: 3px;
+  background: #020617;
+  border: 1px solid transparent;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+.layer-item-selected {
+  border-color: #f97316;
+  background: rgba(249, 115, 22, 0.18);
+}
+
+/* Small screens: hide right sidebar if needed */
+@media (max-width: 1100px) {
+  .ds3-body {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .ds3-right {
+    display: none;
+  }
+}
 
