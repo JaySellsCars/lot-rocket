@@ -1637,23 +1637,24 @@ const designLauncher =
   let studioDnDWired = false;
   let studioAvailablePhotos = [];
 
-  function initDesignStudio() {
-    if (!window.Konva) {
-      console.warn("Konva not loaded – Design Studio 3.5 disabled.");
-      return;
-    }
-    const container = document.getElementById("konvaStageContainer");
-    if (!container) {
-      console.warn("konvaStageContainer not found.");
-      return;
-    }
+function initDesignStudio() {
+  const container = document.getElementById("konvaStageContainer");
+  if (!container || !window.Konva) return;
 
-    const width = 1080;
-    const height = 1080;
+  const size = Math.min(container.clientWidth, container.clientHeight || container.clientWidth);
 
-    if (studioStage) {
-      studioStage.destroy();
-    }
+  studioStage = new Konva.Stage({
+    container: "konvaStageContainer",
+    width: size,
+    height: size,
+  });
+
+  studioLayer = new Konva.Layer();
+  studioStage.add(studioLayer);
+
+  // ... your existing background rect + transformer + wiring ...
+}
+
 
     studioStage = new Konva.Stage({
       container: "konvaStageContainer",
