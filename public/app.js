@@ -1187,23 +1187,11 @@ function addCreativeThumb(url) {
 
 
 
-}  // ← end of addCreativeThumb
-
-async function buildEditedDataUrl(src) {
-  ...
-}
 
 
 
-    // 🔢 Keep only the most recent MAX_STEP3_PHOTOS thumbs visible
-    const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
-    if (thumbs.length > MAX_STEP3_PHOTOS) {
-      const extra = thumbs.length - MAX_STEP3_PHOTOS;
-      for (let i = 0; i < extra; i++) {
-        creativeThumbGrid.removeChild(thumbs[i]);
-      }
-    }
-  }
+
+
 
   async function buildEditedDataUrl(src) {
     if (!src) return src;
