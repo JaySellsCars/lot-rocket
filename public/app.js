@@ -67,6 +67,40 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("sendPhotosToStudio") ||
     document.getElementById("sendPhotosToDesignStudio") ||
     document.getElementById("sendTopPhotosToDesignStudio");
+// ---------------------------------------------
+// Step 1 → "Send Top Photos to Design Studio" UI Feedback
+// ---------------------------------------------
+if (sendPhotosToStudioBtn) {
+  sendPhotosToStudioBtn.addEventListener("click", async () => {
+    // Show loading animation
+    sendPhotosToStudioBtn.classList.add("loading");
+    sendPhotosToStudioBtn.textContent = "Sending...";
+
+    try {
+      await sendTopPhotosToDesignStudio(); // <-- Your existing function
+
+      // Success feedback
+      sendPhotosToStudioBtn.classList.remove("loading");
+      sendPhotosToStudioBtn.classList.add("success");
+      sendPhotosToStudioBtn.textContent = "✔ Sent to Design Studio!";
+
+      setTimeout(() => {
+        sendPhotosToStudioBtn.classList.remove("success");
+        sendPhotosToStudioBtn.textContent =
+          "Send top photos to Design Studio";
+      }, 2500);
+    } catch (err) {
+      console.error(err);
+      sendPhotosToStudioBtn.classList.remove("loading");
+      sendPhotosToStudioBtn.textContent = "Error — Try Again";
+
+      setTimeout(() => {
+        sendPhotosToStudioBtn.textContent =
+          "Send top photos to Design Studio";
+      }, 2500);
+    }
+  });
+}
 
   // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
