@@ -2048,22 +2048,12 @@ if (typeof addDesignImageToSocialStrip === "function") {
 function addStudioImageFromUrl(url, asBackground = false) {
   if (!studioLayer || !studioStage || !url) return;
 
-  // 🔥 NEW: Always keep ONLY ONE photo on the canvas
-  // (remove any old photo/background photo before adding a new one)
-  studioLayer
-    .find(node => {
-      if (!node.name) return false;
-      const n = node.name();
-      return n === "Background Photo" || n === "Photo Layer";
-    })
-    .forEach(node => node.destroy());
-
   const img = new Image();
 
-  // important for CORS-safe export + filters
+  // allow CORS-safe pixel access
   img.crossOrigin = "anonymous";
 
-  // route external image through our proxy when needed
+  // route external images through our backend proxy
   const safeUrl = getProxiedImageUrl(url);
 
   img.onload = () => {
@@ -2076,6 +2066,16 @@ function addStudioImageFromUrl(url, asBackground = false) {
     const finalRatio = fitRatio * 0.9;
     const w = img.width * finalRatio;
     const h = img.height * finalRatio;
+
+    // ✅ If this is a normal photo (NOT background),
+    // always keep ONLY ONE "Photo Layer" on the canvas.
+    if (!asBackground) {
+      studioLayer.getChildren().forEach((child) => {
+        if (child.name && child.name() === "Photo Layer") {
+          child.destroy();
+        }
+      });
+    }
 
     const node = new Konva.Image({
       image: img,
@@ -2093,9 +2093,10 @@ function addStudioImageFromUrl(url, asBackground = false) {
     studioLayer.add(node);
 
     if (asBackground) {
+      // push background under everything
       node.moveToBottom();
-      const bg = studioLayer.findOne(".BackgroundLayer");
-      if (bg) bg.moveToBottom();
+      const bgRect = studioLayer.findOne(".BackgroundLayer");
+      if (bgRect) bgRect.moveToBottom();
     }
 
     studioLayer.draw();
@@ -2109,6 +2110,7 @@ function addStudioImageFromUrl(url, asBackground = false) {
 
   img.src = safeUrl;
 }
+
 
 
 
