@@ -301,6 +301,18 @@ textarea::placeholder {
 .summary-btn {
   margin-top: 0.6rem;
 }
+#studioToStep3Btn {
+  box-shadow:
+    0 0 18px rgba(236, 72, 153, 0.55),
+    0 0 32px rgba(249, 115, 22, 0.45);
+}
+
+#studioToStep3Btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 24px rgba(236, 72, 153, 0.8),
+    0 0 42px rgba(249, 115, 22, 0.7);
+}
 
 /* ===== DARK THEME BUTTON TEXT FIXES ===== */
 
