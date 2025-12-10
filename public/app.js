@@ -813,8 +813,7 @@ if (step1SendTopBtn) {
     chosen.forEach((url) => {
       if (Array.isArray(localCreativePhotos)) localCreativePhotos.push(url);
       if (typeof addCreativeThumb === "function") addCreativeThumb(url);
-      if (typeof addPhotoToSocialReady === "function")
-        addPhotoToSocialReady(url);
+
 
       if (tunerPreviewImg && !tunerPreviewImg.src) {
         tunerPreviewImg.src = url;
