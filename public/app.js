@@ -740,7 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // STEP 1 → SEND TOP PHOTOS INTO CREATIVE LAB + STRIP
 // (Hard-wired: only the orange Step-1 button)
 // ----------------------------------------------------
-const step1SendTopBtn = document.getElementById("sendTopPhotosToDesignStudio");
+const step1SendTopBtn = document.getElementById("sendTopPhotosBtn");
 
 if (step1SendTopBtn) {
   console.log(
@@ -770,9 +770,7 @@ if (step1SendTopBtn) {
 
     chosen.forEach((url) => {
       if (Array.isArray(localCreativePhotos)) localCreativePhotos.push(url);
-
       if (typeof addCreativeThumb === "function") addCreativeThumb(url);
-
       if (typeof addPhotoToSocialReady === "function")
         addPhotoToSocialReady(url);
 
@@ -782,7 +780,9 @@ if (step1SendTopBtn) {
       }
     });
 
-    if (typeof renderSocialCarousel === "function") renderSocialCarousel();
+    if (typeof renderSocialCarousel === "function") {
+      renderSocialCarousel();
+    }
 
     step1SendTopBtn.classList.remove("loading");
     step1SendTopBtn.classList.add("success");
@@ -794,9 +794,10 @@ if (step1SendTopBtn) {
   });
 } else {
   console.warn(
-    "[LotRocket] Step 1 Send Top Photos button NOT FOUND. Check id='sendTopPhotosToDesignStudio'."
+    "[LotRocket] Step 1 Send Top Photos button NOT FOUND. Check id='sendTopPhotosBtn'."
   );
 }
+
 
   // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
 
