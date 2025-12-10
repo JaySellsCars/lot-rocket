@@ -1214,6 +1214,21 @@ body.dark-theme .step2-card .copy-btn {
 .hidden-input {
   display: none;
 }
+/* ====== GENERIC FULL-SCREEN MODAL OVERLAY ====== */
+.modal-overlay {
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.92); /* dim main app */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999; /* above main layout + right tool buttons */
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
 
 /* ====== PHOTO TUNER WRAPPER (generic) ====== */
 
