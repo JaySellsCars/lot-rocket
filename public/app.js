@@ -1654,6 +1654,23 @@ function initDesignStudio() {
 
   // ... your existing background rect + transformer + wiring ...
 }
+function initDesignStudio() {
+  const container = document.getElementById("konvaStageContainer");
+  if (!container || !window.Konva) return;
+
+  const size = Math.min(container.clientWidth, container.clientHeight || container.clientWidth);
+
+  studioStage = new Konva.Stage({
+    container: "konvaStageContainer",
+    width: size,
+    height: size,
+  });
+
+  studioLayer = new Konva.Layer();
+  studioStage.add(studioLayer);
+
+  // ... your existing background rect + transformer + wiring ...
+}
 
 
     studioStage = new Konva.Stage({
