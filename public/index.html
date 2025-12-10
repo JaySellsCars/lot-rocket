@@ -498,137 +498,142 @@
     </div>
   </div>
 
-  <!-- ####### DESIGN STUDIO 3.0 OVERLAY (Konva) ####### -->
-  <div id="designStudioOverlay" class="creative-overlay hidden">
-    <div class="creative-modal">
-
-      <!-- HEADER -->
-      <div class="creative-header">
+<!-- ====== DESIGN STUDIO 3.0 (Beta) – KONVA OVERLAY ====== -->
+<div id="designStudioOverlay" class="modal-overlay hidden">
+  <div class="ds3-shell">
+    <!-- HEADER -->
+    <header class="ds3-header">
+      <div class="ds3-title">
         <h2>Design Studio 3.0 (Beta)</h2>
-        <button id="designClose" class="modal-close-btn">X</button>
       </div>
 
-<!-- TOP BAR: preset + undo/redo/export -->
-<div class="creative-top-bar">
-  <span class="preset-label">Canvas preset</span>
-  <select id="studioSizePreset">
-    <option value="1080x1080">Square – 1080x1080</option>
-    <option value="1080x1920">Story – 1080x1920</option>
-    <option value="1920x1080">Landscape – 1920x1080</option>
-  </select>
+      <div class="ds3-header-main">
+        <!-- Top row: preset + actions -->
+        <div class="ds3-preset-row">
+          <label class="ds3-preset-label">
+            <span>Canvas preset</span>
+            <select id="studioSizePreset">
+              <option value="1080x1080">Square – 1080×1080</option>
+              <option value="1080x1350">Portrait – 1080×1350</option>
+              <option value="1920x1080">Landscape – 1920×1080</option>
+            </select>
+          </label>
 
-  <div class="creative-actions">
-    <button id="studioUndoBtn">Undo</button>
-    <button id="studioRedoBtn">Redo</button>
-    <button id="studioExportPng">Download PNG</button>
-   <button id="studioToStep3Btn" class="primary-btn full">
-  Send Selected to Design Studio 3.0
-</button>
-
-</div>
-
-
-
-      <!-- NEW: horizontal thumbnail strip ABOVE the canvas -->
-      <div class="studio-photo-strip">
-        <div id="studioPhotoTray" class="studio-photo-tray"></div>
-      </div>
-
-      <!-- MAIN BODY: left tools, center canvas, right properties -->
-      <div class="creative-body">
-
-        <!-- LEFT: tools + templates + save/load -->
-        <aside class="creative-tools">
-          <h3>Tools</h3>
-
-          <!-- Main tools -->
-          <button id="toolAddText" class="pill-btn">Add Text</button>
-          <button id="toolAddShape" class="pill-btn">Add Banner Bar</button>
-          <button id="toolAddBadge" class="pill-btn">Add Price Badge</button>
-          <button id="toolSetBackground" class="pill-btn">Set Background</button>
-
-          <hr class="tool-divider" />
-
-          <!-- Templates -->
-          <p class="tools-label">Templates</p>
-          <button id="templatePayment" class="pill-btn pill-btn-secondary">
-            Payment Promo
-          </button>
-          <button id="templateArrival" class="pill-btn pill-btn-secondary">
-            Just Arrived
-          </button>
-          <button id="templateSale" class="pill-btn pill-btn-secondary">
-            Sale Blast
-          </button>
-
-          <hr class="tool-divider" />
-
-          <!-- Save / load -->
-          <p class="tools-label">Design</p>
-          <button id="saveDesignBtn" class="pill-btn pill-btn-ghost">
-            Save Design
-          </button>
-          <button id="loadDesignBtn" class="pill-btn pill-btn-ghost">
-            Load Design
-          </button>
-        </aside>
-
-        <!-- CENTER: Konva stage container -->
-        <div class="creative-canvas-wrap">
-          <div
-            id="konvaStageContainer"
-            class="studio-canvas-container"
-          ></div>
-        </div>
-
-        <!-- RIGHT: layers + selected-layer controls -->
-        <aside class="creative-properties">
-          <div class="prop-group">
-            <h4>Layers</h4>
-            <ul id="layersList" class="layers-list"></ul>
-          </div>
-
-          <div class="prop-group">
-            <h4>Selected Layer</h4>
-
-            <label>
-              Text
-              <input
-                id="layerTextInput"
-                type="text"
-                placeholder="Edit text..."
-              />
-            </label>
-
-            <label>
-              Font size
-              <input
-                id="layerFontSizeInput"
-                type="number"
-                min="10"
-                max="200"
-              />
-            </label>
-
-            <label>
-              Opacity
-              <input
-                id="layerOpacityInput"
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-              />
-            </label>
-
-            <button id="layerDeleteBtn" class="pill-btn pill-btn-danger">
-              Delete Layer
+          <div class="ds3-header-actions">
+            <button id="studioUndoBtn" class="ds3-btn">Undo</button>
+            <button id="studioRedoBtn" class="ds3-btn">Redo</button>
+            <button id="studioExportPng" class="ds3-btn">Download PNG</button>
+            <button
+              id="studioToStep3Btn"
+              class="ds3-btn ds3-btn-accent"
+            >
+              Send to Step 3
             </button>
           </div>
-        </aside>
+        </div>
+
+        <!-- Second row: photo tray banner -->
+        <div id="studioPhotoTray" class="ds3-photo-tray">
+          <!-- Thumbs injected by app.js -->
+        </div>
       </div>
+
+      <button id="designClose" class="ds3-close">✕</button>
+    </header>
+
+    <!-- BODY: left tools, center canvas, right layers -->
+    <div class="ds3-body">
+      <!-- LEFT SIDEBAR -->
+      <aside class="ds3-left">
+        <section class="ds3-panel">
+          <h3 class="ds3-panel-title">Tools</h3>
+          <div class="ds3-btn-column">
+            <button id="toolAddText" class="ds3-btn">Add Text</button>
+            <button id="toolAddShape" class="ds3-btn">Add Banner Bar</button>
+            <button id="toolAddBadge" class="ds3-btn">Add Price Badge</button>
+            <button id="toolSetBackground" class="ds3-btn">
+              Set Background
+            </button>
+          </div>
+        </section>
+
+        <section class="ds3-panel">
+          <h3 class="ds3-panel-title">Templates</h3>
+          <div class="ds3-btn-column">
+            <button id="templatePayment" class="ds3-btn">
+              Payment Promo
+            </button>
+            <button id="templateArrival" class="ds3-btn">Just Arrived</button>
+            <button id="templateSale" class="ds3-btn">Sale Blast</button>
+          </div>
+        </section>
+
+        <section class="ds3-panel">
+          <h3 class="ds3-panel-title">Design</h3>
+          <div class="ds3-btn-column">
+            <button id="saveDesignBtn" class="ds3-btn">Save Design</button>
+            <button id="loadDesignBtn" class="ds3-btn">Load Design</button>
+          </div>
+        </section>
+      </aside>
+
+      <!-- CENTER CANVAS AREA -->
+      <main class="ds3-center">
+        <div id="konvaStageContainer" class="ds3-stage"></div>
+      </main>
+
+      <!-- RIGHT SIDEBAR: Layers -->
+      <aside class="ds3-right">
+        <section class="ds3-panel">
+          <h3 class="ds3-panel-title">Layers</h3>
+          <ul id="layersList" class="ds3-layers-list"></ul>
+        </section>
+
+        <section class="ds3-panel">
+          <h3 class="ds3-panel-title">Selected Layer</h3>
+
+          <label class="ds3-field">
+            <span>Text</span>
+            <input id="layerTextInput" type="text" placeholder="Edit text…" />
+          </label>
+
+          <label class="ds3-field">
+            <span>Font size</span>
+            <input
+              id="layerFontSizeInput"
+              type="number"
+              min="12"
+              max="200"
+              step="2"
+            />
+          </label>
+
+          <label class="ds3-field">
+            <span>Opacity</span>
+            <input
+              id="layerOpacityInput"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value="1"
+            />
+          </label>
+
+          <button
+            id="layerDeleteBtn"
+            class="ds3-btn ds3-btn-danger"
+            type="button"
+          >
+            Delete Layer
+          </button>
+        </section>
+      </aside>
     </div>
   </div>
+</div>
+<!-- ====== /DESIGN STUDIO 3.0 OVERLAY ====== -->
+
 
   <!-- =============================== -->
   <!-- AI VIDEO SCRIPT + SHOT PLAN MODAL -->
