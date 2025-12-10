@@ -1701,8 +1701,9 @@ function addDesignImageToSocialStrip(url) {
   // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
   // ==================================================
 
-  const designStudioOverlay = document.getElementById("designStudioOverlay");
-const designLauncher =
+const designStudioOverlay = document.getElementById("designStudioOverlay");
+const designLauncher = document.getElementById("designLauncher");
+
   document.getElementById("sendToDesignStudio") ||
   document.getElementById("designLauncher");
   const designCloseBtn = document.getElementById("designClose");
