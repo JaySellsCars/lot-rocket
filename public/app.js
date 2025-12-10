@@ -1691,6 +1691,7 @@ const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
 if (sendDesignToStripBtn) {
   sendDesignToStripBtn.addEventListener("click", async () => {
     console.log("▶️ Send to Step 3 clicked");
+
     try {
       if (!studioStage) {
         console.warn("⚠️ Design Studio stage not initialized.");
@@ -1714,18 +1715,18 @@ if (sendDesignToStripBtn) {
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-      // 3) Push design into the Social-Ready Strip
-      addPhotoToSocialReady(objectUrl);
-
-      console.log("✅ Design sent to Step 3 social strip from Design Studio:", objectUrl);
-
-    } catch (err) {
-      console.error("❌ Failed to send design to Step 3:", err);
-    }
-  }); // ← THIS is the missing brace in your screenshot
-}
-
-
+      // 3) Send into the Social-Ready strip / focus preview
+      if (typeof addDesignImageToSocialStrip === "function") {
+        // if you have a “design specific” helper, use it
+        addDesignImageToSocialStrip(objectUrl);
+      } else if (typeof addPhotoToSocialReady === "function") {
+        // otherwise fall back to the generic helper
+        addPhotoToSocialReady(objectUrl);
+      } else {
+        console.warn(
+          "No social-strip helper defined; design image cannot be added to strip."
+        );
+      }
 
       // 4) ALSO mirror the design into Step 3 Creative Lab thumbs
       //    so it behaves like any other edited photo.
@@ -1745,12 +1746,12 @@ if (sendDesignToStripBtn) {
         "✅ Design sent to Step 3 social strip + Creative Lab from Design Studio:",
         objectUrl
       );
-
     } catch (err) {
       console.error("❌ Failed to send design to Step 3:", err);
     }
   });
 }
+
 
 
 
