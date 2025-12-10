@@ -1742,16 +1742,17 @@ if (sendDesignToStripBtn) {
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
 
-// 3) Use helper to wire into Social-Ready strip + focus preview
-if (typeof addDesignImageToSocialStrip === "function") {
-  addDesignImageToSocialStrip(objectUrl);
-} else if (typeof addPhotoToSocialReady === "function") {
-  addPhotoToSocialReady(objectUrl);
-} else {
-  console.warn(
-    "No social-strip helper defined; design image cannot be added to strip."
-  );
+      // 3) Push design into the Social-Ready Strip
+      addPhotoToSocialReady(objectUrl);
+
+      console.log("✅ Design sent to Step 3 social strip from Design Studio:", objectUrl);
+
+    } catch (err) {
+      console.error("❌ Failed to send design to Step 3:", err);
+    }
+  }); // ← THIS is the missing brace in your screenshot
 }
+
 
 
       // 4) ALSO mirror the design into Step 3 Creative Lab thumbs
