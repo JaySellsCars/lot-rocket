@@ -62,78 +62,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const photosGrid = document.getElementById("photosGrid");
 
   // Works with several possible IDs for the Step 1 → photo button
-  const sendPhotosToStudioBtn =
-    document.getElementById("sendPhotosToCreative") ||
-    document.getElementById("sendPhotosToStudio") ||
-    document.getElementById("sendPhotosToDesignStudio") ||
-    document.getElementById("sendTopPhotosToDesignStudio");
-// ---------------------------------------------
-// Step 1 → Send top photos into Creative Lab + tuner
-// with UI feedback on the button
-// ---------------------------------------------
-if (sendPhotosToStudioBtn) {
-  sendPhotosToStudioBtn.addEventListener("click", () => {
-    // Show loading state
-    sendPhotosToStudioBtn.classList.add("loading");
-    sendPhotosToStudioBtn.textContent = "Sending...";
+const sendPhotosToStudioBtn =
+  document.getElementById("sendPhotosToCreative") ||
+  document.getElementById("sendPhotosToStudio") ||
+  document.getElementById("sendPhotosToDesignStudio") ||
+  document.getElementById("sendTopPhotosToDesignStudio");
 
-    try {
-      // You must have dealer photos first
-      if (!dealerPhotos || !dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        sendPhotosToStudioBtn.classList.remove("loading");
-        sendPhotosToStudioBtn.textContent =
-          "Send top photos to Design Studio";
-        return;
-      }
 
-      // Prefer selected photos; otherwise take all, cap at 24
-      const selected = dealerPhotos
-        .filter((p) => p.selected)
-        .map((p) => p.src);
-
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-        .slice(0, 24);
-
-      // Mirror into Creative Lab thumbnails + tuner preview
-      chosen.forEach((url) => {
-        // Track in Creative Lab source list
-        localCreativePhotos.push(url);
-
-        // Thumbnail in Step 3 "Photos" grid
-        addCreativeThumb(url);
-
-        // If tuner preview is empty, show first one there too
-        if (tunerPreviewImg && !tunerPreviewImg.src) {
-          tunerPreviewImg.src = url;
-          applyTunerFilters();
-        }
-      });
-
-      // Success feedback
-      sendPhotosToStudioBtn.classList.remove("loading");
-      sendPhotosToStudioBtn.classList.add("success");
-      sendPhotosToStudioBtn.textContent = "✔ Sent to Design Studio!";
-
-      // Reset after a moment
-      setTimeout(() => {
-        sendPhotosToStudioBtn.classList.remove("success");
-        sendPhotosToStudioBtn.textContent =
-          "Send top photos to Design Studio";
-      }, 2500);
-    } catch (err) {
-      console.error("Send top photos failed:", err);
-
-      sendPhotosToStudioBtn.classList.remove("loading");
-      sendPhotosToStudioBtn.textContent = "Error — Try Again";
-
-      setTimeout(() => {
-        sendPhotosToStudioBtn.textContent =
-          "Send top photos to Design Studio";
-      }, 2500);
-    }
-  });
-}
 
   // Dealer photos state (allows selection)
   let dealerPhotos = []; // [{ src, selected }]
