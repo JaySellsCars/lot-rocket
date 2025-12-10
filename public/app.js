@@ -736,6 +736,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Social-ready photos state: [{ url, selected, originalUrl, locked }]
   let socialReadyPhotos = [];
+// ----------------------------------------------------
+// STEP 1 → SEND TOP PHOTOS INTO CREATIVE LAB + STRIP
+// (Hard-wired: only the orange Step-1 button)
+// ----------------------------------------------------
+const step1SendTopBtn = document.getElementById("sendTopPhotosToDesignStudio");
+
+if (step1SendTopBtn) {
+  console.log(
+    "[LotRocket] wiring Step 1 top-photos button:",
+    step1SendTopBtn.id
+  );
+
+  step1SendTopBtn.addEventListener("click", () => {
+    console.log("[LotRocket] Step 1 Send Top Photos clicked");
+
+    if (!dealerPhotos || !dealerPhotos.length) {
+      alert("Boost a listing first so Lot Rocket can grab photos.");
+      return;
+    }
+
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
+      .slice(0, 12);
+
+    if (!chosen.length) {
+      alert("No photos available to send.");
+      return;
+    }
+
+    step1SendTopBtn.disabled = true;
+    step1SendTopBtn.classList.add("loading");
+
+    chosen.forEach((url) => {
+      if (Array.isArray(localCreativePhotos)) localCreativePhotos.push(url);
+
+      if (typeof addCreativeThumb === "function") addCreativeThumb(url);
+
+      if (typeof addPhotoToSocialReady === "function")
+        addPhotoToSocialReady(url);
+
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = url;
+        if (typeof applyTunerFilters === "function") applyTunerFilters();
+      }
+    });
+
+    if (typeof renderSocialCarousel === "function") renderSocialCarousel();
+
+    step1SendTopBtn.classList.remove("loading");
+    step1SendTopBtn.classList.add("success");
+
+    setTimeout(() => {
+      step1SendTopBtn.classList.remove("success");
+      step1SendTopBtn.disabled = false;
+    }, 900);
+  });
+} else {
+  console.warn(
+    "[LotRocket] Step 1 Send Top Photos button NOT FOUND. Check id='sendTopPhotosToDesignStudio'."
+  );
+}
 
   // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
 
