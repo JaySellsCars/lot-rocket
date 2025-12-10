@@ -1699,21 +1699,28 @@ body.light-theme .video-output-card textarea {
   gap: 0.75rem;
 }
 
+/* Ensure the Step 3 main preview box stays a perfect square (1080x1080) */
 .social-carousel-preview {
-  /* Make the preview box a square so it matches 1080x1080 */
-  aspect-ratio: 1 / 1;
-  width: 320px;          /* or whatever size you like */
-  max-width: 100%;
-  margin: 0 auto;
-  overflow: hidden;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 420px;   /* You can adjust this */
+    margin: 0 auto;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.social-carousel-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;   /* IMPORTANT: show whole design, don’t crop */
-  display: block;
+/* Fix the image scaling inside the square preview */
+#socialCarouselPreviewImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;   /* 🔥 Stops stretching / overlaying */
+    display: block;
+    pointer-events: none;  /* So clicks go to next/prev buttons */
 }
+
 
 
 #socialCarouselPreviewImg {
