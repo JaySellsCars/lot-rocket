@@ -844,15 +844,32 @@ if (step1SendTopBtn) {
   // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
 
   // Small utility to actually trigger a browser download
-  function triggerSocialDownload(url, index) {
-    if (!url) return;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+// Small helper: always try to use our proxy so downloads don't
+// hijack the current tab when dealer photos are cross-origin.
+function triggerSocialDownload(url, index) {
+  if (!url) return;
+
+  // getProxiedImageUrl is defined later in this file; function
+  // declarations are hoisted so it's safe to call here.
+  let safeUrl = url;
+  try {
+    if (typeof getProxiedImageUrl === "function") {
+      safeUrl = getProxiedImageUrl(url);
+    }
+  } catch (e) {
+    console.warn("[LotRocket] getProxiedImageUrl failed, using raw URL", e);
   }
+
+  const a = document.createElement("a");
+  a.href = safeUrl;
+  a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
+  a.rel = "noopener";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 
   // Download the "current" social-ready image (or by explicit index)
   function downloadSocialImage(index) {
