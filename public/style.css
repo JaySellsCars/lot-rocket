@@ -1005,6 +1005,43 @@ body.dark-theme .step2-card .copy-btn {
 
 /* ====== BASIC CALCULATOR INSIDE MODAL ====== */
 /* ===== Simple Calculator (right-side modal) ===== */
+.basic-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.basic-calc-display {
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  font-size: 1.1rem;
+  text-align: right;
+}
+
+.basic-calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.basic-calc-grid button {
+  padding: 0.55rem 0;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: #e5e7eb;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.basic-calc-grid button.basic-calc-equals {
+  grid-column: span 2;
+  background: linear-gradient(90deg, #f97316, #ec4899);
+}
 
 .basic-calc {
   margin-top: 1rem;
