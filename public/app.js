@@ -438,9 +438,8 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
 
 
   // ---------- Payment helper ----------
-  const paymentForm = document.getElementById("paymentForm");
-  const paymentOutput = document.getElementById("paymentOutput");
-  if (paymentForm) {
+  const paymentOutput = document.getElementById("paymentOutput");  // only this const
+  if (paymentForm) { // reuse the one defined above in the calculator section
     paymentForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(paymentForm);
@@ -476,6 +475,7 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
       }
     });
   }
+
 
   // ---------- Income helper ----------
   const incomeForm = document.getElementById("incomeForm");
