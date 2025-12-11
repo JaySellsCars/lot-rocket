@@ -918,18 +918,45 @@
   </div>
 </div>
 
-<!-- Calculator (simple placeholder, no JS yet) -->
-<div id="calcModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Calculator</h3>
-      <button class="modal-close-btn side-modal-close">✕</button>
-    </div>
-    <div class="side-modal-body">
-      <p>Simple calculator / scratchpad can live here later.</p>
-    </div>
+<!-- inside #calcModal .side-modal-body -->
+<div class="basic-calc">
+  <input
+    id="basicCalcDisplay"
+    class="basic-calc-display"
+    type="text"
+    readonly
+  />
+
+  <div class="basic-calc-grid">
+    <button type="button" data-calc-key="7">7</button>
+    <button type="button" data-calc-key="8">8</button>
+    <button type="button" data-calc-key="9">9</button>
+    <button type="button" data-calc-key="/">÷</button>
+
+    <button type="button" data-calc-key="4">4</button>
+    <button type="button" data-calc-key="5">5</button>
+    <button type="button" data-calc-key="6">6</button>
+    <button type="button" data-calc-key="*">×</button>
+
+    <button type="button" data-calc-key="1">1</button>
+    <button type="button" data-calc-key="2">2</button>
+    <button type="button" data-calc-key="3">3</button>
+    <button type="button" data-calc-key="-">−</button>
+
+    <button type="button" data-calc-key="0">0</button>
+    <button type="button" data-calc-key=".">.</button>
+    <button type="button" data-calc-key="C">C</button>
+    <button type="button" data-calc-key="+">+</button>
+
+    <button
+      type="button"
+      class="basic-calc-equals"
+      data-calc-key="="
+    >=</button>
+    <button type="button" data-calc-key="DEL">⌫</button>
   </div>
 </div>
+
 
 <!-- Payment Calculator -->
 <div id="paymentModal" class="side-modal hidden">
