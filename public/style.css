@@ -2307,3 +2307,31 @@ body.light-theme .video-output-card textarea {
 #video-generation-launch {
   margin-bottom: 2rem;
 }
+/* =========================================
+   VIDEO BUILDER – FULL-WIDTH BOTTOM STRIP
+   ========================================= */
+
+#video-bottom {
+  /* make it break out of any previous grid/column rules */
+  width: 100%;
+  max-width: 1200px;
+  margin: 3rem auto 4rem;
+  padding: 0 2rem;
+  display: block;
+  clear: both;
+  grid-column: 1 / -1;  /* if it's still inside a grid, span full width */
+}
+
+#video-bottom * {
+  /* kill any weird offsets from old layout */
+  float: none !important;
+}
+
+/* make each block in the bottom panel stretch nicely */
+#video-bottom textarea,
+#video-bottom .video-script-block,
+#video-bottom .video-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+}
