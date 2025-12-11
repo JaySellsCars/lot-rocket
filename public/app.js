@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------------------------------------
-  // RIGHT-SIDE FLOATING TOOL MODALS (simplified)
+  // RIGHT-SIDE FLOATING TOOL MODALS (simplified + debug)
   // ----------------------------------------------
 
   const launcherModalPairs = [
@@ -337,18 +337,27 @@ document.addEventListener("DOMContentLoaded", () => {
     ["videoLauncher", "videoModal"],
   ];
 
-  // Open modals when you click the right-side buttons
   launcherModalPairs.forEach(([launcherId, modalId]) => {
     const launcher = document.getElementById(launcherId);
     const modal = document.getElementById(modalId);
 
-    if (!launcher || !modal) {
-      console.warn("[LotRocket] Missing launcher or modal:", launcherId, "→", modalId);
-      return;
-    }
+    console.log(
+      "[LotRocket] modal pair:",
+      launcherId,
+      "launcher?",
+      !!launcher,
+      "|",
+      modalId,
+      "modal?",
+      !!modal
+    );
+
+    if (!launcher || !modal) return;
 
     launcher.addEventListener("click", () => {
-      // For the video one, prefill context
+      console.log("[LotRocket] CLICK from", launcherId);
+
+      // Video: pre-fill context when opened
       if (launcherId === "videoLauncher" && videoContextField) {
         videoContextField.value = buildVideoContextFromKit();
       }
@@ -373,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
 
 
 // ----------------------------------------------
