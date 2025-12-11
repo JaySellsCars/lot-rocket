@@ -373,6 +373,9 @@ function wireModal(launcherId, modalId, closeSelector, onOpen) {
   // ----------------------------------------------
   // PAYMENT CALCULATOR (right-side modal)
   // ----------------------------------------------
+  // ----------------------------------------------
+  // PAYMENT CALCULATOR (right-side modal)
+  // ----------------------------------------------
   const paymentForm = document.getElementById("paymentForm");
   const paymentPriceInput = document.getElementById("paymentPrice");
   const paymentDownInput = document.getElementById("paymentDown");
@@ -433,6 +436,7 @@ function wireModal(launcherId, modalId, closeSelector, onOpen) {
       )} at ${safeApr.toFixed(2)}% APR (est., tax ${taxRate || 0}%).`;
     });
   }
+
 
   // ---------- Payment helper ----------
   const paymentForm = document.getElementById("paymentForm");
