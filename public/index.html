@@ -411,21 +411,23 @@
     </button>
 
 <aside class="side-tools">
-
-    <!-- AI Video Generation -->
-    <button id="videoLauncher" class="tool-button">
-        <span class="tool-icon">🎥</span>
-        <span class="tool-label">AI Video Generation</span>
-    </button>
-
-    <!-- Hidden Design Studio launcher (keeps layout stable) -->
-    <button id="designLauncher" class="tool-button" style="display:none;">
-        <span class="tool-icon">🪄</span>
-        <span class="tool-label">Design Studio 3.0</span>
-    </button>
-
+  <!-- side buttons ... -->
+  <button id="designLauncher" class="tool-button" style="display:none;">
+    <span class="tool-icon">🎨</span>
+    <span class="tool-label">Design Studio 3.0</span>
+  </button>
 </aside>
 
+</main>  <!-- 👈 close the layout here -->
+
+
+<!-- AI Video Generation Launcher (clean placement above script builder) -->
+<section id="video-generation-launch" style="text-align:center; margin-top:2rem;">
+  <button id="videoLauncher" class="tool-button" style="padding:1rem 2.5rem; font-size:1.2rem;">
+    <span class="tool-icon">🎥</span>
+    <span class="tool-label">AI Video Generation</span>
+  </button>
+</section>
 
 <!-- NOW your bottom section -->
 <section id="video-bottom" class="video-bottom-panel">
@@ -434,6 +436,7 @@
   <!-- 3. AI Video Generator Prompt -->
   <!-- 4. Thumbnail Prompt -->
 </section>
+
 
 
 
