@@ -320,25 +320,38 @@ document.addEventListener("DOMContentLoaded", () => {
     return parts.join("\n");
   }
 
-function wireModal(launcherId, modalId, closeSelector, onOpen) {
+// ----------------------------------------------
+// RIGHT-SIDE FLOATING TOOL MODALS
+// ----------------------------------------------
+
+const TOOL_CONFIG = [
+  ["objectionLauncher", "objectionModal"],
+  ["calcLauncher", "calcModal"],
+  ["paymentLauncher", "paymentModal"],
+  ["incomeLauncher", "incomeModal"],
+  ["workflowLauncher", "workflowModal"],
+  ["messageLauncher", "messageModal"],
+  ["askLauncher", "askModal"],
+  ["carLauncher", "carModal"],
+  ["imageLauncher", "imageModal"],
+  ["videoLauncher", "videoModal"],
+];
+
+function wireSideModal(launcherId, modalId, onOpen) {
   const launcher = document.getElementById(launcherId);
   const modal = document.getElementById(modalId);
 
   if (!launcher || !modal) {
-    console.warn(
-      "[LotRocket] Missing launcher or modal for",
-      launcherId,
-      "→",
-      modalId,
-      "launcher?", !!launcher,
-      "modal?", !!modal
-    );
+    console.warn("[LotRocket] Missing launcher or modal for:", launcherId, "→", modalId);
     return;
   }
 
-  const closeBtn = modal.querySelector(closeSelector || ".modal-close-btn");
+  const closeBtn = modal.querySelector(".side-modal-close");
+
   const backdropClose = (e) => {
-    if (e.target === modal) modal.classList.add("hidden");
+    if (e.target === modal) {
+      modal.classList.add("hidden");
+    }
   };
 
   launcher.addEventListener("click", () => {
@@ -353,23 +366,18 @@ function wireModal(launcherId, modalId, closeSelector, onOpen) {
   modal.addEventListener("click", backdropClose);
 }
 
+TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+  if (launcherId === "videoLauncher") {
+    wireSideModal(launcherId, modalId, () => {
+      if (typeof buildVideoContextFromKit === "function" && window.videoContextField) {
+        window.videoContextField.value = buildVideoContextFromKit();
+      }
+    });
+  } else {
+    wireSideModal(launcherId, modalId);
+  }
+});
 
-  wireModal("objectionLauncher", "objectionModal", ".modal-close-btn");
-  wireModal("calcLauncher", "calcModal", ".modal-close-btn");
-  wireModal("paymentLauncher", "paymentModal", ".modal-close-btn");
-  wireModal("incomeLauncher", "incomeModal", ".modal-close-btn");
-  wireModal("workflowLauncher", "workflowModal", ".modal-close-btn");
-  wireModal("messageLauncher", "messageModal", ".modal-close-btn");
-  wireModal("askLauncher", "askModal", ".modal-close-btn");
-  wireModal("carLauncher", "carModal", ".modal-close-btn");
-  wireModal("imageLauncher", "imageModal", ".modal-close-btn");
-
-  // VIDEO: when opening, pre-fill context field (if present) with kit info
-  wireModal("videoLauncher", "videoModal", ".modal-close-btn", () => {
-    if (videoContextField) {
-      videoContextField.value = buildVideoContextFromKit();
-    }
-  });
 
 // ----------------------------------------------
 // PAYMENT CALCULATOR (right-side modal)
