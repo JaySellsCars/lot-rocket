@@ -580,15 +580,13 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
             `Error (HTTP ${res.status}) from objection coach.`;
           throw new Error(msg);
         }
-        if (objectionOutput) objectionOutput.value = data.answer || "";
-      } catch (err) {
-        console.error("❌ objection-coach error", err);
-        if (objectionOutput)
+        if (objectionOutput) {
           objectionOutput.value =
             err && err.message
               ? err.message
               : "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
-      }
+          autoResizeTextarea(objectionOutput);
+        }
     });
   }
 
