@@ -993,7 +993,7 @@
   </div>
 </div>
 
-<!-- Income Calculator (Projected Income) -->
+<!-- Income Calculator -->
 <div id="incomeModal" class="side-modal hidden">
   <div class="side-modal-content">
     <div class="side-modal-header">
@@ -1003,25 +1003,25 @@
     <div class="side-modal-body">
       <form id="incomeForm" class="tool-form">
         <label>
-          Month-to-Date Gross Income
+          Year-to-Date Gross Income
           <input
-            name="monthIncome"
+            id="incomeYtd"
             type="text"
-            placeholder="Example: 8250"
+            placeholder="Example: 128000"
           />
         </label>
 
         <label>
           Date of Last Paycheck
           <input
-            name="lastCheck"
+            id="incomeLastPaycheck"
             type="date"
           />
         </label>
 
         <p class="small-note">
-          Lot Rocket will estimate your yearly gross, how many weeks into the
-          year you are, and your average monthly income.
+          Lot Rocket will estimate your yearly gross, how many weeks into the year you are,
+          and your estimated average monthly income.
         </p>
 
         <button type="submit" class="primary-btn full">
@@ -1035,6 +1035,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- AI Work Flow Expert -->
 <div id="workflowModal" class="side-modal hidden">
