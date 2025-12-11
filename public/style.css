@@ -206,13 +206,7 @@ textarea {
   line-height: 1.4;
 }
 
-textarea {
-  border-radius: 0.9rem;
-  min-height: 4.5rem;
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.4;
-}
+
 
 input::placeholder,
 textarea::placeholder {
