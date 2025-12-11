@@ -5,11 +5,19 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5.9");
   const apiBase = "";
+
 function autoResizeTextarea(el) {
   if (!el) return;
-  el.style.height = "auto";                      // reset
-  el.style.height = (el.scrollHeight + 4) + "px"; // grow to fit content
+  el.style.height = "auto";
+  el.style.height = (el.scrollHeight + 4) + "px";
 }
+
+// Apply auto-grow behavior to ALL textareas
+const allTextareas = document.querySelectorAll("textarea");
+allTextareas.forEach((ta) => {
+  autoResizeTextarea(ta); 
+  ta.addEventListener("input", () => autoResizeTextarea(ta));
+});
 
   // Brand palette for Design Studio 3.5
   const BRAND = {
