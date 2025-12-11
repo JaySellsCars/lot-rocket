@@ -188,6 +188,14 @@ select {
   color: inherit;
   outline: none;
 }
+/* Global auto-grow behavior for all textareas */
+textarea {
+  height: auto;        /* let JS control final height */
+  min-height: 120px;   /* starting size – adjust if needed */
+  overflow: hidden;    /* no scrollbars */
+  resize: none;        /* user can't drag-resize and break layout */
+  line-height: 1.4;
+}
 
 textarea {
   border-radius: 0.9rem;
