@@ -675,18 +675,41 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
     } = sections;
 
     // Right-side modal
-    if (videoScriptOutput) videoScriptOutput.value = script;
-    if (videoShotListOutput) videoShotListOutput.value = shots;
-    if (videoAIPromptOutput) videoAIPromptOutput.value = aiPrompt;
-    if (videoThumbPromptOutput) videoThumbPromptOutput.value = thumbPrompt;
+    if (videoScriptOutput) {
+      videoScriptOutput.value = script;
+      autoResizeTextarea(videoScriptOutput);
+    }
+    if (videoShotListOutput) {
+      videoShotListOutput.value = shots;
+      autoResizeTextarea(videoShotListOutput);
+    }
+    if (videoAIPromptOutput) {
+      videoAIPromptOutput.value = aiPrompt;
+      autoResizeTextarea(videoAIPromptOutput);
+    }
+    if (videoThumbPromptOutput) {
+      videoThumbPromptOutput.value = thumbPrompt;
+      autoResizeTextarea(videoThumbPromptOutput);
+    }
 
     // Bottom under Design Studio
-    if (videoScriptOutputBottom) videoScriptOutputBottom.value = script;
-    if (videoShotListOutputBottom) videoShotListOutputBottom.value = shots;
-    if (videoAIPromptOutputBottom) videoAIPromptOutputBottom.value = aiPrompt;
-    if (videoThumbPromptOutputBottom)
+    if (videoScriptOutputBottom) {
+      videoScriptOutputBottom.value = script;
+      autoResizeTextarea(videoScriptOutputBottom);
+    }
+    if (videoShotListOutputBottom) {
+      videoShotListOutputBottom.value = shots;
+      autoResizeTextarea(videoShotListOutputBottom);
+    }
+    if (videoAIPromptOutputBottom) {
+      videoAIPromptOutputBottom.value = aiPrompt;
+      autoResizeTextarea(videoAIPromptOutputBottom);
+    }
+    if (videoThumbPromptOutputBottom) {
       videoThumbPromptOutputBottom.value = thumbPrompt;
-  }
+      autoResizeTextarea(videoThumbPromptOutputBottom);
+    }
+
 
   function parseVideoSections(full) {
     if (!full || typeof full !== "string") {
