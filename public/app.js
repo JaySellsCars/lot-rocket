@@ -164,14 +164,39 @@ allTextareas.forEach((ta) => {
       }
 
       // Social posts
-      if (facebookPost) facebookPost.value = data.facebook || "";
-      if (instagramPost) instagramPost.value = data.instagram || "";
-      if (tiktokPost) tiktokPost.value = data.tiktok || "";
-      if (linkedinPost) linkedinPost.value = data.linkedin || "";
-      if (twitterPost) twitterPost.value = data.twitter || "";
-      if (textBlurb) textBlurb.value = data.text || "";
-      if (marketplacePost) marketplacePost.value = data.marketplace || "";
-      if (hashtags) hashtags.value = data.hashtags || "";
+      if (facebookPost) {
+        facebookPost.value = data.facebook || "";
+        autoResizeTextarea(facebookPost);
+      }
+      if (instagramPost) {
+        instagramPost.value = data.instagram || "";
+        autoResizeTextarea(instagramPost);
+      }
+      if (tiktokPost) {
+        tiktokPost.value = data.tiktok || "";
+        autoResizeTextarea(tiktokPost);
+      }
+      if (linkedinPost) {
+        linkedinPost.value = data.linkedin || "";
+        autoResizeTextarea(linkedinPost);
+      }
+      if (twitterPost) {
+        twitterPost.value = data.twitter || "";
+        autoResizeTextarea(twitterPost);
+      }
+      if (textBlurb) {
+        textBlurb.value = data.text || "";
+        autoResizeTextarea(textBlurb);
+      }
+      if (marketplacePost) {
+        marketplacePost.value = data.marketplace || "";
+        autoResizeTextarea(marketplacePost);
+      }
+      if (hashtags) {
+        hashtags.value = data.hashtags || "";
+        autoResizeTextarea(hashtags);
+      }
+
 
       // Photos – cap to 40
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
