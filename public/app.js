@@ -644,7 +644,6 @@ try {
             "Lot Rocket hit a snag talking to AI. Try again in a moment.";
           autoResizeTextarea(output);
         }
-
     });
   }
 
