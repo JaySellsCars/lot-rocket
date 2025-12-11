@@ -570,7 +570,7 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
         payload[key] = value;
       });
 
-      // show thinking state
+      // thinking state
       objectionOutput.value = "Coaching that objection…";
       autoResizeTextarea(objectionOutput);
 
@@ -591,31 +591,27 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
           throw new Error(msg);
         }
 
-        // Be flexible about what the backend returns
-        const coached =
+        // ✅ accept any of these shapes: {coachedMessage}, {answer}, or {message}
+        const reply =
           (data &&
-            (data.coachedMessage ||
-              data.message ||
-              data.reply ||
-              data.text ||
-              data.coached)) ||
+            (data.coachedMessage || data.answer || data.message)) ||
           "";
 
-        if (!coached.trim()) {
+        if (!reply.trim()) {
           throw new Error("Empty coached reply from server");
         }
 
-        objectionOutput.value = coached;
+        objectionOutput.value = reply;
       } catch (err) {
         console.error("Objection coach error:", err);
         objectionOutput.value =
-          (err && err.message && `Error: ${err.message}`) ||
           "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
       }
 
       autoResizeTextarea(objectionOutput);
     });
   }
+
 
 
 
