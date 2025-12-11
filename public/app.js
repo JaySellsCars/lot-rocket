@@ -618,8 +618,12 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
             (data && data.message) ||
             `Message helper error (HTTP ${res.status}).`;
           console.error("❌ message-helper backend error:", res.status, data);
-          if (output) output.value = msg;
+          if (output) {
+            output.value = msg;
+            autoResizeTextarea(output);
+          }
           return;
+
         }
 
         if (output) output.value = data.text || "";
