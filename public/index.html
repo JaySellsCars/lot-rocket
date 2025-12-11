@@ -883,7 +883,7 @@
     ></textarea>
   </section>
 
-<!-- ===== FLOATING TOOL SIDE-MODALS ====== -->
+<!-- ====== FLOATING TOOL SIDE-MODALS (FINAL) ====== -->
 
 <!-- Objection Coach -->
 <div id="objectionModal" class="side-modal hidden">
@@ -893,12 +893,32 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Use this panel for objection-handling scripts or future AI tools.</p>
+      <form id="objectionForm" class="tool-form">
+        <label>
+          Customer Objection
+          <textarea name="objection" rows="3"
+            placeholder="Example: I need to think about it, or I need to talk to my spouse."></textarea>
+        </label>
+
+        <label>
+          Context / History (optional)
+          <textarea name="history" rows="3"
+            placeholder="Example: What they’ve already seen, trade situation, payment goals, etc."></textarea>
+        </label>
+
+        <button type="submit" class="primary-btn full">Coach This Objection</button>
+
+        <label class="output-label">
+          Suggested Response
+          <textarea id="objectionOutput" rows="5" readonly
+            placeholder="Lot Rocket will drop a coached response here."></textarea>
+        </label>
+      </form>
     </div>
   </div>
 </div>
 
-<!-- Calculator -->
+<!-- Calculator (simple placeholder, no JS yet) -->
 <div id="calcModal" class="side-modal hidden">
   <div class="side-modal-content">
     <div class="side-modal-header">
@@ -906,7 +926,7 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Simple math / quick figures here.</p>
+      <p>Simple calculator / scratchpad can live here later.</p>
     </div>
   </div>
 </div>
@@ -919,8 +939,42 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Monthly payment helper UI will live here.</p>
-      <!-- optional: later you can drop the payment form in this body -->
+      <form id="paymentForm" class="tool-form">
+        <label>
+          Vehicle Price
+          <input id="paymentPrice" type="text" placeholder="Example: 47995" />
+        </label>
+
+        <label>
+          Cash / Trade Down
+          <input id="paymentDown" type="text" placeholder="Example: 3000" />
+        </label>
+
+        <label>
+          APR (%)
+          <input id="paymentRate" type="number" step="0.01" placeholder="Example: 7.99" />
+        </label>
+
+        <label>
+          Term (years)
+          <input id="paymentTerm" type="number" step="0.5" placeholder="Example: 6" />
+        </label>
+
+        <label>
+          Tax Rate (%)
+          <input id="paymentTax" type="number" step="0.1" placeholder="Example: 6" />
+        </label>
+
+        <button type="submit" class="primary-btn full">Calculate Payment</button>
+
+        <div class="payment-result">
+          <p>Estimated Payment:</p>
+          <p id="paymentMonthly" class="payment-big">$0.00</p>
+          <p id="paymentDetails" class="small-note">
+            Enter details and click Calculate to see an estimate.
+          </p>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -933,7 +987,23 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>“How much do I need to make?” style calculator.</p>
+      <form id="incomeForm" class="tool-form">
+        <label>
+          Target Payment (monthly)
+          <input name="payment" type="text" placeholder="Example: 699" />
+        </label>
+
+        <label>
+          Max DTI (% of income to car)
+          <input name="dti" type="number" step="1" placeholder="Example: 12" />
+        </label>
+
+        <button type="submit" class="primary-btn full">Estimate Required Income</button>
+
+        <p id="incomeOutput" class="tool-output small-note">
+          Result will appear here.
+        </p>
+      </form>
     </div>
   </div>
 </div>
@@ -946,7 +1016,21 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Workflow / process coaching content here.</p>
+      <form id="workflowForm" class="tool-form">
+        <label>
+          What process do you want help with?
+          <textarea name="prompt" rows="4"
+            placeholder="Example: Follow-up workflow for internet leads over 7 days."></textarea>
+        </label>
+
+        <button type="submit" class="primary-btn full">Build Workflow</button>
+
+        <label class="output-label">
+          Workflow Plan
+          <textarea id="workflowOutput" rows="6" readonly
+            placeholder="Step-by-step workflow will appear here."></textarea>
+        </label>
+      </form>
     </div>
   </div>
 </div>
@@ -959,7 +1043,21 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Templates for texts / emails / DMs will go here.</p>
+      <form id="messageForm" class="tool-form">
+        <label>
+          Situation / Goal
+          <textarea name="prompt" rows="4"
+            placeholder="Example: First text to a new lead who inquired on a 2024 Silverado."></textarea>
+        </label>
+
+        <button type="submit" class="primary-btn full">Write Message</button>
+
+        <label class="output-label">
+          Suggested Message
+          <textarea id="messageOutput" rows="6" readonly
+            placeholder="Lot Rocket will write your message here."></textarea>
+        </label>
+      </form>
     </div>
   </div>
 </div>
@@ -972,7 +1070,21 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Generic “ask anything about this deal” helper.</p>
+      <form id="askForm" class="tool-form">
+        <label>
+          Question
+          <textarea name="prompt" rows="4"
+            placeholder="Example: How do I explain the difference between LT and LTZ to a customer?"></textarea>
+        </label>
+
+        <button type="submit" class="primary-btn full">Get Answer</button>
+
+        <label class="output-label">
+          Answer
+          <textarea id="askOutput" rows="6" readonly
+            placeholder="Lot Rocket’s answer will appear here."></textarea>
+        </label>
+      </form>
     </div>
   </div>
 </div>
@@ -985,7 +1097,21 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Vehicle-specific talking points, comparisons, etc.</p>
+      <form id="carForm" class="tool-form">
+        <label>
+          Vehicle & Question
+          <textarea name="prompt" rows="4"
+            placeholder="Example: 2024 Chevy Traverse vs 2024 Blazer: which is better for a family of 5?"></textarea>
+        </label>
+
+        <button type="submit" class="primary-btn full">Ask Car Expert</button>
+
+        <label class="output-label">
+          Answer
+          <textarea id="carOutput" rows="6" readonly
+            placeholder="Talking points / explanation will appear here."></textarea>
+        </label>
+      </form>
     </div>
   </div>
 </div>
@@ -998,28 +1124,33 @@
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
     <div class="side-modal-body">
-      <p>Prompts and tools for AI images (thumbnails, backgrounds).</p>
+      <form id="imageForm" class="tool-form">
+        <label>
+          Image Brief
+          <textarea name="prompt" rows="4"
+            placeholder="Example: Cinematic vertical thumbnail of a red Silverado on a dark showroom floor."></textarea>
+        </label>
+
+        <button type="submit" class="primary-btn full">Build Image Prompt</button>
+
+        <label class="output-label">
+          Prompt
+          <textarea id="imageOutput" rows="6" readonly
+            placeholder="Copy-paste this into your AI image tool."></textarea>
+        </label>
+      </form>
     </div>
   </div>
 </div>
 
-<!-- AI Video Shot Plan + Script Builder -->
+<!-- AI Video Generation (shot plan builder) -->
 <div id="videoModal" class="side-modal hidden">
-  <div class="side-modal-content wide-video-modal">
-
-    <div class="side-modal-header">
-      <h2>🎬 AI Video Shot Plan & Script Builder</h2>
-      <button class="modal-close-btn side-modal-close">✕</button>
-    </div>
-
-    <div class="side-modal-body">
-      <!-- keep your full videoForm and output grid here exactly as you already have it -->
-      <!-- START videoForm -->
-      <!-- (paste your existing <form id="videoForm"> ... </form> block here) -->
-      <!-- END videoForm -->
-    </div>
-  </div>
+  <!-- keep your big AI Video Shot Plan markup here,
+       just make sure the outer div has class="side-modal"
+       and the close button has class="side-modal-close" as well -->
+  <!-- (Use the existing videoForm / outputs you already pasted above) -->
 </div>
+
 
 <!-- APP SCRIPT -->
 <script src="/app.js"></script>
