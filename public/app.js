@@ -432,6 +432,7 @@ allTextareas.forEach((ta) => {
   }
 
   // Wire all tool drawers
+  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
     if (launcherId === "videoLauncher") {
       // When opening the video drawer, auto-fill context
       wireToolDrawer(launcherId, modalId, () => {
@@ -440,11 +441,11 @@ allTextareas.forEach((ta) => {
           autoResizeTextarea(videoContextField);
         }
       });
-
     } else {
       wireToolDrawer(launcherId, modalId);
     }
   });
+
 
 
 
