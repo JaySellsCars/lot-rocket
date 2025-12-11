@@ -320,27 +320,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return parts.join("\n");
   }
 
-  function wireModal(launcherId, modalId, closeSelector, onOpen) {
-    const launcher = document.getElementById(launcherId);
-    const modal = document.getElementById(modalId);
-    if (!launcher || !modal) return;
+function wireModal(launcherId, modalId, closeSelector, onOpen) {
+  const launcher = document.getElementById(launcherId);
+  const modal = document.getElementById(modalId);
 
-    const closeBtn = modal.querySelector(closeSelector || ".modal-close-btn");
-    const backdropClose = (e) => {
-      if (e.target === modal) modal.classList.add("hidden");
-    };
-
-    launcher.addEventListener("click", () => {
-      modal.classList.remove("hidden");
-      if (typeof onOpen === "function") {
-        onOpen();
-      }
-    });
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    }
-    modal.addEventListener("click", backdropClose);
+  if (!launcher || !modal) {
+    console.warn(
+      "[LotRocket] Missing launcher or modal for",
+      launcherId,
+      "→",
+      modalId,
+      "launcher?", !!launcher,
+      "modal?", !!modal
+    );
+    return;
   }
+
+  const closeBtn = modal.querySelector(closeSelector || ".modal-close-btn");
+  const backdropClose = (e) => {
+    if (e.target === modal) modal.classList.add("hidden");
+  };
+
+  launcher.addEventListener("click", () => {
+    modal.classList.remove("hidden");
+    if (typeof onOpen === "function") onOpen();
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
+  }
+
+  modal.addEventListener("click", backdropClose);
+}
+
 
   wireModal("objectionLauncher", "objectionModal", ".modal-close-btn");
   wireModal("calcLauncher", "calcModal", ".modal-close-btn");
