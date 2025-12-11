@@ -14,11 +14,20 @@
   --bg-panel: #020617;
   --bg-panel-soft: #020617;
   --border-soft: rgba(148, 163, 184, 0.55);
-  --text-main: #0b1120;  /* base text used in light theme; dark theme overrides via body */
+  --text-main: #0b1120;
   --text-muted: #6b7280;
   --accent-1: #f97316;
   --accent-2: #ec4899;
 }
+
+/* --- Auto-expand textareas globally --- */
+textarea {
+  overflow-y: hidden !important;
+  resize: none !important;
+  min-height: 60px;
+  line-height: 1.4;
+}
+
 
 /* Dark theme baseline */
 body.dark-theme {
