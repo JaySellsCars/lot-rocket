@@ -558,100 +558,109 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
   // ---------- Objection coach ----------
   const objectionForm = document.getElementById("objectionForm");
   const objectionOutput = document.getElementById("objectionOutput");
-  if (objectionForm) {
-    objectionForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(objectionForm);
-      const payload = {
-        objection: fd.get("objection") || "",
-        history: fd.get("history") || "",
-      };
+if (objectionForm && objectionOutput) {
+  objectionForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-try {
-  const res = await fetch(apiBase + "/api/objection-coach", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    const formData = new FormData(objectionForm);
+    const payload = {};
+    formData.forEach((value, key) => {
+      payload[key] = value;
+    });
+
+    // show thinking state
+    objectionOutput.value = "Coaching that objection…";
+    autoResizeTextarea(objectionOutput);
+
+    try {
+      const res = await fetch(apiBase + "/api/objection-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const msg =
+          (data && data.message) ||
+          `Error (HTTP ${res.status}) from objection coach.`;
+        throw new Error(msg);
+      }
+
+      objectionOutput.value =
+        data && data.coachedMessage
+          ? data.coachedMessage
+          : "AI didn't return a coached reply, try again in a bit.";
+    } catch (err) {
+      console.error("Objection coach error:", err);
+      objectionOutput.value =
+        "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
+    }
+
+    autoResizeTextarea(objectionOutput);
   });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    const msg =
-      (data && data.message) ||
-      `Error (HTTP ${res.status}) from objection coach.`;
-    throw new Error(msg);
-  }
-
-  // ✅ success path – show coached objection
-  if (objectionOutput) {
-    objectionOutput.value =
-      (data && data.output) ||
-      (data && data.message) ||
-      JSON.stringify(data, null, 2);
-    autoResizeTextarea(objectionOutput);
-  }
-} catch (err) {
-  console.error("Objection coach error:", err);
-  if (objectionOutput) {
-    objectionOutput.value =
-      (err && err.message) ||
-      "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
-    autoResizeTextarea(objectionOutput);
-  }
 }
+
 }); // <-- keep this: closes the submit listener
 
 
-  // ---------- AI Message / Workflow / Ask / Car / Image ----------
-  function wireMessageHelper(formId, outputId, mode) {
-    const form = document.getElementById(formId);
-    const output = document.getElementById(outputId);
-    if (!form) return;
+// -------- AI Message / Workflow / Ask / Car / Image --------
+function wireMessageHelper(formId, outputId, mode) {
+  const form = document.getElementById(formId);
+  const output = document.getElementById(outputId);
+  if (!form || !output) return;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(form);
-      const payload = { mode };
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      fd.forEach((value, key) => {
-        payload[key] = value;
+    const fd = new FormData(form);
+    const payload = { mode };
+
+    fd.forEach((value, key) => {
+      payload[key] = value;
+    });
+
+    output.value = "Spinning up AI...";
+    autoResizeTextarea(output);
+
+    try {
+      const res = await fetch(apiBase + "/api/message-builder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      try {
-        const res = await fetch(apiBase + "/api/message-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(
+          `HTTP ${res.status} from message builder${
+            text ? `: ${text}` : ""
+          }`
+        );
+      }
 
-        if (!res.ok) {
-          const msg =
-            (data && data.message) ||
-            `Message helper error (HTTP ${res.status}).`;
-          console.error("❌ message-helper backend error:", res.status, data);
-          if (output) {
-            output.value = msg;
-            autoResizeTextarea(output);
-          }
-          return;
+      const data = await res.json();
+      output.value =
+        data && data.message
+          ? data.message
+          : "AI didn't return a message. Try again.";
+    } catch (err) {
+      console.error("Message builder error:", err);
+      output.value =
+        "Lot Rocket hit a snag talking to AI. Try again in a minute.";
+    }
 
-        }
+    autoResizeTextarea(output);
+  });
+}
 
-        if (output) {
-          output.value =
-            "Lot Rocket hit a snag talking to AI. Try again in a moment.";
-          autoResizeTextarea(output);
-        }
-    });
-  }
+// wire up all the forms
+wireMessageHelper("workflowForm", "workflowOutput", "workflow");
+wireMessageHelper("messageForm", "messageOutput", "message");
+wireMessageHelper("askForm", "askOutput", "ask");
+wireMessageHelper("carForm", "carOutput", "car");
+wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
-  wireMessageHelper("workflowForm", "workflowOutput", "workflow");
-  wireMessageHelper("messageForm", "messageOutput", "message");
-  wireMessageHelper("askForm", "askOutput", "ask");
-  wireMessageHelper("carForm", "carOutput", "car");
-  wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
   // --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ---------
   const videoFormEl = document.getElementById("videoForm");
