@@ -437,44 +437,7 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
   }
 
 
-  // ---------- Payment helper ----------
-  const paymentOutput = document.getElementById("paymentOutput");  // only this const
-  if (paymentForm) { // reuse the one defined above in the calculator section
-    paymentForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(paymentForm);
-      const payload = {
-        price: fd.get("price"),
-        down: fd.get("down"),
-        rate: fd.get("rate"),
-        term: fd.get("term"),
-        tax: fd.get("tax"),
-      };
 
-      try {
-        const res = await fetch(apiBase + "/api/payment-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          const msg =
-            (data && data.message) ||
-            `Error (HTTP ${res.status}) calculating payment.`;
-          throw new Error(msg);
-        }
-        if (paymentOutput) paymentOutput.textContent = data.result || "";
-      } catch (err) {
-        console.error("❌ payment-helper error", err);
-        if (paymentOutput)
-          paymentOutput.textContent =
-            err && err.message
-              ? err.message
-              : "Could not calculate payment. Check numbers and try again.";
-      }
-    });
-  }
 
 
   // ---------- Income helper ----------
