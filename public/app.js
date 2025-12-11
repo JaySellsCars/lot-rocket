@@ -491,70 +491,83 @@ allTextareas.forEach((ta) => {
 
 
 
-// ----------------------------------------------
-// PAYMENT CALCULATOR (right-side modal)
-// ----------------------------------------------
+// ---------- PAYMENT CALCULATOR ----------
 const paymentForm = document.getElementById("paymentForm");
-const paymentPriceInput = document.getElementById("paymentPrice");
-const paymentDownInput = document.getElementById("paymentDown");
-const paymentRateInput = document.getElementById("paymentRate");
-const paymentTermInput = document.getElementById("paymentTerm");
-const paymentTaxInput = document.getElementById("paymentTax");
-const paymentMonthlyEl = document.getElementById("paymentMonthly");
-const paymentDetailsEl = document.getElementById("paymentDetails");
+if (paymentForm) {
+  const priceInput = document.getElementById("paymentPrice");
+  const cashDownInput = document.getElementById("paymentCashDown");
+  const tradeValueInput = document.getElementById("paymentTradeValue");
+  const tradeOweInput = document.getElementById("paymentTradeOwe");
+  const rateInput = document.getElementById("paymentRate");
+  const termInput = document.getElementById("paymentTerm");
+  const taxInput = document.getElementById("paymentTax");
 
+  const paymentMonthlyEl = document.getElementById("paymentMonthly");
+  const paymentDetailsEl = document.getElementById("paymentDetails");
 
-  function formatMoney(value) {
-    return value.toLocaleString(undefined, {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
+  const cleanNumber = (val) => {
+    if (!val) return 0;
+    const n = parseFloat(String(val).replace(/[^0-9.]/g, ""));
+    return Number.isNaN(n) ? 0 : n;
+  };
 
-  if (
-    paymentForm &&
-    paymentPriceInput &&
-    paymentDownInput &&
-    paymentRateInput &&
-    paymentTermInput &&
-    paymentMonthlyEl &&
-    paymentDetailsEl
-  ) {
-    paymentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+  paymentForm.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-      const price =
-        parseFloat((paymentPriceInput.value || "").replace(/,/g, "")) || 0;
-      const down =
-        parseFloat((paymentDownInput.value || "").replace(/,/g, "")) || 0;
-      const apr = parseFloat(paymentRateInput.value) || 0;
-      const termYears = parseFloat(paymentTermInput.value) || 0;
-      const taxRate = parseFloat(paymentTaxInput?.value) || 0;
+    const price = cleanNumber(priceInput.value);
+    const cashDown = cleanNumber(cashDownInput.value);
+    const tradeValue = cleanNumber(tradeValueInput.value);
+    const tradeOwe = cleanNumber(tradeOweInput.value);
+    const apr = parseFloat(rateInput.value || "0");
+    const years = parseFloat(termInput.value || "0");
+    const taxRate = parseFloat(taxInput.value || "0");
 
-      const taxAmount = price * (taxRate / 100);
-      const amountFinanced = Math.max(price + taxAmount - down, 0);
-      const n = Math.max(Math.round(termYears * 12), 1); // number of payments
+    if (!price || !years) {
+      paymentDetailsEl.textContent =
+        "Please enter at least a vehicle price and term in years.";
+      return;
+    }
 
-      let payment = 0;
-      if (apr <= 0) {
-        // simple divide if 0% APR
-        payment = amountFinanced / n;
-      } else {
-        const r = apr / 100 / 12; // monthly rate
-        payment =
-          amountFinanced * (r / (1 - Math.pow(1 + r, -1 * n)));
-      }
+    // Taxable amount: price minus trade value (never below zero)
+    const taxableBase = Math.max(price - tradeValue, 0);
+    const taxAmount = taxableBase * (taxRate / 100);
 
-      const safeApr = apr || 0;
-      paymentMonthlyEl.textContent = formatMoney(payment || 0);
+    // Amount financed before tax:
+    // price - cash down - trade value + payoff on trade
+    let financedBeforeTax = price - cashDown - tradeValue + tradeOwe;
+    if (financedBeforeTax < 0) financedBeforeTax = 0;
 
-      paymentDetailsEl.textContent = `${termYears || 0} years • ${n} payments • Amount financed ${formatMoney(
-        amountFinanced
-      )} at ${safeApr.toFixed(2)}% APR (est., tax ${taxRate || 0}%).`;
-    });
-  }
+    const amountFinanced = financedBeforeTax + taxAmount;
+
+    const months = years * 12;
+    let monthly = 0;
+
+    if (apr > 0) {
+      const monthlyRate = apr / 100 / 12;
+      const factor = Math.pow(1 + monthlyRate, months);
+      monthly = amountFinanced * (monthlyRate * factor) / (factor - 1);
+    } else {
+      monthly = amountFinanced / months;
+    }
+
+    const negativeEquity = Math.max(tradeOwe - tradeValue, 0);
+
+    const fmtMoney = (n) =>
+      n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    paymentMonthlyEl.textContent = `$${fmtMoney(monthly)}`;
+
+    let details = `Amount Financed (est.): $${fmtMoney(amountFinanced)}. `;
+    details += `Includes approx. $${fmtMoney(taxAmount)} in tax. `;
+    if (negativeEquity > 0) {
+      details += `Rolled-in negative equity: $${fmtMoney(negativeEquity)}. `;
+    }
+    details += "This is an estimate only; final figures may vary by lender and fees.";
+
+    paymentDetailsEl.textContent = details;
+  });
+}
+
 
 
 
