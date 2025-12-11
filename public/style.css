@@ -20,13 +20,16 @@
   --accent-2: #ec4899;
 }
 
-/* --- Auto-expand textareas globally --- */
+/* Global auto-grow behavior for all textareas */
 textarea {
-  overflow-y: hidden !important;
-  resize: none !important;
-  min-height: 60px;
+  height: auto;              /* let JS control final height */
+  min-height: 120px;         /* starting size – adjust if needed */
+  overflow-y: hidden;        /* no scrollbars */
+  resize: none;              /* user can't drag-resize and break layout */
   line-height: 1.4;
+  font-family: inherit;
 }
+
 
 
 /* Dark theme baseline */
