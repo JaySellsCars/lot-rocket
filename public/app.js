@@ -370,20 +370,19 @@ function wireModal(launcherId, modalId, closeSelector, onOpen) {
       videoContextField.value = buildVideoContextFromKit();
     }
   });
-  // ----------------------------------------------
-  // PAYMENT CALCULATOR (right-side modal)
-  // ----------------------------------------------
-  // ----------------------------------------------
-  // PAYMENT CALCULATOR (right-side modal)
-  // ----------------------------------------------
-  const paymentForm = document.getElementById("paymentForm");
-  const paymentPriceInput = document.getElementById("paymentPrice");
-  const paymentDownInput = document.getElementById("paymentDown");
-  const paymentRateInput = document.getElementById("paymentRate");
-  const paymentTermInput = document.getElementById("paymentTerm");
-  const paymentTaxInput = document.getElementById("paymentTax");
-  const paymentMonthlyEl = document.getElementById("paymentMonthly");
-  const paymentDetailsEl = document.getElementById("paymentDetails");
+
+// ----------------------------------------------
+// PAYMENT CALCULATOR (right-side modal)
+// ----------------------------------------------
+const paymentForm = document.getElementById("paymentForm");
+const paymentPriceInput = document.getElementById("paymentPrice");
+const paymentDownInput = document.getElementById("paymentDown");
+const paymentRateInput = document.getElementById("paymentRate");
+const paymentTermInput = document.getElementById("paymentTerm");
+const paymentTaxInput = document.getElementById("paymentTax");
+const paymentMonthlyEl = document.getElementById("paymentMonthly");
+const paymentDetailsEl = document.getElementById("paymentDetails");
+
 
   function formatMoney(value) {
     return value.toLocaleString(undefined, {
