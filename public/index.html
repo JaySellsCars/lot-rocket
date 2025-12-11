@@ -2180,26 +2180,42 @@
   </div>
 </div>
 
-<!-- Income Calculator -->
+<!-- Income Calculator (Projected Income) -->
 <div id="incomeModal" class="side-modal hidden">
   <div class="side-modal-content">
     <div class="side-modal-header">
       <h3>Income Calculator</h3>
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
+
     <div class="side-modal-body">
       <form id="incomeForm" class="tool-form">
         <label>
-          Target Payment (monthly)
-          <input name="payment" type="text" placeholder="Example: 699" />
+          Month-to-Date Gross Income
+          <input
+            name="monthIncome"
+            type="text"
+            placeholder="Example: 8250"
+          />
         </label>
 
         <label>
-          Max DTI (% of income to car)
-          <input name="dti" type="number" step="1" placeholder="Example: 12" />
+          Date of Last Paycheck
+          <input
+            name="lastCheck"
+            type="date"
+          />
         </label>
 
-        <button type="submit" class="primary-btn full">Estimate Required Income</button>
+        <p class="small-note">
+          Lot Rocket will use this month-to-date income and the paycheck date
+          to estimate your yearly gross, how many weeks into the year you are,
+          and your average monthly income.
+        </p>
+
+        <button type="submit" class="primary-btn full">
+          Estimate Income
+        </button>
 
         <p id="incomeOutput" class="tool-output small-note">
           Result will appear here.
@@ -2208,6 +2224,7 @@
     </div>
   </div>
 </div>
+
 
 <!-- AI Work Flow Expert -->
 <div id="workflowModal" class="side-modal hidden">
