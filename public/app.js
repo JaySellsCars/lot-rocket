@@ -560,42 +560,75 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
 
 
 
-  // ---------- Income helper ----------
+  // ============================
+  // INCOME CALCULATOR (PROJECTION)
+  // ============================
   const incomeForm = document.getElementById("incomeForm");
   const incomeOutput = document.getElementById("incomeOutput");
-  if (incomeForm) {
-    incomeForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(incomeForm);
-      const payload = {
-        payment: fd.get("payment"),
-        dti: fd.get("dti"),
-      };
 
-      try {
-        const res = await fetch(apiBase + "/api/income-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          const msg =
-            (data && data.message) ||
-            `Error (HTTP ${res.status}) estimating income.`;
-          throw new Error(msg);
-        }
-        if (incomeOutput) incomeOutput.textContent = data.result || "";
-      } catch (err) {
-        console.error("❌ income-helper error", err);
-        if (incomeOutput)
-          incomeOutput.textContent =
-            err && err.message
-              ? err.message
-              : "Could not estimate income. Check numbers and try again.";
-      }
+  function formatMoney(n) {
+    if (isNaN(n)) return "0";
+    return n.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     });
   }
+
+  if (incomeForm && incomeOutput) {
+    incomeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const rawMonthIncome = incomeForm.monthIncome.value || "";
+      const lastCheckStr = incomeForm.lastCheck.value;
+
+      // strip commas, $ signs, etc.
+      const monthIncome = parseFloat(rawMonthIncome.replace(/[^0-9.]/g, ""));
+
+      if (!monthIncome || !lastCheckStr) {
+        incomeOutput.textContent =
+          "Please enter your month-to-date income and the date of your last paycheck.";
+        return;
+      }
+
+      const lastCheckDate = new Date(lastCheckStr);
+      if (isNaN(lastCheckDate.getTime())) {
+        incomeOutput.textContent = "Please enter a valid paycheck date.";
+        return;
+      }
+
+      const year = lastCheckDate.getFullYear();
+      const month = lastCheckDate.getMonth(); // 0–11
+
+      // Start and end of the current month
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 0); // last day of month
+
+      const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+      const daysSoFar =
+        Math.floor((lastCheckDate - monthStart) / MS_PER_DAY) + 1;
+      const daysInMonth =
+        Math.floor((monthEnd - monthStart) / MS_PER_DAY) + 1;
+
+      // Project monthly and yearly based on how far through the month you are
+      const dailyRate = monthIncome / daysSoFar;
+      const projectedMonth = dailyRate * daysInMonth;
+      const projectedYear = projectedMonth * 12;
+
+      // Weeks into the year (based on paycheck date)
+      const jan1 = new Date(year, 0, 1);
+      const weeksIntoYear =
+        Math.floor((lastCheckDate - jan1) / (MS_PER_DAY * 7)) + 1;
+
+      const avgMonthly = projectedYear / 12;
+
+      incomeOutput.textContent =
+        `Estimated Yearly Gross: $${formatMoney(projectedYear)}\n` +
+        `Weeks into Year: ${weeksIntoYear}\n` +
+        `Estimated Average Monthly Income: $${formatMoney(avgMonthly)}`;
+    });
+  }
+
 
   // ---------- Objection coach ----------
   const objectionForm = document.getElementById("objectionForm");
