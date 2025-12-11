@@ -560,74 +560,64 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
 
 
 
-  // ============================
-  // INCOME CALCULATOR (PROJECTION)
-  // ============================
-  const incomeForm = document.getElementById("incomeForm");
+// ---------- INCOME CALCULATOR (YTD → yearly, weeks, avg monthly) ----------
+const incomeForm = document.getElementById("incomeForm");
+if (incomeForm) {
+  const incomeYtdInput = document.getElementById("incomeYtd");
+  const incomeLastPaycheckInput = document.getElementById("incomeLastPaycheck");
   const incomeOutput = document.getElementById("incomeOutput");
 
-  function formatMoney(n) {
-    if (isNaN(n)) return "0";
-    return n.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-  }
+  incomeForm.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-  if (incomeForm && incomeOutput) {
-    incomeForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+    // Clean and parse YTD income
+    const rawYtd = (incomeYtdInput.value || "").replace(/[^0-9.]/g, "");
+    const ytd = parseFloat(rawYtd);
 
-      const rawMonthIncome = incomeForm.monthIncome.value || "";
-      const lastCheckStr = incomeForm.lastCheck.value;
-
-      // strip commas, $ signs, etc.
-      const monthIncome = parseFloat(rawMonthIncome.replace(/[^0-9.]/g, ""));
-
-      if (!monthIncome || !lastCheckStr) {
-        incomeOutput.textContent =
-          "Please enter your month-to-date income and the date of your last paycheck.";
-        return;
-      }
-
-      const lastCheckDate = new Date(lastCheckStr);
-      if (isNaN(lastCheckDate.getTime())) {
-        incomeOutput.textContent = "Please enter a valid paycheck date.";
-        return;
-      }
-
-      const year = lastCheckDate.getFullYear();
-      const month = lastCheckDate.getMonth(); // 0–11
-
-      // Start and end of the current month
-      const monthStart = new Date(year, month, 1);
-      const monthEnd = new Date(year, month + 1, 0); // last day of month
-
-      const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
-      const daysSoFar =
-        Math.floor((lastCheckDate - monthStart) / MS_PER_DAY) + 1;
-      const daysInMonth =
-        Math.floor((monthEnd - monthStart) / MS_PER_DAY) + 1;
-
-      // Project monthly and yearly based on how far through the month you are
-      const dailyRate = monthIncome / daysSoFar;
-      const projectedMonth = dailyRate * daysInMonth;
-      const projectedYear = projectedMonth * 12;
-
-      // Weeks into the year (based on paycheck date)
-      const jan1 = new Date(year, 0, 1);
-      const weeksIntoYear =
-        Math.floor((lastCheckDate - jan1) / (MS_PER_DAY * 7)) + 1;
-
-      const avgMonthly = projectedYear / 12;
-
+    if (!ytd || Number.isNaN(ytd)) {
       incomeOutput.textContent =
-        `Estimated Yearly Gross: $${formatMoney(projectedYear)}\n` +
-        `Weeks into Year: ${weeksIntoYear}\n` +
-        `Estimated Average Monthly Income: $${formatMoney(avgMonthly)}`;
-    });
-  }
+        "Please enter your year-to-date gross income (numbers only).";
+      return;
+    }
+
+    if (!incomeLastPaycheckInput.value) {
+      incomeOutput.textContent = "Please choose the date of your last paycheck.";
+      return;
+    }
+
+    const lastDate = new Date(incomeLastPaycheckInput.value + "T12:00:00");
+    if (Number.isNaN(lastDate.getTime())) {
+      incomeOutput.textContent = "That paycheck date doesn’t look valid.";
+      return;
+    }
+
+    const year = lastDate.getFullYear();
+    const startOfYear = new Date(year, 0, 1); // Jan 1
+    const diffMs = lastDate - startOfYear;
+    const dayOfYear = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+
+    // Weeks into the year
+    const weeksIntoYear = dayOfYear / 7;
+
+    // Daily earning rate based on YTD
+    const dailyRate = ytd / dayOfYear;
+
+    // Estimated yearly and monthly gross
+    const estYearly = dailyRate * 365;
+    const estMonthly = estYearly / 12;
+
+    const fmtMoney0 = (n) =>
+      n.toLocaleString(undefined, {
+        maximumFractionDigits: 0,
+      });
+
+    incomeOutput.textContent =
+      `Estimated Yearly Gross: $${fmtMoney0(estYearly)}  ` +
+      `Weeks into Year: ${weeksIntoYear.toFixed(1)}  ` +
+      `Estimated Average Monthly Income: $${fmtMoney0(estMonthly)}`;
+  });
+}
+
 
 
   // ---------- Objection coach ----------
