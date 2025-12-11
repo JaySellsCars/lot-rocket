@@ -312,10 +312,14 @@ allTextareas.forEach((ta) => {
             targetId = "hashtags";
             break;
         }
-        if (targetId) {
+         if (targetId) {
           const ta = document.getElementById(targetId);
-          if (ta) ta.value = text;
+          if (ta) {
+            ta.value = text;
+            autoResizeTextarea(ta);
+          }
         }
+
       } catch (err) {
         console.error("❌ regen error", err);
         alert(
