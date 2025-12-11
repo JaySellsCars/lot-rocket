@@ -934,6 +934,8 @@ ${context || "(none)"}
 
         break;
       }
+      // ... rest of cases ...
+
 
       case "workflow":
         systemPrompt = `
