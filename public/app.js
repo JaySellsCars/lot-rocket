@@ -321,10 +321,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------------------------------------
-  // RIGHT-SIDE FLOATING TOOL MODALS (simplified + debug)
+  // RIGHT-SIDE FLOATING TOOL MODALS (DRAWERS)
   // ----------------------------------------------
 
-  const launcherModalPairs = [
+  const TOOL_CONFIG = [
     ["objectionLauncher", "objectionModal"],
     ["calcLauncher", "calcModal"],
     ["paymentLauncher", "paymentModal"],
@@ -337,51 +337,72 @@ document.addEventListener("DOMContentLoaded", () => {
     ["videoLauncher", "videoModal"],
   ];
 
-  launcherModalPairs.forEach(([launcherId, modalId]) => {
+  function wireToolDrawer(launcherId, modalId, onOpen) {
     const launcher = document.getElementById(launcherId);
     const modal = document.getElementById(modalId);
 
+    const haveLauncher = !!launcher;
+    const haveModal = !!modal;
     console.log(
       "[LotRocket] modal pair:",
       launcherId,
       "launcher?",
-      !!launcher,
+      haveLauncher,
       "|",
       modalId,
       "modal?",
-      !!modal
+      haveModal
     );
 
     if (!launcher || !modal) return;
 
+    // Try both possible close-button classes
+    const closeBtn =
+      modal.querySelector(".side-modal-close") ||
+      modal.querySelector(".modal-close-btn");
+
+    const backdropClose = (e) => {
+      if (e.target === modal) {
+        // click on dark backdrop closes
+        modal.classList.add("hidden");
+        modal.style.display = "none";
+      }
+    };
+
     launcher.addEventListener("click", () => {
       console.log("[LotRocket] CLICK from", launcherId);
-
-      // Video: pre-fill context when opened
-      if (launcherId === "videoLauncher" && videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-      }
-
+      // open drawer
       modal.classList.remove("hidden");
-    });
-  });
+      // force it visible even if CSS is confused
+      modal.style.display = "flex";
 
-  // Close buttons inside side modals
-  document.querySelectorAll(".side-modal-close").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const modal = btn.closest(".side-modal");
-      if (modal) modal.classList.add("hidden");
+      if (typeof onOpen === "function") onOpen();
     });
-  });
 
-  // Click on the dark backdrop closes the modal
-  document.querySelectorAll(".side-modal").forEach((modal) => {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
         modal.classList.add("hidden");
-      }
-    });
+        modal.style.display = "none";
+      });
+    }
+
+    modal.addEventListener("click", backdropClose);
+  }
+
+  // Wire all tool drawers
+  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+    if (launcherId === "videoLauncher") {
+      // When opening the video drawer, auto-fill context
+      wireToolDrawer(launcherId, modalId, () => {
+        if (videoContextField) {
+          videoContextField.value = buildVideoContextFromKit();
+        }
+      });
+    } else {
+      wireToolDrawer(launcherId, modalId);
+    }
   });
+
 
 
 
