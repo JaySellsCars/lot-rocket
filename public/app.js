@@ -626,13 +626,12 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
 
         }
 
-        if (output) output.value = data.text || "";
-      } catch (err) {
-        console.error("❌ message-helper network error", err);
-        if (output)
+        if (output) {
           output.value =
             "Lot Rocket hit a snag talking to AI. Try again in a moment.";
-      }
+          autoResizeTextarea(output);
+        }
+
     });
   }
 
