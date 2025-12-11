@@ -567,28 +567,41 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
         history: fd.get("history") || "",
       };
 
-      try {
-        const res = await fetch(apiBase + "/api/objection-coach", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          const msg =
-            (data && data.message) ||
-            `Error (HTTP ${res.status}) from objection coach.`;
-          throw new Error(msg);
-        }
-        if (objectionOutput) {
-          objectionOutput.value =
-            err && err.message
-              ? err.message
-              : "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
-          autoResizeTextarea(objectionOutput);
-        }
-    });
+try {
+  const res = await fetch(apiBase + "/api/objection-coach", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    const msg =
+      (data && data.message) ||
+      `Error (HTTP ${res.status}) from objection coach.`;
+    throw new Error(msg);
   }
+
+  // ✅ success path – show coached objection
+  if (objectionOutput) {
+    objectionOutput.value =
+      (data && data.output) ||
+      (data && data.message) ||
+      JSON.stringify(data, null, 2);
+    autoResizeTextarea(objectionOutput);
+  }
+} catch (err) {
+  console.error("Objection coach error:", err);
+  if (objectionOutput) {
+    objectionOutput.value =
+      (err && err.message) ||
+      "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
+    autoResizeTextarea(objectionOutput);
+  }
+}
+}); // <-- keep this: closes the submit listener
+
 
   // ---------- AI Message / Workflow / Ask / Car / Image ----------
   function wireMessageHelper(formId, outputId, mode) {
