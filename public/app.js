@@ -744,7 +744,45 @@ function wireMessageHelper(formId, outputId, mode) {
 }
 
 // wire up all the forms
-wireMessageHelper("workflowForm", "workflowOutput", "workflow");
+// -------- WORKFLOW EXPERT --------
+const workflowForm = document.getElementById("workflowForm");
+if (workflowForm) {
+  workflowForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(workflowForm);
+    const payload = {
+      goal: formData.get("goal"),
+      tone: formData.get("tone"),
+      format: formData.get("format"),
+      days: formData.get("days"),
+      touches: formData.get("touches"),
+    };
+
+    const output = document.getElementById("workflowOutput");
+    output.value = "Building professional workflow...";
+
+    try {
+      const res = await fetch("/ai/workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data.answer) {
+        output.value = data.answer;
+      } else {
+        output.value = "AI returned an empty response.";
+      }
+    } catch (err) {
+      output.value = "Lot Rocket hit a snag. Please try again.";
+      console.error("Workflow error:", err);
+    }
+  });
+}
+
 wireMessageHelper("messageForm", "messageOutput", "message");
 wireMessageHelper("askForm", "askOutput", "ask");
 wireMessageHelper("carForm", "carOutput", "car");
