@@ -693,160 +693,148 @@ if (incomeForm) {
 
 
 
-// -------- AI Message / Workflow / Ask / Car / Image --------
-function wireMessageHelper(formId, outputId, mode) {
-  const form = document.getElementById(formId);
-  const output = document.getElementById(outputId);
-  if (!form || !output) return;
+  // -------- AI Message / Workflow / Ask / Car / Image --------
+  function wireMessageHelper(formId, outputId, mode) {
+    const form = document.getElementById(formId);
+    const output = document.getElementById(outputId);
+    if (!form || !output) return;
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    const fd = new FormData(form);
-    const payload = { mode };
+      const fd = new FormData(form);
+      const payload = { mode };
 
-    fd.forEach((value, key) => {
-      payload[key] = value;
+      fd.forEach((value, key) => {
+        payload[key] = value;
+      });
+
+      output.value = "Spinning up AI...";
+      autoResizeTextarea(output);
+
+      try {
+        const res = await fetch(apiBase + "/api/message-helper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(
+            `HTTP ${res.status} from message helper${
+              text ? `: ${text}` : ""
+            }`
+          );
+        }
+
+        const data = await res.json();
+
+        const text =
+          (data &&
+            typeof data.text === "string" &&
+            data.text.trim()) ||
+          (data &&
+            typeof data.message === "string" &&
+            data.message.trim()) ||
+          "";
+
+        output.value =
+          text || "AI didn't return a message. Try again.";
+      } catch (err) {
+        console.error("Message helper error:", err);
+        output.value =
+          "Lot Rocket hit a snag talking to AI. Try again in a minute.";
+      }
+
+      autoResizeTextarea(output);
     });
+  }
 
-    output.value = "Spinning up AI...";
-    autoResizeTextarea(output);
+  // ===== AI WORKFLOW EXPERT – talks to /ai/workflow =====
+  const workflowForm = document.getElementById("workflowForm");
+  const workflowOutput = document.getElementById("workflowOutput");
 
-    try {
-      const res = await fetch(apiBase + "/api/message-builder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  if (workflowForm && workflowOutput) {
+    workflowForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(
-          `HTTP ${res.status} from message builder${
-            text ? `: ${text}` : ""
-          }`
-        );
-      }
+      workflowOutput.value = "Building workflow…";
+      autoResizeTextarea(workflowOutput);
 
-      const data = await res.json();
-      output.value =
-        data && data.message
-          ? data.message
-          : "AI didn't return a message. Try again.";
-    } catch (err) {
-      console.error("Message builder error:", err);
-      output.value =
-        "Lot Rocket hit a snag talking to AI. Try again in a minute.";
-    }
+      try {
+        const formData = new FormData(workflowForm);
 
-    autoResizeTextarea(output);
-  });
-}
+        // Match these to your HTML name="" attributes
+        const payload = {
+          goal:
+            formData.get("goal") ||
+            formData.get("workflowGoal") ||
+            "",
+          tone: formData.get("tone") || "",
+          channel:
+            formData.get("channel") ||
+            formData.get("messageType") ||
+            "",
+          days:
+            Number(
+              formData.get("days") ||
+                formData.get("daysCount") ||
+                0
+            ) || 0,
+          touches:
+            Number(
+              formData.get("touches") ||
+                formData.get("touchCount") ||
+                0
+            ) || 0,
+        };
 
-// wire up all the forms
-// -------- WORKFLOW EXPERT --------
-const workflowForm = document.getElementById("workflowForm");
-if (workflowForm) {
-  workflowForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+        const resp = await fetch("/ai/workflow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-    const formData = new FormData(workflowForm);
-    const payload = {
-      goal: formData.get("goal"),
-      tone: formData.get("tone"),
-      format: formData.get("format"),
-      days: formData.get("days"),
-      touches: formData.get("touches"),
-    };
+        if (!resp.ok) {
+          console.error(
+            "[LotRocket] /ai/workflow error status",
+            resp.status
+          );
+          workflowOutput.value =
+            "Lot Rocket hit a snag building the workflow. Please try again.";
+          autoResizeTextarea(workflowOutput);
+          return;
+        }
 
-    const output = document.getElementById("workflowOutput");
-    output.value = "Building professional workflow...";
+        const data = await resp.json();
+        const text =
+          (data &&
+            typeof data.text === "string" &&
+            data.text.trim()) ||
+          "";
 
-    try {
-      const res = await fetch("/ai/workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (data.answer) {
-        output.value = data.answer;
-      } else {
-        output.value = "AI returned an empty response.";
-      }
-    } catch (err) {
-      output.value = "Lot Rocket hit a snag. Please try again.";
-      console.error("Workflow error:", err);
-    }
-  });
-}
-// ===== AI WORKFLOW EXPERT – talks to /ai/workflow =====
-const workflowForm = document.getElementById("workflowForm");
-const workflowOutput = document.getElementById("workflowOutput");
-
-if (workflowForm && workflowOutput) {
-  workflowForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    workflowOutput.value = "Building workflow…";
-
-    try {
-      const formData = new FormData(workflowForm);
-
-      // Match these to your HTML name="" attributes
-      const payload = {
-        goal:
-          formData.get("goal") ||
-          formData.get("workflowGoal") ||
-          "",
-        tone: formData.get("tone") || "",
-        channel:
-          formData.get("channel") ||
-          formData.get("messageType") ||
-          "",
-        days:
-          Number(formData.get("days") || formData.get("daysCount") || 0) || 0,
-        touches:
-          Number(formData.get("touches") || formData.get("touchCount") || 0) ||
-          0,
-      };
-
-      const resp = await fetch("/ai/workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        console.error("[LotRocket] /ai/workflow error status", resp.status);
+        if (!text) {
+          workflowOutput.value = "AI returned an empty response.";
+        } else {
+          workflowOutput.value = text;
+        }
+      } catch (err) {
+        console.error("[LotRocket] workflow error:", err);
         workflowOutput.value =
-          "Lot Rocket hit a snag building the workflow. Please try again.";
-        return;
+          "Lot Rocket hit a snag talking to AI. Please try again.";
       }
 
-      const data = await resp.json();
-      const text =
-        (data && typeof data.text === "string" && data.text.trim()) || "";
+      autoResizeTextarea(workflowOutput);
+    });
+  }
 
-      if (!text) {
-        workflowOutput.value = "AI returned an empty response.";
-      } else {
-        workflowOutput.value = text;
-      }
-    } catch (err) {
-      console.error("[LotRocket] workflow error:", err);
-      workflowOutput.value =
-        "Lot Rocket hit a snag talking to AI. Please try again.";
-    }
-  });
-}
+  // Wire up the other AI helpers (these all use /api/message-helper)
+  wireMessageHelper("messageForm", "messageOutput", "message");
+  wireMessageHelper("askForm", "askOutput", "ask");
+  wireMessageHelper("carForm", "carOutput", "car");
+  wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
-wireMessageHelper("messageForm", "messageOutput", "message");
-wireMessageHelper("askForm", "askOutput", "ask");
-wireMessageHelper("carForm", "carOutput", "car");
-wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
 
   // --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ---------
