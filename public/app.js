@@ -445,6 +445,47 @@ allTextareas.forEach((ta) => {
       wireToolDrawer(launcherId, modalId);
     }
   });
+  // ----------------------------------------------
+  // BASIC SIDE-CALCULATOR (scratchpad keypad)
+  // ----------------------------------------------
+  const basicCalcDisplay = document.getElementById("basicCalcDisplay");
+  const basicCalcButtons = document.querySelectorAll("[data-calc-key]");
+
+  if (basicCalcDisplay && basicCalcButtons.length) {
+    let calcExpr = "";
+
+    function renderCalc() {
+      basicCalcDisplay.value = calcExpr || "0";
+    }
+
+    basicCalcButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-calc-key");
+        if (!key) return;
+
+        if (key === "C") {
+          calcExpr = "";
+        } else if (key === "DEL") {
+          calcExpr = calcExpr.slice(0, -1);
+        } else if (key === "=") {
+          try {
+            // very simple eval – fine for this local scratchpad
+            // eslint-disable-next-line no-eval
+            const result = eval(calcExpr || "0");
+            calcExpr = String(result);
+          } catch {
+            calcExpr = "";
+          }
+        } else {
+          calcExpr += key;
+        }
+
+        renderCalc();
+      });
+    });
+
+    renderCalc();
+  }
 
 
 
