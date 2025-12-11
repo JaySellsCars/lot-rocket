@@ -1048,32 +1048,64 @@
 </div>
 
 
-<!-- AI Work Flow Expert -->
 <div id="workflowModal" class="side-modal hidden">
   <div class="side-modal-content">
     <div class="side-modal-header">
       <h3>AI Work Flow Expert</h3>
       <button class="modal-close-btn side-modal-close">✕</button>
     </div>
+
     <div class="side-modal-body">
       <form id="workflowForm" class="tool-form">
+
         <label>
-          What process do you want help with?
-          <textarea name="prompt" rows="4"
-            placeholder="Example: Follow-up workflow for internet leads over 7 days."></textarea>
+          Workflow Goal
+          <input name="goal" type="text" placeholder="Example: 7-day follow up after showroom visit" />
+        </label>
+
+        <label>
+          Tone
+          <select name="tone">
+            <option value="professional">Professional</option>
+            <option value="friendly">Friendly</option>
+            <option value="luxury">Luxury / High-End</option>
+            <option value="aggressive">Aggressive Close</option>
+            <option value="consultative">Consultative</option>
+          </select>
+        </label>
+
+        <label>
+          Message Type
+          <select name="format">
+            <option value="text">Text / SMS</option>
+            <option value="email">Email</option>
+            <option value="hybrid">Hybrid (Text + Email)</option>
+          </select>
+        </label>
+
+        <label>
+          Number of Days
+          <input name="days" type="number" min="1" max="30" placeholder="Example: 7" />
+        </label>
+
+        <label>
+          Number of Touches
+          <input name="touches" type="number" min="1" max="40" placeholder="Example: 7" />
         </label>
 
         <button type="submit" class="primary-btn full">Build Workflow</button>
 
         <label class="output-label">
           Workflow Plan
-          <textarea id="workflowOutput" rows="6" readonly
-            placeholder="Step-by-step workflow will appear here."></textarea>
+          <textarea id="workflowOutput" rows="10" readonly
+            placeholder="Your professional workflow plan will appear here."></textarea>
         </label>
+
       </form>
     </div>
   </div>
 </div>
+
 
 <!-- AI Message Builder -->
 <div id="messageModal" class="side-modal hidden">
