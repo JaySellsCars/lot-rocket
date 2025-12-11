@@ -727,13 +727,15 @@ wireMessageHelper("imageForm", "imageOutput", "image-brief");
       videoAIPromptOutputBottom.value = aiPrompt;
       autoResizeTextarea(videoAIPromptOutputBottom);
     }
-    if (videoThumbPromptOutputBottom) {
-      videoThumbPromptOutputBottom.value = thumbPrompt;
-      autoResizeTextarea(videoThumbPromptOutputBottom);
-    }
+  if (videoThumbPromptOutputBottom) {
+    videoThumbPromptOutputBottom.value = thumbPrompt;
+    autoResizeTextarea(videoThumbPromptOutputBottom);
+  }
+}  // <--- closes populateVideoOutputs
 
 
-  function parseVideoSections(full) {
+function parseVideoSections(full) {
+
     if (!full || typeof full !== "string") {
       return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
     }
