@@ -782,6 +782,66 @@ if (workflowForm) {
     }
   });
 }
+// ===== AI WORKFLOW EXPERT – talks to /ai/workflow =====
+const workflowForm = document.getElementById("workflowForm");
+const workflowOutput = document.getElementById("workflowOutput");
+
+if (workflowForm && workflowOutput) {
+  workflowForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    workflowOutput.value = "Building workflow…";
+
+    try {
+      const formData = new FormData(workflowForm);
+
+      // Match these to your HTML name="" attributes
+      const payload = {
+        goal:
+          formData.get("goal") ||
+          formData.get("workflowGoal") ||
+          "",
+        tone: formData.get("tone") || "",
+        channel:
+          formData.get("channel") ||
+          formData.get("messageType") ||
+          "",
+        days:
+          Number(formData.get("days") || formData.get("daysCount") || 0) || 0,
+        touches:
+          Number(formData.get("touches") || formData.get("touchCount") || 0) ||
+          0,
+      };
+
+      const resp = await fetch("/ai/workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        console.error("[LotRocket] /ai/workflow error status", resp.status);
+        workflowOutput.value =
+          "Lot Rocket hit a snag building the workflow. Please try again.";
+        return;
+      }
+
+      const data = await resp.json();
+      const text =
+        (data && typeof data.text === "string" && data.text.trim()) || "";
+
+      if (!text) {
+        workflowOutput.value = "AI returned an empty response.";
+      } else {
+        workflowOutput.value = text;
+      }
+    } catch (err) {
+      console.error("[LotRocket] workflow error:", err);
+      workflowOutput.value =
+        "Lot Rocket hit a snag talking to AI. Please try again.";
+    }
+  });
+}
 
 wireMessageHelper("messageForm", "messageOutput", "message");
 wireMessageHelper("askForm", "askOutput", "ask");
