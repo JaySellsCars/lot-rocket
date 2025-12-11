@@ -320,63 +320,59 @@ document.addEventListener("DOMContentLoaded", () => {
     return parts.join("\n");
   }
 
-// ----------------------------------------------
-// RIGHT-SIDE FLOATING TOOL MODALS
-// ----------------------------------------------
+  // ----------------------------------------------
+  // RIGHT-SIDE FLOATING TOOL MODALS (simplified)
+  // ----------------------------------------------
 
-const TOOL_CONFIG = [
-  ["objectionLauncher", "objectionModal"],
-  ["calcLauncher", "calcModal"],
-  ["paymentLauncher", "paymentModal"],
-  ["incomeLauncher", "incomeModal"],
-  ["workflowLauncher", "workflowModal"],
-  ["messageLauncher", "messageModal"],
-  ["askLauncher", "askModal"],
-  ["carLauncher", "carModal"],
-  ["imageLauncher", "imageModal"],
-  ["videoLauncher", "videoModal"],
-];
+  const launcherModalPairs = [
+    ["objectionLauncher", "objectionModal"],
+    ["calcLauncher", "calcModal"],
+    ["paymentLauncher", "paymentModal"],
+    ["incomeLauncher", "incomeModal"],
+    ["workflowLauncher", "workflowModal"],
+    ["messageLauncher", "messageModal"],
+    ["askLauncher", "askModal"],
+    ["carLauncher", "carModal"],
+    ["imageLauncher", "imageModal"],
+    ["videoLauncher", "videoModal"],
+  ];
 
-function wireSideModal(launcherId, modalId, onOpen) {
-  const launcher = document.getElementById(launcherId);
-  const modal = document.getElementById(modalId);
+  // Open modals when you click the right-side buttons
+  launcherModalPairs.forEach(([launcherId, modalId]) => {
+    const launcher = document.getElementById(launcherId);
+    const modal = document.getElementById(modalId);
 
-  if (!launcher || !modal) {
-    console.warn("[LotRocket] Missing launcher or modal for:", launcherId, "→", modalId);
-    return;
-  }
-
-  const closeBtn = modal.querySelector(".side-modal-close");
-
-  const backdropClose = (e) => {
-    if (e.target === modal) {
-      modal.classList.add("hidden");
+    if (!launcher || !modal) {
+      console.warn("[LotRocket] Missing launcher or modal:", launcherId, "→", modalId);
+      return;
     }
-  };
 
-  launcher.addEventListener("click", () => {
-    modal.classList.remove("hidden");
-    if (typeof onOpen === "function") onOpen();
+    launcher.addEventListener("click", () => {
+      // For the video one, prefill context
+      if (launcherId === "videoLauncher" && videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+      }
+
+      modal.classList.remove("hidden");
+    });
   });
 
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-  }
+  // Close buttons inside side modals
+  document.querySelectorAll(".side-modal-close").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const modal = btn.closest(".side-modal");
+      if (modal) modal.classList.add("hidden");
+    });
+  });
 
-  modal.addEventListener("click", backdropClose);
-}
-
-TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-  if (launcherId === "videoLauncher") {
-    wireSideModal(launcherId, modalId, () => {
-      if (typeof buildVideoContextFromKit === "function" && window.videoContextField) {
-        window.videoContextField.value = buildVideoContextFromKit();
+  // Click on the dark backdrop closes the modal
+  document.querySelectorAll(".side-modal").forEach((modal) => {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
       }
     });
-  } else {
-    wireSideModal(launcherId, modalId);
-  }
-});
+  });
 
 
 // ----------------------------------------------
