@@ -2335,3 +2335,27 @@ body.light-theme .video-output-card textarea {
   max-width: 100% !important;
   margin-left: 0 !important;
 }
+/* ====== BOTTOM VIDEO OUTPUT PANEL ====== */
+
+.video-output-bottom {
+  max-width: 1100px;          /* nice wide area */
+  margin: 4rem auto 5rem;     /* center it and push it down a bit */
+  padding: 0 1.5rem;
+}
+
+/* Each block inside (Script, Shot List, AI Prompt, Thumbnail) */
+.video-output-bottom h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.video-output-bottom .copy-btn {
+  margin-bottom: 0.5rem;
+}
+
+/* Make all four big “pill” text areas stretch full width & center */
+.video-output-bottom textarea {
+  width: 100%;
+  display: block;
+  margin: 0 auto;
+}
