@@ -582,6 +582,8 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
         });
 
         const data = await res.json();
+        console.log("[ObjectionCoach] raw response:", data);
+
         if (!res.ok) {
           const msg =
             (data && data.message) ||
@@ -589,19 +591,32 @@ const paymentDetailsEl = document.getElementById("paymentDetails");
           throw new Error(msg);
         }
 
-        objectionOutput.value =
-          data && data.coachedMessage
-            ? data.coachedMessage
-            : "AI didn't return a coached reply, try again in a bit.";
+        // Be flexible about what the backend returns
+        const coached =
+          (data &&
+            (data.coachedMessage ||
+              data.message ||
+              data.reply ||
+              data.text ||
+              data.coached)) ||
+          "";
+
+        if (!coached.trim()) {
+          throw new Error("Empty coached reply from server");
+        }
+
+        objectionOutput.value = coached;
       } catch (err) {
         console.error("Objection coach error:", err);
         objectionOutput.value =
+          (err && err.message && `Error: ${err.message}`) ||
           "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
       }
 
       autoResizeTextarea(objectionOutput);
     });
   }
+
 
 
 
