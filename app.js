@@ -824,6 +824,54 @@ app.post("/api/message-helper", async (req, res) => {
     if (!mode) {
       return res.status(400).json({ message: "Missing mode in request body." });
     }
+// ===== AI: Workflow Expert =====
+app.post("/ai/workflow", async (req, res) => {
+  try {
+    const { goal, tone, channel, days, touches } = req.body || {};
+
+    const workflowPrompt = `
+You are a professional automotive sales follow-up strategist.
+
+Build a step-by-step outreach workflow for a car salesperson.
+
+Details:
+- Primary goal: ${goal || "Follow up and close more deals"}
+- Tone: ${tone || "Professional"}
+- Message type: ${channel || "Text / SMS"}
+- Number of days: ${days || 7}
+- Total touches: ${touches || 5}
+
+Instructions:
+- Spread touches logically across the number of days.
+- For each touch, include:
+  - Day #
+  - Time of day
+  - Channel
+  - Purpose
+  - Example message (short, high-converting)
+- Keep formatting clean and automotive-appropriate.
+`;
+
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: "You build automotive follow-up workflows." },
+        { role: "user", content: workflowPrompt }
+      ]
+    });
+
+    const text =
+      response.output?.[0]?.content?.[0]?.text ||
+      "No workflow generated.";
+
+    res.json({ text });
+  } catch (err) {
+    console.error("Workflow route error:", err);
+    res.status(500).json({
+      error: "Failed to generate workflow. Try again.",
+    });
+  }
+});
 
     // -----------------------------------------
     // Build system + user prompts per mode
