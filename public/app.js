@@ -370,6 +370,69 @@ function wireModal(launcherId, modalId, closeSelector, onOpen) {
       videoContextField.value = buildVideoContextFromKit();
     }
   });
+  // ----------------------------------------------
+  // PAYMENT CALCULATOR (right-side modal)
+  // ----------------------------------------------
+  const paymentForm = document.getElementById("paymentForm");
+  const paymentPriceInput = document.getElementById("paymentPrice");
+  const paymentDownInput = document.getElementById("paymentDown");
+  const paymentRateInput = document.getElementById("paymentRate");
+  const paymentTermInput = document.getElementById("paymentTerm");
+  const paymentTaxInput = document.getElementById("paymentTax");
+  const paymentMonthlyEl = document.getElementById("paymentMonthly");
+  const paymentDetailsEl = document.getElementById("paymentDetails");
+
+  function formatMoney(value) {
+    return value.toLocaleString(undefined, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  if (
+    paymentForm &&
+    paymentPriceInput &&
+    paymentDownInput &&
+    paymentRateInput &&
+    paymentTermInput &&
+    paymentMonthlyEl &&
+    paymentDetailsEl
+  ) {
+    paymentForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const price =
+        parseFloat((paymentPriceInput.value || "").replace(/,/g, "")) || 0;
+      const down =
+        parseFloat((paymentDownInput.value || "").replace(/,/g, "")) || 0;
+      const apr = parseFloat(paymentRateInput.value) || 0;
+      const termYears = parseFloat(paymentTermInput.value) || 0;
+      const taxRate = parseFloat(paymentTaxInput?.value) || 0;
+
+      const taxAmount = price * (taxRate / 100);
+      const amountFinanced = Math.max(price + taxAmount - down, 0);
+      const n = Math.max(Math.round(termYears * 12), 1); // number of payments
+
+      let payment = 0;
+      if (apr <= 0) {
+        // simple divide if 0% APR
+        payment = amountFinanced / n;
+      } else {
+        const r = apr / 100 / 12; // monthly rate
+        payment =
+          amountFinanced * (r / (1 - Math.pow(1 + r, -1 * n)));
+      }
+
+      const safeApr = apr || 0;
+      paymentMonthlyEl.textContent = formatMoney(payment || 0);
+
+      paymentDetailsEl.textContent = `${termYears || 0} years • ${n} payments • Amount financed ${formatMoney(
+        amountFinanced
+      )} at ${safeApr.toFixed(2)}% APR (est., tax ${taxRate || 0}%).`;
+    });
+  }
 
   // ---------- Payment helper ----------
   const paymentForm = document.getElementById("paymentForm");
