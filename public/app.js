@@ -3573,7 +3573,8 @@ if (downloadAllEditedBtn) {
 
     const closeAllSideModals = () => {
       document.querySelectorAll(".side-modal").forEach((m) => {
-        m.classList.add("hidden");
+   if (m) m.classList.add("hidden");
+
         m.style.display = "none";
       });
     };
@@ -3612,13 +3613,14 @@ if (downloadAllEditedBtn) {
     });
 
     // Close drill
-    const drillClose = document.getElementById("closeDrillMode");
-    if (drillClose) {
-      drillClose.addEventListener("click", () => {
-        const m = document.getElementById("drillModeModal");
-        if (m) m.classList.add("hidden");
-      });
-    }
+const drillClose = document.getElementById("closeDrillMode");
+if (drillClose) {
+  drillClose.addEventListener("click", () => {
+    const m = document.getElementById("drillModeModal");
+    if (m) m.classList.add("hidden");
+  });
+}
+
 
     console.log("[LotRocket] ✅ Emergency floating button wiring installed");
   })();
