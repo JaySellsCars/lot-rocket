@@ -2359,3 +2359,19 @@ body.light-theme .video-output-card textarea {
   display: block;
   margin: 0 auto;
 }
+/* ====== BOTTOM VIDEO OUTPUT PANEL (OVERRIDE) ====== */
+
+#videoOutputBottom {
+  max-width: 1100px;
+  margin: 4rem auto 6rem;        /* center on page */
+  padding: 0 1.5rem;
+}
+
+/* Make the four big outputs full-width and centered */
+#videoOutputBottom textarea,
+#videoOutputBottom .pill-textarea {
+  width: 100% !important;
+  max-width: 1100px;
+  display: block;
+  margin: 0 auto 1.5rem;
+}
