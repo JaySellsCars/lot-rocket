@@ -1102,10 +1102,15 @@
           <input name="days" type="number" min="1" max="30" placeholder="Example: 7" />
         </label>
 
-        <label>
-          Number of Touches
-          <input name="touches" type="number" min="1" max="40" placeholder="Example: 7" />
-        </label>
+<!-- Number of Touches Field WITH Tooltip -->
+<label>
+  Number of Touches
+  <span class="tooltip" data-tooltip="A 'touch' is any contact attempt you make with the customer (text, call, email, DM, voicemail, etc.). This is the total number of times Lot Rocket will schedule communication attempts.">
+    ❓
+  </span>
+  <input name="touches" type="number" min="1" max="10" value="5" />
+</label>
+
 
         <button type="submit" class="primary-btn full">Build Workflow</button>
 
