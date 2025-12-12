@@ -193,7 +193,7 @@ const socialPreviewImg = document.getElementById("socialCarouselPreviewImg");
 const socialStatus = document.getElementById("socialCarouselStatus");
 const socialNextBtn = document.getElementById("socialNextBtn");
 
-let socialReadySelectedIndex = 0;
+
 
 function renderSocialReadyStrip() {
   if (!socialCarousel) return;
