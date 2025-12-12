@@ -972,6 +972,7 @@ let socialCurrentIndex = 0;
 const MAX_STEP3_PHOTOS = 24;
 
 
+
   // ---------------- Step 1 → Send Top Photos
   const step1SendTopBtn = document.getElementById("sendTopPhotosBtn");
   if (step1SendTopBtn) {
