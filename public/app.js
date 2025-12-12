@@ -942,17 +942,7 @@ if (socialNextBtn) {
 
   let currentTunerFilter = "";
 
-  // Social strip UI
-  const socialCarousel = document.getElementById("socialCarousel");
-  const openCanvasFromCarouselBtn = document.getElementById("openCanvasFromCarousel");
-  const openDesignFromCarouselBtn = document.getElementById("openDesignFromCarousel");
-  const revertSocialPhotoBtn = document.getElementById("revertSocialPhotoBtn");
-  const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
-
-  const socialCarouselPreviewImg = document.getElementById("socialCarouselPreviewImg");
-  const socialPrevBtn = document.getElementById("socialPrevBtn");
-  const socialNextBtn = document.getElementById("socialNextBtn");
-  const socialCarouselStatus = document.getElementById("socialCarouselStatus");
+ 
 
   // Canvas overlay
   const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
