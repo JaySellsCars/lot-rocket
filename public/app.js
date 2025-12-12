@@ -3428,9 +3428,10 @@ renderSocialCarousel();
   const resultEl = document.getElementById("drillResult");
   const timerEl = document.getElementById("drillTimer");
 
+  // If the button or modal doesn't exist, do nothing (prevents JS crash)
   if (!drillLauncher || !drillModal) return;
 
-  let timer;
+  let timer = null;
   let timeLeft = 60;
 
   const objections = [
@@ -3438,7 +3439,7 @@ renderSocialCarousel();
     "The payment is too high.",
     "I want to talk to my spouse.",
     "I'm just looking.",
-    "I found one cheaper online."
+    "I found one cheaper online.",
   ];
 
   drillLauncher.addEventListener("click", () => {
@@ -3446,47 +3447,65 @@ renderSocialCarousel();
     resetDrill();
   });
 
-  closeBtn.addEventListener("click", () => {
-    drillModal.classList.add("hidden");
-    clearInterval(timer);
-  });
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      drillModal.classList.add("hidden");
+      clearInterval(timer);
+    });
+  }
 
-  getBtn.addEventListener("click", () => {
-    const o = objections[Math.floor(Math.random() * objections.length)];
-    textEl.textContent = o;
-    startTimer();
-  });
+  if (getBtn) {
+    getBtn.addEventListener("click", () => {
+      const o = objections[Math.floor(Math.random() * objections.length)];
+      if (textEl) textEl.textContent = o;
+      startTimer();
+    });
+  }
 
-  gradeBtn.addEventListener("click", () => {
-    clearInterval(timer);
-const score = Math.floor(Math.random() * 3) + 8; // 8–10
-resultEl.innerHTML = `
-  <strong>Score:</strong> ${score}/10<br><br>
-  Good empathy. Try asking a yes/no close to regain control.
-`;
+  if (gradeBtn) {
+    gradeBtn.addEventListener("click", () => {
+      clearInterval(timer);
 
+      const score = Math.floor(Math.random() * 3) + 8; // 8–10
+
+      if (resultEl) {
+        resultEl.classList.remove("hidden");
+        resultEl.innerHTML = `
+          <strong>Score:</strong> ${score}/10<br><br>
+          Good empathy. Try asking a yes/no close to regain control.
+        `;
+      }
+    });
+  }
 
   function startTimer() {
     clearInterval(timer);
     timeLeft = 60;
-    timerEl.textContent = timeLeft;
+    if (timerEl) timerEl.textContent = String(timeLeft);
 
     timer = setInterval(() => {
       timeLeft--;
-      timerEl.textContent = timeLeft;
+      if (timerEl) timerEl.textContent = String(timeLeft);
       if (timeLeft <= 0) clearInterval(timer);
     }, 1000);
   }
 
   function resetDrill() {
-    textEl.textContent = "Press \"Give Me an Objection\" to begin.";
-    inputEl.value = "";
-    resultEl.classList.add("hidden");
-    timerEl.textContent = "60";
+    if (textEl) textEl.textContent = 'Press "Give Me an Objection" to begin.';
+    if (inputEl) inputEl.value = "";
+    if (resultEl) resultEl.classList.add("hidden");
+    if (timerEl) timerEl.textContent = "60";
     clearInterval(timer);
   }
 })();
 
 
+
+// ...lots of functions...
+
+// Initialize social strip UI so status text isn't blank
+renderSocialCarousel();
+
 }); // ✅ closes DOMContentLoaded
+
 
