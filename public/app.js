@@ -966,8 +966,9 @@ let creativeHistoryIndex = -1;
 let localCreativePhotos = [];
 
 // Social-ready photos
-let socialReadyPhotos = [];
-let socialReadySelectedIndex = 0;
+// (already declared earlier)
+socialReadySelectedIndex = 0;
+
 
 
 // Photo limits
