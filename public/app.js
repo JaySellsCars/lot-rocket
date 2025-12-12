@@ -1761,92 +1761,122 @@ async function buildEditedDataUrl(src) {
 }
 
 
-  // ------------ SOCIAL-READY STRIP HELPERS + CAROUSEL ------------
+// ---------- SOCIAL-READY STRIP HELPERS + CAROUSEL ----------
 
-  function addPhotoToSocialReady(url) {
-    if (!url) return;
-
-    // If it already exists, just select it and move preview there
-    const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
-    if (existingIndex !== -1) {
-      socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
-        ...p,
-        selected: idx === existingIndex ? true : p.selected,
-      }));
-      socialCurrentIndex = existingIndex;
-      renderSocialCarousel();
-      return;
-    }
 // Helper: force preview to show a freshly added design image
 function addDesignImageToSocialStrip(url) {
   if (!url) return;
   addPhotoToSocialReady(url);
-  // make sure the preview is pointed at the newest image
+  // make sure preview points to the newest image
   socialCurrentIndex = socialReadyPhotos.length - 1;
   renderSocialCarousel();
 }
 
-    // Push new photo, mark selected (unlocked by default)
-    socialReadyPhotos.push({
-      url,
-      originalUrl: url, // remember the first/original version
-      selected: true,
-      locked: false,
-    });
+// Add a photo to the Social-Ready strip (deduped, capped, sets active preview)
+function addPhotoToSocialReady(url) {
+  if (!url) return;
 
-    // Optional cap (keep latest MAX_STEP3_PHOTOS – 24)
-    const MAX_SOCIAL = MAX_STEP3_PHOTOS;
-    if (socialReadyPhotos.length > MAX_SOCIAL) {
-      socialReadyPhotos = socialReadyPhotos.slice(
-        socialReadyPhotos.length - MAX_SOCIAL
-      );
+  // If it already exists, just select it and move preview there
+  const existingIndex = socialReadyPhotos.findIndex((p) => p && p.url === url);
+  if (existingIndex !== -1) {
+    socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
+      ...p,
+      selected: idx === existingIndex ? true : !!p.selected,
+      locked: typeof p.locked === "boolean" ? p.locked : false,
+      originalUrl: p.originalUrl || p.url,
+    }));
+    socialCurrentIndex = existingIndex;
+    renderSocialCarousel();
+    return;
+  }
+
+  // Push new photo, mark selected (unlocked by default)
+  socialReadyPhotos.push({
+    url,
+    originalUrl: url, // remember the first/original version
+    selected: true,
+    locked: false,
+  });
+
+  // Optional cap (keep latest MAX_STEP3_PHOTOS – 24)
+  const MAX_SOCIAL = MAX_STEP3_PHOTOS;
+  if (socialReadyPhotos.length > MAX_SOCIAL) {
+    socialReadyPhotos = socialReadyPhotos.slice(
+      socialReadyPhotos.length - MAX_SOCIAL
+    );
+  }
+
+  // Newly added is last
+  socialCurrentIndex = socialReadyPhotos.length - 1;
+
+  // Re-render strip + preview
+  renderSocialCarousel();
+}
+
+// Replace current image in-place (keeps originalUrl intact)
+function replaceCurrentSocialImage(newUrl) {
+  if (!newUrl) return;
+
+  if (!socialReadyPhotos.length) {
+    addPhotoToSocialReady(newUrl);
+    return;
+  }
+
+  let idx = socialCurrentIndex;
+  if (idx < 0 || idx >= socialReadyPhotos.length) {
+    idx = 0;
+  }
+
+  const photo = socialReadyPhotos[idx];
+  if (!photo) {
+    addPhotoToSocialReady(newUrl);
+    return;
+  }
+
+  // keep originalUrl from first version if present
+  photo.originalUrl = photo.originalUrl || photo.url || newUrl;
+  photo.url = newUrl;
+  photo.selected = true;
+
+  renderSocialCarousel();
+}
+
+function updateSocialPreview() {
+  if (!socialCarouselPreviewImg) return;
+
+  if (!socialReadyPhotos.length) {
+    socialCarouselPreviewImg.src = "";
+    socialCarouselPreviewImg.alt = "";
+    if (socialCarouselStatus) {
+      socialCarouselStatus.textContent =
+        "No social-ready photos yet. Double-click a photo above to add it.";
     }
+    return;
+  }
 
-    // Newly added is last
+  // Clamp index
+  if (socialCurrentIndex < 0) {
     socialCurrentIndex = socialReadyPhotos.length - 1;
-
-    // Re-render strip + preview
-    renderSocialCarousel();
+  }
+  if (socialCurrentIndex >= socialReadyPhotos.length) {
+    socialCurrentIndex = 0;
   }
 
-  function replaceCurrentSocialImage(newUrl) {
-    if (!newUrl) return;
+  const current = socialReadyPhotos[socialCurrentIndex];
+  socialCarouselPreviewImg.src = current.url;
+  socialCarouselPreviewImg.alt = `Social-ready photo ${socialCurrentIndex + 1}`;
 
-    if (!socialReadyPhotos.length) {
-      addPhotoToSocialReady(newUrl);
-      return;
+  if (socialCarouselStatus) {
+    const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
+    const total = socialReadyPhotos.length;
+
+    let label = `${socialCurrentIndex + 1} of ${total}`;
+    if (selectedCount && selectedCount !== total) {
+      label += ` • ${selectedCount} selected`;
     }
-
-    const idx = socialCurrentIndex;
-    if (idx < 0 || idx >= socialReadyPhotos.length) {
-      addPhotoToSocialReady(newUrl);
-      return;
-    }
-
-    const photo = socialReadyPhotos[idx];
-    if (!photo) {
-      addPhotoToSocialReady(newUrl);
-      return;
-    }
-
-    photo.url = newUrl;
-    photo.selected = true;
-
-    renderSocialCarousel();
+    socialCarouselStatus.textContent = label;
   }
-
-  function updateSocialPreview() {
-    if (!socialCarouselPreviewImg) return;
-
-    if (!socialReadyPhotos.length) {
-      socialCarouselPreviewImg.src = "";
-      socialCarouselPreviewImg.alt = "";
-      if (socialCarouselStatus) {
-        socialCarouselStatus.textContent =
-          "No social-ready photos yet. Double-click a photo above to add it.";
-      }
-      return;
-    }
+}
 
     // Clamp index
     if (socialCurrentIndex < 0) {
