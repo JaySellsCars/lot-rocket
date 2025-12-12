@@ -966,7 +966,8 @@ let localCreativePhotos = [];
 
 // Social-ready photos
 let socialReadyPhotos = [];
-let socialCurrentIndex = 0;
+let socialReadySelectedIndex = 0;
+
 
 // Photo limits
 const MAX_STEP3_PHOTOS = 24;
