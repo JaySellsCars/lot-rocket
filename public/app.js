@@ -44,6 +44,31 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme(true);
     themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
   }
+document.addEventListener("DOMContentLoaded", () => {
+
+  console.log("🚀 Lot Rocket frontend loaded");
+
+  // ==========================================
+  // GLOBAL PHOTO STATE (DECLARE ONCE — DO NOT DUPLICATE)
+  // ==========================================
+  let creativePhotos = window.creativePhotos || [];
+  let socialReadyPhotos = window.socialReadyPhotos || [];
+  let designStudioPhotos = window.designStudioPhotos || [];
+
+  window.creativePhotos = creativePhotos;
+  window.socialReadyPhotos = socialReadyPhotos;
+  window.designStudioPhotos = designStudioPhotos;
+
+  // indices
+  let socialReadySelectedIndex = 0;
+  let socialCurrentIndex = 0;
+
+  // photo limits
+  const MAX_PHOTOS = 24;
+
+  // ==================================================
+  // STEP 1 – DEALER URL SCRAPER
+  // ==================================================
 
   // ==================================================
   // STEP 1 – DEALER URL + SOCIAL KIT
