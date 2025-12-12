@@ -688,6 +688,161 @@ if (incomeForm) {
       autoResizeTextarea(objectionOutput);
     });
   }
+// =======================================
+// Objection Drill Mode – Q&A + Grading
+// =======================================
+const drillLauncher = document.getElementById("drillLauncher");
+const drillModal = document.getElementById("drillModeModal");
+const closeDrillModeBtn = document.getElementById("closeDrillMode");
+
+const drillObjectionText = document.getElementById("drillObjectionText");
+const getDrillObjectionBtn = document.getElementById("getDrillObjection");
+
+const drillReplyInput = document.getElementById("drillReplyInput");
+const gradeDrillReplyBtn = document.getElementById("gradeDrillReply");
+
+const drillResult = document.getElementById("drillResult");
+const drillTimerDisplay = document.getElementById("drillTimer");
+
+// A small starter bank of objections for Drill Mode
+const DRILL_OBJECTIONS = [
+  "The price is too high.",
+  "I need to talk to my spouse first.",
+  "I want to think about it.",
+  "Can you send me some numbers and I’ll get back to you?",
+  "I’m just looking right now, not ready to buy.",
+  "My payment can’t go up at all.",
+  "I found something cheaper online.",
+  "I don’t want to run my credit.",
+];
+
+let currentDrillObjection = "";
+let drillTimerId = null;
+let drillSecondsLeft = 0;
+
+function resetDrillState() {
+  if (drillReplyInput) drillReplyInput.value = "";
+  if (drillResult) {
+    drillResult.textContent = "";
+    drillResult.classList.add("hidden");
+  }
+  if (drillTimerDisplay) {
+    drillTimerDisplay.textContent = "60";
+  }
+}
+
+function startDrillTimer(startSeconds = 60) {
+  if (!drillTimerDisplay) return;
+  // clear any old timer
+  if (drillTimerId) {
+    clearInterval(drillTimerId);
+    drillTimerId = null;
+  }
+
+  drillSecondsLeft = startSeconds;
+  drillTimerDisplay.textContent = String(drillSecondsLeft);
+
+  drillTimerId = setInterval(() => {
+    drillSecondsLeft -= 1;
+    if (drillSecondsLeft <= 0) {
+      drillSecondsLeft = 0;
+      drillTimerDisplay.textContent = "0";
+      clearInterval(drillTimerId);
+      drillTimerId = null;
+    } else {
+      drillTimerDisplay.textContent = String(drillSecondsLeft);
+    }
+  }, 1000);
+}
+
+function stopDrillTimer() {
+  if (drillTimerId) {
+    clearInterval(drillTimerId);
+    drillTimerId = null;
+  }
+}
+
+function openDrillModal() {
+  if (!drillModal) return;
+  drillModal.classList.remove("hidden");
+  resetDrillState();
+}
+
+function closeDrillModal() {
+  if (!drillModal) return;
+  drillModal.classList.add("hidden");
+  stopDrillTimer();
+}
+
+// Open / close wiring
+if (drillLauncher && drillModal && closeDrillModeBtn) {
+  drillLauncher.addEventListener("click", openDrillModal);
+  closeDrillModeBtn.addEventListener("click", closeDrillModal);
+}
+
+// “Give Me an Objection” button
+if (getDrillObjectionBtn && drillObjectionText) {
+  getDrillObjectionBtn.addEventListener("click", () => {
+    if (!DRILL_OBJECTIONS.length) return;
+
+    const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
+    currentDrillObjection = DRILL_OBJECTIONS[idx];
+
+    drillObjectionText.textContent = currentDrillObjection;
+
+    resetDrillState();
+    startDrillTimer(60);
+
+    if (drillReplyInput) {
+      drillReplyInput.focus();
+    }
+  });
+}
+
+// “Grade Me” button – calls AI for grading & coaching
+if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
+  gradeDrillReplyBtn.addEventListener("click", async () => {
+    const reply = drillReplyInput.value.trim();
+
+    if (!currentDrillObjection) {
+      drillResult.classList.remove("hidden");
+      drillResult.textContent = "Hit “Give Me an Objection” first.";
+      return;
+    }
+
+    if (!reply) {
+      drillResult.classList.remove("hidden");
+      drillResult.textContent = "Type your response first, then I’ll grade it.";
+      return;
+    }
+
+    stopDrillTimer();
+    drillResult.classList.remove("hidden");
+    drillResult.textContent = "Grading your reply and building coaching tips...";
+
+    try {
+      const res = await fetch(apiBase + "/api/message-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "objection-drill",
+          objection: currentDrillObjection,
+          reply,
+          secondsRemaining: drillSecondsLeft,
+        }),
+      });
+
+      const data = await res.json();
+      drillResult.textContent =
+        data.text ||
+        "I couldn’t grade that one, but keep practicing and try another objection.";
+    } catch (err) {
+      console.error("Drill Mode grading error:", err);
+      drillResult.textContent =
+        "There was an error talking to AI. Try again in a moment.";
+    }
+  });
+}
 
 
 
