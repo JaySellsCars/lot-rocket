@@ -3411,6 +3411,13 @@ if (downloadAllEditedBtn) {
 
   // Initialize social strip UI on load so status text isn't blank
   renderSocialCarousel();
+app.post("/some-route", async (req, res) => {
+  try {
+    // ...
+  } catch (err) {
+    // ...
+  }
+});
 
 // ... last route above ...
 
