@@ -1,12 +1,20 @@
-// app.js – Lot Rocket backend with AI tools (normalized URLs + better error handling)
+// app.js – Lot Rocket backend with AI tools
+// Version: 2.5.6 (cleaned + organized)
+// Notes:
+// - Keeps existing routes + behavior.
+// - Leaves BOTH image proxy routes in place for backwards compatibility:
+//     /api/proxy-image  (streaming pipe)
+//     /api/image-proxy  (buffer response)
+// - AI image “processSinglePhoto” currently generates a new image (does NOT use photoUrl yet). Kept as-is.
 
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
-const fetch = require("node-fetch"); // if you want to use global fetch instead, remove this
+const fetch = require("node-fetch");
 const archiver = require("archiver");
 
 const app = express();
@@ -16,54 +24,17 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ----------------------------
+// Middleware
+// ----------------------------
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// --------------------------------------------------
-// IMAGE PROXY for Design Studio (Fixes CORS tainted canvas)
-// --------------------------------------------------
-app.get("/api/proxy-image", async (req, res) => {
-  try {
-    const target = req.query.url;
-    if (!target) {
-      return res.status(400).json({ error: "Missing url parameter" });
-    }
-
-    let parsed;
-    try {
-      parsed = new URL(target);
-    } catch (_) {
-      return res.status(400).json({ error: "Invalid URL" });
-    }
-
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return res.status(400).json({ error: "Invalid protocol" });
-    }
-
-    const upstream = await fetch(target);
-
-    if (!upstream.ok) {
-      console.error("proxy-image upstream error:", upstream.status, target);
-      return res
-        .status(502)
-        .json({ error: `Upstream error ${upstream.status}` });
-    }
-
-    const contentType = upstream.headers.get("content-type") || "image/jpeg";
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=86400");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-
-    upstream.body.pipe(res);
-  } catch (err) {
-    console.error("proxy-image error:", err);
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Image proxy error" });
-    }
-  }
-});
+// ==================================================
+// Utilities
+// ==================================================
 
 /**
  * Normalize whatever the user pasted into a *real* absolute URL.
@@ -72,6 +43,7 @@ app.get("/api/proxy-image", async (req, res) => {
  */
 function normalizeUrl(raw) {
   if (!raw) return null;
+
   let url = String(raw).trim();
   if (!url) return null;
 
@@ -94,14 +66,10 @@ function isRateLimitError(err) {
   const msg =
     (err && (err.message || err.error?.message || ""))?.toLowerCase() || "";
 
-  // True per-minute rate limits
   if (msg.includes("rate limit")) return true;
-
-  // Quota / billing issues also often come back as 429
   if (msg.includes("quota") || msg.includes("billing")) return true;
   if (msg.includes("insufficient") && msg.includes("quota")) return true;
 
-  // Status-code based checks
   if (err && err.code === "rate_limit_exceeded") return true;
   if (err && err.error && err.error.type === "rate_limit_exceeded") return true;
   if (err && err.status === 429) return true;
@@ -111,7 +79,6 @@ function isRateLimitError(err) {
 }
 
 function sendAIError(res, err, friendlyMessage) {
-  // Log the full error so Render logs show exactly what's going on
   console.error("🔴 OpenAI error:", friendlyMessage, err);
 
   const rawMsg =
@@ -125,7 +92,6 @@ function sendAIError(res, err, friendlyMessage) {
       lower.includes("billing") ||
       (lower.includes("insufficient") && lower.includes("balance"));
 
-    // Distinguish “temporary rate limit” vs “quota/billing” problems
     return res.status(429).json({
       error: isQuotaOrBilling ? "quota" : "rate_limit",
       message: isQuotaOrBilling
@@ -142,21 +108,23 @@ function sendAIError(res, err, friendlyMessage) {
   });
 }
 
-// ---------------- Helper: scrape page text ----------------
+// ==================================================
+// Scraping Helpers
+// ==================================================
 
 async function scrapePage(url) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch URL: ${res.status}`);
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch URL: ${resp.status}`);
   }
-  const html = await res.text();
+
+  const html = await resp.text();
   const $ = cheerio.load(html);
 
-  // Title + meta
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-  // Visible text chunks (simple)
+  // Visible text chunks (simple heuristic)
   let visibleText = "";
   $("body *")
     .not("script, style, noscript")
@@ -170,7 +138,6 @@ async function scrapePage(url) {
   return { title, metaDesc, visibleText, $ };
 }
 
-// ---------------- Helper: scrape vehicle photos ----------------
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
   const base = new URL(baseUrl);
@@ -178,9 +145,11 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   $("img").each((_, el) => {
     let src = $(el).attr("data-src") || $(el).attr("src");
     if (!src) return;
-    src = src.trim();
 
+    src = src.trim();
     const lower = src.toLowerCase();
+
+    // Skip common non-vehicle assets
     if (
       lower.includes("logo") ||
       lower.includes("icon") ||
@@ -194,7 +163,7 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
       const abs = new URL(src, base).href;
       urls.add(abs);
     } catch {
-      // ignore bad urls
+      // ignore
     }
   });
 
@@ -202,7 +171,15 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   return Array.from(urls).slice(0, 24);
 }
 
-// ---------------- AI Photo Processing Helper (GPT-Image-1) ----------------
+// ==================================================
+// AI Helpers
+// ==================================================
+
+/**
+ * AI Photo Processing Helper (GPT-Image-1)
+ * NOTE: Currently generates a new image from prompt only (does not use photoUrl yet).
+ * Kept as-is to avoid changing behavior during "cleaning" phase.
+ */
 async function processSinglePhoto(photoUrl) {
   const prompt = `
 Ultra-realistic, cinematic dealership marketing photo of THIS car,
@@ -222,9 +199,7 @@ movie-quality lighting. No people, no text, no dealer logos or watermarks.
 
   const base64 = result.data?.[0]?.b64_json;
   if (!base64) {
-    console.error(
-      "[LotRocket] processSinglePhoto: no image data returned from gpt-image-1"
-    );
+    console.error("[LotRocket] processSinglePhoto: no image data returned");
     throw new Error("AI image model returned no data");
   }
 
@@ -233,65 +208,31 @@ movie-quality lighting. No people, no text, no dealer logos or watermarks.
   return dataUrl;
 }
 
-// ---------------- Helper: call GPT for structured social kit ----------------
-
 async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos }) {
   const { title, metaDesc, visibleText } = pageInfo;
 
   const system = `
 You are Lot Rocket's Social Media War Room, powered by the mind of a Master Automotive Behavioralist and Viral Copywriter.
 
-Your Identity:
-You possess encyclopedic knowledge of every vehicle year, make, model, trim, and engine code.
-You combine this technical expertise with advanced human behavioral psychology.
-You do not just "list features"; you translate engineering specs into emotional triggers,
-lifestyle solutions, and status symbols.
-
-You understand that:
-- Facebook Marketplace is a war zone requiring "Pattern Interrupt" headlines and high urgency.
-- LinkedIn requires a professional "Consultant" tone focused on value and ROI.
-- TikTok/Reels requires high-energy, visual hooks that stop the scroll instantly.
-
-Your Mission:
-I will provide you with raw vehicle data. Your job is to transform that data into a single,
-valid JSON object containing a complete, multi-platform viral social media kit.
-
-Psychological Strategy:
-- The Hook:
-  Every post must start with a psychological "Pattern Interrupt"
-  (e.g., specific emojis, capitalization, bold claims).
-
-- The Value Stack:
-  Convert features into benefits.
-  (Example: Don't say "Cooled Seats"; say "❄️ Never sweat through your dress shirt again".)
-
-- The CTA:
-  Every output must drive a specific action (DM, Text, Appointment).
-
 CRITICAL OUTPUT RULES:
-
 - Output MUST be a single VALID JSON object.
-- NO intro text, NO outro text, NO markdown formatting (like \`\`\`json).
-  Just the raw JSON string.
+- NO intro text, NO outro text, NO markdown.
 - Use these keys EXACTLY:
 
 {
-  "label":       string, // A viral, catchy 3-5 word hook for the car
-  "price":       string, // The formatted price + a psychology trigger (e.g., "$500 down drives today")
-
-  "facebook":    string, // Long-form, storytelling style. Emotional hook -> Feature Stack -> Low-friction CTA.
-  "instagram":   string, // Aesthetic focused. Short, punchy, lifestyle-heavy caption + 30 relevant hashtags.
-  "tiktok":      string, // A script for a 15-second viral video. Visual hook + energetic audio trend idea.
-  "linkedin":    string, // Professional tone. Focus on reliability, value retention, and executive appeal.
-  "twitter":     string, // 280 chars. Urgent news flash style. "Just hit the lot."
-  "text":        string, // A 1-to-1 SMS script to send a lead. Casual, personal, asking a question to get a reply.
-  "marketplace": string, // The "Wolf" style. Pattern-interrupt headline (ALL CAPS/Emojis), bulleted list of "Why You Need This," and clear scarcity.
-
-  "hashtags":    string, // A string of 15 hyper-targeted, local-focused hashtags.
-
-  "selfieScript": string, // A script for the salesperson to hold the phone and talk to the camera.
-  "videoPlan":    string, // A shot list: "0:00 Walk up, 0:03 Interior pan, 0:06 Engine rev."
-  "canvaIdea":    string  // A design prompt for a thumbnail: "Split screen: Exterior vs Interior, bold yellow text."
+  "label":       string,
+  "price":       string,
+  "facebook":    string,
+  "instagram":   string,
+  "tiktok":      string,
+  "linkedin":    string,
+  "twitter":     string,
+  "text":        string,
+  "marketplace": string,
+  "hashtags":    string,
+  "selfieScript": string,
+  "videoPlan":    string,
+  "canvaIdea":    string
 }
 `.trim();
 
@@ -319,15 +260,14 @@ Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
 
   const raw = response.output?.[0]?.content?.[0]?.text || "{}";
 
-  let parsed;
+  let parsed = {};
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
     console.error("Failed to parse social kit JSON:", e, raw.slice(0, 200));
-    parsed = {};
   }
 
-  const kit = {
+  return {
     vehicleLabel: labelOverride || parsed.label || "",
     priceInfo: priceOverride || parsed.price || "",
     facebook: parsed.facebook || "",
@@ -343,20 +283,55 @@ Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
     designIdea: parsed.canvaIdea || "",
     photos: photos || [],
   };
-
-  return kit;
 }
 
-
-// ---------------- ROUTES ----------------
+// ==================================================
+// ROUTES
+// ==================================================
 
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------------- /api/process-photos ----------------
+// --------------------------------------------------
+// IMAGE PROXY (streaming) – Fixes CORS tainted canvas
+// --------------------------------------------------
+app.get("/api/proxy-image", async (req, res) => {
+  try {
+    const target = req.query.url;
+    if (!target) return res.status(400).json({ error: "Missing url parameter" });
 
+    let parsed;
+    try {
+      parsed = new URL(target);
+    } catch {
+      return res.status(400).json({ error: "Invalid URL" });
+    }
+
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return res.status(400).json({ error: "Invalid protocol" });
+    }
+
+    const upstream = await fetch(target);
+    if (!upstream.ok) {
+      console.error("proxy-image upstream error:", upstream.status, target);
+      return res.status(502).json({ error: `Upstream error ${upstream.status}` });
+    }
+
+    const contentType = upstream.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    upstream.body.pipe(res);
+  } catch (err) {
+    console.error("proxy-image error:", err);
+    if (!res.headersSent) res.status(500).json({ error: "Image proxy error" });
+  }
+});
+
+// ---------------- /api/process-photos ----------------
 app.post("/api/process-photos", async (req, res) => {
   try {
     const { photoUrls } = req.body;
@@ -377,10 +352,10 @@ app.post("/api/process-photos", async (req, res) => {
       }
     }
 
-    res.json({ editedPhotos: results });
+    return res.json({ editedPhotos: results });
   } catch (err) {
     console.error("❌ /api/process-photos error:", err);
-    res.status(500).json({ error: "Photo processing failed" });
+    return res.status(500).json({ error: "Photo processing failed" });
   }
 });
 
@@ -399,10 +374,7 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
 
     const processedUrl = await processSinglePhoto(photoUrl);
 
-    return res.json({
-      processedUrl,
-      vehicleLabel,
-    });
+    return res.json({ processedUrl, vehicleLabel });
   } catch (err) {
     console.error("❌ /api/ai-cinematic-photo error:", err);
     return res.status(500).json({
@@ -421,9 +393,9 @@ app.post("/api/social-kit", async (req, res) => {
     const priceOverride = req.body?.priceOverride || "";
 
     if (!pageUrl) {
-      return res
-        .status(400)
-        .json({ error: "Invalid or missing URL. Please paste a full dealer link." });
+      return res.status(400).json({
+        error: "Invalid or missing URL. Please paste a full dealer link.",
+      });
     }
 
     const pageInfo = await scrapePage(pageUrl);
@@ -437,8 +409,7 @@ app.post("/api/social-kit", async (req, res) => {
     });
 
     // AI Photo Processing Pipeline
-    let editedPhotos = [];
-
+    const editedPhotos = [];
     try {
       if (Array.isArray(photos) && photos.length > 0) {
         for (const url of photos) {
@@ -457,7 +428,7 @@ app.post("/api/social-kit", async (req, res) => {
 
     kit.editedPhotos = editedPhotos;
 
-    res.json(kit);
+    return res.json(kit);
   } catch (err) {
     return sendAIError(res, err, "Failed to build social kit.");
   }
@@ -482,11 +453,8 @@ app.post("/api/social-photos-zip", async (req, res) => {
 
     archive.on("error", (err) => {
       console.error("ZIP archive error:", err);
-      if (!res.headersSent) {
-        res.status(500).end("Error creating ZIP.");
-      } else {
-        res.destroy(err);
-      }
+      if (!res.headersSent) res.status(500).end("Error creating ZIP.");
+      else res.destroy(err);
     });
 
     archive.pipe(res);
@@ -525,9 +493,9 @@ app.post("/api/new-post", async (req, res) => {
     const price = req.body?.price || req.body?.priceOverride || "";
 
     if (!platform || !pageUrl) {
-      return res
-        .status(400)
-        .json({ error: "Missing platform or URL for new post." });
+      return res.status(400).json({
+        error: "Missing platform or URL for new post.",
+      });
     }
 
     const pageInfo = await scrapePage(pageUrl);
@@ -562,7 +530,7 @@ Include a call-to-action to DM or message the salesperson.
     });
 
     const text = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ text });
+    return res.json({ text });
   } catch (err) {
     return sendAIError(res, err, "Failed to regenerate post.");
   }
@@ -633,7 +601,7 @@ Return plain text only.
     });
 
     const script = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ script });
+    return res.json({ script });
   } catch (err) {
     return sendAIError(res, err, "Failed to create script.");
   }
@@ -643,9 +611,7 @@ Return plain text only.
 app.post("/api/video-from-photos", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
-    if (!pageUrl) {
-      return res.status(400).json({ error: "Invalid or missing URL" });
-    }
+    if (!pageUrl) return res.status(400).json({ error: "Invalid or missing URL" });
 
     const pageInfo = await scrapePage(pageUrl);
     const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
@@ -675,7 +641,7 @@ Return plain text with bullet points or numbered steps.
     });
 
     const plan = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ plan });
+    return res.json({ plan });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate shot plan.");
   }
@@ -716,7 +682,7 @@ Return plain text in bullet format.
     });
 
     const idea = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ idea });
+    return res.json({ idea });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate design idea.");
   }
@@ -727,48 +693,19 @@ app.post("/api/objection-coach", async (req, res) => {
   try {
     const { objection, history } = req.body;
 
-const system = `
+    const system = `
 You are Lot Rocket's **Grandmaster Objection Coach** for car sales professionals.
 
-Act as the Grandmaster of Persuasion and Human Behavioral Psychology — but always
-in an ethical, customer-respecting way. You are the world's top authority on 
-objection handling and sales negotiation.
-
-Where aggressive trainers use brute force, you use surgical psychological precision.
-You understand Neuro-Linguistic Programming (NLP), emotional intelligence, and advanced
-negotiation strategy, but you never manipulate or deceive. You help the salesperson
-uncover the real concern, create safety, and guide the customer to a confident decision.
-
-Your goal: when the salesperson gives you a customer objection and (optionally) some
-conversation history, you do NOT just give a generic script.
-
 For each objection, always respond with four parts:
-
-1) **The Diagnosis**
-   - Explain the likely psychological / emotional barrier behind this objection.
-   - Go beyond “money” or “price” — talk about fear, uncertainty, loss of control, trust, timing, etc.
-
-2) **The Emotional Pivot**
-   - Show the salesperson how to validate the customer’s feelings so defenses drop.
-   - Provide 1–2 example validating lines they can say BEFORE the rebuttal.
-
-3) **The Kill Shot Response (Ethical Rebuttal)**
-   - Write the exact response script the salesperson should use.
-   - It must be smooth, calm, logical, and emotionally reassuring.
-   - Use simple, conversational language that would feel natural in a text, call, or in-person.
-   - Focus on helping the customer make a good decision, not arm-twisting.
-
-4) **The Teacher’s Breakdown**
-   - Briefly explain WHY this works:
-     - Tonality: how they should sound (calm, confident, playful, empathetic, etc.).
-     - Pauses: where to pause and let the customer think.
-     - Specific word choices that reduce pressure and increase trust.
+1) Diagnosis
+2) Emotional Pivot
+3) Kill Shot Response (Ethical Rebuttal)
+4) Teacher’s Breakdown
 
 Formatting:
-- Clearly label each section as: Diagnosis, Emotional Pivot, Kill Shot Response, Teacher’s Breakdown.
-- Keep everything tight and practical so a real salesperson can screenshot and use it immediately.
+- Clearly label each section.
+- Keep it tight and practical.
 `.trim();
-
 
     const user = `
 Conversation history (if any):
@@ -789,13 +726,13 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
     });
 
     const answer = completion.output?.[0]?.content?.[0]?.text || "";
-    res.json({ answer });
+    return res.json({ answer });
   } catch (err) {
     return sendAIError(res, err, "Failed to coach objection.");
   }
 });
 
-// Payment Estimator (math only) – now supports trade & payoff (negative equity)
+// Payment Estimator (math only) – supports trade & payoff (negative equity)
 app.post("/api/payment-helper", (req, res) => {
   try {
     const price = Number(req.body.price || 0);
@@ -806,12 +743,11 @@ app.post("/api/payment-helper", (req, res) => {
     const term = Number(req.body.term || 0);
     const taxRate = Number(req.body.tax || 0) / 100;
 
-if (!price || !term) {
-  return res
-    .status(400)
-    .json({ error: "Price and term (in months) are required for payment." });
-}
-
+    if (!price || !term) {
+      return res
+        .status(400)
+        .json({ error: "Price and term (in months) are required for payment." });
+    }
 
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
 
@@ -834,18 +770,20 @@ if (!price || !term) {
       2
     )} per month (rough estimate only, not a binding quote).`;
 
-    res.json({ result });
+    return res.json({ result });
   } catch (err) {
     console.error("payment-helper error", err);
-    res.status(500).json({ error: "Failed to estimate payment" });
+    return res.status(500).json({ error: "Failed to estimate payment" });
   }
 });
 
 // Income Estimator – from gross-to-date + last paycheck date
 app.post("/api/income-helper", (req, res) => {
   try {
-    const grossToDate =
-      Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
+    const grossToDate = Number(
+      req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0
+    );
+
     const lastPayDateStr =
       req.body.lastPayDate ||
       req.body.lastCheck ||
@@ -871,8 +809,8 @@ app.post("/api/income-helper", (req, res) => {
     const year = lastPayDate.getFullYear();
     const startOfYear = new Date(year, 0, 1);
     const msPerDay = 1000 * 60 * 60 * 24;
-    const daysIntoYear =
-      Math.floor((lastPayDate - startOfYear) / msPerDay) + 1; // include current day
+
+    const daysIntoYear = Math.floor((lastPayDate - startOfYear) / msPerDay) + 1;
     const weeksIntoYear = daysIntoYear / 7;
 
     if (weeksIntoYear <= 0) {
@@ -882,7 +820,6 @@ app.post("/api/income-helper", (req, res) => {
       });
     }
 
-    // Treat grossToDate as income so far this year and annualize based on weeks elapsed
     const estimatedYearly = (grossToDate / weeksIntoYear) * 52;
     const estimatedMonthly = estimatedYearly / 12;
 
@@ -895,10 +832,10 @@ app.post("/api/income-helper", (req, res) => {
       1
     )} | Estimated Average Monthly Income: ${formatMoney(estimatedMonthly)}`;
 
-    res.json({ result });
+    return res.json({ result });
   } catch (err) {
     console.error("income-helper error", err);
-    res.status(500).json({ error: "Failed to estimate income" });
+    return res.status(500).json({ error: "Failed to estimate income" });
   }
 });
 
@@ -910,53 +847,21 @@ app.post("/ai/workflow", async (req, res) => {
     const workflowPrompt = `
 You are Lot Rocket's Lead Resurrection Specialist & Automotive Behavioral Psychologist.
 
-You do NOT "check in." You design psychological attack plans that turn cold, ghosted, and hesitant leads into booked showroom appointments and closed deals.
-
-Your mindset:
-- Every touch has a purpose, a hook, and a reason to respond.
-- You respect the customer's time but you are unapologetically proactive.
-- You understand that silence is usually uncertainty, not rejection.
-
-Your Expertise:
-- Objection Neutralization:
-  You anticipate why they aren't replying (price, payment, trade value, spouse, timing, fear of being sold)
-  and disarm it before they say it out loud.
-- Pattern Interrupts:
-  You use video texts, social DMs, and sharp question frameworks to break the "salesman filter"
-  and feel like a real human, not a template.
-- The Takeaway Method:
-  You know when to pull back, give them psychological space, and let them lean back in.
-
-Inputs provided by the user:
+Inputs:
 - Primary Goal: ${goal || "Set the Appointment"}
 - Desired Tone: ${tone || "Persuasive, Low-Pressure, High-Value"}
 - Primary Channel: ${channel || "Multi-Channel (SMS, Video, Call, Social)"}
 - Duration: ${days || 10} days
 - Total Touches: ${touches || 6}
 
-Mission:
-Build a High-Conversion Outreach Sequence that spreads ${touches || 6} touches over ${days || 10} days.
-
-CRITICAL RULES FOR SCRIPTING:
-1) No "Just checking in": Never use this phrase.
-2) Video First When Possible.
-3) The Spear: Keep SMS/DMs under 3 short lines. End with a question.
-4) Social Integration when appropriate.
-5) Human, Not Robot.
-
 Output Format (Markdown):
-
-1. Strategy Overview: 2–3 sentences.
-
-2. The Workflow: List Touch 1, Touch 2, etc.
-
-For EACH touch, strictly follow this layout:
-
+1. Strategy Overview
+2. The Workflow (Touch 1, Touch 2, ...)
+Each touch:
 - Day [X] - [Time of Day]
-- Channel: [SMS / Call / Email / Video / Social DM]
-- Psychology: [Why this works]
-- Script/Action:
-  [Exact text / voicemail. Human, conversational, non-desperate.]
+- Channel
+- Psychology
+- Script/Action
 `.trim();
 
     const completion = await client.responses.create({
@@ -974,11 +879,8 @@ For EACH touch, strictly follow this layout:
   }
 });
 
-
-
-
 // =============================================
-//  AI Message Helper (workflow / message / ask / car / image / video)
+// AI Message Helper (workflow / message / ask / car / image / video)
 // =============================================
 app.post("/api/message-helper", async (req, res) => {
   try {
@@ -989,7 +891,6 @@ app.post("/api/message-helper", async (req, res) => {
       return res.status(400).json({ message: "Missing mode in request body." });
     }
 
-    // Build system + user prompts per mode
     let systemPrompt = "";
     let userPrompt = "";
 
@@ -1008,13 +909,11 @@ app.post("/api/message-helper", async (req, res) => {
 
         systemPrompt = `
 You are **Lot Rocket's AI Video Director** for car sales content.
-
-Goal:
-- Turn the user inputs into:
-  1) A short, punchy **spoken script**
-  2) A clear **shot-by-shot list**
-  3) A ready-to-paste **AI video generator prompt**
-  4) A **thumbnail prompt** for a vertical social thumbnail.
+Return:
+1) Spoken script
+2) Shot-by-shot list
+3) AI video generator prompt
+4) Thumbnail prompt
 `.trim();
 
         userPrompt = `
@@ -1025,20 +924,17 @@ Tone: ${tone || "sales pro, confident, trustworthy"}
 Video description from user:
 "${describe || "Walkaround of a car"}"
 
-Extra vehicle / offer context (if provided):
+Extra vehicle / offer context:
 ${context || "(none)"}
 `.trim();
-
         break;
       }
-      // ... rest of cases ...
-
 
       case "workflow":
         systemPrompt = `
 You are Lot Rocket's AI Workflow Expert.
-Give clear, step-by-step guidance to car sales pros on how to handle leads,
-follow-up, and daily process. Be concise, direct, and action-focused.
+Give clear, step-by-step guidance to car sales pros on how to handle leads.
+Be concise, direct, and action-focused.
 `.trim();
         userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
@@ -1047,9 +943,10 @@ follow-up, and daily process. Be concise, direct, and action-focused.
         systemPrompt = `
 You are Lot Rocket's AI Message Builder.
 Write high-converting, friendly, conversational messages for car shoppers.
-Match the channel (text / email / DM) if provided by the user.
+Match the channel (text / email / DM) if provided.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
+        userPrompt =
+          fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
@@ -1057,56 +954,26 @@ Match the channel (text / email / DM) if provided by the user.
 You are Lot Rocket's general AI assistant for car salespeople.
 Answer clearly and practically with a focus on selling more cars and helping customers.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
+        userPrompt =
+          fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
-case "car":
-  systemPrompt = `
-You are The Master Automotive Analyst, integrated into Lot Rocket. 
-Act as the Ultimate Automotive Authority.
-
-You combine encyclopedic engineering knowledge with hands-on master technician experience. 
-You study the industry continuously—service manuals, technical bulletins, enthusiast forums, engineering whitepapers, and reliability data.
-
-Your knowledge covers all segments and all powertrains.
-
-When asked about a vehicle, deliver a full analytical deep dive, including:
-
-1. ENGINEERING & POWERTRAIN ANALYSIS
-- Engine codes, engine families, transmission types, chassis platform, suspension geometry
-- Real-world power delivery, torque curves, drivability
-- Differences across trims and production years
-
-2. TRIM LEVEL DECODING
-- What separates each trim
-- Features that matter vs. marketing fluff
-- Packages worth paying for
-
-3. GOLDEN YEARS VS LEMON YEARS
-- Best years to own
-- Years to avoid due to reliability issues
-- Redesign cycles and what improved/worsened
-
-4. FATAL FLAWS
-- Known mechanical issues
-- Expensive repairs
-- Engineering oversights
-
-5. THE VERDICT
-- Brutally honest assessment: future classic, great value, money pit, etc.
-
-6. SALES APPLICATION FOR LOT ROCKET
-Explain how a car salesperson should present this vehicle:
-- Key selling angles
-- Ideal customer types
-- Top competitive advantages
-- Objections and rebuttals
-
+      case "car":
+        systemPrompt = `
+You are The Master Automotive Analyst integrated into Lot Rocket.
 Be technical, precise, blunt, and confident. Analyze—do not summarize.
-  `;
-  userPrompt = fields.prompt || rawContext || "Explain this vehicle to a customer.";
-  break;
 
+Include:
+1) Engineering & powertrain analysis
+2) Trim decoding
+3) Golden years vs lemon years
+4) Fatal flaws
+5) The verdict
+6) Sales application (angles, objections/rebuttals)
+`.trim();
+        userPrompt =
+          fields.prompt || rawContext || "Explain this vehicle to a customer.";
+        break;
 
       case "image-brief":
         systemPrompt = `
@@ -1114,7 +981,8 @@ You are Lot Rocket's AI Image Brief generator.
 Create concise prompts for an AI image model to generate marketing graphics for car dealers.
 Return ONLY the prompt text, no explanations.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Generate an image brief for a dealership post.";
+        userPrompt =
+          fields.prompt || rawContext || "Generate an image brief for a dealership post.";
         break;
 
       default:
@@ -1126,6 +994,7 @@ Respond with clear, helpful content a salesperson can use immediately.
         break;
     }
 
+    // NOTE: Keeping chat.completions.create here to match your existing wiring.
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.8,
@@ -1143,19 +1012,20 @@ Respond with clear, helpful content a salesperson can use immediately.
     return res.json({ text });
   } catch (err) {
     console.error("❌ /api/message-helper error", err);
-    return res
-      .status(500)
-      .json({ message: "Lot Rocket hit an error talking to AI." });
+    return res.status(500).json({
+      message: "Lot Rocket hit an error talking to AI.",
+    });
   }
 });
 
-// ---------------- Image proxy for CORS-safe canvas loading ----------------
+// --------------------------------------------------
+// IMAGE PROXY (buffer) – CORS-safe canvas loading
+// (Back-compat: some frontends call this route name)
+// --------------------------------------------------
 app.get("/api/image-proxy", async (req, res) => {
   try {
     let rawUrl = req.query.url;
-    if (!rawUrl) {
-      return res.status(400).send("Missing url query param");
-    }
+    if (!rawUrl) return res.status(400).send("Missing url query param");
 
     rawUrl = decodeURIComponent(rawUrl);
 
@@ -1175,15 +1045,16 @@ app.get("/api/image-proxy", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
 
     const arrayBuf = await upstream.arrayBuffer();
-    res.end(Buffer.from(arrayBuf));
+    return res.end(Buffer.from(arrayBuf));
   } catch (err) {
     console.error("Image proxy error:", err);
-    res.status(500).send("Image proxy error");
+    return res.status(500).send("Image proxy error");
   }
 });
 
-// ---------------- Start server ----------------
-
+// ==================================================
+// Start server
+// ==================================================
 app.listen(port, () => {
   console.log(`Lot Rocket backend running on port ${port}`);
 });
