@@ -935,7 +935,7 @@ Inputs provided by the user:
 - Total Touches: ${touches || 6}
 
 Mission:
-Build a High-Conversion Outreach Sequence that spreads ${touches} touches over ${days} days.
+Build a High-Conversion Outreach Sequence that spreads ${touches || 6} touches over ${days || 10} days.
 The sequence should feel like it was built by a top 1% car salesperson who respects the customer
 and knows exactly when to push, when to educate, and when to pull back.
 
@@ -974,13 +974,18 @@ For EACH touch, strictly follow this layout:
 - Psychology: [Why this works, e.g., "Value Add", "Pattern Interrupt", "Soft Takeaway"]
 - Script/Action:
   [The exact text to send or voicemail to leave. Make it sound human, conversational, and non-desperate.]
-
-Make the entire sequence feel cohesive, intentional, and designed to resurrect a real, living lead — not blast a list.
 `.trim();
 
     const completion = await client.responses.create({
       model: "gpt-4o-mini",
-      input: workflowPrompt,
+      input: [
+        {
+          role: "system",
+          content:
+            "You are Lot Rocket's AI Workflow Expert. Return Markdown only. No JSON.",
+        },
+        { role: "user", content: workflowPrompt },
+      ],
     });
 
     const text =
@@ -992,6 +997,7 @@ Make the entire sequence feel cohesive, intentional, and designed to resurrect a
     return sendAIError(res, err, "Failed to generate workflow.");
   }
 });
+
 
 
 // =============================================
