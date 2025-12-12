@@ -1,19 +1,22 @@
 /* ======================================================
-   LOT ROCKET – CLEAN STABLE CSS (v2.5.6 – layout restored)
-   Goal: restore Step 2 "card grid" + proper form stacking
+   LOT ROCKET – CLEAN STABLE CSS (v2.5.6 – STEP2 GRID FIX)
    ====================================================== */
 
-/* -------------------- RESET -------------------- */
+/* ---------- RESET ---------- */
 *,
 *::before,
-*::after { box-sizing: border-box; }
+*::after {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* ---------- THEME TOKENS ---------- */
 :root {
   --bg-main: #020617;
   --bg-panel: #020617;
@@ -22,115 +25,16 @@ html, body {
   --text-muted: #9ca3af;
   --accent-1: #f97316;
   --accent-2: #ec4899;
-
-  --card-radius: 18px;
-  --btn-radius: 999px;
 }
 
-/* -------------------- THEME -------------------- */
 body.dark-theme {
   background: radial-gradient(circle at top left, #020617, #020617);
   color: var(--text-main);
 }
 
-/* -------------------- TYPOGRAPHY -------------------- */
-h1, h2, h3 { margin: 0 0 0.65rem; }
-h2 { font-size: 1.15rem; letter-spacing: 0.2px; }
-h3 { font-size: 0.95rem; letter-spacing: 0.2px; }
-
-.small-note {
-  margin: 0.35rem 0 0.75rem;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-
-/* -------------------- HEADER -------------------- */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.2rem 3rem;
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.branding h1 {
-  font-size: 1.6rem;
-}
-
-.branding p {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-/* -------------------- LAYOUT -------------------- */
-.layout {
-  display: grid;
-  grid-template-columns: 1.05fr 1.6fr;
-  gap: 2.5rem;
-  padding: 1.5rem 15rem 3rem 3rem; /* space for floating tools */
-}
-
-/* columns */
-.column { min-width: 0; } /* prevents overflow */
-.column-left { }
-.column-middle { }
-.column-right { grid-column: 1 / span 1; } /* Step 3 sits under Step 1 by default */
-
-/* Step 2 header spacing */
-.step2-header { margin-bottom: 0.75rem; }
-
-/* -------------------- PANELS / CARDS -------------------- */
-.summary-box,
-.platform-card,
-.lab-card,
-.panel {
-  background: var(--bg-panel);
-  border-radius: var(--card-radius);
-  border: 1px solid var(--border-soft);
-  padding: 1.1rem;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-}
-
-.inner-summary {
-  margin-top: 0.8rem;
-  padding: 0.9rem;
-}
-
-/* -------------------- FORMS (IMPORTANT FIX) -------------------- */
-.field {
-  display: block;
-  margin: 0.75rem 0;
-}
-
-.field-label {
-  display: block;
-  font-size: 0.86rem;
-  color: var(--text-main);
-  margin-bottom: 0.35rem;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
-  width: 100%;
-  border-radius: 14px;
-  padding: 0.65rem 0.75rem;
-  background: #020617;
-  border: 1px solid var(--border-soft);
-  color: var(--text-main);
-  outline: none;
-}
-
-input::placeholder,
-textarea::placeholder { color: rgba(156, 163, 175, 0.75); }
-
-/* Textareas (auto-grow compatible) */
+/* ---------- GLOBAL TEXTAREAS ---------- */
 textarea {
   width: 100%;
-  min-height: 120px;
   resize: none;
   overflow-y: hidden;
   line-height: 1.5;
@@ -141,78 +45,161 @@ textarea {
   color: var(--text-main);
 }
 
-/* -------------------- BUTTONS -------------------- */
+/* ---------- HEADER ---------- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 3rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.branding h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.branding p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- MAIN LAYOUT ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: 1.05fr 1.6fr;
+  gap: 2.5rem;
+  padding: 1.5rem 15rem 3rem 3rem; /* space for floating tools */
+}
+
+.column h2 {
+  margin: 0 0 1rem;
+}
+
+.small-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+/* ---------- PANELS ---------- */
+.summary-box,
+.platform-card,
+.lab-card {
+  background: var(--bg-panel);
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  padding: 1.1rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.summary-box + .summary-box {
+  margin-top: 1.2rem;
+}
+
+/* ---------- INPUTS ---------- */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  width: 100%;
+  margin-top: 0.35rem;
+  margin-bottom: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: #020617;
+  color: var(--text-main);
+}
+
+/* ---------- BUTTONS ---------- */
 .primary-btn {
-  border-radius: var(--btn-radius);
+  border-radius: 999px;
   border: none;
   padding: 0.6rem 1.4rem;
   font-weight: 700;
   cursor: pointer;
   background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
   color: #020617;
-  box-shadow: 0 0 22px rgba(249,115,22,0.8);
+  box-shadow: 0 0 22px rgba(249, 115, 22, 0.8);
 }
 
 .secondary-btn {
-  border-radius: var(--btn-radius);
+  border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: #020617;
   color: var(--text-main);
-  padding: 0.5rem 1.1rem;
+  padding: 0.45rem 1.2rem;
   cursor: pointer;
 }
 
-.full { width: 100%; }
-.summary-btn { margin-top: 0.9rem; }
+.full {
+  width: 100%;
+}
 
 .btn-row {
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
-  margin-top: 0.65rem;
+  margin-top: 0.7rem;
 }
 
-.regen-btn,
-.copy-btn {
-  border-radius: var(--btn-radius);
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  padding: 0.35rem 0.9rem;
-  cursor: pointer;
-  font-size: 0.78rem;
+/* ---------- STEP 2 (THIS IS THE FIX) ---------- */
+.column-middle {
+  display: block;
 }
 
-/* -------------------- STEP 2 GRID (KEY RESTORE) -------------------- */
+.step2-subtitle {
+  margin: 0.25rem 0 1.2rem;
+}
+
 .step2-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* ✅ pic-1 style two-up cards */
-  gap: 1.2rem;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 1.4rem;
+  align-items: stretch;
 }
 
-/* Make cards look like “shorter” blocks vs tall stacked */
+.step2-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;          /* compact card height like your old screenshot */
+  border-radius: 18px;
+}
+
+.step2-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.2px;
+}
+
 .step2-card textarea {
-  min-height: 140px;
+  min-height: 120px;          /* keeps them compact */
+  flex: 1;
 }
 
-/* -------------------- PHOTO GRID (STEP 1) -------------------- */
+.step2-card .btn-row {
+  margin-top: 0.7rem;
+}
+
+/* ---------- PHOTO GRID (STEP 1) ---------- */
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.65rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
   margin-top: 0.9rem;
 }
 
 .photo-grid img {
   width: 100%;
-  height: 84px;
+  height: 92px;
   object-fit: cover;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  cursor: pointer;
+  border: 1px solid var(--border-soft);
 }
 
-/* -------------------- FLOATING TOOLS -------------------- */
+/* ---------- FLOATING TOOLS ---------- */
 .floating-tools {
   position: fixed;
   right: 1.5rem;
@@ -226,92 +213,70 @@ textarea {
 .tool-button {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
+  gap: 0.55rem;
   padding: 0.5rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: #020617;
   color: var(--text-main);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  box-shadow: 0 0 16px rgba(56,189,248,0.7);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.7);
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .tool-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 26px rgba(56,189,248,1);
+  box-shadow: 0 0 26px rgba(56, 189, 248, 1);
 }
 
-.tool-icon { width: 18px; display: inline-flex; justify-content: center; }
-
-/* -------------------- MODALS (RIGHT SLIDE-IN) -------------------- */
+/* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
 .side-modal {
   position: fixed;
   inset: 0;
   display: flex;
   justify-content: flex-end;
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.75);
   z-index: 100;
 }
 
-.side-modal.hidden { display: none; }
+.side-modal.hidden {
+  display: none;
+}
 
 .side-modal-content {
-  width: 360px;
-  max-width: 92vw;
+  width: 340px;
   background: #020617;
   border-left: 1px solid var(--border-soft);
   display: flex;
   flex-direction: column;
 }
 
-.side-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.side-modal-body {
-  padding: 1rem;
-  overflow: auto;
-}
-
-.modal-close-btn {
-  border: 1px solid rgba(255,255,255,0.15);
-  background: transparent;
-  color: var(--text-main);
-  border-radius: 10px;
-  padding: 0.25rem 0.55rem;
-  cursor: pointer;
-}
-
-/* -------------------- DRILL MODE -------------------- */
+/* ---------- DRILL MODE ---------- */
 #drillModeModal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 120;
 }
 
-#drillModeModal.hidden { display: none; }
+#drillModeModal.hidden {
+  display: none;
+}
 
 #drillModeModal .modal-content {
   width: 420px;
-  max-width: 92vw;
   background: #0a0f1c;
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .objection-box {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 12px;
@@ -328,11 +293,14 @@ textarea {
   margin-top: 14px;
   padding: 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
-/* -------------------- TOOLTIP -------------------- */
-.tooltip { position: relative; cursor: pointer; }
+/* ---------- TOOLTIP ---------- */
+.tooltip {
+  position: relative;
+  cursor: pointer;
+}
 
 .tooltip::after {
   content: attr(data-tooltip);
@@ -341,19 +309,21 @@ textarea {
   left: 50%;
   transform: translateX(-50%);
   width: 220px;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   color: #fff;
   padding: 8px;
   border-radius: 8px;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease;
-  pointer-events: none;
 }
 
-.tooltip:hover::after { opacity: 1; visibility: visible; }
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
 
-/* -------------------- MOBILE -------------------- */
+/* ---------- RESPONSIVE ---------- */
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr;
@@ -361,7 +331,7 @@ textarea {
   }
 
   .step2-grid {
-    grid-template-columns: 1fr; /* stacks on mobile */
+    grid-template-columns: 1fr;
   }
 
   .floating-tools {
@@ -369,6 +339,6 @@ textarea {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    margin: 1rem 0;
+    margin-top: 1rem;
   }
 }
