@@ -1,4 +1,4 @@
-// public/app.js – Lot Rocket frontend logic v2.5.9 (cleaned)
+// public/app.js – Lot Rocket frontend logic v2.5.9 (CLEANED)
 // Stable: theme toggle, Boost, calculators, side tools.
 // Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
 
@@ -6,23 +6,24 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded v2.5.9");
   const apiBase = "";
 
-function autoResizeTextarea(el) {
-  if (!el) return;
-  el.style.height = "auto";
-  el.style.height = (el.scrollHeight + 4) + "px";
-}
+  // ==================================================
+  // UTIL
+  // ==================================================
+  function autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + 4 + "px";
+  }
 
-// Apply auto-grow behavior to ALL textareas
-const allTextareas = document.querySelectorAll("textarea");
-allTextareas.forEach((ta) => {
-  autoResizeTextarea(ta); 
-  ta.addEventListener("input", () => autoResizeTextarea(ta));
-});
+  // Auto-grow ALL textareas
+  document.querySelectorAll("textarea").forEach((ta) => {
+    autoResizeTextarea(ta);
+    ta.addEventListener("input", () => autoResizeTextarea(ta));
+  });
 
-  // Brand palette for Design Studio 3.5
   const BRAND = {
-    primary: "#f97316", // accent-1
-    secondary: "#ec4899", // accent-2
+    primary: "#f97316",
+    secondary: "#ec4899",
     dark: "#020617",
     light: "#f9fafb",
     textLight: "#f9fafb",
@@ -31,29 +32,22 @@ allTextareas.forEach((ta) => {
 
   const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
 
-  // --------------------------------------------------
+  // ==================================================
   // THEME TOGGLE
-  // --------------------------------------------------
+  // ==================================================
   const themeToggleInput = document.getElementById("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
-      if (isDark) {
-        document.body.classList.add("dark-theme");
-      } else {
-        document.body.classList.remove("dark-theme");
-      }
-      themeToggleInput.checked = isDark;
+      document.body.classList.toggle("dark-theme", !!isDark);
+      themeToggleInput.checked = !!isDark;
     };
     applyTheme(true);
-    themeToggleInput.addEventListener("change", () => {
-      applyTheme(themeToggleInput.checked);
-    });
+    themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
   }
 
   // ==================================================
   // STEP 1 – DEALER URL + SOCIAL KIT
   // ==================================================
-
   const vehicleUrlInput = document.getElementById("vehicleUrl");
   const vehicleLabelInput = document.getElementById("vehicleLabel");
   const priceInfoInput = document.getElementById("priceInfo");
@@ -74,16 +68,7 @@ allTextareas.forEach((ta) => {
 
   const photosGrid = document.getElementById("photosGrid");
 
-
-
-
-
-
-
-
-
-
-  // Dealer photos state (allows selection)
+  // Dealer photos state
   let dealerPhotos = []; // [{ src, selected }]
 
   function renderDealerPhotos() {
@@ -93,8 +78,7 @@ allTextareas.forEach((ta) => {
     dealerPhotos.forEach((photo, index) => {
       const wrapper = document.createElement("button");
       wrapper.type = "button";
-      wrapper.className =
-        "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
+      wrapper.className = "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
       wrapper.dataset.index = String(index);
 
       const img = document.createElement("img");
@@ -110,6 +94,7 @@ allTextareas.forEach((ta) => {
     photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
+        if (!dealerPhotos[idx]) return;
         dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
         renderDealerPhotos();
       });
@@ -129,76 +114,39 @@ allTextareas.forEach((ta) => {
     }
 
     boostButton.disabled = true;
-    if (statusText)
-      statusText.textContent = "Scraping dealer page and building kit…";
+    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
 
     try {
       const res = await fetch(apiBase + "/api/social-kit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url,
-          labelOverride,
-          priceOverride,
-        }),
+        body: JSON.stringify({ url, labelOverride, priceOverride }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status}).`);
 
-      if (!res.ok) {
-        const msg =
-          (data && data.message) ||
-          `Something went wrong building the kit (HTTP ${res.status}).`;
-        throw new Error(msg);
-      }
-
-      // Summary / overrides
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
       if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
 
-      if (vehicleLabelInput && !vehicleLabelInput.value) {
-        vehicleLabelInput.value = data.vehicleLabel || "";
-      }
-      if (priceInfoInput && !priceInfoInput.value) {
-        priceInfoInput.value = data.priceInfo || "";
-      }
+      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = data.vehicleLabel || "";
+      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = data.priceInfo || "";
 
-      // Social posts
-      if (facebookPost) {
-        facebookPost.value = data.facebook || "";
-        autoResizeTextarea(facebookPost);
-      }
-      if (instagramPost) {
-        instagramPost.value = data.instagram || "";
-        autoResizeTextarea(instagramPost);
-      }
-      if (tiktokPost) {
-        tiktokPost.value = data.tiktok || "";
-        autoResizeTextarea(tiktokPost);
-      }
-      if (linkedinPost) {
-        linkedinPost.value = data.linkedin || "";
-        autoResizeTextarea(linkedinPost);
-      }
-      if (twitterPost) {
-        twitterPost.value = data.twitter || "";
-        autoResizeTextarea(twitterPost);
-      }
-      if (textBlurb) {
-        textBlurb.value = data.text || "";
-        autoResizeTextarea(textBlurb);
-      }
-      if (marketplacePost) {
-        marketplacePost.value = data.marketplace || "";
-        autoResizeTextarea(marketplacePost);
-      }
-      if (hashtags) {
-        hashtags.value = data.hashtags || "";
-        autoResizeTextarea(hashtags);
-      }
+      const setTA = (el, v) => {
+        if (!el) return;
+        el.value = v || "";
+        autoResizeTextarea(el);
+      };
 
+      setTA(facebookPost, data.facebook);
+      setTA(instagramPost, data.instagram);
+      setTA(tiktokPost, data.tiktok);
+      setTA(linkedinPost, data.linkedin);
+      setTA(twitterPost, data.twitter);
+      setTA(textBlurb, data.text);
+      setTA(marketplacePost, data.marketplace);
+      setTA(hashtags, data.hashtags);
 
-      // Photos – cap to 40
       const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
@@ -207,23 +155,17 @@ allTextareas.forEach((ta) => {
       if (statusText) statusText.textContent = "Social kit ready ✔";
     } catch (err) {
       console.error("❌ Boost error:", err);
-      if (statusText)
-        statusText.textContent =
-          err && err.message
-            ? err.message
-            : "Failed to build kit. Try again in a moment.";
+      if (statusText) statusText.textContent = err?.message || "Failed to build kit.";
     } finally {
-      if (boostButton) boostButton.disabled = false;
+      boostButton.disabled = false;
     }
   }
 
-  if (boostButton) {
-    boostButton.addEventListener("click", doBoostListing);
-  }
+  if (boostButton) boostButton.addEventListener("click", doBoostListing);
 
-  // --------------------------------------------------
+  // ==================================================
   // COPY / REGEN
-  // --------------------------------------------------
+  // ==================================================
   document.querySelectorAll(".copy-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-copy-target");
@@ -261,72 +203,39 @@ allTextareas.forEach((ta) => {
       btn.textContent = "Thinking…";
 
       try {
-        const label =
-          vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
-        const price =
-          priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
+        const label = vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
+        const price = priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
 
         const res = await fetch(apiBase + "/api/new-post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            platform,
-            url,
-            label,
-            price,
-          }),
+          body: JSON.stringify({ platform, url, label, price }),
         });
 
-        const data = await res.json();
-        if (!res.ok) {
-          const msg =
-            (data && data.message) || `Error generating post (HTTP ${res.status}).`;
-          throw new Error(msg);
-        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.message || `Regen failed (HTTP ${res.status}).`);
 
         const text = data.text || "";
-        let targetId = "";
-        switch (platform) {
-          case "facebook":
-            targetId = "facebookPost";
-            break;
-          case "instagram":
-            targetId = "instagramPost";
-            break;
-          case "tiktok":
-            targetId = "tiktokPost";
-            break;
-          case "linkedin":
-            targetId = "linkedinPost";
-            break;
-          case "twitter":
-            targetId = "twitterPost";
-            break;
-          case "text":
-            targetId = "textBlurb";
-            break;
-          case "marketplace":
-            targetId = "marketplacePost";
-            break;
-          case "hashtags":
-            targetId = "hashtags";
-            break;
-        }
-         if (targetId) {
-          const ta = document.getElementById(targetId);
-          if (ta) {
-            ta.value = text;
-            autoResizeTextarea(ta);
-          }
-        }
+        const map = {
+          facebook: "facebookPost",
+          instagram: "instagramPost",
+          tiktok: "tiktokPost",
+          linkedin: "linkedinPost",
+          twitter: "twitterPost",
+          text: "textBlurb",
+          marketplace: "marketplacePost",
+          hashtags: "hashtags",
+        };
 
+        const targetId = map[platform] || "";
+        const ta = targetId ? document.getElementById(targetId) : null;
+        if (ta) {
+          ta.value = text;
+          autoResizeTextarea(ta);
+        }
       } catch (err) {
         console.error("❌ regen error", err);
-        alert(
-          err && err.message
-            ? err.message
-            : "Failed to generate a new post. Try again."
-        );
+        alert(err?.message || "Failed to generate a new post.");
       } finally {
         btn.disabled = false;
         btn.textContent = original;
@@ -335,21 +244,19 @@ allTextareas.forEach((ta) => {
   });
 
   // ==================================================
-  // MODALS + TOOLS
+  // RIGHT-SIDE TOOL MODALS (DRAWERS)
   // ==================================================
-
   const videoContextField = document.getElementById("videoContext");
 
   function buildVideoContextFromKit() {
     const parts = [];
-
     const label =
-      (vehicleLabelInput && vehicleLabelInput.value.trim()) ||
-      (summaryLabel && (summaryLabel.textContent || "").trim()) ||
+      vehicleLabelInput?.value.trim() ||
+      (summaryLabel?.textContent || "").trim() ||
       "";
     const price =
-      (priceInfoInput && priceInfoInput.value.trim()) ||
-      (summaryPrice && (summaryPrice.textContent || "").trim()) ||
+      priceInfoInput?.value.trim() ||
+      (summaryPrice?.textContent || "").trim() ||
       "";
     const url = vehicleUrlInput ? vehicleUrlInput.value.trim() : "";
     const tags = hashtags ? (hashtags.value || "").trim() : "";
@@ -361,10 +268,6 @@ allTextareas.forEach((ta) => {
 
     return parts.join("\n");
   }
-
-  // ----------------------------------------------
-  // RIGHT-SIDE FLOATING TOOL MODALS (DRAWERS)
-  // ----------------------------------------------
 
   const TOOL_CONFIG = [
     ["objectionLauncher", "objectionModal"],
@@ -382,59 +285,38 @@ allTextareas.forEach((ta) => {
   function wireToolDrawer(launcherId, modalId, onOpen) {
     const launcher = document.getElementById(launcherId);
     const modal = document.getElementById(modalId);
-
-    const haveLauncher = !!launcher;
-    const haveModal = !!modal;
-    console.log(
-      "[LotRocket] modal pair:",
-      launcherId,
-      "launcher?",
-      haveLauncher,
-      "|",
-      modalId,
-      "modal?",
-      haveModal
-    );
-
     if (!launcher || !modal) return;
 
-    // Try both possible close-button classes
+    if (launcher.dataset.wired === "true") return;
+    launcher.dataset.wired = "true";
+
     const closeBtn =
       modal.querySelector(".side-modal-close") ||
       modal.querySelector(".modal-close-btn");
 
-    const backdropClose = (e) => {
-      if (e.target === modal) {
-        // click on dark backdrop closes
-        modal.classList.add("hidden");
-        modal.style.display = "none";
-      }
+    const close = () => {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
     };
 
     launcher.addEventListener("click", () => {
-      console.log("[LotRocket] CLICK from", launcherId);
-      // open drawer
       modal.classList.remove("hidden");
-      // force it visible even if CSS is confused
       modal.style.display = "flex";
-
       if (typeof onOpen === "function") onOpen();
     });
 
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => {
-        modal.classList.add("hidden");
-        modal.style.display = "none";
-      });
+    if (closeBtn && closeBtn.dataset.wired !== "true") {
+      closeBtn.dataset.wired = "true";
+      closeBtn.addEventListener("click", close);
     }
 
-    modal.addEventListener("click", backdropClose);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) close();
+    });
   }
 
-  // Wire all tool drawers
   TOOL_CONFIG.forEach(([launcherId, modalId]) => {
     if (launcherId === "videoLauncher") {
-      // When opening the video drawer, auto-fill context
       wireToolDrawer(launcherId, modalId, () => {
         if (videoContextField) {
           videoContextField.value = buildVideoContextFromKit();
@@ -445,40 +327,33 @@ allTextareas.forEach((ta) => {
       wireToolDrawer(launcherId, modalId);
     }
   });
-  // ----------------------------------------------
-  // BASIC SIDE-CALCULATOR (scratchpad keypad)
-  // ----------------------------------------------
+
+  // ==================================================
+  // BASIC CALCULATOR (scratchpad keypad)
+  // ==================================================
   const basicCalcDisplay = document.getElementById("basicCalcDisplay");
   const basicCalcButtons = document.querySelectorAll("[data-calc-key]");
 
   if (basicCalcDisplay && basicCalcButtons.length) {
     let calcExpr = "";
 
-    function renderCalc() {
-      basicCalcDisplay.value = calcExpr || "0";
-    }
+    const renderCalc = () => (basicCalcDisplay.value = calcExpr || "0");
 
     basicCalcButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const key = btn.getAttribute("data-calc-key");
         if (!key) return;
 
-        if (key === "C") {
-          calcExpr = "";
-        } else if (key === "DEL") {
-          calcExpr = calcExpr.slice(0, -1);
-        } else if (key === "=") {
+        if (key === "C") calcExpr = "";
+        else if (key === "DEL") calcExpr = calcExpr.slice(0, -1);
+        else if (key === "=") {
           try {
-            // very simple eval – fine for this local scratchpad
             // eslint-disable-next-line no-eval
-            const result = eval(calcExpr || "0");
-            calcExpr = String(result);
+            calcExpr = String(eval(calcExpr || "0"));
           } catch {
             calcExpr = "";
           }
-        } else {
-          calcExpr += key;
-        }
+        } else calcExpr += key;
 
         renderCalc();
       });
@@ -487,153 +362,132 @@ allTextareas.forEach((ta) => {
     renderCalc();
   }
 
+  // ==================================================
+  // PAYMENT CALCULATOR
+  // ==================================================
+  const paymentForm = document.getElementById("paymentForm");
+  if (paymentForm) {
+    const priceInput = document.getElementById("paymentPrice");
+    const cashDownInput = document.getElementById("paymentCashDown");
+    const tradeValueInput = document.getElementById("paymentTradeValue");
+    const tradeOweInput = document.getElementById("paymentTradeOwe");
+    const rateInput = document.getElementById("paymentRate");
+    const termInput = document.getElementById("paymentTerm");
+    const taxInput = document.getElementById("paymentTax");
 
+    const paymentMonthlyEl = document.getElementById("paymentMonthly");
+    const paymentDetailsEl = document.getElementById("paymentDetails");
 
+    const cleanNumber = (val) => {
+      if (!val) return 0;
+      const n = parseFloat(String(val).replace(/[^0-9.]/g, ""));
+      return Number.isNaN(n) ? 0 : n;
+    };
 
+    paymentForm.addEventListener("submit", (e) => {
+      e.preventDefault();
 
-// ---------- PAYMENT CALCULATOR ----------
-const paymentForm = document.getElementById("paymentForm");
-if (paymentForm) {
-  const priceInput = document.getElementById("paymentPrice");
-  const cashDownInput = document.getElementById("paymentCashDown");
-  const tradeValueInput = document.getElementById("paymentTradeValue");
-  const tradeOweInput = document.getElementById("paymentTradeOwe");
-  const rateInput = document.getElementById("paymentRate");
-  const termInput = document.getElementById("paymentTerm");
-  const taxInput = document.getElementById("paymentTax");
+      const price = cleanNumber(priceInput?.value);
+      const cashDown = cleanNumber(cashDownInput?.value);
+      const tradeValue = cleanNumber(tradeValueInput?.value);
+      const tradeOwe = cleanNumber(tradeOweInput?.value);
+      const apr = parseFloat(rateInput?.value || "0");
+      const years = parseFloat(termInput?.value || "0");
+      const taxRate = parseFloat(taxInput?.value || "0");
 
-  const paymentMonthlyEl = document.getElementById("paymentMonthly");
-  const paymentDetailsEl = document.getElementById("paymentDetails");
+      if (!price || !years) {
+        if (paymentDetailsEl)
+          paymentDetailsEl.textContent = "Please enter at least a vehicle price and term in years.";
+        return;
+      }
 
-  const cleanNumber = (val) => {
-    if (!val) return 0;
-    const n = parseFloat(String(val).replace(/[^0-9.]/g, ""));
-    return Number.isNaN(n) ? 0 : n;
-  };
+      const taxableBase = Math.max(price - tradeValue, 0);
+      const taxAmount = taxableBase * (taxRate / 100);
 
-  paymentForm.addEventListener("submit", (e) => {
-    e.preventDefault();
+      let financedBeforeTax = price - cashDown - tradeValue + tradeOwe;
+      if (financedBeforeTax < 0) financedBeforeTax = 0;
 
-    const price = cleanNumber(priceInput.value);
-    const cashDown = cleanNumber(cashDownInput.value);
-    const tradeValue = cleanNumber(tradeValueInput.value);
-    const tradeOwe = cleanNumber(tradeOweInput.value);
-    const apr = parseFloat(rateInput.value || "0");
-    const years = parseFloat(termInput.value || "0");
-    const taxRate = parseFloat(taxInput.value || "0");
+      const amountFinanced = financedBeforeTax + taxAmount;
+      const months = years * 12;
 
-    if (!price || !years) {
-      paymentDetailsEl.textContent =
-        "Please enter at least a vehicle price and term in years.";
-      return;
-    }
+      let monthly = 0;
+      if (apr > 0) {
+        const monthlyRate = apr / 100 / 12;
+        const factor = Math.pow(1 + monthlyRate, months);
+        monthly = (amountFinanced * (monthlyRate * factor)) / (factor - 1);
+      } else {
+        monthly = amountFinanced / months;
+      }
 
-    // Taxable amount: price minus trade value (never below zero)
-    const taxableBase = Math.max(price - tradeValue, 0);
-    const taxAmount = taxableBase * (taxRate / 100);
+      const negativeEquity = Math.max(tradeOwe - tradeValue, 0);
 
-    // Amount financed before tax:
-    // price - cash down - trade value + payoff on trade
-    let financedBeforeTax = price - cashDown - tradeValue + tradeOwe;
-    if (financedBeforeTax < 0) financedBeforeTax = 0;
+      const fmtMoney = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    const amountFinanced = financedBeforeTax + taxAmount;
+      if (paymentMonthlyEl) paymentMonthlyEl.textContent = `$${fmtMoney(monthly)}`;
 
-    const months = years * 12;
-    let monthly = 0;
+      let details = `Amount Financed (est.): $${fmtMoney(amountFinanced)}. `;
+      details += `Includes approx. $${fmtMoney(taxAmount)} in tax. `;
+      if (negativeEquity > 0) details += `Rolled-in negative equity: $${fmtMoney(negativeEquity)}. `;
+      details += "This is an estimate only; final figures may vary by lender and fees.";
 
-    if (apr > 0) {
-      const monthlyRate = apr / 100 / 12;
-      const factor = Math.pow(1 + monthlyRate, months);
-      monthly = amountFinanced * (monthlyRate * factor) / (factor - 1);
-    } else {
-      monthly = amountFinanced / months;
-    }
+      if (paymentDetailsEl) paymentDetailsEl.textContent = details;
+    });
+  }
 
-    const negativeEquity = Math.max(tradeOwe - tradeValue, 0);
+  // ==================================================
+  // INCOME CALCULATOR
+  // ==================================================
+  const incomeForm = document.getElementById("incomeForm");
+  if (incomeForm) {
+    const incomeYtdInput = document.getElementById("incomeYtd");
+    const incomeLastPaycheckInput = document.getElementById("incomeLastPaycheck");
+    const incomeOutput = document.getElementById("incomeOutput");
 
-    const fmtMoney = (n) =>
-      n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    incomeForm.addEventListener("submit", (e) => {
+      e.preventDefault();
 
-    paymentMonthlyEl.textContent = `$${fmtMoney(monthly)}`;
+      const rawYtd = (incomeYtdInput?.value || "").replace(/[^0-9.]/g, "");
+      const ytd = parseFloat(rawYtd);
+      if (!ytd || Number.isNaN(ytd)) {
+        if (incomeOutput) incomeOutput.textContent = "Please enter your year-to-date gross income (numbers only).";
+        return;
+      }
 
-    let details = `Amount Financed (est.): $${fmtMoney(amountFinanced)}. `;
-    details += `Includes approx. $${fmtMoney(taxAmount)} in tax. `;
-    if (negativeEquity > 0) {
-      details += `Rolled-in negative equity: $${fmtMoney(negativeEquity)}. `;
-    }
-    details += "This is an estimate only; final figures may vary by lender and fees.";
+      if (!incomeLastPaycheckInput?.value) {
+        if (incomeOutput) incomeOutput.textContent = "Please choose the date of your last paycheck.";
+        return;
+      }
 
-    paymentDetailsEl.textContent = details;
-  });
-}
+      const lastDate = new Date(incomeLastPaycheckInput.value + "T12:00:00");
+      if (Number.isNaN(lastDate.getTime())) {
+        if (incomeOutput) incomeOutput.textContent = "That paycheck date doesn’t look valid.";
+        return;
+      }
 
+      const year = lastDate.getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const diffMs = lastDate - startOfYear;
+      const dayOfYear = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
 
+      const weeksIntoYear = dayOfYear / 7;
+      const dailyRate = ytd / dayOfYear;
+      const estYearly = dailyRate * 365;
+      const estMonthly = estYearly / 12;
 
+      const fmtMoney0 = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 
+      if (incomeOutput) {
+        incomeOutput.textContent =
+          `Estimated Yearly Gross: $${fmtMoney0(estYearly)}  ` +
+          `Weeks into Year: ${weeksIntoYear.toFixed(1)}  ` +
+          `Estimated Average Monthly Income: $${fmtMoney0(estMonthly)}`;
+      }
+    });
+  }
 
-
-// ---------- INCOME CALCULATOR (YTD → yearly, weeks, avg monthly) ----------
-const incomeForm = document.getElementById("incomeForm");
-if (incomeForm) {
-  const incomeYtdInput = document.getElementById("incomeYtd");
-  const incomeLastPaycheckInput = document.getElementById("incomeLastPaycheck");
-  const incomeOutput = document.getElementById("incomeOutput");
-
-  incomeForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    // Clean and parse YTD income
-    const rawYtd = (incomeYtdInput.value || "").replace(/[^0-9.]/g, "");
-    const ytd = parseFloat(rawYtd);
-
-    if (!ytd || Number.isNaN(ytd)) {
-      incomeOutput.textContent =
-        "Please enter your year-to-date gross income (numbers only).";
-      return;
-    }
-
-    if (!incomeLastPaycheckInput.value) {
-      incomeOutput.textContent = "Please choose the date of your last paycheck.";
-      return;
-    }
-
-    const lastDate = new Date(incomeLastPaycheckInput.value + "T12:00:00");
-    if (Number.isNaN(lastDate.getTime())) {
-      incomeOutput.textContent = "That paycheck date doesn’t look valid.";
-      return;
-    }
-
-    const year = lastDate.getFullYear();
-    const startOfYear = new Date(year, 0, 1); // Jan 1
-    const diffMs = lastDate - startOfYear;
-    const dayOfYear = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-
-    // Weeks into the year
-    const weeksIntoYear = dayOfYear / 7;
-
-    // Daily earning rate based on YTD
-    const dailyRate = ytd / dayOfYear;
-
-    // Estimated yearly and monthly gross
-    const estYearly = dailyRate * 365;
-    const estMonthly = estYearly / 12;
-
-    const fmtMoney0 = (n) =>
-      n.toLocaleString(undefined, {
-        maximumFractionDigits: 0,
-      });
-
-    incomeOutput.textContent =
-      `Estimated Yearly Gross: $${fmtMoney0(estYearly)}  ` +
-      `Weeks into Year: ${weeksIntoYear.toFixed(1)}  ` +
-      `Estimated Average Monthly Income: $${fmtMoney0(estMonthly)}`;
-  });
-}
-
-
-
-  // ---------- Objection coach ----------
+  // ==================================================
+  // OBJECTION COACH (server endpoint)
+  // ==================================================
   const objectionForm = document.getElementById("objectionForm");
   const objectionOutput = document.getElementById("objectionOutput");
 
@@ -643,11 +497,8 @@ if (incomeForm) {
 
       const formData = new FormData(objectionForm);
       const payload = {};
-      formData.forEach((value, key) => {
-        payload[key] = value;
-      });
+      formData.forEach((value, key) => (payload[key] = value));
 
-      // thinking state
       objectionOutput.value = "Coaching that objection…";
       autoResizeTextarea(objectionOutput);
 
@@ -658,157 +509,116 @@ if (incomeForm) {
           body: JSON.stringify(payload),
         });
 
-        const data = await res.json();
-        console.log("[ObjectionCoach] raw response:", data);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.message || `Error (HTTP ${res.status}) from objection coach.`);
 
-        if (!res.ok) {
-          const msg =
-            (data && data.message) ||
-            `Error (HTTP ${res.status}) from objection coach.`;
-          throw new Error(msg);
-        }
-
-        // ✅ accept any of these shapes: {coachedMessage}, {answer}, or {message}
-        const reply =
-          (data &&
-            (data.coachedMessage || data.answer || data.message)) ||
-          "";
-
-        if (!reply.trim()) {
-          throw new Error("Empty coached reply from server");
-        }
+        const reply = data?.coachedMessage || data?.answer || data?.message || "";
+        if (!reply.trim()) throw new Error("Empty coached reply from server");
 
         objectionOutput.value = reply;
       } catch (err) {
         console.error("Objection coach error:", err);
-        objectionOutput.value =
-          "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
+        objectionOutput.value = "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
       }
 
       autoResizeTextarea(objectionOutput);
     });
   }
-// =======================================
-// Objection Drill Mode – Q&A + Grading
-// =======================================
 
-// DOM refs
-const drillLauncher = document.getElementById("drillLauncher");
-const drillModal = document.getElementById("drillModeModal");
-const closeDrillModeBtn = document.getElementById("closeDrillMode");
+  // ==================================================
+  // OBJECTION DRILL MODE – Q&A + GRADING
+  // ==================================================
+  const drillLauncher = document.getElementById("drillLauncher");
+  const drillModal = document.getElementById("drillModeModal");
+  const closeDrillModeBtn = document.getElementById("closeDrillMode");
 
-const drillObjectionText = document.getElementById("drillObjectionText");
-const getDrillObjectionBtn = document.getElementById("getDrillObjection");
+  const drillObjectionText = document.getElementById("drillObjectionText");
+  const getDrillObjectionBtn = document.getElementById("getDrillObjection");
 
-const drillReplyInput = document.getElementById("drillReplyInput");
-const gradeDrillReplyBtn = document.getElementById("gradeDrillReply");
+  const drillReplyInput = document.getElementById("drillReplyInput");
+  const gradeDrillReplyBtn = document.getElementById("gradeDrillReply");
 
-const drillResult = document.getElementById("drillResult");
-const drillTimerDisplay = document.getElementById("drillTimer");
+  const drillResult = document.getElementById("drillResult");
+  const drillTimerDisplay = document.getElementById("drillTimer");
 
-// Starter bank of objections
-const DRILL_OBJECTIONS = [
-  "The price is too high.",
-  "I need to talk to my spouse first.",
-  "I want to think about it.",
-  "Can you send me some numbers and I’ll get back to you?",
-  "I’m just looking right now, not ready to buy.",
-  "My payment can’t go up at all.",
-  "I found something cheaper online.",
-  "I don’t want to run my credit.",
-];
+  const DRILL_OBJECTIONS = [
+    "The price is too high.",
+    "I need to talk to my spouse first.",
+    "I want to think about it.",
+    "Can you send me some numbers and I’ll get back to you?",
+    "I’m just looking right now, not ready to buy.",
+    "My payment can’t go up at all.",
+    "I found something cheaper online.",
+    "I don’t want to run my credit.",
+  ];
 
-let currentDrillObjection = "";
-let drillTimerId = null;
-let drillSecondsLeft = 0;
+  let currentDrillObjection = "";
+  let drillTimerId = null;
+  let drillSecondsLeft = 0;
 
-function setDrillResult(message = "", show = false) {
-  if (!drillResult) return;
-  drillResult.textContent = message;
-  drillResult.classList.toggle("hidden", !show);
-}
+  function setDrillResult(message = "", show = false) {
+    if (!drillResult) return;
+    drillResult.textContent = message;
+    drillResult.classList.toggle("hidden", !show);
+  }
 
-function resetDrillState() {
-  if (drillReplyInput) drillReplyInput.value = "";
-  setDrillResult("", false);
-  if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
-}
+  function stopDrillTimer() {
+    if (drillTimerId) {
+      clearInterval(drillTimerId);
+      drillTimerId = null;
+    }
+  }
 
-function startDrillTimer(startSeconds = 60) {
-  if (!drillTimerDisplay) return;
+  function resetDrillState() {
+    if (drillReplyInput) drillReplyInput.value = "";
+    setDrillResult("", false);
+    if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
+  }
 
-  stopDrillTimer();
-  drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
-  drillTimerDisplay.textContent = String(drillSecondsLeft);
+  function startDrillTimer(startSeconds = 60) {
+    if (!drillTimerDisplay) return;
 
-  drillTimerId = setInterval(() => {
-    drillSecondsLeft = Math.max(0, drillSecondsLeft - 1);
+    stopDrillTimer();
+    drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
     drillTimerDisplay.textContent = String(drillSecondsLeft);
 
-    if (drillSecondsLeft <= 0) stopDrillTimer();
-  }, 1000);
-}
-
-function stopDrillTimer() {
-  if (drillTimerId) {
-    clearInterval(drillTimerId);
-    drillTimerId = null;
+    drillTimerId = setInterval(() => {
+      drillSecondsLeft = Math.max(0, drillSecondsLeft - 1);
+      drillTimerDisplay.textContent = String(drillSecondsLeft);
+      if (drillSecondsLeft <= 0) stopDrillTimer();
+    }, 1000);
   }
-}
 
-function openDrillModal() {
-  if (!drillModal) return;
-  drillModal.classList.remove("hidden");
-  resetDrillState();
-}
+  function openDrillModal() {
+    if (!drillModal) return;
+    drillModal.classList.remove("hidden");
+    resetDrillState();
+  }
 
-function closeDrillModal() {
-  if (!drillModal) return;
-  drillModal.classList.add("hidden");
-  stopDrillTimer();
-}
+  function closeDrillModal() {
+    if (!drillModal) return;
+    drillModal.classList.add("hidden");
+    stopDrillTimer();
+  }
 
-// ---------------------------------------
-// Wiring (guarded + no double-bind)
-// ---------------------------------------
-if (drillLauncher && drillModal && closeDrillModeBtn) {
-  if (!drillLauncher.dataset.wired) {
-    drillLauncher.dataset.wired = "true";
+  if (drillLauncher && closeDrillModeBtn) {
     drillLauncher.addEventListener("click", openDrillModal);
-  }
-
-  if (!closeDrillModeBtn.dataset.wired) {
-    closeDrillModeBtn.dataset.wired = "true";
     closeDrillModeBtn.addEventListener("click", closeDrillModal);
   }
-}
 
-// “Give Me an Objection”
-if (getDrillObjectionBtn && drillObjectionText) {
-  if (!getDrillObjectionBtn.dataset.wired) {
-    getDrillObjectionBtn.dataset.wired = "true";
-
+  if (getDrillObjectionBtn && drillObjectionText) {
     getDrillObjectionBtn.addEventListener("click", () => {
       if (!DRILL_OBJECTIONS.length) return;
-
       const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
       currentDrillObjection = DRILL_OBJECTIONS[idx];
-
       drillObjectionText.textContent = currentDrillObjection;
-
       resetDrillState();
       startDrillTimer(60);
-
       drillReplyInput?.focus?.();
     });
   }
-}
 
-// “Grade Me” – calls AI for grading & coaching
-if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
-  if (!gradeDrillReplyBtn.dataset.wired) {
-    gradeDrillReplyBtn.dataset.wired = "true";
-
+  if (gradeDrillReplyBtn && drillReplyInput) {
     gradeDrillReplyBtn.addEventListener("click", async () => {
       const reply = (drillReplyInput.value || "").trim();
 
@@ -816,7 +626,6 @@ if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
         setDrillResult('Hit “Give Me an Objection” first.', true);
         return;
       }
-
       if (!reply) {
         setDrillResult("Type your response first, then I’ll grade it.", true);
         return;
@@ -838,14 +647,7 @@ if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
         });
 
         const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          const msg =
-            data.message ||
-            data.error ||
-            `AI grading failed (HTTP ${res.status}).`;
-          throw new Error(msg);
-        }
+        if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
 
         setDrillResult(
           data.text ||
@@ -854,21 +656,14 @@ if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
         );
       } catch (err) {
         console.error("Drill Mode grading error:", err);
-        setDrillResult(
-          err?.message || "There was an error talking to AI. Try again in a moment.",
-          true
-        );
+        setDrillResult(err?.message || "There was an error talking to AI. Try again in a moment.", true);
       }
     });
   }
-}
 
-
-
-
-
-
-  // -------- AI Message / Workflow / Ask / Car / Image --------
+  // ==================================================
+  // AI HELPERS (message-helper)
+  // ==================================================
   function wireMessageHelper(formId, outputId, mode) {
     const form = document.getElementById(formId);
     const output = document.getElementById(outputId);
@@ -879,10 +674,7 @@ if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
 
       const fd = new FormData(form);
       const payload = { mode };
-
-      fd.forEach((value, key) => {
-        payload[key] = value;
-      });
+      fd.forEach((value, key) => (payload[key] = value));
 
       output.value = "Spinning up AI...";
       autoResizeTextarea(output);
@@ -896,198 +688,67 @@ if (gradeDrillReplyBtn && drillReplyInput && drillResult) {
 
         if (!res.ok) {
           const text = await res.text().catch(() => "");
-          throw new Error(
-            `HTTP ${res.status} from message helper${
-              text ? `: ${text}` : ""
-            }`
-          );
+          throw new Error(`HTTP ${res.status} from message helper${text ? `: ${text}` : ""}`);
         }
 
-        const data = await res.json();
-
+        const data = await res.json().catch(() => ({}));
         const text =
-          (data &&
-            typeof data.text === "string" &&
-            data.text.trim()) ||
-          (data &&
-            typeof data.message === "string" &&
-            data.message.trim()) ||
+          (typeof data?.text === "string" && data.text.trim()) ||
+          (typeof data?.message === "string" && data.message.trim()) ||
           "";
 
-        output.value =
-          text || "AI didn't return a message. Try again.";
+        output.value = text || "AI didn't return a message. Try again.";
       } catch (err) {
         console.error("Message helper error:", err);
-        output.value =
-          "Lot Rocket hit a snag talking to AI. Try again in a minute.";
+        output.value = "Lot Rocket hit a snag talking to AI. Try again in a minute.";
       }
 
       autoResizeTextarea(output);
     });
   }
 
-  // ===== AI WORKFLOW EXPERT – talks to /ai/workflow =====
-  const workflowForm = document.getElementById("workflowForm");
-  const workflowOutput = document.getElementById("workflowOutput");
-
-  if (workflowForm && workflowOutput) {
-    workflowForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      workflowOutput.value = "Building workflow…";
-      autoResizeTextarea(workflowOutput);
-
-      try {
-        const formData = new FormData(workflowForm);
-
-        // Match these to your HTML name="" attributes
-        const payload = {
-          goal:
-            formData.get("goal") ||
-            formData.get("workflowGoal") ||
-            "",
-          tone: formData.get("tone") || "",
-          channel:
-            formData.get("channel") ||
-            formData.get("messageType") ||
-            "",
-          days:
-            Number(
-              formData.get("days") ||
-                formData.get("daysCount") ||
-                0
-            ) || 0,
-          touches:
-            Number(
-              formData.get("touches") ||
-                formData.get("touchCount") ||
-                0
-            ) || 0,
-        };
-
-        const resp = await fetch("/ai/workflow", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!resp.ok) {
-          console.error(
-            "[LotRocket] /ai/workflow error status",
-            resp.status
-          );
-          workflowOutput.value =
-            "Lot Rocket hit a snag building the workflow. Please try again.";
-          autoResizeTextarea(workflowOutput);
-          return;
-        }
-
-        const data = await resp.json();
-        const text =
-          (data &&
-            typeof data.text === "string" &&
-            data.text.trim()) ||
-          "";
-
-        if (!text) {
-          workflowOutput.value = "AI returned an empty response.";
-        } else {
-          workflowOutput.value = text;
-        }
-      } catch (err) {
-        console.error("[LotRocket] workflow error:", err);
-        workflowOutput.value =
-          "Lot Rocket hit a snag talking to AI. Please try again.";
-      }
-
-      autoResizeTextarea(workflowOutput);
-    });
-  }
-
-  // Wire up the other AI helpers (these all use /api/message-helper)
   wireMessageHelper("messageForm", "messageOutput", "message");
   wireMessageHelper("askForm", "askOutput", "ask");
   wireMessageHelper("carForm", "carOutput", "car");
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
-
-
-  // --------- VIDEO SHOT PLAN + SCRIPT (custom parsing) ---------
+  // ==================================================
+  // VIDEO SHOT PLAN + SCRIPT
+  // ==================================================
   const videoFormEl = document.getElementById("videoForm");
   const videoScriptOutput = document.getElementById("videoScriptOutput");
   const videoShotListOutput = document.getElementById("videoShotListOutput");
   const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
-  const videoThumbPromptOutput = document.getElementById(
-    "videoThumbPromptOutput"
-  );
+  const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
 
-  // bottom copies under Design Studio
-  const videoScriptOutputBottom = document.getElementById(
-    "videoScriptOutputBottom"
-  );
-  const videoShotListOutputBottom = document.getElementById(
-    "videoShotListOutputBottom"
-  );
-  const videoAIPromptOutputBottom = document.getElementById(
-    "videoAIPromptOutputBottom"
-  );
-  const videoThumbPromptOutputBottom = document.getElementById(
-    "videoThumbPromptOutputBottom"
-  );
+  const videoScriptOutputBottom = document.getElementById("videoScriptOutputBottom");
+  const videoShotListOutputBottom = document.getElementById("videoShotListOutputBottom");
+  const videoAIPromptOutputBottom = document.getElementById("videoAIPromptOutputBottom");
+  const videoThumbPromptOutputBottom = document.getElementById("videoThumbPromptOutputBottom");
 
   function populateVideoOutputs(sections) {
     if (!sections) return;
+    const { script = "", shots = "", aiPrompt = "", thumbPrompt = "" } = sections;
 
-    const {
-      script = "",
-      shots = "",
-      aiPrompt = "",
-      thumbPrompt = "",
-    } = sections;
+    const set = (el, v) => {
+      if (!el) return;
+      el.value = v || "";
+      autoResizeTextarea(el);
+    };
 
-    // Right-side modal
-    if (videoScriptOutput) {
-      videoScriptOutput.value = script;
-      autoResizeTextarea(videoScriptOutput);
-    }
-    if (videoShotListOutput) {
-      videoShotListOutput.value = shots;
-      autoResizeTextarea(videoShotListOutput);
-    }
-    if (videoAIPromptOutput) {
-      videoAIPromptOutput.value = aiPrompt;
-      autoResizeTextarea(videoAIPromptOutput);
-    }
-    if (videoThumbPromptOutput) {
-      videoThumbPromptOutput.value = thumbPrompt;
-      autoResizeTextarea(videoThumbPromptOutput);
-    }
+    set(videoScriptOutput, script);
+    set(videoShotListOutput, shots);
+    set(videoAIPromptOutput, aiPrompt);
+    set(videoThumbPromptOutput, thumbPrompt);
 
-    // Bottom under Design Studio
-    if (videoScriptOutputBottom) {
-      videoScriptOutputBottom.value = script;
-      autoResizeTextarea(videoScriptOutputBottom);
-    }
-    if (videoShotListOutputBottom) {
-      videoShotListOutputBottom.value = shots;
-      autoResizeTextarea(videoShotListOutputBottom);
-    }
-    if (videoAIPromptOutputBottom) {
-      videoAIPromptOutputBottom.value = aiPrompt;
-      autoResizeTextarea(videoAIPromptOutputBottom);
-    }
-  if (videoThumbPromptOutputBottom) {
-    videoThumbPromptOutputBottom.value = thumbPrompt;
-    autoResizeTextarea(videoThumbPromptOutputBottom);
+    set(videoScriptOutputBottom, script);
+    set(videoShotListOutputBottom, shots);
+    set(videoAIPromptOutputBottom, aiPrompt);
+    set(videoThumbPromptOutputBottom, thumbPrompt);
   }
-}  // <--- closes populateVideoOutputs
 
-
-function parseVideoSections(full) {
-
-    if (!full || typeof full !== "string") {
-      return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
-    }
+  function parseVideoSections(full) {
+    if (!full || typeof full !== "string") return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
 
     const h1 = "### 1. Video Script";
     const h2 = "### 2. Shot List";
@@ -1098,16 +759,9 @@ function parseVideoSections(full) {
       const startIdx = full.indexOf(startMarker);
       if (startIdx === -1) return "";
       const fromStart = full.slice(startIdx + startMarker.length);
-
-      if (!endMarker) {
-        return fromStart.trim();
-      }
-
+      if (!endMarker) return fromStart.trim();
       const endIdx = fromStart.indexOf(endMarker);
-      if (endIdx === -1) {
-        return fromStart.trim();
-      }
-
+      if (endIdx === -1) return fromStart.trim();
       return fromStart.slice(0, endIdx).trim();
     }
 
@@ -1119,13 +773,7 @@ function parseVideoSections(full) {
     };
   }
 
-  if (
-    videoFormEl &&
-    videoScriptOutput &&
-    videoShotListOutput &&
-    videoAIPromptOutput &&
-    videoThumbPromptOutput
-  ) {
+  if (videoFormEl) {
     videoFormEl.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -1140,10 +788,7 @@ function parseVideoSections(full) {
       try {
         const fd = new FormData(videoFormEl);
         const payload = { mode: "video-brief" };
-
-        fd.forEach((value, key) => {
-          payload[key] = value;
-        });
+        fd.forEach((value, key) => (payload[key] = value));
 
         const res = await fetch(apiBase + "/api/message-helper", {
           method: "POST",
@@ -1151,29 +796,14 @@ function parseVideoSections(full) {
           body: JSON.stringify(payload),
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          const msg =
-            (data && data.message) ||
-            `Video builder error (HTTP ${res.status}).`;
-          console.error(
-            "❌ /api/message-helper (video) error:",
-            res.status,
-            data
-          );
-          alert(msg);
-          return;
-        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.message || `Video builder error (HTTP ${res.status}).`);
 
         const full = data.text || "";
-        const sections = parseVideoSections(full);
-        populateVideoOutputs(sections);
+        populateVideoOutputs(parseVideoSections(full));
       } catch (err) {
-        console.error("❌ Video builder network/error:", err);
-        alert(
-          "Lot Rocket hit a snag building that video shot plan. Try again in a moment."
-        );
+        console.error("❌ Video builder error:", err);
+        alert("Lot Rocket hit a snag building that video shot plan. Try again in a moment.");
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -1186,8 +816,6 @@ function parseVideoSections(full) {
   // ==================================================
   // STEP 3 – CREATIVE HUB (Fabric) + SOCIAL STRIP
   // ==================================================
-
-
   const photoDropZone = document.getElementById("photoDropZone");
   const photoFileInput = document.getElementById("photoFileInput");
   const creativeThumbGrid = document.getElementById("creativeThumbGrid");
@@ -1200,41 +828,25 @@ function parseVideoSections(full) {
   const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
   const aiCinematicBtn = document.getElementById("aiCinematicBtn");
 
-  // Hidden canvas used to bake tuner edits into real pixels
   const hiddenTunerCanvas = document.createElement("canvas");
-  const hiddenTunerCtx = hiddenTunerCanvas.getContext
-    ? hiddenTunerCanvas.getContext("2d")
-    : null;
+  const hiddenTunerCtx = hiddenTunerCanvas.getContext ? hiddenTunerCanvas.getContext("2d") : null;
 
-  // Current filter used by both CSS preview and canvas drawing
   let currentTunerFilter = "";
 
-  // NEW: Social-ready photo strip elements
+  // Social strip UI
   const socialCarousel = document.getElementById("socialCarousel");
-  const openCanvasFromCarouselBtn = document.getElementById(
-    "openCanvasFromCarousel"
-  );
-  const openDesignFromCarouselBtn = document.getElementById(
-    "openDesignFromCarousel"
-  );
+  const openCanvasFromCarouselBtn = document.getElementById("openCanvasFromCarousel");
+  const openDesignFromCarouselBtn = document.getElementById("openDesignFromCarousel");
   const revertSocialPhotoBtn = document.getElementById("revertSocialPhotoBtn");
   const downloadAllEditedBtn = document.getElementById("downloadAllEditedBtn");
-  const sendAllToCanvasBtn = document.getElementById("sendAllToCanvas");
 
-  // NEW: big preview + nav + status
-  const socialCarouselPreviewImg = document.getElementById(
-    "socialCarouselPreviewImg"
-  );
+  const socialCarouselPreviewImg = document.getElementById("socialCarouselPreviewImg");
   const socialPrevBtn = document.getElementById("socialPrevBtn");
   const socialNextBtn = document.getElementById("socialNextBtn");
   const socialCarouselStatus = document.getElementById("socialCarouselStatus");
 
-  // Track which social-ready photo is “active” in the viewer
-  let socialCurrentIndex = 0;
-
-  const creativeStudioOverlay = document.getElementById(
-    "creativeStudioOverlay"
-  );
+  // Canvas overlay
+  const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
   const creativeCloseBtn = document.getElementById("creativeClose");
   const canvasLauncher = document.getElementById("canvasLauncher");
 
@@ -1251,206 +863,453 @@ function parseVideoSections(full) {
   let creativeHistoryIndex = -1;
   let localCreativePhotos = [];
 
-  // Social-ready photos state: [{ url, selected, originalUrl, locked }]
+  // Social-ready photos: [{ url, selected, originalUrl, locked }]
   let socialReadyPhotos = [];
-    // --------------------------------------------------
-  // STEP 3 → SEND SELECTED PHOTO(S) INTO DESIGN STUDIO
-  // --------------------------------------------------
-  if (sendToDesignStudioBtn) {
-    sendToDesignStudioBtn.addEventListener("click", () => {
-      // 1) Try to grab the selected Creative Lab thumb
-      let urls = [];
+  let socialCurrentIndex = 0;
 
-      if (creativeThumbGrid) {
-        const selectedThumbs = creativeThumbGrid.querySelectorAll(
-          ".creative-thumb.selected"
-        );
+  const MAX_STEP3_PHOTOS = 24;
 
-        if (selectedThumbs.length) {
-          selectedThumbs.forEach((img) => {
-            if (img.src) urls.push(img.src);
-          });
-        }
-      }
-
-      // 2) If nothing explicitly selected, fall back to localCreativePhotos
-      if (!urls.length && Array.isArray(localCreativePhotos)) {
-        urls = localCreativePhotos.slice(0, 24);
-      }
-
-      // 3) If still nothing, fall back to dealer photos
-      if (!urls.length && dealerPhotos && dealerPhotos.length) {
-        urls = dealerPhotos.map((p) => p.src).slice(0, 24);
-      }
-
-      if (!urls.length) {
-        alert(
-          "Load or select a photo in the Creative Lab first before sending to Design Studio."
-        );
+  // ---------------- Step 1 → Send Top Photos
+  const step1SendTopBtn = document.getElementById("sendTopPhotosBtn");
+  if (step1SendTopBtn) {
+    step1SendTopBtn.addEventListener("click", () => {
+      if (!dealerPhotos || !dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
         return;
       }
 
-      // 4) Push into Design Studio (auto-opens overlay + drops onto canvas)
-      pushUrlsIntoDesignStudio(urls);
-    });
-  }
-// ----------------------------------------------------
-// STEP 1 → SEND TOP PHOTOS INTO CREATIVE LAB + STRIP
-// (Hard-wired: only the orange Step-1 button)
-// ----------------------------------------------------
-const step1SendTopBtn = document.getElementById("sendTopPhotosBtn");
-
-if (step1SendTopBtn) {
-  console.log(
-    "[LotRocket] wiring Step 1 top-photos button:",
-    step1SendTopBtn.id
-  );
-
-  step1SendTopBtn.addEventListener("click", () => {
-    console.log("[LotRocket] Step 1 Send Top Photos clicked");
-
-    if (!dealerPhotos || !dealerPhotos.length) {
-      alert("Boost a listing first so Lot Rocket can grab photos.");
-      return;
-    }
-
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src))
-      .slice(0, 12);
-
-    if (!chosen.length) {
-      alert("No photos available to send.");
-      return;
-    }
-
-    step1SendTopBtn.disabled = true;
-    step1SendTopBtn.classList.add("loading");
-
-    chosen.forEach((url) => {
-      if (Array.isArray(localCreativePhotos)) localCreativePhotos.push(url);
-      if (typeof addCreativeThumb === "function") addCreativeThumb(url);
-
-
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        if (typeof applyTunerFilters === "function") applyTunerFilters();
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(0, 12);
+      if (!chosen.length) {
+        alert("No photos available to send.");
+        return;
       }
-    });
 
-    if (typeof renderSocialCarousel === "function") {
+      step1SendTopBtn.disabled = true;
+      step1SendTopBtn.classList.add("loading");
+
+      chosen.forEach((url) => {
+        localCreativePhotos.push(url);
+        addCreativeThumb(url);
+
+        if (tunerPreviewImg && !tunerPreviewImg.src) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
+      });
+
       renderSocialCarousel();
-    }
 
-    step1SendTopBtn.classList.remove("loading");
-    step1SendTopBtn.classList.add("success");
-
-    setTimeout(() => {
-      step1SendTopBtn.classList.remove("success");
-      step1SendTopBtn.disabled = false;
-    }, 900);
-  });
-} else {
-  console.warn(
-    "[LotRocket] Step 1 Send Top Photos button NOT FOUND. Check id='sendTopPhotosBtn'."
-  );
-}
-
-
-  // ---------- SOCIAL-READY STRIP HELPERS + DOWNLOAD ----------
-
-  // Small utility to actually trigger a browser download
-// Small helper: always try to use our proxy so downloads don't
-// hijack the current tab when dealer photos are cross-origin.
-function triggerSocialDownload(url, index) {
-  if (!url) return;
-
-  // getProxiedImageUrl is defined later in this file; function
-  // declarations are hoisted so it's safe to call here.
-  let safeUrl = url;
-  try {
-    if (typeof getProxiedImageUrl === "function") {
-      safeUrl = getProxiedImageUrl(url);
-    }
-  } catch (e) {
-    console.warn("[LotRocket] getProxiedImageUrl failed, using raw URL", e);
+      step1SendTopBtn.classList.remove("loading");
+      step1SendTopBtn.classList.add("success");
+      setTimeout(() => {
+        step1SendTopBtn.classList.remove("success");
+        step1SendTopBtn.disabled = false;
+      }, 900);
+    });
   }
 
-  const a = document.createElement("a");
-  a.href = safeUrl;
-  a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
-  a.rel = "noopener";
-
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-
-  // Download the "current" social-ready image (or by explicit index)
-  function downloadSocialImage(index) {
-    if (!socialReadyPhotos.length) return;
-
-    let idx =
-      typeof index === "number"
-        ? index
-        : socialCurrentIndex || 0;
-
-    if (idx < 0) idx = 0;
-    if (idx >= socialReadyPhotos.length) {
-      idx = socialReadyPhotos.length - 1;
-    }
-
-    const photo = socialReadyPhotos[idx];
-    if (!photo || !photo.url) return;
-
-    triggerSocialDownload(photo.url, idx);
-  }
-
-  // Expose for inline onclicks in HTML if needed
-  window.downloadSocialImage = downloadSocialImage;
-
-  // ---------------- PHOTO TUNER ----------------
-
+  // ---------------- Tuner
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
-
     const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
     const c = tunerContrast ? Number(tunerContrast.value || 100) : 100;
     const s = tunerSaturation ? Number(tunerSaturation.value || 100) : 100;
-
     currentTunerFilter = `brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
     tunerPreviewImg.style.filter = currentTunerFilter;
   }
 
-  if (tunerBrightness) {
-    tunerBrightness.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerContrast) {
-    tunerContrast.addEventListener("input", applyTunerFilters);
-  }
-  if (tunerSaturation) {
-    tunerSaturation.addEventListener("input", applyTunerFilters);
-  }
-  if (autoEnhanceBtn) {
-    autoEnhanceBtn.addEventListener("click", () => {
-      if (tunerBrightness) tunerBrightness.value = "115";
-      if (tunerContrast) tunerContrast.value = "115";
-      if (tunerSaturation) tunerSaturation.value = "120";
-      applyTunerFilters();
+  tunerBrightness?.addEventListener("input", applyTunerFilters);
+  tunerContrast?.addEventListener("input", applyTunerFilters);
+  tunerSaturation?.addEventListener("input", applyTunerFilters);
+
+  autoEnhanceBtn?.addEventListener("click", () => {
+    if (tunerBrightness) tunerBrightness.value = "115";
+    if (tunerContrast) tunerContrast.value = "115";
+    if (tunerSaturation) tunerSaturation.value = "120";
+    applyTunerFilters();
+  });
+
+  async function buildEditedDataUrl(src) {
+    if (!src || !hiddenTunerCanvas || !hiddenTunerCtx) return src;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+
+      // NOTE: crossOrigin only helps if server allows it — otherwise toDataURL will fail
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => {
+        const maxW = 1920;
+        const maxH = 1920;
+
+        let w = img.naturalWidth || img.width || 800;
+        let h = img.naturalHeight || img.height || 600;
+
+        const scale = Math.min(1, maxW / w, maxH / h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+
+        hiddenTunerCanvas.width = w;
+        hiddenTunerCanvas.height = h;
+
+        hiddenTunerCtx.clearRect(0, 0, w, h);
+        hiddenTunerCtx.filter = currentTunerFilter || "none";
+        hiddenTunerCtx.drawImage(img, 0, 0, w, h);
+
+        try {
+          const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
+          resolve(dataUrl);
+        } catch (err) {
+          console.warn("[LotRocket] Canvas tainted, using original URL:", err);
+          resolve(src);
+        }
+      };
+
+      img.onerror = () => resolve(src);
+      img.src = src;
     });
   }
 
-  // ---------------- FABRIC CANVAS (Creative Studio) ----------------
+  // ---------------- Creative thumbs
+  function addCreativeThumb(url) {
+    if (!creativeThumbGrid) return;
 
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Creative photo";
+    img.loading = "lazy";
+    img.className = "creative-thumb";
+    img.title = "Click to select/deselect. Double-click to send edited copy to social strip.";
+
+    img.addEventListener("click", () => {
+      img.classList.toggle("selected");
+      if (tunerPreviewImg) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
+      }
+    });
+
+    img.addEventListener("dblclick", async () => {
+      const editedUrl = await buildEditedDataUrl(url);
+      addPhotoToSocialReady(editedUrl);
+    });
+
+    creativeThumbGrid.appendChild(img);
+
+    const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
+    if (thumbs.length > MAX_STEP3_PHOTOS) {
+      const extra = thumbs.length - MAX_STEP3_PHOTOS;
+      for (let i = 0; i < extra; i++) creativeThumbGrid.removeChild(thumbs[i]);
+    }
+  }
+
+  function handleCreativeFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    files.forEach((file) => {
+      if (!file?.type?.startsWith("image/")) return;
+      const url = URL.createObjectURL(file);
+
+      localCreativePhotos.push(url);
+      if (localCreativePhotos.length > MAX_STEP3_PHOTOS) {
+        localCreativePhotos = localCreativePhotos.slice(-MAX_STEP3_PHOTOS);
+      }
+
+      addCreativeThumb(url);
+
+      if (tunerPreviewImg && !tunerPreviewImg.src) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
+      }
+    });
+  }
+
+  // Dropzone
+  if (photoDropZone && photoFileInput) {
+    photoDropZone.addEventListener("click", () => photoFileInput.click());
+
+    photoFileInput.addEventListener("change", (e) => {
+      handleCreativeFiles(e.target.files);
+      photoFileInput.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach((evt) => {
+      photoDropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "dragend"].forEach((evt) => {
+      photoDropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.remove("dragover");
+      });
+    });
+
+    photoDropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      photoDropZone.classList.remove("dragover");
+
+      const dt = e.dataTransfer;
+      let files = dt?.files;
+
+      if ((!files || !files.length) && dt?.items) {
+        const collected = [];
+        for (const item of dt.items) {
+          if (item.kind === "file") {
+            const f = item.getAsFile();
+            if (f) collected.push(f);
+          }
+        }
+        files = collected;
+      }
+
+      if (!files || !files.length) return;
+      handleCreativeFiles(files);
+    });
+  }
+
+  // ==================================================
+  // SOCIAL STRIP (THIS WAS BROKEN BEFORE — FIXED HERE)
+  // ==================================================
+  function addPhotoToSocialReady(url) {
+    if (!url) return;
+
+    const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
+    if (existingIndex !== -1) {
+      socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
+        ...p,
+        selected: idx === existingIndex ? true : p.selected,
+      }));
+      socialCurrentIndex = existingIndex;
+      renderSocialCarousel();
+      return;
+    }
+
+    socialReadyPhotos.push({
+      url,
+      originalUrl: url,
+      selected: true,
+      locked: false,
+    });
+
+    if (socialReadyPhotos.length > MAX_STEP3_PHOTOS) {
+      socialReadyPhotos = socialReadyPhotos.slice(-MAX_STEP3_PHOTOS);
+    }
+
+    socialCurrentIndex = socialReadyPhotos.length - 1;
+    renderSocialCarousel();
+  }
+
+  function updateSocialPreview() {
+    if (!socialCarouselPreviewImg) return;
+
+    if (!socialReadyPhotos.length) {
+      socialCarouselPreviewImg.src = "";
+      socialCarouselPreviewImg.alt = "";
+      if (socialCarouselStatus) {
+        socialCarouselStatus.textContent = "No social-ready photos yet. Double-click a photo above to add it.";
+      }
+      return;
+    }
+
+    socialCurrentIndex = Math.max(0, Math.min(socialCurrentIndex, socialReadyPhotos.length - 1));
+    const active = socialReadyPhotos[socialCurrentIndex];
+    if (!active?.url) return;
+
+    socialCarouselPreviewImg.src = active.url;
+    socialCarouselPreviewImg.alt = "Social-ready preview";
+
+    if (socialCarouselStatus) {
+      const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
+      socialCarouselStatus.textContent = `Photo ${socialCurrentIndex + 1}/${socialReadyPhotos.length} • Selected: ${selectedCount}`;
+    }
+  }
+
+  function renderSocialCarousel() {
+    if (!socialCarousel) return;
+    socialCarousel.innerHTML = "";
+
+    socialReadyPhotos.forEach((photo, index) => {
+      if (typeof photo.locked !== "boolean") photo.locked = false;
+
+      const item = document.createElement("div");
+      item.className =
+        "social-carousel-item" +
+        (photo.selected ? " social-carousel-item-selected" : "") +
+        (photo.locked ? " social-carousel-item-locked" : "");
+      item.dataset.index = String(index);
+
+      const img = document.createElement("img");
+      img.src = photo.url;
+      img.alt = `Social-ready photo ${index + 1}`;
+      img.loading = "lazy";
+      img.className = "social-carousel-img";
+
+      const controls = document.createElement("div");
+      controls.className = "social-carousel-controls";
+
+      const lockBtn = document.createElement("button");
+      lockBtn.type = "button";
+      lockBtn.className = "social-carousel-control-btn lock-btn";
+      lockBtn.title = photo.locked ? "Unlock this photo so it can be removed" : "Lock this photo so it can't be removed";
+      lockBtn.textContent = photo.locked ? "🔒" : "🔓";
+
+      lockBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const idx = Number(item.dataset.index || "0");
+        const p = socialReadyPhotos[idx];
+        if (!p) return;
+        p.locked = !p.locked;
+        renderSocialCarousel();
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "social-carousel-control-btn delete-btn";
+      deleteBtn.title = "Remove this photo from Step 3";
+      deleteBtn.textContent = "🗑️";
+
+      function removePhotoWithAnimation() {
+        const idx = Number(item.dataset.index || "0");
+        const p = socialReadyPhotos[idx];
+        if (!p) return;
+
+        if (p.locked) {
+          alert("This photo is locked. Unlock it first if you want to remove it.");
+          return;
+        }
+
+        item.classList.add("social-carousel-item-removing");
+        setTimeout(() => {
+          socialReadyPhotos.splice(idx, 1);
+          if (socialCurrentIndex >= socialReadyPhotos.length) socialCurrentIndex = socialReadyPhotos.length - 1;
+          if (socialCurrentIndex < 0) socialCurrentIndex = 0;
+          renderSocialCarousel();
+        }, 160);
+      }
+
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removePhotoWithAnimation();
+      });
+
+      controls.appendChild(lockBtn);
+      controls.appendChild(deleteBtn);
+
+      item.appendChild(img);
+      item.appendChild(controls);
+      socialCarousel.appendChild(item);
+
+      item.addEventListener("click", (e) => {
+        if (e.target.closest(".social-carousel-control-btn")) return;
+        const idx = Number(item.dataset.index || "0");
+        if (!socialReadyPhotos[idx]) return;
+        socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
+        socialCurrentIndex = idx;
+        renderSocialCarousel();
+      });
+
+      item.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        removePhotoWithAnimation();
+      });
+    });
+
+    updateSocialPreview();
+  }
+
+  socialPrevBtn?.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) return;
+    socialCurrentIndex = (socialCurrentIndex - 1 + socialReadyPhotos.length) % socialReadyPhotos.length;
+    updateSocialPreview();
+  });
+
+  socialNextBtn?.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) return;
+    socialCurrentIndex = (socialCurrentIndex + 1) % socialReadyPhotos.length;
+    updateSocialPreview();
+  });
+
+  // Revert
+  revertSocialPhotoBtn?.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) {
+      alert("No social-ready photos to revert.");
+      return;
+    }
+    const photo = socialReadyPhotos[socialCurrentIndex];
+    if (!photo?.originalUrl) {
+      alert("No original version saved for this photo.");
+      return;
+    }
+    photo.url = photo.originalUrl;
+    renderSocialCarousel();
+  });
+
+  // Download helper (proxy-aware)
+  function getProxiedImageUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
+    try {
+      const u = new URL(rawUrl, window.location.origin);
+      if (u.origin === window.location.origin || u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
+      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
+      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
+    } catch {
+      return rawUrl;
+    }
+  }
+
+  function triggerSocialDownload(url, index) {
+    if (!url) return;
+    const safeUrl = typeof getProxiedImageUrl === "function" ? getProxiedImageUrl(url) : url;
+    const a = document.createElement("a");
+    a.href = safeUrl;
+    a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  downloadAllEditedBtn?.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) {
+      alert("No social-ready photos to download. Double-click a photo in the grid above first.");
+      return;
+    }
+
+    const urls = socialReadyPhotos.map((p) => p?.url).filter(Boolean);
+    if (!urls.length) return;
+
+    const originalLabel = downloadAllEditedBtn.textContent;
+    downloadAllEditedBtn.disabled = true;
+    downloadAllEditedBtn.textContent = "Downloading JPGs…";
+
+    urls.forEach((url, index) => {
+      setTimeout(() => triggerSocialDownload(url, index), index * 200);
+    });
+
+    setTimeout(() => {
+      downloadAllEditedBtn.disabled = false;
+      downloadAllEditedBtn.textContent = originalLabel || "Download JPGs";
+    }, urls.length * 200 + 400);
+  });
+
+  // ==================================================
+  // CANVAS STUDIO (Fabric) — minimal stable wiring
+  // ==================================================
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
     if (typeof fabric === "undefined") {
       console.error("Fabric.js not loaded");
       return null;
     }
-    creativeCanvas = new fabric.Canvas("creativeCanvas", {
-      preserveObjectStacking: true,
-    });
+    creativeCanvas = new fabric.Canvas("creativeCanvas", { preserveObjectStacking: true });
     saveCanvasState();
     return creativeCanvas;
   }
@@ -1467,95 +1326,36 @@ function triggerSocialDownload(url, index) {
     if (!creativeCanvas) return;
     if (index < 0 || index >= creativeHistory.length) return;
     creativeHistoryIndex = index;
-    creativeCanvas.loadFromJSON(creativeHistory[index], () => {
-      creativeCanvas.renderAll();
-    });
+    creativeCanvas.loadFromJSON(creativeHistory[index], () => creativeCanvas.renderAll());
   }
 
   function addImageFromUrl(url) {
     const canvas = ensureCanvas();
     if (!canvas || !url) return;
 
-    fabric.Image.fromURL(url, (img) => {
-      if (!img) {
-        console.error("Fabric could not load image:", url);
-        return;
-      }
-      const scale = Math.min(
-        canvas.width / (img.width * 1.2),
-        canvas.height / (img.height * 1.2),
-        1
-      );
-      img.set({
-        left: canvas.width / 2,
-        top: canvas.height / 2,
-        originX: "center",
-        originY: "center",
-        selectable: true,
-      });
-      img.scale(scale);
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.renderAll();
-      saveCanvasState();
-    });
-  }
+    // use proxied URL for cross-origin
+    const safeUrl = getProxiedImageUrl(url);
 
-  function addRectBanner() {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-    const rect = new fabric.Rect({
-      left: canvas.width / 2,
-      top: canvas.height - 120,
-      originX: "center",
-      originY: "center",
-      width: canvas.width * 0.9,
-      height: 160,
-      fill: "#000000",
-      opacity: 0.75,
-      rx: 16,
-      ry: 16,
-    });
-    canvas.add(rect);
-    canvas.setActiveObject(rect);
-    canvas.renderAll();
-    saveCanvasState();
-  }
-
-  function addBadge() {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-    const circle = new fabric.Circle({
-      radius: 130,
-      fill: "#ff0000",
-      left: canvas.width - 220,
-      top: 80,
-      originX: "center",
-      originY: "center",
-    });
-    canvas.add(circle);
-    canvas.setActiveObject(circle);
-    canvas.renderAll();
-    saveCanvasState();
-  }
-
-  function addTextBox() {
-    const canvas = ensureCanvas();
-    if (!canvas) return;
-    const text = new fabric.Textbox("YOUR TEXT HERE", {
-      left: canvas.width / 2,
-      top: 150,
-      originX: "center",
-      originY: "center",
-      fill: "#ffffff",
-      fontSize: 64,
-      fontWeight: "bold",
-      textAlign: "center",
-    });
-    canvas.add(text);
-    canvas.setActiveObject(text);
-    canvas.renderAll();
-    saveCanvasState();
+    fabric.Image.fromURL(
+      safeUrl,
+      (img) => {
+        if (!img) return;
+        const scale = Math.min(canvas.width / (img.width * 1.2), canvas.height / (img.height * 1.2), 1);
+        img.set({
+          left: canvas.width / 2,
+          top: canvas.height / 2,
+          originX: "center",
+          originY: "center",
+          selectable: true,
+        });
+        img.scale(scale);
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        saveCanvasState();
+      },
+      { crossOrigin: "anonymous" }
+    );
   }
 
   function openCreativeStudio() {
@@ -1569,9 +1369,8 @@ function triggerSocialDownload(url, index) {
     creativeStudioOverlay.classList.add("hidden");
   }
 
-  if (canvasLauncher) {
-    canvasLauncher.addEventListener("click", openCreativeStudio);
-  }
+  canvasLauncher?.addEventListener("click", openCreativeStudio);
+
   if (creativeCloseBtn && creativeStudioOverlay) {
     creativeCloseBtn.addEventListener("click", closeCreativeStudio);
     creativeStudioOverlay.addEventListener("click", (e) => {
@@ -1579,670 +1378,82 @@ function triggerSocialDownload(url, index) {
     });
   }
 
-  if (canvasPresetSelect) {
-    canvasPresetSelect.addEventListener("change", () => {
-      const canvas = ensureCanvas();
-      if (!canvas) return;
-      const [w, h] = canvasPresetSelect.value.split("x").map(Number);
-      canvas.setWidth(w);
-      canvas.setHeight(h);
-      canvas.calcOffset();
-      canvas.renderAll();
-      saveCanvasState();
-    });
-  }
+  canvasPresetSelect?.addEventListener("change", () => {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    const [w, h] = canvasPresetSelect.value.split("x").map(Number);
+    canvas.setWidth(w);
+    canvas.setHeight(h);
+    canvas.calcOffset();
+    canvas.renderAll();
+    saveCanvasState();
+  });
 
-  if (creativeUndo) {
-    creativeUndo.addEventListener("click", () => {
-      if (creativeHistoryIndex > 0) {
-        loadCanvasState(creativeHistoryIndex - 1);
-      }
-    });
-  }
-  if (creativeRedo) {
-    creativeRedo.addEventListener("click", () => {
-      if (creativeHistoryIndex < creativeHistory.length - 1) {
-        loadCanvasState(creativeHistoryIndex + 1);
-      }
-    });
-  }
-  if (creativeDelete) {
-    creativeDelete.addEventListener("click", () => {
-      if (!creativeCanvas) return;
-      const active = creativeCanvas.getActiveObject();
-      if (!active) return;
-      creativeCanvas.remove(active);
-      creativeCanvas.discardActiveObject();
-      creativeCanvas.renderAll();
-      saveCanvasState();
-    });
-  }
-  if (creativeExportPng) {
-    creativeExportPng.addEventListener("click", () => {
-      const canvas = ensureCanvas();
-      if (!canvas) return;
-      try {
-        const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "lot-rocket-creative.png";
-        a.click();
-      } catch (err) {
-        console.error("Export PNG error (likely CORS):", err);
-        alert(
-          "Browser blocked exporting this image (CORS). Export may be limited on some dealer images."
-        );
-      }
-    });
-  }
+  creativeUndo?.addEventListener("click", () => {
+    if (creativeHistoryIndex > 0) loadCanvasState(creativeHistoryIndex - 1);
+  });
 
-  if (creativeToolButtons.length) {
-    creativeToolButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tool = btn.getAttribute("data-tool");
-        if (!tool) return;
+  creativeRedo?.addEventListener("click", () => {
+    if (creativeHistoryIndex < creativeHistory.length - 1) loadCanvasState(creativeHistoryIndex + 1);
+  });
 
-        creativeToolButtons.forEach((b) =>
-          b.classList.remove("tool-btn-active")
-        );
-        btn.classList.add("tool-btn-active");
+  creativeDelete?.addEventListener("click", () => {
+    if (!creativeCanvas) return;
+    const active = creativeCanvas.getActiveObject();
+    if (!active) return;
+    creativeCanvas.remove(active);
+    creativeCanvas.discardActiveObject();
+    creativeCanvas.renderAll();
+    saveCanvasState();
+  });
 
-        if (tool === "select") {
-          if (creativeCanvas) creativeCanvas.isDrawingMode = false;
-        } else if (tool === "addText") {
-          addTextBox();
-        } else if (tool === "addRect") {
-          addRectBanner();
-        } else if (tool === "addBadge") {
-          addBadge();
-        } else if (tool === "uploadImage" && creativeImageInput) {
-          creativeImageInput.click();
-        }
-      });
-    });
-  }
-
-  // ---------------- CREATIVE THUMBS + TUNER + SOCIAL STRIP ----------------
-
-  // One global cap so all Step 3 areas behave the same
-  const MAX_STEP3_PHOTOS = 24;
+  creativeExportPng?.addEventListener("click", () => {
+    const canvas = ensureCanvas();
+    if (!canvas) return;
+    try {
+      const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "lot-rocket-creative.png";
+      a.click();
+    } catch (err) {
+      console.error("Export PNG error:", err);
+      alert("Browser blocked exporting this image (CORS). Some dealer images may not export.");
+    }
+  });
 
   if (creativeImageInput) {
     creativeImageInput.addEventListener("change", (e) => {
       const files = e.target.files;
-      if (!files || !files.length) return;
+      if (!files?.length) return;
       handleCreativeFiles(files);
       creativeImageInput.value = "";
     });
   }
 
-function addCreativeThumb(url) {
-  if (!creativeThumbGrid) return;
+  creativeToolButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tool = btn.getAttribute("data-tool");
+      if (!tool) return;
 
-  const img = document.createElement("img");
-  img.src = url;
-  img.alt = "Creative photo";
-  img.loading = "lazy";
-  img.className = "creative-thumb";
+      creativeToolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
+      btn.classList.add("tool-btn-active");
 
-  img.title =
-    "Click to select/deselect. Double-click to send a tuned copy into the social strip.";
-
-  // ✅ CLICK = toggle selection (multi-select)
-  img.addEventListener("click", () => {
-    img.classList.toggle("selected");
-
-    // Always show this image in the tuner when clicked
-    if (tunerPreviewImg) {
-      tunerPreviewImg.src = url;
-      applyTunerFilters();
-    }
+      if (tool === "uploadImage" && creativeImageInput) creativeImageInput.click();
+    });
   });
-
-  // ✅ DOUBLE-CLICK = send edited copy to Social-ready strip
-  img.addEventListener("dblclick", async () => {
-    const editedUrl = await buildEditedDataUrl(url);
-    addPhotoToSocialReady(editedUrl);
-  });
-
-  creativeThumbGrid.appendChild(img);
-
-  // 🔢 Keep only the most recent MAX_STEP3_PHOTOS thumbs visible
-  const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
-  if (thumbs.length > MAX_STEP3_PHOTOS) {
-    const extra = thumbs.length - MAX_STEP3_PHOTOS;
-    for (let i = 0; i < extra; i++) {
-      creativeThumbGrid.removeChild(thumbs[i]);
-    }
-  }
-}
-
-
-
-
-
-
-
-
-
-async function buildEditedDataUrl(src) {
-  if (!src) return src;
-  if (!hiddenTunerCanvas || !hiddenTunerCtx) return src;
-
-  return new Promise((resolve) => {
-    const img = new Image();
-
-    const isSameOrigin =
-      src.startsWith(window.location.origin) || src.startsWith("blob:");
-    if (isSameOrigin) {
-      img.crossOrigin = "anonymous";
-    }
-
-    img.onload = () => {
-      const maxW = 1920;
-      const maxH = 1920;
-
-      let w = img.naturalWidth || img.width || 800;
-      let h = img.naturalHeight || img.height || 600;
-
-      const scale = Math.min(1, maxW / w, maxH / h);
-      w = Math.round(w * scale);
-      h = Math.round(h * scale);
-
-      hiddenTunerCanvas.width = w;
-      hiddenTunerCanvas.height = h;
-
-      hiddenTunerCtx.clearRect(0, 0, w, h);
-      hiddenTunerCtx.filter = currentTunerFilter || "none";
-      hiddenTunerCtx.drawImage(img, 0, 0, w, h);
-
-      try {
-        const dataUrl = hiddenTunerCanvas.toDataURL("image/jpeg", 0.92);
-        resolve(dataUrl);
-      } catch (err) {
-        console.warn(
-          "[LotRocket] Canvas tainted, falling back to original URL.",
-          err
-        );
-        resolve(src);
-      }
-    };
-
-    img.onerror = (err) => {
-      console.warn(
-        "[LotRocket] Failed to load image for tuner, falling back:",
-        err
-      );
-      resolve(src);
-    };
-
-    img.src = src;
-  });
-}
-
-
-// ---------- SOCIAL-READY STRIP HELPERS + CAROUSEL ----------
-
-// Safe render helper (prevents crashes if function isn't loaded yet)
-function safeRenderSocialCarousel() {
-  if (typeof renderSocialCarousel === "function") renderSocialCarousel();
-}
-
-// Helper: force preview to show a freshly added design image
-function addDesignImageToSocialStrip(url) {
-  if (!url) return;
-  addPhotoToSocialReady(url);
-  // addPhotoToSocialReady already selects newest + re-renders
-}
-
-/**
- * Adds an image URL to the social-ready strip.
- * - If already exists: selects it and updates preview
- * - If new: pushes it, caps the list, selects newest, updates preview
- */
-function addPhotoToSocialReady(url) {
-  if (!url) return;
-
-  // If already in strip, select it
-  const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
-  if (existingIndex !== -1) {
-    socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
-      ...p,
-      selected: idx === existingIndex ? true : p.selected,
-    }));
-    socialCurrentIndex = existingIndex;
-    safeRenderSocialCarousel();
-    return;
-  }
-
-  // Add new (selected by default)
-  socialReadyPhotos.push({
-    url,
-    originalUrl: url, // preserve original
-    selected: true,
-    locked: false,
-  });
-
-  // Cap list to MAX_STEP3_PHOTOS
-  const MAX_SOCIAL = Number(MAX_STEP3_PHOTOS) || 24;
-  if (socialReadyPhotos.length > MAX_SOCIAL) {
-    socialReadyPhotos = socialReadyPhotos.slice(-MAX_SOCIAL);
-  }
-
-  // Select newest + render
-  socialCurrentIndex = socialReadyPhotos.length - 1;
-  safeRenderSocialCarousel();
-}
-
-function replaceCurrentSocialImage(newUrl) {
-  if (!newUrl) return;
-
-  // If nothing in strip yet, just add
-  if (!socialReadyPhotos.length) {
-    addPhotoToSocialReady(newUrl);
-    return;
-  }
-
-  const idx = socialCurrentIndex;
-  if (idx < 0 || idx >= socialReadyPhotos.length) {
-    addPhotoToSocialReady(newUrl);
-    return;
-  }
-
-  const photo = socialReadyPhotos[idx];
-  if (!photo) {
-    addPhotoToSocialReady(newUrl);
-    return;
-  }
-
-  // Respect lock
-  if (photo.locked) return;
-
-  photo.url = newUrl;
-  photo.selected = true;
-
-  safeRenderSocialCarousel();
-}
-
-function updateSocialPreview() {
-  if (!socialCarouselPreviewImg) return;
-
-  if (!socialReadyPhotos.length) {
-    socialCarouselPreviewImg.src = "";
-    socialCarouselPreviewImg.alt = "";
-    if (socialCarouselStatus) {
-      socialCarouselStatus.textContent =
-        "No social-ready photos yet. Double-click a photo above to add it.";
-    }
-    return;
-  }
-
-  // Clamp index
-  if (socialCurrentIndex < 0) socialCurrentIndex = 0;
-  if (socialCurrentIndex >= socialReadyPhotos.length) {
-    socialCurrentIndex = socialReadyPhotos.length - 1;
-  }
-
-  const active = socialReadyPhotos[socialCurrentIndex];
-  if (!active || !active.url) return;
-
-  socialCarouselPreviewImg.src = active.url;
-  socialCarouselPreviewImg.alt = "Social-ready preview";
-
-  if (socialCarouselStatus) {
-    const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
-    socialCarouselStatus.textContent = `Photo ${socialCurrentIndex + 1}/${
-      socialReadyPhotos.length
-    } • Selected: ${selectedCount}`;
-  }
-}
-
-
-
-    socialReadyPhotos.forEach((photo, index) => {
-      // Ensure every photo has a locked flag
-      if (typeof photo.locked !== "boolean") {
-        photo.locked = false;
-      }
-
-      const item = document.createElement("div");
-      item.className =
-        "social-carousel-item" +
-        (photo.selected ? " social-carousel-item-selected" : "") +
-        (photo.locked ? " social-carousel-item-locked" : "");
-      item.dataset.index = String(index);
-
-      const img = document.createElement("img");
-      img.src = photo.url;
-      img.alt = `Social-ready photo ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "social-carousel-img";
-      img.title =
-        "Click to select / deselect. Double-click the card or use the trash icon to remove.";
-
-      // Controls bar (lock + trash)
-      const controls = document.createElement("div");
-      controls.className = "social-carousel-controls";
-
-      // 🔒 Lock / unlock button
-      const lockBtn = document.createElement("button");
-      lockBtn.type = "button";
-      lockBtn.className = "social-carousel-control-btn lock-btn";
-      lockBtn.title = photo.locked
-        ? "Unlock this photo so it can be removed"
-        : "Lock this photo so it can't be removed";
-      lockBtn.textContent = photo.locked ? "🔒" : "🔓";
-
-      lockBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const idx = Number(item.dataset.index || "0");
-        const p = socialReadyPhotos[idx];
-        if (!p) return;
-        p.locked = !p.locked;
-        renderSocialCarousel();
-      });
-
-      // 🗑️ Delete button
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "social-carousel-control-btn delete-btn";
-      deleteBtn.title = "Remove this photo from Step 3";
-      deleteBtn.textContent = "🗑️";
-
-      function removePhotoWithAnimation() {
-        const idx = Number(item.dataset.index || "0");
-        const p = socialReadyPhotos[idx];
-        if (!p) return;
-
-        if (p.locked) {
-          alert(
-            "This photo is locked. Unlock it first if you want to remove it."
-          );
-          return;
-        }
-
-        // Animation class
-        item.classList.add("social-carousel-item-removing");
-
-        setTimeout(() => {
-          socialReadyPhotos.splice(idx, 1);
-
-          if (socialCurrentIndex >= socialReadyPhotos.length) {
-            socialCurrentIndex = socialReadyPhotos.length - 1;
-          }
-          if (socialCurrentIndex < 0) socialCurrentIndex = 0;
-
-          renderSocialCarousel();
-        }, 160); // keep in sync with CSS transition
-      }
-
-      deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removePhotoWithAnimation();
-      });
-
-      controls.appendChild(lockBtn);
-      controls.appendChild(deleteBtn);
-
-      item.appendChild(img);
-      item.appendChild(controls);
-      socialCarousel.appendChild(item);
-
-      // 🖱️ Single-click = select + make active preview
-      item.addEventListener("click", (e) => {
-        // Ignore clicks directly on control buttons (handled above)
-        if (e.target.closest(".social-carousel-control-btn")) return;
-
-        const idx = Number(item.dataset.index || "0");
-        socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
-        socialCurrentIndex = idx;
-        renderSocialCarousel();
-      });
-
-      // 🖱️ Double-click anywhere on the card = quick delete
-      item.addEventListener("dblclick", (e) => {
-        e.preventDefault();
-        removePhotoWithAnimation();
-      });
-    });
-
-    // Refresh preview
-    updateSocialPreview();
-  }
-
-  // Prev/Next buttons for the big preview
-  if (socialPrevBtn) {
-    socialPrevBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) return;
-      socialCurrentIndex =
-        (socialCurrentIndex - 1 + socialReadyPhotos.length) %
-        socialReadyPhotos.length;
-      updateSocialPreview();
-    });
-  }
-
-  if (socialNextBtn) {
-    socialNextBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) return;
-      socialCurrentIndex =
-        (socialCurrentIndex + 1) % socialReadyPhotos.length;
-      updateSocialPreview();
-    });
-  }
-
-  function handleCreativeFiles(fileList) {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
-
-    files.forEach((file) => {
-      if (!file || !file.type || !file.type.startsWith("image/")) return;
-      const url = URL.createObjectURL(file);
-      localCreativePhotos.push(url);
-
-      // Keep only latest MAX_STEP3_PHOTOS in state
-      if (localCreativePhotos.length > MAX_STEP3_PHOTOS) {
-        localCreativePhotos = localCreativePhotos.slice(
-          localCreativePhotos.length - MAX_STEP3_PHOTOS
-        );
-      }
-
-      addCreativeThumb(url);
-
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
-    });
-  }
-
-  if (photoDropZone && photoFileInput) {
-    photoDropZone.addEventListener("click", () => {
-      photoFileInput.click();
-    });
-
-    photoFileInput.addEventListener("change", (e) => {
-      handleCreativeFiles(e.target.files);
-      photoFileInput.value = "";
-    });
-
-    ["dragenter", "dragover"].forEach((evtName) => {
-      photoDropZone.addEventListener(evtName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        photoDropZone.classList.add("dragover");
-      });
-    });
-
-    ["dragleave", "dragend"].forEach((evtName) => {
-      photoDropZone.addEventListener(evtName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        photoDropZone.classList.remove("dragover");
-      });
-    });
-
-    photoDropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      photoDropZone.classList.remove("dragover");
-
-      const dt = e.dataTransfer;
-      let files = dt && dt.files;
-
-      if ((!files || !files.length) && dt && dt.items) {
-        const collected = [];
-        for (const item of dt.items) {
-          if (item.kind === "file") {
-            const f = item.getAsFile();
-            if (f) collected.push(f);
-          }
-        }
-        files = collected;
-      }
-
-      if (!files || !files.length) return;
-      handleCreativeFiles(files);
-    });
-  }
-
-  function getActivePhotoUrlForCinematic() {
-    if (tunerPreviewImg && tunerPreviewImg.src) {
-      return tunerPreviewImg.src;
-    }
-
-    if (creativeThumbGrid) {
-      const selected = creativeThumbGrid.querySelector(
-        ".creative-thumb.selected"
-      );
-      if (selected && selected.src) return selected.src;
-    }
-
-    if (localCreativePhotos && localCreativePhotos.length) {
-      return localCreativePhotos[0];
-    }
-
-    if (dealerPhotos && dealerPhotos.length) {
-      return dealerPhotos[0].src;
-    }
-
-    return "";
-  }
-
-  if (aiCinematicBtn) {
-    aiCinematicBtn.addEventListener("click", async () => {
-      const src = getActivePhotoUrlForCinematic();
-      if (!src) {
-        alert("Pick or load a photo in the Creative Lab first.");
-        return;
-      }
-
-      const originalLabel = aiCinematicBtn.textContent;
-      aiCinematicBtn.disabled = true;
-      aiCinematicBtn.textContent = "AI Enhancing…";
-
-      try {
-        const res = await fetch(apiBase + "/api/process-photos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ photoUrls: [src] }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          const msg =
-            (data && data.error) ||
-            `AI photo enhancement failed (HTTP ${res.status}).`;
-          console.error("❌ /api/process-photos error:", msg, data);
-          alert(msg);
-          return;
-        }
-
-        const processed =
-          data.editedPhotos &&
-          data.editedPhotos[0] &&
-          (data.editedPhotos[0].processedUrl ||
-            data.editedPhotos[0].originalUrl);
-
-        const finalUrl = processed || src;
-
-        // 1) Update tuner preview
-        if (tunerPreviewImg) {
-          tunerPreviewImg.src = finalUrl;
-          if (tunerBrightness) tunerBrightness.value = "100";
-          if (tunerContrast) tunerContrast.value = "100";
-          if (tunerSaturation) tunerSaturation.value = "100";
-          applyTunerFilters();
-        }
-
-        // 2) Update creative thumb grid so you SEE the new AI version
-        if (creativeThumbGrid) {
-          let updated = false;
-
-          const selectedThumb = creativeThumbGrid.querySelector(
-            ".creative-thumb.selected"
-          );
-          if (selectedThumb) {
-            selectedThumb.src = finalUrl;
-            updated = true;
-          } else {
-            const thumbs =
-              creativeThumbGrid.querySelectorAll(".creative-thumb");
-            thumbs.forEach((imgEl) => {
-              if (!updated && imgEl.src === src) {
-                imgEl.src = finalUrl;
-                updated = true;
-              }
-            });
-          }
-        }
-
-        // 3) Update localCreativePhotos state
-        localCreativePhotos = (localCreativePhotos || []).map((u) =>
-          u === src ? finalUrl : u
-        );
-
-        // 4) Add into Social-ready strip (helper handles push + cap + preview)
-        addPhotoToSocialReady(finalUrl);
-
-        // 5) Also add as a fresh thumb if it's not already there
-        const alreadyInThumbs =
-          creativeThumbGrid &&
-          !!Array.from(
-            creativeThumbGrid.querySelectorAll(".creative-thumb")
-          ).find((imgEl) => imgEl.src === finalUrl);
-
-        if (!alreadyInThumbs) {
-          addCreativeThumb(finalUrl);
-        }
-      } catch (err) {
-        console.error("❌ AI Cinematic network error:", err);
-        alert(
-          "Lot Rocket hit a snag talking to the AI photo editor. Try again in a moment."
-        );
-      } finally {
-        aiCinematicBtn.disabled = false;
-        aiCinematicBtn.textContent =
-          originalLabel || "AI Cinematic Background";
-      }
-    });
-  }
 
   // ==================================================
-  // DESIGN STUDIO 3.5 (Konva + Templates + Save/Load)
+  // DESIGN STUDIO 3.5 (Konva) — cleaned init + loader
   // ==================================================
-
-const designStudioOverlay = document.getElementById("designStudioOverlay");
-const designLauncher = document.getElementById("designLauncher");
-
-  document.getElementById("sendToDesignStudio") ||
-  document.getElementById("designLauncher");
+  const designStudioOverlay = document.getElementById("designStudioOverlay");
+  const designLauncher = document.getElementById("designLauncher");
   const designCloseBtn = document.getElementById("designClose");
 
-  const studioSizePreset = document.getElementById("studioSizePreset");
+  const studioExportPng = document.getElementById("studioExportPng");
   const studioUndoBtn = document.getElementById("studioUndoBtn");
   const studioRedoBtn = document.getElementById("studioRedoBtn");
-  const studioExportPng = document.getElementById("studioExportPng");
+  const studioSizePreset = document.getElementById("studioSizePreset");
 
   const toolAddText = document.getElementById("toolAddText");
   const toolAddShape = document.getElementById("toolAddShape");
@@ -2264,6 +1475,8 @@ const designLauncher = document.getElementById("designLauncher");
 
   const studioPhotoTray = document.getElementById("studioPhotoTray");
 
+  const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
+
   let studioStage = null;
   let studioLayer = null;
   let studioSelectedNode = null;
@@ -2274,154 +1487,43 @@ const designLauncher = document.getElementById("designLauncher");
   let studioDnDWired = false;
   let studioAvailablePhotos = [];
 
-function initDesignStudio() {
-  const container = document.getElementById("konvaStageContainer");
-  if (!container || !window.Konva) return;
-
-  const width = container.clientWidth || 1080;
-  const height = container.clientHeight || width;
-// Auto-fit the image when loaded into the Design Studio canvas
-function addImageToStudio(url) {
-  Konva.Image.fromURL(url, (img) => {
-    const stageWidth = stage.width();
-    const stageHeight = stage.height();
-
-    // Scale image to fit inside the stage while keeping aspect ratio
-    const scale = Math.min(
-      stageWidth / img.width(),
-      stageHeight / img.height()
-    );
-
-    img.scale({ x: scale, y: scale });
-
-    // Center the image on the stage
-    img.position({
-      x: (stageWidth - img.width() * scale) / 2,
-      y: (stageHeight - img.height() * scale) / 2,
-    });
-
-    // Add the image to the layer and redraw
-    studioLayer.add(img);
-    img.draggable(true);
+  function setStudioBackground(color = BRAND.dark) {
+    if (!studioLayer || !studioStage) return;
+    let bg = studioLayer.findOne(".BackgroundLayer");
+    if (!bg) {
+      bg = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: studioStage.width(),
+        height: studioStage.height(),
+        fill: color,
+        name: "BackgroundLayer",
+        listening: false,
+      });
+      studioLayer.add(bg);
+      bg.moveToBottom();
+    } else {
+      bg.fill(color);
+      bg.width(studioStage.width());
+      bg.height(studioStage.height());
+      bg.moveToBottom();
+    }
     studioLayer.draw();
-  });
-}
+  }
 
-  studioStage = new Konva.Stage({
-    container: "konvaStageContainer",
-    width,
-    height,
-  });
+  function attachNodeInteractions(node) {
+    node.on("click tap", () => selectStudioNode(node));
+    node.on("dragend transformend", () => saveStudioHistory());
+  }
 
-  studioLayer = new Konva.Layer();
-  studioStage.add(studioLayer);
-
-  setStudioBackground(BRAND.dark);
-
-  studioTransformer = new Konva.Transformer({
-    rotateEnabled: true,
-    enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
-    anchorSize: 10,
-    borderStroke: "#e5e7eb",
-    anchorFill: BRAND.primary,
-    anchorStroke: BRAND.primary,
-    anchorCornerRadius: 4,
-  });
-  studioLayer.add(studioTransformer);
-
-  studioStage.on("click tap", (e) => {
-    const target = e.target;
-    if (
-      target === studioStage ||
-      target === studioLayer ||
-      target.name() === "BackgroundLayer"
-    ) {
-      selectStudioNode(null);
-    }
-  });
-
-  wireDesignStudioUI();
-  attachEventsToAllNodes();
-  rebuildLayersList();
-  saveStudioHistory();
-}
-
-// --------------------------------------------------
-// DESIGN STUDIO → STEP 3 (SOCIAL-READY STRIP + CREATIVE LAB)
-// --------------------------------------------------
-const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
-
-if (sendDesignToStripBtn) {
-  sendDesignToStripBtn.addEventListener("click", async () => {
-    console.log("▶️ Send to Step 3 clicked");
-
-    try {
-      if (!studioStage) {
-        console.warn("⚠️ Design Studio stage not initialized.");
-        return;
-      }
-
-      // 1) Export Konva stage to PNG
-      let dataUrl;
-      try {
-        dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
-      } catch (e) {
-        console.error("❌ Konva toDataURL failed:", e);
-        alert(
-          "Design export failed because one of the images on the canvas does not allow download. Try using only dealer/Creative Lab images."
-        );
-        return;
-      }
-
-      // 2) Convert dataURL → Blob → object URL
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-
-      // 3) Send into the Social-Ready strip / focus preview
-      if (typeof addDesignImageToSocialStrip === "function") {
-        // if you have a “design specific” helper, use it
-        addDesignImageToSocialStrip(objectUrl);
-      } else if (typeof addPhotoToSocialReady === "function") {
-        // otherwise fall back to the generic helper
-        addPhotoToSocialReady(objectUrl);
-      } else {
-        console.warn(
-          "No social-strip helper defined; design image cannot be added to strip."
-        );
-      }
-
-      // 4) ALSO mirror the design into Step 3 Creative Lab thumbs
-      //    so it behaves like any other edited photo.
-      if (creativeThumbGrid) {
-        // track it in localCreativePhotos (with global cap logic elsewhere)
-        localCreativePhotos.push(objectUrl);
-        addCreativeThumb(objectUrl);
-
-        // if tuner preview is empty, show this design there too
-        if (tunerPreviewImg && !tunerPreviewImg.src) {
-          tunerPreviewImg.src = objectUrl;
-          applyTunerFilters();
-        }
-      }
-
-      console.log(
-        "✅ Design sent to Step 3 social strip + Creative Lab from Design Studio:",
-        objectUrl
-      );
-    } catch (err) {
-      console.error("❌ Failed to send design to Step 3:", err);
-    }
-  });
-}
-
-
-
-
-
-
-
-
+  function attachEventsToAllNodes() {
+    if (!studioLayer) return;
+    studioLayer.getChildren().forEach((node) => {
+      if (node.name() === "BackgroundLayer") return;
+      if (node.getClassName && node.getClassName() === "Transformer") return;
+      attachNodeInteractions(node);
+    });
+  }
 
   function saveStudioHistory() {
     if (!studioStage) return;
@@ -2432,8 +1534,7 @@ if (sendDesignToStripBtn) {
   }
 
   function restoreStudioFromHistory(index) {
-    if (!window.Konva) return;
-    if (!studioHistory.length) return;
+    if (!window.Konva || !studioHistory.length) return;
     if (index < 0 || index >= studioHistory.length) return;
 
     const container =
@@ -2443,9 +1544,7 @@ if (sendDesignToStripBtn) {
 
     const json = studioHistory[index];
 
-    if (studioStage) {
-      studioStage.destroy();
-    }
+    if (studioStage) studioStage.destroy();
 
     studioStage = Konva.Node.create(json, container);
     const layers = studioStage.getLayers();
@@ -2456,21 +1555,15 @@ if (sendDesignToStripBtn) {
       studioStage.findOne("Transformer") ||
       new Konva.Transformer({
         rotateEnabled: true,
-        enabledAnchors: [
-          "top-left",
-          "top-right",
-          "bottom-left",
-          "bottom-right",
-        ],
+        enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
         anchorSize: 10,
         borderStroke: "#e5e7eb",
         anchorFill: BRAND.primary,
         anchorStroke: BRAND.primary,
         anchorCornerRadius: 4,
       });
-    if (!studioTransformer.getStage()) {
-      studioLayer.add(studioTransformer);
-    }
+
+    if (!studioTransformer.getStage()) studioLayer.add(studioTransformer);
 
     studioSelectedNode = null;
     studioHistoryIndex = index;
@@ -2481,15 +1574,10 @@ if (sendDesignToStripBtn) {
   }
 
   function studioUndo() {
-    if (studioHistoryIndex > 0) {
-      restoreStudioFromHistory(studioHistoryIndex - 1);
-    }
+    if (studioHistoryIndex > 0) restoreStudioFromHistory(studioHistoryIndex - 1);
   }
-
   function studioRedo() {
-    if (studioHistoryIndex < studioHistory.length - 1) {
-      restoreStudioFromHistory(studioHistoryIndex + 1);
-    }
+    if (studioHistoryIndex < studioHistory.length - 1) restoreStudioFromHistory(studioHistoryIndex + 1);
   }
 
   function selectStudioNode(node) {
@@ -2523,9 +1611,7 @@ if (sendDesignToStripBtn) {
       li.className = "layer-item";
       li.textContent = node.name() || node.getClassName();
       if (node === studioSelectedNode) li.classList.add("layer-item-selected");
-      li.addEventListener("click", () => {
-        selectStudioNode(node);
-      });
+      li.addEventListener("click", () => selectStudioNode(node));
       layersList.appendChild(li);
     });
   }
@@ -2540,34 +1626,13 @@ if (sendDesignToStripBtn) {
 
     if (studioSelectedNode.className === "Text") {
       if (layerTextInput) layerTextInput.value = studioSelectedNode.text() || "";
-      if (layerFontSizeInput)
-        layerFontSizeInput.value = studioSelectedNode.fontSize() || 40;
+      if (layerFontSizeInput) layerFontSizeInput.value = studioSelectedNode.fontSize() || 40;
     } else {
       if (layerTextInput) layerTextInput.value = "";
       if (layerFontSizeInput) layerFontSizeInput.value = "";
     }
 
-    if (layerOpacityInput) {
-      layerOpacityInput.value = studioSelectedNode.opacity() ?? 1;
-    }
-  }
-
-  function attachNodeInteractions(node) {
-    node.on("click tap", () => {
-      selectStudioNode(node);
-    });
-    node.on("dragend transformend", () => {
-      saveStudioHistory();
-    });
-  }
-
-  function attachEventsToAllNodes() {
-    if (!studioLayer) return;
-    studioLayer.getChildren().forEach((node) => {
-      if (node.name() === "BackgroundLayer") return;
-      if (node.getClassName && node.getClassName() === "Transformer") return;
-      attachNodeInteractions(node);
-    });
+    if (layerOpacityInput) layerOpacityInput.value = studioSelectedNode.opacity() ?? 1;
   }
 
   function addStudioText(text = "YOUR HEADLINE HERE") {
@@ -2590,7 +1655,6 @@ if (sendDesignToStripBtn) {
     });
 
     node.offsetX(node.width() / 2);
-
     attachNodeInteractions(node);
     studioLayer.add(node);
     studioLayer.draw();
@@ -2646,130 +1710,54 @@ if (sendDesignToStripBtn) {
     saveStudioHistory();
   }
 
-  function setStudioBackground(color = BRAND.dark) {
-    if (!studioLayer || !studioStage) return;
-    let bg = studioLayer.findOne(".BackgroundLayer");
-    if (!bg) {
-      bg = new Konva.Rect({
-        x: 0,
-        y: 0,
-        width: studioStage.width(),
-        height: studioStage.height(),
-        fill: color,
-        name: "BackgroundLayer",
-        listening: false,
-      });
-      studioLayer.add(bg);
-      bg.moveToBottom();
-    } else {
-      bg.fill(color);
-      bg.width(studioStage.width());
-      bg.height(studioStage.height());
-      bg.moveToBottom();
-    }
-    studioLayer.draw();
-  }
+  function addStudioImageFromUrl(url, asBackground = false) {
+    if (!studioLayer || !studioStage || !url) return;
 
-  // CORS-safe wrapper for images used in Design Studio.
-  // Routes external URLs through our /api/proxy-image endpoint.
-  function getProxiedImageUrl(rawUrl) {
-    if (!rawUrl) return rawUrl;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    const safeUrl = getProxiedImageUrl(url);
 
-    try {
-      const u = new URL(rawUrl, window.location.origin);
+    img.onload = () => {
+      const fitRatio = Math.min(studioStage.width() / img.width, studioStage.height() / img.height) || 1;
+      const finalRatio = fitRatio * 0.9;
+      const w = img.width * finalRatio;
+      const h = img.height * finalRatio;
 
-      // Same-origin, blob: or data: URLs do NOT need proxying.
-      if (
-        u.origin === window.location.origin ||
-        u.protocol === "blob:" ||
-        u.protocol === "data:"
-      ) {
-        return rawUrl;
+      if (!asBackground) {
+        studioLayer.getChildren().forEach((child) => {
+          if (child.name && child.name() === "Photo Layer") child.destroy();
+        });
       }
 
-      // Already going through our proxy
-      if (u.pathname.startsWith("/api/proxy-image")) {
-        return rawUrl;
+      const node = new Konva.Image({
+        image: img,
+        x: studioStage.width() / 2,
+        y: studioStage.height() / 2,
+        width: w,
+        height: h,
+        offsetX: w / 2,
+        offsetY: h / 2,
+        draggable: true,
+        name: asBackground ? "Background Photo" : "Photo Layer",
+      });
+
+      attachNodeInteractions(node);
+      studioLayer.add(node);
+
+      if (asBackground) {
+        node.moveToBottom();
+        const bgRect = studioLayer.findOne(".BackgroundLayer");
+        if (bgRect) bgRect.moveToBottom();
       }
 
-      // Everything else → send through backend proxy
-      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
-    } catch (e) {
-      console.warn("[DesignStudio] Could not parse URL for proxy:", rawUrl, e);
-      return rawUrl;
-    }
+      studioLayer.draw();
+      selectStudioNode(node);
+      saveStudioHistory();
+    };
+
+    img.onerror = (err) => console.error("[DesignStudio] Failed to load image:", safeUrl, err);
+    img.src = safeUrl;
   }
-
-function addStudioImageFromUrl(url, asBackground = false) {
-  if (!studioLayer || !studioStage || !url) return;
-
-  const img = new Image();
-
-  // allow CORS-safe pixel access
-  img.crossOrigin = "anonymous";
-
-  // route external images through our backend proxy
-  const safeUrl = getProxiedImageUrl(url);
-
-  img.onload = () => {
-    const fitRatio =
-      Math.min(
-        studioStage.width() / img.width,
-        studioStage.height() / img.height
-      ) || 1;
-
-    const finalRatio = fitRatio * 0.9;
-    const w = img.width * finalRatio;
-    const h = img.height * finalRatio;
-
-    // ✅ If this is a normal photo (NOT background),
-    // always keep ONLY ONE "Photo Layer" on the canvas.
-    if (!asBackground) {
-      studioLayer.getChildren().forEach((child) => {
-        if (child.name && child.name() === "Photo Layer") {
-          child.destroy();
-        }
-      });
-    }
-
-    const node = new Konva.Image({
-      image: img,
-      x: studioStage.width() / 2,
-      y: studioStage.height() / 2,
-      width: w,
-      height: h,
-      offsetX: w / 2,
-      offsetY: h / 2,
-      draggable: true,
-      name: asBackground ? "Background Photo" : "Photo Layer",
-    });
-
-    attachNodeInteractions(node);
-    studioLayer.add(node);
-
-    if (asBackground) {
-      // push background under everything
-      node.moveToBottom();
-      const bgRect = studioLayer.findOne(".BackgroundLayer");
-      if (bgRect) bgRect.moveToBottom();
-    }
-
-    studioLayer.draw();
-    selectStudioNode(node);
-    saveStudioHistory();
-  };
-
-  img.onerror = (err) => {
-    console.error("[DesignStudio] Failed to load image:", safeUrl, err);
-  };
-
-  img.src = safeUrl;
-}
-
-
-
-
-
 
   function exportStudioAsPng() {
     if (!studioStage) return;
@@ -2780,10 +1768,8 @@ function addStudioImageFromUrl(url, asBackground = false) {
       a.download = "lot-rocket-design.png";
       a.click();
     } catch (err) {
-      console.error("Export PNG error (likely CORS):", err);
-      alert(
-        "Browser blocked exporting this design (CORS). Some dealer images may not export."
-      );
+      console.error("Export PNG error:", err);
+      alert("Browser blocked exporting this design (CORS). Some dealer images may not export.");
     }
   }
 
@@ -2814,19 +1800,16 @@ function addStudioImageFromUrl(url, asBackground = false) {
     studioLayer.draw();
     studioSelectedNode = null;
     if (studioTransformer) {
-      studioTransformer.nodes([]); 
+      studioTransformer.nodes([]);
       studioTransformer.visible(false);
     }
   }
 
   function applyTemplate(type) {
-    if (!studioStage || !studioLayer) {
-      initDesignStudio();
-    }
+    if (!studioStage || !studioLayer) initDesignStudio();
     if (!studioStage || !studioLayer) return;
 
     clearStudioNonBackgroundNodes();
-
     const cx = studioStage.width() / 2;
     const cy = studioStage.height() / 2;
 
@@ -2953,21 +1936,6 @@ function addStudioImageFromUrl(url, asBackground = false) {
       sold.offsetY(sold.height() / 2);
       attachNodeInteractions(sold);
       studioLayer.add(sold);
-
-      const congrats = new Konva.Text({
-        x: cx,
-        y: cy + 160,
-        text: "Congrats [Customer Name]!",
-        fontFamily: "system-ui, sans-serif",
-        fontSize: 44,
-        align: "center",
-        fill: BRAND.textLight,
-        name: "Sold Congrats",
-        draggable: true,
-      });
-      congrats.offsetX(congrats.width() / 2);
-      attachNodeInteractions(congrats);
-      studioLayer.add(congrats);
     } else {
       addStudioText();
     }
@@ -2983,177 +1951,175 @@ function addStudioImageFromUrl(url, asBackground = false) {
       return;
     }
     try {
-      const json = studioStage.toJSON();
-      localStorage.setItem(STUDIO_STORAGE_KEY, json);
+      localStorage.setItem(STUDIO_STORAGE_KEY, studioStage.toJSON());
       alert("Design saved on this device.");
     } catch (err) {
       console.error("Error saving design:", err);
-      alert("Could not save this design. Check storage permissions.");
+      alert("Could not save this design.");
     }
   }
 
-function loadDesignFromLocal() {
-  const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
-  if (!stored) {
-    alert("No saved design found yet.");
-    return;
-  }
-  if (!window.Konva) {
-    alert("Design Studio is not available (Konva missing).");
-    return;
-  }
-  const container = document.getElementById("konvaStageContainer");
-  if (!container) {
-    alert("Design Studio area not found.");
-    return;
-  }
-
-  try {
-    if (studioStage) {
-      studioStage.destroy();
+  function loadDesignFromLocal() {
+    const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
+    if (!stored) {
+      alert("No saved design found yet.");
+      return;
+    }
+    if (!window.Konva) {
+      alert("Design Studio is not available (Konva missing).");
+      return;
+    }
+    const container = document.getElementById("konvaStageContainer");
+    if (!container) {
+      alert("Design Studio area not found.");
+      return;
     }
 
-    studioStage = Konva.Node.create(stored, container);
-    const layers = studioStage.getLayers();
-    studioLayer = layers[0] || new Konva.Layer();
-    if (!layers.length) studioStage.add(studioLayer);
+    try {
+      if (studioStage) studioStage.destroy();
+      studioStage = Konva.Node.create(stored, container);
 
-    studioTransformer =
-      studioStage.findOne("Transformer") ||
-      new Konva.Transformer({
-        rotateEnabled: true,
-        enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
-        anchorSize: 10,
-        borderStroke: "#e5e7eb",
-        anchorFill: BRAND.primary,
-        anchorStroke: BRAND.primary,
-        anchorCornerRadius: 4,
-      });
+      const layers = studioStage.getLayers();
+      studioLayer = layers[0] || new Konva.Layer();
+      if (!layers.length) studioStage.add(studioLayer);
 
-    if (!studioTransformer.getStage()) {
-      studioLayer.add(studioTransformer);
+      studioTransformer =
+        studioStage.findOne("Transformer") ||
+        new Konva.Transformer({
+          rotateEnabled: true,
+          enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
+          anchorSize: 10,
+          borderStroke: "#e5e7eb",
+          anchorFill: BRAND.primary,
+          anchorStroke: BRAND.primary,
+          anchorCornerRadius: 4,
+        });
+
+      if (!studioTransformer.getStage()) studioLayer.add(studioTransformer);
+
+      studioSelectedNode = null;
+      studioHistory = [stored];
+      studioHistoryIndex = 0;
+
+      attachEventsToAllNodes();
+      rebuildLayersList();
+      wireDesignStudioUI();
+      saveStudioHistory();
+
+      designStudioOverlay?.classList.remove("hidden");
+    } catch (err) {
+      console.error("Error loading design:", err);
+      alert("Could not load saved design.");
     }
-
-    studioSelectedNode = null;
-    studioHistory = [stored];
-    studioHistoryIndex = 0;
-
-    attachEventsToAllNodes();
-    rebuildLayersList();
-    wireDesignStudioUI();
-    saveStudioHistory();
-
-    if (designStudioOverlay) {
-      designStudioOverlay.classList.remove("hidden");
-    }
-  } catch (err) {
-    console.error("Error loading design:", err);
-    alert("Could not load saved design. Save a new one and try again.");
   }
-}
-
 
   function wireDesignStudioUI() {
     if (studioUIWired) return;
     studioUIWired = true;
 
-    if (toolAddText) {
-      toolAddText.addEventListener("click", () => addStudioText());
-    }
-    if (toolAddShape) {
-      toolAddShape.addEventListener("click", () => addStudioShape());
-    }
-    if (toolAddBadge) {
-      toolAddBadge.addEventListener("click", () => addStudioBadge());
-    }
-    if (toolSetBackground) {
-      toolSetBackground.addEventListener("click", () =>
-        setStudioBackground(BRAND.dark)
-      );
-    }
+    toolAddText?.addEventListener("click", () => addStudioText());
+    toolAddShape?.addEventListener("click", () => addStudioShape());
+    toolAddBadge?.addEventListener("click", () => addStudioBadge());
+    toolSetBackground?.addEventListener("click", () => setStudioBackground(BRAND.dark));
 
-    if (studioExportPng) {
-      studioExportPng.addEventListener("click", exportStudioAsPng);
-    }
-    if (studioUndoBtn) {
-      studioUndoBtn.addEventListener("click", studioUndo);
-    }
-    if (studioRedoBtn) {
-      studioRedoBtn.addEventListener("click", studioRedo);
-    }
-    if (studioSizePreset) {
-      studioSizePreset.addEventListener("change", applyStudioSizePreset);
-    }
+    studioExportPng?.addEventListener("click", exportStudioAsPng);
+    studioUndoBtn?.addEventListener("click", studioUndo);
+    studioRedoBtn?.addEventListener("click", studioRedo);
+    studioSizePreset?.addEventListener("change", applyStudioSizePreset);
 
-    if (layerTextInput) {
-      layerTextInput.addEventListener("input", () => {
-        if (studioSelectedNode && studioSelectedNode.className === "Text") {
-          studioSelectedNode.text(layerTextInput.value);
-          studioLayer.batchDraw();
-          saveStudioHistory();
-        }
-      });
-    }
-
-    if (layerFontSizeInput) {
-      layerFontSizeInput.addEventListener("input", () => {
-        if (studioSelectedNode && studioSelectedNode.className === "Text") {
-          const size = Number(layerFontSizeInput.value) || 40;
-          studioSelectedNode.fontSize(size);
-          studioLayer.batchDraw();
-          saveStudioHistory();
-        }
-      });
-    }
-
-    if (layerOpacityInput) {
-      layerOpacityInput.addEventListener("input", () => {
-        if (studioSelectedNode) {
-          const val = Number(layerOpacityInput.value);
-          studioSelectedNode.opacity(val);
-          studioLayer.batchDraw();
-          saveStudioHistory();
-        }
-      });
-    }
-
-    if (layerDeleteBtn) {
-      layerDeleteBtn.addEventListener("click", () => {
-        if (!studioSelectedNode || !studioLayer) return;
-        studioSelectedNode.destroy();
-        studioSelectedNode = null;
-
-        if (studioTransformer) {
-          studioTransformer.nodes([]);
-          studioTransformer.visible(false);
-        }
-
-        studioLayer.draw();
-        rebuildLayersList();
+    layerTextInput?.addEventListener("input", () => {
+      if (studioSelectedNode && studioSelectedNode.className === "Text") {
+        studioSelectedNode.text(layerTextInput.value);
+        studioLayer.batchDraw();
         saveStudioHistory();
-      });
-    }
+      }
+    });
+
+    layerFontSizeInput?.addEventListener("input", () => {
+      if (studioSelectedNode && studioSelectedNode.className === "Text") {
+        const size = Number(layerFontSizeInput.value) || 40;
+        studioSelectedNode.fontSize(size);
+        studioLayer.batchDraw();
+        saveStudioHistory();
+      }
+    });
+
+    layerOpacityInput?.addEventListener("input", () => {
+      if (studioSelectedNode) {
+        studioSelectedNode.opacity(Number(layerOpacityInput.value));
+        studioLayer.batchDraw();
+        saveStudioHistory();
+      }
+    });
+
+    layerDeleteBtn?.addEventListener("click", () => {
+      if (!studioSelectedNode || !studioLayer) return;
+      studioSelectedNode.destroy();
+      studioSelectedNode = null;
+      studioTransformer?.nodes([]);
+      studioTransformer?.visible(false);
+      studioLayer.draw();
+      rebuildLayersList();
+      saveStudioHistory();
+    });
+
+    saveDesignBtn?.addEventListener("click", saveDesignToLocal);
+    loadDesignBtn?.addEventListener("click", loadDesignFromLocal);
+
+    templatePaymentBtn?.addEventListener("click", () => applyTemplate("payment"));
+    templateArrivalBtn?.addEventListener("click", () => applyTemplate("arrival"));
+    templateSaleBtn?.addEventListener("click", () => applyTemplate("sale"));
+  }
+
+  function initDesignStudio() {
+    const container = document.getElementById("konvaStageContainer");
+    if (!container || !window.Konva) return;
+
+    const width = container.clientWidth || 1080;
+    const height = container.clientHeight || width;
+
+    studioStage = new Konva.Stage({ container: "konvaStageContainer", width, height });
+    studioLayer = new Konva.Layer();
+    studioStage.add(studioLayer);
+
+    setStudioBackground(BRAND.dark);
+
+    studioTransformer = new Konva.Transformer({
+      rotateEnabled: true,
+      enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
+      anchorSize: 10,
+      borderStroke: "#e5e7eb",
+      anchorFill: BRAND.primary,
+      anchorStroke: BRAND.primary,
+      anchorCornerRadius: 4,
+    });
+
+    studioLayer.add(studioTransformer);
+
+    studioStage.on("click tap", (e) => {
+      const target = e.target;
+      if (target === studioStage || target === studioLayer || target.name() === "BackgroundLayer") {
+        selectStudioNode(null);
+      }
+    });
+
+    wireDesignStudioUI();
+    attachEventsToAllNodes();
+    rebuildLayersList();
+    saveStudioHistory();
   }
 
   function gatherImageUrlsForStudios() {
     const urls = new Set();
 
-    // 1) Creative Lab thumbs
-    if (creativeThumbGrid) {
-      creativeThumbGrid.querySelectorAll("img").forEach((img) => {
-        if (img.src) urls.add(img.src);
-      });
-    }
+    // Creative thumbs
+    creativeThumbGrid?.querySelectorAll("img").forEach((img) => img?.src && urls.add(img.src));
 
-    // 2) Social-ready strip
-    if (Array.isArray(socialReadyPhotos) && socialReadyPhotos.length) {
-      socialReadyPhotos.forEach((p) => {
-        if (p && p.url) urls.add(p.url);
-      });
-    }
+    // Social strip
+    socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
 
-    // 3) Dealer photos (selected first, then all)
-    if (dealerPhotos && dealerPhotos.length) {
+    // Dealer photos (selected first)
+    if (dealerPhotos?.length) {
       const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
       const fallback = dealerPhotos.map((p) => p.src);
       (selected.length ? selected : fallback).forEach((u) => urls.add(u));
@@ -3166,11 +2132,10 @@ function loadDesignFromLocal() {
     if (!studioPhotoTray) return;
     studioPhotoTray.innerHTML = "";
 
-    if (!studioAvailablePhotos || !studioAvailablePhotos.length) {
+    if (!studioAvailablePhotos?.length) {
       const msg = document.createElement("p");
       msg.className = "small-note";
-      msg.textContent =
-        "No photos loaded yet. Boost a listing or load/edit photos in the Creative Lab, then open Design Studio.";
+      msg.textContent = "No photos loaded yet. Boost a listing or load/edit photos in the Creative Lab, then open Design Studio.";
       studioPhotoTray.appendChild(msg);
       return;
     }
@@ -3183,25 +2148,11 @@ function loadDesignFromLocal() {
       img.className = "studio-photo-thumb";
       img.draggable = true;
 
-      // CLICK = drop onto canvas
-      img.addEventListener("click", (e) => {
-        if (e.shiftKey) {
-          addStudioImageFromUrl(url, true); // shift+click = background
-        } else {
-          addStudioImageFromUrl(url, false);
-        }
-      });
+      img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
+      img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
 
-      // DOUBLE-CLICK = force background
-      img.addEventListener("dblclick", () => {
-        addStudioImageFromUrl(url, true);
-      });
-
-      // Optional drag → drop into canvas
       img.addEventListener("dragstart", (e) => {
-        try {
-          e.dataTransfer.setData("text/plain", url);
-        } catch (_) {}
+        try { e.dataTransfer.setData("text/plain", url); } catch {}
       });
 
       studioPhotoTray.appendChild(img);
@@ -3210,18 +2161,11 @@ function loadDesignFromLocal() {
     const konvaContainer = document.getElementById("konvaStageContainer");
     if (konvaContainer && !studioDnDWired) {
       studioDnDWired = true;
-
-      konvaContainer.addEventListener("dragover", (e) => {
-        e.preventDefault();
-      });
-
+      konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
       konvaContainer.addEventListener("drop", (e) => {
         e.preventDefault();
         let url = "";
-        try {
-          url = e.dataTransfer.getData("text/plain");
-        } catch (_) {}
-
+        try { url = e.dataTransfer.getData("text/plain"); } catch {}
         if (url) addStudioImageFromUrl(url, false);
       });
     }
@@ -3231,30 +2175,21 @@ function loadDesignFromLocal() {
     if (!designStudioOverlay) return;
     designStudioOverlay.classList.remove("hidden");
 
-    if (!studioStage && window.Konva) {
-      initDesignStudio();
-    } else if (studioStage) {
-      studioStage.draw();
-    }
+    if (!studioStage && window.Konva) initDesignStudio();
+    else studioStage?.draw?.();
 
-    // Decide photos
-    if (Array.isArray(forceSources) && forceSources.length) {
-      studioAvailablePhotos = forceSources.slice(0, 24);
-    } else {
-      studioAvailablePhotos = gatherImageUrlsForStudios();
-    }
+    studioAvailablePhotos = Array.isArray(forceSources) && forceSources.length
+      ? forceSources.slice(0, 24)
+      : gatherImageUrlsForStudios();
 
     renderStudioPhotoTray();
   }
 
   function closeDesignStudio() {
-    if (!designStudioOverlay) return;
-    designStudioOverlay.classList.add("hidden");
+    designStudioOverlay?.classList.add("hidden");
   }
 
-  if (designLauncher) {
-    designLauncher.addEventListener("click", () => openDesignStudio());
-  }
+  designLauncher?.addEventListener("click", () => openDesignStudio());
   if (designCloseBtn && designStudioOverlay) {
     designCloseBtn.addEventListener("click", closeDesignStudio);
     designStudioOverlay.addEventListener("click", (e) => {
@@ -3262,302 +2197,93 @@ function loadDesignFromLocal() {
     });
   }
 
-  if (templatePaymentBtn) {
-    templatePaymentBtn.addEventListener("click", () =>
-      applyTemplate("payment")
-    );
-  }
-  if (templateArrivalBtn) {
-    templateArrivalBtn.addEventListener("click", () =>
-      applyTemplate("arrival")
-    );
-  }
-  if (templateSaleBtn) {
-    templateSaleBtn.addEventListener("click", () => applyTemplate("sale"));
-  }
-  if (saveDesignBtn) {
-    saveDesignBtn.addEventListener("click", saveDesignToLocal);
-  }
-  if (loadDesignBtn) {
-    loadDesignBtn.addEventListener("click", loadDesignFromLocal);
-  }
-
-function pushUrlsIntoDesignStudio(urls) {
-  const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
-
-  if (!list.length) {
-    alert("No photos available. Boost a listing or add photos first.");
-    return;
-  }
-
-  studioAvailablePhotos = list.slice(0, 24);
-  openDesignStudio(list);
-
-  // Auto-drop first few onto canvas (first as background)
-  list.slice(0, 24).forEach((url, index) => {
-    addStudioImageFromUrl(url, index === 0);
-  });
-}
-
-
-
-
-
-
-
-
-  // --------------------------------------------------
-  // Social-ready Photo Strip (Carousel) Actions
-  // --------------------------------------------------
-
-  // Open selected (or all) social-ready photos in Design Studio
-  if (openDesignFromCarouselBtn) {
-    openDesignFromCarouselBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) {
-        alert(
-          "No social-ready photos yet. Double-click a photo in the grid above to add it."
-        );
-        return;
-      }
-
-      const selected = socialReadyPhotos
-        .filter((p) => p.selected)
-        .map((p) => p.url);
-
-      const chosen = (selected.length
-        ? selected
-        : socialReadyPhotos.map((p) => p.url)
-      ).slice(0, 24);
-
-      pushUrlsIntoDesignStudio(chosen);
-    });
-  }
-
-  // Open selected (or all) social-ready photos in Canvas Studio
-  if (openCanvasFromCarouselBtn) {
-    openCanvasFromCarouselBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) {
-        alert(
-          "No social-ready photos yet. Double-click a photo in the grid above to add it."
-        );
-        return;
-      }
-
-      const selected = socialReadyPhotos
-        .filter((p) => p.selected)
-        .map((p) => p.url);
-
-      const urls = (selected.length
-        ? selected
-        : socialReadyPhotos.map((p) => p.url)
-      ).slice(0, 24);
-
-      openCreativeStudio();
-      urls.forEach((url) => addImageFromUrl(url));
-    });
-  }
-
-  // Revert current social photo back to original (first version)
-  if (revertSocialPhotoBtn) {
-    revertSocialPhotoBtn.addEventListener("click", () => {
-      if (!socialReadyPhotos.length) {
-        alert("No social-ready photos to revert.");
-        return;
-      }
-      const idx = socialCurrentIndex;
-      const photo = socialReadyPhotos[idx];
-      if (!photo || !photo.originalUrl) {
-        alert("No original version saved for this photo.");
-        return;
-      }
-      photo.url = photo.originalUrl;
-      renderSocialCarousel();
-    });
-  }
-
-if (downloadAllEditedBtn) {
-  downloadAllEditedBtn.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) {
-      alert(
-        "No social-ready photos to download. Double-click a photo in the grid above first."
-      );
+  function pushUrlsIntoDesignStudio(urls) {
+    const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
+    if (!list.length) {
+      alert("No photos available. Boost a listing or add photos first.");
       return;
     }
+    openDesignStudio(list);
 
-    const urls = socialReadyPhotos
-      .map((p) => (p && p.url ? p.url : null))
-      .filter(Boolean);
+    // Auto-drop first few (first as background)
+    list.slice(0, 24).forEach((url, idx) => addStudioImageFromUrl(url, idx === 0));
+  }
+
+  // Step 3 → send selected photos into Design Studio
+  sendToDesignStudioBtn?.addEventListener("click", () => {
+    let urls = [];
+
+    const selectedThumbs = creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
+    if (selectedThumbs.length) {
+      selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
+    }
+
+    if (!urls.length && Array.isArray(localCreativePhotos)) urls = localCreativePhotos.slice(0, 24);
+    if (!urls.length && dealerPhotos?.length) urls = dealerPhotos.map((p) => p.src).slice(0, 24);
 
     if (!urls.length) {
-      alert("No valid photo URLs to download.");
+      alert("Load or select a photo in the Creative Lab first before sending to Design Studio.");
       return;
     }
 
-    const originalLabel = downloadAllEditedBtn.textContent;
-    downloadAllEditedBtn.disabled = true;
-    downloadAllEditedBtn.textContent = "Downloading JPGs…";
-
-    // Fire one download per photo. Small delay helps browsers keep up.
-    urls.forEach((url, index) => {
-      setTimeout(() => {
-        try {
-          triggerSocialDownload(url, index);
-        } catch (e) {
-          console.error("Download failed for", url, e);
-        }
-      }, index * 200); // 0ms, 200ms, 400ms, ...
-    });
-
-    // Re-enable button after the last download is triggered
-    const totalDelay = urls.length * 200 + 400;
-    setTimeout(() => {
-      downloadAllEditedBtn.disabled = false;
-      downloadAllEditedBtn.textContent =
-        originalLabel || "Download JPGs for IG / FB Carousel";
-    }, totalDelay);
+    pushUrlsIntoDesignStudio(urls);
   });
-}
 
-
-
-
-
-
-
-
-
-// ...lots of functions...
-
-
-
-  // --------------------------------------------------
-  // FINAL INIT (runs once on page load)
-  // --------------------------------------------------
-
-  // Initialize social strip UI so status text isn't blank
-  if (typeof renderSocialCarousel === "function") {
-    renderSocialCarousel();
-  }
-
-  // ===============================
-  // AI WORKFLOW EXPERT – BUTTON WIRING (uses your HTML ids)
-  // ===============================
-  const buildWorkflowBtn = document.getElementById("buildWorkflowBtn");
-  // NOTE: workflowOutput is already defined earlier in your file in the workflow section.
-  // If not, safely grab it here without redeclaring const in the same scope:
-  const workflowOutputEl =
-    document.getElementById("workflowOutput") || workflowOutput || null;
-
-  if (buildWorkflowBtn && workflowOutputEl) {
-    buildWorkflowBtn.addEventListener("click", async () => {
-      console.log("[AI Workflow] Build clicked");
-
-      const payload = {
-        goal: document.querySelector("#workflowForm [name='goal']")?.value || "",
-        tone: document.querySelector("#workflowForm [name='tone']")?.value || "",
-        format:
-          document.querySelector("#workflowForm [name='format']")?.value || "",
-        days: Number(
-          document.querySelector("#workflowForm [name='days']")?.value || 7
-        ),
-        touches: Number(
-          document.querySelector("#workflowForm [name='touches']")?.value || 5
-        ),
-      };
-
-      try {
-        workflowOutputEl.value = "Building workflow…";
-        autoResizeTextarea(workflowOutputEl);
-
-        const res = await fetch("/ai/workflow", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        workflowOutputEl.value = data.text || data.message || "No workflow returned.";
-        autoResizeTextarea(workflowOutputEl);
-      } catch (e) {
-        console.error("[AI Workflow] error", e);
-        workflowOutputEl.value = "Workflow failed. Try again in a moment.";
-        autoResizeTextarea(workflowOutputEl);
-      }
-    });
-  }
-
-  // ===============================
-  // EMERGENCY: FLOATING BUTTON WIRING (bulletproof)
-  // Keep INSIDE DOMContentLoaded
-  // ===============================
-  (function wireFloatingButtonsNow() {
-    const open = (id) => {
-      const el = document.getElementById(id);
-      if (!el) return console.warn("[LotRocket] Missing modal:", id);
-      el.classList.remove("hidden");
-      el.style.display = "flex";
-    };
-
-    const closeAllSideModals = () => {
-      document.querySelectorAll(".side-modal").forEach((m) => {
-   if (m) m.classList.add("hidden");
-
-        m.style.display = "none";
-      });
-    };
-
-    const map = {
-      objectionLauncher: "objectionModal",
-      calcLauncher: "calcModal",
-      paymentLauncher: "paymentModal",
-      incomeLauncher: "incomeModal",
-      workflowLauncher: "workflowModal",
-      messageLauncher: "messageModal",
-      askLauncher: "askModal",
-      carLauncher: "carModal",
-      imageLauncher: "imageModal",
-      videoLauncher: "videoModal",
-    };
-
-    Object.entries(map).forEach(([btnId, modalId]) => {
-      const btn = document.getElementById(btnId);
-      if (!btn) return console.warn("[LotRocket] Missing button:", btnId);
-      btn.addEventListener("click", () => {
-        console.log("[LotRocket] Open modal:", modalId);
-        open(modalId);
-      });
-    });
-
-    // Drill mode
-    const drillBtn = document.getElementById("drillLauncher");
-    if (drillBtn) {
-      drillBtn.addEventListener("click", () => open("drillModeModal"));
+  // Social strip → open Design Studio
+  openDesignFromCarouselBtn?.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) {
+      alert("No social-ready photos yet. Double-click a photo in the grid above to add it.");
+      return;
     }
 
-    // Close buttons
-    document.querySelectorAll(".side-modal-close, .modal-close-btn").forEach((x) => {
-      x.addEventListener("click", () => closeAllSideModals());
-    });
-
-    // Close drill
-const drillClose = document.getElementById("closeDrillMode");
-if (drillClose) {
-  drillClose.addEventListener("click", () => {
-    const m = document.getElementById("drillModeModal");
-    if (m) m.classList.add("hidden");
+    const selected = socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
+    const chosen = (selected.length ? selected : socialReadyPhotos.map((p) => p.url)).slice(0, 24);
+    pushUrlsIntoDesignStudio(chosen);
   });
-}
 
+  // Social strip → open Canvas Studio
+  openCanvasFromCarouselBtn?.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) {
+      alert("No social-ready photos yet. Double-click a photo in the grid above to add it.");
+      return;
+    }
 
-    console.log("[LotRocket] ✅ Emergency floating button wiring installed");
-  })();
+    const selected = socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
+    const urls = (selected.length ? selected : socialReadyPhotos.map((p) => p.url)).slice(0, 24);
 
-}); // ✅ THIS must be the LAST LINE of app.js (closes DOMContentLoaded)
+    openCreativeStudio();
+    urls.forEach((u) => addImageFromUrl(u));
+  });
 
+  // Design Studio → Send to Step 3
+  sendDesignToStripBtn?.addEventListener("click", async () => {
+    if (!studioStage) return;
 
+    let dataUrl;
+    try {
+      dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
+    } catch (e) {
+      console.error("❌ Konva toDataURL failed:", e);
+      alert("Design export failed due to CORS. Try using only proxied images (dealer/Creative images).");
+      return;
+    }
 
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
 
+    addPhotoToSocialReady(objectUrl);
+    localCreativePhotos.push(objectUrl);
+    addCreativeThumb(objectUrl);
 
+    if (tunerPreviewImg && !tunerPreviewImg.src) {
+      tunerPreviewImg.src = objectUrl;
+      applyTunerFilters();
+    }
+  });
 
-
-
+  // ==================================================
+  // FINAL INIT
+  // ==================================================
+  renderSocialCarousel();
+});
