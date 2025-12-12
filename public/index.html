@@ -1059,7 +1059,7 @@
   </div>
 </div>
 
-
+<!-- AI WORKFLOW EXPERT -->
 <div id="workflowModal" class="side-modal hidden">
   <div class="side-modal-content">
     <div class="side-modal-header">
@@ -1072,12 +1072,16 @@
 
         <label>
           Workflow Goal
-          <input name="goal" type="text" placeholder="Example: 7-day follow up after showroom visit" />
+          <input
+            id="workflowGoal"
+            type="text"
+            placeholder="Example: 7-day follow up after showroom visit"
+          />
         </label>
 
         <label>
           Tone
-          <select name="tone">
+          <select id="workflowTone">
             <option value="professional">Professional</option>
             <option value="friendly">Friendly</option>
             <option value="luxury">Luxury / High-End</option>
@@ -1087,43 +1091,66 @@
         </label>
 
         <label>
-          Message Type
-          <select name="format">
+          Primary Channel
+          <select id="workflowChannel">
+            <option value="multi">Multi-Channel (SMS, Call, Social)</option>
             <option value="text">Text / SMS</option>
             <option value="email">Email</option>
-            <option value="hybrid">Hybrid (Text + Email)</option>
+            <option value="social">Social DM</option>
+            <option value="call">Phone Call</option>
           </select>
         </label>
 
         <label>
           Number of Days
-          <input name="days" type="number" min="1" max="30" placeholder="Example: 7" />
+          <input
+            id="workflowDays"
+            type="number"
+            min="1"
+            max="30"
+            placeholder="Example: 7"
+          />
         </label>
 
-<!-- Number of Touches Field WITH Tooltip -->
-<label>
-  Number of Touches
-  <span class="tooltip" data-tooltip="A 'touch' is any contact attempt you make with the customer (text, call, email, DM, voicemail, etc.). This is the total number of times Lot Rocket will schedule communication attempts.">
-    ❓
-  </span>
-  <input name="touches" type="number" min="1" max="10" value="5" />
-</label>
+        <label>
+          Number of Touches
+          <span
+            class="tooltip"
+            data-tooltip="A 'touch' is any contact attempt you make with the customer (text, call, email, DM, voicemail, etc.). This is the total number of times Lot Rocket will schedule communication attempts."
+          >
+            ❓
+          </span>
+          <input
+            id="workflowTouches"
+            type="number"
+            min="1"
+            max="10"
+            value="5"
+          />
+        </label>
 
-
-<button id="buildWorkflowBtn" type="button" class="primary-btn full">Build Workflow</button>
-
+        <button
+          id="buildWorkflowBtn"
+          type="button"
+          class="primary-btn full"
+        >
+          Build Workflow
+        </button>
 
         <label class="output-label">
           Workflow Plan
-          <textarea id="workflowOutput" rows="10" readonly
-            placeholder="Your professional workflow plan will appear here."></textarea>
+          <textarea
+            id="workflowOutput"
+            rows="10"
+            readonly
+            placeholder="Your professional workflow plan will appear here."
+          ></textarea>
         </label>
 
       </form>
     </div>
   </div>
 </div>
-
 
 <!-- AI Message Builder -->
 <div id="messageModal" class="side-modal hidden">
