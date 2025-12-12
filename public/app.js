@@ -64,11 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let socialCurrentIndex = 0;
 
   // photo limits
+  // ================================
+  // GLOBAL LIMITS
+  // ================================
   const MAX_PHOTOS = 24;
-
-  // ==================================================
-  // STEP 1 – DEALER URL SCRAPER
-  // ==================================================
 
   // ==================================================
   // STEP 1 – DEALER URL + SOCIAL KIT
@@ -103,7 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
     dealerPhotos.forEach((photo, index) => {
       const wrapper = document.createElement("button");
       wrapper.type = "button";
-      wrapper.className = "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
+      wrapper.className =
+        "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
       wrapper.dataset.index = String(index);
 
       const img = document.createElement("img");
@@ -154,8 +154,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
       if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
 
-      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = data.vehicleLabel || "";
-      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = data.priceInfo || "";
+      if (vehicleLabelInput && !vehicleLabelInput.value)
+        vehicleLabelInput.value = data.vehicleLabel || "";
+      if (priceInfoInput && !priceInfoInput.value)
+        priceInfoInput.value = data.priceInfo || "";
 
       const setTA = (el, v) => {
         if (!el) return;
@@ -172,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setTA(marketplacePost, data.marketplace);
       setTA(hashtags, data.hashtags);
 
-      const photos = Array.isArray(data.photos) ? data.photos.slice(0, 40) : [];
+      const photos = Array.isArray(data.photos) ? data.photos.slice(0, MAX_PHOTOS) : [];
       dealerPhotos = photos.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
@@ -185,11 +187,11 @@ document.addEventListener("DOMContentLoaded", () => {
       boostButton.disabled = false;
     }
   }
-// ================================
-// PHOTO LIMITS + SOCIAL STRIP CORE
-// ================================
 
-// 2a — constants + arrays
+  // ================================
+  // PHOTO LIMITS + SOCIAL STRIP CORE
+  // ================================
+  // (Do NOT redeclare MAX_PHOTOS here)
 const MAX_PHOTOS = 24;
 
 window.creativePhotos = Array.isArray(window.creativePhotos) ? window.creativePhotos : [];
