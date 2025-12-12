@@ -956,16 +956,21 @@ if (socialNextBtn) {
   const creativeImageInput = document.getElementById("creativeImageInput");
   const creativeToolButtons = document.querySelectorAll(".tool-btn");
 
-  let creativeCanvas = null;
-  let creativeHistory = [];
-  let creativeHistoryIndex = -1;
-  let localCreativePhotos = [];
+// ================================
+// STATE (no broken lines)
+// ================================
+let creativeCanvas = null;
+let creativeHistory = [];
+let creativeHistoryIndex = -1;
+let localCreativePhotos = [];
 
-  // Social-ready photos: [{ url, selected, originalUrl, locked }]
-  let socialReadyPhotos = [];
-  let socialCurrentIndex = 0;
+// Social-ready photos
+let socialReadyPhotos = [];
+let socialCurrentIndex = 0;
 
-  const MAX_STEP3_PHOTOS = 24;
+// Photo limits
+const MAX_STEP3_PHOTOS = 24;
+
 
   // ---------------- Step 1 → Send Top Photos
   const step1SendTopBtn = document.getElementById("sendTopPhotosBtn");
