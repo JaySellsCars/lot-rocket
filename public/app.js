@@ -2115,6 +2115,32 @@ function initDesignStudio() {
 
   const width = container.clientWidth || 1080;
   const height = container.clientHeight || width;
+// Auto-fit the image when loaded into the Design Studio canvas
+function addImageToStudio(url) {
+  Konva.Image.fromURL(url, (img) => {
+    const stageWidth = stage.width();
+    const stageHeight = stage.height();
+
+    // Scale image to fit inside the stage while keeping aspect ratio
+    const scale = Math.min(
+      stageWidth / img.width(),
+      stageHeight / img.height()
+    );
+
+    img.scale({ x: scale, y: scale });
+
+    // Center the image on the stage
+    img.position({
+      x: (stageWidth - img.width() * scale) / 2,
+      y: (stageHeight - img.height() * scale) / 2,
+    });
+
+    // Add the image to the layer and redraw
+    studioLayer.add(img);
+    img.draggable(true);
+    studioLayer.draw();
+  });
+}
 
   studioStage = new Konva.Stage({
     container: "konvaStageContainer",
