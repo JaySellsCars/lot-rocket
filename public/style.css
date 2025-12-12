@@ -1,52 +1,101 @@
 /* ======================================================
-   LOT ROCKET – CLEAN STABLE CSS (v2.5.6 – STEP2 GRID FIX)
+   LOT ROCKET – CLEAN STABLE CSS (v2.5.6 – LAYOUT RESTORED)
+   - Step 2 tiles like “pic 2”
+   - Step 3 2-column Creative Lab like “pic 1”
    ====================================================== */
 
 /* ---------- RESET ---------- */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
 
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* ---------- THEME TOKENS ---------- */
-:root {
+:root{
   --bg-main: #020617;
   --bg-panel: #020617;
   --border-soft: rgba(148, 163, 184, 0.55);
+
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
+
   --accent-1: #f97316;
   --accent-2: #ec4899;
+
+  --card-radius: 18px;
+  --inner-radius: 14px;
+
+  --shadow-1: 0 20px 50px rgba(0,0,0,0.6);
+  --glow-1: 0 0 22px rgba(249,115,22,0.65);
+  --glow-2: 0 0 18px rgba(56,189,248,0.55);
 }
 
-body.dark-theme {
+body.dark-theme{
   background: radial-gradient(circle at top left, #020617, #020617);
   color: var(--text-main);
 }
 
-/* ---------- GLOBAL TEXTAREAS ---------- */
-textarea {
+/* ---------- TYPOGRAPHY ---------- */
+h1,h2,h3{ margin: 0 0 .6rem 0; }
+h2{ font-size: 1.25rem; letter-spacing: .2px; }
+h3{ font-size: 1.05rem; }
+
+.small-note{
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+/* ---------- FORM FIELDS (fixes “labels inline” look) ---------- */
+label.field,
+.summary-box label,
+.tool-form label{
+  display: block;
+  margin: .65rem 0;
+}
+
+label.field > span{
+  display:block;
+  font-weight: 600;
+  font-size: .9rem;
+  margin-bottom: .35rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select{
+  width: 100%;
+  border-radius: 999px;
+  padding: .6rem .9rem;
+  border: 1px solid var(--border-soft);
+  background: #020617;
+  color: var(--text-main);
+  outline: none;
+}
+
+input::placeholder{ color: rgba(156,163,175,.7); }
+
+/* ---------- TEXTAREAS (auto-grow friendly) ---------- */
+textarea{
   width: 100%;
   resize: none;
   overflow-y: hidden;
   line-height: 1.5;
-  border-radius: 14px;
-  padding: 0.75rem;
+  border-radius: var(--inner-radius);
+  padding: .75rem;
   background: #020617;
   border: 1px solid var(--border-soft);
   color: var(--text-main);
 }
 
 /* ---------- HEADER ---------- */
-.app-header {
+.app-header{
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -54,287 +103,423 @@ textarea {
   border-bottom: 1px solid var(--border-soft);
 }
 
-.branding h1 {
-  margin: 0;
-  font-size: 1.6rem;
-}
-
-.branding p {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
+.branding h1{ font-size: 1.6rem; }
+.branding p{
+  margin: .25rem 0 0 0;
+  font-size: .85rem;
   color: var(--text-muted);
 }
 
-/* ---------- MAIN LAYOUT ---------- */
-.layout {
+/* ---------- LAYOUT ---------- */
+/* Two main columns, leave space on right for floating tools */
+.layout{
   display: grid;
   grid-template-columns: 1.05fr 1.6fr;
   gap: 2.5rem;
-  padding: 1.5rem 15rem 3rem 3rem; /* space for floating tools */
+  padding: 1.5rem 15rem 3rem 3rem;
+  align-items: start;
 }
 
-.column h2 {
-  margin: 0 0 1rem;
-}
+.column{ min-width: 0; }
 
-.small-note {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.35;
+/* Step 3 should span full width below Step 1 & 2 */
+.creativeHubFull{
+  grid-column: 1 / -1;
 }
 
 /* ---------- PANELS ---------- */
 .summary-box,
 .platform-card,
-.lab-card {
+.lab-card,
+.panel{
   background: var(--bg-panel);
-  border-radius: 18px;
+  border-radius: var(--card-radius);
   border: 1px solid var(--border-soft);
   padding: 1.1rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-1);
 }
 
-.summary-box + .summary-box {
-  margin-top: 1.2rem;
-}
+.summary-box + .summary-box{ margin-top: 1.2rem; }
 
-/* ---------- INPUTS ---------- */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
-  width: 100%;
-  margin-top: 0.35rem;
-  margin-bottom: 0.85rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
+.inner-summary{
+  margin-top: .85rem;
+  border-radius: var(--inner-radius);
+  padding: 1rem;
 }
 
 /* ---------- BUTTONS ---------- */
-.primary-btn {
+.primary-btn{
   border-radius: 999px;
   border: none;
-  padding: 0.6rem 1.4rem;
+  padding: .6rem 1.4rem;
   font-weight: 700;
   cursor: pointer;
   background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
   color: #020617;
-  box-shadow: 0 0 22px rgba(249, 115, 22, 0.8);
+  box-shadow: var(--glow-1);
 }
 
-.secondary-btn {
+.secondary-btn{
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: #020617;
   color: var(--text-main);
-  padding: 0.45rem 1.2rem;
+  padding: .55rem 1.2rem;
   cursor: pointer;
 }
 
-.full {
+.primary-btn.full,
+.secondary-btn.full{
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: .5rem;
+}
+
+.summary-btn{
+  margin-top: .8rem;
   width: 100%;
 }
 
-.btn-row {
+.btn-row{
   display: flex;
+  gap: .6rem;
   justify-content: flex-end;
-  gap: 0.6rem;
-  margin-top: 0.7rem;
+  margin-top: .7rem;
 }
 
-/* ---------- STEP 2 (THIS IS THE FIX) ---------- */
-.column-middle {
-  display: block;
+.copy-btn,
+.regen-btn{
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: #020617;
+  color: var(--text-main);
+  padding: .4rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .82rem;
 }
 
-.step2-subtitle {
-  margin: 0.25rem 0 1.2rem;
+.glow-send{
+  box-shadow: 0 0 28px rgba(249,115,22,0.55);
 }
 
-.step2-grid {
+/* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
+.photo-grid{
   display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
-  gap: 1.4rem;
-  align-items: stretch;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .6rem;
+  margin-top: .9rem;
 }
 
-.step2-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 220px;          /* compact card height like your old screenshot */
-  border-radius: 18px;
-}
-
-.step2-card h3 {
-  margin: 0 0 0.75rem;
-  font-size: 0.95rem;
-  letter-spacing: 0.2px;
-}
-
-.step2-card textarea {
-  min-height: 120px;          /* keeps them compact */
-  flex: 1;
-}
-
-.step2-card .btn-row {
-  margin-top: 0.7rem;
-}
-
-/* ---------- PHOTO GRID (STEP 1) ---------- */
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-top: 0.9rem;
-}
-
-.photo-grid img {
+.photo-grid img{
   width: 100%;
-  height: 92px;
+  height: 86px;
   object-fit: cover;
   border-radius: 12px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid rgba(148,163,184,.35);
+  cursor: pointer;
+}
+
+/* ---------- STEP 2 “TILES” (matches your pic 2) ---------- */
+.step2-subtitle{ margin: .2rem 0 1rem; }
+
+.step2-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.step2-card{
+  padding: 1rem;
+  border-radius: var(--card-radius);
+  position: relative;
+  min-height: 260px; /* tile feel */
+}
+
+.step2-card h3{
+  font-size: .88rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(229,231,235,.95);
+  margin-bottom: .75rem;
+}
+
+.step2-card textarea{
+  min-height: 140px;
+  border-radius: 16px;
+  background: rgba(2,6,23,.85);
 }
 
 /* ---------- FLOATING TOOLS ---------- */
-.floating-tools {
+.floating-tools{
   position: fixed;
   right: 1.5rem;
   top: 150px;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: .6rem;
   z-index: 50;
 }
 
-.tool-button {
+.tool-button{
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 1rem;
+  gap: .55rem;
+  padding: .45rem 1rem;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: #020617;
   color: var(--text-main);
-  font-size: 0.8rem;
+  font-size: .78rem;
   cursor: pointer;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.7);
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  box-shadow: var(--glow-2);
+  transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.tool-button:hover {
+.tool-button:hover{
   transform: translateY(-1px);
-  box-shadow: 0 0 26px rgba(56, 189, 248, 1);
+  box-shadow: 0 0 26px rgba(56,189,248,0.9);
+}
+
+/* ---------- STEP 3 CREATIVE HUB (restores 2-column like pic 1) ---------- */
+.creative-hub{
+  display: grid;
+  grid-template-columns: 1.65fr .95fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.photo-dropzone{
+  border: 2px dashed rgba(148,163,184,.45);
+  border-radius: 16px;
+  padding: 2.2rem 1.2rem;
+  text-align: center;
+  color: rgba(229,231,235,.9);
+  cursor: pointer;
+}
+
+.photo-dropzone span{ color: var(--text-muted); }
+
+.creative-thumb-grid{
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .65rem;
+  margin: 1rem 0;
+}
+
+.creative-thumb-grid img{
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.35);
+  cursor: pointer;
+}
+
+.tuner-preview{
+  width: 100%;
+  height: 220px;
+  border-radius: 16px;
+  border: 1px solid rgba(148,163,184,.35);
+  overflow: hidden;
+  background: rgba(2,6,23,.7);
+}
+
+.tuner-preview img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.slider-block{
+  margin-top: .9rem;
+}
+
+.slider-block label{
+  display: block;
+  font-size: .85rem;
+  color: var(--text-muted);
+  margin-bottom: .35rem;
+}
+
+.slider-block input[type="range"]{
+  width: 100%;
+}
+
+/* ---------- Social-ready strip ---------- */
+.social-ready-panel{ margin-top: 1.5rem; }
+.panel-header p{ margin: .35rem 0 0; color: var(--text-muted); }
+
+.social-carousel-preview{
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+
+.ghost-circle-btn{
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: rgba(2,6,23,.7);
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+#socialCarouselPreviewImg{
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.65);
+}
+
+.social-carousel{
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: .6rem;
+  margin-top: 1rem;
+}
+
+.social-carousel-actions{
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
 /* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
-.side-modal {
+.side-modal{
   position: fixed;
   inset: 0;
   display: flex;
   justify-content: flex-end;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0,0,0,.75);
   z-index: 100;
 }
 
-.side-modal.hidden {
-  display: none;
-}
+.side-modal.hidden{ display: none; }
 
-.side-modal-content {
-  width: 340px;
+.side-modal-content{
+  width: 360px;
   background: #020617;
   border-left: 1px solid var(--border-soft);
   display: flex;
   flex-direction: column;
+  padding-bottom: 1rem;
+}
+
+.side-modal-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(148,163,184,.25);
+}
+
+.side-modal-body{
+  padding: 1rem;
+  overflow: auto;
+}
+
+.modal-close-btn{
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.6);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: .35rem .7rem;
+  cursor: pointer;
 }
 
 /* ---------- DRILL MODE ---------- */
-#drillModeModal {
+#drillModeModal{
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0,0,0,.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 120;
 }
 
-#drillModeModal.hidden {
-  display: none;
-}
+#drillModeModal.hidden{ display: none; }
 
-#drillModeModal .modal-content {
+#drillModeModal .modal-content{
   width: 420px;
   background: #0a0f1c;
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,.1);
 }
 
-.objection-box {
-  background: rgba(255, 255, 255, 0.06);
+.objection-box{
+  background: rgba(255,255,255,.06);
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 12px;
 }
 
-.timer-display {
+.timer-display{
   font-size: 2rem;
   text-align: center;
   margin: 12px 0;
   color: var(--accent-1);
 }
 
-.drill-result {
+.drill-result{
   margin-top: 14px;
   padding: 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255,255,255,.08);
 }
 
 /* ---------- TOOLTIP ---------- */
-.tooltip {
-  position: relative;
-  cursor: pointer;
-}
+.tooltip{ position: relative; cursor: pointer; }
 
-.tooltip::after {
+.tooltip::after{
   content: attr(data-tooltip);
   position: absolute;
   bottom: 130%;
   left: 50%;
   transform: translateX(-50%);
   width: 220px;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0,0,0,.85);
   color: #fff;
   padding: 8px;
   border-radius: 8px;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease;
+  transition: opacity .2s ease;
+  pointer-events: none;
 }
 
-.tooltip:hover::after {
+.tooltip:hover::after{
   opacity: 1;
   visibility: visible;
 }
 
-/* ---------- RESPONSIVE ---------- */
-@media (max-width: 1100px) {
-  .layout {
+/* ---------- MOBILE / SMALL SCREENS ---------- */
+@media (max-width: 1100px){
+  .layout{
     grid-template-columns: 1fr;
     padding: 1.2rem;
   }
 
-  .step2-grid {
+  .step2-grid{
     grid-template-columns: 1fr;
   }
 
-  .floating-tools {
+  .creative-hub{
+    grid-template-columns: 1fr;
+  }
+
+  .floating-tools{
     position: static;
     flex-direction: row;
     flex-wrap: wrap;
