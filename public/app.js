@@ -167,94 +167,110 @@ document.addEventListener("DOMContentLoaded", () => {
 // 2a — constants + arrays
 const MAX_PHOTOS = 24;
 
-let creativePhotos = window.creativePhotos || [];
-let socialReadyPhotos = window.socialReadyPhotos || [];
-let designStudioPhotos = window.designStudioPhotos || [];
+window.creativePhotos = Array.isArray(window.creativePhotos) ? window.creativePhotos : [];
+window.socialReadyPhotos = Array.isArray(window.socialReadyPhotos) ? window.socialReadyPhotos : [];
+window.designStudioPhotos = Array.isArray(window.designStudioPhotos) ? window.designStudioPhotos : [];
 
-window.creativePhotos = creativePhotos;
-window.socialReadyPhotos = socialReadyPhotos;
-window.designStudioPhotos = designStudioPhotos;
+let creativePhotos = window.creativePhotos;
+let socialReadyPhotos = window.socialReadyPhotos;
+let designStudioPhotos = window.designStudioPhotos;
 
 // 2b — helpers (cap + push)
 function cap24(arr) {
-  if (!Array.isArray(arr)) return [];
-  return arr.slice(0, MAX_PHOTOS);
+  return Array.isArray(arr) ? arr.slice(0, MAX_PHOTOS) : [];
 }
 
 function pushCapped(arr, item) {
-  if (!Array.isArray(arr)) return;
-  if (arr.length >= MAX_PHOTOS) return;
+  if (!Array.isArray(arr) || !item) return false;
+  if (arr.length >= MAX_PHOTOS) return false;
   arr.push(item);
+  return true;
 }
 
-// 2c — social-ready render
-const socialReadyViewport =
-  document.getElementById("socialReadyViewport") ||
-  document.getElementById("socialReadyStrip");
+// 2c — social-ready strip wiring (MATCHES YOUR HTML IDS)
+const socialCarousel = document.getElementById("socialCarousel");
+const socialPreviewImg = document.getElementById("socialCarouselPreviewImg");
+const socialStatus = document.getElementById("socialCarouselStatus");
+const socialPrevBtn = document.getElementById("socialPrevBtn");
+const socialNextBtn = document.getElementById("socialNextBtn");
 
 let socialReadySelectedIndex = 0;
 
 function renderSocialReadyStrip() {
-  if (!socialReadyViewport) return;
+  if (!socialCarousel) return;
 
   socialReadyPhotos = cap24(socialReadyPhotos);
   window.socialReadyPhotos = socialReadyPhotos;
 
-  socialReadyViewport.innerHTML = "";
-
-  socialReadyPhotos.forEach((url, idx) => {
-    const img = document.createElement("img");
-    img.src = url;
-    img.className =
-      "social-ready-thumb" +
-      (idx === socialReadySelectedIndex ? " selected" : "");
-
-    img.addEventListener("click", () => {
-      socialReadySelectedIndex = idx;
-      renderSocialReadyStrip();
-    });
-
-    socialReadyViewport.appendChild(img);
-  });
-}
-
-  if (boostButton) boostButton.addEventListener("click", doBoostListing);
-const socialReadyViewport =
-  document.getElementById("socialReadyViewport") || document.getElementById("socialReadyStrip");
-
-let socialReadySelectedIndex = 0;
-
-function renderSocialReadyStrip() {
-  if (!socialReadyViewport) return;
-
-  socialReadyPhotos = cap24(socialReadyPhotos);
-  window.socialReadyPhotos = socialReadyPhotos;
-
-  socialReadyViewport.innerHTML = "";
-
-  socialReadyPhotos.forEach((url, idx) => {
-    const img = document.createElement("img");
-    img.src = url;
-    img.className = "social-ready-thumb" + (idx === socialReadySelectedIndex ? " selected" : "");
-    img.title = `Photo ${idx + 1}`;
-    img.addEventListener("click", () => {
-      socialReadySelectedIndex = idx;
-      renderSocialReadyStrip();
-      // optional: update a big preview if you have one
-      const preview = document.getElementById("socialReadyPreviewImg");
-      if (preview) preview.src = url;
-    });
-    socialReadyViewport.appendChild(img);
-  });
-
-  // keep selected index sane
+  // keep index sane
+  if (socialReadySelectedIndex < 0) socialReadySelectedIndex = 0;
   if (socialReadySelectedIndex >= socialReadyPhotos.length) socialReadySelectedIndex = 0;
+
+  // preview
+  if (socialPreviewImg) {
+    socialPreviewImg.src = socialReadyPhotos.length
+      ? socialReadyPhotos[socialReadySelectedIndex]
+      : "";
+  }
+
+  // status
+  if (socialStatus) {
+    socialStatus.textContent = socialReadyPhotos.length
+      ? `Photo ${socialReadySelectedIndex + 1}/${socialReadyPhotos.length}`
+      : "No social-ready photos yet. Double-click a photo above to add it.";
+  }
+
+  // thumbs
+  socialCarousel.innerHTML = "";
+  socialReadyPhotos.forEach((url, idx) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "social-carousel-item" + (idx === socialReadySelectedIndex ? " selected" : "");
+    btn.title = `Photo ${idx + 1}`;
+
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = `Social-ready ${idx + 1}`;
+
+    btn.addEventListener("click", () => {
+      socialReadySelectedIndex = idx;
+      renderSocialReadyStrip();
+    });
+
+    btn.appendChild(img);
+    socialCarousel.appendChild(btn);
+  });
 }
+
 function addToSocialReady(url) {
   if (!url) return;
-  pushCapped(socialReadyPhotos, url);
-  renderSocialReadyStrip();
+  if (pushCapped(socialReadyPhotos, url)) {
+    window.socialReadyPhotos = socialReadyPhotos;
+    socialReadySelectedIndex = socialReadyPhotos.length - 1;
+    renderSocialReadyStrip();
+  }
 }
+
+// prev/next controls
+if (socialPrevBtn) {
+  socialPrevBtn.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) return;
+    socialReadySelectedIndex =
+      (socialReadySelectedIndex - 1 + socialReadyPhotos.length) % socialReadyPhotos.length;
+    renderSocialReadyStrip();
+  });
+}
+
+if (socialNextBtn) {
+  socialNextBtn.addEventListener("click", () => {
+    if (!socialReadyPhotos.length) return;
+    socialReadySelectedIndex =
+      (socialReadySelectedIndex + 1) % socialReadyPhotos.length;
+    renderSocialReadyStrip();
+  });
+}
+
+
 
   // ==================================================
   // COPY / REGEN
