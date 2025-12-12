@@ -191,7 +191,6 @@ function pushCapped(arr, item) {
 const socialCarousel = document.getElementById("socialCarousel");
 const socialPreviewImg = document.getElementById("socialCarouselPreviewImg");
 const socialStatus = document.getElementById("socialCarouselStatus");
-const socialPrevBtn = document.getElementById("socialPrevBtn");
 const socialNextBtn = document.getElementById("socialNextBtn");
 
 let socialReadySelectedIndex = 0;
@@ -1324,11 +1323,6 @@ if (socialNextBtn) {
     updateSocialPreview();
   }
 
-  socialPrevBtn?.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) return;
-    socialCurrentIndex = (socialCurrentIndex - 1 + socialReadyPhotos.length) % socialReadyPhotos.length;
-    updateSocialPreview();
-  });
 
   socialNextBtn?.addEventListener("click", () => {
     if (!socialReadyPhotos.length) return;
