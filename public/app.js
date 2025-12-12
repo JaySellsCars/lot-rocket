@@ -194,9 +194,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-window.creativePhotos = Array.isArray(window.creativePhotos) ? window.creativePhotos : [];
-window.socialReadyPhotos = Array.isArray(window.socialReadyPhotos) ? window.socialReadyPhotos : [];
-window.designStudioPhotos = Array.isArray(window.designStudioPhotos) ? window.designStudioPhotos : [];
+// ================================
+// GLOBAL PHOTO STATE (single source of truth)
+// ================================
+window.creativePhotos = window.creativePhotos || [];
+window.socialReadyPhotos = window.socialReadyPhotos || [];
+window.designStudioPhotos = window.designStudioPhotos || [];
+
+// Local references (DO NOT re-declare elsewhere)
+const creativePhotos = window.creativePhotos;
+const socialReadyPhotos = window.socialReadyPhotos;
+const designStudioPhotos = window.designStudioPhotos;
+
 
 let creativePhotos = window.creativePhotos;
 socialReadyPhotos = window.socialReadyPhotos;
