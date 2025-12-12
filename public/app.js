@@ -3409,7 +3409,7 @@ if (downloadAllEditedBtn) {
 }
 
 
-  // Initialize social strip UI on load so status text isn't blank
+
   renderSocialCarousel();
 app.post("/some-route", async (req, res) => {
   try {
@@ -3426,4 +3426,8 @@ app.listen(port, () => {
   console.log(`Lot Rocket backend running on port ${port}`);
 });
 
+  // Initialize social strip UI on load so status text isn't blank
+  renderSocialCarousel();
+
+}); // ✅ closes DOMContentLoaded
 
