@@ -907,7 +907,7 @@ app.post("/ai/workflow", async (req, res) => {
   try {
     const { goal, tone, channel, days, touches } = req.body || {};
 
-const workflowPrompt = `
+    const workflowPrompt = `
 You are Lot Rocket's Lead Resurrection Specialist & Automotive Behavioral Psychologist.
 
 You do NOT "check in." You design psychological attack plans that turn cold, ghosted, and hesitant leads into booked showroom appointments and closed deals.
@@ -960,11 +960,9 @@ CRITICAL RULES FOR SCRIPTING:
    and clearly on the customer's side.
 
 Output Format (Markdown):
-Provide a structured plan in Markdown.
 
 1. Strategy Overview:
-   2–3 sentences summarizing the psychological angle you are using for this sequence
-   (for example: "reassurance and safety", "scarcity and opportunity", "relationship and trust").
+   2–3 sentences summarizing the psychological angle you are using for this sequence.
 
 2. The Workflow:
    List Touch 1, Touch 2, etc.
@@ -979,6 +977,7 @@ For EACH touch, strictly follow this layout:
 
 Make the entire sequence feel cohesive, intentional, and designed to resurrect a real, living lead — not blast a list.
 `.trim();
+
     const completion = await client.responses.create({
       model: "gpt-4o-mini",
       input: workflowPrompt,
@@ -993,6 +992,7 @@ Make the entire sequence feel cohesive, intentional, and designed to resurrect a
     return sendAIError(res, err, "Failed to generate workflow.");
   }
 });
+
 
 // =============================================
 //  AI Message Helper (workflow / message / ask / car / image / video)
