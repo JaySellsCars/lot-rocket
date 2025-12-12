@@ -2375,3 +2375,17 @@ body.light-theme .video-output-card textarea {
   display: block;
   margin: 0 auto 1.5rem;
 }
+/* ============================
+   TEMP: Hide unfinished features for launch
+   ============================ */
+
+/* Hide AI Video Generation launcher button */
+#video-generation-launch {
+  display: none !important;
+}
+
+/* Hide the entire bottom video script builder panel */
+#videoOutputBottom {
+  display: none !important;
+}
+
