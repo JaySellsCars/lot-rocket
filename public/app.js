@@ -785,7 +785,9 @@ if (getDrillObjectionBtn && drillObjectionText) {
   getDrillObjectionBtn.addEventListener("click", () => {
     if (!DRILL_OBJECTIONS.length) return;
 
-    const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
+const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
+
+
     currentDrillObjection = DRILL_OBJECTIONS[idx];
 
     drillObjectionText.textContent = currentDrillObjection;
