@@ -979,6 +979,20 @@ For EACH touch, strictly follow this layout:
 
 Make the entire sequence feel cohesive, intentional, and designed to resurrect a real, living lead — not blast a list.
 `.trim();
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: workflowPrompt,
+    });
+
+    const text =
+      completion.output?.[0]?.content?.[0]?.text?.trim() ||
+      "No workflow returned. Try again.";
+
+    return res.json({ text });
+  } catch (err) {
+    return sendAIError(res, err, "Failed to generate workflow.");
+  }
+});
 
 // =============================================
 //  AI Message Helper (workflow / message / ask / car / image / video)
