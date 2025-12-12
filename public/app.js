@@ -160,8 +160,101 @@ document.addEventListener("DOMContentLoaded", () => {
       boostButton.disabled = false;
     }
   }
+// ================================
+// PHOTO LIMITS + SOCIAL STRIP CORE
+// ================================
+
+// 2a — constants + arrays
+const MAX_PHOTOS = 24;
+
+let creativePhotos = window.creativePhotos || [];
+let socialReadyPhotos = window.socialReadyPhotos || [];
+let designStudioPhotos = window.designStudioPhotos || [];
+
+window.creativePhotos = creativePhotos;
+window.socialReadyPhotos = socialReadyPhotos;
+window.designStudioPhotos = designStudioPhotos;
+
+// 2b — helpers (cap + push)
+function cap24(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.slice(0, MAX_PHOTOS);
+}
+
+function pushCapped(arr, item) {
+  if (!Array.isArray(arr)) return;
+  if (arr.length >= MAX_PHOTOS) return;
+  arr.push(item);
+}
+
+// 2c — social-ready render
+const socialReadyViewport =
+  document.getElementById("socialReadyViewport") ||
+  document.getElementById("socialReadyStrip");
+
+let socialReadySelectedIndex = 0;
+
+function renderSocialReadyStrip() {
+  if (!socialReadyViewport) return;
+
+  socialReadyPhotos = cap24(socialReadyPhotos);
+  window.socialReadyPhotos = socialReadyPhotos;
+
+  socialReadyViewport.innerHTML = "";
+
+  socialReadyPhotos.forEach((url, idx) => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.className =
+      "social-ready-thumb" +
+      (idx === socialReadySelectedIndex ? " selected" : "");
+
+    img.addEventListener("click", () => {
+      socialReadySelectedIndex = idx;
+      renderSocialReadyStrip();
+    });
+
+    socialReadyViewport.appendChild(img);
+  });
+}
 
   if (boostButton) boostButton.addEventListener("click", doBoostListing);
+const socialReadyViewport =
+  document.getElementById("socialReadyViewport") || document.getElementById("socialReadyStrip");
+
+let socialReadySelectedIndex = 0;
+
+function renderSocialReadyStrip() {
+  if (!socialReadyViewport) return;
+
+  socialReadyPhotos = cap24(socialReadyPhotos);
+  window.socialReadyPhotos = socialReadyPhotos;
+
+  socialReadyViewport.innerHTML = "";
+
+  socialReadyPhotos.forEach((url, idx) => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.className = "social-ready-thumb" + (idx === socialReadySelectedIndex ? " selected" : "");
+    img.title = `Photo ${idx + 1}`;
+    img.addEventListener("click", () => {
+      socialReadySelectedIndex = idx;
+      renderSocialReadyStrip();
+      // optional: update a big preview if you have one
+      const preview = document.getElementById("socialReadyPreviewImg");
+      if (preview) preview.src = url;
+    });
+    socialReadyViewport.appendChild(img);
+  });
+
+  // keep selected index sane
+  if (socialReadySelectedIndex >= socialReadyPhotos.length) socialReadySelectedIndex = 0;
+}
+function addToSocialReady(url) {
+  if (!url) return;
+  pushCapped(socialReadyPhotos, url);
+  renderSocialReadyStrip();
+}
 
   // ==================================================
   // COPY / REGEN
