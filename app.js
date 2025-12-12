@@ -732,11 +732,12 @@ app.post("/api/payment-helper", (req, res) => {
     const term = Number(req.body.term || 0);
     const taxRate = Number(req.body.tax || 0) / 100;
 
-    if (!price || !term) {
-      return res
-        .status(400)
-        .json({ error: "Price and term are required for payment." });
-    }
+if (!price || !term) {
+  return res
+    .status(400)
+    .json({ error: "Price and term (in months) are required for payment." });
+}
+
 
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
 
