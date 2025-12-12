@@ -269,12 +269,14 @@ function renderSocialReadyStrip() {
 
 function addToSocialReady(url) {
   if (!url) return;
+
   if (pushCapped(socialReadyPhotos, url)) {
     window.socialReadyPhotos = socialReadyPhotos;
     socialReadySelectedIndex = socialReadyPhotos.length - 1;
     renderSocialReadyStrip();
   }
 }
+
 
 // prev/next controls
 if (socialPrevBtn) {
