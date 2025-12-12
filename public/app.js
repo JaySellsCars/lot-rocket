@@ -3503,108 +3503,128 @@ if (downloadAllEditedBtn) {
 
 
 
-// Initialize social strip UI so status text isn't blank
-if (typeof renderSocialCarousel === "function") {
-  renderSocialCarousel();
-}
-// helper functions
-function parseVideoSections(...) { ... }
-function someOtherHelper(...) { ... }
+  // --------------------------------------------------
+  // FINAL INIT (runs once on page load)
+  // --------------------------------------------------
 
-// ===============================
-// AI WORKFLOW EXPERT – BUTTON WIRING
-// ===============================
-const buildWorkflowBtn = document.getElementById("buildWorkflowBtn");
-const workflowOutput = document.getElementById("workflowOutput");
+  // Initialize social strip UI so status text isn't blank
+  if (typeof renderSocialCarousel === "function") {
+    renderSocialCarousel();
+  }
 
-if (buildWorkflowBtn && workflowOutput) {
-  buildWorkflowBtn.addEventListener("click", async () => {
-    console.log("[AI Workflow] Build clicked");
+  // ===============================
+  // AI WORKFLOW EXPERT – BUTTON WIRING (uses your HTML ids)
+  // ===============================
+  const buildWorkflowBtn = document.getElementById("buildWorkflowBtn");
+  // NOTE: workflowOutput is already defined earlier in your file in the workflow section.
+  // If not, safely grab it here without redeclaring const in the same scope:
+  const workflowOutputEl =
+    document.getElementById("workflowOutput") || workflowOutput || null;
 
-    const payload = {
-      goal: document.getElementById("workflowGoal")?.value || "",
-      tone: document.getElementById("workflowTone")?.value || "",
-      channel: document.getElementById("workflowChannel")?.value || "",
-      days: Number(document.getElementById("workflowDays")?.value || 10),
-      touches: Number(document.getElementById("workflowTouches")?.value || 6),
+  if (buildWorkflowBtn && workflowOutputEl) {
+    buildWorkflowBtn.addEventListener("click", async () => {
+      console.log("[AI Workflow] Build clicked");
+
+      const payload = {
+        goal: document.querySelector("#workflowForm [name='goal']")?.value || "",
+        tone: document.querySelector("#workflowForm [name='tone']")?.value || "",
+        format:
+          document.querySelector("#workflowForm [name='format']")?.value || "",
+        days: Number(
+          document.querySelector("#workflowForm [name='days']")?.value || 7
+        ),
+        touches: Number(
+          document.querySelector("#workflowForm [name='touches']")?.value || 5
+        ),
+      };
+
+      try {
+        workflowOutputEl.value = "Building workflow…";
+        autoResizeTextarea(workflowOutputEl);
+
+        const res = await fetch("/ai/workflow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        workflowOutputEl.value = data.text || data.message || "No workflow returned.";
+        autoResizeTextarea(workflowOutputEl);
+      } catch (e) {
+        console.error("[AI Workflow] error", e);
+        workflowOutputEl.value = "Workflow failed. Try again in a moment.";
+        autoResizeTextarea(workflowOutputEl);
+      }
+    });
+  }
+
+  // ===============================
+  // EMERGENCY: FLOATING BUTTON WIRING (bulletproof)
+  // Keep INSIDE DOMContentLoaded
+  // ===============================
+  (function wireFloatingButtonsNow() {
+    const open = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return console.warn("[LotRocket] Missing modal:", id);
+      el.classList.remove("hidden");
+      el.style.display = "flex";
     };
 
-    const res = await fetch("/ai/workflow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const closeAllSideModals = () => {
+      document.querySelectorAll(".side-modal").forEach((m) => {
+        m.classList.add("hidden");
+        m.style.display = "none";
+      });
+    };
+
+    const map = {
+      objectionLauncher: "objectionModal",
+      calcLauncher: "calcModal",
+      paymentLauncher: "paymentModal",
+      incomeLauncher: "incomeModal",
+      workflowLauncher: "workflowModal",
+      messageLauncher: "messageModal",
+      askLauncher: "askModal",
+      carLauncher: "carModal",
+      imageLauncher: "imageModal",
+      videoLauncher: "videoModal",
+    };
+
+    Object.entries(map).forEach(([btnId, modalId]) => {
+      const btn = document.getElementById(btnId);
+      if (!btn) return console.warn("[LotRocket] Missing button:", btnId);
+      btn.addEventListener("click", () => {
+        console.log("[LotRocket] Open modal:", modalId);
+        open(modalId);
+      });
     });
 
-    const data = await res.json();
-    workflowOutput.value = data.text || "No workflow returned.";
-  });
-}
-// ===============================
-// EMERGENCY: FLOATING BUTTON WIRING (bulletproof)
-// Paste near bottom of DOMContentLoaded
-// ===============================
-(function wireFloatingButtonsNow() {
-  const open = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return console.warn("[LotRocket] Missing modal:", id);
-    el.classList.remove("hidden");
-  };
+    // Drill mode
+    const drillBtn = document.getElementById("drillLauncher");
+    if (drillBtn) {
+      drillBtn.addEventListener("click", () => open("drillModeModal"));
+    }
 
-  const closeAllSideModals = () => {
-    document.querySelectorAll(".side-modal").forEach((m) => m.classList.add("hidden"));
-  };
-
-  // Openers (floating buttons)
-  const map = {
-    objectionLauncher: "objectionModal",
-    calcLauncher: "calcModal",
-    paymentLauncher: "paymentModal",
-    incomeLauncher: "incomeModal",
-    workflowLauncher: "workflowModal",
-    messageLauncher: "messageModal",
-    askLauncher: "askModal",
-    carLauncher: "carModal",
-    imageLauncher: "imageModal",
-    videoLauncher: "videoModal",
-  };
-
-  Object.entries(map).forEach(([btnId, modalId]) => {
-    const btn = document.getElementById(btnId);
-    if (!btn) return console.warn("[LotRocket] Missing button:", btnId);
-    btn.addEventListener("click", () => {
-      console.log("[LotRocket] Open modal:", modalId);
-      open(modalId);
+    // Close buttons
+    document.querySelectorAll(".side-modal-close, .modal-close-btn").forEach((x) => {
+      x.addEventListener("click", () => closeAllSideModals());
     });
-  });
 
-  // Drill Mode (different markup/class in your HTML)
-  const drillBtn = document.getElementById("drillLauncher");
-  if (drillBtn) {
-    drillBtn.addEventListener("click", () => {
-      const m = document.getElementById("drillModeModal");
-      if (!m) return console.warn("[LotRocket] Missing modal: drillModeModal");
-      m.classList.remove("hidden");
-    });
-  }
+    // Close drill
+    const drillClose = document.getElementById("closeDrillMode");
+    if (drillClose) {
+      drillClose.addEventListener("click", () => {
+        const m = document.getElementById("drillModeModal");
+        if (m) m.classList.add("hidden");
+      });
+    }
 
-  // Closers (X buttons inside side-modals)
-  document.querySelectorAll(".side-modal-close").forEach((x) => {
-    x.addEventListener("click", () => {
-      closeAllSideModals();
-    });
-  });
+    console.log("[LotRocket] ✅ Emergency floating button wiring installed");
+  })();
 
-  // Drill close
-  const drillClose = document.getElementById("closeDrillMode");
-  if (drillClose) {
-    drillClose.addEventListener("click", () => {
-      const m = document.getElementById("drillModeModal");
-      if (m) m.classList.add("hidden");
-    });
-  }
+}); // ✅ THIS must be the LAST LINE of app.js (closes DOMContentLoaded)
 
-  console.log("[LotRocket] ✅ Emergency floating button wiring installed");
-})();
 
 
 
