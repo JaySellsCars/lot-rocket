@@ -172,7 +172,8 @@ window.socialReadyPhotos = Array.isArray(window.socialReadyPhotos) ? window.soci
 window.designStudioPhotos = Array.isArray(window.designStudioPhotos) ? window.designStudioPhotos : [];
 
 let creativePhotos = window.creativePhotos;
-let socialReadyPhotos = window.socialReadyPhotos;
+socialReadyPhotos = window.socialReadyPhotos;
+
 let designStudioPhotos = window.designStudioPhotos;
 
 // 2b — helpers (cap + push)
