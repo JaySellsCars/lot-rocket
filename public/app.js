@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // PHOTO LIMITS + SOCIAL STRIP CORE
   // ================================
   // (Do NOT redeclare MAX_PHOTOS here)
-const MAX_PHOTOS = 24;
+
 
 window.creativePhotos = Array.isArray(window.creativePhotos) ? window.creativePhotos : [];
 window.socialReadyPhotos = Array.isArray(window.socialReadyPhotos) ? window.socialReadyPhotos : [];
