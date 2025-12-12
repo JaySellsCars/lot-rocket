@@ -11,13 +11,13 @@
     "node": "22.x"
   },
   "dependencies": {
+    "archiver": "^5.3.2",
     "body-parser": "^1.20.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "node-fetch": "^2.7.0",
-    "openai": "^4.58.1",
-    "archiver": "^5.3.2"
+    "openai": "^4.58.1"
   }
 }
