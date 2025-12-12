@@ -527,3 +527,51 @@ textarea{
     margin-top: 1rem;
   }
 }
+/* ======================================================
+   FIX: Social-ready Photo Strip thumbnails (always)
+   ====================================================== */
+
+.social-ready-wrap {
+  margin-top: 12px;
+}
+
+.social-ready-viewport {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.social-ready-thumb {
+  flex: 0 0 auto;
+  width: 90px;
+  height: 68px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.social-ready-thumb.selected {
+  outline: 2px solid rgba(56,189,248,0.95);
+  box-shadow: 0 0 18px rgba(56,189,248,0.6);
+}
+
+/* Optional: keep any “main preview” from going gigantic */
+.social-ready-preview img {
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 14px;
+  display: block;
+  margin: 0 auto;
+}
