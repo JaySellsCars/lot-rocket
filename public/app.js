@@ -3412,6 +3412,11 @@ if (downloadAllEditedBtn) {
   // Initialize social strip UI on load so status text isn't blank
   renderSocialCarousel();
 
-  console.log("✅ Lot Rocket frontend wiring complete");
-}); // end DOMContentLoaded
+// ... last route above ...
+
+// ---------------- Start server ----------------
+app.listen(port, () => {
+  console.log(`Lot Rocket backend running on port ${port}`);
+});
+
 
