@@ -3507,6 +3507,40 @@ if (downloadAllEditedBtn) {
 if (typeof renderSocialCarousel === "function") {
   renderSocialCarousel();
 }
+// helper functions
+function parseVideoSections(...) { ... }
+function someOtherHelper(...) { ... }
+
+// ===============================
+// AI WORKFLOW EXPERT – BUTTON WIRING
+// ===============================
+const buildWorkflowBtn = document.getElementById("buildWorkflowBtn");
+const workflowOutput = document.getElementById("workflowOutput");
+
+if (buildWorkflowBtn && workflowOutput) {
+  buildWorkflowBtn.addEventListener("click", async () => {
+    console.log("[AI Workflow] Build clicked");
+
+    const payload = {
+      goal: document.getElementById("workflowGoal")?.value || "",
+      tone: document.getElementById("workflowTone")?.value || "",
+      channel: document.getElementById("workflowChannel")?.value || "",
+      days: Number(document.getElementById("workflowDays")?.value || 10),
+      touches: Number(document.getElementById("workflowTouches")?.value || 6),
+    };
+
+    const res = await fetch("/ai/workflow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    workflowOutput.value = data.text || "No workflow returned.";
+  });
+}
+
+
 
 }); // ✅ closes DOMContentLoaded
 
