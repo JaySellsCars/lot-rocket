@@ -1783,68 +1783,64 @@ async function buildEditedDataUrl(src) {
 
 // ---------- SOCIAL-READY STRIP HELPERS + CAROUSEL ----------
 
-// Helper: force preview to show a freshly added design image
 function addDesignImageToSocialStrip(url) {
   if (!url) return;
   addPhotoToSocialReady(url);
-  // make sure preview points to the newest image
-  socialCurrentIndex = socialReadyPhotos.length - 1;
-  renderSocialCarousel();
+  // addPhotoToSocialReady already sets index + rerenders
 }
 
-// Add a photo to the Social-Ready strip (deduped, capped, sets active preview)
+/**
+ * Adds an image URL to the social-ready strip.
+ * - If already exists: selects it and updates preview
+ * - If new: pushes it, caps the list, selects newest, updates preview
+ */
 function addPhotoToSocialReady(url) {
   if (!url) return;
 
-  // If it already exists, just select it and move preview there
-  const existingIndex = socialReadyPhotos.findIndex((p) => p && p.url === url);
+  // Already in strip? Select it.
+  const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
   if (existingIndex !== -1) {
     socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
       ...p,
-      selected: idx === existingIndex ? true : !!p.selected,
-      locked: typeof p.locked === "boolean" ? p.locked : false,
-      originalUrl: p.originalUrl || p.url,
+      selected: idx === existingIndex ? true : p.selected,
     }));
     socialCurrentIndex = existingIndex;
     renderSocialCarousel();
     return;
   }
 
-  // Push new photo, mark selected (unlocked by default)
+  // Add new
   socialReadyPhotos.push({
     url,
-    originalUrl: url, // remember the first/original version
+    originalUrl: url, // preserve the original
     selected: true,
     locked: false,
   });
 
-  // Optional cap (keep latest MAX_STEP3_PHOTOS – 24)
+  // Cap (keep latest MAX_STEP3_PHOTOS)
   const MAX_SOCIAL = MAX_STEP3_PHOTOS;
   if (socialReadyPhotos.length > MAX_SOCIAL) {
-    socialReadyPhotos = socialReadyPhotos.slice(
-      socialReadyPhotos.length - MAX_SOCIAL
-    );
+    socialReadyPhotos = socialReadyPhotos.slice(-MAX_SOCIAL);
   }
 
-  // Newly added is last
+  // Select newest + rerender
   socialCurrentIndex = socialReadyPhotos.length - 1;
-
-  // Re-render strip + preview
   renderSocialCarousel();
 }
 
-// Replace current image in-place (keeps originalUrl intact)
 function replaceCurrentSocialImage(newUrl) {
   if (!newUrl) return;
 
+  // If nothing in strip yet, just add it.
   if (!socialReadyPhotos.length) {
     addPhotoToSocialReady(newUrl);
     return;
   }
 
-  let idx = socialCurrentIndex;
+  const idx = socialCurrentIndex;
   if (idx < 0 || idx >= socialReadyPhotos.length) {
-    idx = 0;
+    addPhotoToSocialReady(newUrl);
+    return;
   }
 
   const photo = socialReadyPhotos[idx];
@@ -1853,8 +1849,9 @@ function replaceCurrentSocialImage(newUrl) {
     return;
   }
 
-  // keep originalUrl from first version if present
-  photo.originalUrl = photo.originalUrl || photo.url || newUrl;
+  // Respect lock
+  if (photo.locked) return;
+
   photo.url = newUrl;
   photo.selected = true;
 
@@ -1874,70 +1871,21 @@ function updateSocialPreview() {
     return;
   }
 
-  // Clamp index
-  if (socialCurrentIndex < 0) {
+  // Safety clamp
+  if (socialCurrentIndex < 0) socialCurrentIndex = 0;
+  if (socialCurrentIndex >= socialReadyPhotos.length) {
     socialCurrentIndex = socialReadyPhotos.length - 1;
   }
-  if (socialCurrentIndex >= socialReadyPhotos.length) {
-    socialCurrentIndex = 0;
-  }
 
-  const current = socialReadyPhotos[socialCurrentIndex];
-  socialCarouselPreviewImg.src = current.url;
-  socialCarouselPreviewImg.alt = `Social-ready photo ${socialCurrentIndex + 1}`;
+  const photo = socialReadyPhotos[socialCurrentIndex];
+  socialCarouselPreviewImg.src = photo?.url || "";
+  socialCarouselPreviewImg.alt = "Social-ready preview";
 
   if (socialCarouselStatus) {
-    const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
-    const total = socialReadyPhotos.length;
-
-    let label = `${socialCurrentIndex + 1} of ${total}`;
-    if (selectedCount && selectedCount !== total) {
-      label += ` • ${selectedCount} selected`;
-    }
-    socialCarouselStatus.textContent = label;
+    socialCarouselStatus.textContent = `${socialCurrentIndex + 1} / ${socialReadyPhotos.length}`;
   }
 }
 
-    // Clamp index
-    if (socialCurrentIndex < 0) {
-      socialCurrentIndex = socialReadyPhotos.length - 1;
-    }
-    if (socialCurrentIndex >= socialReadyPhotos.length) {
-      socialCurrentIndex = 0;
-    }
-
-    const current = socialReadyPhotos[socialCurrentIndex];
-    socialCarouselPreviewImg.src = current.url;
-    socialCarouselPreviewImg.alt = `Social-ready photo ${
-      socialCurrentIndex + 1
-    }`;
-
-    if (socialCarouselStatus) {
-      const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
-      const total = socialReadyPhotos.length;
-
-      let label = `${socialCurrentIndex + 1} of ${total}`;
-      if (selectedCount && selectedCount !== total) {
-        label += ` • ${selectedCount} selected`;
-      }
-      socialCarouselStatus.textContent = label;
-    }
-  }
-
-  function renderSocialCarousel() {
-    if (!socialCarousel) return;
-    socialCarousel.innerHTML = "";
-
-    if (!socialReadyPhotos.length) {
-      const note = document.createElement("p");
-      note.className = "small-note";
-      note.textContent =
-        "Double-click a photo in the grid above to mark it social-ready. Use the trash icon here to remove.";
-      socialCarousel.appendChild(note);
-
-      updateSocialPreview();
-      return;
-    }
 
     socialReadyPhotos.forEach((photo, index) => {
       // Ensure every photo has a locked flag
