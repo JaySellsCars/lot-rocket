@@ -3539,10 +3539,76 @@ if (buildWorkflowBtn && workflowOutput) {
     workflowOutput.value = data.text || "No workflow returned.";
   });
 }
+// ===============================
+// EMERGENCY: FLOATING BUTTON WIRING (bulletproof)
+// Paste near bottom of DOMContentLoaded
+// ===============================
+(function wireFloatingButtonsNow() {
+  const open = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return console.warn("[LotRocket] Missing modal:", id);
+    el.classList.remove("hidden");
+  };
+
+  const closeAllSideModals = () => {
+    document.querySelectorAll(".side-modal").forEach((m) => m.classList.add("hidden"));
+  };
+
+  // Openers (floating buttons)
+  const map = {
+    objectionLauncher: "objectionModal",
+    calcLauncher: "calcModal",
+    paymentLauncher: "paymentModal",
+    incomeLauncher: "incomeModal",
+    workflowLauncher: "workflowModal",
+    messageLauncher: "messageModal",
+    askLauncher: "askModal",
+    carLauncher: "carModal",
+    imageLauncher: "imageModal",
+    videoLauncher: "videoModal",
+  };
+
+  Object.entries(map).forEach(([btnId, modalId]) => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return console.warn("[LotRocket] Missing button:", btnId);
+    btn.addEventListener("click", () => {
+      console.log("[LotRocket] Open modal:", modalId);
+      open(modalId);
+    });
+  });
+
+  // Drill Mode (different markup/class in your HTML)
+  const drillBtn = document.getElementById("drillLauncher");
+  if (drillBtn) {
+    drillBtn.addEventListener("click", () => {
+      const m = document.getElementById("drillModeModal");
+      if (!m) return console.warn("[LotRocket] Missing modal: drillModeModal");
+      m.classList.remove("hidden");
+    });
+  }
+
+  // Closers (X buttons inside side-modals)
+  document.querySelectorAll(".side-modal-close").forEach((x) => {
+    x.addEventListener("click", () => {
+      closeAllSideModals();
+    });
+  });
+
+  // Drill close
+  const drillClose = document.getElementById("closeDrillMode");
+  if (drillClose) {
+    drillClose.addEventListener("click", () => {
+      const m = document.getElementById("drillModeModal");
+      if (m) m.classList.add("hidden");
+    });
+  }
+
+  console.log("[LotRocket] ✅ Emergency floating button wiring installed");
+})();
 
 
 
-}); // ✅ closes DOMContentLoaded
+
 
 
 
