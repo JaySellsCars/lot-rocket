@@ -1234,6 +1234,33 @@
     </div>
   </div>
 </div>
+<!-- ========================= -->
+<!-- Objection Drill Mode Modal -->
+<!-- ========================= -->
+<div id="drillModeModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Objection Drill Mode 🎯</h2>
+
+    <div class="objection-box">
+      <p id="drillObjectionText">Press "Give Me an Objection" to begin.</p>
+    </div>
+
+    <button id="getDrillObjection" class="btn accent">Give Me an Objection</button>
+
+    <div id="drillTimer" class="timer-display">60</div>
+
+    <textarea
+      id="drillReplyInput"
+      placeholder="Type your response here..."
+      class="modal-textarea"></textarea>
+
+    <button id="gradeDrillReply" class="btn primary">Grade Me</button>
+
+    <div id="drillResult" class="drill-result hidden"></div>
+
+    <button id="closeDrillMode" class="btn close">Close</button>
+  </div>
+</div>
 
 <!-- NOTE: AI Video Generation modal (id="videoModal") is already defined above
      in the AI Video Script + Shot Plan section. Do NOT duplicate it here. -->
