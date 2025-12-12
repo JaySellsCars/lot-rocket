@@ -936,56 +936,32 @@ Inputs provided by the user:
 
 Mission:
 Build a High-Conversion Outreach Sequence that spreads ${touches || 6} touches over ${days || 10} days.
-The sequence should feel like it was built by a top 1% car salesperson who respects the customer
-and knows exactly when to push, when to educate, and when to pull back.
 
 CRITICAL RULES FOR SCRIPTING:
-1) No "Just checking in":
-   Never use this phrase. Every touch must have a clear Reason for Contact
-   (price movement, availability update, new option, tailored question, value add).
-2) Video First When Possible:
-   If the channel allows, suggest a short "Personal Video" move and give a quick script idea
-   (example: "Flash the headlights, show the interior, then invite them in").
-3) The Spear:
-   Keep SMS/DMs under 3 short lines.
-   End with a question that can be answered with a simple yes/no or one-word reply.
-4) Social Integration:
-   When appropriate, include a step like:
-   - view their profile
-   - like or comment on something
-   - then send a light, human DM
-   This warms them up before a call or stronger CTA.
-5) Human, Not Robot:
-   No corporate tone. Write like a real salesperson who is sharp, kind, funny if appropriate,
-   and clearly on the customer's side.
+1) No "Just checking in": Never use this phrase.
+2) Video First When Possible.
+3) The Spear: Keep SMS/DMs under 3 short lines. End with a question.
+4) Social Integration when appropriate.
+5) Human, Not Robot.
 
 Output Format (Markdown):
 
-1. Strategy Overview:
-   2–3 sentences summarizing the psychological angle you are using for this sequence.
+1. Strategy Overview: 2–3 sentences.
 
-2. The Workflow:
-   List Touch 1, Touch 2, etc.
+2. The Workflow: List Touch 1, Touch 2, etc.
 
 For EACH touch, strictly follow this layout:
 
 - Day [X] - [Time of Day]
 - Channel: [SMS / Call / Email / Video / Social DM]
-- Psychology: [Why this works, e.g., "Value Add", "Pattern Interrupt", "Soft Takeaway"]
+- Psychology: [Why this works]
 - Script/Action:
-  [The exact text to send or voicemail to leave. Make it sound human, conversational, and non-desperate.]
+  [Exact text / voicemail. Human, conversational, non-desperate.]
 `.trim();
 
     const completion = await client.responses.create({
       model: "gpt-4o-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "You are Lot Rocket's AI Workflow Expert. Return Markdown only. No JSON.",
-        },
-        { role: "user", content: workflowPrompt },
-      ],
+      input: workflowPrompt,
     });
 
     const text =
@@ -997,6 +973,7 @@ For EACH touch, strictly follow this layout:
     return sendAIError(res, err, "Failed to generate workflow.");
   }
 });
+
 
 
 
