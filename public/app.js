@@ -3410,8 +3410,6 @@ if (downloadAllEditedBtn) {
 
 
 
-// Initialize social strip UI on load
-renderSocialCarousel();
 
 
 // ===============================
@@ -3503,9 +3501,14 @@ renderSocialCarousel();
 
 // ...lots of functions...
 
+
+
 // Initialize social strip UI so status text isn't blank
-renderSocialCarousel();
+if (typeof renderSocialCarousel === "function") {
+  renderSocialCarousel();
+}
 
 }); // ✅ closes DOMContentLoaded
+
 
 
