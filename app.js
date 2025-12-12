@@ -1,5 +1,16 @@
-// app.js — Lot Rocket backend (CLEANED + ORGANIZED)
-// Purpose: scrape dealer page, generate social kit, process images, calculators, AI helper tools.
+/**
+ * app.js — Lot Rocket Backend (CLEANED / ORGANIZED)
+ * Version: 2.5.6-clean
+ *
+ * What this file does:
+ * - Scrapes dealer page (title/meta/text) + pulls up to 24 non-logo images
+ * - Generates social kit copy (multi-platform JSON)
+ * - Generates/edits photos via gpt-image-1 (returns data URLs)
+ * - Provides regen endpoints (single platform post, scripts, shot plans, design ideas)
+ * - Provides tool endpoints (objection coach, payment calc, income calc, workflow, message helper)
+ * - Provides CORS-safe image proxy for canvas/konva/fabric loading
+ * - Provides ZIP download for photos
+ */
 
 require("dotenv").config();
 
@@ -7,36 +18,26 @@ const express = require("express");
 const cors = require("cors");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
-const fetch = require("node-fetch"); // keep for Node 22 compatibility + consistency
+const fetch = require("node-fetch");
 const archiver = require("archiver");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-// -------------------------
-// OpenAI Client
-// -------------------------
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// -------------------- OpenAI Client --------------------
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// -------------------------
-// Middleware
-// -------------------------
+// -------------------- Middleware --------------------
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// -------------------------
-// Utilities
-// -------------------------
+// ======================================================
+// Helpers
+// ======================================================
 
-/**
- * Normalize whatever the user pasted into a real absolute URL.
- * - adds https:// if missing
- * - returns null if invalid
- */
+/** Normalize user input into an absolute http(s) URL; return null if invalid. */
 function normalizeUrl(raw) {
   if (!raw) return null;
   let url = String(raw).trim();
@@ -53,22 +54,29 @@ function normalizeUrl(raw) {
   }
 }
 
-/**
- * fetch with timeout (prevents hanging Render requests)
- */
-async function fetchWithTimeout(url, ms = 15000) {
+/** Fetch with timeout (prevents hanging requests) */
+async function fetchWithTimeout(url, opts = {}, timeoutMs = 15000) {
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), ms);
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    return await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    return res;
   } finally {
-    clearTimeout(t);
+    clearTimeout(id);
   }
 }
 
-/**
- * OpenAI error helpers (better logs + friendly error payload)
- */
+/** Best-effort JSON parse */
+function safeJsonParse(str, fallback = null) {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
+}
+
+/** Rate-limit / quota detection for nicer error responses */
 function isRateLimitError(err) {
   const msg =
     (err && (err.message || err.error?.message || ""))?.toLowerCase() || "";
@@ -86,14 +94,13 @@ function isRateLimitError(err) {
 }
 
 function sendAIError(res, err, friendlyMessage) {
-  console.error("🔴 OpenAI error:", friendlyMessage, err);
+  console.error("🔴 AI error:", friendlyMessage, err);
 
   const rawMsg =
     (err && (err.message || err.error?.message || "")) || "Unknown error";
 
   if (isRateLimitError(err)) {
     const lower = rawMsg.toLowerCase();
-
     const isQuotaOrBilling =
       lower.includes("quota") ||
       lower.includes("billing") ||
@@ -115,33 +122,13 @@ function sendAIError(res, err, friendlyMessage) {
   });
 }
 
-/**
- * One helper to call Responses API and return plain text.
- * Keeps your backend consistent.
- */
-async function aiText({ system, user, model = "gpt-4o-mini", temperature }) {
-  const input = [];
-  if (system) input.push({ role: "system", content: system });
-  if (user) input.push({ role: "user", content: user });
-
-  const resp = await client.responses.create({
-    model,
-    input,
-    ...(typeof temperature === "number" ? { temperature } : {}),
-  });
-
-  return resp.output?.[0]?.content?.[0]?.text || "";
-}
-
-// -------------------------
-// Scraping Helpers
-// -------------------------
+// ======================================================
+// Scraping
+// ======================================================
 
 async function scrapePage(url) {
-  const res = await fetchWithTimeout(url, 15000);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch URL: ${res.status}`);
-  }
+  const res = await fetchWithTimeout(url, {}, 20000);
+  if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
 
   const html = await res.text();
   const $ = cheerio.load(html);
@@ -149,18 +136,16 @@ async function scrapePage(url) {
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-  // Visible text chunks (simple)
+  // Simple visible text extraction (helps AI understand the page)
   let visibleText = "";
   $("body *")
     .not("script, style, noscript")
     .each((_, el) => {
       const text = $(el).text().replace(/\s+/g, " ").trim();
-      if (text.length > 40 && text.length < 500) {
-        visibleText += text + "\n";
-      }
+      if (text.length > 40 && text.length < 500) visibleText += text + "\n";
     });
 
-  return { title, metaDesc, visibleText, $, html };
+  return { title, metaDesc, visibleText, $ };
 }
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
@@ -170,9 +155,11 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   $("img").each((_, el) => {
     let src = $(el).attr("data-src") || $(el).attr("src");
     if (!src) return;
-    src = src.trim();
 
+    src = src.trim();
     const lower = src.toLowerCase();
+
+    // Skip obvious non-vehicle images
     if (
       lower.includes("logo") ||
       lower.includes("icon") ||
@@ -186,16 +173,17 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
       const abs = new URL(src, base).href;
       urls.add(abs);
     } catch {
-      // ignore bad urls
+      // ignore invalid urls
     }
   });
 
   return Array.from(urls).slice(0, 24);
 }
 
-// -------------------------
+// ======================================================
 // AI: Photo Processing (gpt-image-1)
-// -------------------------
+// ======================================================
+
 async function processSinglePhoto(photoUrl) {
   const prompt = `
 Ultra-realistic, cinematic dealership marketing photo of THIS car,
@@ -204,7 +192,7 @@ Soft reflections, high dynamic range, subtle vignette, sharp detail,
 movie-quality lighting. No people, no text, no dealer logos or watermarks.
   `.trim();
 
-  console.log("[LotRocket] gpt-image-1 photo:", photoUrl);
+  console.log("[LotRocket] gpt-image-1 processing:", photoUrl);
 
   const result = await client.images.generate({
     model: "gpt-image-1",
@@ -214,17 +202,15 @@ movie-quality lighting. No people, no text, no dealer logos or watermarks.
   });
 
   const base64 = result.data?.[0]?.b64_json;
-  if (!base64) {
-    console.error("[LotRocket] gpt-image-1 returned no image data");
-    throw new Error("AI image model returned no data");
-  }
+  if (!base64) throw new Error("AI image model returned no data");
 
   return `data:image/png;base64,${base64}`;
 }
 
-// -------------------------
-// AI: Social Kit (JSON)
-// -------------------------
+// ======================================================
+// AI: Social Kit Builder
+// ======================================================
+
 async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos }) {
   const { title, metaDesc, visibleText } = pageInfo;
 
@@ -239,6 +225,7 @@ CRITICAL OUTPUT RULES:
 {
   "label":       string,
   "price":       string,
+
   "facebook":    string,
   "instagram":   string,
   "tiktok":      string,
@@ -246,7 +233,9 @@ CRITICAL OUTPUT RULES:
   "twitter":     string,
   "text":        string,
   "marketplace": string,
+
   "hashtags":    string,
+
   "selfieScript": string,
   "videoPlan":    string,
   "canvaIdea":    string
@@ -264,17 +253,19 @@ Optional custom label: ${labelOverride || "none"}
 Optional custom price: ${priceOverride || "none"}
 
 If label/price overrides are provided, prefer those in the copy.
-Remember: OUTPUT ONLY raw JSON with the required keys.
+Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
 `.trim();
 
-  const raw = await aiText({ system, user, model: "gpt-4o-mini" });
+  const response = await client.responses.create({
+    model: "gpt-4o-mini",
+    input: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+  });
 
-  let parsed = {};
-  try {
-    parsed = JSON.parse(raw);
-  } catch (e) {
-    console.error("❌ Social kit JSON parse failed:", e, raw.slice(0, 250));
-  }
+  const raw = response.output?.[0]?.content?.[0]?.text || "{}";
+  const parsed = safeJsonParse(raw, {}) || {};
 
   return {
     vehicleLabel: labelOverride || parsed.label || "",
@@ -295,17 +286,16 @@ Remember: OUTPUT ONLY raw JSON with the required keys.
 }
 
 // ======================================================
-// ROUTES
+// Routes
 // ======================================================
 
 // Health check
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
-// IMAGE PROXY (CORS-safe for canvas loading)
-// Keep ONE canonical route, then alias the old one.
+// IMAGE PROXY (Fixes CORS tainted canvas)
 // --------------------------------------------------
-async function handleImageProxy(req, res) {
+app.get("/api/proxy-image", async (req, res) => {
   try {
     const target = req.query.url;
     if (!target) return res.status(400).json({ error: "Missing url parameter" });
@@ -321,8 +311,7 @@ async function handleImageProxy(req, res) {
       return res.status(400).json({ error: "Invalid protocol" });
     }
 
-    const upstream = await fetchWithTimeout(target, 15000);
-
+    const upstream = await fetchWithTimeout(target, {}, 20000);
     if (!upstream.ok) {
       console.error("proxy-image upstream error:", upstream.status, target);
       return res.status(502).json({ error: `Upstream error ${upstream.status}` });
@@ -333,24 +322,24 @@ async function handleImageProxy(req, res) {
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    // stream if possible
-    if (upstream.body && typeof upstream.body.pipe === "function") {
-      return upstream.body.pipe(res);
-    }
-
-    const buf = await upstream.arrayBuffer();
-    return res.end(Buffer.from(buf));
+    // node-fetch v2: upstream.body is a stream
+    upstream.body.pipe(res);
   } catch (err) {
     console.error("proxy-image error:", err);
     if (!res.headersSent) res.status(500).json({ error: "Image proxy error" });
   }
-}
+});
 
-app.get("/api/proxy-image", handleImageProxy);
-// alias (older frontend code sometimes uses this)
-app.get("/api/image-proxy", handleImageProxy);
+// Back-compat alias (older frontend might call /api/image-proxy)
+app.get("/api/image-proxy", (req, res) => {
+  // forward to same handler
+  req.url = "/api/proxy-image" + (req._parsedUrl?.search || "");
+  return app._router.handle(req, res, () => {});
+});
 
-// ---------------- /api/process-photos ----------------
+// --------------------------------------------------
+// /api/process-photos (batch enhance)
+// --------------------------------------------------
 app.post("/api/process-photos", async (req, res) => {
   try {
     const { photoUrls } = req.body;
@@ -360,14 +349,13 @@ app.post("/api/process-photos", async (req, res) => {
     }
 
     const results = [];
-
     for (const url of photoUrls) {
       try {
         const processedUrl = await processSinglePhoto(url);
         results.push({ originalUrl: url, processedUrl });
       } catch (innerErr) {
-        console.error("Photo processing failed for", url, innerErr);
-        results.push({ originalUrl: url, processedUrl: url }); // fallback
+        console.error("Photo processing failed:", url, innerErr);
+        results.push({ originalUrl: url, processedUrl: url });
       }
     }
 
@@ -378,7 +366,9 @@ app.post("/api/process-photos", async (req, res) => {
   }
 });
 
-// Single-photo cinematic background / enhancement
+// --------------------------------------------------
+// /api/ai-cinematic-photo (single enhance)
+// --------------------------------------------------
 app.post("/api/ai-cinematic-photo", async (req, res) => {
   try {
     const photoUrl = req.body?.photoUrl;
@@ -392,7 +382,6 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
     }
 
     const processedUrl = await processSinglePhoto(photoUrl);
-
     return res.json({ processedUrl, vehicleLabel });
   } catch (err) {
     console.error("❌ /api/ai-cinematic-photo error:", err);
@@ -404,7 +393,9 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
   }
 });
 
-// Full social kit from dealer URL
+// --------------------------------------------------
+// /api/social-kit (scrape + kit + optional photo pipeline)
+// --------------------------------------------------
 app.post("/api/social-kit", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
@@ -412,9 +403,10 @@ app.post("/api/social-kit", async (req, res) => {
     const priceOverride = req.body?.priceOverride || "";
 
     if (!pageUrl) {
-      return res
-        .status(400)
-        .json({ error: "Invalid or missing URL. Please paste a full dealer link." });
+      return res.status(400).json({
+        error: "bad_url",
+        message: "Invalid or missing URL. Please paste a full dealer link.",
+      });
     }
 
     const pageInfo = await scrapePage(pageUrl);
@@ -427,15 +419,15 @@ app.post("/api/social-kit", async (req, res) => {
       photos,
     });
 
-    // Optional: AI Photo Processing Pipeline
-    const editedPhotos = [];
-    if (Array.isArray(photos) && photos.length) {
+    // Photo pipeline (can be expensive)
+    let editedPhotos = [];
+    if (Array.isArray(photos) && photos.length > 0) {
       for (const url of photos) {
         try {
           const processedUrl = await processSinglePhoto(url);
           editedPhotos.push({ originalUrl: url, processedUrl });
         } catch (innerErr) {
-          console.error("Photo processing failed for", url, innerErr);
+          console.error("Photo processing failed:", url, innerErr);
           editedPhotos.push({ originalUrl: url, processedUrl: url });
         }
       }
@@ -449,7 +441,9 @@ app.post("/api/social-kit", async (req, res) => {
   }
 });
 
-// Download all photos as ZIP
+// --------------------------------------------------
+// /api/social-photos-zip (download URLs as zip)
+// --------------------------------------------------
 app.post("/api/social-photos-zip", async (req, res) => {
   try {
     const urls = Array.isArray(req.body.urls) ? req.body.urls.filter(Boolean) : [];
@@ -471,7 +465,7 @@ app.post("/api/social-photos-zip", async (req, res) => {
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
       try {
-        const resp = await fetchWithTimeout(url, 15000);
+        const resp = await fetchWithTimeout(url, {}, 20000);
         if (!resp.ok || !resp.body) {
           console.warn("Skipping bad photo URL:", url, resp.status);
           continue;
@@ -489,7 +483,9 @@ app.post("/api/social-photos-zip", async (req, res) => {
   }
 });
 
-// New content for a single platform (regen buttons)
+// --------------------------------------------------
+// /api/new-post (regen single platform copy)
+// --------------------------------------------------
 app.post("/api/new-post", async (req, res) => {
   try {
     const platform = req.body?.platform;
@@ -524,14 +520,24 @@ Write ONE high-performing piece of content for this platform.
 Include a call-to-action to DM or message the salesperson.
 `.trim();
 
-    const text = await aiText({ system, user, model: "gpt-4o-mini" });
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const text = completion.output?.[0]?.content?.[0]?.text || "";
     return res.json({ text });
   } catch (err) {
     return sendAIError(res, err, "Failed to regenerate post.");
   }
 });
 
-// New video script (selfie or generic idea)
+// --------------------------------------------------
+// /api/new-script (selfie script OR generic script idea)
+// --------------------------------------------------
 app.post("/api/new-script", async (req, res) => {
   try {
     const { kind, url, vehicle, hook, style, length } = req.body || {};
@@ -551,6 +557,7 @@ app.post("/api/new-script", async (req, res) => {
       system = `
 You are Lot Rocket, an expert vertical video script writer for car salespeople.
 Write natural sounding, selfie-style walkaround scripts.
+Return plain text only.
 `.trim();
 
       user = `
@@ -562,12 +569,12 @@ ${visibleText.slice(0, 2500)}
 
 Write a 30–60 second selfie video script the salesperson can record.
 Use short, spoken lines and a clear CTA to DM or message.
-Return plain text only.
 `.trim();
     } else {
       system = `
 You are Lot Rocket, an expert short-form car video script writer.
 Write scripts that feel natural for Reels / TikTok / Shorts.
+Return plain text only.
 `.trim();
 
       user = `
@@ -580,19 +587,27 @@ Write:
 - A grabber hook
 - 3–6 short bullet points (spoken lines)
 - A closing CTA inviting viewers to DM or message the salesperson
-
-Return plain text only.
 `.trim();
     }
 
-    const script = await aiText({ system, user, model: "gpt-4o-mini" });
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const script = completion.output?.[0]?.content?.[0]?.text || "";
     return res.json({ script });
   } catch (err) {
     return sendAIError(res, err, "Failed to create script.");
   }
 });
 
-// Shot plan from URL
+// --------------------------------------------------
+// /api/video-from-photos (shot plan)
+// --------------------------------------------------
 app.post("/api/video-from-photos", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
@@ -604,6 +619,7 @@ app.post("/api/video-from-photos", async (req, res) => {
     const system = `
 You are Lot Rocket, a video director for car salespeople.
 You design shot lists / storyboards for short vertical videos.
+Return plain text with bullet points or numbered steps.
 `.trim();
 
     const user = `
@@ -613,18 +629,26 @@ Meta: ${pageInfo.metaDesc}
 You have ${photos.length} exterior/interior still photos.
 Create a shot plan for a 30–45 second vertical video that uses these photos
 with text overlays and pacing notes.
-
-Return plain text with bullet points or numbered steps.
 `.trim();
 
-    const plan = await aiText({ system, user, model: "gpt-4o-mini" });
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const plan = completion.output?.[0]?.content?.[0]?.text || "";
     return res.json({ plan });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate shot plan.");
   }
 });
 
-// Canva-style layout idea
+// --------------------------------------------------
+// /api/design-idea (Canva layout idea)
+// --------------------------------------------------
 app.post("/api/design-idea", async (req, res) => {
   try {
     const { type, creativeType, headline, cta, vibe, label } = req.body || {};
@@ -632,6 +656,7 @@ app.post("/api/design-idea", async (req, res) => {
     const system = `
 You are Lot Rocket, a senior marketing designer.
 You output clear bullet-point layout blueprints for Canva or similar tools.
+Return plain text.
 `.trim();
 
     const user = `
@@ -646,18 +671,26 @@ Describe:
 - Where headline & CTA sit
 - Any supporting text or badges
 - Suggested color / style notes
-
-Return plain text in bullet format.
 `.trim();
 
-    const idea = await aiText({ system, user, model: "gpt-4o-mini" });
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const idea = completion.output?.[0]?.content?.[0]?.text || "";
     return res.json({ idea });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate design idea.");
   }
 });
 
-// Objection Coach
+// --------------------------------------------------
+// /api/objection-coach
+// --------------------------------------------------
 app.post("/api/objection-coach", async (req, res) => {
   try {
     const { objection, history } = req.body || {};
@@ -667,13 +700,13 @@ You are Lot Rocket's Grandmaster Objection Coach for car sales professionals.
 
 For each objection, respond with four parts:
 1) Diagnosis
-2) Emotional Pivot
-3) Kill Shot Response (ethical)
-4) Teacher’s Breakdown
+2) Emotional Pivot (1–2 validation lines)
+3) Kill Shot Response (ethical rebuttal)
+4) Teacher’s Breakdown (tone, pauses, word choice)
 
 Formatting:
-- Clearly label each section as: Diagnosis, Emotional Pivot, Kill Shot Response, Teacher’s Breakdown.
-- Tight, practical, screenshot-friendly.
+- Clearly label each section.
+- Tight and practical.
 `.trim();
 
     const user = `
@@ -682,16 +715,28 @@ ${history || "(none)"}
 
 New customer objection:
 ${objection || "(none provided)"}
+
+Write a suggested response the salesperson can send, plus 1–2 coaching tips in [brackets] at the end.
 `.trim();
 
-    const answer = await aiText({ system, user, model: "gpt-4o-mini" });
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+
+    const answer = completion.output?.[0]?.content?.[0]?.text || "";
     return res.json({ answer });
   } catch (err) {
     return sendAIError(res, err, "Failed to coach objection.");
   }
 });
 
-// Payment Estimator (math only) — supports trade & payoff (negative equity)
+// --------------------------------------------------
+// /api/payment-helper (math only)
+// --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
     const price = Number(req.body.price || 0);
@@ -703,17 +748,18 @@ app.post("/api/payment-helper", (req, res) => {
     const taxRate = Number(req.body.tax || 0) / 100;
 
     if (!price || !term) {
-      return res
-        .status(400)
-        .json({ error: "Price and term (in months) are required for payment." });
+      return res.status(400).json({
+        error: "missing_inputs",
+        message: "Price and term (in months) are required for payment.",
+      });
     }
 
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
 
-    // Negative equity: only add payoff above trade value
+    // Negative equity: only add payoff that is ABOVE trade value
     const negativeEquity = Math.max(payoff - trade, 0);
 
-    // Amount financed after down payment + negative equity
+    // Amount financed after down payment and trade equity/negative equity
     const amountFinanced = Math.max(taxedPrice - down + negativeEquity, 0);
 
     let payment;
@@ -736,7 +782,9 @@ app.post("/api/payment-helper", (req, res) => {
   }
 });
 
-// Income Estimator — from gross-to-date + last paycheck date
+// --------------------------------------------------
+// /api/income-helper (annualize gross-to-date using last paycheck date)
+// --------------------------------------------------
 app.post("/api/income-helper", (req, res) => {
   try {
     const grossToDate =
@@ -767,7 +815,6 @@ app.post("/api/income-helper", (req, res) => {
     const year = lastPayDate.getFullYear();
     const startOfYear = new Date(year, 0, 1);
     const msPerDay = 1000 * 60 * 60 * 24;
-
     const daysIntoYear = Math.floor((lastPayDate - startOfYear) / msPerDay) + 1;
     const weeksIntoYear = daysIntoYear / 7;
 
@@ -797,18 +844,20 @@ app.post("/api/income-helper", (req, res) => {
   }
 });
 
-// ===== AI: Workflow Expert =====
-// NOTE: keeping your existing path AND adding an /api alias for safety.
-async function handleWorkflow(req, res) {
+// --------------------------------------------------
+// /ai/workflow (standalone route used by workflow modal)
+// --------------------------------------------------
+app.post("/ai/workflow", async (req, res) => {
   try {
     const { goal, tone, channel, days, touches } = req.body || {};
 
     const workflowPrompt = `
 You are Lot Rocket's Lead Resurrection Specialist & Automotive Behavioral Psychologist.
 
-Build a High-Conversion Outreach Sequence that spreads ${touches || 6} touches over ${
-      days || 10
-    } days.
+Rules:
+1) Never say "just checking in".
+2) Keep SMS/DMs under 3 short lines. End with a question.
+3) Human, not robotic.
 
 Inputs:
 - Primary Goal: ${goal || "Set the Appointment"}
@@ -817,44 +866,41 @@ Inputs:
 - Duration: ${days || 10} days
 - Total Touches: ${touches || 6}
 
-Rules:
-1) Never say "Just checking in".
-2) Keep SMS/DMs under 3 short lines. End with a question.
-3) Human, not robot.
-
-Output Format (Markdown):
-1) Strategy Overview (2–3 sentences)
-2) Touch 1, Touch 2, ... with:
+Output (Markdown):
+1. Strategy Overview: 2–3 sentences.
+2. The Workflow: Touch 1, Touch 2...
+For each touch:
 - Day [X] - [Time of Day]
-- Channel
-- Psychology
-- Script/Action
+- Channel:
+- Psychology:
+- Script/Action:
 `.trim();
 
-    const text = await aiText({ system: "", user: workflowPrompt, model: "gpt-4o-mini" });
-
-    return res.json({
-      text: (text || "").trim() || "No workflow returned. Try again.",
+    const completion = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: workflowPrompt,
     });
+
+    const text =
+      completion.output?.[0]?.content?.[0]?.text?.trim() ||
+      "No workflow returned. Try again.";
+
+    return res.json({ text });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate workflow.");
   }
-}
+});
 
-app.post("/ai/workflow", handleWorkflow);
-app.post("/api/workflow", handleWorkflow);
-
-// =============================================
-//  AI Message Helper (workflow / message / ask / car / image-brief / video-brief)
-// =============================================
+// --------------------------------------------------
+// /api/message-helper (workflow/message/ask/car/image + video-brief)
+// NOTE: returns { text } always, and ALSO returns parsed fields when video-brief JSON is returned.
+// --------------------------------------------------
 app.post("/api/message-helper", async (req, res) => {
   try {
     const body = req.body || {};
     const { mode, ...fields } = body;
 
-    if (!mode) {
-      return res.status(400).json({ message: "Missing mode in request body." });
-    }
+    if (!mode) return res.status(400).json({ message: "Missing mode in request body." });
 
     const rawContext = Object.entries(fields)
       .map(([key, value]) => `${key}: ${value}`)
@@ -873,25 +919,32 @@ app.post("/api/message-helper", async (req, res) => {
         const platform = fields.platform || "TikTok / Reels";
 
         systemPrompt = `
-You are Lot Rocket's AI Video Director for car sales content.
-
-Return:
-1) A short, punchy spoken script
-2) A shot-by-shot list
-3) An AI video generator prompt
-4) A thumbnail prompt (vertical)
+You are Lot Rocket's AI Video Director.
+Return ONLY valid JSON (no markdown, no extra text) with these keys:
+{
+  "script": string,
+  "shotList": string,
+  "aiPrompt": string,
+  "thumbPrompt": string
+}
 `.trim();
 
         userPrompt = `
 Platform: ${platform}
 Hook style: ${hookStyle}
 Target length (seconds): ${length}
-Tone: ${tone || "sales pro, confident, trustworthy"}
+Tone: ${tone || "confident, trustworthy, sales pro"}
 Video description:
 "${describe || "Walkaround of a car"}"
 
-Extra vehicle/offer context:
+Vehicle/offer context:
 ${context || "(none)"}
+
+Write:
+- script: spoken lines (short + punchy)
+- shotList: numbered timeline beats
+- aiPrompt: for Pika/Runway/Luma (camera, lighting, vibe)
+- thumbPrompt: cinematic thumbnail idea
 `.trim();
         break;
       }
@@ -899,10 +952,10 @@ ${context || "(none)"}
       case "workflow":
         systemPrompt = `
 You are Lot Rocket's AI Workflow Expert.
-Give clear, step-by-step guidance to car sales pros on leads, follow-up, and daily process.
-Be concise, direct, action-focused.
+Be concise, direct, action-focused for car sales pros.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
+        userPrompt =
+          fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
 
       case "message":
@@ -911,7 +964,8 @@ You are Lot Rocket's AI Message Builder.
 Write high-converting, friendly, conversational messages for car shoppers.
 Match the channel (text / email / DM) if provided.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
+        userPrompt =
+          fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
@@ -919,23 +973,18 @@ Match the channel (text / email / DM) if provided.
 You are Lot Rocket's general AI assistant for car salespeople.
 Answer clearly and practically with a focus on selling more cars and helping customers.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
+        userPrompt =
+          fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
       case "car":
         systemPrompt = `
 You are The Master Automotive Analyst, integrated into Lot Rocket.
-Be technical, precise, blunt, confident. Analyze—do not summarize.
-
-Include:
-1) Engineering & powertrain
-2) Trim decoding
-3) Best years vs avoid years
-4) Known issues
-5) Verdict
-6) Sales application (angles, objections, rebuttals)
+Be technical, precise, blunt, and confident. Analyze—do not summarize.
+Include: powertrain, trim decoding, best/avoid years, known issues, verdict, and sales application.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Explain this vehicle to a customer.";
+        userPrompt =
+          fields.prompt || rawContext || "Explain this vehicle to a customer.";
         break;
 
       case "image-brief":
@@ -944,7 +993,8 @@ You are Lot Rocket's AI Image Brief generator.
 Create concise prompts for an AI image model to generate marketing graphics for car dealers.
 Return ONLY the prompt text, no explanations.
 `.trim();
-        userPrompt = fields.prompt || rawContext || "Generate an image brief for a dealership post.";
+        userPrompt =
+          fields.prompt || rawContext || "Generate an image brief for a dealership post.";
         break;
 
       default:
@@ -956,26 +1006,45 @@ Respond with clear, helpful content a salesperson can use immediately.
         break;
     }
 
-    // Use Responses API for consistency
-    const text = await aiText({
-      system: systemPrompt,
-      user: userPrompt,
+    // Use chat.completions for consistency with your existing frontend usage
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.8,
+      max_tokens: 900,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
     });
 
-    return res.json({
-      text: (text || "").trim() || "Lot Rocket could not generate a response. Please try again.",
-    });
+    const text =
+      completion.choices?.[0]?.message?.content?.trim() ||
+      "Lot Rocket could not generate a response. Please try again.";
+
+    // If video-brief returns JSON, expose fields too (helps frontend fill 4 boxes cleanly)
+    if (mode === "video-brief") {
+      const parsed = safeJsonParse(text, null);
+      if (parsed && typeof parsed === "object") {
+        return res.json({
+          text,
+          script: parsed.script || "",
+          shotList: parsed.shotList || "",
+          aiPrompt: parsed.aiPrompt || "",
+          thumbPrompt: parsed.thumbPrompt || "",
+        });
+      }
+    }
+
+    return res.json({ text });
   } catch (err) {
     console.error("❌ /api/message-helper error", err);
     return res.status(500).json({ message: "Lot Rocket hit an error talking to AI." });
   }
 });
 
-// -------------------------
-// Start server
-// -------------------------
-app.listen(PORT, () => {
-  console.log(`Lot Rocket backend running on port ${PORT}`);
+// ======================================================
+// Start Server
+// ======================================================
+app.listen(port, () => {
+  console.log(`Lot Rocket backend running on port ${port}`);
 });
