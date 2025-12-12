@@ -3410,20 +3410,83 @@ if (downloadAllEditedBtn) {
 
 
 
-  renderSocialCarousel();
-app.post("/some-route", async (req, res) => {
-  try {
-    // ...
-  } catch (err) {
-    // ...
+// Initialize social strip UI on load
+renderSocialCarousel();
+
+
+// ===============================
+// DRILL MODE – Objection Trainer
+// ===============================
+(function initDrillMode() {
+  const drillLauncher = document.getElementById("drillLauncher");
+  const drillModal = document.getElementById("drillModeModal");
+  const closeBtn = document.getElementById("closeDrillMode");
+  const getBtn = document.getElementById("getDrillObjection");
+  const gradeBtn = document.getElementById("gradeDrillReply");
+  const textEl = document.getElementById("drillObjectionText");
+  const inputEl = document.getElementById("drillReplyInput");
+  const resultEl = document.getElementById("drillResult");
+  const timerEl = document.getElementById("drillTimer");
+
+  if (!drillLauncher || !drillModal) return;
+
+  let timer;
+  let timeLeft = 60;
+
+  const objections = [
+    "I need to think about it.",
+    "The payment is too high.",
+    "I want to talk to my spouse.",
+    "I'm just looking.",
+    "I found one cheaper online."
+  ];
+
+  drillLauncher.addEventListener("click", () => {
+    drillModal.classList.remove("hidden");
+    resetDrill();
+  });
+
+  closeBtn.addEventListener("click", () => {
+    drillModal.classList.add("hidden");
+    clearInterval(timer);
+  });
+
+  getBtn.addEventListener("click", () => {
+    const o = objections[Math.floor(Math.random() * objections.length)];
+    textEl.textContent = o;
+    startTimer();
+  });
+
+  gradeBtn.addEventListener("click", () => {
+    clearInterval(timer);
+const score = Math.floor(Math.random() * 3) + 8; // 8–10
+resultEl.innerHTML = `
+  <strong>Score:</strong> ${score}/10<br><br>
+  Good empathy. Try asking a yes/no close to regain control.
+`;
+
+
+  function startTimer() {
+    clearInterval(timer);
+    timeLeft = 60;
+    timerEl.textContent = timeLeft;
+
+    timer = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = timeLeft;
+      if (timeLeft <= 0) clearInterval(timer);
+    }, 1000);
   }
-});
 
-// ... last route above ...
+  function resetDrill() {
+    textEl.textContent = "Press \"Give Me an Objection\" to begin.";
+    inputEl.value = "";
+    resultEl.classList.add("hidden");
+    timerEl.textContent = "60";
+    clearInterval(timer);
+  }
+})();
 
-
-  // Initialize social strip UI on load so status text isn't blank
-  renderSocialCarousel();
 
 }); // ✅ closes DOMContentLoaded
 
