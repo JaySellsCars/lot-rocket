@@ -634,6 +634,39 @@ textarea{
     margin-top: 1rem;
   }
 }
+/* ==================================================
+   ROCKET-2: SIDE TOOLS CLICK FIX
+   If buttons show but don't click, it's usually z-index or pointer-events.
+   ================================================== */
+.floating-tools,
+.floating-tools * {
+  pointer-events: auto !important;
+}
+
+.floating-tools {
+  position: fixed !important;
+  right: 18px !important;
+  top: 120px !important;
+  z-index: 99999 !important;
+}
+
+/* Side modals must be above app */
+.side-modal,
+.side-drawer,
+.tool-modal,
+#objectionModal,
+#calcModal,
+#paymentModal,
+#incomeModal,
+#workflowModal,
+#messageModal,
+#askModal,
+#carModal,
+#imageModal,
+#videoModal,
+#drillModeModal {
+  z-index: 100000 !important;
+}
 
 /* ======================================================
    REMOVED (DEDUPED): legacy “social-ready-*” strip CSS
