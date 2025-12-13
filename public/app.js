@@ -55,7 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeModal(modal) {
     if (!modal) return;
-    modal.classList.remove("open");
+  modal.classList.remove("hidden");
+modal.setAttribute("aria-hidden", "false");
+
     modal.style.display = "none";
     modal.setAttribute("aria-hidden", "true");
   }
