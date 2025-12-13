@@ -1,6 +1,6 @@
 /**
- * app.js — Lot Rocket Backend (CLEANED / ORGANIZED)
- * Version: 2.5.6-clean
+ * app.js — Lot Rocket Backend (CLEAN / DEDUPED / CONSISTENT)
+ * Version: 2.6-clean
  *
  * What this file does:
  * - Scrapes dealer page (title/meta/text) + pulls up to 24 non-logo images
@@ -10,6 +10,12 @@
  * - Provides tool endpoints (objection coach, payment calc, income calc, workflow, message helper)
  * - Provides CORS-safe image proxy for canvas/konva/fabric loading
  * - Provides ZIP download for photos
+ *
+ * Cleanup goals:
+ * - Single naming conventions
+ * - No duplicate endpoints / logic paths
+ * - One OpenAI text call style (Responses API) everywhere
+ * - Shared error handling
  */
 
 require("dotenv").config();
@@ -34,7 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 // ======================================================
-// Helpers
+// Helpers (single source of truth)
 // ======================================================
 
 /** Normalize user input into an absolute http(s) URL; return null if invalid. */
@@ -74,6 +80,12 @@ function safeJsonParse(str, fallback = null) {
   } catch {
     return fallback;
   }
+}
+
+/** Extract text from OpenAI Responses API result */
+function getResponseText(response) {
+  // safest: walk the first output block
+  return response?.output?.[0]?.content?.[0]?.text || "";
 }
 
 /** Rate-limit / quota detection for nicer error responses */
@@ -122,8 +134,35 @@ function sendAIError(res, err, friendlyMessage) {
   });
 }
 
+/** Basic SSRF guard for proxying images (blocks local/private ranges) */
+function isBlockedProxyTarget(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    const host = u.hostname?.toLowerCase() || "";
+
+    // obvious localhost names
+    if (host === "localhost" || host.endsWith(".localhost")) return true;
+
+    // IPv4 checks (simple prefix blocks)
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
+      if (host.startsWith("127.")) return true;
+      if (host.startsWith("10.")) return true;
+      if (host.startsWith("192.168.")) return true;
+      if (host.startsWith("169.254.")) return true; // link-local
+
+      // 172.16.0.0–172.31.255.255
+      const parts = host.split(".").map((n) => Number(n));
+      if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    }
+
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 // ======================================================
-// Scraping
+// Scraping (single path)
 // ======================================================
 
 async function scrapePage(url) {
@@ -136,7 +175,7 @@ async function scrapePage(url) {
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-  // Simple visible text extraction (helps AI understand the page)
+  // Visible text extraction
   let visibleText = "";
   $("body *")
     .not("script, style, noscript")
@@ -156,7 +195,7 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     let src = $(el).attr("data-src") || $(el).attr("src");
     if (!src) return;
 
-    src = src.trim();
+    src = String(src).trim();
     const lower = src.toLowerCase();
 
     // Skip obvious non-vehicle images
@@ -184,16 +223,19 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 // AI: Photo Processing (gpt-image-1)
 // ======================================================
 
-async function processSinglePhoto(photoUrl) {
+async function processSinglePhoto(photoUrl, vehicleLabel = "") {
   const prompt = `
 Ultra-realistic, cinematic dealership marketing photo of THIS car,
 isolated on a dramatic but clean showroom-style background.
 Soft reflections, high dynamic range, subtle vignette, sharp detail,
 movie-quality lighting. No people, no text, no dealer logos or watermarks.
+Vehicle context (optional): ${vehicleLabel || "n/a"}
   `.trim();
 
   console.log("[LotRocket] gpt-image-1 processing:", photoUrl);
 
+  // NOTE: gpt-image-1 here does NOT “use” the URL; it creates a new image from prompt.
+  // If later you want true editing/inpainting, we’ll switch to image edit endpoints with an input image.
   const result = await client.images.generate({
     model: "gpt-image-1",
     prompt,
@@ -205,6 +247,22 @@ movie-quality lighting. No people, no text, no dealer logos or watermarks.
   if (!base64) throw new Error("AI image model returned no data");
 
   return `data:image/png;base64,${base64}`;
+}
+
+/** Process many photos safely (keeps original if AI fails) */
+async function processPhotoBatch(photoUrls, vehicleLabel = "") {
+  const results = [];
+  for (const url of photoUrls) {
+    if (!url) continue;
+    try {
+      const processedUrl = await processSinglePhoto(url, vehicleLabel);
+      results.push({ originalUrl: url, processedUrl });
+    } catch (err) {
+      console.error("Photo processing failed:", url, err);
+      results.push({ originalUrl: url, processedUrl: url });
+    }
+  }
+  return results;
 }
 
 // ======================================================
@@ -264,12 +322,13 @@ Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
     ],
   });
 
-  const raw = response.output?.[0]?.content?.[0]?.text || "{}";
+  const raw = getResponseText(response) || "{}";
   const parsed = safeJsonParse(raw, {}) || {};
 
   return {
     vehicleLabel: labelOverride || parsed.label || "",
     priceInfo: priceOverride || parsed.price || "",
+
     facebook: parsed.facebook || "",
     instagram: parsed.instagram || "",
     tiktok: parsed.tiktok || "",
@@ -277,10 +336,13 @@ Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
     twitter: parsed.twitter || "",
     text: parsed.text || "",
     marketplace: parsed.marketplace || "",
+
     hashtags: parsed.hashtags || "",
+
     selfieScript: parsed.selfieScript || "",
     shotPlan: parsed.videoPlan || "",
     designIdea: parsed.canvaIdea || "",
+
     photos: photos || [],
   };
 }
@@ -294,8 +356,11 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
 // IMAGE PROXY (Fixes CORS tainted canvas)
+// Supports both:
+//   /api/proxy-image?url=...
+//   /api/image-proxy?url=...   (back-compat)
 // --------------------------------------------------
-app.get("/api/proxy-image", async (req, res) => {
+async function proxyImageHandler(req, res) {
   try {
     const target = req.query.url;
     if (!target) return res.status(400).json({ error: "Missing url parameter" });
@@ -311,6 +376,10 @@ app.get("/api/proxy-image", async (req, res) => {
       return res.status(400).json({ error: "Invalid protocol" });
     }
 
+    if (isBlockedProxyTarget(target)) {
+      return res.status(400).json({ error: "Blocked proxy target" });
+    }
+
     const upstream = await fetchWithTimeout(target, {}, 20000);
     if (!upstream.ok) {
       console.error("proxy-image upstream error:", upstream.status, target);
@@ -322,47 +391,34 @@ app.get("/api/proxy-image", async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    // node-fetch v2: upstream.body is a stream
+    if (!upstream.body) return res.status(502).json({ error: "Upstream has no body" });
+
     upstream.body.pipe(res);
   } catch (err) {
     console.error("proxy-image error:", err);
     if (!res.headersSent) res.status(500).json({ error: "Image proxy error" });
   }
-});
+}
 
-// Back-compat alias (older frontend might call /api/image-proxy)
-app.get("/api/image-proxy", (req, res) => {
-  // forward to same handler
-  req.url = "/api/proxy-image" + (req._parsedUrl?.search || "");
-  return app._router.handle(req, res, () => {});
-});
+app.get("/api/proxy-image", proxyImageHandler);
+app.get("/api/image-proxy", proxyImageHandler); // back-compat
 
 // --------------------------------------------------
 // /api/process-photos (batch enhance)
 // --------------------------------------------------
 app.post("/api/process-photos", async (req, res) => {
   try {
-    const { photoUrls } = req.body;
+    const { photoUrls, vehicleLabel } = req.body || {};
 
     if (!Array.isArray(photoUrls) || photoUrls.length === 0) {
       return res.status(400).json({ error: "No photoUrls provided" });
     }
 
-    const results = [];
-    for (const url of photoUrls) {
-      try {
-        const processedUrl = await processSinglePhoto(url);
-        results.push({ originalUrl: url, processedUrl });
-      } catch (innerErr) {
-        console.error("Photo processing failed:", url, innerErr);
-        results.push({ originalUrl: url, processedUrl: url });
-      }
-    }
-
-    return res.json({ editedPhotos: results });
+    const editedPhotos = await processPhotoBatch(photoUrls.slice(0, 24), vehicleLabel || "");
+    return res.json({ editedPhotos });
   } catch (err) {
     console.error("❌ /api/process-photos error:", err);
-    return res.status(500).json({ error: "Photo processing failed" });
+    return sendAIError(res, err, "Photo processing failed.");
   }
 });
 
@@ -381,26 +437,24 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
       });
     }
 
-    const processedUrl = await processSinglePhoto(photoUrl);
+    const processedUrl = await processSinglePhoto(photoUrl, vehicleLabel);
     return res.json({ processedUrl, vehicleLabel });
   } catch (err) {
-    console.error("❌ /api/ai-cinematic-photo error:", err);
-    return res.status(500).json({
-      error: "server_error",
-      message:
-        "Lot Rocket couldn't complete the cinematic background edit. Try again in a moment.",
-    });
+    return sendAIError(res, err, "Lot Rocket couldn't complete the cinematic background edit.");
   }
 });
 
 // --------------------------------------------------
 // /api/social-kit (scrape + kit + optional photo pipeline)
+// NOTE: by default we keep existing behavior: it DOES process photos.
+// You can disable by sending { processPhotos: false }.
 // --------------------------------------------------
 app.post("/api/social-kit", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
+    const processPhotos = req.body?.processPhotos !== false; // default true
 
     if (!pageUrl) {
       return res.status(400).json({
@@ -419,21 +473,8 @@ app.post("/api/social-kit", async (req, res) => {
       photos,
     });
 
-    // Photo pipeline (can be expensive)
-    let editedPhotos = [];
-    if (Array.isArray(photos) && photos.length > 0) {
-      for (const url of photos) {
-        try {
-          const processedUrl = await processSinglePhoto(url);
-          editedPhotos.push({ originalUrl: url, processedUrl });
-        } catch (innerErr) {
-          console.error("Photo processing failed:", url, innerErr);
-          editedPhotos.push({ originalUrl: url, processedUrl: url });
-        }
-      }
-    }
-
-    kit.editedPhotos = editedPhotos;
+    // Photo pipeline (expensive) — controlled by processPhotos
+    kit.editedPhotos = processPhotos ? await processPhotoBatch(photos, kit.vehicleLabel) : [];
 
     return res.json(kit);
   } catch (err) {
@@ -446,7 +487,7 @@ app.post("/api/social-kit", async (req, res) => {
 // --------------------------------------------------
 app.post("/api/social-photos-zip", async (req, res) => {
   try {
-    const urls = Array.isArray(req.body.urls) ? req.body.urls.filter(Boolean) : [];
+    const urls = Array.isArray(req.body?.urls) ? req.body.urls.filter(Boolean) : [];
     if (!urls.length) return res.status(400).json({ message: "No photo URLs provided." });
 
     res.setHeader("Content-Type", "application/zip");
@@ -528,7 +569,7 @@ Include a call-to-action to DM or message the salesperson.
       ],
     });
 
-    const text = completion.output?.[0]?.content?.[0]?.text || "";
+    const text = (getResponseText(completion) || "").trim();
     return res.json({ text });
   } catch (err) {
     return sendAIError(res, err, "Failed to regenerate post.");
@@ -598,7 +639,7 @@ Write:
       ],
     });
 
-    const script = completion.output?.[0]?.content?.[0]?.text || "";
+    const script = (getResponseText(completion) || "").trim();
     return res.json({ script });
   } catch (err) {
     return sendAIError(res, err, "Failed to create script.");
@@ -639,7 +680,7 @@ with text overlays and pacing notes.
       ],
     });
 
-    const plan = completion.output?.[0]?.content?.[0]?.text || "";
+    const plan = (getResponseText(completion) || "").trim();
     return res.json({ plan });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate shot plan.");
@@ -681,7 +722,7 @@ Describe:
       ],
     });
 
-    const idea = completion.output?.[0]?.content?.[0]?.text || "";
+    const idea = (getResponseText(completion) || "").trim();
     return res.json({ idea });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate design idea.");
@@ -727,7 +768,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
       ],
     });
 
-    const answer = completion.output?.[0]?.content?.[0]?.text || "";
+    const answer = (getResponseText(completion) || "").trim();
     return res.json({ answer });
   } catch (err) {
     return sendAIError(res, err, "Failed to coach objection.");
@@ -846,6 +887,7 @@ app.post("/api/income-helper", (req, res) => {
 
 // --------------------------------------------------
 // /ai/workflow (standalone route used by workflow modal)
+// KEEP THIS PATH: your frontend already calls /ai/workflow
 // --------------------------------------------------
 app.post("/ai/workflow", async (req, res) => {
   try {
@@ -881,10 +923,7 @@ For each touch:
       input: workflowPrompt,
     });
 
-    const text =
-      completion.output?.[0]?.content?.[0]?.text?.trim() ||
-      "No workflow returned. Try again.";
-
+    const text = (getResponseText(completion) || "").trim() || "No workflow returned. Try again.";
     return res.json({ text });
   } catch (err) {
     return sendAIError(res, err, "Failed to generate workflow.");
@@ -892,8 +931,9 @@ For each touch:
 });
 
 // --------------------------------------------------
-// /api/message-helper (workflow/message/ask/car/image + video-brief)
-// NOTE: returns { text } always, and ALSO returns parsed fields when video-brief JSON is returned.
+// /api/message-helper (workflow/message/ask/car/image-brief/video-brief)
+// NOTE: returns { text } always.
+// If mode === "video-brief" and model returns valid JSON, also returns fields.
 // --------------------------------------------------
 app.post("/api/message-helper", async (req, res) => {
   try {
@@ -954,8 +994,7 @@ Write:
 You are Lot Rocket's AI Workflow Expert.
 Be concise, direct, action-focused for car sales pros.
 `.trim();
-        userPrompt =
-          fields.prompt || rawContext || "Help me with my sales workflow.";
+        userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
 
       case "message":
@@ -964,8 +1003,7 @@ You are Lot Rocket's AI Message Builder.
 Write high-converting, friendly, conversational messages for car shoppers.
 Match the channel (text / email / DM) if provided.
 `.trim();
-        userPrompt =
-          fields.prompt || rawContext || "Write a follow-up message to a car lead.";
+        userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
@@ -973,8 +1011,7 @@ Match the channel (text / email / DM) if provided.
 You are Lot Rocket's general AI assistant for car salespeople.
 Answer clearly and practically with a focus on selling more cars and helping customers.
 `.trim();
-        userPrompt =
-          fields.prompt || rawContext || "Answer this question for a car salesperson.";
+        userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
       case "car":
@@ -983,8 +1020,7 @@ You are The Master Automotive Analyst, integrated into Lot Rocket.
 Be technical, precise, blunt, and confident. Analyze—do not summarize.
 Include: powertrain, trim decoding, best/avoid years, known issues, verdict, and sales application.
 `.trim();
-        userPrompt =
-          fields.prompt || rawContext || "Explain this vehicle to a customer.";
+        userPrompt = fields.prompt || rawContext || "Explain this vehicle to a customer.";
         break;
 
       case "image-brief":
@@ -993,8 +1029,7 @@ You are Lot Rocket's AI Image Brief generator.
 Create concise prompts for an AI image model to generate marketing graphics for car dealers.
 Return ONLY the prompt text, no explanations.
 `.trim();
-        userPrompt =
-          fields.prompt || rawContext || "Generate an image brief for a dealership post.";
+        userPrompt = fields.prompt || rawContext || "Generate an image brief for a dealership post.";
         break;
 
       default:
@@ -1006,22 +1041,18 @@ Respond with clear, helpful content a salesperson can use immediately.
         break;
     }
 
-    // Use chat.completions for consistency with your existing frontend usage
-    const completion = await client.chat.completions.create({
+    const completion = await client.responses.create({
       model: "gpt-4o-mini",
-      temperature: 0.8,
-      max_tokens: 900,
-      messages: [
+      input: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
     });
 
     const text =
-      completion.choices?.[0]?.message?.content?.trim() ||
+      (getResponseText(completion) || "").trim() ||
       "Lot Rocket could not generate a response. Please try again.";
 
-    // If video-brief returns JSON, expose fields too (helps frontend fill 4 boxes cleanly)
     if (mode === "video-brief") {
       const parsed = safeJsonParse(text, null);
       if (parsed && typeof parsed === "object") {
@@ -1037,8 +1068,7 @@ Respond with clear, helpful content a salesperson can use immediately.
 
     return res.json({ text });
   } catch (err) {
-    console.error("❌ /api/message-helper error", err);
-    return res.status(500).json({ message: "Lot Rocket hit an error talking to AI." });
+    return sendAIError(res, err, "Lot Rocket hit an error talking to AI.");
   }
 });
 
