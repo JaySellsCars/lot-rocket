@@ -647,6 +647,47 @@
     </div>
   </div>
 </section>
+<!-- ============ REQUIRED SIDE MODALS (must exist once) ============ -->
+
+<section id="objectionModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Objection Coach</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <form id="objectionForm">
+        <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
+        <button type="submit">Coach Me</button>
+      </form>
+      <div id="objectionOutput"></div>
+    </div>
+  </div>
+</section>
+
+<section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Drill Mode</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <div id="drillOutput"></div>
+    </div>
+  </div>
+</section>
+
+<section id="calcModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Calculator</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <div id="calcOutput">Calculator UI goes here</div>
+    </div>
+  </div>
+</section>
 
   <!-- APP SCRIPT -->
   <script src="/app.js?v=260"></script>
