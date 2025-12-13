@@ -445,7 +445,9 @@ modal.setAttribute("aria-hidden", "false");
     };
 
     const close = () => {
-      modal.classList.add("hidden");
+    modal.classList.add("hidden");
+modal.setAttribute("aria-hidden", "true");
+
       modal.style.display = "none";
     };
 
