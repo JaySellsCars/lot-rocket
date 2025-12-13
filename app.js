@@ -27,8 +27,27 @@ const OpenAI = require("openai");
 const fetch = require("node-fetch");
 const archiver = require("archiver");
 
+const express = require("express");
+const path = require("path");
+
 const app = express();
-const port = process.env.PORT || 3000;
+
+// ✅ STEP 1 — PUT THIS HERE
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// API routes BELOW this
+// app.post("/scrape", ...)
+// app.post("/generate", ...)
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
+
 
 // -------------------- OpenAI Client --------------------
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
