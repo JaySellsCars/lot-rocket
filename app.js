@@ -27,7 +27,7 @@ const OpenAI = require("openai");
 const fetch = require("node-fetch");
 const archiver = require("archiver");
 
-const express = require("express");
+
 const path = require("path");
 
 const app = express();
