@@ -95,94 +95,131 @@ document.addEventListener("DOMContentLoaded", () => {
     a.remove();
   }
 
-  // ==================================================
-  // FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
-  // (Drill modal is NOT wired here to avoid duplicate declarations.)
-  // ==================================================
-  const TOOL_CONFIG = [
-    ["objectionLauncher", "objectionModal"],
-    ["calcLauncher", "calcModal"],
-    ["paymentLauncher", "paymentModal"],
-    ["incomeLauncher", "incomeModal"],
-    ["workflowLauncher", "workflowModal"],
-    ["messageLauncher", "messageModal"],
-    ["askLauncher", "askModal"],
-    ["carLauncher", "carModal"],
-    ["imageLauncher", "imageModal"],
-    ["videoLauncher", "videoModal"],
-  ];
+// ==================================================
+// FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
+// Robust wiring + diagnostics + prevents form-submit clicks
+// ==================================================
+const TOOL_CONFIG = [
+  // [launcherId, modalId]
+  ["objectionLauncher", "objectionModal"],
+  ["calcLauncher", "calcModal"],
+  ["paymentLauncher", "paymentModal"],
+  ["incomeLauncher", "incomeModal"],
+  ["workflowLauncher", "workflowModal"],
+  ["messageLauncher", "messageModal"],
+  ["askLauncher", "askModal"],
+  ["carLauncher", "carModal"],
+  ["imageLauncher", "imageModal"],
+  ["videoLauncher", "videoModal"],
+];
 
-  function wireToolDrawer(launcherId, modalId, onOpen) {
-    const launcher = $(launcherId);
-    const modal = $(modalId);
+function wireToolDrawer(launcherId, modalId, onOpen) {
+  const launcher = document.getElementById(launcherId);
+  const modal = document.getElementById(modalId);
 
-    // If either is missing, silently skip (prevents crashes)
-    if (!launcher || !modal) return;
-
-    // Prevent double-wiring
-    if (launcher.dataset.wired === "true") return;
-    launcher.dataset.wired = "true";
-
-    const closeBtn = modal.querySelector(".side-modal-close") || modal.querySelector(".modal-close-btn");
-
-    const open = () => {
-      modal.classList.remove("hidden");
-      modal.style.display = "flex"; // side-modal uses flex in CSS
-      if (typeof onOpen === "function") onOpen();
-    };
-
-    const close = () => {
-      modal.classList.add("hidden");
-      modal.style.display = "none";
-    };
-
-    launcher.addEventListener("click", (e) => {
-      e.preventDefault();
-      open();
+  // HARD DEBUG so you can see exactly what's wrong
+  if (!launcher || !modal) {
+    console.warn("[ToolWire] Missing:", {
+      launcherId,
+      launcherFound: !!launcher,
+      modalId,
+      modalFound: !!modal,
     });
-
-    if (closeBtn && closeBtn.dataset.wired !== "true") {
-      closeBtn.dataset.wired = "true";
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        close();
-      });
-    }
-
-    // Click outside panel closes
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close();
-    });
+    return;
   }
 
-  // Special handling: when opening video drawer, fill context
-  const videoContextField = $("videoContext");
+  // Prevent double-wiring
+  if (launcher.dataset.wired === "true") return;
+  launcher.dataset.wired = "true";
 
-  function buildVideoContextFromKit() {
-    const parts = [];
-    const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
-    const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
-    const url = ($("vehicleUrl")?.value || "").trim();
-    const tags = ($("hashtags")?.value || "").trim();
-    if (label) parts.push(`Vehicle: ${label}`);
-    if (price) parts.push(`Price/Offer: ${price}`);
-    if (url) parts.push(`Listing URL: ${url}`);
-    if (tags) parts.push(`Hashtags: ${tags}`);
-    return parts.join("\n");
+  // If launcher is a <button> inside a form, default type is "submit" — kill that.
+  if (launcher.tagName === "BUTTON" && !launcher.getAttribute("type")) {
+    launcher.setAttribute("type", "button");
   }
 
-  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-    if (launcherId === "videoLauncher") {
-      wireToolDrawer(launcherId, modalId, () => {
-        if (videoContextField) {
-          videoContextField.value = buildVideoContextFromKit();
-          autoResizeTextarea(videoContextField);
-        }
-      });
-    } else {
-      wireToolDrawer(launcherId, modalId);
-    }
+  // Close button: support multiple patterns
+  const closeBtn =
+    modal.querySelector(".side-modal-close") ||
+    modal.querySelector(".modal-close-btn") ||
+    modal.querySelector("[data-close]") ||
+    modal.querySelector(".close") ||
+    modal.querySelector("button[aria-label='Close']");
+
+  const open = () => {
+    // Some CSS uses .hidden, some uses display none — set both.
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+    if (typeof onOpen === "function") onOpen();
+    console.log("[ToolWire] OPEN:", launcherId, "->", modalId);
+  };
+
+  const close = () => {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    console.log("[ToolWire] CLOSE:", modalId);
+  };
+
+  launcher.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    open();
   });
+
+  if (closeBtn && closeBtn.dataset.wired !== "true") {
+    closeBtn.dataset.wired = "true";
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    });
+  } else if (!closeBtn) {
+    console.warn("[ToolWire] No close button found in modal:", modalId);
+  }
+
+  // Click outside closes (only if clicking the overlay itself)
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+
+  // ESC closes
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+}
+
+// Special handling: when opening video drawer, fill context
+const videoContextField = document.getElementById("videoContext");
+function buildVideoContextFromKit() {
+  const parts = [];
+  const label = (document.getElementById("vehicleLabel")?.value || document.getElementById("summaryLabel")?.textContent || "").trim();
+  const price = (document.getElementById("priceInfo")?.value || document.getElementById("summaryPrice")?.textContent || "").trim();
+  const url = (document.getElementById("vehicleUrl")?.value || "").trim();
+  const tags = (document.getElementById("hashtags")?.value || "").trim();
+  if (label) parts.push(`Vehicle: ${label}`);
+  if (price) parts.push(`Price/Offer: ${price}`);
+  if (url) parts.push(`Listing URL: ${url}`);
+  if (tags) parts.push(`Hashtags: ${tags}`);
+  return parts.join("\n");
+}
+
+TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+  if (launcherId === "videoLauncher") {
+    wireToolDrawer(launcherId, modalId, () => {
+      if (videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
+      }
+    });
+  } else {
+    wireToolDrawer(launcherId, modalId);
+  }
+});
+
+// One-time summary
+console.log("[ToolWire] Configured tools:", TOOL_CONFIG.map(x => x[0]).join(", "));
+
 
   // ==================================================
   // BRAND + THEME
