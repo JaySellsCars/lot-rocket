@@ -1,11 +1,11 @@
 <!--
   Lot Rocket – AI Social Media Kit & Creative Lab
-  Version: 2.5.6 (Layout Restored + JS-aligned)
-  Layout:
-    - Step 1 (left)
-    - Step 2 (middle)
-    - Floating tools (right)
-    - Step 3 (full width below)
+  Version: 2.6 (HTML CLEAN + JS-ALIGNED)
+  Focus:
+    - Remove/avoid duplicate IDs
+    - Ensure launcher IDs + targets match app.js exactly
+    - Keep one-and-only-one element per required ID
+    - Standardize modal/overlay target naming (data-* is fine, JS uses IDs)
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -27,7 +27,7 @@
   <link rel="shortcut icon" href="/favicon.ico">
   <meta name="theme-color" content="#111827">
 
-  <link rel="stylesheet" href="style.css?v=256" />
+  <link rel="stylesheet" href="style.css?v=260" />
 </head>
 
 <body class="dark-theme">
@@ -101,7 +101,7 @@
           <p>Price: <span id="summaryPrice">—</span></p>
         </div>
 
-        <button id="boostButton" class="primary-btn summary-btn">
+        <button id="boostButton" class="primary-btn summary-btn" type="button">
           Boost This Listing
         </button>
         <div id="statusText" class="status-text"></div>
@@ -113,10 +113,12 @@
           Click "Boost This Listing" to refresh photos. Up to 24 images, logos removed when possible.
         </p>
 
+        <!-- ✅ app.js expects: sendTopPhotosBtn -->
         <button id="sendTopPhotosBtn" class="primary-btn full glow-send" type="button">
           Send Top Photos to Creative Lab + Strip
         </button>
 
+        <!-- ✅ app.js expects: photosGrid -->
         <div id="photosGrid" class="photo-grid"></div>
       </div>
     </section>
@@ -218,6 +220,7 @@
           <div class="creative-left">
             <h3>Photos</h3>
 
+            <!-- ✅ app.js expects: photoDropZone + photoFileInput -->
             <div id="photoDropZone" class="photo-dropzone">
               <p>
                 Drag & Drop Photos Here<br />
@@ -226,8 +229,10 @@
               <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
             </div>
 
+            <!-- ✅ app.js expects: creativeThumbGrid -->
             <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
+            <!-- ✅ app.js expects: sendToDesignStudio -->
             <button id="sendToDesignStudio" type="button" class="secondary-btn full">
               Send Selected to Design Studio 3.5
             </button>
@@ -241,21 +246,24 @@
             </div>
 
             <div class="slider-block">
-              <label>Brightness</label>
+              <label for="tunerBrightness">Brightness</label>
               <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
             </div>
 
             <div class="slider-block">
-              <label>Contrast</label>
+              <label for="tunerContrast">Contrast</label>
               <input type="range" id="tunerContrast" min="50" max="150" value="100" />
             </div>
 
             <div class="slider-block">
-              <label>Saturation</label>
+              <label for="tunerSaturation">Saturation</label>
               <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
             </div>
 
+            <!-- ✅ app.js expects: autoEnhanceBtn -->
             <button id="autoEnhanceBtn" type="button" class="secondary-btn full">Auto Enhance</button>
+
+            <!-- NOTE: aiCinematicBtn is not wired in the shared v2.6 app.js yet (safe to keep) -->
             <button id="aiCinematicBtn" type="button" class="primary-btn full">AI Cinematic Background</button>
           </div>
         </div>
@@ -269,11 +277,13 @@
 
           <div class="social-carousel-shell">
             <div class="social-carousel-preview">
+              <!-- ✅ app.js expects: socialPrevBtn/socialNextBtn + socialCarouselPreviewImg -->
               <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
               <img id="socialCarouselPreviewImg" alt="Selected social-ready photo" />
               <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
             </div>
 
+            <!-- ✅ app.js expects: socialCarouselStatus + socialCarousel -->
             <p id="socialCarouselStatus" class="small-note"></p>
             <div id="socialCarousel" class="social-carousel"></div>
 
@@ -302,67 +312,69 @@
 
   </main>
 
-<!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
-<aside class="floating-tools">
+  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+  <aside class="floating-tools">
 
-  <!-- Tool drawers (side modals) -->
-  <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
-    <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
-  </button>
+    <!-- Tool drawers (side modals) -->
+    <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
+      <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
+    </button>
 
-  <button id="drillLauncher" class="tool-button" type="button" data-modal-target="drillModeModal">
-    <span class="tool-icon">🎯</span><span class="tool-label">Drill Mode</span>
-  </button>
+    <button id="drillLauncher" class="tool-button" type="button" data-modal-target="drillModeModal">
+      <span class="tool-icon">🎯</span><span class="tool-label">Drill Mode</span>
+    </button>
 
-  <button id="calcLauncher" class="tool-button" type="button" data-modal-target="calcModal">
-    <span class="tool-icon">🧮</span><span class="tool-label">Calculator</span>
-  </button>
+    <button id="calcLauncher" class="tool-button" type="button" data-modal-target="calcModal">
+      <span class="tool-icon">🧮</span><span class="tool-label">Calculator</span>
+    </button>
 
-  <button id="paymentLauncher" class="tool-button" type="button" data-modal-target="paymentModal">
-    <span class="tool-icon">💵</span><span class="tool-label">Payment Calculator</span>
-  </button>
+    <button id="paymentLauncher" class="tool-button" type="button" data-modal-target="paymentModal">
+      <span class="tool-icon">💵</span><span class="tool-label">Payment Calculator</span>
+    </button>
 
-  <button id="incomeLauncher" class="tool-button" type="button" data-modal-target="incomeModal">
-    <span class="tool-icon">📊</span><span class="tool-label">Income Calculator</span>
-  </button>
+    <button id="incomeLauncher" class="tool-button" type="button" data-modal-target="incomeModal">
+      <span class="tool-icon">📊</span><span class="tool-label">Income Calculator</span>
+    </button>
 
-  <button id="workflowLauncher" class="tool-button" type="button" data-modal-target="workflowModal">
-    <span class="tool-icon">📋</span><span class="tool-label">AI Work Flow Expert</span>
-  </button>
+    <button id="workflowLauncher" class="tool-button" type="button" data-modal-target="workflowModal">
+      <span class="tool-icon">📋</span><span class="tool-label">AI Work Flow Expert</span>
+    </button>
 
-  <button id="messageLauncher" class="tool-button" type="button" data-modal-target="messageModal">
-    <span class="tool-icon">💬</span><span class="tool-label">AI Message Builder</span>
-  </button>
+    <button id="messageLauncher" class="tool-button" type="button" data-modal-target="messageModal">
+      <span class="tool-icon">💬</span><span class="tool-label">AI Message Builder</span>
+    </button>
 
-  <button id="askLauncher" class="tool-button" type="button" data-modal-target="askModal">
-    <span class="tool-icon">❓</span><span class="tool-label">Ask A.I.</span>
-  </button>
+    <button id="askLauncher" class="tool-button" type="button" data-modal-target="askModal">
+      <span class="tool-icon">❓</span><span class="tool-label">Ask A.I.</span>
+    </button>
 
-  <button id="carLauncher" class="tool-button" type="button" data-modal-target="carModal">
-    <span class="tool-icon">🚗</span><span class="tool-label">AI Car Expert</span>
-  </button>
+    <button id="carLauncher" class="tool-button" type="button" data-modal-target="carModal">
+      <span class="tool-icon">🚗</span><span class="tool-label">AI Car Expert</span>
+    </button>
 
-  <button id="imageLauncher" class="tool-button" type="button" data-modal-target="imageModal">
-    <span class="tool-icon">🖼</span><span class="tool-label">AI Image Generation</span>
-  </button>
+    <!-- NOTE: app.js v2.6 ToolWire supports imageModal/videoModal (and legacy fallbacks) -->
+    <button id="imageLauncher" class="tool-button" type="button" data-modal-target="imageModal">
+      <span class="tool-icon">🖼</span><span class="tool-label">AI Image Generation</span>
+    </button>
 
-  <button id="videoLauncher" class="tool-button" type="button" data-modal-target="videoModal">
-    <span class="tool-icon">🎥</span><span class="tool-label">AI Video Generation</span>
-  </button>
+    <button id="videoLauncher" class="tool-button" type="button" data-modal-target="videoModal">
+      <span class="tool-icon">🎥</span><span class="tool-label">AI Video Generation</span>
+    </button>
 
-  <!-- Studios (overlays) -->
-  <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
-    <span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span>
-  </button>
+    <!-- Studios (overlays) -->
+    <!-- ✅ app.js v2.6 wires these by ID: canvasLauncher / designLauncher -->
+    <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
+      <span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span>
+    </button>
 
-  <button id="designLauncher" class="tool-button" type="button" data-overlay-target="designStudioOverlay">
-    <span class="tool-icon">🧩</span><span class="tool-label">Design Studio</span>
-  </button>
+    <button id="designLauncher" class="tool-button" type="button" data-overlay-target="designStudioOverlay">
+      <span class="tool-icon">🧩</span><span class="tool-label">Design Studio</span>
+    </button>
 
-</aside>
-
+  </aside>
 
   <!-- BOTTOM VIDEO OUTPUT DISPLAY -->
+  <!-- ✅ IDs match app.js v2.6 (populateVideoOutputs writes here too) -->
   <section id="videoOutputBottom" class="video-output-bottom">
     <h3>1. Video Script (Spoken)</h3>
     <button type="button" class="copy-btn" data-copy-target="videoScriptOutputBottom">Copy</button>
@@ -382,6 +394,7 @@
   </section>
 
   <!-- CANVAS CREATIVE STUDIO (Fabric) -->
+  <!-- ✅ IDs match app.js v2.6: creativeStudioOverlay / creativeClose / creativeCanvasPreset / creativeCanvas -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
     <div class="creative-modal">
       <div class="creative-header">
@@ -424,6 +437,7 @@
   </div>
 
   <!-- DESIGN STUDIO (Konva) -->
+  <!-- ✅ IDs match app.js v2.6: designStudioOverlay / designClose / konvaStageContainer / studioPhotoTray -->
   <div id="designStudioOverlay" class="modal-overlay hidden">
     <div class="ds3-shell">
       <header class="ds3-header">
@@ -521,10 +535,16 @@
     </div>
   </div>
 
-  <!-- TOOL MODALS (unchanged content; your IDs already match app.js) -->
+  <!-- TOOL MODALS (keep your modal blocks as-is) -->
+  <!-- ✅ REQUIREMENT: each modal ID must exist EXACTLY ONCE:
+       objectionModal, drillModeModal, calcModal, paymentModal, incomeModal,
+       workflowModal, messageModal, askModal, carModal, imageModal, videoModal
+       and each should include a close element that matches one of:
+       .side-modal-close OR .modal-close-btn OR [data-close]
+  -->
   <!-- ... keep all your modals exactly as you pasted ... -->
 
   <!-- APP SCRIPT -->
-  <script src="/app.js?v=256"></script>
+  <script src="/app.js?v=260"></script>
 </body>
 </html>
