@@ -302,24 +302,65 @@
 
   </main>
 
-  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
-  <aside class="floating-tools">
-    <button id="objectionLauncher" class="tool-button" type="button"><span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span></button>
-    <button id="drillLauncher" class="tool-button" type="button"><span class="tool-icon">🎯</span><span class="tool-label">Drill Mode</span></button>
-    <button id="calcLauncher" class="tool-button" type="button"><span class="tool-icon">🧮</span><span class="tool-label">Calculator</span></button>
-    <button id="paymentLauncher" class="tool-button" type="button"><span class="tool-icon">💵</span><span class="tool-label">Payment Calculator</span></button>
-    <button id="incomeLauncher" class="tool-button" type="button"><span class="tool-icon">📊</span><span class="tool-label">Income Calculator</span></button>
-    <button id="workflowLauncher" class="tool-button" type="button"><span class="tool-icon">📋</span><span class="tool-label">AI Work Flow Expert</span></button>
-    <button id="messageLauncher" class="tool-button" type="button"><span class="tool-icon">💬</span><span class="tool-label">AI Message Builder</span></button>
-    <button id="askLauncher" class="tool-button" type="button"><span class="tool-icon">❓</span><span class="tool-label">Ask A.I.</span></button>
-    <button id="carLauncher" class="tool-button" type="button"><span class="tool-icon">🚗</span><span class="tool-label">AI Car Expert</span></button>
-    <button id="imageLauncher" class="tool-button" type="button"><span class="tool-icon">🖼</span><span class="tool-label">AI Image Generation</span></button>
-    <button id="videoLauncher" class="tool-button" type="button"><span class="tool-icon">🎥</span><span class="tool-label">AI Video Generation</span></button>
+<!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+<aside class="floating-tools">
 
-    <!-- ✅ app.js expects these sometimes in some builds; safe no-op if unused -->
-    <button id="canvasLauncher" class="tool-button" type="button"><span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span></button>
-    <button id="designLauncher" class="tool-button" type="button"><span class="tool-icon">🧩</span><span class="tool-label">Design Studio</span></button>
-  </aside>
+  <!-- Tool drawers (side modals) -->
+  <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
+    <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
+  </button>
+
+  <button id="drillLauncher" class="tool-button" type="button" data-modal-target="drillModeModal">
+    <span class="tool-icon">🎯</span><span class="tool-label">Drill Mode</span>
+  </button>
+
+  <button id="calcLauncher" class="tool-button" type="button" data-modal-target="calcModal">
+    <span class="tool-icon">🧮</span><span class="tool-label">Calculator</span>
+  </button>
+
+  <button id="paymentLauncher" class="tool-button" type="button" data-modal-target="paymentModal">
+    <span class="tool-icon">💵</span><span class="tool-label">Payment Calculator</span>
+  </button>
+
+  <button id="incomeLauncher" class="tool-button" type="button" data-modal-target="incomeModal">
+    <span class="tool-icon">📊</span><span class="tool-label">Income Calculator</span>
+  </button>
+
+  <button id="workflowLauncher" class="tool-button" type="button" data-modal-target="workflowModal">
+    <span class="tool-icon">📋</span><span class="tool-label">AI Work Flow Expert</span>
+  </button>
+
+  <button id="messageLauncher" class="tool-button" type="button" data-modal-target="messageModal">
+    <span class="tool-icon">💬</span><span class="tool-label">AI Message Builder</span>
+  </button>
+
+  <button id="askLauncher" class="tool-button" type="button" data-modal-target="askModal">
+    <span class="tool-icon">❓</span><span class="tool-label">Ask A.I.</span>
+  </button>
+
+  <button id="carLauncher" class="tool-button" type="button" data-modal-target="carModal">
+    <span class="tool-icon">🚗</span><span class="tool-label">AI Car Expert</span>
+  </button>
+
+  <button id="imageLauncher" class="tool-button" type="button" data-modal-target="imageModal">
+    <span class="tool-icon">🖼</span><span class="tool-label">AI Image Generation</span>
+  </button>
+
+  <button id="videoLauncher" class="tool-button" type="button" data-modal-target="videoModal">
+    <span class="tool-icon">🎥</span><span class="tool-label">AI Video Generation</span>
+  </button>
+
+  <!-- Studios (overlays) -->
+  <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
+    <span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span>
+  </button>
+
+  <button id="designLauncher" class="tool-button" type="button" data-overlay-target="designStudioOverlay">
+    <span class="tool-icon">🧩</span><span class="tool-label">Design Studio</span>
+  </button>
+
+</aside>
+
 
   <!-- BOTTOM VIDEO OUTPUT DISPLAY -->
   <section id="videoOutputBottom" class="video-output-bottom">
