@@ -96,6 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 // ==================================================
 // FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
+// Paste this ONCE inside DOMContentLoaded AFTER $ helper.
 // ==================================================
 const TOOL_CONFIG = [
   ["objectionLauncher", "objectionModal"],
@@ -110,35 +111,40 @@ const TOOL_CONFIG = [
   ["videoLauncher", "videoModal"],
 ];
 
-// (Optional) Drill mode modal (center modal, not side drawer)
-const drillLauncher = $("drillLauncher");
-const drillModal = $("drillModeModal");
-const closeDrillModeBtn = $("closeDrillMode");
+// ---------- DRILL MODE (center modal, not drawer) ----------
+(() => {
+  const drillLauncher = $("drillLauncher");
+  const drillModal = $("drillModeModal");
+  const closeDrillModeBtn = $("closeDrillMode");
 
-function openCenteredModal(modalEl) {
-  if (!modalEl) return;
-  modalEl.classList.remove("hidden");
-}
-function closeCenteredModal(modalEl) {
-  if (!modalEl) return;
-  modalEl.classList.add("hidden");
-}
+  const openCentered = () => drillModal?.classList.remove("hidden");
+  const closeCentered = () => drillModal?.classList.add("hidden");
 
-if (drillLauncher && drillModal) {
-  drillLauncher.addEventListener("click", () => openCenteredModal(drillModal));
-}
-if (closeDrillModeBtn && drillModal) {
-  closeDrillModeBtn.addEventListener("click", () => closeCenteredModal(drillModal));
-  drillModal.addEventListener("click", (e) => {
-    if (e.target === drillModal) closeCenteredModal(drillModal);
-  });
-}
+  if (drillLauncher && drillModal) {
+    drillLauncher.addEventListener("click", (e) => {
+      e.preventDefault();
+      openCentered();
+    });
+  }
 
+  if (closeDrillModeBtn && drillModal) {
+    closeDrillModeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeCentered();
+    });
+
+    drillModal.addEventListener("click", (e) => {
+      if (e.target === drillModal) closeCentered();
+    });
+  }
+})();
+
+// ---------- DRAWER WIRING ----------
 function wireToolDrawer(launcherId, modalId, onOpen) {
   const launcher = $(launcherId);
   const modal = $(modalId);
 
-  // If either is missing, silently skip (prevents crashes)
+  // Skip if missing (prevents crashes)
   if (!launcher || !modal) return;
 
   // Prevent double-wiring
@@ -151,7 +157,7 @@ function wireToolDrawer(launcherId, modalId, onOpen) {
 
   const open = () => {
     modal.classList.remove("hidden");
-    modal.style.display = "flex"; // side-modal uses flex in CSS
+    modal.style.display = "flex"; // side-modal uses flex
     if (typeof onOpen === "function") onOpen();
   };
 
@@ -173,283 +179,21 @@ function wireToolDrawer(launcherId, modalId, onOpen) {
     });
   }
 
-  // Click outside panel closes
+  // Click outside drawer closes
   modal.addEventListener("click", (e) => {
     if (e.target === modal) close();
   });
 }
 
-// Special handling: when opening video drawer, fill context
+// ---------- VIDEO: fill context on open ----------
 const videoContextField = $("videoContext");
+
 function buildVideoContextFromKit() {
   const parts = [];
   const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
   const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
   const url = ($("vehicleUrl")?.value || "").trim();
   const tags = ($("hashtags")?.value || "").trim();
-  if (label) parts.push(`Vehicle: ${label}`);
-  if (price) parts.push(`Price/Offer: ${price}`);
-  if (url) parts.push(`Listing URL: ${url}`);
-  if (tags) parts.push(`Hashtags: ${tags}`);
-  return parts.join("\n");
-}
-
-TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-  if (launcherId === "videoLauncher") {
-    wireToolDrawer(launcherId, modalId, () => {
-      if (videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-        autoResizeTextarea(videoContextField);
-      }
-    });
-  } else {
-    wireToolDrawer(launcherId, modalId);
-  }
-});
-
-// Quick sanity log (remove later)
-console.log("🔧 Tool launchers found:", TOOL_CONFIG.map(([id]) => id).filter((id) => !!$(id)));
-
-  // ==================================================
-  // BRAND + THEME
-  // ==================================================
-  const BRAND = {
-    primary: "#f97316",
-    secondary: "#ec4899",
-    dark: "#020617",
-    light: "#f9fafb",
-    textLight: "#f9fafb",
-    textDark: "#020617",
-  };
-
-  const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
-
-  const themeToggleInput = $("themeToggle");
-  if (themeToggleInput) {
-    const applyTheme = (isDark) => {
-      document.body.classList.toggle("dark-theme", !!isDark);
-      themeToggleInput.checked = !!isDark;
-    };
-    applyTheme(true);
-    themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
-  }
-
-  // Auto-grow ALL textareas
-  document.querySelectorAll("textarea").forEach((ta) => {
-    autoResizeTextarea(ta);
-    ta.addEventListener("input", () => autoResizeTextarea(ta));
-  });
-
-  // ==================================================
-  // STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
-  // ==================================================
-  const vehicleUrlInput = $("vehicleUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceInfoInput = $("priceInfo");
-  const boostButton = $("boostButton");
-  const statusText = $("statusText");
-
-  const summaryLabel = $("summaryLabel");
-  const summaryPrice = $("summaryPrice");
-
-  const facebookPost = $("facebookPost");
-  const instagramPost = $("instagramPost");
-  const tiktokPost = $("tiktokPost");
-  const linkedinPost = $("linkedinPost");
-  const twitterPost = $("twitterPost");
-  const textBlurb = $("textBlurb");
-  const marketplacePost = $("marketplacePost");
-  const hashtags = $("hashtags");
-
-  const photosGrid = $("photosGrid");
-
-  function renderDealerPhotos() {
-    if (!photosGrid) return;
-    photosGrid.innerHTML = "";
-
-    const list = capMax(dealerPhotos, MAX_PHOTOS); // UI shows up to 24
-    list.forEach((photo, index) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
-      btn.dataset.index = String(index);
-
-      const img = document.createElement("img");
-      img.src = photo.src;
-      img.alt = `Dealer photo ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "photo-thumb-img";
-
-      btn.appendChild(img);
-      photosGrid.appendChild(btn);
-
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.dataset.index || "0");
-        if (!dealerPhotos[idx]) return;
-        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-        renderDealerPhotos();
-      });
-    });
-  }
-
-  function setTA(el, v) {
-    if (!el) return;
-    el.value = v || "";
-    autoResizeTextarea(el);
-  }
-
-  async function doBoostListing() {
-    if (!vehicleUrlInput || !boostButton) return;
-
-    const url = vehicleUrlInput.value.trim();
-    const labelOverride = vehicleLabelInput?.value.trim() || "";
-    const priceOverride = priceInfoInput?.value.trim() || "";
-
-    if (!url) {
-      alert("Paste a full dealer URL first.");
-      return;
-    }
-
-    boostButton.disabled = true;
-    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
-
-    try {
-      const res = await fetch(apiBase + "/api/social-kit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, labelOverride, priceOverride }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status}).`);
-
-      if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
-      if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
-
-      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = data.vehicleLabel || "";
-      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = data.priceInfo || "";
-
-      setTA(facebookPost, data.facebook);
-      setTA(instagramPost, data.instagram);
-      setTA(tiktokPost, data.tiktok);
-      setTA(linkedinPost, data.linkedin);
-      setTA(twitterPost, data.twitter);
-      setTA(textBlurb, data.text);
-      setTA(marketplacePost, data.marketplace);
-      setTA(hashtags, data.hashtags);
-
-      const photos = Array.isArray(data.photos) ? data.photos : [];
-      const capped = capMax(photos, MAX_PHOTOS);
-      dealerPhotos = capped.map((src) => ({ src, selected: false }));
-      renderDealerPhotos();
-
-      document.body.classList.add("kit-ready");
-      if (statusText) statusText.textContent = "Social kit ready ✔";
-    } catch (err) {
-      console.error("❌ Boost error:", err);
-      if (statusText) statusText.textContent = err?.message || "Failed to build kit.";
-    } finally {
-      boostButton.disabled = false;
-    }
-  }
-
-  boostButton?.addEventListener("click", doBoostListing);
-
-  // ==================================================
-  // COPY / REGEN
-  // ==================================================
-  document.querySelectorAll(".copy-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-copy-target");
-      if (!targetId) return;
-      const el = $(targetId);
-      if (!el) return;
-
-      el.select?.();
-      try { el.setSelectionRange?.(0, 99999); } catch {}
-      document.execCommand("copy");
-
-      btn.classList.add("copied");
-      const original = btn.textContent;
-      btn.textContent = "Copied!";
-      setTimeout(() => {
-        btn.textContent = original;
-        btn.classList.remove("copied");
-      }, 1200);
-    });
-  });
-
-  document.querySelectorAll(".regen-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const platform = btn.getAttribute("data-platform");
-      if (!platform || !vehicleUrlInput) return;
-
-      const url = vehicleUrlInput.value.trim();
-      if (!url) {
-        alert("Paste a dealer URL and hit Boost at least once first.");
-        return;
-      }
-
-      btn.disabled = true;
-      const original = btn.textContent;
-      btn.textContent = "Thinking…";
-
-      try {
-        const label = vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
-        const price = priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
-
-        const res = await fetch(apiBase + "/api/new-post", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform, url, label, price }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `Regen failed (HTTP ${res.status}).`);
-
-        const text = data.text || "";
-        const map = {
-          facebook: "facebookPost",
-          instagram: "instagramPost",
-          tiktok: "tiktokPost",
-          linkedin: "linkedinPost",
-          twitter: "twitterPost",
-          text: "textBlurb",
-          marketplace: "marketplacePost",
-          hashtags: "hashtags",
-        };
-
-        const targetId = map[platform];
-        const ta = targetId ? $(targetId) : null;
-        if (ta) {
-          ta.value = text;
-          autoResizeTextarea(ta);
-        }
-      } catch (err) {
-        console.error("❌ regen error", err);
-        alert(err?.message || "Failed to generate a new post.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
-    });
-  });
-
-// ==================================================
-// RIGHT-SIDE TOOL MODALS (DRAWERS) — HARD WIRED + DEBUG
-// ==================================================
-const videoContextField = document.getElementById("videoContext");
-
-function buildVideoContextFromKit() {
-  const parts = [];
-  const label =
-    (document.getElementById("vehicleLabel")?.value || "").trim() ||
-    (document.getElementById("summaryLabel")?.textContent || "").trim();
-  const price =
-    (document.getElementById("priceInfo")?.value || "").trim() ||
-    (document.getElementById("summaryPrice")?.textContent || "").trim();
-  const url = (document.getElementById("vehicleUrl")?.value || "").trim();
-  const tags = (document.getElementById("hashtags")?.value || "").trim();
 
   if (label) parts.push(`Vehicle: ${label}`);
   if (price) parts.push(`Price/Offer: ${price}`);
@@ -458,69 +202,13 @@ function buildVideoContextFromKit() {
   return parts.join("\n");
 }
 
-const TOOL_CONFIG = [
-  ["objectionLauncher", "objectionModal"],
-  ["calcLauncher", "calcModal"],
-  ["paymentLauncher", "paymentModal"],
-  ["incomeLauncher", "incomeModal"],
-  ["workflowLauncher", "workflowModal"],
-  ["messageLauncher", "messageModal"],
-  ["askLauncher", "askModal"],
-  ["carLauncher", "carModal"],
-  ["imageLauncher", "imageModal"],
-  ["videoLauncher", "videoModal"],
-];
-
-function wireToolDrawer(launcherId, modalId, onOpen) {
-  const launcher = document.getElementById(launcherId);
-  const modal = document.getElementById(modalId);
-
-  console.log("[TOOLS] wire", launcherId, "=>", modalId, {
-    launcher: !!launcher,
-    modal: !!modal,
-  });
-
-  if (!launcher || !modal) return;
-
-  // Prevent double wiring
-  if (launcher.dataset.wired === "true") return;
-  launcher.dataset.wired = "true";
-
-  const closeBtn =
-    modal.querySelector(".side-modal-close") ||
-    modal.querySelector(".modal-close-btn");
-
-  const close = () => {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  };
-
-  const open = () => {
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    if (typeof onOpen === "function") onOpen();
-  };
-
-  launcher.addEventListener("click", open);
-
-  if (closeBtn && closeBtn.dataset.wired !== "true") {
-    closeBtn.dataset.wired = "true";
-    closeBtn.addEventListener("click", close);
-  }
-
-  // click-outside-to-close
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
-  });
-}
-
+// Wire all drawers
 TOOL_CONFIG.forEach(([launcherId, modalId]) => {
   if (launcherId === "videoLauncher") {
     wireToolDrawer(launcherId, modalId, () => {
       if (videoContextField) {
         videoContextField.value = buildVideoContextFromKit();
-        // optional auto-resize if you have it:
-        // autoResizeTextarea(videoContextField);
+        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
       }
     });
   } else {
@@ -528,107 +216,11 @@ TOOL_CONFIG.forEach(([launcherId, modalId]) => {
   }
 });
 
-
-  // ==================================================
-  // BASIC CALCULATOR (keypad)
-  // ==================================================
-  const basicCalcDisplay = $("basicCalcDisplay");
-  const basicCalcButtons = document.querySelectorAll("[data-calc-key]");
-
-  if (basicCalcDisplay && basicCalcButtons.length) {
-    let calcExpr = "";
-    const renderCalc = () => (basicCalcDisplay.value = calcExpr || "0");
-
-    basicCalcButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.getAttribute("data-calc-key");
-        if (!key) return;
-
-        if (key === "C") calcExpr = "";
-        else if (key === "DEL") calcExpr = calcExpr.slice(0, -1);
-        else if (key === "=") {
-          try {
-            // eslint-disable-next-line no-eval
-            calcExpr = String(eval(calcExpr || "0"));
-          } catch {
-            calcExpr = "";
-          }
-        } else calcExpr += key;
-
-        renderCalc();
-      });
-    });
-
-    renderCalc();
-  }
-
-  // ==================================================
-  // PAYMENT CALCULATOR
-  // ==================================================
-  const paymentForm = $("paymentForm");
-  if (paymentForm) {
-    const priceInput = $("paymentPrice");
-    const cashDownInput = $("paymentCashDown");
-    const tradeValueInput = $("paymentTradeValue");
-    const tradeOweInput = $("paymentTradeOwe");
-    const rateInput = $("paymentRate");
-    const termInput = $("paymentTerm");
-    const taxInput = $("paymentTax");
-
-    const paymentMonthlyEl = $("paymentMonthly");
-    const paymentDetailsEl = $("paymentDetails");
-
-    const cleanNumber = (val) => {
-      if (!val) return 0;
-      const n = parseFloat(String(val).replace(/[^0-9.]/g, ""));
-      return Number.isNaN(n) ? 0 : n;
-    };
-
-    paymentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const price = cleanNumber(priceInput?.value);
-      const cashDown = cleanNumber(cashDownInput?.value);
-      const tradeValue = cleanNumber(tradeValueInput?.value);
-      const tradeOwe = cleanNumber(tradeOweInput?.value);
-      const apr = parseFloat(rateInput?.value || "0");
-      const years = parseFloat(termInput?.value || "0");
-      const taxRate = parseFloat(taxInput?.value || "0");
-
-      if (!price || !years) {
-        if (paymentDetailsEl) paymentDetailsEl.textContent = "Enter vehicle price and term (years).";
-        return;
-      }
-
-      const taxableBase = Math.max(price - tradeValue, 0);
-      const taxAmount = taxableBase * (taxRate / 100);
-
-      let financedBeforeTax = price - cashDown - tradeValue + tradeOwe;
-      if (financedBeforeTax < 0) financedBeforeTax = 0;
-
-      const amountFinanced = financedBeforeTax + taxAmount;
-      const months = years * 12;
-
-      let monthly = 0;
-      if (apr > 0) {
-        const monthlyRate = apr / 100 / 12;
-        const factor = Math.pow(1 + monthlyRate, months);
-        monthly = (amountFinanced * (monthlyRate * factor)) / (factor - 1);
-      } else {
-        monthly = amountFinanced / months;
-      }
-
-      const negativeEquity = Math.max(tradeOwe - tradeValue, 0);
-      const fmtMoney = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-      if (paymentMonthlyEl) paymentMonthlyEl.textContent = `$${fmtMoney(monthly)}`;
-
-      let details = `Amount Financed (est.): $${fmtMoney(amountFinanced)}. `;
-      details += `Includes approx. $${fmtMoney(taxAmount)} in tax. `;
-      if (negativeEquity > 0) details += `Rolled-in negative equity: $${fmtMoney(negativeEquity)}. `;
-      details += "Estimate only; lender/fees vary.";
-      if (paymentDetailsEl) paymentDetailsEl.textContent = details;
-    });
+// Debug (optional)
+console.log(
+  "🔧 Tool launchers found:",
+  TOOL_CONFIG.map(([id]) => id).filter((id) => !!$(id))
+);
   }
 
   // ==================================================
