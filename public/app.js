@@ -389,7 +389,8 @@ modal.setAttribute("aria-hidden", "false");
   // - DOES NOT wire canvas/design launchers (to avoid duplicates)
   // ==================================================
   const TOOL_CONFIG = [
-   { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
+  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
+
 
 
     // Calculator: include legacy IDs so it opens even if HTML differs
