@@ -1094,6 +1094,8 @@ Respond with clear, helpful content a salesperson can use immediately.
 // ======================================================
 // Start Server
 // ======================================================
-app.listen(port, () => {
-  console.log(`Lot Rocket backend running on port ${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
+
