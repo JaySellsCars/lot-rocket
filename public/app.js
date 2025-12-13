@@ -243,6 +243,116 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   boostButton?.addEventListener("click", doBoostListing);
+// ==================================================
+// FLOATING TOOLS → RIGHT-SIDE MODALS (ToolWire)
+// ==================================================
+const TOOL_CONFIG = [
+  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
+  { launcherId: "calcLauncher",      modalIds: ["calcModal"] },
+  { launcherId: "paymentLauncher",   modalIds: ["paymentModal"] },
+  { launcherId: "incomeLauncher",    modalIds: ["incomeModal"] },
+  { launcherId: "workflowLauncher",  modalIds: ["workflowModal"] },
+  { launcherId: "messageLauncher",   modalIds: ["messageModal"] },
+  { launcherId: "askLauncher",       modalIds: ["askModal"] },
+  { launcherId: "carLauncher",       modalIds: ["carModal"] },
+
+  // Image/Video fallbacks (covers old IDs if you used them before)
+  { launcherId: "imageLauncher", modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
+  { launcherId: "videoLauncher", modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
+];
+
+function wireToolDrawer(launcherId, modalIds, onOpen) {
+  const launcher = document.getElementById(launcherId);
+  if (!launcher) return;
+
+  // Prevent double wiring
+  if (launcher.dataset.wired === "true") return;
+  launcher.dataset.wired = "true";
+
+  const modal =
+    (modalIds || [])
+      .map((id) => document.getElementById(id))
+      .find(Boolean) || null;
+
+  if (!modal) {
+    console.warn("[ToolWire] Missing modal for launcher:", { launcherId, modalIds, modalFound: false });
+    return;
+  }
+
+  const closeBtn =
+    modal.querySelector(".side-modal-close") ||
+    modal.querySelector(".modal-close-btn") ||
+    modal.querySelector("[data-close]");
+
+  const open = () => {
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    if (typeof onOpen === "function") onOpen();
+  };
+
+  const close = () => {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+  };
+
+  launcher.addEventListener("click", (e) => {
+    e.preventDefault();
+    open();
+  });
+
+  if (closeBtn && closeBtn.dataset.wired !== "true") {
+    closeBtn.dataset.wired = "true";
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      close();
+    });
+  }
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+}
+
+// Auto-fill videoContext when opening video modal
+const videoContextField = document.getElementById("videoContext");
+function buildVideoContextFromKit() {
+  const parts = [];
+  const label = (document.getElementById("vehicleLabel")?.value || document.getElementById("summaryLabel")?.textContent || "").trim();
+  const price = (document.getElementById("priceInfo")?.value || document.getElementById("summaryPrice")?.textContent || "").trim();
+  const url = (document.getElementById("vehicleUrl")?.value || "").trim();
+  const tags = (document.getElementById("hashtags")?.value || "").trim();
+  if (label) parts.push(`Vehicle: ${label}`);
+  if (price) parts.push(`Price/Offer: ${price}`);
+  if (url) parts.push(`Listing URL: ${url}`);
+  if (tags) parts.push(`Hashtags: ${tags}`);
+  return parts.join("\n");
+}
+
+TOOL_CONFIG.forEach((t) => {
+  if (t.launcherId === "videoLauncher") {
+    wireToolDrawer(t.launcherId, t.modalIds, () => {
+      if (videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
+      }
+    });
+  } else {
+    wireToolDrawer(t.launcherId, t.modalIds);
+  }
+});
+
+// Extra: wire Canvas + Design launchers to their overlays
+document.getElementById("canvasLauncher")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  // calls your existing function later in the file
+  if (typeof openCreativeStudio === "function") openCreativeStudio();
+});
+
+document.getElementById("designLauncher")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  // calls your existing function later in the file
+  if (typeof openDesignStudio === "function") openDesignStudio();
+});
 
   // ==================================================
   // COPY / REGEN
