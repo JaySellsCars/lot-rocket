@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function autoResizeTextarea(el) {
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = (el.scrollHeight + 4) + "px";
+    el.style.height = el.scrollHeight + 4 + "px";
   }
 
   function capMax(arr, max = MAX_PHOTOS) {
@@ -94,128 +94,95 @@ document.addEventListener("DOMContentLoaded", () => {
     a.click();
     a.remove();
   }
-// ==================================================
-// FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
-// ==================================================
-const TOOL_CONFIG = [
-  ["objectionLauncher", "objectionModal"],
-  ["calcLauncher", "calcModal"],
-  ["paymentLauncher", "paymentModal"],
-  ["incomeLauncher", "incomeModal"],
-  ["workflowLauncher", "workflowModal"],
-  ["messageLauncher", "messageModal"],
-  ["askLauncher", "askModal"],
-  ["carLauncher", "carModal"],
-  ["imageLauncher", "imageModal"],
-  ["videoLauncher", "videoModal"],
-];
 
-// (Optional) Drill mode modal (center modal, not side drawer)
-const drillLauncher = $("drillLauncher");
-const drillModal = $("drillModeModal");
-const closeDrillModeBtn = $("closeDrillMode");
+  // ==================================================
+  // FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
+  // (Drill modal is NOT wired here to avoid duplicate declarations.)
+  // ==================================================
+  const TOOL_CONFIG = [
+    ["objectionLauncher", "objectionModal"],
+    ["calcLauncher", "calcModal"],
+    ["paymentLauncher", "paymentModal"],
+    ["incomeLauncher", "incomeModal"],
+    ["workflowLauncher", "workflowModal"],
+    ["messageLauncher", "messageModal"],
+    ["askLauncher", "askModal"],
+    ["carLauncher", "carModal"],
+    ["imageLauncher", "imageModal"],
+    ["videoLauncher", "videoModal"],
+  ];
 
-function openCenteredModal(modalEl) {
-  if (!modalEl) return;
-  modalEl.classList.remove("hidden");
-  modalEl.style.display = "flex";
-}
-function closeCenteredModal(modalEl) {
-  if (!modalEl) return;
-  modalEl.classList.add("hidden");
-  modalEl.style.display = "none";
-}
+  function wireToolDrawer(launcherId, modalId, onOpen) {
+    const launcher = $(launcherId);
+    const modal = $(modalId);
 
-if (drillLauncher && drillModal) {
-  drillLauncher.addEventListener("click", () => openCenteredModal(drillModal));
-}
-if (closeDrillModeBtn && drillModal) {
-  closeDrillModeBtn.addEventListener("click", () => closeCenteredModal(drillModal));
-  drillModal.addEventListener("click", (e) => {
-    if (e.target === drillModal) closeCenteredModal(drillModal);
-  });
-}
+    // If either is missing, silently skip (prevents crashes)
+    if (!launcher || !modal) return;
 
-function wireToolDrawer(launcherId, modalId, onOpen) {
-  const launcher = $(launcherId);
-  const modal = $(modalId);
+    // Prevent double-wiring
+    if (launcher.dataset.wired === "true") return;
+    launcher.dataset.wired = "true";
 
-  // If either is missing, silently skip (prevents crashes)
-  if (!launcher || !modal) return;
+    const closeBtn = modal.querySelector(".side-modal-close") || modal.querySelector(".modal-close-btn");
 
-  // Prevent double-wiring
-  if (launcher.dataset.wired === "true") return;
-  launcher.dataset.wired = "true";
+    const open = () => {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex"; // side-modal uses flex in CSS
+      if (typeof onOpen === "function") onOpen();
+    };
 
-  const closeBtn =
-    modal.querySelector(".side-modal-close") ||
-    modal.querySelector(".modal-close-btn");
+    const close = () => {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    };
 
-  const open = () => {
-    modal.classList.remove("hidden");
-    modal.style.display = "flex"; // side-modal uses flex in CSS
-    if (typeof onOpen === "function") onOpen();
-  };
-
-  const close = () => {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  };
-
-  launcher.addEventListener("click", (e) => {
-    e.preventDefault();
-    open();
-  });
-
-  if (closeBtn && closeBtn.dataset.wired !== "true") {
-    closeBtn.dataset.wired = "true";
-    closeBtn.addEventListener("click", (e) => {
+    launcher.addEventListener("click", (e) => {
       e.preventDefault();
-      close();
+      open();
+    });
+
+    if (closeBtn && closeBtn.dataset.wired !== "true") {
+      closeBtn.dataset.wired = "true";
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        close();
+      });
+    }
+
+    // Click outside panel closes
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) close();
     });
   }
 
-  // Click outside panel closes
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
+  // Special handling: when opening video drawer, fill context
+  const videoContextField = $("videoContext");
+
+  function buildVideoContextFromKit() {
+    const parts = [];
+    const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
+    const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
+    const url = ($("vehicleUrl")?.value || "").trim();
+    const tags = ($("hashtags")?.value || "").trim();
+    if (label) parts.push(`Vehicle: ${label}`);
+    if (price) parts.push(`Price/Offer: ${price}`);
+    if (url) parts.push(`Listing URL: ${url}`);
+    if (tags) parts.push(`Hashtags: ${tags}`);
+    return parts.join("\n");
+  }
+
+  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+    if (launcherId === "videoLauncher") {
+      wireToolDrawer(launcherId, modalId, () => {
+        if (videoContextField) {
+          videoContextField.value = buildVideoContextFromKit();
+          autoResizeTextarea(videoContextField);
+        }
+      });
+    } else {
+      wireToolDrawer(launcherId, modalId);
+    }
   });
-}
-
-// Special handling: when opening video drawer, fill context
-const videoContextField = $("videoContext");
-
-function buildVideoContextFromKit() {
-  const parts = [];
-  const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
-  const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
-  const url = ($("vehicleUrl")?.value || "").trim();
-  const tags = ($("hashtags")?.value || "").trim();
-  if (label) parts.push(`Vehicle: ${label}`);
-  if (price) parts.push(`Price/Offer: ${price}`);
-  if (url) parts.push(`Listing URL: ${url}`);
-  if (tags) parts.push(`Hashtags: ${tags}`);
-  return parts.join("\n");
-}
-
-TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-  if (launcherId === "videoLauncher") {
-    wireToolDrawer(launcherId, modalId, () => {
-      if (videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
-      }
-    });
-  } else {
-    wireToolDrawer(launcherId, modalId);
-  }
-});
-
-// Quick sanity log (remove later)
-console.log(
-  "🔧 Tool launchers found:",
-  TOOL_CONFIG.map(([id]) => id).filter((id) => !!$(id))
-);
-
 
   // ==================================================
   // BRAND + THEME
@@ -373,7 +340,9 @@ console.log(
       if (!el) return;
 
       el.select?.();
-      try { el.setSelectionRange?.(0, 99999); } catch {}
+      try {
+        el.setSelectionRange?.(0, 99999);
+      } catch {}
       document.execCommand("copy");
 
       btn.classList.add("copied");
@@ -441,7 +410,6 @@ console.log(
       }
     });
   });
-
 
   // ==================================================
   // PAYMENT CALCULATOR
@@ -655,7 +623,9 @@ console.log(
 
   // ==================================================
   // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
+  // (FIXED: no duplicate declarations)
   // ==================================================
+  const drillLauncher = $("drillLauncher");
   const drillModal = $("drillModeModal");
   const closeDrillModeBtn = $("closeDrillMode");
 
@@ -718,17 +688,30 @@ console.log(
   function openDrillModal() {
     if (!drillModal) return;
     drillModal.classList.remove("hidden");
+    drillModal.style.display = "flex";
     resetDrillState();
   }
 
   function closeDrillModal() {
     if (!drillModal) return;
     drillModal.classList.add("hidden");
+    drillModal.style.display = "none";
     stopDrillTimer();
   }
 
-  // If drill modal is not a drawer, you might be opening it another way.
-  closeDrillModeBtn?.addEventListener("click", closeDrillModal);
+  drillLauncher?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openDrillModal();
+  });
+
+  closeDrillModeBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeDrillModal();
+  });
+
+  drillModal?.addEventListener("click", (e) => {
+    if (e.target === drillModal) closeDrillModal();
+  });
 
   getDrillObjectionBtn?.addEventListener("click", () => {
     const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
@@ -1008,7 +991,7 @@ console.log(
     });
 
     // set preview if empty
-    if (tunerPreviewImg && !tunerPreviewImg.src && STORE.creativePhotos.length) {
+    if (tunerPreviewImg && (!tunerPreviewImg.getAttribute("src") || tunerPreviewImg.src === "") && STORE.creativePhotos.length) {
       tunerPreviewImg.src = STORE.creativePhotos[0];
       applyTunerFilters();
     }
@@ -1099,11 +1082,6 @@ console.log(
 
   // ==================================================
   // SOCIAL READY STRIP (ONE MODULE ONLY)
-  // IDs expected:
-  // socialCarousel, socialCarouselPreviewImg, socialCarouselStatus,
-  // socialPrevBtn, socialNextBtn,
-  // revertSocialPhotoBtn, downloadAllEditedBtn,
-  // openDesignFromCarouselBtn, openCanvasFromCarouselBtn
   // ==================================================
   const socialCarousel = $("socialCarousel");
   const socialPreviewImg = $("socialCarouselPreviewImg");
@@ -1136,7 +1114,7 @@ console.log(
       img.src = photo.url;
       img.alt = `Social-ready ${index + 1}`;
       img.loading = "lazy";
-      img.className = "social-carousel-img"; // CSS should force thumbnails
+      img.className = "social-carousel-img";
 
       item.appendChild(img);
 
@@ -1263,6 +1241,14 @@ console.log(
   let creativeHistory = [];
   let creativeHistoryIndex = -1;
 
+  function saveCanvasState() {
+    if (!creativeCanvas) return;
+    const json = creativeCanvas.toJSON();
+    creativeHistory = creativeHistory.slice(0, creativeHistoryIndex + 1);
+    creativeHistory.push(json);
+    creativeHistoryIndex = creativeHistory.length - 1;
+  }
+
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
     if (typeof fabric === "undefined") {
@@ -1272,14 +1258,6 @@ console.log(
     creativeCanvas = new fabric.Canvas("creativeCanvas", { preserveObjectStacking: true });
     saveCanvasState();
     return creativeCanvas;
-  }
-
-  function saveCanvasState() {
-    if (!creativeCanvas) return;
-    const json = creativeCanvas.toJSON();
-    creativeHistory = creativeHistory.slice(0, creativeHistoryIndex + 1);
-    creativeHistory.push(json);
-    creativeHistoryIndex = creativeHistory.length - 1;
   }
 
   function loadCanvasState(index) {
@@ -1491,9 +1469,7 @@ console.log(
     if (!window.Konva || !studioHistory.length) return;
     if (index < 0 || index >= studioHistory.length) return;
 
-    const container =
-      (studioStage && studioStage.container()) ||
-      $("konvaStageContainer");
+    const container = (studioStage && studioStage.container()) || $("konvaStageContainer");
     if (!container) return;
 
     const json = studioHistory[index];
@@ -2082,7 +2058,9 @@ console.log(
       img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
 
       img.addEventListener("dragstart", (e) => {
-        try { e.dataTransfer.setData("text/plain", url); } catch {}
+        try {
+          e.dataTransfer.setData("text/plain", url);
+        } catch {}
       });
 
       studioPhotoTray.appendChild(img);
@@ -2095,7 +2073,9 @@ console.log(
       konvaContainer.addEventListener("drop", (e) => {
         e.preventDefault();
         let url = "";
-        try { url = e.dataTransfer.getData("text/plain"); } catch {}
+        try {
+          url = e.dataTransfer.getData("text/plain");
+        } catch {}
         if (url) addStudioImageFromUrl(url, false);
       });
     }
@@ -2108,9 +2088,8 @@ console.log(
     if (!studioStage && window.Konva) initDesignStudio();
     else studioStage?.draw?.();
 
-    studioAvailablePhotos = Array.isArray(forceSources) && forceSources.length
-      ? forceSources.slice(0, MAX_PHOTOS)
-      : gatherImageUrlsForStudios();
+    studioAvailablePhotos =
+      Array.isArray(forceSources) && forceSources.length ? forceSources.slice(0, MAX_PHOTOS) : gatherImageUrlsForStudios();
 
     renderStudioPhotoTray();
   }
