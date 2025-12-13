@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
 
-  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // array of urls (strings)
+  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // urls (strings)
   STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls (strings)
 
   // Social-ready: normalized objects: { url, originalUrl, selected, locked }
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Trigger a download (jpg)
+  // Trigger a download (jpg/png/dataURL)
   function triggerDownload(url, filename) {
     if (!url) return;
     const a = document.createElement("a");
@@ -94,10 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
     a.click();
     a.remove();
   }
-
-
-
-
 
   // ==================================================
   // BRAND + THEME
@@ -243,121 +239,135 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   boostButton?.addEventListener("click", doBoostListing);
-// ==================================================
-// FLOATING TOOLS → RIGHT-SIDE MODALS (ToolWire)
-// ==================================================
-const TOOL_CONFIG = [
-  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
-  { launcherId: "calcLauncher",      modalIds: ["calcModal"] },
-  { launcherId: "paymentLauncher",   modalIds: ["paymentModal"] },
-  { launcherId: "incomeLauncher",    modalIds: ["incomeModal"] },
-  { launcherId: "workflowLauncher",  modalIds: ["workflowModal"] },
-  { launcherId: "messageLauncher",   modalIds: ["messageModal"] },
-  { launcherId: "askLauncher",       modalIds: ["askModal"] },
-  { launcherId: "carLauncher",       modalIds: ["carModal"] },
 
-  // Image/Video fallbacks (covers old IDs if you used them before)
-  { launcherId: "imageLauncher", modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
-  { launcherId: "videoLauncher", modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
-];
+  // ==================================================
+  // FLOATING TOOLS → RIGHT-SIDE MODALS (ToolWire) [CLEAN]
+  // - Prevents double wiring (launcher + modal)
+  // - Supports legacy modal IDs
+  // - DOES NOT wire canvas/design launchers (to avoid duplicates)
+  // ==================================================
+  const TOOL_CONFIG = [
+    { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
 
-function wireToolDrawer(launcherId, modalIds, onOpen) {
-  const launcher = document.getElementById(launcherId);
-  if (!launcher) return;
+    // Calculator: include legacy IDs so it opens even if HTML differs
+    { launcherId: "calcLauncher", modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
 
-  // Prevent double wiring
-  if (launcher.dataset.wired === "true") return;
-  launcher.dataset.wired = "true";
+    { launcherId: "paymentLauncher", modalIds: ["paymentModal"] },
+    { launcherId: "incomeLauncher", modalIds: ["incomeModal"] },
+    { launcherId: "workflowLauncher", modalIds: ["workflowModal"] },
+    { launcherId: "messageLauncher", modalIds: ["messageModal"] },
+    { launcherId: "askLauncher", modalIds: ["askModal"] },
+    { launcherId: "carLauncher", modalIds: ["carModal"] },
 
-  const modal =
-    (modalIds || [])
-      .map((id) => document.getElementById(id))
-      .find(Boolean) || null;
+    // Image/Video fallbacks (covers old IDs)
+    { launcherId: "imageLauncher", modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
+    { launcherId: "videoLauncher", modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
+  ];
 
-  if (!modal) {
-    console.warn("[ToolWire] Missing modal for launcher:", { launcherId, modalIds, modalFound: false });
-    return;
-  }
+  function wireToolDrawer(launcherId, modalIds, onOpen) {
+    const launcher = document.getElementById(launcherId);
+    if (!launcher) return;
 
-  const closeBtn =
-    modal.querySelector(".side-modal-close") ||
-    modal.querySelector(".modal-close-btn") ||
-    modal.querySelector("[data-close]");
+    // Prevent double wiring (launcher)
+    if (launcher.dataset.wired === "true") return;
+    launcher.dataset.wired = "true";
 
-  const open = () => {
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    if (typeof onOpen === "function") onOpen();
-  };
+    const modal =
+      (modalIds || [])
+        .map((id) => document.getElementById(id))
+        .find(Boolean) || null;
 
-  const close = () => {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  };
+    if (!modal) {
+      console.warn("[ToolWire] Missing modal for launcher:", {
+        launcherId,
+        launcherFound: true,
+        modalIds,
+        modalFound: false,
+      });
+      return;
+    }
 
-  launcher.addEventListener("click", (e) => {
-    e.preventDefault();
-    open();
-  });
+    // Prevent double wiring (modal/backdrop)
+    if (modal.dataset.wired === "true") return;
+    modal.dataset.wired = "true";
 
-  if (closeBtn && closeBtn.dataset.wired !== "true") {
-    closeBtn.dataset.wired = "true";
-    closeBtn.addEventListener("click", (e) => {
+    const closeBtn =
+      modal.querySelector(".side-modal-close") ||
+      modal.querySelector(".modal-close-btn") ||
+      modal.querySelector("[data-close]");
+
+    const open = () => {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+      if (typeof onOpen === "function") onOpen();
+    };
+
+    const close = () => {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    };
+
+    launcher.addEventListener("click", (e) => {
       e.preventDefault();
-      close();
+      open();
+    });
+
+    if (closeBtn && closeBtn.dataset.wired !== "true") {
+      closeBtn.dataset.wired = "true";
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        close();
+      });
+    }
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) close();
     });
   }
 
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
+  function buildVideoContextFromKit() {
+    const parts = [];
+    const label = (
+      document.getElementById("vehicleLabel")?.value ||
+      document.getElementById("summaryLabel")?.textContent ||
+      ""
+    ).trim();
+    const price = (
+      document.getElementById("priceInfo")?.value ||
+      document.getElementById("summaryPrice")?.textContent ||
+      ""
+    ).trim();
+    const url = (document.getElementById("vehicleUrl")?.value || "").trim();
+    const tags = (document.getElementById("hashtags")?.value || "").trim();
+    if (label) parts.push(`Vehicle: ${label}`);
+    if (price) parts.push(`Price/Offer: ${price}`);
+    if (url) parts.push(`Listing URL: ${url}`);
+    if (tags) parts.push(`Hashtags: ${tags}`);
+    return parts.join("\n");
+  }
+
+  TOOL_CONFIG.forEach((t) => {
+    if (t.launcherId === "videoLauncher") {
+      wireToolDrawer(t.launcherId, t.modalIds, () => {
+        // Resolve field at open-time (more reliable than capturing once)
+        const videoContextField = document.getElementById("videoContext");
+        if (videoContextField) {
+          videoContextField.value = buildVideoContextFromKit();
+          autoResizeTextarea(videoContextField);
+        }
+      });
+    } else {
+      wireToolDrawer(t.launcherId, t.modalIds);
+    }
   });
-}
-
-// Auto-fill videoContext when opening video modal
-const videoContextField = document.getElementById("videoContext");
-function buildVideoContextFromKit() {
-  const parts = [];
-  const label = (document.getElementById("vehicleLabel")?.value || document.getElementById("summaryLabel")?.textContent || "").trim();
-  const price = (document.getElementById("priceInfo")?.value || document.getElementById("summaryPrice")?.textContent || "").trim();
-  const url = (document.getElementById("vehicleUrl")?.value || "").trim();
-  const tags = (document.getElementById("hashtags")?.value || "").trim();
-  if (label) parts.push(`Vehicle: ${label}`);
-  if (price) parts.push(`Price/Offer: ${price}`);
-  if (url) parts.push(`Listing URL: ${url}`);
-  if (tags) parts.push(`Hashtags: ${tags}`);
-  return parts.join("\n");
-}
-
-TOOL_CONFIG.forEach((t) => {
-  if (t.launcherId === "videoLauncher") {
-    wireToolDrawer(t.launcherId, t.modalIds, () => {
-      if (videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
-      }
-    });
-  } else {
-    wireToolDrawer(t.launcherId, t.modalIds);
-  }
-});
-
-// Extra: wire Canvas + Design launchers to their overlays
-document.getElementById("canvasLauncher")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  // calls your existing function later in the file
-  if (typeof openCreativeStudio === "function") openCreativeStudio();
-});
-
-document.getElementById("designLauncher")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  // calls your existing function later in the file
-  if (typeof openDesignStudio === "function") openDesignStudio();
-});
 
   // ==================================================
   // COPY / REGEN
   // ==================================================
   document.querySelectorAll(".copy-btn").forEach((btn) => {
+    if (btn.dataset.wired === "true") return;
+    btn.dataset.wired = "true";
+
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-copy-target");
       if (!targetId) return;
@@ -381,6 +391,9 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
   });
 
   document.querySelectorAll(".regen-btn").forEach((btn) => {
+    if (btn.dataset.wired === "true") return;
+    btn.dataset.wired = "true";
+
     btn.addEventListener("click", async () => {
       const platform = btn.getAttribute("data-platform");
       if (!platform || !vehicleUrlInput) return;
@@ -440,7 +453,9 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
   // PAYMENT CALCULATOR
   // ==================================================
   const paymentForm = $("paymentForm");
-  if (paymentForm) {
+  if (paymentForm && paymentForm.dataset.wired !== "true") {
+    paymentForm.dataset.wired = "true";
+
     const priceInput = $("paymentPrice");
     const cashDownInput = $("paymentCashDown");
     const tradeValueInput = $("paymentTradeValue");
@@ -509,7 +524,9 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
   // INCOME CALCULATOR
   // ==================================================
   const incomeForm = $("incomeForm");
-  if (incomeForm) {
+  if (incomeForm && incomeForm.dataset.wired !== "true") {
+    incomeForm.dataset.wired = "true";
+
     const incomeYtdInput = $("incomeYtd");
     const incomeLastPaycheckInput = $("incomeLastPaycheck");
     const incomeOutput = $("incomeOutput");
@@ -563,7 +580,9 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
   const objectionForm = $("objectionForm");
   const objectionOutput = $("objectionOutput");
 
-  if (objectionForm && objectionOutput) {
+  if (objectionForm && objectionOutput && objectionForm.dataset.wired !== "true") {
+    objectionForm.dataset.wired = "true";
+
     objectionForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -602,6 +621,10 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
     const form = $(formId);
     const output = $(outputId);
     if (!form || !output) return;
+
+    // Prevent double wiring
+    if (form.dataset.wired === "true") return;
+    form.dataset.wired = "true";
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -648,7 +671,6 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
 
   // ==================================================
   // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
-  // (FIXED: no duplicate declarations)
   // ==================================================
   const drillLauncher = $("drillLauncher");
   const drillModal = $("drillModeModal");
@@ -724,88 +746,100 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
     stopDrillTimer();
   }
 
-  drillLauncher?.addEventListener("click", (e) => {
-    e.preventDefault();
-    openDrillModal();
-  });
+  if (drillLauncher && drillLauncher.dataset.wired !== "true") {
+    drillLauncher.dataset.wired = "true";
+    drillLauncher.addEventListener("click", (e) => {
+      e.preventDefault();
+      openDrillModal();
+    });
+  }
 
-  closeDrillModeBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeDrillModal();
-  });
+  if (closeDrillModeBtn && closeDrillModeBtn.dataset.wired !== "true") {
+    closeDrillModeBtn.dataset.wired = "true";
+    closeDrillModeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeDrillModal();
+    });
+  }
 
-  drillModal?.addEventListener("click", (e) => {
-    if (e.target === drillModal) closeDrillModal();
-  });
+  if (drillModal && drillModal.dataset.wired !== "true") {
+    drillModal.dataset.wired = "true";
+    drillModal.addEventListener("click", (e) => {
+      if (e.target === drillModal) closeDrillModal();
+    });
+  }
 
-  getDrillObjectionBtn?.addEventListener("click", () => {
-    const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
-    currentDrillObjection = DRILL_OBJECTIONS[idx];
-    if (drillObjectionText) drillObjectionText.textContent = currentDrillObjection;
-    resetDrillState();
-    startDrillTimer(60);
-    drillReplyInput?.focus?.();
-  });
+  if (getDrillObjectionBtn && getDrillObjectionBtn.dataset.wired !== "true") {
+    getDrillObjectionBtn.dataset.wired = "true";
+    getDrillObjectionBtn.addEventListener("click", () => {
+      const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
+      currentDrillObjection = DRILL_OBJECTIONS[idx];
+      if (drillObjectionText) drillObjectionText.textContent = currentDrillObjection;
+      resetDrillState();
+      startDrillTimer(60);
+      drillReplyInput?.focus?.();
+    });
+  }
 
-  gradeDrillReplyBtn?.addEventListener("click", async () => {
-    const reply = (drillReplyInput?.value || "").trim();
+  if (gradeDrillReplyBtn && gradeDrillReplyBtn.dataset.wired !== "true") {
+    gradeDrillReplyBtn.dataset.wired = "true";
+    gradeDrillReplyBtn.addEventListener("click", async () => {
+      const reply = (drillReplyInput?.value || "").trim();
 
-    if (!currentDrillObjection) {
-      setDrillResult('Hit “Give Me an Objection” first.', true);
-      return;
-    }
-    if (!reply) {
-      setDrillResult("Type your response first, then I’ll grade it.", true);
-      return;
-    }
+      if (!currentDrillObjection) {
+        setDrillResult('Hit “Give Me an Objection” first.', true);
+        return;
+      }
+      if (!reply) {
+        setDrillResult("Type your response first, then I’ll grade it.", true);
+        return;
+      }
 
-    stopDrillTimer();
-    setDrillResult("Grading your reply…", true);
+      stopDrillTimer();
+      setDrillResult("Grading your reply…", true);
 
-    // Prefer /api/drill-grade (new dedicated grader). Fallback to message-helper.
-    const payload = {
-      objection: currentDrillObjection,
-      reply,
-      secondsRemaining: drillSecondsLeft,
-      rubric: { tone: "confident, friendly, professional", target: "set appointment or move to numbers" },
-    };
+      const payload = {
+        objection: currentDrillObjection,
+        reply,
+        secondsRemaining: drillSecondsLeft,
+        rubric: { tone: "confident, friendly, professional", target: "set appointment or move to numbers" },
+      };
 
-    try {
-      let res = await fetch(apiBase + "/api/drill-grade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      // fallback if route not implemented yet
-      if (!res.ok) {
-        res = await fetch(apiBase + "/api/message-helper", {
+      try {
+        let res = await fetch(apiBase + "/api/drill-grade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "objection-drill", ...payload }),
+          body: JSON.stringify(payload),
         });
-      }
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
+        if (!res.ok) {
+          res = await fetch(apiBase + "/api/message-helper", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: "objection-drill", ...payload }),
+          });
+        }
 
-      // Supports either JSON grader output or plain text
-      if (typeof data?.score === "number") {
-        const msg =
-          `Score: ${data.score}/100\n\n` +
-          `✅ What you did well:\n${data.what_you_did_well || "—"}\n\n` +
-          `🔧 What to fix:\n${data.what_to_fix || "—"}\n\n` +
-          `🔥 Better response:\n${data.better_response || "—"}\n\n` +
-          `Coach tip: ${data.one_sentence_coaching_tip || "—"}`;
-        setDrillResult(msg, true);
-      } else {
-        setDrillResult(data.text || "Couldn’t grade that one. Try another objection.", true);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
+
+        if (typeof data?.score === "number") {
+          const msg =
+            `Score: ${data.score}/100\n\n` +
+            `✅ What you did well:\n${data.what_you_did_well || "—"}\n\n` +
+            `🔧 What to fix:\n${data.what_to_fix || "—"}\n\n` +
+            `🔥 Better response:\n${data.better_response || "—"}\n\n` +
+            `Coach tip: ${data.one_sentence_coaching_tip || "—"}`;
+          setDrillResult(msg, true);
+        } else {
+          setDrillResult(data.text || "Couldn’t grade that one. Try another objection.", true);
+        }
+      } catch (err) {
+        console.error("Drill grading error:", err);
+        setDrillResult(err?.message || "Error talking to AI. Try again in a moment.", true);
       }
-    } catch (err) {
-      console.error("Drill grading error:", err);
-      setDrillResult(err?.message || "Error talking to AI. Try again in a moment.", true);
-    }
-  });
+    });
+  }
 
   // ==================================================
   // VIDEO BUILDER (message-helper: video-brief)
@@ -868,7 +902,9 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
     };
   }
 
-  if (videoFormEl) {
+  if (videoFormEl && videoFormEl.dataset.wired !== "true") {
+    videoFormEl.dataset.wired = "true";
+
     videoFormEl.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -1015,8 +1051,11 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
       creativeThumbGrid.appendChild(img);
     });
 
-    // set preview if empty
-    if (tunerPreviewImg && (!tunerPreviewImg.getAttribute("src") || tunerPreviewImg.src === "") && STORE.creativePhotos.length) {
+    if (
+      tunerPreviewImg &&
+      (!tunerPreviewImg.getAttribute("src") || tunerPreviewImg.src === "") &&
+      STORE.creativePhotos.length
+    ) {
       tunerPreviewImg.src = STORE.creativePhotos[0];
       applyTunerFilters();
     }
@@ -1036,7 +1075,9 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
     renderCreativeThumbs();
   }
 
-  if (photoDropZone && photoFileInput) {
+  if (photoDropZone && photoFileInput && photoDropZone.dataset.wired !== "true") {
+    photoDropZone.dataset.wired = "true";
+
     photoDropZone.addEventListener("click", () => photoFileInput.click());
 
     photoFileInput.addEventListener("change", (e) => {
@@ -1086,24 +1127,28 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
 
   // Step 1 -> Send Top Photos into Creative + Social Strip (cap to 24)
   const step1SendTopBtn = $("sendTopPhotosBtn");
-  step1SendTopBtn?.addEventListener("click", () => {
-    if (!dealerPhotos.length) {
-      alert("Boost a listing first so Lot Rocket can grab photos.");
-      return;
-    }
+  if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
+    step1SendTopBtn.dataset.wired = "true";
 
-    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(0, MAX_PHOTOS);
+    step1SendTopBtn.addEventListener("click", () => {
+      if (!dealerPhotos.length) {
+        alert("Boost a listing first so Lot Rocket can grab photos.");
+        return;
+      }
 
-    STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, ...chosen]), MAX_PHOTOS);
-    renderCreativeThumbs();
+      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(0, MAX_PHOTOS);
 
-    // Optional: also seed Social Strip with chosen (not edited)
-    chosen.forEach((u) => addToSocialReady(u, false));
+      STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, ...chosen]), MAX_PHOTOS);
+      renderCreativeThumbs();
 
-    step1SendTopBtn.classList.add("success");
-    setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
-  });
+      // Optional: also seed Social Strip with chosen (not edited)
+      chosen.forEach((u) => addToSocialReady(u, false));
+
+      step1SendTopBtn.classList.add("success");
+      setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
+    });
+  }
 
   // ==================================================
   // SOCIAL READY STRIP (ONE MODULE ONLY)
@@ -1163,14 +1208,12 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
       socialCarousel.appendChild(item);
     });
 
-    // Preview
     if (socialPreviewImg) {
       const active = STORE.socialReadyPhotos[socialIndex];
       socialPreviewImg.src = active?.url || "";
       socialPreviewImg.alt = active?.url ? "Social preview" : "";
     }
 
-    // Status
     if (socialStatus) {
       if (!STORE.socialReadyPhotos.length) {
         socialStatus.textContent = "No social-ready photos yet. Double-click a Creative photo to add it.";
@@ -1331,13 +1374,25 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
     creativeStudioOverlay.classList.add("hidden");
   }
 
-  canvasLauncher?.addEventListener("click", openCreativeStudio);
-
-  if (creativeCloseBtn && creativeStudioOverlay) {
-    creativeCloseBtn.addEventListener("click", closeCreativeStudio);
-    creativeStudioOverlay.addEventListener("click", (e) => {
-      if (e.target === creativeStudioOverlay) closeCreativeStudio();
+  // Wire canvas launcher HERE (single source of truth)
+  if (canvasLauncher && canvasLauncher.dataset.wired !== "true") {
+    canvasLauncher.dataset.wired = "true";
+    canvasLauncher.addEventListener("click", (e) => {
+      e.preventDefault();
+      openCreativeStudio();
     });
+  }
+
+  if (creativeCloseBtn && creativeStudioOverlay && creativeCloseBtn.dataset.wired !== "true") {
+    creativeCloseBtn.dataset.wired = "true";
+    creativeCloseBtn.addEventListener("click", closeCreativeStudio);
+
+    if (creativeStudioOverlay.dataset.wired !== "true") {
+      creativeStudioOverlay.dataset.wired = "true";
+      creativeStudioOverlay.addEventListener("click", (e) => {
+        if (e.target === creativeStudioOverlay) closeCreativeStudio();
+      });
+    }
   }
 
   canvasPresetSelect?.addEventListener("change", () => {
@@ -2123,12 +2178,25 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
     designStudioOverlay?.classList.add("hidden");
   }
 
-  designLauncher?.addEventListener("click", () => openDesignStudio());
-  if (designCloseBtn && designStudioOverlay) {
-    designCloseBtn.addEventListener("click", closeDesignStudio);
-    designStudioOverlay.addEventListener("click", (e) => {
-      if (e.target === designStudioOverlay) closeDesignStudio();
+  // Wire design launcher HERE (single source of truth)
+  if (designLauncher && designLauncher.dataset.wired !== "true") {
+    designLauncher.dataset.wired = "true";
+    designLauncher.addEventListener("click", (e) => {
+      e.preventDefault();
+      openDesignStudio();
     });
+  }
+
+  if (designCloseBtn && designStudioOverlay && designCloseBtn.dataset.wired !== "true") {
+    designCloseBtn.dataset.wired = "true";
+    designCloseBtn.addEventListener("click", closeDesignStudio);
+
+    if (designStudioOverlay.dataset.wired !== "true") {
+      designStudioOverlay.dataset.wired = "true";
+      designStudioOverlay.addEventListener("click", (e) => {
+        if (e.target === designStudioOverlay) closeDesignStudio();
+      });
+    }
   }
 
   function pushUrlsIntoDesignStudio(urls) {
@@ -2137,7 +2205,6 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
 
     openDesignStudio(list);
 
-    // Auto-drop first as background only (not 24 spam)
     if (list[0]) addStudioImageFromUrl(list[0], true);
   }
 
@@ -2193,14 +2260,12 @@ document.getElementById("designLauncher")?.addEventListener("click", (e) => {
       return;
     }
 
-    // Convert to blob -> object URL for browser-safe caching
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
 
     addToSocialReady(objectUrl, true);
 
-    // also drop into Creative Photos
     STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, objectUrl]), MAX_PHOTOS);
     renderCreativeThumbs();
   });
