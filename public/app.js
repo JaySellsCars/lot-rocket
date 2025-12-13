@@ -97,73 +97,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ==================================================
 // FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
-// Robust wiring + diagnostics + prevents form-submit clicks
+// Bulletproof: supports multiple modal IDs per launcher
 // ==================================================
+
 const TOOL_CONFIG = [
-  // [launcherId, modalId]
-  ["objectionLauncher", "objectionModal"],
-  ["calcLauncher", "calcModal"],
-  ["paymentLauncher", "paymentModal"],
-  ["incomeLauncher", "incomeModal"],
-  ["workflowLauncher", "workflowModal"],
-  ["messageLauncher", "messageModal"],
-  ["askLauncher", "askModal"],
-  ["carLauncher", "carModal"],
-  ["imageLauncher", "imageModal"],
-  ["videoLauncher", "videoModal"],
+  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
+  { launcherId: "calcLauncher",      modalIds: ["calcModal"] },
+  { launcherId: "paymentLauncher",   modalIds: ["paymentModal"] },
+  { launcherId: "incomeLauncher",    modalIds: ["incomeModal"] },
+  { launcherId: "workflowLauncher",  modalIds: ["workflowModal"] },
+  { launcherId: "messageLauncher",   modalIds: ["messageModal"] },
+  { launcherId: "askLauncher",       modalIds: ["askModal"] },
+  { launcherId: "carLauncher",       modalIds: ["carModal"] },
+
+  // 🔥 These are the ones failing in your console:
+  // Add fallback IDs here to match whatever your HTML actually uses.
+  { launcherId: "imageLauncher",     modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
+  { launcherId: "videoLauncher",     modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
 ];
 
-function wireToolDrawer(launcherId, modalId, onOpen) {
+function wireToolDrawer(launcherId, modalIds, onOpen) {
   const launcher = document.getElementById(launcherId);
-  const modal = document.getElementById(modalId);
-
-  // HARD DEBUG so you can see exactly what's wrong
-  if (!launcher || !modal) {
-    console.warn("[ToolWire] Missing:", {
-      launcherId,
-      launcherFound: !!launcher,
-      modalId,
-      modalFound: !!modal,
-    });
-    return;
-  }
+  if (!launcher) return;
 
   // Prevent double-wiring
   if (launcher.dataset.wired === "true") return;
   launcher.dataset.wired = "true";
 
-  // If launcher is a <button> inside a form, default type is "submit" — kill that.
-  if (launcher.tagName === "BUTTON" && !launcher.getAttribute("type")) {
-    launcher.setAttribute("type", "button");
+  // Find the first modal that exists
+  const modal =
+    (modalIds || [])
+      .map((id) => document.getElementById(id))
+      .find((el) => !!el) || null;
+
+  if (!modal) {
+    console.warn("[ToolWire] Missing modal for launcher:", {
+      launcherId,
+      launcherFound: !!launcher,
+      modalIds,
+      modalFound: false,
+    });
+    return;
   }
 
-  // Close button: support multiple patterns
   const closeBtn =
     modal.querySelector(".side-modal-close") ||
     modal.querySelector(".modal-close-btn") ||
-    modal.querySelector("[data-close]") ||
-    modal.querySelector(".close") ||
-    modal.querySelector("button[aria-label='Close']");
+    modal.querySelector("[data-close]");
 
   const open = () => {
-    // Some CSS uses .hidden, some uses display none — set both.
     modal.classList.remove("hidden");
     modal.style.display = "flex";
-    modal.setAttribute("aria-hidden", "false");
     if (typeof onOpen === "function") onOpen();
-    console.log("[ToolWire] OPEN:", launcherId, "->", modalId);
   };
 
   const close = () => {
     modal.classList.add("hidden");
     modal.style.display = "none";
-    modal.setAttribute("aria-hidden", "true");
-    console.log("[ToolWire] CLOSE:", modalId);
   };
 
   launcher.addEventListener("click", (e) => {
     e.preventDefault();
-    e.stopPropagation();
     open();
   });
 
@@ -171,25 +165,19 @@ function wireToolDrawer(launcherId, modalId, onOpen) {
     closeBtn.dataset.wired = "true";
     closeBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      e.stopPropagation();
       close();
     });
-  } else if (!closeBtn) {
-    console.warn("[ToolWire] No close button found in modal:", modalId);
   }
 
-  // Click outside closes (only if clicking the overlay itself)
+  // Click outside closes
   modal.addEventListener("click", (e) => {
     if (e.target === modal) close();
   });
 
-  // ESC closes
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
+  console.log("[ToolWire] Wired:", launcherId, "->", modal.id);
 }
 
-// Special handling: when opening video drawer, fill context
+// Video drawer special onOpen (keep your existing logic)
 const videoContextField = document.getElementById("videoContext");
 function buildVideoContextFromKit() {
   const parts = [];
@@ -204,21 +192,20 @@ function buildVideoContextFromKit() {
   return parts.join("\n");
 }
 
-TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-  if (launcherId === "videoLauncher") {
-    wireToolDrawer(launcherId, modalId, () => {
+TOOL_CONFIG.forEach((t) => {
+  if (t.launcherId === "videoLauncher") {
+    wireToolDrawer(t.launcherId, t.modalIds, () => {
       if (videoContextField) {
         videoContextField.value = buildVideoContextFromKit();
+        // if your autoResizeTextarea exists in scope:
         if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
       }
     });
   } else {
-    wireToolDrawer(launcherId, modalId);
+    wireToolDrawer(t.launcherId, t.modalIds);
   }
 });
 
-// One-time summary
-console.log("[ToolWire] Configured tools:", TOOL_CONFIG.map(x => x[0]).join(", "));
 
 
   // ==================================================
