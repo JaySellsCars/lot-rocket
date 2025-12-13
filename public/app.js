@@ -5,6 +5,146 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean)");
   const apiBase = "";
+// ==================================================
+// ROCKET-2: HARD RESET SIDE TOOLS WIRING (v2.6)
+// Fixes: launchers not opening, modals not closing, overlay click blocks.
+// Paste near top of DOMContentLoaded (after apiBase).
+// ==================================================
+(function initSideToolsHardReset() {
+  const TOOL_CONFIG = [
+    ["objectionLauncher", "objectionModal"],
+    ["calcLauncher", "calcModal"],
+    ["paymentLauncher", "paymentModal"],
+    ["incomeLauncher", "incomeModal"],
+    ["workflowLauncher", "workflowModal"],
+    ["messageLauncher", "messageModal"],
+    ["askLauncher", "askModal"],
+    ["carLauncher", "carModal"],
+    ["imageLauncher", "imageModal"],
+    ["videoLauncher", "videoModal"],
+  ];
+
+  const debug = (...args) => console.log("🧰 SideTools:", ...args);
+
+  // If ANY JS error earlier killed wiring, you'll see this log.
+  debug("Init hard reset wiring…");
+
+  // Helper: safe query
+  const $ = (id) => document.getElementById(id);
+
+  // 1) Ensure launchers are clickable (CSS/z-index issues are common)
+  const launcherIds = TOOL_CONFIG.map(([l]) => l).concat(["drillLauncher"]);
+  launcherIds.forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+
+    // Make it click-safe even if CSS messed up
+    el.style.pointerEvents = "auto";
+    el.style.position = el.style.position || "relative";
+    el.style.zIndex = el.style.zIndex || "9999";
+  });
+
+  // 2) Modal open/close primitives (works with side drawers)
+  function openModal(modal) {
+    if (!modal) return;
+    modal.classList.add("open");
+    modal.style.display = "block";
+    modal.style.pointerEvents = "auto";
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(modal) {
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  // 3) Wire close controls inside a modal (multiple selector support)
+  function wireModalClose(modal) {
+    if (!modal || modal.dataset.closeWired === "true") return;
+    modal.dataset.closeWired = "true";
+
+    const closeSelectors = [".side-modal-close", ".modal-close-btn", "[data-close]"];
+    const closeBtn =
+      modal.querySelector(closeSelectors.join(",")) ||
+      null;
+
+    if (closeBtn && closeBtn.dataset.wired !== "true") {
+      closeBtn.dataset.wired = "true";
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal(modal);
+      });
+    }
+
+    // ESC closes modal
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("open")) closeModal(modal);
+    });
+
+    // Click outside (if you use overlay style) — safe: only if modal has data-overlay="true"
+    if (modal.dataset.overlay === "true") {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal(modal);
+      });
+    }
+  }
+
+  // 4) Wire each launcher → modal
+  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+    const launcher = $(launcherId);
+    const modal = $(modalId);
+
+    if (!launcher) {
+      debug("❌ Missing launcher ID:", launcherId);
+      return;
+    }
+    if (!modal) {
+      debug("❌ Missing modal ID:", modalId);
+      return;
+    }
+
+    wireModalClose(modal);
+
+    // Prevent duplicate wiring
+    if (launcher.dataset.wired === "true") return;
+    launcher.dataset.wired = "true";
+
+    launcher.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      debug("OPEN:", modalId);
+      openModal(modal);
+    });
+  });
+
+  // 5) Drill mode special (if present)
+  const drillLauncher = $("drillLauncher");
+  const drillModal = $("drillModeModal");
+  if (drillLauncher && drillModal) {
+    wireModalClose(drillModal);
+    if (drillLauncher.dataset.wired !== "true") {
+      drillLauncher.dataset.wired = "true";
+      drillLauncher.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        debug("OPEN: drillModeModal");
+        openModal(drillModal);
+      });
+    }
+  }
+
+  // 6) Final sanity report (what’s actually on the page)
+  const present = TOOL_CONFIG.map(([l, m]) => ({
+    launcher: l,
+    launcherFound: !!$(l),
+    modal: m,
+    modalFound: !!$(m),
+  }));
+  debug("Presence report:", present);
+})();
 
   // ==================================================
   // GLOBAL LIMITS + SINGLE SOURCE OF TRUTH
