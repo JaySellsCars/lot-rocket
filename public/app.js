@@ -1,26 +1,103 @@
-// public/app.js – Lot Rocket frontend logic v2.5.9 (CLEANED)
-// Stable: theme toggle, Boost, calculators, side tools.
-// Step 3: Creative Hub (Fabric) + Design Studio 3.5 (Konva) + Social Strip.
+// public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
+// Goal: zero duplicate declarations, single source of truth photo state,
+// MAX_PHOTOS = 24 everywhere, stable buttons + modals + Step 3 tools.
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Lot Rocket frontend loaded v2.5.9");
+  console.log("✅ Lot Rocket frontend loaded (v2.6 clean)");
   const apiBase = "";
+
+  // ==================================================
+  // GLOBAL LIMITS + SINGLE SOURCE OF TRUTH
+  // ==================================================
+  const MAX_PHOTOS = 24;
+
+  // Single photo store (objects, not mixed types)
+  window.LOTROCKET = window.LOTROCKET || {};
+  const STORE = window.LOTROCKET;
+
+  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // array of urls (strings)
+  STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls (strings)
+
+  // Social-ready: normalized objects: { url, originalUrl, selected, locked }
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+  STORE.socialReadyPhotos = STORE.socialReadyPhotos
+    .map((p) => (typeof p === "string" ? { url: p, originalUrl: p, selected: true, locked: false } : p))
+    .filter((p) => p && p.url);
+
+  let socialIndex = 0; // preview index
+  let dealerPhotos = []; // [{ src, selected }]
 
   // ==================================================
   // UTIL
   // ==================================================
+  const $ = (id) => document.getElementById(id);
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
   function autoResizeTextarea(el) {
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = el.scrollHeight + 4 + "px";
+    el.style.height = (el.scrollHeight + 4) + "px";
   }
 
-  // Auto-grow ALL textareas
-  document.querySelectorAll("textarea").forEach((ta) => {
-    autoResizeTextarea(ta);
-    ta.addEventListener("input", () => autoResizeTextarea(ta));
-  });
+  function capMax(arr, max = MAX_PHOTOS) {
+    return Array.isArray(arr) ? arr.slice(0, max) : [];
+  }
 
+  function uniqueUrls(urls) {
+    const out = [];
+    const seen = new Set();
+    (urls || []).forEach((u) => {
+      if (!u) return;
+      if (seen.has(u)) return;
+      seen.add(u);
+      out.push(u);
+    });
+    return out;
+  }
+
+  function normalizeSocialReady() {
+    STORE.socialReadyPhotos = (STORE.socialReadyPhotos || [])
+      .map((p) => (typeof p === "string" ? { url: p, originalUrl: p, selected: true, locked: false } : p))
+      .filter((p) => p && p.url);
+
+    // cap to MAX_PHOTOS (keep most recent at the end)
+    if (STORE.socialReadyPhotos.length > MAX_PHOTOS) {
+      STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(-MAX_PHOTOS);
+    }
+
+    // fix preview index
+    if (!STORE.socialReadyPhotos.length) socialIndex = 0;
+    else socialIndex = clamp(socialIndex, 0, STORE.socialReadyPhotos.length - 1);
+  }
+
+  // Proxy helper for CORS-sensitive images
+  function getProxiedImageUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
+    try {
+      const u = new URL(rawUrl, window.location.origin);
+      if (u.origin === window.location.origin || u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
+      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
+      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
+    } catch {
+      return rawUrl;
+    }
+  }
+
+  // Trigger a download (jpg)
+  function triggerDownload(url, filename) {
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "lot-rocket.jpg";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  // ==================================================
+  // BRAND + THEME
+  // ==================================================
   const BRAND = {
     primary: "#f97316",
     secondary: "#ec4899",
@@ -32,10 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
 
-  // ==================================================
-  // THEME TOGGLE
-  // ==================================================
-  const themeToggleInput = document.getElementById("themeToggle");
+  const themeToggleInput = $("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
       document.body.classList.toggle("dark-theme", !!isDark);
@@ -44,67 +118,46 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme(true);
     themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
   }
-document.addEventListener("DOMContentLoaded", () => {
 
-  console.log("🚀 Lot Rocket frontend loaded");
-
-  // ==========================================
-  // GLOBAL PHOTO STATE (DECLARE ONCE — DO NOT DUPLICATE)
-  // ==========================================
-  let creativePhotos = window.creativePhotos || [];
-  let socialReadyPhotos = window.socialReadyPhotos || [];
-  let designStudioPhotos = window.designStudioPhotos || [];
-
-  window.creativePhotos = creativePhotos;
-  window.socialReadyPhotos = socialReadyPhotos;
-  window.designStudioPhotos = designStudioPhotos;
-
-  // indices
-  let socialReadySelectedIndex = 0;
-  let socialCurrentIndex = 0;
-
-  // photo limits
-  // ================================
-  // GLOBAL LIMITS
-  // ================================
-  const MAX_PHOTOS = 24;
+  // Auto-grow ALL textareas
+  document.querySelectorAll("textarea").forEach((ta) => {
+    autoResizeTextarea(ta);
+    ta.addEventListener("input", () => autoResizeTextarea(ta));
+  });
 
   // ==================================================
-  // STEP 1 – DEALER URL + SOCIAL KIT
+  // STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
   // ==================================================
-  const vehicleUrlInput = document.getElementById("vehicleUrl");
-  const vehicleLabelInput = document.getElementById("vehicleLabel");
-  const priceInfoInput = document.getElementById("priceInfo");
-  const boostButton = document.getElementById("boostButton");
-  const statusText = document.getElementById("statusText");
+  const vehicleUrlInput = $("vehicleUrl");
+  const vehicleLabelInput = $("vehicleLabel");
+  const priceInfoInput = $("priceInfo");
+  const boostButton = $("boostButton");
+  const statusText = $("statusText");
 
-  const summaryLabel = document.getElementById("summaryLabel");
-  const summaryPrice = document.getElementById("summaryPrice");
+  const summaryLabel = $("summaryLabel");
+  const summaryPrice = $("summaryPrice");
 
-  const facebookPost = document.getElementById("facebookPost");
-  const instagramPost = document.getElementById("instagramPost");
-  const tiktokPost = document.getElementById("tiktokPost");
-  const linkedinPost = document.getElementById("linkedinPost");
-  const twitterPost = document.getElementById("twitterPost");
-  const textBlurb = document.getElementById("textBlurb");
-  const marketplacePost = document.getElementById("marketplacePost");
-  const hashtags = document.getElementById("hashtags");
+  const facebookPost = $("facebookPost");
+  const instagramPost = $("instagramPost");
+  const tiktokPost = $("tiktokPost");
+  const linkedinPost = $("linkedinPost");
+  const twitterPost = $("twitterPost");
+  const textBlurb = $("textBlurb");
+  const marketplacePost = $("marketplacePost");
+  const hashtags = $("hashtags");
 
-  const photosGrid = document.getElementById("photosGrid");
-
-  // Dealer photos state
-  let dealerPhotos = []; // [{ src, selected }]
+  const photosGrid = $("photosGrid");
 
   function renderDealerPhotos() {
     if (!photosGrid) return;
     photosGrid.innerHTML = "";
 
-    dealerPhotos.forEach((photo, index) => {
-      const wrapper = document.createElement("button");
-      wrapper.type = "button";
-      wrapper.className =
-        "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
-      wrapper.dataset.index = String(index);
+    const list = capMax(dealerPhotos, MAX_PHOTOS); // UI shows up to 24
+    list.forEach((photo, index) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
+      btn.dataset.index = String(index);
 
       const img = document.createElement("img");
       img.src = photo.src;
@@ -112,11 +165,9 @@ document.addEventListener("DOMContentLoaded", () => {
       img.loading = "lazy";
       img.className = "photo-thumb-img";
 
-      wrapper.appendChild(img);
-      photosGrid.appendChild(wrapper);
-    });
+      btn.appendChild(img);
+      photosGrid.appendChild(btn);
 
-    photosGrid.querySelectorAll(".photo-thumb-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.index || "0");
         if (!dealerPhotos[idx]) return;
@@ -124,6 +175,12 @@ document.addEventListener("DOMContentLoaded", () => {
         renderDealerPhotos();
       });
     });
+  }
+
+  function setTA(el, v) {
+    if (!el) return;
+    el.value = v || "";
+    autoResizeTextarea(el);
   }
 
   async function doBoostListing() {
@@ -154,16 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
       if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
 
-      if (vehicleLabelInput && !vehicleLabelInput.value)
-        vehicleLabelInput.value = data.vehicleLabel || "";
-      if (priceInfoInput && !priceInfoInput.value)
-        priceInfoInput.value = data.priceInfo || "";
-
-      const setTA = (el, v) => {
-        if (!el) return;
-        el.value = v || "";
-        autoResizeTextarea(el);
-      };
+      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = data.vehicleLabel || "";
+      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = data.priceInfo || "";
 
       setTA(facebookPost, data.facebook);
       setTA(instagramPost, data.instagram);
@@ -174,8 +223,9 @@ document.addEventListener("DOMContentLoaded", () => {
       setTA(marketplacePost, data.marketplace);
       setTA(hashtags, data.hashtags);
 
-      const photos = Array.isArray(data.photos) ? data.photos.slice(0, MAX_PHOTOS) : [];
-      dealerPhotos = photos.map((src) => ({ src, selected: false }));
+      const photos = Array.isArray(data.photos) ? data.photos : [];
+      const capped = capMax(photos, MAX_PHOTOS);
+      dealerPhotos = capped.map((src) => ({ src, selected: false }));
       renderDealerPhotos();
 
       document.body.classList.add("kit-ready");
@@ -188,127 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ================================
-  // PHOTO LIMITS + SOCIAL STRIP CORE
-  // ================================
-
-
-
-// ================================
-// GLOBAL PHOTO STATE (single source of truth)
-// ================================
-window.creativePhotos = window.creativePhotos || [];
-window.socialReadyPhotos = window.socialReadyPhotos || [];
-window.designStudioPhotos = window.designStudioPhotos || [];
-
-// Local references (DO NOT re-declare elsewhere)
-const creativePhotos = window.creativePhotos;
-const socialReadyPhotos = window.socialReadyPhotos;
-const designStudioPhotos = window.designStudioPhotos;
-
-
-let creativePhotos = window.creativePhotos;
-socialReadyPhotos = window.socialReadyPhotos;
-
-let designStudioPhotos = window.designStudioPhotos;
-
-// 2b — helpers (cap + push)
-function cap24(arr) {
-  return Array.isArray(arr) ? arr.slice(0, MAX_PHOTOS) : [];
-}
-
-function pushCapped(arr, item) {
-  if (!Array.isArray(arr) || !item) return false;
-  if (arr.length >= MAX_PHOTOS) return false;
-  arr.push(item);
-  return true;
-}
-
-// 2c — social-ready strip wiring (MATCHES YOUR HTML IDS)
-const socialCarousel = document.getElementById("socialCarousel");
-const socialPreviewImg = document.getElementById("socialCarouselPreviewImg");
-const socialStatus = document.getElementById("socialCarouselStatus");
-const socialNextBtn = document.getElementById("socialNextBtn");
-
-
-
-function renderSocialReadyStrip() {
-  if (!socialCarousel) return;
-
-  socialReadyPhotos = cap24(socialReadyPhotos);
-  window.socialReadyPhotos = socialReadyPhotos;
-
-  // keep index sane
-  if (socialReadySelectedIndex < 0) socialReadySelectedIndex = 0;
-  if (socialReadySelectedIndex >= socialReadyPhotos.length) socialReadySelectedIndex = 0;
-
-  // preview
-  if (socialPreviewImg) {
-    socialPreviewImg.src = socialReadyPhotos.length
-      ? socialReadyPhotos[socialReadySelectedIndex]
-      : "";
-  }
-
-  // status
-  if (socialStatus) {
-    socialStatus.textContent = socialReadyPhotos.length
-      ? `Photo ${socialReadySelectedIndex + 1}/${socialReadyPhotos.length}`
-      : "No social-ready photos yet. Double-click a photo above to add it.";
-  }
-
-  // thumbs
-  socialCarousel.innerHTML = "";
-  socialReadyPhotos.forEach((url, idx) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "social-carousel-item" + (idx === socialReadySelectedIndex ? " selected" : "");
-    btn.title = `Photo ${idx + 1}`;
-
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = `Social-ready ${idx + 1}`;
-
-    btn.addEventListener("click", () => {
-      socialReadySelectedIndex = idx;
-      renderSocialReadyStrip();
-    });
-
-    btn.appendChild(img);
-    socialCarousel.appendChild(btn);
-  });
-}
-
-function addToSocialReady(url) {
-  if (!url) return;
-
-  if (pushCapped(socialReadyPhotos, url)) {
-    window.socialReadyPhotos = socialReadyPhotos;
-    socialReadySelectedIndex = socialReadyPhotos.length - 1;
-    renderSocialReadyStrip();
-  }
-}
-
-
-// prev/next controls
-if (socialPrevBtn) {
-  socialPrevBtn.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) return;
-    socialReadySelectedIndex =
-      (socialReadySelectedIndex - 1 + socialReadyPhotos.length) % socialReadyPhotos.length;
-    renderSocialReadyStrip();
-  });
-}
-
-if (socialNextBtn) {
-  socialNextBtn.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) return;
-    socialReadySelectedIndex =
-      (socialReadySelectedIndex + 1) % socialReadyPhotos.length;
-    renderSocialReadyStrip();
-  });
-}
-
-
+  boostButton?.addEventListener("click", doBoostListing);
 
   // ==================================================
   // COPY / REGEN
@@ -317,11 +247,11 @@ if (socialNextBtn) {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-copy-target");
       if (!targetId) return;
-      const el = document.getElementById(targetId);
+      const el = $(targetId);
       if (!el) return;
 
-      el.select();
-      el.setSelectionRange(0, 99999);
+      el.select?.();
+      try { el.setSelectionRange?.(0, 99999); } catch {}
       document.execCommand("copy");
 
       btn.classList.add("copied");
@@ -330,7 +260,7 @@ if (socialNextBtn) {
       setTimeout(() => {
         btn.textContent = original;
         btn.classList.remove("copied");
-      }, 1500);
+      }, 1200);
     });
   });
 
@@ -374,8 +304,8 @@ if (socialNextBtn) {
           hashtags: "hashtags",
         };
 
-        const targetId = map[platform] || "";
-        const ta = targetId ? document.getElementById(targetId) : null;
+        const targetId = map[platform];
+        const ta = targetId ? $(targetId) : null;
         if (ta) {
           ta.value = text;
           autoResizeTextarea(ta);
@@ -393,26 +323,19 @@ if (socialNextBtn) {
   // ==================================================
   // RIGHT-SIDE TOOL MODALS (DRAWERS)
   // ==================================================
-  const videoContextField = document.getElementById("videoContext");
+  const videoContextField = $("videoContext");
 
   function buildVideoContextFromKit() {
     const parts = [];
-    const label =
-      vehicleLabelInput?.value.trim() ||
-      (summaryLabel?.textContent || "").trim() ||
-      "";
-    const price =
-      priceInfoInput?.value.trim() ||
-      (summaryPrice?.textContent || "").trim() ||
-      "";
+    const label = (vehicleLabelInput?.value || summaryLabel?.textContent || "").trim();
+    const price = (priceInfoInput?.value || summaryPrice?.textContent || "").trim();
     const url = vehicleUrlInput ? vehicleUrlInput.value.trim() : "";
-    const tags = hashtags ? (hashtags.value || "").trim() : "";
+    const tags = (hashtags?.value || "").trim();
 
     if (label) parts.push(`Vehicle: ${label}`);
     if (price) parts.push(`Price/Offer: ${price}`);
     if (url) parts.push(`Listing URL: ${url}`);
     if (tags) parts.push(`Hashtags: ${tags}`);
-
     return parts.join("\n");
   }
 
@@ -427,19 +350,17 @@ if (socialNextBtn) {
     ["carLauncher", "carModal"],
     ["imageLauncher", "imageModal"],
     ["videoLauncher", "videoModal"],
+    ["drillLauncher", "drillModeModal"], // drill modal if you have it as a drawer
   ];
 
   function wireToolDrawer(launcherId, modalId, onOpen) {
-    const launcher = document.getElementById(launcherId);
-    const modal = document.getElementById(modalId);
+    const launcher = $(launcherId);
+    const modal = $(modalId);
     if (!launcher || !modal) return;
-
     if (launcher.dataset.wired === "true") return;
     launcher.dataset.wired = "true";
 
-    const closeBtn =
-      modal.querySelector(".side-modal-close") ||
-      modal.querySelector(".modal-close-btn");
+    const closeBtn = modal.querySelector(".side-modal-close") || modal.querySelector(".modal-close-btn");
 
     const close = () => {
       modal.classList.add("hidden");
@@ -476,14 +397,13 @@ if (socialNextBtn) {
   });
 
   // ==================================================
-  // BASIC CALCULATOR (scratchpad keypad)
+  // BASIC CALCULATOR (keypad)
   // ==================================================
-  const basicCalcDisplay = document.getElementById("basicCalcDisplay");
+  const basicCalcDisplay = $("basicCalcDisplay");
   const basicCalcButtons = document.querySelectorAll("[data-calc-key]");
 
   if (basicCalcDisplay && basicCalcButtons.length) {
     let calcExpr = "";
-
     const renderCalc = () => (basicCalcDisplay.value = calcExpr || "0");
 
     basicCalcButtons.forEach((btn) => {
@@ -512,18 +432,18 @@ if (socialNextBtn) {
   // ==================================================
   // PAYMENT CALCULATOR
   // ==================================================
-  const paymentForm = document.getElementById("paymentForm");
+  const paymentForm = $("paymentForm");
   if (paymentForm) {
-    const priceInput = document.getElementById("paymentPrice");
-    const cashDownInput = document.getElementById("paymentCashDown");
-    const tradeValueInput = document.getElementById("paymentTradeValue");
-    const tradeOweInput = document.getElementById("paymentTradeOwe");
-    const rateInput = document.getElementById("paymentRate");
-    const termInput = document.getElementById("paymentTerm");
-    const taxInput = document.getElementById("paymentTax");
+    const priceInput = $("paymentPrice");
+    const cashDownInput = $("paymentCashDown");
+    const tradeValueInput = $("paymentTradeValue");
+    const tradeOweInput = $("paymentTradeOwe");
+    const rateInput = $("paymentRate");
+    const termInput = $("paymentTerm");
+    const taxInput = $("paymentTax");
 
-    const paymentMonthlyEl = document.getElementById("paymentMonthly");
-    const paymentDetailsEl = document.getElementById("paymentDetails");
+    const paymentMonthlyEl = $("paymentMonthly");
+    const paymentDetailsEl = $("paymentDetails");
 
     const cleanNumber = (val) => {
       if (!val) return 0;
@@ -543,8 +463,7 @@ if (socialNextBtn) {
       const taxRate = parseFloat(taxInput?.value || "0");
 
       if (!price || !years) {
-        if (paymentDetailsEl)
-          paymentDetailsEl.textContent = "Please enter at least a vehicle price and term in years.";
+        if (paymentDetailsEl) paymentDetailsEl.textContent = "Enter vehicle price and term (years).";
         return;
       }
 
@@ -567,7 +486,6 @@ if (socialNextBtn) {
       }
 
       const negativeEquity = Math.max(tradeOwe - tradeValue, 0);
-
       const fmtMoney = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       if (paymentMonthlyEl) paymentMonthlyEl.textContent = `$${fmtMoney(monthly)}`;
@@ -575,8 +493,7 @@ if (socialNextBtn) {
       let details = `Amount Financed (est.): $${fmtMoney(amountFinanced)}. `;
       details += `Includes approx. $${fmtMoney(taxAmount)} in tax. `;
       if (negativeEquity > 0) details += `Rolled-in negative equity: $${fmtMoney(negativeEquity)}. `;
-      details += "This is an estimate only; final figures may vary by lender and fees.";
-
+      details += "Estimate only; lender/fees vary.";
       if (paymentDetailsEl) paymentDetailsEl.textContent = details;
     });
   }
@@ -584,30 +501,31 @@ if (socialNextBtn) {
   // ==================================================
   // INCOME CALCULATOR
   // ==================================================
-  const incomeForm = document.getElementById("incomeForm");
+  const incomeForm = $("incomeForm");
   if (incomeForm) {
-    const incomeYtdInput = document.getElementById("incomeYtd");
-    const incomeLastPaycheckInput = document.getElementById("incomeLastPaycheck");
-    const incomeOutput = document.getElementById("incomeOutput");
+    const incomeYtdInput = $("incomeYtd");
+    const incomeLastPaycheckInput = $("incomeLastPaycheck");
+    const incomeOutput = $("incomeOutput");
 
     incomeForm.addEventListener("submit", (e) => {
       e.preventDefault();
 
       const rawYtd = (incomeYtdInput?.value || "").replace(/[^0-9.]/g, "");
       const ytd = parseFloat(rawYtd);
+
       if (!ytd || Number.isNaN(ytd)) {
-        if (incomeOutput) incomeOutput.textContent = "Please enter your year-to-date gross income (numbers only).";
+        if (incomeOutput) incomeOutput.textContent = "Enter year-to-date gross income (numbers only).";
         return;
       }
 
       if (!incomeLastPaycheckInput?.value) {
-        if (incomeOutput) incomeOutput.textContent = "Please choose the date of your last paycheck.";
+        if (incomeOutput) incomeOutput.textContent = "Choose the date of your last paycheck.";
         return;
       }
 
       const lastDate = new Date(incomeLastPaycheckInput.value + "T12:00:00");
       if (Number.isNaN(lastDate.getTime())) {
-        if (incomeOutput) incomeOutput.textContent = "That paycheck date doesn’t look valid.";
+        if (incomeOutput) incomeOutput.textContent = "That paycheck date isn’t valid.";
         return;
       }
 
@@ -627,7 +545,7 @@ if (socialNextBtn) {
         incomeOutput.textContent =
           `Estimated Yearly Gross: $${fmtMoney0(estYearly)}  ` +
           `Weeks into Year: ${weeksIntoYear.toFixed(1)}  ` +
-          `Estimated Average Monthly Income: $${fmtMoney0(estMonthly)}`;
+          `Avg Monthly: $${fmtMoney0(estMonthly)}`;
       }
     });
   }
@@ -635,16 +553,16 @@ if (socialNextBtn) {
   // ==================================================
   // OBJECTION COACH (server endpoint)
   // ==================================================
-  const objectionForm = document.getElementById("objectionForm");
-  const objectionOutput = document.getElementById("objectionOutput");
+  const objectionForm = $("objectionForm");
+  const objectionOutput = $("objectionOutput");
 
   if (objectionForm && objectionOutput) {
     objectionForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const formData = new FormData(objectionForm);
+      const fd = new FormData(objectionForm);
       const payload = {};
-      formData.forEach((value, key) => (payload[key] = value));
+      fd.forEach((value, key) => (payload[key] = value));
 
       objectionOutput.value = "Coaching that objection…";
       autoResizeTextarea(objectionOutput);
@@ -657,12 +575,10 @@ if (socialNextBtn) {
         });
 
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `Error (HTTP ${res.status}) from objection coach.`);
+        if (!res.ok) throw new Error(data?.message || `HTTP ${res.status} from objection coach.`);
 
         const reply = data?.coachedMessage || data?.answer || data?.message || "";
-        if (!reply.trim()) throw new Error("Empty coached reply from server");
-
-        objectionOutput.value = reply;
+        objectionOutput.value = reply.trim() ? reply : "Empty reply from server.";
       } catch (err) {
         console.error("Objection coach error:", err);
         objectionOutput.value = "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
@@ -673,147 +589,11 @@ if (socialNextBtn) {
   }
 
   // ==================================================
-  // OBJECTION DRILL MODE – Q&A + GRADING
-  // ==================================================
-  const drillLauncher = document.getElementById("drillLauncher");
-  const drillModal = document.getElementById("drillModeModal");
-  const closeDrillModeBtn = document.getElementById("closeDrillMode");
-
-  const drillObjectionText = document.getElementById("drillObjectionText");
-  const getDrillObjectionBtn = document.getElementById("getDrillObjection");
-
-  const drillReplyInput = document.getElementById("drillReplyInput");
-  const gradeDrillReplyBtn = document.getElementById("gradeDrillReply");
-
-  const drillResult = document.getElementById("drillResult");
-  const drillTimerDisplay = document.getElementById("drillTimer");
-
-  const DRILL_OBJECTIONS = [
-    "The price is too high.",
-    "I need to talk to my spouse first.",
-    "I want to think about it.",
-    "Can you send me some numbers and I’ll get back to you?",
-    "I’m just looking right now, not ready to buy.",
-    "My payment can’t go up at all.",
-    "I found something cheaper online.",
-    "I don’t want to run my credit.",
-  ];
-
-  let currentDrillObjection = "";
-  let drillTimerId = null;
-  let drillSecondsLeft = 0;
-
-  function setDrillResult(message = "", show = false) {
-    if (!drillResult) return;
-    drillResult.textContent = message;
-    drillResult.classList.toggle("hidden", !show);
-  }
-
-  function stopDrillTimer() {
-    if (drillTimerId) {
-      clearInterval(drillTimerId);
-      drillTimerId = null;
-    }
-  }
-
-  function resetDrillState() {
-    if (drillReplyInput) drillReplyInput.value = "";
-    setDrillResult("", false);
-    if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
-  }
-
-  function startDrillTimer(startSeconds = 60) {
-    if (!drillTimerDisplay) return;
-
-    stopDrillTimer();
-    drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
-    drillTimerDisplay.textContent = String(drillSecondsLeft);
-
-    drillTimerId = setInterval(() => {
-      drillSecondsLeft = Math.max(0, drillSecondsLeft - 1);
-      drillTimerDisplay.textContent = String(drillSecondsLeft);
-      if (drillSecondsLeft <= 0) stopDrillTimer();
-    }, 1000);
-  }
-
-  function openDrillModal() {
-    if (!drillModal) return;
-    drillModal.classList.remove("hidden");
-    resetDrillState();
-  }
-
-  function closeDrillModal() {
-    if (!drillModal) return;
-    drillModal.classList.add("hidden");
-    stopDrillTimer();
-  }
-
-  if (drillLauncher && closeDrillModeBtn) {
-    drillLauncher.addEventListener("click", openDrillModal);
-    closeDrillModeBtn.addEventListener("click", closeDrillModal);
-  }
-
-  if (getDrillObjectionBtn && drillObjectionText) {
-    getDrillObjectionBtn.addEventListener("click", () => {
-      if (!DRILL_OBJECTIONS.length) return;
-      const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
-      currentDrillObjection = DRILL_OBJECTIONS[idx];
-      drillObjectionText.textContent = currentDrillObjection;
-      resetDrillState();
-      startDrillTimer(60);
-      drillReplyInput?.focus?.();
-    });
-  }
-
-  if (gradeDrillReplyBtn && drillReplyInput) {
-    gradeDrillReplyBtn.addEventListener("click", async () => {
-      const reply = (drillReplyInput.value || "").trim();
-
-      if (!currentDrillObjection) {
-        setDrillResult('Hit “Give Me an Objection” first.', true);
-        return;
-      }
-      if (!reply) {
-        setDrillResult("Type your response first, then I’ll grade it.", true);
-        return;
-      }
-
-      stopDrillTimer();
-      setDrillResult("Grading your reply and building coaching tips...", true);
-
-      try {
-        const res = await fetch(apiBase + "/api/message-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "objection-drill",
-            objection: currentDrillObjection,
-            reply,
-            secondsRemaining: drillSecondsLeft,
-          }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
-
-        setDrillResult(
-          data.text ||
-            "I couldn’t grade that one, but keep practicing and try another objection.",
-          true
-        );
-      } catch (err) {
-        console.error("Drill Mode grading error:", err);
-        setDrillResult(err?.message || "There was an error talking to AI. Try again in a moment.", true);
-      }
-    });
-  }
-
-  // ==================================================
   // AI HELPERS (message-helper)
   // ==================================================
   function wireMessageHelper(formId, outputId, mode) {
-    const form = document.getElementById(formId);
-    const output = document.getElementById(outputId);
+    const form = $(formId);
+    const output = $(outputId);
     if (!form || !output) return;
 
     form.addEventListener("submit", async (e) => {
@@ -860,18 +640,164 @@ if (socialNextBtn) {
   wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
   // ==================================================
-  // VIDEO SHOT PLAN + SCRIPT
+  // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
   // ==================================================
-  const videoFormEl = document.getElementById("videoForm");
-  const videoScriptOutput = document.getElementById("videoScriptOutput");
-  const videoShotListOutput = document.getElementById("videoShotListOutput");
-  const videoAIPromptOutput = document.getElementById("videoAIPromptOutput");
-  const videoThumbPromptOutput = document.getElementById("videoThumbPromptOutput");
+  const drillModal = $("drillModeModal");
+  const closeDrillModeBtn = $("closeDrillMode");
 
-  const videoScriptOutputBottom = document.getElementById("videoScriptOutputBottom");
-  const videoShotListOutputBottom = document.getElementById("videoShotListOutputBottom");
-  const videoAIPromptOutputBottom = document.getElementById("videoAIPromptOutputBottom");
-  const videoThumbPromptOutputBottom = document.getElementById("videoThumbPromptOutputBottom");
+  const drillObjectionText = $("drillObjectionText");
+  const getDrillObjectionBtn = $("getDrillObjection");
+
+  const drillReplyInput = $("drillReplyInput");
+  const gradeDrillReplyBtn = $("gradeDrillReply");
+
+  const drillResult = $("drillResult");
+  const drillTimerDisplay = $("drillTimer");
+
+  const DRILL_OBJECTIONS = [
+    "The price is too high.",
+    "I need to talk to my spouse first.",
+    "I want to think about it.",
+    "Can you send me some numbers and I’ll get back to you?",
+    "I’m just looking right now, not ready to buy.",
+    "My payment can’t go up at all.",
+    "I found something cheaper online.",
+    "I don’t want to run my credit.",
+  ];
+
+  let currentDrillObjection = "";
+  let drillTimerId = null;
+  let drillSecondsLeft = 0;
+
+  function setDrillResult(message = "", show = false) {
+    if (!drillResult) return;
+    drillResult.textContent = message;
+    drillResult.classList.toggle("hidden", !show);
+  }
+
+  function stopDrillTimer() {
+    if (drillTimerId) {
+      clearInterval(drillTimerId);
+      drillTimerId = null;
+    }
+  }
+
+  function resetDrillState() {
+    if (drillReplyInput) drillReplyInput.value = "";
+    setDrillResult("", false);
+    if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
+  }
+
+  function startDrillTimer(startSeconds = 60) {
+    if (!drillTimerDisplay) return;
+    stopDrillTimer();
+    drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
+    drillTimerDisplay.textContent = String(drillSecondsLeft);
+
+    drillTimerId = setInterval(() => {
+      drillSecondsLeft = Math.max(0, drillSecondsLeft - 1);
+      drillTimerDisplay.textContent = String(drillSecondsLeft);
+      if (drillSecondsLeft <= 0) stopDrillTimer();
+    }, 1000);
+  }
+
+  function openDrillModal() {
+    if (!drillModal) return;
+    drillModal.classList.remove("hidden");
+    resetDrillState();
+  }
+
+  function closeDrillModal() {
+    if (!drillModal) return;
+    drillModal.classList.add("hidden");
+    stopDrillTimer();
+  }
+
+  // If drill modal is not a drawer, you might be opening it another way.
+  closeDrillModeBtn?.addEventListener("click", closeDrillModal);
+
+  getDrillObjectionBtn?.addEventListener("click", () => {
+    const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
+    currentDrillObjection = DRILL_OBJECTIONS[idx];
+    if (drillObjectionText) drillObjectionText.textContent = currentDrillObjection;
+    resetDrillState();
+    startDrillTimer(60);
+    drillReplyInput?.focus?.();
+  });
+
+  gradeDrillReplyBtn?.addEventListener("click", async () => {
+    const reply = (drillReplyInput?.value || "").trim();
+
+    if (!currentDrillObjection) {
+      setDrillResult('Hit “Give Me an Objection” first.', true);
+      return;
+    }
+    if (!reply) {
+      setDrillResult("Type your response first, then I’ll grade it.", true);
+      return;
+    }
+
+    stopDrillTimer();
+    setDrillResult("Grading your reply…", true);
+
+    // Prefer /api/drill-grade (new dedicated grader). Fallback to message-helper.
+    const payload = {
+      objection: currentDrillObjection,
+      reply,
+      secondsRemaining: drillSecondsLeft,
+      rubric: { tone: "confident, friendly, professional", target: "set appointment or move to numbers" },
+    };
+
+    try {
+      let res = await fetch(apiBase + "/api/drill-grade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      // fallback if route not implemented yet
+      if (!res.ok) {
+        res = await fetch(apiBase + "/api/message-helper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "objection-drill", ...payload }),
+        });
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
+
+      // Supports either JSON grader output or plain text
+      if (typeof data?.score === "number") {
+        const msg =
+          `Score: ${data.score}/100\n\n` +
+          `✅ What you did well:\n${data.what_you_did_well || "—"}\n\n` +
+          `🔧 What to fix:\n${data.what_to_fix || "—"}\n\n` +
+          `🔥 Better response:\n${data.better_response || "—"}\n\n` +
+          `Coach tip: ${data.one_sentence_coaching_tip || "—"}`;
+        setDrillResult(msg, true);
+      } else {
+        setDrillResult(data.text || "Couldn’t grade that one. Try another objection.", true);
+      }
+    } catch (err) {
+      console.error("Drill grading error:", err);
+      setDrillResult(err?.message || "Error talking to AI. Try again in a moment.", true);
+    }
+  });
+
+  // ==================================================
+  // VIDEO BUILDER (message-helper: video-brief)
+  // ==================================================
+  const videoFormEl = $("videoForm");
+  const videoScriptOutput = $("videoScriptOutput");
+  const videoShotListOutput = $("videoShotListOutput");
+  const videoAIPromptOutput = $("videoAIPromptOutput");
+  const videoThumbPromptOutput = $("videoThumbPromptOutput");
+
+  const videoScriptOutputBottom = $("videoScriptOutputBottom");
+  const videoShotListOutputBottom = $("videoShotListOutputBottom");
+  const videoAIPromptOutputBottom = $("videoAIPromptOutputBottom");
+  const videoThumbPromptOutputBottom = $("videoThumbPromptOutputBottom");
 
   function populateVideoOutputs(sections) {
     if (!sections) return;
@@ -961,100 +887,23 @@ if (socialNextBtn) {
   }
 
   // ==================================================
-  // STEP 3 – CREATIVE HUB (Fabric) + SOCIAL STRIP
+  // STEP 3 – CREATIVE LAB (thumbs + tuner + upload)
   // ==================================================
-  const photoDropZone = document.getElementById("photoDropZone");
-  const photoFileInput = document.getElementById("photoFileInput");
-  const creativeThumbGrid = document.getElementById("creativeThumbGrid");
-  const sendToDesignStudioBtn = document.getElementById("sendToDesignStudio");
+  const photoDropZone = $("photoDropZone");
+  const photoFileInput = $("photoFileInput");
+  const creativeThumbGrid = $("creativeThumbGrid");
+  const sendToDesignStudioBtn = $("sendToDesignStudio");
 
-  const tunerPreviewImg = document.getElementById("tunerPreviewImg");
-  const tunerBrightness = document.getElementById("tunerBrightness");
-  const tunerContrast = document.getElementById("tunerContrast");
-  const tunerSaturation = document.getElementById("tunerSaturation");
-  const autoEnhanceBtn = document.getElementById("autoEnhanceBtn");
-  const aiCinematicBtn = document.getElementById("aiCinematicBtn");
+  const tunerPreviewImg = $("tunerPreviewImg");
+  const tunerBrightness = $("tunerBrightness");
+  const tunerContrast = $("tunerContrast");
+  const tunerSaturation = $("tunerSaturation");
+  const autoEnhanceBtn = $("autoEnhanceBtn");
 
   const hiddenTunerCanvas = document.createElement("canvas");
   const hiddenTunerCtx = hiddenTunerCanvas.getContext ? hiddenTunerCanvas.getContext("2d") : null;
-
   let currentTunerFilter = "";
 
- 
-
-  // Canvas overlay
-  const creativeStudioOverlay = document.getElementById("creativeStudioOverlay");
-  const creativeCloseBtn = document.getElementById("creativeClose");
-  const canvasLauncher = document.getElementById("canvasLauncher");
-
-  const canvasPresetSelect = document.getElementById("creativeCanvasPreset");
-  const creativeUndo = document.getElementById("creativeUndo");
-  const creativeRedo = document.getElementById("creativeRedo");
-  const creativeDelete = document.getElementById("creativeDelete");
-  const creativeExportPng = document.getElementById("creativeExportPng");
-  const creativeImageInput = document.getElementById("creativeImageInput");
-  const creativeToolButtons = document.querySelectorAll(".tool-btn");
-
-// ================================
-// STATE (no broken lines)
-// ================================
-let creativeCanvas = null;
-let creativeHistory = [];
-let creativeHistoryIndex = -1;
-let localCreativePhotos = [];
-
-// Social-ready photos
-// (already declared earlier)
-socialReadySelectedIndex = 0;
-
-
-
-// Photo limits
-const MAX_STEP3_PHOTOS = 24;
-
-
-
-  // ---------------- Step 1 → Send Top Photos
-  const step1SendTopBtn = document.getElementById("sendTopPhotosBtn");
-  if (step1SendTopBtn) {
-    step1SendTopBtn.addEventListener("click", () => {
-      if (!dealerPhotos || !dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(0, 12);
-      if (!chosen.length) {
-        alert("No photos available to send.");
-        return;
-      }
-
-      step1SendTopBtn.disabled = true;
-      step1SendTopBtn.classList.add("loading");
-
-      chosen.forEach((url) => {
-        localCreativePhotos.push(url);
-        addCreativeThumb(url);
-
-        if (tunerPreviewImg && !tunerPreviewImg.src) {
-          tunerPreviewImg.src = url;
-          applyTunerFilters();
-        }
-      });
-
-      renderSocialCarousel();
-
-      step1SendTopBtn.classList.remove("loading");
-      step1SendTopBtn.classList.add("success");
-      setTimeout(() => {
-        step1SendTopBtn.classList.remove("success");
-        step1SendTopBtn.disabled = false;
-      }, 900);
-    });
-  }
-
-  // ---------------- Tuner
   function applyTunerFilters() {
     if (!tunerPreviewImg) return;
     const b = tunerBrightness ? Number(tunerBrightness.value || 100) : 100;
@@ -1080,8 +929,6 @@ const MAX_STEP3_PHOTOS = 24;
 
     return new Promise((resolve) => {
       const img = new Image();
-
-      // NOTE: crossOrigin only helps if server allows it — otherwise toDataURL will fail
       img.crossOrigin = "anonymous";
 
       img.onload = () => {
@@ -1112,40 +959,44 @@ const MAX_STEP3_PHOTOS = 24;
       };
 
       img.onerror = () => resolve(src);
-      img.src = src;
+      img.src = getProxiedImageUrl(src);
     });
   }
 
-  // ---------------- Creative thumbs
-  function addCreativeThumb(url) {
+  function renderCreativeThumbs() {
     if (!creativeThumbGrid) return;
+    creativeThumbGrid.innerHTML = "";
 
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "Creative photo";
-    img.loading = "lazy";
-    img.className = "creative-thumb";
-    img.title = "Click to select/deselect. Double-click to send edited copy to social strip.";
+    STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
 
-    img.addEventListener("click", () => {
-      img.classList.toggle("selected");
-      if (tunerPreviewImg) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
+    STORE.creativePhotos.forEach((url) => {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Creative photo";
+      img.loading = "lazy";
+      img.className = "creative-thumb";
+      img.title = "Click to select. Double-click to send edited copy to Social Strip.";
+
+      img.addEventListener("click", () => {
+        img.classList.toggle("selected");
+        if (tunerPreviewImg) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
+      });
+
+      img.addEventListener("dblclick", async () => {
+        const edited = await buildEditedDataUrl(url);
+        addToSocialReady(edited, true);
+      });
+
+      creativeThumbGrid.appendChild(img);
     });
 
-    img.addEventListener("dblclick", async () => {
-      const editedUrl = await buildEditedDataUrl(url);
-      addPhotoToSocialReady(editedUrl);
-    });
-
-    creativeThumbGrid.appendChild(img);
-
-    const thumbs = creativeThumbGrid.querySelectorAll(".creative-thumb");
-    if (thumbs.length > MAX_STEP3_PHOTOS) {
-      const extra = thumbs.length - MAX_STEP3_PHOTOS;
-      for (let i = 0; i < extra; i++) creativeThumbGrid.removeChild(thumbs[i]);
+    // set preview if empty
+    if (tunerPreviewImg && !tunerPreviewImg.src && STORE.creativePhotos.length) {
+      tunerPreviewImg.src = STORE.creativePhotos[0];
+      applyTunerFilters();
     }
   }
 
@@ -1156,22 +1007,13 @@ const MAX_STEP3_PHOTOS = 24;
     files.forEach((file) => {
       if (!file?.type?.startsWith("image/")) return;
       const url = URL.createObjectURL(file);
-
-      localCreativePhotos.push(url);
-      if (localCreativePhotos.length > MAX_STEP3_PHOTOS) {
-        localCreativePhotos = localCreativePhotos.slice(-MAX_STEP3_PHOTOS);
-      }
-
-      addCreativeThumb(url);
-
-      if (tunerPreviewImg && !tunerPreviewImg.src) {
-        tunerPreviewImg.src = url;
-        applyTunerFilters();
-      }
+      STORE.creativePhotos.push(url);
     });
+
+    STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
+    renderCreativeThumbs();
   }
 
-  // Dropzone
   if (photoDropZone && photoFileInput) {
     photoDropZone.addEventListener("click", () => photoFileInput.click());
 
@@ -1220,229 +1062,193 @@ const MAX_STEP3_PHOTOS = 24;
     });
   }
 
-  // ==================================================
-  // SOCIAL STRIP (THIS WAS BROKEN BEFORE — FIXED HERE)
-  // ==================================================
-  function addPhotoToSocialReady(url) {
-    if (!url) return;
-
-    const existingIndex = socialReadyPhotos.findIndex((p) => p.url === url);
-    if (existingIndex !== -1) {
-      socialReadyPhotos = socialReadyPhotos.map((p, idx) => ({
-        ...p,
-        selected: idx === existingIndex ? true : p.selected,
-      }));
-      socialCurrentIndex = existingIndex;
-      renderSocialCarousel();
+  // Step 1 -> Send Top Photos into Creative + Social Strip (cap to 24)
+  const step1SendTopBtn = $("sendTopPhotosBtn");
+  step1SendTopBtn?.addEventListener("click", () => {
+    if (!dealerPhotos.length) {
+      alert("Boost a listing first so Lot Rocket can grab photos.");
       return;
     }
 
-    socialReadyPhotos.push({
-      url,
-      originalUrl: url,
-      selected: true,
-      locked: false,
-    });
+    const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
+    const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(0, MAX_PHOTOS);
 
-    if (socialReadyPhotos.length > MAX_STEP3_PHOTOS) {
-      socialReadyPhotos = socialReadyPhotos.slice(-MAX_STEP3_PHOTOS);
-    }
+    STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, ...chosen]), MAX_PHOTOS);
+    renderCreativeThumbs();
 
-    socialCurrentIndex = socialReadyPhotos.length - 1;
-    renderSocialCarousel();
-  }
+    // Optional: also seed Social Strip with chosen (not edited)
+    chosen.forEach((u) => addToSocialReady(u, false));
 
-  function updateSocialPreview() {
-    if (!socialCarouselPreviewImg) return;
+    step1SendTopBtn.classList.add("success");
+    setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
+  });
 
-    if (!socialReadyPhotos.length) {
-      socialCarouselPreviewImg.src = "";
-      socialCarouselPreviewImg.alt = "";
-      if (socialCarouselStatus) {
-        socialCarouselStatus.textContent = "No social-ready photos yet. Double-click a photo above to add it.";
-      }
-      return;
-    }
+  // ==================================================
+  // SOCIAL READY STRIP (ONE MODULE ONLY)
+  // IDs expected:
+  // socialCarousel, socialCarouselPreviewImg, socialCarouselStatus,
+  // socialPrevBtn, socialNextBtn,
+  // revertSocialPhotoBtn, downloadAllEditedBtn,
+  // openDesignFromCarouselBtn, openCanvasFromCarouselBtn
+  // ==================================================
+  const socialCarousel = $("socialCarousel");
+  const socialPreviewImg = $("socialCarouselPreviewImg");
+  const socialStatus = $("socialCarouselStatus");
+  const socialPrevBtn = $("socialPrevBtn");
+  const socialNextBtn = $("socialNextBtn");
 
-    socialCurrentIndex = Math.max(0, Math.min(socialCurrentIndex, socialReadyPhotos.length - 1));
-    const active = socialReadyPhotos[socialCurrentIndex];
-    if (!active?.url) return;
+  const revertSocialPhotoBtn = $("revertSocialPhotoBtn");
+  const downloadAllEditedBtn = $("downloadAllEditedBtn");
+  const openDesignFromCarouselBtn = $("openDesignFromCarouselBtn");
+  const openCanvasFromCarouselBtn = $("openCanvasFromCarouselBtn");
 
-    socialCarouselPreviewImg.src = active.url;
-    socialCarouselPreviewImg.alt = "Social-ready preview";
-
-    if (socialCarouselStatus) {
-      const selectedCount = socialReadyPhotos.filter((p) => p.selected).length;
-      socialCarouselStatus.textContent = `Photo ${socialCurrentIndex + 1}/${socialReadyPhotos.length} • Selected: ${selectedCount}`;
-    }
-  }
-
-  function renderSocialCarousel() {
+  function renderSocialStrip() {
+    normalizeSocialReady();
     if (!socialCarousel) return;
+
     socialCarousel.innerHTML = "";
 
-    socialReadyPhotos.forEach((photo, index) => {
-      if (typeof photo.locked !== "boolean") photo.locked = false;
-
-      const item = document.createElement("div");
+    STORE.socialReadyPhotos.forEach((photo, index) => {
+      const item = document.createElement("button");
+      item.type = "button";
       item.className =
         "social-carousel-item" +
-        (photo.selected ? " social-carousel-item-selected" : "") +
-        (photo.locked ? " social-carousel-item-locked" : "");
-      item.dataset.index = String(index);
+        (index === socialIndex ? " selected" : "") +
+        (photo.selected ? " picked" : "") +
+        (photo.locked ? " locked" : "");
+      item.title = "Click: select for actions • Double-click: remove";
 
       const img = document.createElement("img");
       img.src = photo.url;
-      img.alt = `Social-ready photo ${index + 1}`;
+      img.alt = `Social-ready ${index + 1}`;
       img.loading = "lazy";
-      img.className = "social-carousel-img";
-
-      const controls = document.createElement("div");
-      controls.className = "social-carousel-controls";
-
-      const lockBtn = document.createElement("button");
-      lockBtn.type = "button";
-      lockBtn.className = "social-carousel-control-btn lock-btn";
-      lockBtn.title = photo.locked ? "Unlock this photo so it can be removed" : "Lock this photo so it can't be removed";
-      lockBtn.textContent = photo.locked ? "🔒" : "🔓";
-
-      lockBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const idx = Number(item.dataset.index || "0");
-        const p = socialReadyPhotos[idx];
-        if (!p) return;
-        p.locked = !p.locked;
-        renderSocialCarousel();
-      });
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "social-carousel-control-btn delete-btn";
-      deleteBtn.title = "Remove this photo from Step 3";
-      deleteBtn.textContent = "🗑️";
-
-      function removePhotoWithAnimation() {
-        const idx = Number(item.dataset.index || "0");
-        const p = socialReadyPhotos[idx];
-        if (!p) return;
-
-        if (p.locked) {
-          alert("This photo is locked. Unlock it first if you want to remove it.");
-          return;
-        }
-
-        item.classList.add("social-carousel-item-removing");
-        setTimeout(() => {
-          socialReadyPhotos.splice(idx, 1);
-          if (socialCurrentIndex >= socialReadyPhotos.length) socialCurrentIndex = socialReadyPhotos.length - 1;
-          if (socialCurrentIndex < 0) socialCurrentIndex = 0;
-          renderSocialCarousel();
-        }, 160);
-      }
-
-      deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removePhotoWithAnimation();
-      });
-
-      controls.appendChild(lockBtn);
-      controls.appendChild(deleteBtn);
+      img.className = "social-carousel-img"; // CSS should force thumbnails
 
       item.appendChild(img);
-      item.appendChild(controls);
-      socialCarousel.appendChild(item);
 
-      item.addEventListener("click", (e) => {
-        if (e.target.closest(".social-carousel-control-btn")) return;
-        const idx = Number(item.dataset.index || "0");
-        if (!socialReadyPhotos[idx]) return;
-        socialReadyPhotos[idx].selected = !socialReadyPhotos[idx].selected;
-        socialCurrentIndex = idx;
-        renderSocialCarousel();
+      item.addEventListener("click", () => {
+        socialIndex = index;
+        photo.selected = !photo.selected;
+        renderSocialStrip();
       });
 
       item.addEventListener("dblclick", (e) => {
         e.preventDefault();
-        removePhotoWithAnimation();
+        if (photo.locked) {
+          alert("This photo is locked. Unlock it first to remove it.");
+          return;
+        }
+        STORE.socialReadyPhotos.splice(index, 1);
+        socialIndex = clamp(socialIndex, 0, Math.max(0, STORE.socialReadyPhotos.length - 1));
+        renderSocialStrip();
       });
+
+      socialCarousel.appendChild(item);
     });
 
-    updateSocialPreview();
+    // Preview
+    if (socialPreviewImg) {
+      const active = STORE.socialReadyPhotos[socialIndex];
+      socialPreviewImg.src = active?.url || "";
+      socialPreviewImg.alt = active?.url ? "Social preview" : "";
+    }
+
+    // Status
+    if (socialStatus) {
+      if (!STORE.socialReadyPhotos.length) {
+        socialStatus.textContent = "No social-ready photos yet. Double-click a Creative photo to add it.";
+      } else {
+        const selectedCount = STORE.socialReadyPhotos.filter((p) => p.selected).length;
+        socialStatus.textContent = `Photo ${socialIndex + 1}/${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`;
+      }
+    }
   }
 
+  function addToSocialReady(url, selected = true) {
+    if (!url) return;
+    normalizeSocialReady();
+
+    const existing = STORE.socialReadyPhotos.findIndex((p) => p.url === url);
+    if (existing !== -1) {
+      socialIndex = existing;
+      STORE.socialReadyPhotos[existing].selected = true;
+      renderSocialStrip();
+      return;
+    }
+
+    STORE.socialReadyPhotos.push({
+      url,
+      originalUrl: url,
+      selected: !!selected,
+      locked: false,
+    });
+
+    normalizeSocialReady();
+    socialIndex = STORE.socialReadyPhotos.length - 1;
+    renderSocialStrip();
+  }
+
+  socialPrevBtn?.addEventListener("click", () => {
+    if (!STORE.socialReadyPhotos.length) return;
+    socialIndex = (socialIndex - 1 + STORE.socialReadyPhotos.length) % STORE.socialReadyPhotos.length;
+    renderSocialStrip();
+  });
 
   socialNextBtn?.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) return;
-    socialCurrentIndex = (socialCurrentIndex + 1) % socialReadyPhotos.length;
-    updateSocialPreview();
+    if (!STORE.socialReadyPhotos.length) return;
+    socialIndex = (socialIndex + 1) % STORE.socialReadyPhotos.length;
+    renderSocialStrip();
   });
 
-  // Revert
   revertSocialPhotoBtn?.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) {
-      alert("No social-ready photos to revert.");
-      return;
-    }
-    const photo = socialReadyPhotos[socialCurrentIndex];
-    if (!photo?.originalUrl) {
-      alert("No original version saved for this photo.");
-      return;
-    }
-    photo.url = photo.originalUrl;
-    renderSocialCarousel();
+    normalizeSocialReady();
+    if (!STORE.socialReadyPhotos.length) return alert("No social-ready photos to revert.");
+    const p = STORE.socialReadyPhotos[socialIndex];
+    if (!p?.originalUrl) return alert("No original saved for this photo.");
+    p.url = p.originalUrl;
+    renderSocialStrip();
   });
-
-  // Download helper (proxy-aware)
-  function getProxiedImageUrl(rawUrl) {
-    if (!rawUrl) return rawUrl;
-    try {
-      const u = new URL(rawUrl, window.location.origin);
-      if (u.origin === window.location.origin || u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
-      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
-      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
-    } catch {
-      return rawUrl;
-    }
-  }
-
-  function triggerSocialDownload(url, index) {
-    if (!url) return;
-    const safeUrl = typeof getProxiedImageUrl === "function" ? getProxiedImageUrl(url) : url;
-    const a = document.createElement("a");
-    a.href = safeUrl;
-    a.download = `lot-rocket-photo-${(index ?? 0) + 1}.jpg`;
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }
 
   downloadAllEditedBtn?.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) {
-      alert("No social-ready photos to download. Double-click a photo in the grid above first.");
-      return;
-    }
+    normalizeSocialReady();
+    if (!STORE.socialReadyPhotos.length) return alert("No social-ready photos to download.");
 
-    const urls = socialReadyPhotos.map((p) => p?.url).filter(Boolean);
-    if (!urls.length) return;
+    const urls = STORE.socialReadyPhotos.map((p) => p.url).filter(Boolean);
+    const proxied = urls.map((u) => getProxiedImageUrl(u));
 
-    const originalLabel = downloadAllEditedBtn.textContent;
+    const original = downloadAllEditedBtn.textContent;
     downloadAllEditedBtn.disabled = true;
-    downloadAllEditedBtn.textContent = "Downloading JPGs…";
+    downloadAllEditedBtn.textContent = "Downloading…";
 
-    urls.forEach((url, index) => {
-      setTimeout(() => triggerSocialDownload(url, index), index * 200);
+    proxied.forEach((u, idx) => {
+      setTimeout(() => triggerDownload(u, `lot-rocket-photo-${idx + 1}.jpg`), idx * 180);
     });
 
     setTimeout(() => {
       downloadAllEditedBtn.disabled = false;
-      downloadAllEditedBtn.textContent = originalLabel || "Download JPGs";
-    }, urls.length * 200 + 400);
+      downloadAllEditedBtn.textContent = original || "Download JPGs";
+    }, proxied.length * 180 + 500);
   });
 
   // ==================================================
-  // CANVAS STUDIO (Fabric) — minimal stable wiring
+  // CANVAS STUDIO (Fabric) — stable minimal
   // ==================================================
+  const creativeStudioOverlay = $("creativeStudioOverlay");
+  const creativeCloseBtn = $("creativeClose");
+  const canvasLauncher = $("canvasLauncher");
+
+  const canvasPresetSelect = $("creativeCanvasPreset");
+  const creativeUndo = $("creativeUndo");
+  const creativeRedo = $("creativeRedo");
+  const creativeDelete = $("creativeDelete");
+  const creativeExportPng = $("creativeExportPng");
+  const creativeImageInput = $("creativeImageInput");
+  const creativeToolButtons = document.querySelectorAll(".tool-btn");
+
+  let creativeCanvas = null;
+  let creativeHistory = [];
+  let creativeHistoryIndex = -1;
+
   function ensureCanvas() {
     if (creativeCanvas) return creativeCanvas;
     if (typeof fabric === "undefined") {
@@ -1473,7 +1279,6 @@ const MAX_STEP3_PHOTOS = 24;
     const canvas = ensureCanvas();
     if (!canvas || !url) return;
 
-    // use proxied URL for cross-origin
     const safeUrl = getProxiedImageUrl(url);
 
     fabric.Image.fromURL(
@@ -1521,7 +1326,8 @@ const MAX_STEP3_PHOTOS = 24;
   canvasPresetSelect?.addEventListener("change", () => {
     const canvas = ensureCanvas();
     if (!canvas) return;
-    const [w, h] = canvasPresetSelect.value.split("x").map(Number);
+    const [w, h] = (canvasPresetSelect.value || "").split("x").map(Number);
+    if (!w || !h) return;
     canvas.setWidth(w);
     canvas.setHeight(h);
     canvas.calcOffset();
@@ -1552,24 +1358,19 @@ const MAX_STEP3_PHOTOS = 24;
     if (!canvas) return;
     try {
       const dataUrl = canvas.toDataURL({ format: "png", quality: 1.0 });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "lot-rocket-creative.png";
-      a.click();
+      triggerDownload(dataUrl, "lot-rocket-creative.png");
     } catch (err) {
       console.error("Export PNG error:", err);
-      alert("Browser blocked exporting this image (CORS). Some dealer images may not export.");
+      alert("Export blocked (CORS). Use proxied images or uploads.");
     }
   });
 
-  if (creativeImageInput) {
-    creativeImageInput.addEventListener("change", (e) => {
-      const files = e.target.files;
-      if (!files?.length) return;
-      handleCreativeFiles(files);
-      creativeImageInput.value = "";
-    });
-  }
+  creativeImageInput?.addEventListener("change", (e) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    handleCreativeFiles(files);
+    creativeImageInput.value = "";
+  });
 
   creativeToolButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1584,38 +1385,37 @@ const MAX_STEP3_PHOTOS = 24;
   });
 
   // ==================================================
-  // DESIGN STUDIO 3.5 (Konva) — cleaned init + loader
+  // DESIGN STUDIO 3.5 (Konva) — stable init + tray
   // ==================================================
-  const designStudioOverlay = document.getElementById("designStudioOverlay");
-  const designLauncher = document.getElementById("designLauncher");
-  const designCloseBtn = document.getElementById("designClose");
+  const designStudioOverlay = $("designStudioOverlay");
+  const designLauncher = $("designLauncher");
+  const designCloseBtn = $("designClose");
 
-  const studioExportPng = document.getElementById("studioExportPng");
-  const studioUndoBtn = document.getElementById("studioUndoBtn");
-  const studioRedoBtn = document.getElementById("studioRedoBtn");
-  const studioSizePreset = document.getElementById("studioSizePreset");
+  const studioExportPng = $("studioExportPng");
+  const studioUndoBtn = $("studioUndoBtn");
+  const studioRedoBtn = $("studioRedoBtn");
+  const studioSizePreset = $("studioSizePreset");
 
-  const toolAddText = document.getElementById("toolAddText");
-  const toolAddShape = document.getElementById("toolAddShape");
-  const toolAddBadge = document.getElementById("toolAddBadge");
-  const toolSetBackground = document.getElementById("toolSetBackground");
+  const toolAddText = $("toolAddText");
+  const toolAddShape = $("toolAddShape");
+  const toolAddBadge = $("toolAddBadge");
+  const toolSetBackground = $("toolSetBackground");
 
-  const layersList = document.getElementById("layersList");
-  const layerTextInput = document.getElementById("layerTextInput");
-  const layerFontSizeInput = document.getElementById("layerFontSizeInput");
-  const layerOpacityInput = document.getElementById("layerOpacityInput");
-  const layerDeleteBtn = document.getElementById("layerDeleteBtn");
+  const layersList = $("layersList");
+  const layerTextInput = $("layerTextInput");
+  const layerFontSizeInput = $("layerFontSizeInput");
+  const layerOpacityInput = $("layerOpacityInput");
+  const layerDeleteBtn = $("layerDeleteBtn");
 
-  const saveDesignBtn = document.getElementById("saveDesignBtn");
-  const loadDesignBtn = document.getElementById("loadDesignBtn");
+  const saveDesignBtn = $("saveDesignBtn");
+  const loadDesignBtn = $("loadDesignBtn");
 
-  const templatePaymentBtn = document.getElementById("templatePayment");
-  const templateArrivalBtn = document.getElementById("templateArrival");
-  const templateSaleBtn = document.getElementById("templateSale");
+  const templatePaymentBtn = $("templatePayment");
+  const templateArrivalBtn = $("templateArrival");
+  const templateSaleBtn = $("templateSale");
 
-  const studioPhotoTray = document.getElementById("studioPhotoTray");
-
-  const sendDesignToStripBtn = document.getElementById("studioToStep3Btn");
+  const studioPhotoTray = $("studioPhotoTray");
+  const sendDesignToStripBtn = $("studioToStep3Btn");
 
   let studioStage = null;
   let studioLayer = null;
@@ -1679,7 +1479,7 @@ const MAX_STEP3_PHOTOS = 24;
 
     const container =
       (studioStage && studioStage.container()) ||
-      document.getElementById("konvaStageContainer");
+      $("konvaStageContainer");
     if (!container) return;
 
     const json = studioHistory[index];
@@ -1772,7 +1572,7 @@ const MAX_STEP3_PHOTOS = 24;
       if (layerFontSizeInput) layerFontSizeInput.value = "";
     }
 
-    if (layerOpacityInput) layerOpacityInput.value = studioSelectedNode.opacity() ?? 1;
+    if (layerOpacityInput) layerOpacityInput.value = studioSelectedNode.opacity?.() ?? 1;
   }
 
   function addStudioText(text = "YOUR HEADLINE HERE") {
@@ -1903,19 +1703,17 @@ const MAX_STEP3_PHOTOS = 24;
     if (!studioStage) return;
     try {
       const dataURL = studioStage.toDataURL({ pixelRatio: 2 });
-      const a = document.createElement("a");
-      a.href = dataURL;
-      a.download = "lot-rocket-design.png";
-      a.click();
+      triggerDownload(dataURL, "lot-rocket-design.png");
     } catch (err) {
       console.error("Export PNG error:", err);
-      alert("Browser blocked exporting this design (CORS). Some dealer images may not export.");
+      alert("Export blocked (CORS). Use proxied images or uploads.");
     }
   }
 
   function applyStudioSizePreset() {
     if (!studioStage || !studioLayer || !studioSizePreset) return;
-    const [w, h] = studioSizePreset.value.split("x").map(Number);
+    const [w, h] = (studioSizePreset.value || "").split("x").map(Number);
+    if (!w || !h) return;
     studioStage.width(w);
     studioStage.height(h);
 
@@ -1969,7 +1767,6 @@ const MAX_STEP3_PHOTOS = 24;
         name: "Payment Banner",
         draggable: true,
       });
-
       attachNodeInteractions(bar);
       studioLayer.add(bar);
 
@@ -2086,10 +1883,7 @@ const MAX_STEP3_PHOTOS = 24;
   }
 
   function saveDesignToLocal() {
-    if (!studioStage) {
-      alert("Open Design Studio first, then save.");
-      return;
-    }
+    if (!studioStage) return alert("Open Design Studio first, then save.");
     try {
       localStorage.setItem(STUDIO_STORAGE_KEY, studioStage.toJSON());
       alert("Design saved on this device.");
@@ -2101,19 +1895,10 @@ const MAX_STEP3_PHOTOS = 24;
 
   function loadDesignFromLocal() {
     const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
-    if (!stored) {
-      alert("No saved design found yet.");
-      return;
-    }
-    if (!window.Konva) {
-      alert("Design Studio is not available (Konva missing).");
-      return;
-    }
-    const container = document.getElementById("konvaStageContainer");
-    if (!container) {
-      alert("Design Studio area not found.");
-      return;
-    }
+    if (!stored) return alert("No saved design found yet.");
+    if (!window.Konva) return alert("Design Studio is not available (Konva missing).");
+    const container = $("konvaStageContainer");
+    if (!container) return alert("Design Studio area not found.");
 
     try {
       if (studioStage) studioStage.destroy();
@@ -2212,7 +1997,7 @@ const MAX_STEP3_PHOTOS = 24;
   }
 
   function initDesignStudio() {
-    const container = document.getElementById("konvaStageContainer");
+    const container = $("konvaStageContainer");
     if (!container || !window.Konva) return;
 
     const width = container.clientWidth || 1080;
@@ -2252,20 +2037,11 @@ const MAX_STEP3_PHOTOS = 24;
   function gatherImageUrlsForStudios() {
     const urls = new Set();
 
-    // Creative thumbs
-    creativeThumbGrid?.querySelectorAll("img").forEach((img) => img?.src && urls.add(img.src));
+    STORE.creativePhotos.forEach((u) => u && urls.add(u));
+    STORE.socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
+    dealerPhotos.forEach((p) => p?.src && urls.add(p.src));
 
-    // Social strip
-    socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
-
-    // Dealer photos (selected first)
-    if (dealerPhotos?.length) {
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const fallback = dealerPhotos.map((p) => p.src);
-      (selected.length ? selected : fallback).forEach((u) => urls.add(u));
-    }
-
-    return Array.from(urls).slice(0, 24);
+    return Array.from(urls).slice(0, MAX_PHOTOS);
   }
 
   function renderStudioPhotoTray() {
@@ -2275,7 +2051,7 @@ const MAX_STEP3_PHOTOS = 24;
     if (!studioAvailablePhotos?.length) {
       const msg = document.createElement("p");
       msg.className = "small-note";
-      msg.textContent = "No photos loaded yet. Boost a listing or load/edit photos in the Creative Lab, then open Design Studio.";
+      msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
       studioPhotoTray.appendChild(msg);
       return;
     }
@@ -2298,7 +2074,7 @@ const MAX_STEP3_PHOTOS = 24;
       studioPhotoTray.appendChild(img);
     });
 
-    const konvaContainer = document.getElementById("konvaStageContainer");
+    const konvaContainer = $("konvaStageContainer");
     if (konvaContainer && !studioDnDWired) {
       studioDnDWired = true;
       konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
@@ -2319,7 +2095,7 @@ const MAX_STEP3_PHOTOS = 24;
     else studioStage?.draw?.();
 
     studioAvailablePhotos = Array.isArray(forceSources) && forceSources.length
-      ? forceSources.slice(0, 24)
+      ? forceSources.slice(0, MAX_PHOTOS)
       : gatherImageUrlsForStudios();
 
     renderStudioPhotoTray();
@@ -2338,15 +2114,13 @@ const MAX_STEP3_PHOTOS = 24;
   }
 
   function pushUrlsIntoDesignStudio(urls) {
-    const list = (Array.isArray(urls) ? urls : []).filter(Boolean);
-    if (!list.length) {
-      alert("No photos available. Boost a listing or add photos first.");
-      return;
-    }
+    const list = capMax(uniqueUrls((urls || []).filter(Boolean)), MAX_PHOTOS);
+    if (!list.length) return alert("No photos available. Boost a listing or add photos first.");
+
     openDesignStudio(list);
 
-    // Auto-drop first few (first as background)
-    list.slice(0, 24).forEach((url, idx) => addStudioImageFromUrl(url, idx === 0));
+    // Auto-drop first as background only (not 24 spam)
+    if (list[0]) addStudioImageFromUrl(list[0], true);
   }
 
   // Step 3 → send selected photos into Design Studio
@@ -2358,44 +2132,37 @@ const MAX_STEP3_PHOTOS = 24;
       selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
     }
 
-    if (!urls.length && Array.isArray(localCreativePhotos)) urls = localCreativePhotos.slice(0, 24);
-    if (!urls.length && dealerPhotos?.length) urls = dealerPhotos.map((p) => p.src).slice(0, 24);
+    if (!urls.length) urls = STORE.creativePhotos.slice(0, MAX_PHOTOS);
+    if (!urls.length) urls = dealerPhotos.map((p) => p.src).slice(0, MAX_PHOTOS);
 
-    if (!urls.length) {
-      alert("Load or select a photo in the Creative Lab first before sending to Design Studio.");
-      return;
-    }
+    if (!urls.length) return alert("Load or select a photo first before sending to Design Studio.");
 
     pushUrlsIntoDesignStudio(urls);
   });
 
   // Social strip → open Design Studio
   openDesignFromCarouselBtn?.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) {
-      alert("No social-ready photos yet. Double-click a photo in the grid above to add it.");
-      return;
-    }
+    normalizeSocialReady();
+    if (!STORE.socialReadyPhotos.length) return alert("No social-ready photos yet.");
 
-    const selected = socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
-    const chosen = (selected.length ? selected : socialReadyPhotos.map((p) => p.url)).slice(0, 24);
+    const selected = STORE.socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
+    const chosen = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p.url)).slice(0, MAX_PHOTOS);
     pushUrlsIntoDesignStudio(chosen);
   });
 
-  // Social strip → open Canvas Studio
+  // Social strip → open Canvas Studio (Fabric)
   openCanvasFromCarouselBtn?.addEventListener("click", () => {
-    if (!socialReadyPhotos.length) {
-      alert("No social-ready photos yet. Double-click a photo in the grid above to add it.");
-      return;
-    }
+    normalizeSocialReady();
+    if (!STORE.socialReadyPhotos.length) return alert("No social-ready photos yet.");
 
-    const selected = socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
-    const urls = (selected.length ? selected : socialReadyPhotos.map((p) => p.url)).slice(0, 24);
+    const selected = STORE.socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
+    const urls = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p.url)).slice(0, MAX_PHOTOS);
 
     openCreativeStudio();
     urls.forEach((u) => addImageFromUrl(u));
   });
 
-  // Design Studio → Send to Step 3
+  // Design Studio → Send to Social Strip
   sendDesignToStripBtn?.addEventListener("click", async () => {
     if (!studioStage) return;
 
@@ -2404,26 +2171,26 @@ const MAX_STEP3_PHOTOS = 24;
       dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
     } catch (e) {
       console.error("❌ Konva toDataURL failed:", e);
-      alert("Design export failed due to CORS. Try using only proxied images (dealer/Creative images).");
+      alert("Design export failed (CORS). Try using proxied images or uploads.");
       return;
     }
 
+    // Convert to blob -> object URL for browser-safe caching
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
 
-    addPhotoToSocialReady(objectUrl);
-    localCreativePhotos.push(objectUrl);
-    addCreativeThumb(objectUrl);
+    addToSocialReady(objectUrl, true);
 
-    if (tunerPreviewImg && !tunerPreviewImg.src) {
-      tunerPreviewImg.src = objectUrl;
-      applyTunerFilters();
-    }
+    // also drop into Creative Photos
+    STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, objectUrl]), MAX_PHOTOS);
+    renderCreativeThumbs();
   });
 
   // ==================================================
   // FINAL INIT
   // ==================================================
-  renderSocialCarousel();
+  renderDealerPhotos();
+  renderCreativeThumbs();
+  renderSocialStrip();
 });
