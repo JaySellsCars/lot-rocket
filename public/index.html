@@ -543,6 +543,79 @@
        .side-modal-close OR .modal-close-btn OR [data-close]
   -->
   <!-- ... keep all your modals exactly as you pasted ... -->
+<!-- ==================================================
+     ROCKET-2: SIDE TOOL MODALS (REQUIRED SHELLS)
+     These MUST exist for side buttons to work
+     ================================================== -->
+
+<div id="objectionModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Objection Coach</h2>
+  <form id="objectionForm">
+    <textarea id="objectionInput" placeholder="Paste objection here"></textarea>
+    <button type="submit">Coach Me</button>
+  </form>
+  <div id="objectionOutput"></div>
+</div>
+
+<div id="calcModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Calculator</h2>
+  <div id="calcOutput">Calculator UI goes here</div>
+</div>
+
+<div id="paymentModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Payment Calculator</h2>
+  <form id="paymentForm"></form>
+</div>
+
+<div id="incomeModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Income Tracker</h2>
+  <form id="incomeForm"></form>
+</div>
+
+<div id="workflowModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Workflow Builder</h2>
+  <form id="workflowForm"></form>
+</div>
+
+<div id="messageModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Message Helper</h2>
+  <form id="messageForm"></form>
+  <div id="messageOutput"></div>
+</div>
+
+<div id="askModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Ask AI</h2>
+  <form id="askForm"></form>
+  <div id="askOutput"></div>
+</div>
+
+<div id="carModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Car Expert</h2>
+  <form id="carForm"></form>
+  <div id="carOutput"></div>
+</div>
+
+<div id="imageModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>AI Image Brief</h2>
+  <form id="imageForm"></form>
+  <div id="imageOutput"></div>
+</div>
+
+<div id="videoModal" class="side-modal">
+  <button class="side-modal-close">×</button>
+  <h2>Video Builder</h2>
+  <form id="videoForm"></form>
+  <div id="videoOutput"></div>
+</div>
 
   <!-- APP SCRIPT -->
   <script src="/app.js?v=260"></script>
