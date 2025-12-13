@@ -118,10 +118,12 @@ const closeDrillModeBtn = $("closeDrillMode");
 function openCenteredModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.remove("hidden");
+  modalEl.style.display = "flex";
 }
 function closeCenteredModal(modalEl) {
   if (!modalEl) return;
   modalEl.classList.add("hidden");
+  modalEl.style.display = "none";
 }
 
 if (drillLauncher && drillModal) {
@@ -181,6 +183,7 @@ function wireToolDrawer(launcherId, modalId, onOpen) {
 
 // Special handling: when opening video drawer, fill context
 const videoContextField = $("videoContext");
+
 function buildVideoContextFromKit() {
   const parts = [];
   const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
@@ -199,7 +202,7 @@ TOOL_CONFIG.forEach(([launcherId, modalId]) => {
     wireToolDrawer(launcherId, modalId, () => {
       if (videoContextField) {
         videoContextField.value = buildVideoContextFromKit();
-        autoResizeTextarea(videoContextField);
+        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
       }
     });
   } else {
@@ -208,7 +211,11 @@ TOOL_CONFIG.forEach(([launcherId, modalId]) => {
 });
 
 // Quick sanity log (remove later)
-console.log("🔧 Tool launchers found:", TOOL_CONFIG.map(([id]) => id).filter((id) => !!$(id)));
+console.log(
+  "🔧 Tool launchers found:",
+  TOOL_CONFIG.map(([id]) => id).filter((id) => !!$(id))
+);
+
 
   // ==================================================
   // BRAND + THEME
@@ -435,132 +442,6 @@ console.log("🔧 Tool launchers found:", TOOL_CONFIG.map(([id]) => id).filter((
     });
   });
 
-// ==================================================
-// RIGHT-SIDE TOOL MODALS (DRAWERS) — HARD WIRED + DEBUG
-// ==================================================
-const videoContextField = document.getElementById("videoContext");
-
-function buildVideoContextFromKit() {
-  const parts = [];
-  const label =
-    (document.getElementById("vehicleLabel")?.value || "").trim() ||
-    (document.getElementById("summaryLabel")?.textContent || "").trim();
-  const price =
-    (document.getElementById("priceInfo")?.value || "").trim() ||
-    (document.getElementById("summaryPrice")?.textContent || "").trim();
-  const url = (document.getElementById("vehicleUrl")?.value || "").trim();
-  const tags = (document.getElementById("hashtags")?.value || "").trim();
-
-  if (label) parts.push(`Vehicle: ${label}`);
-  if (price) parts.push(`Price/Offer: ${price}`);
-  if (url) parts.push(`Listing URL: ${url}`);
-  if (tags) parts.push(`Hashtags: ${tags}`);
-  return parts.join("\n");
-}
-
-const TOOL_CONFIG = [
-  ["objectionLauncher", "objectionModal"],
-  ["calcLauncher", "calcModal"],
-  ["paymentLauncher", "paymentModal"],
-  ["incomeLauncher", "incomeModal"],
-  ["workflowLauncher", "workflowModal"],
-  ["messageLauncher", "messageModal"],
-  ["askLauncher", "askModal"],
-  ["carLauncher", "carModal"],
-  ["imageLauncher", "imageModal"],
-  ["videoLauncher", "videoModal"],
-];
-
-function wireToolDrawer(launcherId, modalId, onOpen) {
-  const launcher = document.getElementById(launcherId);
-  const modal = document.getElementById(modalId);
-
-  console.log("[TOOLS] wire", launcherId, "=>", modalId, {
-    launcher: !!launcher,
-    modal: !!modal,
-  });
-
-  if (!launcher || !modal) return;
-
-  // Prevent double wiring
-  if (launcher.dataset.wired === "true") return;
-  launcher.dataset.wired = "true";
-
-  const closeBtn =
-    modal.querySelector(".side-modal-close") ||
-    modal.querySelector(".modal-close-btn");
-
-  const close = () => {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  };
-
-  const open = () => {
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    if (typeof onOpen === "function") onOpen();
-  };
-
-  launcher.addEventListener("click", open);
-
-  if (closeBtn && closeBtn.dataset.wired !== "true") {
-    closeBtn.dataset.wired = "true";
-    closeBtn.addEventListener("click", close);
-  }
-
-  // click-outside-to-close
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
-  });
-}
-
-TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-  if (launcherId === "videoLauncher") {
-    wireToolDrawer(launcherId, modalId, () => {
-      if (videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-        // optional auto-resize if you have it:
-        // autoResizeTextarea(videoContextField);
-      }
-    });
-  } else {
-    wireToolDrawer(launcherId, modalId);
-  }
-});
-
-
-  // ==================================================
-  // BASIC CALCULATOR (keypad)
-  // ==================================================
-  const basicCalcDisplay = $("basicCalcDisplay");
-  const basicCalcButtons = document.querySelectorAll("[data-calc-key]");
-
-  if (basicCalcDisplay && basicCalcButtons.length) {
-    let calcExpr = "";
-    const renderCalc = () => (basicCalcDisplay.value = calcExpr || "0");
-
-    basicCalcButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.getAttribute("data-calc-key");
-        if (!key) return;
-
-        if (key === "C") calcExpr = "";
-        else if (key === "DEL") calcExpr = calcExpr.slice(0, -1);
-        else if (key === "=") {
-          try {
-            // eslint-disable-next-line no-eval
-            calcExpr = String(eval(calcExpr || "0"));
-          } catch {
-            calcExpr = "";
-          }
-        } else calcExpr += key;
-
-        renderCalc();
-      });
-    });
-
-    renderCalc();
-  }
 
   // ==================================================
   // PAYMENT CALCULATOR
