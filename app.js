@@ -21,23 +21,23 @@
 require("dotenv").config();
 
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
 const fetch = require("node-fetch");
 const archiver = require("archiver");
 
-
-const path = require("path");
-
 const app = express();
-
-// ✅ STEP 1 — PUT THIS HERE
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+app.use(cors());
+app.use(express.json());
+
+
 
 // API routes BELOW this
 // app.post("/scrape", ...)
