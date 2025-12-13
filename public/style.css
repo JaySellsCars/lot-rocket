@@ -667,6 +667,10 @@ textarea{
 #drillModeModal {
   z-index: 100000 !important;
 }
+/* ROCKET-2 EMERGENCY: stop modals from black-screening the app */
+.side-modal { display: none !important; }
+.side-modal.open { display: flex !important; }
+.side-modal.hidden { display: none !important; }
 
 /* ======================================================
    REMOVED (DEDUPED): legacy “social-ready-*” strip CSS
