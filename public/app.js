@@ -435,81 +435,99 @@ console.log("🔧 Tool launchers found:", TOOL_CONFIG.map(([id]) => id).filter((
     });
   });
 
-  // ==================================================
-  // RIGHT-SIDE TOOL MODALS (DRAWERS)
-  // ==================================================
-  const videoContextField = $("videoContext");
+// ==================================================
+// RIGHT-SIDE TOOL MODALS (DRAWERS) — HARD WIRED + DEBUG
+// ==================================================
+const videoContextField = document.getElementById("videoContext");
 
-  function buildVideoContextFromKit() {
-    const parts = [];
-    const label = (vehicleLabelInput?.value || summaryLabel?.textContent || "").trim();
-    const price = (priceInfoInput?.value || summaryPrice?.textContent || "").trim();
-    const url = vehicleUrlInput ? vehicleUrlInput.value.trim() : "";
-    const tags = (hashtags?.value || "").trim();
+function buildVideoContextFromKit() {
+  const parts = [];
+  const label =
+    (document.getElementById("vehicleLabel")?.value || "").trim() ||
+    (document.getElementById("summaryLabel")?.textContent || "").trim();
+  const price =
+    (document.getElementById("priceInfo")?.value || "").trim() ||
+    (document.getElementById("summaryPrice")?.textContent || "").trim();
+  const url = (document.getElementById("vehicleUrl")?.value || "").trim();
+  const tags = (document.getElementById("hashtags")?.value || "").trim();
 
-    if (label) parts.push(`Vehicle: ${label}`);
-    if (price) parts.push(`Price/Offer: ${price}`);
-    if (url) parts.push(`Listing URL: ${url}`);
-    if (tags) parts.push(`Hashtags: ${tags}`);
-    return parts.join("\n");
-  }
+  if (label) parts.push(`Vehicle: ${label}`);
+  if (price) parts.push(`Price/Offer: ${price}`);
+  if (url) parts.push(`Listing URL: ${url}`);
+  if (tags) parts.push(`Hashtags: ${tags}`);
+  return parts.join("\n");
+}
 
-  const TOOL_CONFIG = [
-    ["objectionLauncher", "objectionModal"],
-    ["calcLauncher", "calcModal"],
-    ["paymentLauncher", "paymentModal"],
-    ["incomeLauncher", "incomeModal"],
-    ["workflowLauncher", "workflowModal"],
-    ["messageLauncher", "messageModal"],
-    ["askLauncher", "askModal"],
-    ["carLauncher", "carModal"],
-    ["imageLauncher", "imageModal"],
-    ["videoLauncher", "videoModal"],
-    ["drillLauncher", "drillModeModal"], // drill modal if you have it as a drawer
-  ];
+const TOOL_CONFIG = [
+  ["objectionLauncher", "objectionModal"],
+  ["calcLauncher", "calcModal"],
+  ["paymentLauncher", "paymentModal"],
+  ["incomeLauncher", "incomeModal"],
+  ["workflowLauncher", "workflowModal"],
+  ["messageLauncher", "messageModal"],
+  ["askLauncher", "askModal"],
+  ["carLauncher", "carModal"],
+  ["imageLauncher", "imageModal"],
+  ["videoLauncher", "videoModal"],
+];
 
-  function wireToolDrawer(launcherId, modalId, onOpen) {
-    const launcher = $(launcherId);
-    const modal = $(modalId);
-    if (!launcher || !modal) return;
-    if (launcher.dataset.wired === "true") return;
-    launcher.dataset.wired = "true";
+function wireToolDrawer(launcherId, modalId, onOpen) {
+  const launcher = document.getElementById(launcherId);
+  const modal = document.getElementById(modalId);
 
-    const closeBtn = modal.querySelector(".side-modal-close") || modal.querySelector(".modal-close-btn");
-
-    const close = () => {
-      modal.classList.add("hidden");
-      modal.style.display = "none";
-    };
-
-    launcher.addEventListener("click", () => {
-      modal.classList.remove("hidden");
-      modal.style.display = "flex";
-      if (typeof onOpen === "function") onOpen();
-    });
-
-    if (closeBtn && closeBtn.dataset.wired !== "true") {
-      closeBtn.dataset.wired = "true";
-      closeBtn.addEventListener("click", close);
-    }
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close();
-    });
-  }
-
-  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-    if (launcherId === "videoLauncher") {
-      wireToolDrawer(launcherId, modalId, () => {
-        if (videoContextField) {
-          videoContextField.value = buildVideoContextFromKit();
-          autoResizeTextarea(videoContextField);
-        }
-      });
-    } else {
-      wireToolDrawer(launcherId, modalId);
-    }
+  console.log("[TOOLS] wire", launcherId, "=>", modalId, {
+    launcher: !!launcher,
+    modal: !!modal,
   });
+
+  if (!launcher || !modal) return;
+
+  // Prevent double wiring
+  if (launcher.dataset.wired === "true") return;
+  launcher.dataset.wired = "true";
+
+  const closeBtn =
+    modal.querySelector(".side-modal-close") ||
+    modal.querySelector(".modal-close-btn");
+
+  const close = () => {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+  };
+
+  const open = () => {
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    if (typeof onOpen === "function") onOpen();
+  };
+
+  launcher.addEventListener("click", open);
+
+  if (closeBtn && closeBtn.dataset.wired !== "true") {
+    closeBtn.dataset.wired = "true";
+    closeBtn.addEventListener("click", close);
+  }
+
+  // click-outside-to-close
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+}
+
+TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+  if (launcherId === "videoLauncher") {
+    wireToolDrawer(launcherId, modalId, () => {
+      if (videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+        // optional auto-resize if you have it:
+        // autoResizeTextarea(videoContextField);
+      }
+    });
+  } else {
+    wireToolDrawer(launcherId, modalId);
+  }
+});
+
 
   // ==================================================
   // BASIC CALCULATOR (keypad)
