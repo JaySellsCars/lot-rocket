@@ -94,6 +94,121 @@ document.addEventListener("DOMContentLoaded", () => {
     a.click();
     a.remove();
   }
+// ==================================================
+// FLOATING TOOLS → RIGHT-SIDE DRAWERS (MODALS)
+// ==================================================
+const TOOL_CONFIG = [
+  ["objectionLauncher", "objectionModal"],
+  ["calcLauncher", "calcModal"],
+  ["paymentLauncher", "paymentModal"],
+  ["incomeLauncher", "incomeModal"],
+  ["workflowLauncher", "workflowModal"],
+  ["messageLauncher", "messageModal"],
+  ["askLauncher", "askModal"],
+  ["carLauncher", "carModal"],
+  ["imageLauncher", "imageModal"],
+  ["videoLauncher", "videoModal"],
+];
+
+// (Optional) Drill mode modal (center modal, not side drawer)
+const drillLauncher = $("drillLauncher");
+const drillModal = $("drillModeModal");
+const closeDrillModeBtn = $("closeDrillMode");
+
+function openCenteredModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.remove("hidden");
+}
+function closeCenteredModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.add("hidden");
+}
+
+if (drillLauncher && drillModal) {
+  drillLauncher.addEventListener("click", () => openCenteredModal(drillModal));
+}
+if (closeDrillModeBtn && drillModal) {
+  closeDrillModeBtn.addEventListener("click", () => closeCenteredModal(drillModal));
+  drillModal.addEventListener("click", (e) => {
+    if (e.target === drillModal) closeCenteredModal(drillModal);
+  });
+}
+
+function wireToolDrawer(launcherId, modalId, onOpen) {
+  const launcher = $(launcherId);
+  const modal = $(modalId);
+
+  // If either is missing, silently skip (prevents crashes)
+  if (!launcher || !modal) return;
+
+  // Prevent double-wiring
+  if (launcher.dataset.wired === "true") return;
+  launcher.dataset.wired = "true";
+
+  const closeBtn =
+    modal.querySelector(".side-modal-close") ||
+    modal.querySelector(".modal-close-btn");
+
+  const open = () => {
+    modal.classList.remove("hidden");
+    modal.style.display = "flex"; // side-modal uses flex in CSS
+    if (typeof onOpen === "function") onOpen();
+  };
+
+  const close = () => {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+  };
+
+  launcher.addEventListener("click", (e) => {
+    e.preventDefault();
+    open();
+  });
+
+  if (closeBtn && closeBtn.dataset.wired !== "true") {
+    closeBtn.dataset.wired = "true";
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      close();
+    });
+  }
+
+  // Click outside panel closes
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+}
+
+// Special handling: when opening video drawer, fill context
+const videoContextField = $("videoContext");
+function buildVideoContextFromKit() {
+  const parts = [];
+  const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
+  const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
+  const url = ($("vehicleUrl")?.value || "").trim();
+  const tags = ($("hashtags")?.value || "").trim();
+  if (label) parts.push(`Vehicle: ${label}`);
+  if (price) parts.push(`Price/Offer: ${price}`);
+  if (url) parts.push(`Listing URL: ${url}`);
+  if (tags) parts.push(`Hashtags: ${tags}`);
+  return parts.join("\n");
+}
+
+TOOL_CONFIG.forEach(([launcherId, modalId]) => {
+  if (launcherId === "videoLauncher") {
+    wireToolDrawer(launcherId, modalId, () => {
+      if (videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+        autoResizeTextarea(videoContextField);
+      }
+    });
+  } else {
+    wireToolDrawer(launcherId, modalId);
+  }
+});
+
+// Quick sanity log (remove later)
+console.log("🔧 Tool launchers found:", TOOL_CONFIG.map(([id]) => id).filter((id) => !!$(id)));
 
   // ==================================================
   // BRAND + THEME
