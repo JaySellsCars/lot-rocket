@@ -1,7 +1,12 @@
 /* ======================================================
-   LOT ROCKET – CLEAN STABLE CSS (v2.5.6 – LAYOUT RESTORED)
-   - Step 2 tiles like “pic 2”
-   - Step 3 2-column Creative Lab like “pic 1”
+   LOT ROCKET – CLEAN STABLE CSS (v2.6 – DEDUPED + JS-ALIGNED)
+   Goals:
+   - Remove duplicate/legacy strip CSS that doesn’t match v2.6 HTML/JS
+   - Keep Step 2 tiles + Step 3 2-column Creative Lab
+   - Ensure “selected” styling matches what app.js toggles:
+       - Dealer photos: .photo-thumb-btn + .photo-thumb-selected + .photo-thumb-img
+       - Creative thumbs: .creative-thumb + .selected
+       - Social strip items: .social-carousel-item + .selected + .picked + .locked
    ====================================================== */
 
 /* ---------- RESET ---------- */
@@ -51,7 +56,7 @@ h3{ font-size: 1.05rem; }
   line-height: 1.35;
 }
 
-/* ---------- FORM FIELDS (fixes “labels inline” look) ---------- */
+/* ---------- FORM FIELDS ---------- */
 label.field,
 .summary-box label,
 .tool-form label{
@@ -201,11 +206,19 @@ textarea{
   font-size: .82rem;
 }
 
+.copy-btn.copied{
+  box-shadow: 0 0 18px rgba(56,189,248,0.65);
+  border-color: rgba(56,189,248,0.7);
+}
+
 .glow-send{
   box-shadow: 0 0 28px rgba(249,115,22,0.55);
 }
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
+/* v2.6 JS renders buttons with:
+   .photo-thumb-btn + .photo-thumb-selected, containing img.photo-thumb-img
+*/
 .photo-grid{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -213,16 +226,34 @@ textarea{
   margin-top: .9rem;
 }
 
-.photo-grid img{
+.photo-thumb-btn{
+  padding: 0;
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 12px;
+  background: rgba(2,6,23,.6);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.photo-thumb-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(56,189,248,0.35);
+}
+
+.photo-thumb-img{
   width: 100%;
   height: 86px;
   object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid rgba(148,163,184,.35);
-  cursor: pointer;
+  display: block;
 }
 
-/* ---------- STEP 2 “TILES” (matches your pic 2) ---------- */
+.photo-thumb-selected{
+  border-color: rgba(56,189,248,0.9);
+  box-shadow: 0 0 18px rgba(56,189,248,0.55);
+}
+
+/* ---------- STEP 2 “TILES” ---------- */
 .step2-subtitle{ margin: .2rem 0 1rem; }
 
 .step2-grid{
@@ -235,7 +266,7 @@ textarea{
   padding: 1rem;
   border-radius: var(--card-radius);
   position: relative;
-  min-height: 260px; /* tile feel */
+  min-height: 260px;
 }
 
 .step2-card h3{
@@ -283,7 +314,7 @@ textarea{
   box-shadow: 0 0 26px rgba(56,189,248,0.9);
 }
 
-/* ---------- STEP 3 CREATIVE HUB (restores 2-column like pic 1) ---------- */
+/* ---------- STEP 3 CREATIVE HUB ---------- */
 .creative-hub{
   display: grid;
   grid-template-columns: 1.65fr .95fr;
@@ -298,9 +329,15 @@ textarea{
   text-align: center;
   color: rgba(229,231,235,.9);
   cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
 
 .photo-dropzone span{ color: var(--text-muted); }
+
+.photo-dropzone.dragover{
+  border-color: rgba(56,189,248,.9);
+  box-shadow: 0 0 18px rgba(56,189,248,.35);
+}
 
 .creative-thumb-grid{
   display: grid;
@@ -309,13 +346,26 @@ textarea{
   margin: 1rem 0;
 }
 
-.creative-thumb-grid img{
+/* v2.6 JS uses className: "creative-thumb" and toggles ".selected" */
+.creative-thumb{
   width: 100%;
   height: 72px;
   object-fit: cover;
   border-radius: 12px;
   border: 1px solid rgba(148,163,184,.35);
   cursor: pointer;
+  display: block;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.creative-thumb:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(56,189,248,0.25);
+}
+
+.creative-thumb.selected{
+  border-color: rgba(56,189,248,0.95);
+  box-shadow: 0 0 18px rgba(56,189,248,0.6);
 }
 
 .tuner-preview{
@@ -349,7 +399,7 @@ textarea{
   width: 100%;
 }
 
-/* ---------- Social-ready strip ---------- */
+/* ---------- Social-ready strip (v2.6 JS uses .social-carousel-item) ---------- */
 .social-ready-panel{ margin-top: 1.5rem; }
 .panel-header p{ margin: .35rem 0 0; color: var(--text-muted); }
 
@@ -387,6 +437,56 @@ textarea{
   margin-top: 1rem;
 }
 
+/* JS creates buttons with class "social-carousel-item" and img "social-carousel-img" */
+.social-carousel-item{
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.25);
+  background: rgba(2,6,23,.55);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, opacity .12s ease;
+}
+
+.social-carousel-item:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(56,189,248,0.25);
+}
+
+.social-carousel-img{
+  width: 100%;
+  height: 68px;
+  object-fit: cover;
+  display: block;
+}
+
+.social-carousel-item.selected{
+  border-color: rgba(56,189,248,0.95);
+  box-shadow: 0 0 18px rgba(56,189,248,0.55);
+}
+
+.social-carousel-item.picked{
+  outline: 2px solid rgba(249,115,22,0.75);
+  outline-offset: 0px;
+}
+
+.social-carousel-item.locked{
+  opacity: .65;
+}
+
+.social-carousel-item.locked::after{
+  content: "🔒";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 14px;
+  background: rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 999px;
+  padding: 2px 6px;
+}
+
 .social-carousel-actions{
   display: flex;
   gap: .75rem;
@@ -395,6 +495,10 @@ textarea{
 }
 
 /* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
+/* IMPORTANT: wireToolDrawer uses:
+   modal.classList.remove("hidden"); modal.style.display="flex";
+   and close adds hidden + style.display="none"
+*/
 .side-modal{
   position: fixed;
   inset: 0;
@@ -428,7 +532,8 @@ textarea{
   overflow: auto;
 }
 
-.modal-close-btn{
+.modal-close-btn,
+.side-modal-close{
   border: 1px solid rgba(148,163,184,.35);
   background: rgba(2,6,23,.6);
   color: var(--text-main);
@@ -479,6 +584,8 @@ textarea{
   background: rgba(255,255,255,.08);
 }
 
+.drill-result.hidden{ display: none; }
+
 /* ---------- TOOLTIP ---------- */
 .tooltip{ position: relative; cursor: pointer; }
 
@@ -527,51 +634,12 @@ textarea{
     margin-top: 1rem;
   }
 }
+
 /* ======================================================
-   FIX: Social-ready Photo Strip thumbnails (always)
+   REMOVED (DEDUPED): legacy “social-ready-*” strip CSS
+   Why:
+   - Your v2.6 HTML/JS uses #socialCarousel + .social-carousel-item,
+     not .social-ready-viewport / .social-ready-thumb.
+   If you *still* have those legacy elements in HTML, delete them
+   OR tell me and I’ll re-add a compatibility block.
    ====================================================== */
-
-.social-ready-wrap {
-  margin-top: 12px;
-}
-
-.social-ready-viewport {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.social-ready-thumb {
-  flex: 0 0 auto;
-  width: 90px;
-  height: 68px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.25);
-  object-fit: cover;
-  display: block;
-  cursor: pointer;
-  scroll-snap-align: start;
-}
-
-.social-ready-thumb.selected {
-  outline: 2px solid rgba(56,189,248,0.95);
-  box-shadow: 0 0 18px rgba(56,189,248,0.6);
-}
-
-/* Optional: keep any “main preview” from going gigantic */
-.social-ready-preview img {
-  max-width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  border-radius: 14px;
-  display: block;
-  margin: 0 auto;
-}
