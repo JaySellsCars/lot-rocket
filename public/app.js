@@ -23,7 +23,7 @@ function initSideToolsHardReset() {
     ["imageLauncher", "imageModal"],
     ["videoLauncher", "videoModal"],
   ];
-
+const $ = (id) => document.getElementById(id);
   const debug = (...args) => console.log("🧰 SideTools:", ...args);
 
   const openModal = (modal) => {
@@ -83,7 +83,7 @@ const closeModal = (modal) => {
     modal: m, modalFound: !!document.getElementById(m)
   })));
 }
-const $ = (id) => document.getElementById(id);
+
 
 
   // 5) Drill mode special (if present)
@@ -110,7 +110,8 @@ const $ = (id) => document.getElementById(id);
     modalFound: !!$(m),
   }));
   debug("Presence report:", present);
-})();
+}
+
 
   // ==================================================
   // GLOBAL LIMITS + SINGLE SOURCE OF TRUTH
