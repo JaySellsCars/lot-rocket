@@ -102,15 +102,16 @@ const closeModal = (modal) => {
     }
   }
 
-  // 6) Final sanity report (what’s actually on the page)
-  const present = TOOL_CONFIG.map(([l, m]) => ({
-    launcher: l,
-    launcherFound: !!$(l),
-    modal: m,
-    modalFound: !!$(m),
-  }));
-  debug("Presence report:", present);
-}
+// 6) Final sanity report (what's actually on the page)
+const present = TOOL_CONFIG.map(([launcherId, modalId]) => ({
+  launcherId,
+  launcherFound: !!$(launcherId),
+  modalId,
+  modalFound: !!$(modalId),
+}));
+
+debug("Presence report:", present);
+
 
 
   // ==================================================
