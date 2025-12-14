@@ -403,18 +403,17 @@ const closeModal = (modal) => {
       modal.querySelector(".modal-close-btn") ||
       modal.querySelector("[data-close]");
 
-    const open = () => {
-      modal.classList.remove("hidden");
-      modal.style.display = "flex";
-      if (typeof onOpen === "function") onOpen();
-    };
+const open = () => {
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  if (typeof onOpen === "function") onOpen();
+};
 
-    const close = () => {
-    modal.classList.add("hidden");
-modal.setAttribute("aria-hidden", "true");
+const close = () => {
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+};
 
-      modal.style.display = "none";
-    };
 
     launcher.addEventListener("click", (e) => {
       e.preventDefault();
