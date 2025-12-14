@@ -1,142 +1,27 @@
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
-// Goal: zero duplicate declarations, single source of truth photo state,
-// MAX_PHOTOS = 24 everywhere, stable buttons + modals + Step 3 tools.
+// Goals:
+// - ZERO duplicate declarations
+// - ONE single source of truth for photo state (MAX_PHOTOS = 24 everywhere)
+// - Stable buttons + modals + Step 3 tools (Creative Lab + Social Strip + Canvas + Design Studio)
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean)");
   const apiBase = "";
-// ==================================================
-// ROCKET-2: HARD RESET SIDE TOOLS WIRING (v2.6)
-// Fixes: launchers not opening, modals not closing, overlay click blocks.
-// Paste near top of DOMContentLoaded (after apiBase).
-// ==================================================
-function initSideToolsHardReset() {
-  const TOOL_CONFIG = [
-    ["objectionLauncher", "objectionModal"],
-    ["calcLauncher", "calcModal"],
-    ["paymentLauncher", "paymentModal"],
-    ["incomeLauncher", "incomeModal"],
-    ["workflowLauncher", "workflowModal"],
-    ["messageLauncher", "messageModal"],
-    ["askLauncher", "askModal"],
-    ["carLauncher", "carModal"],
-    ["imageLauncher", "imageModal"],
-    ["videoLauncher", "videoModal"],
-  ];
-const $ = (id) => document.getElementById(id);
-  const debug = (...args) => console.log("🧰 SideTools:", ...args);
-
-  const openModal = (modal) => {
-    if (!modal) return;
-    modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden", "false");
-  };
-
-const closeModal = (modal) => {
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
-};
-
-
-  // Wire launchers
-  TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-    const launcher = document.getElementById(launcherId);
-    const modal = document.getElementById(modalId);
-
-    if (!launcher) {
-      debug("Missing launcher:", launcherId);
-      return;
-    }
-    if (!modal) {
-      debug("Missing modal:", modalId);
-      return;
-    }
-
-    launcher.addEventListener("click", (e) => {
-      e.preventDefault();
-      debug("OPEN:", modalId);
-      openModal(modal);
-    });
-  });
-
-  // Wire close buttons (works for any modal)
-  document.addEventListener("click", (e) => {
-    const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
-    if (!closeBtn) return;
-
-    const modal = closeBtn.closest(".side-modal");
-    if (!modal) return;
-
-    debug("CLOSE:", modal.id);
-    closeModal(modal);
-  });
-
-  // Optional: ESC closes any open side modal
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    document.querySelectorAll(".side-modal:not(.hidden)").forEach((m) => closeModal(m));
-  });
-
-  debug("Presence report:", TOOL_CONFIG.map(([l, m]) => ({
-    launcher: l, launcherFound: !!document.getElementById(l),
-    modal: m, modalFound: !!document.getElementById(m)
-  })));
-}
-
-
-
-  // 5) Drill mode special (if present)
-  const drillLauncher = $("drillLauncher");
-  const drillModal = $("drillModeModal");
-  if (drillLauncher && drillModal) {
-    wireModalClose(drillModal);
-    if (drillLauncher.dataset.wired !== "true") {
-      drillLauncher.dataset.wired = "true";
-      drillLauncher.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        debug("OPEN: drillModeModal");
-        openModal(drillModal);
-      });
-    }
-  }
-
-// 6) Final sanity report (what's actually on the page)
-const present = TOOL_CONFIG.map(([launcherId, modalId]) => ({
-  launcherId,
-  launcherFound: !!$(launcherId),
-  modalId,
-  modalFound: !!$(modalId),
-}));
-
-debug("Presence report:", present);
-
-
 
   // ==================================================
-  // GLOBAL LIMITS + SINGLE SOURCE OF TRUTH
+  // CORE CONSTANTS + GLOBAL STORE
   // ==================================================
   const MAX_PHOTOS = 24;
 
-  // Single photo store (objects, not mixed types)
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
 
   STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // urls (strings)
   STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls (strings)
-
-  // Social-ready: normalized objects: { url, originalUrl, selected, locked }
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-  STORE.socialReadyPhotos = STORE.socialReadyPhotos
-    .map((p) => (typeof p === "string" ? { url: p, originalUrl: p, selected: true, locked: false } : p))
-    .filter((p) => p && p.url);
-
-  let socialIndex = 0; // preview index
-  let dealerPhotos = []; // [{ src, selected }]
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : []; // objects (normalized below)
 
   // ==================================================
-  // UTIL
+  // UTIL (ONE AND ONLY ONE $)
   // ==================================================
   const $ = (id) => document.getElementById(id);
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -144,7 +29,7 @@ debug("Presence report:", present);
   function autoResizeTextarea(el) {
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = el.scrollHeight + 4 + "px";
+    el.style.height = (el.scrollHeight + 4) + "px";
   }
 
   function capMax(arr, max = MAX_PHOTOS) {
@@ -165,15 +50,17 @@ debug("Presence report:", present);
 
   function normalizeSocialReady() {
     STORE.socialReadyPhotos = (STORE.socialReadyPhotos || [])
-      .map((p) => (typeof p === "string" ? { url: p, originalUrl: p, selected: true, locked: false } : p))
+      .map((p) =>
+        typeof p === "string"
+          ? { url: p, originalUrl: p, selected: true, locked: false }
+          : p
+      )
       .filter((p) => p && p.url);
 
-    // cap to MAX_PHOTOS (keep most recent at the end)
     if (STORE.socialReadyPhotos.length > MAX_PHOTOS) {
       STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(-MAX_PHOTOS);
     }
 
-    // fix preview index
     if (!STORE.socialReadyPhotos.length) socialIndex = 0;
     else socialIndex = clamp(socialIndex, 0, STORE.socialReadyPhotos.length - 1);
   }
@@ -191,7 +78,6 @@ debug("Presence report:", present);
     }
   }
 
-  // Trigger a download (jpg/png/dataURL)
   function triggerDownload(url, filename) {
     if (!url) return;
     const a = document.createElement("a");
@@ -234,6 +120,133 @@ debug("Presence report:", present);
   });
 
   // ==================================================
+  // RIGHT-SIDE TOOL MODALS (SINGLE, STABLE WIRING)
+  // - Uses hidden class + aria-hidden
+  // - Prevents double wiring
+  // - Global delegated close buttons + ESC close
+  // ==================================================
+  const SIDE_TOOL_CONFIG = [
+    { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
+    { launcherId: "calcLauncher", modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
+    { launcherId: "paymentLauncher", modalIds: ["paymentModal"] },
+    { launcherId: "incomeLauncher", modalIds: ["incomeModal"] },
+    { launcherId: "workflowLauncher", modalIds: ["workflowModal"] },
+    { launcherId: "messageLauncher", modalIds: ["messageModal"] },
+    { launcherId: "askLauncher", modalIds: ["askModal"] },
+    { launcherId: "carLauncher", modalIds: ["carModal"] },
+    { launcherId: "imageLauncher", modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
+    { launcherId: "videoLauncher", modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
+  ];
+
+  const sideToolsDebug = (...args) => console.log("🧰 SideTools:", ...args);
+
+  function resolveFirstExisting(ids) {
+    return (ids || []).map((id) => $(id)).find(Boolean) || null;
+  }
+
+  function openSideModal(modal) {
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeSideModal(modal) {
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  function wireSideTool(launcherId, modalIds, onOpen) {
+    const launcher = $(launcherId);
+    if (!launcher) return;
+
+    if (launcher.dataset.wired === "true") return;
+    launcher.dataset.wired = "true";
+
+    const modal = resolveFirstExisting(modalIds);
+    if (!modal) {
+      sideToolsDebug("Missing modal for launcher:", launcherId, modalIds);
+      return;
+    }
+
+    if (modal.dataset.backdropWired !== "true") {
+      modal.dataset.backdropWired = "true";
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeSideModal(modal);
+      });
+    }
+
+    launcher.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openSideModal(modal);
+      if (typeof onOpen === "function") onOpen();
+    });
+  }
+
+  // Delegated close buttons for ANY side modal
+  if (document.body.dataset.sideModalCloseWired !== "true") {
+    document.body.dataset.sideModalCloseWired = "true";
+
+    document.addEventListener("click", (e) => {
+      const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
+      if (!closeBtn) return;
+      const modal = closeBtn.closest(".side-modal");
+      if (!modal) return;
+      sideToolsDebug("CLOSE:", modal.id);
+      closeSideModal(modal);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      document.querySelectorAll(".side-modal:not(.hidden)").forEach((m) => closeSideModal(m));
+    });
+  }
+
+  function buildVideoContextFromKit() {
+    const parts = [];
+    const label = (
+      $("vehicleLabel")?.value ||
+      $("summaryLabel")?.textContent ||
+      ""
+    ).trim();
+    const price = (
+      $("priceInfo")?.value ||
+      $("summaryPrice")?.textContent ||
+      ""
+    ).trim();
+    const url = ($("vehicleUrl")?.value || "").trim();
+    const tags = ($("hashtags")?.value || "").trim();
+    if (label) parts.push(`Vehicle: ${label}`);
+    if (price) parts.push(`Price/Offer: ${price}`);
+    if (url) parts.push(`Listing URL: ${url}`);
+    if (tags) parts.push(`Hashtags: ${tags}`);
+    return parts.join("\n");
+  }
+
+  // Wire side tools (video fills context on open)
+  SIDE_TOOL_CONFIG.forEach((t) => {
+    if (t.launcherId === "videoLauncher") {
+      wireSideTool(t.launcherId, t.modalIds, () => {
+        const videoContextField = $("videoContext");
+        if (videoContextField) {
+          videoContextField.value = buildVideoContextFromKit();
+          autoResizeTextarea(videoContextField);
+        }
+      });
+    } else {
+      wireSideTool(t.launcherId, t.modalIds);
+    }
+  });
+
+  sideToolsDebug("Presence report:", SIDE_TOOL_CONFIG.map((t) => ({
+    launcher: t.launcherId,
+    launcherFound: !!$(t.launcherId),
+    modalIds: t.modalIds,
+    modalFound: !!resolveFirstExisting(t.modalIds),
+  })));
+
+  // ==================================================
   // STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
   // ==================================================
   const vehicleUrlInput = $("vehicleUrl");
@@ -256,11 +269,20 @@ debug("Presence report:", present);
 
   const photosGrid = $("photosGrid");
 
+  let socialIndex = 0; // preview index
+  let dealerPhotos = []; // [{ src, selected }]
+
+  function setTA(el, v) {
+    if (!el) return;
+    el.value = v || "";
+    autoResizeTextarea(el);
+  }
+
   function renderDealerPhotos() {
     if (!photosGrid) return;
     photosGrid.innerHTML = "";
 
-    const list = capMax(dealerPhotos, MAX_PHOTOS); // UI shows up to 24
+    const list = capMax(dealerPhotos, MAX_PHOTOS);
     list.forEach((photo, index) => {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -283,12 +305,6 @@ debug("Presence report:", present);
         renderDealerPhotos();
       });
     });
-  }
-
-  function setTA(el, v) {
-    if (!el) return;
-    el.value = v || "";
-    autoResizeTextarea(el);
   }
 
   async function doBoostListing() {
@@ -349,131 +365,6 @@ debug("Presence report:", present);
   boostButton?.addEventListener("click", doBoostListing);
 
   // ==================================================
-  // FLOATING TOOLS → RIGHT-SIDE MODALS (ToolWire) [CLEAN]
-  // - Prevents double wiring (launcher + modal)
-  // - Supports legacy modal IDs
-  // - DOES NOT wire canvas/design launchers (to avoid duplicates)
-  // ==================================================
-  const TOOL_CONFIG = [
-  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
-
-
-
-    // Calculator: include legacy IDs so it opens even if HTML differs
-    { launcherId: "calcLauncher", modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
-
-    { launcherId: "paymentLauncher", modalIds: ["paymentModal"] },
-    { launcherId: "incomeLauncher", modalIds: ["incomeModal"] },
-    { launcherId: "workflowLauncher", modalIds: ["workflowModal"] },
-    { launcherId: "messageLauncher", modalIds: ["messageModal"] },
-    { launcherId: "askLauncher", modalIds: ["askModal"] },
-    { launcherId: "carLauncher", modalIds: ["carModal"] },
-
-    // Image/Video fallbacks (covers old IDs)
-    { launcherId: "imageLauncher", modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
-    { launcherId: "videoLauncher", modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
-  ];
-
-  function wireToolDrawer(launcherId, modalIds, onOpen) {
-    const launcher = document.getElementById(launcherId);
-    if (!launcher) return;
-
-    // Prevent double wiring (launcher)
-    if (launcher.dataset.wired === "true") return;
-    launcher.dataset.wired = "true";
-
-    const modal =
-      (modalIds || [])
-        .map((id) => document.getElementById(id))
-        .find(Boolean) || null;
-
-    if (!modal) {
-      console.warn("[ToolWire] Missing modal for launcher:", {
-        launcherId,
-        launcherFound: true,
-        modalIds,
-        modalFound: false,
-      });
-      return;
-    }
-
-    // Prevent double wiring (modal/backdrop)
-    if (modal.dataset.wired === "true") return;
-    modal.dataset.wired = "true";
-
-    const closeBtn =
-      modal.querySelector(".side-modal-close") ||
-      modal.querySelector(".modal-close-btn") ||
-      modal.querySelector("[data-close]");
-
-const open = () => {
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-  if (typeof onOpen === "function") onOpen();
-};
-
-const close = () => {
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
-};
-
-
-
-    launcher.addEventListener("click", (e) => {
-      e.preventDefault();
-      open();
-    });
-
-    if (closeBtn && closeBtn.dataset.wired !== "true") {
-      closeBtn.dataset.wired = "true";
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        close();
-      });
-    }
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close();
-    });
-  }
-
-  function buildVideoContextFromKit() {
-    const parts = [];
-    const label = (
-      document.getElementById("vehicleLabel")?.value ||
-      document.getElementById("summaryLabel")?.textContent ||
-      ""
-    ).trim();
-    const price = (
-      document.getElementById("priceInfo")?.value ||
-      document.getElementById("summaryPrice")?.textContent ||
-      ""
-    ).trim();
-    const url = (document.getElementById("vehicleUrl")?.value || "").trim();
-    const tags = (document.getElementById("hashtags")?.value || "").trim();
-    if (label) parts.push(`Vehicle: ${label}`);
-    if (price) parts.push(`Price/Offer: ${price}`);
-    if (url) parts.push(`Listing URL: ${url}`);
-    if (tags) parts.push(`Hashtags: ${tags}`);
-    return parts.join("\n");
-  }
-
-  TOOL_CONFIG.forEach((t) => {
-    if (t.launcherId === "videoLauncher") {
-      wireToolDrawer(t.launcherId, t.modalIds, () => {
-        // Resolve field at open-time (more reliable than capturing once)
-        const videoContextField = document.getElementById("videoContext");
-        if (videoContextField) {
-          videoContextField.value = buildVideoContextFromKit();
-          autoResizeTextarea(videoContextField);
-        }
-      });
-    } else {
-      wireToolDrawer(t.launcherId, t.modalIds);
-    }
-  });
-
-  // ==================================================
   // COPY / REGEN
   // ==================================================
   document.querySelectorAll(".copy-btn").forEach((btn) => {
@@ -487,9 +378,7 @@ const close = () => {
       if (!el) return;
 
       el.select?.();
-      try {
-        el.setSelectionRange?.(0, 99999);
-      } catch {}
+      try { el.setSelectionRange?.(0, 99999); } catch {}
       document.execCommand("copy");
 
       btn.classList.add("copied");
@@ -734,7 +623,6 @@ const close = () => {
     const output = $(outputId);
     if (!form || !output) return;
 
-    // Prevent double wiring
     if (form.dataset.wired === "true") return;
     form.dataset.wired = "true";
 
@@ -874,8 +762,8 @@ const close = () => {
     });
   }
 
-  if (drillModal && drillModal.dataset.wired !== "true") {
-    drillModal.dataset.wired = "true";
+  if (drillModal && drillModal.dataset.backdropWired !== "true") {
+    drillModal.dataset.backdropWired = "true";
     drillModal.addEventListener("click", (e) => {
       if (e.target === drillModal) closeDrillModal();
     });
@@ -1237,7 +1125,7 @@ const close = () => {
     });
   }
 
-  // Step 1 -> Send Top Photos into Creative + Social Strip (cap to 24)
+  // Step 1 -> Send Top Photos into Creative + Social Strip
   const step1SendTopBtn = $("sendTopPhotosBtn");
   if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
     step1SendTopBtn.dataset.wired = "true";
@@ -1254,7 +1142,6 @@ const close = () => {
       STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, ...chosen]), MAX_PHOTOS);
       renderCreativeThumbs();
 
-      // Optional: also seed Social Strip with chosen (not edited)
       chosen.forEach((u) => addToSocialReady(u, false));
 
       step1SendTopBtn.classList.add("success");
@@ -1361,12 +1248,14 @@ const close = () => {
   }
 
   socialPrevBtn?.addEventListener("click", () => {
+    normalizeSocialReady();
     if (!STORE.socialReadyPhotos.length) return;
     socialIndex = (socialIndex - 1 + STORE.socialReadyPhotos.length) % STORE.socialReadyPhotos.length;
     renderSocialStrip();
   });
 
   socialNextBtn?.addEventListener("click", () => {
+    normalizeSocialReady();
     if (!STORE.socialReadyPhotos.length) return;
     socialIndex = (socialIndex + 1) % STORE.socialReadyPhotos.length;
     renderSocialStrip();
@@ -1486,7 +1375,6 @@ const close = () => {
     creativeStudioOverlay.classList.add("hidden");
   }
 
-  // Wire canvas launcher HERE (single source of truth)
   if (canvasLauncher && canvasLauncher.dataset.wired !== "true") {
     canvasLauncher.dataset.wired = "true";
     canvasLauncher.addEventListener("click", (e) => {
@@ -1499,8 +1387,8 @@ const close = () => {
     creativeCloseBtn.dataset.wired = "true";
     creativeCloseBtn.addEventListener("click", closeCreativeStudio);
 
-    if (creativeStudioOverlay.dataset.wired !== "true") {
-      creativeStudioOverlay.dataset.wired = "true";
+    if (creativeStudioOverlay.dataset.backdropWired !== "true") {
+      creativeStudioOverlay.dataset.backdropWired = "true";
       creativeStudioOverlay.addEventListener("click", (e) => {
         if (e.target === creativeStudioOverlay) closeCreativeStudio();
       });
@@ -1557,6 +1445,9 @@ const close = () => {
   });
 
   creativeToolButtons.forEach((btn) => {
+    if (btn.dataset.wired === "true") return;
+    btn.dataset.wired = "true";
+
     btn.addEventListener("click", () => {
       const tool = btn.getAttribute("data-tool");
       if (!tool) return;
@@ -1570,6 +1461,7 @@ const close = () => {
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva) — stable init + tray
+  // (Your original section kept, just cleaned for wiring consistency)
   // ==================================================
   const designStudioOverlay = $("designStudioOverlay");
   const designLauncher = $("designLauncher");
@@ -1635,6 +1527,14 @@ const close = () => {
     studioLayer.draw();
   }
 
+  function saveStudioHistory() {
+    if (!studioStage) return;
+    const json = studioStage.toJSON();
+    studioHistory = studioHistory.slice(0, studioHistoryIndex + 1);
+    studioHistory.push(json);
+    studioHistoryIndex = studioHistory.length - 1;
+  }
+
   function attachNodeInteractions(node) {
     node.on("click tap", () => selectStudioNode(node));
     node.on("dragend transformend", () => saveStudioHistory());
@@ -1647,14 +1547,6 @@ const close = () => {
       if (node.getClassName && node.getClassName() === "Transformer") return;
       attachNodeInteractions(node);
     });
-  }
-
-  function saveStudioHistory() {
-    if (!studioStage) return;
-    const json = studioStage.toJSON();
-    studioHistory = studioHistory.slice(0, studioHistoryIndex + 1);
-    studioHistory.push(json);
-    studioHistoryIndex = studioHistory.length - 1;
   }
 
   function restoreStudioFromHistory(index) {
@@ -1844,12 +1736,6 @@ const close = () => {
       const finalRatio = fitRatio * 0.9;
       const w = img.width * finalRatio;
       const h = img.height * finalRatio;
-
-      if (!asBackground) {
-        studioLayer.getChildren().forEach((child) => {
-          if (child.name && child.name() === "Photo Layer") child.destroy();
-        });
-      }
 
       const node = new Konva.Image({
         image: img,
@@ -2250,9 +2136,7 @@ const close = () => {
       img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
 
       img.addEventListener("dragstart", (e) => {
-        try {
-          e.dataTransfer.setData("text/plain", url);
-        } catch {}
+        try { e.dataTransfer.setData("text/plain", url); } catch {}
       });
 
       studioPhotoTray.appendChild(img);
@@ -2265,9 +2149,7 @@ const close = () => {
       konvaContainer.addEventListener("drop", (e) => {
         e.preventDefault();
         let url = "";
-        try {
-          url = e.dataTransfer.getData("text/plain");
-        } catch {}
+        try { url = e.dataTransfer.getData("text/plain"); } catch {}
         if (url) addStudioImageFromUrl(url, false);
       });
     }
@@ -2281,7 +2163,9 @@ const close = () => {
     else studioStage?.draw?.();
 
     studioAvailablePhotos =
-      Array.isArray(forceSources) && forceSources.length ? forceSources.slice(0, MAX_PHOTOS) : gatherImageUrlsForStudios();
+      Array.isArray(forceSources) && forceSources.length
+        ? forceSources.slice(0, MAX_PHOTOS)
+        : gatherImageUrlsForStudios();
 
     renderStudioPhotoTray();
   }
@@ -2290,7 +2174,6 @@ const close = () => {
     designStudioOverlay?.classList.add("hidden");
   }
 
-  // Wire design launcher HERE (single source of truth)
   if (designLauncher && designLauncher.dataset.wired !== "true") {
     designLauncher.dataset.wired = "true";
     designLauncher.addEventListener("click", (e) => {
@@ -2303,8 +2186,8 @@ const close = () => {
     designCloseBtn.dataset.wired = "true";
     designCloseBtn.addEventListener("click", closeDesignStudio);
 
-    if (designStudioOverlay.dataset.wired !== "true") {
-      designStudioOverlay.dataset.wired = "true";
+    if (designStudioOverlay.dataset.backdropWired !== "true") {
+      designStudioOverlay.dataset.backdropWired = "true";
       designStudioOverlay.addEventListener("click", (e) => {
         if (e.target === designStudioOverlay) closeDesignStudio();
       });
@@ -2316,7 +2199,6 @@ const close = () => {
     if (!list.length) return alert("No photos available. Boost a listing or add photos first.");
 
     openDesignStudio(list);
-
     if (list[0]) addStudioImageFromUrl(list[0], true);
   }
 
@@ -2325,15 +2207,12 @@ const close = () => {
     let urls = [];
 
     const selectedThumbs = creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
-    if (selectedThumbs.length) {
-      selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
-    }
+    if (selectedThumbs.length) selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
 
     if (!urls.length) urls = STORE.creativePhotos.slice(0, MAX_PHOTOS);
     if (!urls.length) urls = dealerPhotos.map((p) => p.src).slice(0, MAX_PHOTOS);
 
     if (!urls.length) return alert("Load or select a photo first before sending to Design Studio.");
-
     pushUrlsIntoDesignStudio(urls);
   });
 
@@ -2388,4 +2267,4 @@ const close = () => {
   renderDealerPhotos();
   renderCreativeThumbs();
   renderSocialStrip();
-
+});
