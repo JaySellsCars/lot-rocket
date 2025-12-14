@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Fixes: launchers not opening, modals not closing, overlay click blocks.
 // Paste near top of DOMContentLoaded (after apiBase).
 // ==================================================
-(function initSideToolsHardReset() {
+function initSideToolsHardReset() {
   const TOOL_CONFIG = [
     ["objectionLauncher", "objectionModal"],
     ["calcLauncher", "calcModal"],
@@ -26,101 +26,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const debug = (...args) => console.log("🧰 SideTools:", ...args);
 
-  // If ANY JS error earlier killed wiring, you'll see this log.
-  debug("Init hard reset wiring…");
-
-  // Helper: safe query
-  const $ = (id) => document.getElementById(id);
-
-  // 1) Ensure launchers are clickable (CSS/z-index issues are common)
-  const launcherIds = TOOL_CONFIG.map(([l]) => l).concat(["drillLauncher"]);
-  launcherIds.forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-
-    // Make it click-safe even if CSS messed up
-    el.style.pointerEvents = "auto";
-    el.style.position = el.style.position || "relative";
-    el.style.zIndex = el.style.zIndex || "9999";
-  });
-
-  // 2) Modal open/close primitives (works with side drawers)
-  function openModal(modal) {
+  const openModal = (modal) => {
     if (!modal) return;
-    modal.classList.add("open");
-    modal.style.display = "block";
-    modal.style.pointerEvents = "auto";
+    modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
-  }
+  };
 
-  function closeModal(modal) {
+  const closeModal = (modal) => {
     if (!modal) return;
-  modal.classList.remove("hidden");
-modal.setAttribute("aria-hidden", "false");
-
-    modal.style.display = "none";
+    modal.classList.add("hidden");
     modal.setAttribute("aria-hidden", "true");
-  }
+  };
 
-  // 3) Wire close controls inside a modal (multiple selector support)
-  function wireModalClose(modal) {
-    if (!modal || modal.dataset.closeWired === "true") return;
-    modal.dataset.closeWired = "true";
-
-    const closeSelectors = [".side-modal-close", ".modal-close-btn", "[data-close]"];
-    const closeBtn =
-      modal.querySelector(closeSelectors.join(",")) ||
-      null;
-
-    if (closeBtn && closeBtn.dataset.wired !== "true") {
-      closeBtn.dataset.wired = "true";
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        closeModal(modal);
-      });
-    }
-
-    // ESC closes modal
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modal.classList.contains("open")) closeModal(modal);
-    });
-
-    // Click outside (if you use overlay style) — safe: only if modal has data-overlay="true"
-    if (modal.dataset.overlay === "true") {
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) closeModal(modal);
-      });
-    }
-  }
-
-  // 4) Wire each launcher → modal
+  // Wire launchers
   TOOL_CONFIG.forEach(([launcherId, modalId]) => {
-    const launcher = $(launcherId);
-    const modal = $(modalId);
+    const launcher = document.getElementById(launcherId);
+    const modal = document.getElementById(modalId);
 
     if (!launcher) {
-      debug("❌ Missing launcher ID:", launcherId);
+      debug("Missing launcher:", launcherId);
       return;
     }
     if (!modal) {
-      debug("❌ Missing modal ID:", modalId);
+      debug("Missing modal:", modalId);
       return;
     }
 
-    wireModalClose(modal);
-
-    // Prevent duplicate wiring
-    if (launcher.dataset.wired === "true") return;
-    launcher.dataset.wired = "true";
-
     launcher.addEventListener("click", (e) => {
       e.preventDefault();
-      e.stopPropagation();
       debug("OPEN:", modalId);
       openModal(modal);
     });
   });
+
+  // Wire close buttons (works for any modal)
+  document.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
+    if (!closeBtn) return;
+
+    const modal = closeBtn.closest(".side-modal");
+    if (!modal) return;
+
+    debug("CLOSE:", modal.id);
+    closeModal(modal);
+  });
+
+  // Optional: ESC closes any open side modal
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".side-modal:not(.hidden)").forEach((m) => closeModal(m));
+  });
+
+  debug("Presence report:", TOOL_CONFIG.map(([l, m]) => ({
+    launcher: l, launcherFound: !!document.getElementById(l),
+    modal: m, modalFound: !!document.getElementById(m)
+  })));
+}
+
 
   // 5) Drill mode special (if present)
   const drillLauncher = $("drillLauncher");
