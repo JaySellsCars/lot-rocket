@@ -83,6 +83,7 @@ const closeModal = (modal) => {
     modal: m, modalFound: !!document.getElementById(m)
   })));
 }
+const $ = (id) => document.getElementById(id);
 
 
   // 5) Drill mode special (if present)
