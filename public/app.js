@@ -32,11 +32,12 @@ function initSideToolsHardReset() {
     modal.setAttribute("aria-hidden", "false");
   };
 
-  const closeModal = (modal) => {
-    if (!modal) return;
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden", "true");
-  };
+const closeModal = (modal) => {
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+};
+
 
   // Wire launchers
   TOOL_CONFIG.forEach(([launcherId, modalId]) => {
