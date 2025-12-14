@@ -2385,4 +2385,4 @@ const close = () => {
   renderDealerPhotos();
   renderCreativeThumbs();
   renderSocialStrip();
-});
+
