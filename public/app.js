@@ -234,6 +234,217 @@ document.addEventListener("DOMContentLoaded", () => {
     autoResizeTextarea(ta);
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
+  // ==================================================
+  // STEP 1 — SCRAPER / BOOST WIRING (CLEAN)
+  // Requires these HTML IDs:
+  // dealerUrl, vehicleLabel, priceOffer,
+  // boostListingBtn,
+  // vehicleTitle, vehiclePrice,
+  // photosGrid,
+  // sendPhotosToCreative (or sendTopPhotosToCreative)  <-- use ONE
+  // ==================================================
+
+  const dealerUrlInput   = $("dealerUrl");
+  const vehicleLabelInput = $("vehicleLabel");
+  const priceOfferInput   = $("priceOffer");
+
+  // Buttons
+  const boostBtn =
+    $("boostListingBtn") ||
+    $("boostThisListing") ||
+    $("boostButton");
+
+  const sendTopBtn =
+    $("sendPhotosToCreative") ||
+    $("sendTopPhotosToCreative") ||
+    $("sendTopPhotosToCreativeLab") ||
+    $("sendPhotosToCreativeLab");
+
+  // Output targets
+  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+  const photosGridEl   = $("photosGrid");
+
+  // --------------------------------------------------
+  // API calls (backend endpoints)
+  // --------------------------------------------------
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error || data?.message || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  // --------------------------------------------------
+  // Render grid
+  // --------------------------------------------------
+  function renderPhotosGrid(urls) {
+    if (!photosGridEl) return;
+
+    const clean = uniqueUrls(capMax(urls || [], MAX_PHOTOS));
+
+    photosGridEl.innerHTML = "";
+
+    clean.forEach((rawUrl, idx) => {
+      const url = getProxiedImageUrl(rawUrl);
+
+      const wrap = document.createElement("button");
+      wrap.type = "button";
+      wrap.className = "photo-thumb";
+      wrap.title = "Click to toggle select";
+
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = `photo ${idx + 1}`;
+      img.loading = "lazy";
+
+      // selected state defaults ON
+      wrap.dataset.selected = "1";
+      wrap.addEventListener("click", () => {
+        const isSel = wrap.dataset.selected === "1";
+        wrap.dataset.selected = isSel ? "0" : "1";
+        wrap.classList.toggle("is-off", isSel);
+      });
+
+      wrap.appendChild(img);
+      photosGridEl.appendChild(wrap);
+    });
+
+    console.log(`✅ Rendered ${clean.length} photos`);
+  }
+
+  function getSelectedGridUrls() {
+    if (!photosGridEl) return [];
+    const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
+    const selected = btns
+      .filter((b) => b.dataset.selected === "1")
+      .map((b) => b.querySelector("img")?.src)
+      .filter(Boolean);
+
+    // De-proxy if needed? keep as-is; your tools use proxy safely.
+    return uniqueUrls(capMax(selected, MAX_PHOTOS));
+  }
+
+  // --------------------------------------------------
+  // Boost Listing (scrape)
+  // Backend expected to return something like:
+  // { title, price, photos: [url...] }
+  // --------------------------------------------------
+  async function boostListing() {
+    const url = (dealerUrlInput?.value || "").trim();
+    if (!url) {
+      alert("Paste a dealer URL first.");
+      return;
+    }
+
+    if (boostBtn) boostBtn.disabled = true;
+
+    try {
+      const payload = {
+        url,
+        labelOverride: (vehicleLabelInput?.value || "").trim(),
+        priceOverride: (priceOfferInput?.value || "").trim(),
+        maxPhotos: MAX_PHOTOS,
+      };
+
+      const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+      const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+      const price = data?.price || data?.offer || data?.vehiclePrice || "";
+      const photos = data?.photos || data?.images || [];
+
+      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+      // store raw urls (not proxied)
+      STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+
+      renderPhotosGrid(STORE.creativePhotos);
+
+      console.log("✅ Boost complete", {
+        title,
+        price,
+        photos: STORE.creativePhotos.length,
+      });
+    } catch (err) {
+      console.error("❌ Boost failed:", err);
+      alert(err.message || "Boost failed.");
+    } finally {
+      if (boostBtn) boostBtn.disabled = false;
+    }
+  }
+
+  // --------------------------------------------------
+  // Send selected photos -> Step 3 (Creative Lab + Social Strip)
+  // --------------------------------------------------
+  function sendSelectedToCreative() {
+    const selected = getSelectedGridUrls();
+    if (!selected.length) {
+      alert("Select at least 1 photo first.");
+      return;
+    }
+
+    // Save into STORE (urls)
+    STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+
+    // Also populate socialReady (normalized objects)
+    STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
+      url: u,
+      originalUrl: u,
+      selected: true,
+      locked: false,
+    }));
+
+    // Keep design studio list in sync too (optional)
+    STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+
+    normalizeSocialReady();
+
+    // Call your Step 3 render functions if they exist
+    if (typeof window.renderCreativePhotoStrip === "function") {
+      window.renderCreativePhotoStrip();
+    }
+    if (typeof window.renderSocialCarousel === "function") {
+      window.renderSocialCarousel();
+    }
+    if (typeof window.refreshDesignStudioStrip === "function") {
+      window.refreshDesignStudioStrip();
+    }
+
+    console.log("✅ Sent photos to Step 3", {
+      creative: STORE.creativePhotos.length,
+      social: STORE.socialReadyPhotos.length,
+      studio: STORE.designStudioPhotos.length,
+    });
+  }
+
+  // --------------------------------------------------
+  // Wire buttons
+  // --------------------------------------------------
+  if (boostBtn) {
+    boostBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      boostListing();
+    });
+  } else {
+    console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
+  }
+
+  if (sendTopBtn) {
+    sendTopBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      sendSelectedToCreative();
+    });
+  } else {
+    console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
+  }
 
   // ==================================================
   // RIGHT-SIDE TOOL MODALS (SINGLE, STABLE WIRING)
