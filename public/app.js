@@ -15,11 +15,53 @@ document.addEventListener("DOMContentLoaded", () => {
   const apiBase = "";
 
 
-// ==================================================
-// MODAL SYSTEM v1 (CLEAN / SINGLE SOURCE OF TRUTH)
-// - One modal open at a time
-// - Close on overlay click, [data-close], Escape
-// ==================================================
+// ================================
+// UNIVERSAL SIDE-MODAL WIRING (v1 LOCK)
+// Matches HTML: class="side-modal hidden"
+// Buttons: data-modal-target="objectionModal"
+// Close: [data-close]
+// ================================
+let activeModal = null;
+
+function openSideModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return console.warn("❌ Modal not found:", modalId);
+
+  if (activeModal && activeModal !== modal) closeSideModal(activeModal);
+
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  activeModal = modal;
+}
+
+function closeSideModal(modal) {
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  if (activeModal === modal) activeModal = null;
+}
+
+// Open modal via launcher data-modal-target
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-modal-target]");
+  if (!btn) return;
+  openSideModal(btn.getAttribute("data-modal-target"));
+});
+
+// Close modal via [data-close]
+document.addEventListener("click", (e) => {
+  const closeBtn = e.target.closest("[data-close]");
+  if (!closeBtn) return;
+  closeSideModal(closeBtn.closest(".side-modal"));
+});
+
+// ESC closes active modal
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && activeModal) closeSideModal(activeModal);
+});
+
 
 
   // ==================================================
