@@ -18,15 +18,10 @@
   <meta charset="UTF-8" />
   <title>Lot Rocket</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Favicons -->
-
   <meta name="theme-color" content="#111827">
 
-<script src="/app.js?v=261" defer></script>
-
-
-
+  <!-- ✅ ONLY ONE app.js include -->
+  <script src="/app.js?v=261" defer></script>
 </head>
 
 <body class="dark-theme">
@@ -51,7 +46,6 @@
   <!-- MAIN -->
   <main class="layout">
 
-
     <!-- ========================================= -->
     <!-- STEP 1 – Dealer URL Scraper (LEFT)       -->
     <!-- ========================================= -->
@@ -63,9 +57,10 @@
 
         <label class="field">
           <span>Dealer Vehicle URL</span>
+          <!-- ✅ app.js expects dealerUrl -->
           <input
             type="text"
-            id="vehicleUrl"
+            id="dealerUrl"
             placeholder="Paste full dealer listing URL here..."
             autocomplete="off"
           />
@@ -101,7 +96,8 @@
           <p>Price: <span id="summaryPrice">—</span></p>
         </div>
 
-        <button id="boostButton" class="primary-btn summary-btn" type="button">
+        <!-- ✅ app.js expects boostListingBtn -->
+        <button id="boostListingBtn" class="primary-btn summary-btn" type="button">
           Boost This Listing
         </button>
         <div id="statusText" class="status-text"></div>
@@ -263,7 +259,7 @@
             <!-- ✅ app.js expects: autoEnhanceBtn -->
             <button id="autoEnhanceBtn" type="button" class="secondary-btn full">Auto Enhance</button>
 
-            <!-- NOTE: aiCinematicBtn is not wired in the shared v2.6 app.js yet (safe to keep) -->
+            <!-- safe to keep -->
             <button id="aiCinematicBtn" type="button" class="primary-btn full">AI Cinematic Background</button>
           </div>
         </div>
@@ -277,18 +273,15 @@
 
           <div class="social-carousel-shell">
             <div class="social-carousel-preview">
-              <!-- ✅ app.js expects: socialPrevBtn/socialNextBtn + socialCarouselPreviewImg -->
               <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
               <img id="socialCarouselPreviewImg" alt="Selected social-ready photo" />
               <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
             </div>
 
-            <!-- ✅ app.js expects: socialCarouselStatus + socialCarousel -->
             <p id="socialCarouselStatus" class="small-note"></p>
             <div id="socialCarousel" class="social-carousel"></div>
 
             <div class="social-carousel-actions">
-              <!-- ✅ IDs MUST MATCH app.js -->
               <button id="openDesignFromCarouselBtn" type="button" class="primary-btn">
                 Open / Replace in Design Studio 3.5
               </button>
@@ -314,8 +307,6 @@
 
   <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
   <aside class="floating-tools">
-
-    <!-- Tool drawers (side modals) -->
     <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
       <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
     </button>
@@ -352,7 +343,6 @@
       <span class="tool-icon">🚗</span><span class="tool-label">AI Car Expert</span>
     </button>
 
-    <!-- NOTE: app.js v2.6 ToolWire supports imageModal/videoModal (and legacy fallbacks) -->
     <button id="imageLauncher" class="tool-button" type="button" data-modal-target="imageModal">
       <span class="tool-icon">🖼</span><span class="tool-label">AI Image Generation</span>
     </button>
@@ -362,7 +352,6 @@
     </button>
 
     <!-- Studios (overlays) -->
-    <!-- ✅ app.js v2.6 wires these by ID: canvasLauncher / designLauncher -->
     <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
       <span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span>
     </button>
@@ -370,11 +359,9 @@
     <button id="designLauncher" class="tool-button" type="button" data-overlay-target="designStudioOverlay">
       <span class="tool-icon">🧩</span><span class="tool-label">Design Studio</span>
     </button>
-
   </aside>
 
   <!-- BOTTOM VIDEO OUTPUT DISPLAY -->
-  <!-- ✅ IDs match app.js v2.6 (populateVideoOutputs writes here too) -->
   <section id="videoOutputBottom" class="video-output-bottom">
     <h3>1. Video Script (Spoken)</h3>
     <button type="button" class="copy-btn" data-copy-target="videoScriptOutputBottom">Copy</button>
@@ -394,7 +381,6 @@
   </section>
 
   <!-- CANVAS CREATIVE STUDIO (Fabric) -->
-  <!-- ✅ IDs match app.js v2.6: creativeStudioOverlay / creativeClose / creativeCanvasPreset / creativeCanvas -->
   <div id="creativeStudioOverlay" class="creative-overlay hidden">
     <div class="creative-modal">
       <div class="creative-header">
@@ -437,7 +423,6 @@
   </div>
 
   <!-- DESIGN STUDIO (Konva) -->
-  <!-- ✅ IDs match app.js v2.6: designStudioOverlay / designClose / konvaStageContainer / studioPhotoTray -->
   <div id="designStudioOverlay" class="modal-overlay hidden">
     <div class="ds3-shell">
       <header class="ds3-header">
@@ -535,166 +520,151 @@
     </div>
   </div>
 
-  <!-- TOOL MODALS (keep your modal blocks as-is) -->
-  <!-- ✅ REQUIREMENT: each modal ID must exist EXACTLY ONCE:
-       objectionModal, drillModeModal, calcModal, paymentModal, incomeModal,
-       workflowModal, messageModal, askModal, carModal, imageModal, videoModal
-       and each should include a close element that matches one of:
-       .side-modal-close OR .modal-close-btn OR [data-close]
-  -->
-  <!-- ... keep all your modals exactly as you pasted ... -->
+  <!-- ============ REQUIRED SIDE MODALS (must exist once) ============ -->
 
+  <section id="objectionModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Objection Coach</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="objectionForm">
+          <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
+          <button type="submit">Coach Me</button>
+        </form>
+        <div id="objectionOutput"></div>
+      </div>
+    </div>
+  </section>
 
+  <section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Drill Mode</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <div id="drillOutput"></div>
+      </div>
+    </div>
+  </section>
 
+  <section id="calcModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <div id="calcOutput">Calculator UI goes here</div>
+      </div>
+    </div>
+  </section>
 
-<!-- ============ REQUIRED SIDE MODALS (must exist once) ============ -->
+  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Payment Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="paymentForm"></form>
+        <div id="paymentOutput"></div>
+      </div>
+    </div>
+  </section>
 
-<section id="objectionModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Objection Coach</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Income Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="incomeForm"></form>
+        <div id="incomeOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <form id="objectionForm">
-        <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
-        <button type="submit">Coach Me</button>
-      </form>
-      <div id="objectionOutput"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Drill Mode</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Workflow Builder</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="workflowForm"></form>
+        <div id="workflowOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <div id="drillOutput"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="calcModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="messageModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Message Builder</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="messageForm"></form>
+        <div id="messageOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <div id="calcOutput">Calculator UI goes here</div>
-    </div>
-  </div>
-</section>
-<section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Payment Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <form id="paymentForm"></form>
-      <div id="paymentOutput"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="incomeModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Income Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="askModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Ask AI</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="askForm"></form>
+        <div id="askOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <form id="incomeForm"></form>
-      <div id="incomeOutput"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="workflowModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Workflow Builder</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="carModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Car Expert</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="carForm"></form>
+        <div id="carOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <form id="workflowForm"></form>
-      <div id="workflowOutput"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="messageModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Message Builder</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="imageModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Image Generation</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="imageForm"></form>
+        <div id="imageOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <form id="messageForm"></form>
-      <div id="messageOutput"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="askModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Ask AI</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="videoModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Video Generation</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="videoForm"></form>
+        <div id="videoOutput"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <form id="askForm"></form>
-      <div id="askOutput"></div>
-    </div>
-  </div>
-</section>
-
-<section id="carModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Car Expert</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <form id="carForm"></form>
-      <div id="carOutput"></div>
-    </div>
-  </div>
-</section>
-
-<section id="imageModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Image Generation</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <form id="imageForm"></form>
-      <div id="imageOutput"></div>
-    </div>
-  </div>
-</section>
-
-<section id="videoModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Video Generation</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <form id="videoForm"></form>
-      <div id="videoOutput"></div>
-    </div>
-  </div>
-</section>
-
-
-
-
+  </section>
 
 </body>
 </html>
