@@ -7,8 +7,19 @@
 // - Stable buttons + modals + Step 3 tools (Creative Lab + Social Strip + Canvas + Design Studio)
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  // ✅ BOOT GUARD (must be inside DOMContentLoaded)
+  if (window.__LOTROCKET_BOOTED__) {
+    console.warn("🚫 Lot Rocket boot blocked (double init)");
+    return;
+  }
+  window.__LOTROCKET_BOOTED__ = true;
+
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean)");
   const apiBase = "";
+
+
+  
 
 
 // ================================
