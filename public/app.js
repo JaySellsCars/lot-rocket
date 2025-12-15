@@ -1,8 +1,4 @@
-if (window.__LOTROCKET_BOOTED__) {
-  console.warn("🚫 Lot Rocket boot blocked (double init)");
-  return;
-}
-window.__LOTROCKET_BOOTED__ = true;
+
 
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
 // Goals:
