@@ -23,18 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // ================================
-// UNIVERSAL SIDE-MODAL WIRING (v1 LOCK)
-// Matches HTML: class="side-modal hidden"
-// Buttons: data-modal-target="objectionModal"
-// Close: [data-close]
+// UNIVERSAL SIDE-MODAL WIRING
 // ================================
 let activeModal = null;
+
 function openSideModal(modalId) {
-  console.log("🟩 openSideModal called with:", modalId);
-
   const modal = document.getElementById(modalId);
-  console.log("🟨 modal element:", modal);
-
   if (!modal) {
     console.warn("❌ Modal not found:", modalId);
     return;
@@ -48,36 +42,22 @@ function openSideModal(modalId) {
   activeModal = modal;
 }
 
-
-  if (activeModal && activeModal !== modal) closeSideModal(activeModal);
-
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("modal-open");
-  activeModal = modal;
-}
-
 function closeSideModal(modal) {
   if (!modal) return;
+
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
+
   if (activeModal === modal) activeModal = null;
 }
 
+// Open modal via launcher data-modal-target
 document.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-modal-target]");
   if (!btn) return;
-
-  const target = btn.getAttribute("data-modal-target");
-  console.log("🟦 MODAL LAUNCH CLICK:", {
-    buttonId: btn.id,
-    target
-  });
-
-  openSideModal(target);
+  openSideModal(btn.getAttribute("data-modal-target"));
 });
-
 
 // Close modal via [data-close]
 document.addEventListener("click", (e) => {
@@ -90,6 +70,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && activeModal) closeSideModal(activeModal);
 });
+
 
 
 
