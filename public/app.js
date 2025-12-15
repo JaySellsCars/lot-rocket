@@ -7,6 +7,122 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean)");
   const apiBase = "";
+// ==================================================
+// MODAL SYSTEM v1 (CLEAN / SINGLE SOURCE OF TRUTH)
+// - One modal open at a time
+// - Close on overlay click, [data-close], Escape
+// ==================================================
+(() => {
+  let activeModal = null;
+
+  function isOpen(modal) {
+    return modal && modal.classList.contains("is-open");
+  }
+
+  function lockScroll(lock) {
+    document.documentElement.style.overflow = lock ? "hidden" : "";
+    document.body.style.overflow = lock ? "hidden" : "";
+  }
+
+  function closeModal(modal) {
+    if (!modal) return;
+
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+
+    // If your modal uses inline display instead of classes, keep this:
+    modal.style.display = "none";
+
+    // Close only if it is the active one
+    if (activeModal === modal) activeModal = null;
+
+    // If no modals open, unlock scroll
+    lockScroll(false);
+  }
+
+  function openModal(modal) {
+    if (!modal) return;
+
+    // Close any currently open modal first
+    if (activeModal && activeModal !== modal) closeModal(activeModal);
+
+    activeModal = modal;
+
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+
+    // If your modal uses inline display instead of classes, keep this:
+    modal.style.display = "block";
+
+    lockScroll(true);
+
+    // Focus first input/button if present (nice UX)
+    const focusable = modal.querySelector(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) focusable.focus();
+  }
+
+  // Global Escape-to-close
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && activeModal && isOpen(activeModal)) {
+      closeModal(activeModal);
+    }
+  });
+
+  // Delegated clicks:
+  // - click overlay (modal background) closes
+  // - any element with [data-close] closes
+  document.addEventListener("click", (e) => {
+    // Close buttons
+    const closeBtn = e.target.closest("[data-close]");
+    if (closeBtn && activeModal) {
+      e.preventDefault();
+      closeModal(activeModal);
+      return;
+    }
+
+    // Overlay click: if you click the modal container itself (background)
+    // This assumes your modal is the overlay wrapper and the inner panel is a child.
+    if (activeModal && e.target === activeModal) {
+      closeModal(activeModal);
+    }
+  });
+
+  // Helper: wire a launcher button to a modal
+  function wireLauncher(launcherId, modalId) {
+    const launcher = document.getElementById(launcherId);
+    const modal = document.getElementById(modalId);
+
+    if (!launcher) {
+      console.warn(`⚠️ ModalSystem: launcher not found: #${launcherId}`);
+      return;
+    }
+    if (!modal) {
+      console.warn(`⚠️ ModalSystem: modal not found: #${modalId}`);
+      return;
+    }
+
+    launcher.addEventListener("click", (e) => {
+      e.preventDefault();
+      openModal(modal);
+    });
+  }
+
+  // --------------------------------------------------
+  // WIRING: Side tool launchers -> modals
+  // IMPORTANT: Make sure these IDs match your HTML exactly.
+  // --------------------------------------------------
+  wireLauncher("objectionLauncher", "objectionModal");
+  wireLauncher("paymentLauncher", "paymentModal");
+  wireLauncher("messageLauncher", "messageModal");
+  wireLauncher("incomeLauncher", "incomeModal");
+
+  // If you have more tools, add them here:
+  // wireLauncher("tradeLauncher", "tradeModal");
+
+  console.log("✅ ModalSystem v1 wired");
+})();
 
   // ==================================================
   // CORE CONSTANTS + GLOBAL STORE
