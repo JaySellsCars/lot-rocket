@@ -7,6 +7,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean)");
   const apiBase = "";
+
+
 // ==================================================
 // MODAL SYSTEM v1 (CLEAN / SINGLE SOURCE OF TRUTH)
 // - One modal open at a time
