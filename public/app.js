@@ -22,10 +22,25 @@ document.addEventListener("DOMContentLoaded", () => {
 // Close: [data-close]
 // ================================
 let activeModal = null;
-
 function openSideModal(modalId) {
+  console.log("🟩 openSideModal called with:", modalId);
+
   const modal = document.getElementById(modalId);
-  if (!modal) return console.warn("❌ Modal not found:", modalId);
+  console.log("🟨 modal element:", modal);
+
+  if (!modal) {
+    console.warn("❌ Modal not found:", modalId);
+    return;
+  }
+
+  if (activeModal && activeModal !== modal) closeSideModal(activeModal);
+
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  activeModal = modal;
+}
+
 
   if (activeModal && activeModal !== modal) closeSideModal(activeModal);
 
