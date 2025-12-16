@@ -2084,7 +2084,8 @@ sideToolsDebug(
   // ==================================================
   // FINAL INIT
   // ==================================================
-  renderDealerPhotos();
+ renderPhotosGrid(STORE.creativePhotos);
+
   renderCreativeThumbs();
   renderSocialStrip();
 });
