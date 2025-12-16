@@ -78,6 +78,44 @@ document.addEventListener("keydown", (e) => {
   const top = openModals[openModals.length - 1];
   if (top) closeSideModal(top);
 });
+(function () {
+  const modal = document.getElementById("objectionModal");
+  if (!modal) return;
+
+  let bound = false;
+
+  modal.addEventListener("lr:open", () => {
+    if (bound) return;
+    bound = true;
+
+    const form = modal.querySelector("#objectionForm");
+    const input = modal.querySelector("#objectionInput");
+    const output = modal.querySelector("#objectionOutput");
+    if (!form || !input || !output) return;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const objection = input.value.trim();
+      if (!objection) return;
+
+      output.textContent = "Thinking…";
+
+      try {
+        const res = await fetch("/api/objection-coach", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ objection }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Request failed");
+        output.textContent = data.reply || "No response.";
+      } catch (err) {
+        console.error(err);
+        output.textContent = "Error generating response.";
+      }
+    });
+  });
+})();
 
 
 
@@ -397,132 +435,8 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 
 
 
-// ==================================================
-// RIGHT-SIDE TOOL MODALS (SINGLE, STABLE WIRING)
-// Uses .hidden + aria-hidden. Close via [data-close] and ESC.
-// Matches your HTML pattern:
-//   <button data-modal-target="objectionModal">
-//   <section id="objectionModal" class="side-modal hidden"> ... <button data-close>✕</button>
-// ==================================================
-const SIDE_TOOL_CONFIG = [
-  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
-  { launcherId: "drillLauncher",     modalIds: ["drillModeModal"] },
-  { launcherId: "calcLauncher",      modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
-  { launcherId: "paymentLauncher",   modalIds: ["paymentModal"] },
-  { launcherId: "incomeLauncher",    modalIds: ["incomeModal"] },
-  { launcherId: "workflowLauncher",  modalIds: ["workflowModal"] },
-  { launcherId: "messageLauncher",   modalIds: ["messageModal"] },
-  { launcherId: "askLauncher",       modalIds: ["askModal"] },
-  { launcherId: "carLauncher",       modalIds: ["carModal"] },
-  { launcherId: "imageLauncher",     modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
-  { launcherId: "videoLauncher",     modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
-];
 
-const sideToolsDebug = (...args) => console.log("🧰 SideTools:", ...args);
 
-function resolveFirstExisting(ids) {
-  return (ids || []).map((id) => $(id)).find(Boolean) || null;
-}
-
-function openSideModal(modal) {
-  if (!modal) return;
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-}
-
-function closeSideModal(modal) {
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
-}
-
-function wireSideTool(launcherId, modalIds, onOpen) {
-  const launcher = $(launcherId);
-  if (!launcher) return;
-
-  if (launcher.dataset.wired === "true") return;
-  launcher.dataset.wired = "true";
-
-  const modal = resolveFirstExisting(modalIds);
-  if (!modal) {
-    sideToolsDebug("Missing modal for launcher:", launcherId, modalIds);
-    return;
-  }
-
-  // Click backdrop to close
-  if (modal.dataset.backdropWired !== "true") {
-    modal.dataset.backdropWired = "true";
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeSideModal(modal);
-    });
-  }
-
-  launcher.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openSideModal(modal);
-    if (typeof onOpen === "function") onOpen();
-  });
-}
-
-// Delegated close buttons + ESC close (wire once)
-if (document.body.dataset.sideModalCloseWired !== "true") {
-  document.body.dataset.sideModalCloseWired = "true";
-
-  document.addEventListener("click", (e) => {
-    const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
-    if (!closeBtn) return;
-    const modal = closeBtn.closest(".side-modal");
-    if (!modal) return;
-    sideToolsDebug("CLOSE:", modal.id);
-    closeSideModal(modal);
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    document.querySelectorAll(".side-modal:not(.hidden)").forEach((m) => closeSideModal(m));
-  });
-}
-
-function buildVideoContextFromKit() {
-  const parts = [];
-  const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
-  const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
-  const url   = ($("vehicleUrl")?.value || "").trim();
-  const tags  = ($("hashtags")?.value || "").trim();
-
-  if (label) parts.push(`Vehicle: ${label}`);
-  if (price) parts.push(`Price/Offer: ${price}`);
-  if (url) parts.push(`Listing URL: ${url}`);
-  if (tags) parts.push(`Hashtags: ${tags}`);
-
-  return parts.join("\n");
-}
-
-// Wire side tools (video fills context on open)
-SIDE_TOOL_CONFIG.forEach((t) => {
-  if (t.launcherId === "videoLauncher") {
-    wireSideTool(t.launcherId, t.modalIds, () => {
-      const videoContextField = $("videoContext");
-      if (videoContextField) {
-        videoContextField.value = buildVideoContextFromKit();
-        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
-      }
-    });
-  } else {
-    wireSideTool(t.launcherId, t.modalIds);
-  }
-});
-
-sideToolsDebug(
-  "Presence report:",
-  SIDE_TOOL_CONFIG.map((t) => ({
-    launcher: t.launcherId,
-    launcherFound: !!$(t.launcherId),
-    modalIds: t.modalIds,
-    modalFound: !!resolveFirstExisting(t.modalIds),
-  }))
-);
 
 // ==================================================
 // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
