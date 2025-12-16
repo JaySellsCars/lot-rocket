@@ -48,7 +48,7 @@ function closeSideModal(modal) {
 }
 
 // Click delegation for open + close
-document.addEventListener("click", (e) => {
+DOC.addEventListener("click", ...)
   // OPEN
   const openBtn = e.target.closest("[data-modal-target]");
   if (openBtn) {
