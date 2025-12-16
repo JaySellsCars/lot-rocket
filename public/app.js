@@ -2086,22 +2086,23 @@ sideToolsDebug(
     STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, objectUrl]), MAX_PHOTOS);
     renderCreativeThumbs();
   });
-  // ==================================================
-  // FINAL INIT
-  // ==================================================
-  try {
-    // Step 1 photo grid (safe)
-    if (typeof renderPhotosGrid === "function") {
-      renderPhotosGrid(STORE?.creativePhotos || []);
-    }
+// ==================================================
+// FINAL INIT
+// ==================================================
+try {
+  renderPhotosGrid(STORE?.creativePhotos || []);
 
-    // Step 3 (safe)
-    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-  } catch (e) {
-    console.error("❌ Final init failed:", e);
+  if (typeof renderCreativeThumbs === "function") {
+    renderCreativeThumbs();
   }
-});
+
+  if (typeof renderSocialStrip === "function") {
+    renderSocialStrip();
+  }
+} catch (e) {
+  console.error("❌ Final init failed:", e);
+}
+
 
 
 
