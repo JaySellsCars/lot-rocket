@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.__LOTROCKET_BOOTED__ = true;
 
 
+
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
 
