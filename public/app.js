@@ -1,14 +1,8 @@
 
 
-// public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
-// Goals:
-// - ZERO duplicate declarations
-// - ONE single source of truth for photo state (MAX_PHOTOS = 24 everywhere)
-// - Stable buttons + modals + Step 3 tools (Creative Lab + Social Strip + Canvas + Design Studio)
-
 document.addEventListener("DOMContentLoaded", () => {
-const DOC = window.document; // ✅ always the real document
 
+  const DOC = window.document; // ✅ MUST be first line inside DOMContentLoaded
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
   if (window.__LOTROCKET_BOOTED__) {
@@ -16,6 +10,7 @@ const DOC = window.document; // ✅ always the real document
     return;
   }
   window.__LOTROCKET_BOOTED__ = true;
+
 
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
