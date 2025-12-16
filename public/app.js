@@ -126,6 +126,8 @@ console.log("DEBUG typeof document.addEventListener =", typeof document.addEvent
   // Optional: focus input when modal opens (using your universal system)
   modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
 }
+console.log("DEBUG typeof document.addEventListener =", typeof document.addEventListener);
+  
 })();
 
 
