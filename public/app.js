@@ -518,19 +518,22 @@ sideToolsDebug(
 
 // ==================================================
 // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
-// NOTE: opening/closing the modal is handled by your universal modal system
 // ==================================================
 (() => {
+  const drillLauncher = $("drillLauncher");
   const drillModal = $("drillModeModal");
-  if (!drillModal) return; // Drill UI not present in this HTML
-
   const closeDrillModeBtn = $("closeDrillMode");
+
   const drillObjectionText = $("drillObjectionText");
   const getDrillObjectionBtn = $("getDrillObjection");
+
   const drillReplyInput = $("drillReplyInput");
   const gradeDrillReplyBtn = $("gradeDrillReply");
+
   const drillResult = $("drillResult");
   const drillTimerDisplay = $("drillTimer");
+
+  if (!drillModal) return;
 
   const DRILL_OBJECTIONS = [
     "The price is too high.",
@@ -564,13 +567,11 @@ sideToolsDebug(
     if (drillReplyInput) drillReplyInput.value = "";
     setDrillResult("", false);
     if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
-    drillSecondsLeft = 60;
   }
 
   function startDrillTimer(startSeconds = 60) {
     if (!drillTimerDisplay) return;
     stopDrillTimer();
-
     drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
     drillTimerDisplay.textContent = String(drillSecondsLeft);
 
@@ -581,36 +582,35 @@ sideToolsDebug(
     }, 1000);
   }
 
-  // Close button inside modal (does NOT fight universal system)
-  if (closeDrillModeBtn && closeDrillModeBtn.dataset.wired !== "true") {
-    closeDrillModeBtn.dataset.wired = "true";
-    closeDrillModeBtn.addEventListener("click", (e) => {
+  // Launch / Close (optional if your universal modal system handles it)
+  if (drillLauncher && drillLauncher.dataset.wired !== "true") {
+    drillLauncher.dataset.wired = "true";
+    drillLauncher.addEventListener("click", (e) => {
       e.preventDefault();
-      stopDrillTimer();
       resetDrillState();
-      // Let your universal [data-close] system hide the modal if you use it
-      // If not, you can manually close:
-      // drillModal.classList.add("hidden");
-      // drillModal.setAttribute("aria-hidden", "true");
     });
   }
 
-  // Give objection
+  if (closeDrillModeBtn && closeDrillModeBtn.dataset.wired !== "true") {
+    closeDrillModeBtn.dataset.wired = "true";
+    closeDrillModeBtn.addEventListener("click", () => {
+      stopDrillTimer();
+      resetDrillState();
+    });
+  }
+
   if (getDrillObjectionBtn && getDrillObjectionBtn.dataset.wired !== "true") {
     getDrillObjectionBtn.dataset.wired = "true";
     getDrillObjectionBtn.addEventListener("click", () => {
       const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
       currentDrillObjection = DRILL_OBJECTIONS[idx];
-
       if (drillObjectionText) drillObjectionText.textContent = currentDrillObjection;
-
       resetDrillState();
       startDrillTimer(60);
       drillReplyInput?.focus?.();
     });
   }
 
-  // Grade reply
   if (gradeDrillReplyBtn && gradeDrillReplyBtn.dataset.wired !== "true") {
     gradeDrillReplyBtn.dataset.wired = "true";
     gradeDrillReplyBtn.addEventListener("click", async () => {
@@ -645,8 +645,8 @@ sideToolsDebug(
           body: JSON.stringify(payload),
         });
 
-        // Fallback
         if (!res.ok) {
+          // fallback (optional)
           res = await fetch(apiBase + "/api/message-helper", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -675,6 +675,7 @@ sideToolsDebug(
     });
   }
 })();
+
 
 
 
