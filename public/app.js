@@ -73,7 +73,8 @@ DOC.addEventListener("click", ...)
 });
 
 // ESC closes topmost open modal
-document.addEventListener("keydown", (e) => {
+DOC.addEventListener("keydown", ...)
+
   if (e.key !== "Escape") return;
   const openModals = Array.from(document.querySelectorAll(".side-modal"))
     .filter((m) => !m.classList.contains("hidden"));
