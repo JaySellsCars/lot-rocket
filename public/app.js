@@ -2124,9 +2124,6 @@ sendToDesignStudioBtn?.addEventListener("click", () => {
     STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, objectUrl]), MAX_PHOTOS);
     renderCreativeThumbs();
   });
-// ==================================================
-// FINAL INIT
-// ==================================================
 try {
   renderPhotosGrid(STORE.creativePhotos || []);
   renderCreativeThumbs?.();
@@ -2134,6 +2131,7 @@ try {
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
+
 
 
 
