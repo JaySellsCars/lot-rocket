@@ -2078,7 +2078,6 @@ if (sendDesignToStripBtn && sendDesignToStripBtn.dataset.wired !== "true") {
     renderCreativeThumbs();
   });
 }
-
 // ==================================================
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
@@ -2090,11 +2089,16 @@ try {
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
   if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+
+  // ✅ ADD THIS LINE RIGHT HERE
+  if (typeof wireObjectionCoach === "function") wireObjectionCoach();
+
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
 
-}); // ✅ closes DOMContentLoaded
+}); // closes DOMContentLoaded
+
 
 
 
