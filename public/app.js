@@ -184,16 +184,17 @@ document.addEventListener("keydown", (e) => {
 
 // ==================================================
 // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
+// Depends on helpers elsewhere:
+//   $, capMax, uniqueUrls, getProxiedImageUrl, normalizeSocialReady,
+//   MAX_PHOTOS, STORE, apiBase
 // ==================================================
 
-// Inputs (support either id naming)
-const dealerUrlInput =
-  $("dealerUrl") || $("vehicleUrl") || $("vehicleUrlInput");
-
+// Inputs
+const dealerUrlInput    = $("dealerUrl");
 const vehicleLabelInput = $("vehicleLabel");
-const priceOfferInput = $("priceOffer");
+const priceOfferInput   = $("priceOffer");
 
-// Buttons (support multiple possible IDs)
+// Buttons (supports multiple possible IDs)
 const boostBtn =
   $("boostListingBtn") ||
   $("boostThisListing") ||
@@ -211,7 +212,7 @@ const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
 const photosGridEl   = $("photosGrid");
 
 // --------------------------------------------------
-// API helper
+// Backend helper
 // --------------------------------------------------
 async function postJSON(url, body) {
   const res = await fetch(url, {
@@ -228,26 +229,7 @@ async function postJSON(url, body) {
 }
 
 // --------------------------------------------------
-// Grid helpers (fallbacks to avoid crashes)
-// --------------------------------------------------
-function capMax(arr, n) {
-  return Array.isArray(arr) ? arr.slice(0, n) : [];
-}
-function uniqueUrls(arr) {
-  const seen = new Set();
-  return (arr || []).filter((u) => {
-    if (!u || seen.has(u)) return false;
-    seen.add(u);
-    return true;
-  });
-}
-function getProxiedImageUrl(u) {
-  // If you already have a proxy function elsewhere, remove this fallback
-  return u;
-}
-
-// --------------------------------------------------
-// Render grid
+// Render photos grid (selectable)
 // --------------------------------------------------
 function renderPhotosGrid(urls) {
   if (!photosGridEl) return;
@@ -268,7 +250,8 @@ function renderPhotosGrid(urls) {
     img.alt = `photo ${idx + 1}`;
     img.loading = "lazy";
 
-    wrap.dataset.selected = "1"; // default selected ON
+    // selected defaults ON
+    wrap.dataset.selected = "1";
     wrap.addEventListener("click", () => {
       const isSel = wrap.dataset.selected === "1";
       wrap.dataset.selected = isSel ? "0" : "1";
@@ -294,7 +277,8 @@ function getSelectedGridUrls() {
 }
 
 // --------------------------------------------------
-// Boost Listing (scrape)
+// BOOST (scrape) — expects backend returns:
+// { title, price, photos: [url...] }  (or photos/images)
 // --------------------------------------------------
 async function boostListing() {
   const url = (dealerUrlInput?.value || "").trim();
@@ -322,10 +306,16 @@ async function boostListing() {
     if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
     if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
 
+    // store RAW urls
     STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+
     renderPhotosGrid(STORE.creativePhotos);
 
-    console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
+    console.log("✅ Boost complete", {
+      title,
+      price,
+      photos: STORE.creativePhotos.length,
+    });
   } catch (err) {
     console.error("❌ Boost failed:", err);
     alert(err?.message || "Boost failed.");
@@ -335,7 +325,7 @@ async function boostListing() {
 }
 
 // --------------------------------------------------
-// Send selected photos -> Step 3
+// Send selected -> Step 3 (Creative + Social + Studio)
 // --------------------------------------------------
 function sendSelectedToCreative() {
   const selected = getSelectedGridUrls();
@@ -355,7 +345,7 @@ function sendSelectedToCreative() {
 
   STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
-  if (typeof window.normalizeSocialReady === "function") window.normalizeSocialReady();
+  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
 
   if (typeof window.renderCreativePhotoStrip === "function") window.renderCreativePhotoStrip();
   if (typeof window.renderSocialCarousel === "function") window.renderSocialCarousel();
@@ -369,7 +359,7 @@ function sendSelectedToCreative() {
 }
 
 // --------------------------------------------------
-// Wire buttons (guard against double-wiring)
+// Wire buttons
 // --------------------------------------------------
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
@@ -390,6 +380,7 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 } else if (!sendTopBtn) {
   console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
 }
+
 
 
 // ==================================================
