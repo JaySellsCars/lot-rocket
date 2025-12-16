@@ -8,6 +8,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
 
+
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
   if (window.__LOTROCKET_BOOTED__) {
     console.warn("🚫 Lot Rocket boot blocked (double init)");
