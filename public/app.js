@@ -23,54 +23,62 @@ document.addEventListener("DOMContentLoaded", () => {
   
 
 
-// ================================
-// UNIVERSAL SIDE-MODAL WIRING (SAFE NAMES)
-// ================================
-let activeModal = null;
-
+// ==================================================
+// UNIVERSAL SIDE-MODAL SYSTEM (single source of truth)
+// ==================================================
 function openSideModalById(modalId) {
+  if (!modalId) return;
   const modal = document.getElementById(modalId);
-  if (!modal) {
-    console.warn("❌ Modal not found:", modalId);
-    return;
-  }
-
-  if (activeModal && activeModal !== modal) closeSideModalEl(activeModal);
+  if (!modal) return console.warn("⚠️ Modal not found:", modalId);
 
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("modal-open");
-  activeModal = modal;
+
+  // fire "on open" hooks (Objection Coach will attach here)
+  modal.dispatchEvent(new CustomEvent("lr:open", { detail: { modalId } }));
 }
 
-function closeSideModalEl(modal) {
+function closeSideModal(modal) {
   if (!modal) return;
-
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("modal-open");
-
-  if (activeModal === modal) activeModal = null;
+  modal.dispatchEvent(new CustomEvent("lr:close", { detail: { modalId: modal.id } }));
 }
 
-// Open modal via launcher data-modal-target
+// Click delegation for open + close
 document.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-modal-target]");
-  if (!btn) return;
-  openSideModalById(btn.getAttribute("data-modal-target"));
-});
+  // OPEN
+  const openBtn = e.target.closest("[data-modal-target]");
+  if (openBtn) {
+    const targetId = openBtn.getAttribute("data-modal-target");
+    openSideModalById(targetId);
+    return;
+  }
 
-// Close modal via [data-close]
-document.addEventListener("click", (e) => {
+  // CLOSE (button)
   const closeBtn = e.target.closest("[data-close]");
-  if (!closeBtn) return;
-  closeSideModalEl(closeBtn.closest(".side-modal"));
+  if (closeBtn) {
+    const modal = closeBtn.closest(".side-modal");
+    closeSideModal(modal);
+    return;
+  }
+
+  // CLOSE (backdrop click)
+  const modalBackdrop = e.target.classList.contains("side-modal") ? e.target : null;
+  if (modalBackdrop && !modalBackdrop.classList.contains("hidden")) {
+    closeSideModal(modalBackdrop);
+  }
 });
 
-// ESC closes active modal
+// ESC closes topmost open modal
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && activeModal) closeSideModalEl(activeModal);
+  if (e.key !== "Escape") return;
+  const openModals = Array.from(document.querySelectorAll(".side-modal"))
+    .filter((m) => !m.classList.contains("hidden"));
+  const top = openModals[openModals.length - 1];
+  if (top) closeSideModal(top);
 });
+
 
 
 
