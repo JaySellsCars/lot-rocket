@@ -150,7 +150,9 @@ console.log("DEBUG typeof document.addEventListener =", typeof document.addEvent
   // ==================================================
   // UTIL (ONE AND ONLY ONE $)
   // ==================================================
-  const $ = (id) => document.getElementById(id);
+// DOM helper (safe)
+const $ = (id) => DOC.getElementById(id);
+
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
   function autoResizeTextarea(el) {
