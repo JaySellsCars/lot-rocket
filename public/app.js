@@ -181,17 +181,7 @@ document.addEventListener("keydown", (e) => {
     autoResizeTextarea(ta);
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
-  // ==================================================
-  // STEP 1 — SCRAPER / BOOST WIRING (CLEAN)
-  // Requires these HTML IDs:
-  // dealerUrl, vehicleLabel, priceOffer,
-  // boostListingBtn,
-  // vehicleTitle, vehiclePrice,
-  // photosGrid,
-  // sendPhotosToCreative (or sendTopPhotosToCreative)  <-- use ONE
-  // ==================================================
 
-  const dealerUrlInput   = $("dealerUrl");
 // ==================================================
 // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
 // ==================================================
