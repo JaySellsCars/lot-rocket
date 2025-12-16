@@ -964,29 +964,7 @@ sideToolsDebug(
     });
   }
 
-  // Step 1 -> Send Top Photos into Creative + Social Strip
-  const step1SendTopBtn = $("sendTopPhotosBtn");
-  if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
-    step1SendTopBtn.dataset.wired = "true";
 
-    step1SendTopBtn.addEventListener("click", () => {
-      if (!dealerPhotos.length) {
-        alert("Boost a listing first so Lot Rocket can grab photos.");
-        return;
-      }
-
-      const selected = dealerPhotos.filter((p) => p.selected).map((p) => p.src);
-      const chosen = (selected.length ? selected : dealerPhotos.map((p) => p.src)).slice(0, MAX_PHOTOS);
-
-      STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, ...chosen]), MAX_PHOTOS);
-      renderCreativeThumbs();
-
-      chosen.forEach((u) => addToSocialReady(u, false));
-
-      step1SendTopBtn.classList.add("success");
-      setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
-    });
-  }
 
   // ==================================================
   // SOCIAL READY STRIP (ONE MODULE ONLY)
@@ -1941,15 +1919,17 @@ sideToolsDebug(
     saveStudioHistory();
   }
 
-  function gatherImageUrlsForStudios() {
-    const urls = new Set();
+function gatherImageUrlsForStudios() {
+  const urls = new Set();
 
-    STORE.creativePhotos.forEach((u) => u && urls.add(u));
-    STORE.socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
-    dealerPhotos.forEach((p) => p?.src && urls.add(p.src));
+  STORE.creativePhotos.forEach((u) => u && urls.add(u));
+  STORE.socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
+  // DELETE this old line:
+  // dealerPhotos.forEach((p) => p?.src && urls.add(p.src));
 
-    return Array.from(urls).slice(0, MAX_PHOTOS);
-  }
+  return Array.from(urls).slice(0, MAX_PHOTOS);
+}
+
 
   function renderStudioPhotoTray() {
     if (!studioPhotoTray) return;
