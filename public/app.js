@@ -2081,11 +2081,21 @@ sideToolsDebug(
     renderCreativeThumbs();
   });
 
-  // ==================================================
-  // FINAL INIT
-  // ==================================================
- renderPhotosGrid(STORE.creativePhotos);
-
-  renderCreativeThumbs();
-  renderSocialStrip();
+// ==================================================
+// FINAL INIT
+// ==================================================
+try {
+  if (typeof renderPhotosGrid === "function") {
+    renderPhotosGrid(dealerPhotos?.map(p => p.src) || []);
+  }
+  if (typeof renderCreativeThumbs === "function") {
+    renderCreativeThumbs();
+  }
+  if (typeof renderSocialStrip === "function") {
+    renderSocialStrip();
+  }
+} catch (e) {
+  console.error("❌ Final init failed:", e);
+}
 });
+
