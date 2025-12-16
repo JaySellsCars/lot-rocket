@@ -2080,7 +2080,6 @@ sendToDesignStudioBtn?.addEventListener("click", () => {
   pushUrlsIntoDesignStudio(urls);
 });
 
-
 // ==================================================
 // SOCIAL STRIP ↔ STUDIOS (Design / Fabric) + Export
 // ==================================================
@@ -2156,5 +2155,6 @@ try {
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
+
 
 
