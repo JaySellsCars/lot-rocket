@@ -53,12 +53,7 @@ function closeSideModal(modal) {
   if (activeModal === modal) activeModal = null;
 }
 
-// Open modal via launcher data-modal-target
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-modal-target]");
-  if (!btn) return;
-  openSideModal(btn.getAttribute("data-modal-target"));
-});
+
 
 // Close modal via [data-close]
 document.addEventListener("click", (e) => {
