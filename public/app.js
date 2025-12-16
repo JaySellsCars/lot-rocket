@@ -192,739 +192,343 @@ document.addEventListener("keydown", (e) => {
   // ==================================================
 
   const dealerUrlInput   = $("dealerUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceOfferInput   = $("priceOffer");
+// ==================================================
+// STEP 1 — BOOST + PHOTO GRID (CLEAN / SINGLE-PASS)
+// Depends on existing helpers elsewhere:
+//   $, capMax, uniqueUrls, getProxiedImageUrl, normalizeSocialReady
+// Depends on globals/constants elsewhere:
+//   MAX_PHOTOS, STORE, apiBase
+// ==================================================
 
-  // Buttons
-  const boostBtn =
-    $("boostListingBtn") ||
-    $("boostThisListing") ||
-    $("boostButton");
+// Inputs (your HTML ids)
+const dealerUrlInput     = $("dealerUrl");       // <input id="dealerUrl">
+const vehicleLabelInput  = $("vehicleLabel");    // <input id="vehicleLabel">
+const priceOfferInput    = $("priceOffer");      // <input id="priceOffer"> (override)
 
-  const sendTopBtn =
-    $("sendPhotosToCreative") ||
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendPhotosToCreativeLab");
+// Buttons (supports multiple possible IDs)
+const boostBtn =
+  $("boostListingBtn") ||
+  $("boostThisListing") ||
+  $("boostButton");
 
-  // Output targets
-  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
-  const photosGridEl   = $("photosGrid");
+const sendTopBtn =
+  $("sendPhotosToCreative") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendPhotosToCreativeLab");
 
-  // --------------------------------------------------
-  // API calls (backend endpoints)
-  // --------------------------------------------------
-  async function postJSON(url, body) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = data?.error || data?.message || `Request failed (${res.status})`;
-      throw new Error(msg);
-    }
-    return data;
+// Output targets
+const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+const photosGridEl   = $("photosGrid");
+
+// --------------------------------------------------
+// API calls (backend endpoints)
+// --------------------------------------------------
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Request failed (${res.status})`;
+    throw new Error(msg);
   }
+  return data;
+}
 
-  // --------------------------------------------------
-  // Render grid
-  // --------------------------------------------------
-  function renderPhotosGrid(urls) {
-    if (!photosGridEl) return;
+// --------------------------------------------------
+// Render photo grid (selectable thumbs)
+// --------------------------------------------------
+function renderPhotosGrid(urls) {
+  if (!photosGridEl) return;
 
-    const clean = uniqueUrls(capMax(urls || [], MAX_PHOTOS));
+  const clean = uniqueUrls(capMax(urls || [], MAX_PHOTOS));
+  photosGridEl.innerHTML = "";
 
-    photosGridEl.innerHTML = "";
+  clean.forEach((rawUrl, idx) => {
+    const url = getProxiedImageUrl(rawUrl);
 
-    clean.forEach((rawUrl, idx) => {
-      const url = getProxiedImageUrl(rawUrl);
+    const wrap = document.createElement("button");
+    wrap.type = "button";
+    wrap.className = "photo-thumb";
+    wrap.title = "Click to toggle select";
 
-      const wrap = document.createElement("button");
-      wrap.type = "button";
-      wrap.className = "photo-thumb";
-      wrap.title = "Click to toggle select";
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = `photo ${idx + 1}`;
+    img.loading = "lazy";
 
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = `photo ${idx + 1}`;
-      img.loading = "lazy";
-
-      // selected state defaults ON
-      wrap.dataset.selected = "1";
-      wrap.addEventListener("click", () => {
-        const isSel = wrap.dataset.selected === "1";
-        wrap.dataset.selected = isSel ? "0" : "1";
-        wrap.classList.toggle("is-off", isSel);
-      });
-
-      wrap.appendChild(img);
-      photosGridEl.appendChild(wrap);
-    });
-
-    console.log(`✅ Rendered ${clean.length} photos`);
-  }
-
-  function getSelectedGridUrls() {
-    if (!photosGridEl) return [];
-    const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
-    const selected = btns
-      .filter((b) => b.dataset.selected === "1")
-      .map((b) => b.querySelector("img")?.src)
-      .filter(Boolean);
-
-    // De-proxy if needed? keep as-is; your tools use proxy safely.
-    return uniqueUrls(capMax(selected, MAX_PHOTOS));
-  }
-
-  // --------------------------------------------------
-  // Boost Listing (scrape)
-  // Backend expected to return something like:
-  // { title, price, photos: [url...] }
-  // --------------------------------------------------
-  async function boostListing() {
-    const url = (dealerUrlInput?.value || "").trim();
-    if (!url) {
-      alert("Paste a dealer URL first.");
-      return;
-    }
-
-    if (boostBtn) boostBtn.disabled = true;
-
-    try {
-      const payload = {
-        url,
-        labelOverride: (vehicleLabelInput?.value || "").trim(),
-        priceOverride: (priceOfferInput?.value || "").trim(),
-        maxPhotos: MAX_PHOTOS,
-      };
-
-      const data = await postJSON(`${apiBase}/api/boost`, payload);
-
-      const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-      const price = data?.price || data?.offer || data?.vehiclePrice || "";
-      const photos = data?.photos || data?.images || [];
-
-      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
-
-      // store raw urls (not proxied)
-      STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
-
-      renderPhotosGrid(STORE.creativePhotos);
-
-      console.log("✅ Boost complete", {
-        title,
-        price,
-        photos: STORE.creativePhotos.length,
-      });
-    } catch (err) {
-      console.error("❌ Boost failed:", err);
-      alert(err.message || "Boost failed.");
-    } finally {
-      if (boostBtn) boostBtn.disabled = false;
-    }
-  }
-
-  // --------------------------------------------------
-  // Send selected photos -> Step 3 (Creative Lab + Social Strip)
-  // --------------------------------------------------
-  function sendSelectedToCreative() {
-    const selected = getSelectedGridUrls();
-    if (!selected.length) {
-      alert("Select at least 1 photo first.");
-      return;
-    }
-
-    // Save into STORE (urls)
-    STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-
-    // Also populate socialReady (normalized objects)
-    STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
-      url: u,
-      originalUrl: u,
-      selected: true,
-      locked: false,
-    }));
-
-    // Keep design studio list in sync too (optional)
-    STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-
-    normalizeSocialReady();
-
-    // Call your Step 3 render functions if they exist
-    if (typeof window.renderCreativePhotoStrip === "function") {
-      window.renderCreativePhotoStrip();
-    }
-    if (typeof window.renderSocialCarousel === "function") {
-      window.renderSocialCarousel();
-    }
-    if (typeof window.refreshDesignStudioStrip === "function") {
-      window.refreshDesignStudioStrip();
-    }
-
-    console.log("✅ Sent photos to Step 3", {
-      creative: STORE.creativePhotos.length,
-      social: STORE.socialReadyPhotos.length,
-      studio: STORE.designStudioPhotos.length,
-    });
-  }
-
-  // --------------------------------------------------
-  // Wire buttons
-  // --------------------------------------------------
-  if (boostBtn) {
-    boostBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      boostListing();
-    });
-  } else {
-    console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
-  }
-
-  if (sendTopBtn) {
-    sendTopBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      sendSelectedToCreative();
-    });
-  } else {
-    console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
-  }
-
-  // ==================================================
-  // RIGHT-SIDE TOOL MODALS (SINGLE, STABLE WIRING)
-  // - Uses hidden class + aria-hidden
-  // - Prevents double wiring
-  // - Global delegated close buttons + ESC close
-  // ==================================================
-  const SIDE_TOOL_CONFIG = [
-    { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
-    { launcherId: "calcLauncher", modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
-    { launcherId: "paymentLauncher", modalIds: ["paymentModal"] },
-    { launcherId: "incomeLauncher", modalIds: ["incomeModal"] },
-    { launcherId: "workflowLauncher", modalIds: ["workflowModal"] },
-    { launcherId: "messageLauncher", modalIds: ["messageModal"] },
-    { launcherId: "askLauncher", modalIds: ["askModal"] },
-    { launcherId: "carLauncher", modalIds: ["carModal"] },
-    { launcherId: "imageLauncher", modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
-    { launcherId: "videoLauncher", modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
-  ];
-
-  const sideToolsDebug = (...args) => console.log("🧰 SideTools:", ...args);
-
-  function resolveFirstExisting(ids) {
-    return (ids || []).map((id) => $(id)).find(Boolean) || null;
-  }
-
-  function openSideModal(modal) {
-    if (!modal) return;
-    modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden", "false");
-  }
-
-  function closeSideModal(modal) {
-    if (!modal) return;
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden", "true");
-  }
-
-  function wireSideTool(launcherId, modalIds, onOpen) {
-    const launcher = $(launcherId);
-    if (!launcher) return;
-
-    if (launcher.dataset.wired === "true") return;
-    launcher.dataset.wired = "true";
-
-    const modal = resolveFirstExisting(modalIds);
-    if (!modal) {
-      sideToolsDebug("Missing modal for launcher:", launcherId, modalIds);
-      return;
-    }
-
-    if (modal.dataset.backdropWired !== "true") {
-      modal.dataset.backdropWired = "true";
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) closeSideModal(modal);
-      });
-    }
-
-    launcher.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openSideModal(modal);
-      if (typeof onOpen === "function") onOpen();
-    });
-  }
-
-  // Delegated close buttons for ANY side modal
-  if (document.body.dataset.sideModalCloseWired !== "true") {
-    document.body.dataset.sideModalCloseWired = "true";
-
-    document.addEventListener("click", (e) => {
-      const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
-      if (!closeBtn) return;
-      const modal = closeBtn.closest(".side-modal");
-      if (!modal) return;
-      sideToolsDebug("CLOSE:", modal.id);
-      closeSideModal(modal);
+    // default selected ON
+    wrap.dataset.selected = "1";
+    wrap.addEventListener("click", () => {
+      const isSel = wrap.dataset.selected === "1";
+      wrap.dataset.selected = isSel ? "0" : "1";
+      wrap.classList.toggle("is-off", isSel);
     });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      document.querySelectorAll(".side-modal:not(.hidden)").forEach((m) => closeSideModal(m));
-    });
-  }
-
-  function buildVideoContextFromKit() {
-    const parts = [];
-    const label = (
-      $("vehicleLabel")?.value ||
-      $("summaryLabel")?.textContent ||
-      ""
-    ).trim();
-    const price = (
-      $("priceInfo")?.value ||
-      $("summaryPrice")?.textContent ||
-      ""
-    ).trim();
-    const url = ($("vehicleUrl")?.value || "").trim();
-    const tags = ($("hashtags")?.value || "").trim();
-    if (label) parts.push(`Vehicle: ${label}`);
-    if (price) parts.push(`Price/Offer: ${price}`);
-    if (url) parts.push(`Listing URL: ${url}`);
-    if (tags) parts.push(`Hashtags: ${tags}`);
-    return parts.join("\n");
-  }
-
-  // Wire side tools (video fills context on open)
-  SIDE_TOOL_CONFIG.forEach((t) => {
-    if (t.launcherId === "videoLauncher") {
-      wireSideTool(t.launcherId, t.modalIds, () => {
-        const videoContextField = $("videoContext");
-        if (videoContextField) {
-          videoContextField.value = buildVideoContextFromKit();
-          autoResizeTextarea(videoContextField);
-        }
-      });
-    } else {
-      wireSideTool(t.launcherId, t.modalIds);
-    }
+    wrap.appendChild(img);
+    photosGridEl.appendChild(wrap);
   });
 
-  sideToolsDebug("Presence report:", SIDE_TOOL_CONFIG.map((t) => ({
+  console.log(`✅ Rendered ${clean.length} photos`);
+}
+
+function getSelectedGridUrls() {
+  if (!photosGridEl) return [];
+  const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
+
+  const selected = btns
+    .filter((b) => b.dataset.selected === "1")
+    .map((b) => b.querySelector("img")?.src)
+    .filter(Boolean);
+
+  // keep as-is (proxied URLs are safe to reuse in-app)
+  return uniqueUrls(capMax(selected, MAX_PHOTOS));
+}
+
+// --------------------------------------------------
+// Boost Listing (scrape)
+// Backend expected:
+// { title, price, photos: [url...] }  (also supports vehicleTitle/vehiclePrice/images)
+// --------------------------------------------------
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) {
+    alert("Paste a dealer URL first.");
+    return;
+  }
+
+  if (boostBtn) boostBtn.disabled = true;
+
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
+
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+    const title =
+      data?.title || data?.vehicle || data?.vehicleTitle || data?.vehicle_name || "";
+    const price =
+      data?.price || data?.offer || data?.vehiclePrice || data?.priceInfo || "";
+
+    const photos = data?.photos || data?.images || data?.photoUrls || [];
+
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    // Store RAW urls (not proxied)
+    STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+
+    renderPhotosGrid(STORE.creativePhotos);
+
+    console.log("✅ Boost complete", {
+      title,
+      price,
+      photos: STORE.creativePhotos.length,
+    });
+  } catch (err) {
+    console.error("❌ Boost failed:", err);
+    alert(err?.message || "Boost failed.");
+  } finally {
+    if (boostBtn) boostBtn.disabled = false;
+  }
+}
+
+// --------------------------------------------------
+// Send selected photos -> Step 3 (Creative Lab + Social Strip + Design Studio)
+// --------------------------------------------------
+function sendSelectedToCreative() {
+  const selected = getSelectedGridUrls();
+  if (!selected.length) {
+    alert("Select at least 1 photo first.");
+    return;
+  }
+
+  // URLs
+  STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+
+  // Social-ready objects
+  STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
+    url: u,
+    originalUrl: u,
+    selected: true,
+    locked: false,
+  }));
+
+  // Optional: keep design studio in sync
+  STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+
+  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+
+  // Call your render hooks if they exist
+  if (typeof window.renderCreativePhotoStrip === "function") window.renderCreativePhotoStrip();
+  if (typeof window.renderSocialCarousel === "function") window.renderSocialCarousel();
+  if (typeof window.refreshDesignStudioStrip === "function") window.refreshDesignStudioStrip();
+
+  console.log("✅ Sent photos to Step 3", {
+    creative: STORE.creativePhotos.length,
+    social: STORE.socialReadyPhotos.length,
+    studio: STORE.designStudioPhotos.length,
+  });
+}
+
+// --------------------------------------------------
+// Wire buttons (guard against double-wiring)
+// --------------------------------------------------
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+  boostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    boostListing();
+  });
+} else if (!boostBtn) {
+  console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
+}
+
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sendSelectedToCreative();
+  });
+} else if (!sendTopBtn) {
+  console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
+}
+
+// ==================================================
+// RIGHT-SIDE TOOL MODALS (SINGLE, STABLE WIRING)
+// Uses .hidden + aria-hidden. Close via [data-close] and ESC.
+// Matches your HTML pattern:
+//   <button data-modal-target="objectionModal">
+//   <section id="objectionModal" class="side-modal hidden"> ... <button data-close>✕</button>
+// ==================================================
+const SIDE_TOOL_CONFIG = [
+  { launcherId: "objectionLauncher", modalIds: ["objectionModal"] },
+  { launcherId: "drillLauncher",     modalIds: ["drillModeModal"] },
+  { launcherId: "calcLauncher",      modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
+  { launcherId: "paymentLauncher",   modalIds: ["paymentModal"] },
+  { launcherId: "incomeLauncher",    modalIds: ["incomeModal"] },
+  { launcherId: "workflowLauncher",  modalIds: ["workflowModal"] },
+  { launcherId: "messageLauncher",   modalIds: ["messageModal"] },
+  { launcherId: "askLauncher",       modalIds: ["askModal"] },
+  { launcherId: "carLauncher",       modalIds: ["carModal"] },
+  { launcherId: "imageLauncher",     modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
+  { launcherId: "videoLauncher",     modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
+];
+
+const sideToolsDebug = (...args) => console.log("🧰 SideTools:", ...args);
+
+function resolveFirstExisting(ids) {
+  return (ids || []).map((id) => $(id)).find(Boolean) || null;
+}
+
+function openSideModal(modal) {
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeSideModal(modal) {
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+function wireSideTool(launcherId, modalIds, onOpen) {
+  const launcher = $(launcherId);
+  if (!launcher) return;
+
+  if (launcher.dataset.wired === "true") return;
+  launcher.dataset.wired = "true";
+
+  const modal = resolveFirstExisting(modalIds);
+  if (!modal) {
+    sideToolsDebug("Missing modal for launcher:", launcherId, modalIds);
+    return;
+  }
+
+  // Click backdrop to close
+  if (modal.dataset.backdropWired !== "true") {
+    modal.dataset.backdropWired = "true";
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeSideModal(modal);
+    });
+  }
+
+  launcher.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openSideModal(modal);
+    if (typeof onOpen === "function") onOpen();
+  });
+}
+
+// Delegated close buttons + ESC close (wire once)
+if (document.body.dataset.sideModalCloseWired !== "true") {
+  document.body.dataset.sideModalCloseWired = "true";
+
+  document.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
+    if (!closeBtn) return;
+    const modal = closeBtn.closest(".side-modal");
+    if (!modal) return;
+    sideToolsDebug("CLOSE:", modal.id);
+    closeSideModal(modal);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".side-modal:not(.hidden)").forEach((m) => closeSideModal(m));
+  });
+}
+
+function buildVideoContextFromKit() {
+  const parts = [];
+  const label = ($("vehicleLabel")?.value || $("summaryLabel")?.textContent || "").trim();
+  const price = ($("priceInfo")?.value || $("summaryPrice")?.textContent || "").trim();
+  const url   = ($("vehicleUrl")?.value || "").trim();
+  const tags  = ($("hashtags")?.value || "").trim();
+
+  if (label) parts.push(`Vehicle: ${label}`);
+  if (price) parts.push(`Price/Offer: ${price}`);
+  if (url) parts.push(`Listing URL: ${url}`);
+  if (tags) parts.push(`Hashtags: ${tags}`);
+
+  return parts.join("\n");
+}
+
+// Wire side tools (video fills context on open)
+SIDE_TOOL_CONFIG.forEach((t) => {
+  if (t.launcherId === "videoLauncher") {
+    wireSideTool(t.launcherId, t.modalIds, () => {
+      const videoContextField = $("videoContext");
+      if (videoContextField) {
+        videoContextField.value = buildVideoContextFromKit();
+        if (typeof autoResizeTextarea === "function") autoResizeTextarea(videoContextField);
+      }
+    });
+  } else {
+    wireSideTool(t.launcherId, t.modalIds);
+  }
+});
+
+sideToolsDebug(
+  "Presence report:",
+  SIDE_TOOL_CONFIG.map((t) => ({
     launcher: t.launcherId,
     launcherFound: !!$(t.launcherId),
     modalIds: t.modalIds,
     modalFound: !!resolveFirstExisting(t.modalIds),
-  })));
+  }))
+);
 
-  // ==================================================
-  // STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
-  // ==================================================
-
-
-
-  let socialIndex = 0; // preview index
-  let dealerPhotos = []; // [{ src, selected }]
-
-  function setTA(el, v) {
-    if (!el) return;
-    el.value = v || "";
-    autoResizeTextarea(el);
-  }
-
-  function renderDealerPhotos() {
-    if (!photosGrid) return;
-    photosGrid.innerHTML = "";
-
-    const list = capMax(dealerPhotos, MAX_PHOTOS);
-    list.forEach((photo, index) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
-      btn.dataset.index = String(index);
-
-      const img = document.createElement("img");
-      img.src = photo.src;
-      img.alt = `Dealer photo ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "photo-thumb-img";
-
-      btn.appendChild(img);
-      photosGrid.appendChild(btn);
-
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.dataset.index || "0");
-        if (!dealerPhotos[idx]) return;
-        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-        renderDealerPhotos();
-      });
-    });
-  }
-
-  async function doBoostListing() {
-    if (!vehicleUrlInput || !boostButton) return;
-
-    const url = vehicleUrlInput.value.trim();
-    const labelOverride = vehicleLabelInput?.value.trim() || "";
-    const priceOverride = priceInfoInput?.value.trim() || "";
-
-    if (!url) {
-      alert("Paste a full dealer URL first.");
-      return;
-    }
-
-    boostButton.disabled = true;
-    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
-
-    try {
-      const res = await fetch(apiBase + "/api/social-kit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, labelOverride, priceOverride }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status}).`);
-
-      if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
-      if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
-
-      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = data.vehicleLabel || "";
-      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = data.priceInfo || "";
-
-      setTA(facebookPost, data.facebook);
-      setTA(instagramPost, data.instagram);
-      setTA(tiktokPost, data.tiktok);
-      setTA(linkedinPost, data.linkedin);
-      setTA(twitterPost, data.twitter);
-      setTA(textBlurb, data.text);
-      setTA(marketplacePost, data.marketplace);
-      setTA(hashtags, data.hashtags);
-
-      const photos = Array.isArray(data.photos) ? data.photos : [];
-      const capped = capMax(photos, MAX_PHOTOS);
-      dealerPhotos = capped.map((src) => ({ src, selected: false }));
-      renderDealerPhotos();
-
-      document.body.classList.add("kit-ready");
-      if (statusText) statusText.textContent = "Social kit ready ✔";
-    } catch (err) {
-      console.error("❌ Boost error:", err);
-      if (statusText) statusText.textContent = err?.message || "Failed to build kit.";
-    } finally {
-      boostButton.disabled = false;
-    }
-  }
-
-  boostButton?.addEventListener("click", doBoostListing);
-
-  // ==================================================
-  // COPY / REGEN
-  // ==================================================
-  document.querySelectorAll(".copy-btn").forEach((btn) => {
-    if (btn.dataset.wired === "true") return;
-    btn.dataset.wired = "true";
-
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-copy-target");
-      if (!targetId) return;
-      const el = $(targetId);
-      if (!el) return;
-
-      el.select?.();
-      try { el.setSelectionRange?.(0, 99999); } catch {}
-      document.execCommand("copy");
-
-      btn.classList.add("copied");
-      const original = btn.textContent;
-      btn.textContent = "Copied!";
-      setTimeout(() => {
-        btn.textContent = original;
-        btn.classList.remove("copied");
-      }, 1200);
-    });
-  });
-
-  document.querySelectorAll(".regen-btn").forEach((btn) => {
-    if (btn.dataset.wired === "true") return;
-    btn.dataset.wired = "true";
-
-    btn.addEventListener("click", async () => {
-      const platform = btn.getAttribute("data-platform");
-      if (!platform || !vehicleUrlInput) return;
-
-      const url = vehicleUrlInput.value.trim();
-      if (!url) {
-        alert("Paste a dealer URL and hit Boost at least once first.");
-        return;
-      }
-
-      btn.disabled = true;
-      const original = btn.textContent;
-      btn.textContent = "Thinking…";
-
-      try {
-        const label = vehicleLabelInput?.value.trim() || summaryLabel?.textContent || "";
-        const price = priceInfoInput?.value.trim() || summaryPrice?.textContent || "";
-
-        const res = await fetch(apiBase + "/api/new-post", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ platform, url, label, price }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `Regen failed (HTTP ${res.status}).`);
-
-        const text = data.text || "";
-        const map = {
-          facebook: "facebookPost",
-          instagram: "instagramPost",
-          tiktok: "tiktokPost",
-          linkedin: "linkedinPost",
-          twitter: "twitterPost",
-          text: "textBlurb",
-          marketplace: "marketplacePost",
-          hashtags: "hashtags",
-        };
-
-        const targetId = map[platform];
-        const ta = targetId ? $(targetId) : null;
-        if (ta) {
-          ta.value = text;
-          autoResizeTextarea(ta);
-        }
-      } catch (err) {
-        console.error("❌ regen error", err);
-        alert(err?.message || "Failed to generate a new post.");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
-    });
-  });
-
-  // ==================================================
-  // PAYMENT CALCULATOR
-  // ==================================================
-  const paymentForm = $("paymentForm");
-  if (paymentForm && paymentForm.dataset.wired !== "true") {
-    paymentForm.dataset.wired = "true";
-
-    const priceInput = $("paymentPrice");
-    const cashDownInput = $("paymentCashDown");
-    const tradeValueInput = $("paymentTradeValue");
-    const tradeOweInput = $("paymentTradeOwe");
-    const rateInput = $("paymentRate");
-    const termInput = $("paymentTerm");
-    const taxInput = $("paymentTax");
-
-    const paymentMonthlyEl = $("paymentMonthly");
-    const paymentDetailsEl = $("paymentDetails");
-
-    const cleanNumber = (val) => {
-      if (!val) return 0;
-      const n = parseFloat(String(val).replace(/[^0-9.]/g, ""));
-      return Number.isNaN(n) ? 0 : n;
-    };
-
-    paymentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const price = cleanNumber(priceInput?.value);
-      const cashDown = cleanNumber(cashDownInput?.value);
-      const tradeValue = cleanNumber(tradeValueInput?.value);
-      const tradeOwe = cleanNumber(tradeOweInput?.value);
-      const apr = parseFloat(rateInput?.value || "0");
-      const years = parseFloat(termInput?.value || "0");
-      const taxRate = parseFloat(taxInput?.value || "0");
-
-      if (!price || !years) {
-        if (paymentDetailsEl) paymentDetailsEl.textContent = "Enter vehicle price and term (years).";
-        return;
-      }
-
-      const taxableBase = Math.max(price - tradeValue, 0);
-      const taxAmount = taxableBase * (taxRate / 100);
-
-      let financedBeforeTax = price - cashDown - tradeValue + tradeOwe;
-      if (financedBeforeTax < 0) financedBeforeTax = 0;
-
-      const amountFinanced = financedBeforeTax + taxAmount;
-      const months = years * 12;
-
-      let monthly = 0;
-      if (apr > 0) {
-        const monthlyRate = apr / 100 / 12;
-        const factor = Math.pow(1 + monthlyRate, months);
-        monthly = (amountFinanced * (monthlyRate * factor)) / (factor - 1);
-      } else {
-        monthly = amountFinanced / months;
-      }
-
-      const negativeEquity = Math.max(tradeOwe - tradeValue, 0);
-      const fmtMoney = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-      if (paymentMonthlyEl) paymentMonthlyEl.textContent = `$${fmtMoney(monthly)}`;
-
-      let details = `Amount Financed (est.): $${fmtMoney(amountFinanced)}. `;
-      details += `Includes approx. $${fmtMoney(taxAmount)} in tax. `;
-      if (negativeEquity > 0) details += `Rolled-in negative equity: $${fmtMoney(negativeEquity)}. `;
-      details += "Estimate only; lender/fees vary.";
-      if (paymentDetailsEl) paymentDetailsEl.textContent = details;
-    });
-  }
-
-  // ==================================================
-  // INCOME CALCULATOR
-  // ==================================================
-  const incomeForm = $("incomeForm");
-  if (incomeForm && incomeForm.dataset.wired !== "true") {
-    incomeForm.dataset.wired = "true";
-
-    const incomeYtdInput = $("incomeYtd");
-    const incomeLastPaycheckInput = $("incomeLastPaycheck");
-    const incomeOutput = $("incomeOutput");
-
-    incomeForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const rawYtd = (incomeYtdInput?.value || "").replace(/[^0-9.]/g, "");
-      const ytd = parseFloat(rawYtd);
-
-      if (!ytd || Number.isNaN(ytd)) {
-        if (incomeOutput) incomeOutput.textContent = "Enter year-to-date gross income (numbers only).";
-        return;
-      }
-
-      if (!incomeLastPaycheckInput?.value) {
-        if (incomeOutput) incomeOutput.textContent = "Choose the date of your last paycheck.";
-        return;
-      }
-
-      const lastDate = new Date(incomeLastPaycheckInput.value + "T12:00:00");
-      if (Number.isNaN(lastDate.getTime())) {
-        if (incomeOutput) incomeOutput.textContent = "That paycheck date isn’t valid.";
-        return;
-      }
-
-      const year = lastDate.getFullYear();
-      const startOfYear = new Date(year, 0, 1);
-      const diffMs = lastDate - startOfYear;
-      const dayOfYear = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-
-      const weeksIntoYear = dayOfYear / 7;
-      const dailyRate = ytd / dayOfYear;
-      const estYearly = dailyRate * 365;
-      const estMonthly = estYearly / 12;
-
-      const fmtMoney0 = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-
-      if (incomeOutput) {
-        incomeOutput.textContent =
-          `Estimated Yearly Gross: $${fmtMoney0(estYearly)}  ` +
-          `Weeks into Year: ${weeksIntoYear.toFixed(1)}  ` +
-          `Avg Monthly: $${fmtMoney0(estMonthly)}`;
-      }
-    });
-  }
-
-  // ==================================================
-  // OBJECTION COACH (server endpoint)
-  // ==================================================
-  const objectionForm = $("objectionForm");
-  const objectionOutput = $("objectionOutput");
-
-  if (objectionForm && objectionOutput && objectionForm.dataset.wired !== "true") {
-    objectionForm.dataset.wired = "true";
-
-    objectionForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const fd = new FormData(objectionForm);
-      const payload = {};
-      fd.forEach((value, key) => (payload[key] = value));
-
-      objectionOutput.value = "Coaching that objection…";
-      autoResizeTextarea(objectionOutput);
-
-      try {
-        const res = await fetch(apiBase + "/api/objection-coach", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `HTTP ${res.status} from objection coach.`);
-
-        const reply = data?.coachedMessage || data?.answer || data?.message || "";
-        objectionOutput.value = reply.trim() ? reply : "Empty reply from server.";
-      } catch (err) {
-        console.error("Objection coach error:", err);
-        objectionOutput.value = "Lot Rocket couldn't coach that objection right now. Try again in a bit.";
-      }
-
-      autoResizeTextarea(objectionOutput);
-    });
-  }
-
-  // ==================================================
-  // AI HELPERS (message-helper)
-  // ==================================================
-  function wireMessageHelper(formId, outputId, mode) {
-    const form = $(formId);
-    const output = $(outputId);
-    if (!form || !output) return;
-
-    if (form.dataset.wired === "true") return;
-    form.dataset.wired = "true";
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const fd = new FormData(form);
-      const payload = { mode };
-      fd.forEach((value, key) => (payload[key] = value));
-
-      output.value = "Spinning up AI...";
-      autoResizeTextarea(output);
-
-      try {
-        const res = await fetch(apiBase + "/api/message-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`HTTP ${res.status} from message helper${text ? `: ${text}` : ""}`);
-        }
-
-        const data = await res.json().catch(() => ({}));
-        const text =
-          (typeof data?.text === "string" && data.text.trim()) ||
-          (typeof data?.message === "string" && data.message.trim()) ||
-          "";
-
-        output.value = text || "AI didn't return a message. Try again.";
-      } catch (err) {
-        console.error("Message helper error:", err);
-        output.value = "Lot Rocket hit a snag talking to AI. Try again in a minute.";
-      }
-
-      autoResizeTextarea(output);
-    });
-  }
-
-  wireMessageHelper("messageForm", "messageOutput", "message");
-  wireMessageHelper("askForm", "askOutput", "ask");
-  wireMessageHelper("carForm", "carOutput", "car");
-  wireMessageHelper("imageForm", "imageOutput", "image-brief");
 
 // ==================================================
 // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
