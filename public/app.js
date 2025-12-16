@@ -2081,30 +2081,45 @@ sendToDesignStudioBtn?.addEventListener("click", () => {
 });
 
 
-  // Social strip → open Design Studio
-  openDesignFromCarouselBtn?.addEventListener("click", () => {
-    normalizeSocialReady();
-    if (!STORE.socialReadyPhotos.length) return alert("No social-ready photos yet.");
+// ==================================================
+// SOCIAL STRIP ↔ STUDIOS (Design / Fabric) + Export
+// ==================================================
 
-    const selected = STORE.socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
-    const chosen = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p.url)).slice(0, MAX_PHOTOS);
+// Social strip → open Design Studio
+if (openDesignFromCarouselBtn && openDesignFromCarouselBtn.dataset.wired !== "true") {
+  openDesignFromCarouselBtn.dataset.wired = "true";
+  openDesignFromCarouselBtn.addEventListener("click", () => {
+    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+    if (!STORE?.socialReadyPhotos?.length) return alert("No social-ready photos yet.");
+
+    const selected = STORE.socialReadyPhotos.filter((p) => p?.selected).map((p) => p?.url).filter(Boolean);
+    const chosen = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p?.url).filter(Boolean))
+      .slice(0, MAX_PHOTOS);
+
     pushUrlsIntoDesignStudio(chosen);
   });
+}
 
-  // Social strip → open Canvas Studio (Fabric)
-  openCanvasFromCarouselBtn?.addEventListener("click", () => {
-    normalizeSocialReady();
-    if (!STORE.socialReadyPhotos.length) return alert("No social-ready photos yet.");
+// Social strip → open Canvas Studio (Fabric)
+if (openCanvasFromCarouselBtn && openCanvasFromCarouselBtn.dataset.wired !== "true") {
+  openCanvasFromCarouselBtn.dataset.wired = "true";
+  openCanvasFromCarouselBtn.addEventListener("click", () => {
+    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+    if (!STORE?.socialReadyPhotos?.length) return alert("No social-ready photos yet.");
 
-    const selected = STORE.socialReadyPhotos.filter((p) => p.selected).map((p) => p.url);
-    const urls = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p.url)).slice(0, MAX_PHOTOS);
+    const selected = STORE.socialReadyPhotos.filter((p) => p?.selected).map((p) => p?.url).filter(Boolean);
+    const urls = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p?.url).filter(Boolean))
+      .slice(0, MAX_PHOTOS);
 
     openCreativeStudio();
     urls.forEach((u) => addImageFromUrl(u));
   });
+}
 
-  // Design Studio → Send to Social Strip
-  sendDesignToStripBtn?.addEventListener("click", async () => {
+// Design Studio → Send to Social Strip
+if (sendDesignToStripBtn && sendDesignToStripBtn.dataset.wired !== "true") {
+  sendDesignToStripBtn.dataset.wired = "true";
+  sendDesignToStripBtn.addEventListener("click", async () => {
     if (!studioStage) return;
 
     let dataUrl;
@@ -2122,32 +2137,24 @@ sendToDesignStudioBtn?.addEventListener("click", () => {
 
     addToSocialReady(objectUrl, true);
 
-    STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, objectUrl]), MAX_PHOTOS);
+    STORE.creativePhotos = capMax(uniqueUrls([...(STORE.creativePhotos || []), objectUrl]), MAX_PHOTOS);
     renderCreativeThumbs();
   });
+}
 
 // ==================================================
-// FINAL INIT (safe boot)
+// FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
 try {
-  // Step 1 grid (dealer photos -> selectable grid) uses STORE.creativePhotos in your clean system
   if (typeof renderPhotosGrid === "function") {
     renderPhotosGrid(STORE?.creativePhotos || []);
   }
 
-  // Step 3
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
-
-  // Keep social objects normalized (safe if function exists)
   if (typeof normalizeSocialReady === "function") normalizeSocialReady();
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
-
-
-
-
-
 
 
