@@ -193,19 +193,17 @@ document.addEventListener("keydown", (e) => {
 
   const dealerUrlInput   = $("dealerUrl");
 // ==================================================
-// STEP 1 — BOOST + PHOTO GRID (CLEAN / SINGLE-PASS)
-// Depends on existing helpers elsewhere:
-//   $, capMax, uniqueUrls, getProxiedImageUrl, normalizeSocialReady
-// Depends on globals/constants elsewhere:
-//   MAX_PHOTOS, STORE, apiBase
+// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
 // ==================================================
 
-// Inputs (your HTML ids)
-const dealerUrlInput     = $("dealerUrl");       // <input id="dealerUrl">
-const vehicleLabelInput  = $("vehicleLabel");    // <input id="vehicleLabel">
-const priceOfferInput    = $("priceOffer");      // <input id="priceOffer"> (override)
+// Inputs (support either id naming)
+const dealerUrlInput =
+  $("dealerUrl") || $("vehicleUrl") || $("vehicleUrlInput");
 
-// Buttons (supports multiple possible IDs)
+const vehicleLabelInput = $("vehicleLabel");
+const priceOfferInput = $("priceOffer");
+
+// Buttons (support multiple possible IDs)
 const boostBtn =
   $("boostListingBtn") ||
   $("boostThisListing") ||
@@ -223,7 +221,7 @@ const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
 const photosGridEl   = $("photosGrid");
 
 // --------------------------------------------------
-// API calls (backend endpoints)
+// API helper
 // --------------------------------------------------
 async function postJSON(url, body) {
   const res = await fetch(url, {
@@ -240,7 +238,26 @@ async function postJSON(url, body) {
 }
 
 // --------------------------------------------------
-// Render photo grid (selectable thumbs)
+// Grid helpers (fallbacks to avoid crashes)
+// --------------------------------------------------
+function capMax(arr, n) {
+  return Array.isArray(arr) ? arr.slice(0, n) : [];
+}
+function uniqueUrls(arr) {
+  const seen = new Set();
+  return (arr || []).filter((u) => {
+    if (!u || seen.has(u)) return false;
+    seen.add(u);
+    return true;
+  });
+}
+function getProxiedImageUrl(u) {
+  // If you already have a proxy function elsewhere, remove this fallback
+  return u;
+}
+
+// --------------------------------------------------
+// Render grid
 // --------------------------------------------------
 function renderPhotosGrid(urls) {
   if (!photosGridEl) return;
@@ -261,8 +278,7 @@ function renderPhotosGrid(urls) {
     img.alt = `photo ${idx + 1}`;
     img.loading = "lazy";
 
-    // default selected ON
-    wrap.dataset.selected = "1";
+    wrap.dataset.selected = "1"; // default selected ON
     wrap.addEventListener("click", () => {
       const isSel = wrap.dataset.selected === "1";
       wrap.dataset.selected = isSel ? "0" : "1";
@@ -279,20 +295,16 @@ function renderPhotosGrid(urls) {
 function getSelectedGridUrls() {
   if (!photosGridEl) return [];
   const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
-
   const selected = btns
     .filter((b) => b.dataset.selected === "1")
     .map((b) => b.querySelector("img")?.src)
     .filter(Boolean);
 
-  // keep as-is (proxied URLs are safe to reuse in-app)
   return uniqueUrls(capMax(selected, MAX_PHOTOS));
 }
 
 // --------------------------------------------------
 // Boost Listing (scrape)
-// Backend expected:
-// { title, price, photos: [url...] }  (also supports vehicleTitle/vehiclePrice/images)
 // --------------------------------------------------
 async function boostListing() {
   const url = (dealerUrlInput?.value || "").trim();
@@ -313,26 +325,17 @@ async function boostListing() {
 
     const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-    const title =
-      data?.title || data?.vehicle || data?.vehicleTitle || data?.vehicle_name || "";
-    const price =
-      data?.price || data?.offer || data?.vehiclePrice || data?.priceInfo || "";
-
-    const photos = data?.photos || data?.images || data?.photoUrls || [];
+    const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+    const price = data?.price || data?.offer || data?.vehiclePrice || "";
+    const photos = data?.photos || data?.images || [];
 
     if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
     if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
 
-    // Store RAW urls (not proxied)
     STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
-
     renderPhotosGrid(STORE.creativePhotos);
 
-    console.log("✅ Boost complete", {
-      title,
-      price,
-      photos: STORE.creativePhotos.length,
-    });
+    console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
   } catch (err) {
     console.error("❌ Boost failed:", err);
     alert(err?.message || "Boost failed.");
@@ -342,7 +345,7 @@ async function boostListing() {
 }
 
 // --------------------------------------------------
-// Send selected photos -> Step 3 (Creative Lab + Social Strip + Design Studio)
+// Send selected photos -> Step 3
 // --------------------------------------------------
 function sendSelectedToCreative() {
   const selected = getSelectedGridUrls();
@@ -351,10 +354,8 @@ function sendSelectedToCreative() {
     return;
   }
 
-  // URLs
   STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
-  // Social-ready objects
   STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
     url: u,
     originalUrl: u,
@@ -362,12 +363,10 @@ function sendSelectedToCreative() {
     locked: false,
   }));
 
-  // Optional: keep design studio in sync
   STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
-  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+  if (typeof window.normalizeSocialReady === "function") window.normalizeSocialReady();
 
-  // Call your render hooks if they exist
   if (typeof window.renderCreativePhotoStrip === "function") window.renderCreativePhotoStrip();
   if (typeof window.renderSocialCarousel === "function") window.renderSocialCarousel();
   if (typeof window.refreshDesignStudioStrip === "function") window.refreshDesignStudioStrip();
@@ -401,6 +400,7 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 } else if (!sendTopBtn) {
   console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
 }
+
 
 // ==================================================
 // RIGHT-SIDE TOOL MODALS (SINGLE, STABLE WIRING)
@@ -528,7 +528,6 @@ sideToolsDebug(
     modalFound: !!resolveFirstExisting(t.modalIds),
   }))
 );
-
 
 // ==================================================
 // DRILL MODE — Q&A + GRADING (prefers /api/drill-grade)
@@ -677,6 +676,7 @@ sideToolsDebug(
     });
   }
 })();
+
 
 
 
