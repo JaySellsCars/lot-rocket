@@ -531,13 +531,15 @@ sideToolsDebug(
 
 
 // ==================================================
-// DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
-// CLEAN: no open/close modal wiring here (handled by universal modal system)
+// DRILL MODE — Q&A + GRADING (prefers /api/drill-grade)
+// NOTE: Modal open/close is handled by your side-modal system.
+// This block only wires the drill UI inside the modal.
 // ==================================================
 
 (() => {
-  // Elements
-  const drillModal = $("drillModeModal"); // exists in HTML (used only for safety checks)
+  const drillModal = $("drillModeModal");
+  if (!drillModal) return; // if modal missing, skip silently
+
   const drillObjectionText = $("drillObjectionText");
   const getDrillObjectionBtn = $("getDrillObjection");
 
@@ -547,10 +549,6 @@ sideToolsDebug(
   const drillResult = $("drillResult");
   const drillTimerDisplay = $("drillTimer");
 
-  // If the modal or key elements don’t exist, bail quietly
-  if (!drillModal) return;
-
-  // Content
   const DRILL_OBJECTIONS = [
     "The price is too high.",
     "I need to talk to my spouse first.",
@@ -562,12 +560,10 @@ sideToolsDebug(
     "I don’t want to run my credit.",
   ];
 
-  // State
   let currentDrillObjection = "";
   let drillTimerId = null;
   let drillSecondsLeft = 0;
 
-  // UI helpers
   function setDrillResult(message = "", show = false) {
     if (!drillResult) return;
     drillResult.textContent = message;
@@ -585,13 +581,11 @@ sideToolsDebug(
     if (drillReplyInput) drillReplyInput.value = "";
     setDrillResult("", false);
     if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
-    drillSecondsLeft = 60;
   }
 
   function startDrillTimer(startSeconds = 60) {
     if (!drillTimerDisplay) return;
     stopDrillTimer();
-
     drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
     drillTimerDisplay.textContent = String(drillSecondsLeft);
 
@@ -602,18 +596,7 @@ sideToolsDebug(
     }, 1000);
   }
 
-  // If the modal gets closed (universal system adds "hidden"), stop the timer
-  // This prevents timers running in the background.
-  const _obs = new MutationObserver(() => {
-    if (drillModal.classList.contains("hidden")) {
-      stopDrillTimer();
-    }
-  });
-  _obs.observe(drillModal, { attributes: true, attributeFilter: ["class"] });
-
-  // -----------------------------
   // Give me an objection
-  // -----------------------------
   if (getDrillObjectionBtn && getDrillObjectionBtn.dataset.wired !== "true") {
     getDrillObjectionBtn.dataset.wired = "true";
     getDrillObjectionBtn.addEventListener("click", () => {
@@ -628,9 +611,7 @@ sideToolsDebug(
     });
   }
 
-  // -----------------------------
-  // Grade reply (prefers /api/drill-grade, falls back to /api/message-helper)
-  // -----------------------------
+  // Grade my reply
   if (gradeDrillReplyBtn && gradeDrillReplyBtn.dataset.wired !== "true") {
     gradeDrillReplyBtn.dataset.wired = "true";
     gradeDrillReplyBtn.addEventListener("click", async () => {
@@ -659,14 +640,14 @@ sideToolsDebug(
       };
 
       try {
-        // 1) preferred endpoint
+        // Try drill-grade first
         let res = await fetch(apiBase + "/api/drill-grade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        // 2) fallback endpoint
+        // Fallback to message helper
         if (!res.ok) {
           res = await fetch(apiBase + "/api/message-helper", {
             method: "POST",
@@ -678,7 +659,6 @@ sideToolsDebug(
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
 
-        // Expecting structured drill-grade response
         if (typeof data?.score === "number") {
           const msg =
             `Score: ${data.score}/100\n\n` +
@@ -686,10 +666,8 @@ sideToolsDebug(
             `🔧 What to fix:\n${data.what_to_fix || "—"}\n\n` +
             `🔥 Better response:\n${data.better_response || "—"}\n\n` +
             `Coach tip: ${data.one_sentence_coaching_tip || "—"}`;
-
           setDrillResult(msg, true);
         } else {
-          // message-helper style fallback
           setDrillResult(data.text || "Couldn’t grade that one. Try another objection.", true);
         }
       } catch (err) {
@@ -699,6 +677,7 @@ sideToolsDebug(
     });
   }
 })();
+
 
 
   // ==================================================
