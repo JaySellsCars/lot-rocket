@@ -2128,18 +2128,13 @@ sendToDesignStudioBtn?.addEventListener("click", () => {
 // FINAL INIT
 // ==================================================
 try {
-  renderPhotosGrid(STORE?.creativePhotos || []);
-
-  if (typeof renderCreativeThumbs === "function") {
-    renderCreativeThumbs();
-  }
-
-  if (typeof renderSocialStrip === "function") {
-    renderSocialStrip();
-  }
+  renderPhotosGrid(STORE.creativePhotos || []);
+  renderCreativeThumbs?.();
+  renderSocialStrip?.();
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
+
 
 
 
