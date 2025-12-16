@@ -2089,5 +2089,7 @@ try {
   console.error("❌ Final init failed:", e);
 }
 
+}); // ✅ closes DOMContentLoaded
+
 
 
