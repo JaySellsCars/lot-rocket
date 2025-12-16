@@ -783,9 +783,46 @@ sideToolsDebug(
     });
   }
 
-  // ==================================================
-  // STEP 3 – CREATIVE LAB (thumbs + tuner + upload)
-  // ==================================================
+// ==================================================
+// STEP 3 – CREATIVE LAB (thumbs + tuner + upload)
+// ==================================================
+
+// Step 1 -> Send Top Photos into Creative + Social Strip
+const step1SendTopBtn = $("sendTopPhotosBtn");
+if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
+  step1SendTopBtn.dataset.wired = "true";
+
+  step1SendTopBtn.addEventListener("click", () => {
+    const selected =
+      typeof getSelectedGridUrls === "function"
+        ? getSelectedGridUrls()
+        : [];
+
+    if (!selected.length) {
+      alert("Select at least 1 photo in the grid first.");
+      return;
+    }
+
+    STORE.creativePhotos = capMax(uniqueUrls(selected), MAX_PHOTOS);
+    STORE.designStudioPhotos = capMax(uniqueUrls(selected), MAX_PHOTOS);
+
+    STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
+      url: u,
+      originalUrl: u,
+      selected: true,
+      locked: false,
+    }));
+
+    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+    renderCreativeThumbs();
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+
+    step1SendTopBtn.classList.add("success");
+    setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
+  });
+}
+
   const photoDropZone = $("photoDropZone");
   const photoFileInput = $("photoFileInput");
   const creativeThumbGrid = $("creativeThumbGrid");
