@@ -7,6 +7,7 @@
 // - Stable buttons + modals + Step 3 tools (Creative Lab + Social Strip + Canvas + Design Studio)
 
 document.addEventListener("DOMContentLoaded", () => {
+const DOC = window.document; // ✅ always the real document
 
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
