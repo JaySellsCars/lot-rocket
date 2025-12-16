@@ -2059,18 +2059,26 @@ function gatherImageUrlsForStudios() {
   }
 
   // Step 3 → send selected photos into Design Studio
-  sendToDesignStudioBtn?.addEventListener("click", () => {
-    let urls = [];
+sendToDesignStudioBtn?.addEventListener("click", () => {
+  let urls = [];
 
-    const selectedThumbs = creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
-    if (selectedThumbs.length) selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
+  const selectedThumbs =
+    creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
 
-    if (!urls.length) urls = STORE.creativePhotos.slice(0, MAX_PHOTOS);
-    if (!urls.length) urls = dealerPhotos.map((p) => p.src).slice(0, MAX_PHOTOS);
+  if (selectedThumbs.length) {
+    selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
+  }
 
-    if (!urls.length) return alert("Load or select a photo first before sending to Design Studio.");
-    pushUrlsIntoDesignStudio(urls);
-  });
+  if (!urls.length) urls = (STORE.creativePhotos || []).slice(0, MAX_PHOTOS);
+
+  if (!urls.length) {
+    alert("Load or select a photo first before sending to Design Studio.");
+    return;
+  }
+
+  pushUrlsIntoDesignStudio(urls);
+});
+
 
   // Social strip → open Design Studio
   openDesignFromCarouselBtn?.addEventListener("click", () => {
