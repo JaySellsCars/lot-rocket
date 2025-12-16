@@ -1961,8 +1961,8 @@ function gatherImageUrlsForStudios() {
 
   STORE.creativePhotos.forEach((u) => u && urls.add(u));
   STORE.socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
-  // DELETE this old line:
-  // dealerPhotos.forEach((p) => p?.src && urls.add(p.src));
+
+ 
 
   return Array.from(urls).slice(0, MAX_PHOTOS);
 }
