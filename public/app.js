@@ -82,50 +82,49 @@ document.addEventListener("keydown", (e) => {
 // ==================================================
 // OBJECTION COACH — INIT ON MODAL OPEN (ONCE)
 // ==================================================
-(function () {
-  const modal = document.getElementById("objectionModal");
-  if (!modal) return;
+// --------------------------------------------------
+// OBJECTION COACH (bind once, runs on submit)
+// --------------------------------------------------
+function wireObjectionCoach() {
+  const modal = $("objectionModal");
+  if (!modal || modal.dataset.wired === "true") return;
+  modal.dataset.wired = "true";
 
-  let bound = false;
+  const form = $("objectionForm");
+  const input = $("objectionInput");
+  const output = $("objectionOutput");
 
-  modal.addEventListener("lr:open", () => {
-    if (bound) return;
-    bound = true;
+  if (!form || !input || !output) {
+    console.warn("[LotRocket] Objection Coach elements missing.");
+    return;
+  }
 
-    const form = modal.querySelector("#objectionForm");
-    const input = modal.querySelector("#objectionInput");
-    const output = modal.querySelector("#objectionOutput");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const objection = (input.value || "").trim();
+    if (!objection) return;
 
-    if (!form || !input || !output) {
-      console.warn("⚠️ Objection Coach missing DOM elements");
-      return;
+    output.textContent = "Thinking…";
+
+    try {
+      const res = await fetch(apiBase + "/api/objection-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ objection }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Request failed");
+      output.textContent = data.reply || "No response.";
+    } catch (err) {
+      console.error(err);
+      output.textContent = "Error generating response.";
     }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const objection = (input.value || "").trim();
-      if (!objection) return;
-
-      output.textContent = "Thinking…";
-
-      try {
-        const res = await fetch("/api/objection-coach", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ objection }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || "Request failed");
-
-        output.textContent = data.reply || data.text || "No response.";
-      } catch (err) {
-        console.error("❌ Objection Coach error:", err);
-        output.textContent = "Error generating response.";
-      }
-    });
   });
+
+  // Optional: focus input when modal opens (using your universal system)
+  modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
+}
 })();
 
 
