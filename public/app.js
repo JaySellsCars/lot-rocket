@@ -527,25 +527,8 @@ document.addEventListener("keydown", (e) => {
   // ==================================================
   // STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
   // ==================================================
-  const vehicleUrlInput = $("vehicleUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceInfoInput = $("priceInfo");
-  const boostButton = $("boostButton");
-  const statusText = $("statusText");
 
-  const summaryLabel = $("summaryLabel");
-  const summaryPrice = $("summaryPrice");
 
-  const facebookPost = $("facebookPost");
-  const instagramPost = $("instagramPost");
-  const tiktokPost = $("tiktokPost");
-  const linkedinPost = $("linkedinPost");
-  const twitterPost = $("twitterPost");
-  const textBlurb = $("textBlurb");
-  const marketplacePost = $("marketplacePost");
-  const hashtags = $("hashtags");
-
-  const photosGrid = $("photosGrid");
 
   let socialIndex = 0; // preview index
   let dealerPhotos = []; // [{ src, selected }]
