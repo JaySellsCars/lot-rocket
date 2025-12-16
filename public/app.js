@@ -78,6 +78,9 @@ document.addEventListener("keydown", (e) => {
   const top = openModals[openModals.length - 1];
   if (top) closeSideModal(top);
 });
+// ==================================================
+// OBJECTION COACH — INIT ON MODAL OPEN (ONCE)
+// ==================================================
 (function () {
   const modal = document.getElementById("objectionModal");
   if (!modal) return;
@@ -91,11 +94,16 @@ document.addEventListener("keydown", (e) => {
     const form = modal.querySelector("#objectionForm");
     const input = modal.querySelector("#objectionInput");
     const output = modal.querySelector("#objectionOutput");
-    if (!form || !input || !output) return;
+
+    if (!form || !input || !output) {
+      console.warn("⚠️ Objection Coach missing DOM elements");
+      return;
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const objection = input.value.trim();
+
+      const objection = (input.value || "").trim();
       if (!objection) return;
 
       output.textContent = "Thinking…";
@@ -106,16 +114,19 @@ document.addEventListener("keydown", (e) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ objection }),
         });
+
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Request failed");
-        output.textContent = data.reply || "No response.";
+
+        output.textContent = data.reply || data.text || "No response.";
       } catch (err) {
-        console.error(err);
+        console.error("❌ Objection Coach error:", err);
         output.textContent = "Error generating response.";
       }
     });
   });
 })();
+
 
 
 
