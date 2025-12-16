@@ -3,6 +3,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   const DOC = window.document; // ✅ MUST be first line inside DOMContentLoaded
+console.log("DEBUG typeof DOC.addEventListener =", typeof DOC.addEventListener);
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
   if (window.__LOTROCKET_BOOTED__) {
@@ -119,14 +120,14 @@ function wireObjectionCoach() {
       output.textContent = "Error generating response.";
     }
   });
-console.log("DEBUG typeof document.addEventListener =", typeof document.addEventListener);
+
 
   // Optional: focus input when modal opens (using your universal system)
   modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
 }
-console.log("DEBUG typeof document.addEventListener =", typeof document.addEventListener);
+
   
-})();
+
 
 
 
