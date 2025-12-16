@@ -517,21 +517,18 @@ sideToolsDebug(
 );
 
 // ==================================================
-// DRILL MODE — Q&A + GRADING (prefers /api/drill-grade)
-// NOTE: Modal open/close is handled by your side-modal system.
-// This block only wires the drill UI inside the modal.
+// DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
+// NOTE: opening/closing the modal is handled by your universal modal system
 // ==================================================
-
 (() => {
   const drillModal = $("drillModeModal");
-  if (!drillModal) return; // if modal missing, skip silently
+  if (!drillModal) return; // Drill UI not present in this HTML
 
+  const closeDrillModeBtn = $("closeDrillMode");
   const drillObjectionText = $("drillObjectionText");
   const getDrillObjectionBtn = $("getDrillObjection");
-
   const drillReplyInput = $("drillReplyInput");
   const gradeDrillReplyBtn = $("gradeDrillReply");
-
   const drillResult = $("drillResult");
   const drillTimerDisplay = $("drillTimer");
 
@@ -567,11 +564,13 @@ sideToolsDebug(
     if (drillReplyInput) drillReplyInput.value = "";
     setDrillResult("", false);
     if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
+    drillSecondsLeft = 60;
   }
 
   function startDrillTimer(startSeconds = 60) {
     if (!drillTimerDisplay) return;
     stopDrillTimer();
+
     drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
     drillTimerDisplay.textContent = String(drillSecondsLeft);
 
@@ -582,7 +581,21 @@ sideToolsDebug(
     }, 1000);
   }
 
-  // Give me an objection
+  // Close button inside modal (does NOT fight universal system)
+  if (closeDrillModeBtn && closeDrillModeBtn.dataset.wired !== "true") {
+    closeDrillModeBtn.dataset.wired = "true";
+    closeDrillModeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      stopDrillTimer();
+      resetDrillState();
+      // Let your universal [data-close] system hide the modal if you use it
+      // If not, you can manually close:
+      // drillModal.classList.add("hidden");
+      // drillModal.setAttribute("aria-hidden", "true");
+    });
+  }
+
+  // Give objection
   if (getDrillObjectionBtn && getDrillObjectionBtn.dataset.wired !== "true") {
     getDrillObjectionBtn.dataset.wired = "true";
     getDrillObjectionBtn.addEventListener("click", () => {
@@ -597,7 +610,7 @@ sideToolsDebug(
     });
   }
 
-  // Grade my reply
+  // Grade reply
   if (gradeDrillReplyBtn && gradeDrillReplyBtn.dataset.wired !== "true") {
     gradeDrillReplyBtn.dataset.wired = "true";
     gradeDrillReplyBtn.addEventListener("click", async () => {
@@ -626,14 +639,13 @@ sideToolsDebug(
       };
 
       try {
-        // Try drill-grade first
         let res = await fetch(apiBase + "/api/drill-grade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        // Fallback to message helper
+        // Fallback
         if (!res.ok) {
           res = await fetch(apiBase + "/api/message-helper", {
             method: "POST",
@@ -663,6 +675,7 @@ sideToolsDebug(
     });
   }
 })();
+
 
 
 
