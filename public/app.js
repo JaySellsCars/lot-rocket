@@ -2125,10 +2125,22 @@ sendToDesignStudioBtn?.addEventListener("click", () => {
     STORE.creativePhotos = capMax(uniqueUrls([...STORE.creativePhotos, objectUrl]), MAX_PHOTOS);
     renderCreativeThumbs();
   });
+
+// ==================================================
+// FINAL INIT (safe boot)
+// ==================================================
 try {
-  renderPhotosGrid(STORE.creativePhotos || []);
-  renderCreativeThumbs?.();
-  renderSocialStrip?.();
+  // Step 1 grid (dealer photos -> selectable grid) uses STORE.creativePhotos in your clean system
+  if (typeof renderPhotosGrid === "function") {
+    renderPhotosGrid(STORE?.creativePhotos || []);
+  }
+
+  // Step 3
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+  // Keep social objects normalized (safe if function exists)
+  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
