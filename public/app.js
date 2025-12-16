@@ -78,7 +78,7 @@ document.addEventListener("keydown", (e) => {
     .filter((m) => !m.classList.contains("hidden"));
   const top = openModals[openModals.length - 1];
   if (top) closeSideModal(top);
-});
+
 // ==================================================
 // OBJECTION COACH — INIT ON MODAL OPEN (ONCE)
 // ==================================================
