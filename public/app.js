@@ -1972,17 +1972,18 @@ function gatherImageUrlsForStudios() {
     });
   }
 
-  if (designCloseBtn && designStudioOverlay && designCloseBtn.dataset.wired !== "true") {
-    designCloseBtn.dataset.wired = "true";
-    designCloseBtn.addEventListener("click", closeDesignStudio);
+if (designCloseBtn && designStudioOverlay && designCloseBtn.dataset.wired !== "true") {
+  designCloseBtn.dataset.wired = "true";
+  designCloseBtn.addEventListener("click", closeDesignStudio);
 
-    if (designStudioOverlay.dataset.backdropWired !== "true") {
-      designStudioOverlay.dataset.backdropWired = "true";
-      designStudioOverlay.addEventListener("click", (e) => {
-        if (e.target === designStudioOverlay) closeDesignStudio();
-      });
-    }
+  if (designStudioOverlay.dataset.backdropWired !== "true") {
+    designStudioOverlay.dataset.backdropWired = "true";
+    designStudioOverlay.addEventListener("click", (e) => {
+      if (e.target === designStudioOverlay) closeDesignStudio();
+    });
   }
+}
+
 
   function pushUrlsIntoDesignStudio(urls) {
     const list = capMax(uniqueUrls((urls || []).filter(Boolean)), MAX_PHOTOS);
@@ -1993,25 +1994,29 @@ function gatherImageUrlsForStudios() {
   }
 
   // Step 3 → send selected photos into Design Studio
-sendToDesignStudioBtn?.addEventListener("click", () => {
-  let urls = [];
+if (sendToDesignStudioBtn && sendToDesignStudioBtn.dataset.wired !== "true") {
+  sendToDesignStudioBtn.dataset.wired = "true";
+  sendToDesignStudioBtn.addEventListener("click", () => {
+    let urls = [];
 
-  const selectedThumbs =
-    creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
+    const selectedThumbs =
+      creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
 
-  if (selectedThumbs.length) {
-    selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
-  }
+    if (selectedThumbs.length) {
+      selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
+    }
 
-  if (!urls.length) urls = (STORE.creativePhotos || []).slice(0, MAX_PHOTOS);
+    if (!urls.length) urls = (STORE.creativePhotos || []).slice(0, MAX_PHOTOS);
 
-  if (!urls.length) {
-    alert("Load or select a photo first before sending to Design Studio.");
-    return;
-  }
+    if (!urls.length) {
+      alert("Load or select a photo first before sending to Design Studio.");
+      return;
+    }
 
-  pushUrlsIntoDesignStudio(urls);
-});
+    pushUrlsIntoDesignStudio(urls);
+  });
+}
+
 
 // ==================================================
 // SOCIAL STRIP ↔ STUDIOS (Design / Fabric) + Export
