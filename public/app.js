@@ -24,18 +24,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // ================================
-// UNIVERSAL SIDE-MODAL WIRING
+// UNIVERSAL SIDE-MODAL WIRING (SAFE NAMES)
 // ================================
 let activeModal = null;
 
-function openSideModal(modalId) {
+function openSideModalById(modalId) {
   const modal = document.getElementById(modalId);
   if (!modal) {
     console.warn("❌ Modal not found:", modalId);
     return;
   }
 
-  if (activeModal && activeModal !== modal) closeSideModal(activeModal);
+  if (activeModal && activeModal !== modal) closeSideModalEl(activeModal);
 
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
@@ -43,7 +43,7 @@ function openSideModal(modalId) {
   activeModal = modal;
 }
 
-function closeSideModal(modal) {
+function closeSideModalEl(modal) {
   if (!modal) return;
 
   modal.classList.add("hidden");
@@ -53,19 +53,25 @@ function closeSideModal(modal) {
   if (activeModal === modal) activeModal = null;
 }
 
-
+// Open modal via launcher data-modal-target
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-modal-target]");
+  if (!btn) return;
+  openSideModalById(btn.getAttribute("data-modal-target"));
+});
 
 // Close modal via [data-close]
 document.addEventListener("click", (e) => {
   const closeBtn = e.target.closest("[data-close]");
   if (!closeBtn) return;
-  closeSideModal(closeBtn.closest(".side-modal"));
+  closeSideModalEl(closeBtn.closest(".side-modal"));
 });
 
 // ESC closes active modal
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && activeModal) closeSideModal(activeModal);
+  if (e.key === "Escape" && activeModal) closeSideModalEl(activeModal);
 });
+
 
 
 
