@@ -1,9 +1,10 @@
 
 
 document.addEventListener("DOMContentLoaded", () => {
+  const DOC = window.document;
+  const $ = (id) => DOC.getElementById(id);
+  ...
 
-  const DOC = window.document; // ✅ MUST be first line inside DOMContentLoaded
-console.log("DEBUG typeof DOC.addEventListener =", typeof DOC.addEventListener);
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
   if (window.__LOTROCKET_BOOTED__) {
