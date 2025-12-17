@@ -307,6 +307,7 @@ const photosGrid = photosGridEl?.get(0);
 // 1) Render Step 1 photos
 function renderStep1Photos(urls) {
   if (!photosGrid) return;
+const renderPhotosGrid = renderStep1Photos;
 
   const clean = (Array.isArray(urls) ? urls : []).filter(Boolean);
 
