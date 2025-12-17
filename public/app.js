@@ -375,7 +375,8 @@ function getSelectedStep1Urls(max = 24) {
 
       // store RAW urls
       STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
-      renderPhotosGrid(STORE.creativePhotos);
+    renderStep1Photos(STORE?.creativePhotos || []);
+
 
       console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
     } catch (err) {
