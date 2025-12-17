@@ -271,7 +271,6 @@ function getProxiedImageUrl(rawUrl) {
 
     modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
   }
-
 // ==================================================
 // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
 // ==================================================
@@ -290,14 +289,73 @@ const sendTopBtn =
 
 const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
 const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+const photosGridEl = $("photosGrid"); // uses your $ helper
 
-const photosGridEl = $("photosGrid"); // ✅ correct for your $ helper
+// ------------------------------------
+// Boost handler (NO refactor)
+// ------------------------------------
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) {
+    alert("Paste a dealer URL first.");
+    return;
+  }
 
+  if (boostBtn) boostBtn.disabled = true;
 
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
+
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+    let title = "";
+    let price = "";
+    let photos = [];
+
+    title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+    price = data?.price || data?.offer || data?.vehiclePrice || "";
+    photos = Array.isArray(data?.photos)
+      ? data.photos
+      : Array.isArray(data?.images)
+      ? data.images
+      : [];
+
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    // store RAW urls (cap elsewhere if you want)
+    STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+
+    // Step 1 render
+    renderStep1Photos(STORE.creativePhotos);
+
+    console.log("✅ Boost complete", {
+      title,
+      price,
+      photos: STORE.creativePhotos.length,
+    });
+  } catch (e) {
+    console.log("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    if (boostBtn) boostBtn.disabled = false;
+  }
+}
+
+// ------------------------------------
+// Boost button click
+// ------------------------------------
+boostBtn?.addEventListener("click", boostListing);
 
 // ================================
 // STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
 // ================================
+
 
 STORE = window.LOTROCKET;
 STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
@@ -375,9 +433,7 @@ function getSelectedStep1Urls(max = 24) {
       const data = await postJSON(`${apiBase}/api/boost`, payload);
 console.log("BOOST RAW DATA:", data);
 
-const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-const price = data?.price || data?.offer || data?.vehiclePrice || "";
-const photos = data?.photos || data?.images || [];
+
 
 console.log("BOOST PARSED:", {
   title,
@@ -388,9 +444,7 @@ console.log("BOOST PARSED:", {
   photosSample: Array.isArray(photos) ? photos.slice(0, 3) : photos,
 });
 
-       title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-      const price = data?.price || data?.offer || data?.vehiclePrice || "";
-      const photos = data?.photos || data?.images || [];
+
 
       if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
       if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
