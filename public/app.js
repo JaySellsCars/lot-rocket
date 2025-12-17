@@ -2049,18 +2049,18 @@ function getSelectedStep1Urls(max = 24) {
       renderSocialStrip();
     });
   }
-  // ==================================================
-  // FINAL INIT (safe boot) — SINGLE COPY ONLY
-  // ==================================================
-  try {
-    normalizeSocialReady();
-    renderPhotosGrid(STORE?.creativePhotos || []);
-    renderCreativeThumbs();
-    renderSocialStrip();
-    wireObjectionCoach();
-  } catch (e) {
-    console.error("Final init failed:", e);
-  }
+// ==================================================
+// FINAL INIT (safe boot) — SINGLE COPY ONLY
+// ==================================================
+try {
+  normalizeSocialReady();
+  renderPhotosGrid(STORE.creativePhotos || []);
+  renderCreativeThumbs();
+  renderSocialStrip();
+  wireObjectionCoach();
+} catch (e) {
+  console.error("Final init failed:", e);
+}
 
 }); // ✅ closes DOMContentLoaded
 
