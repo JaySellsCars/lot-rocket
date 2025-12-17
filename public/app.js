@@ -2120,17 +2120,18 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
 try {
   normalizeSocialReady();
 
-  // Step 1 grid renderer (Option A)
   renderStep1Photos(STORE?.creativePhotos || []);
-
   renderCreativeThumbs();
   renderSocialStrip();
   wireObjectionCoach();
+
+  console.log("FINAL INIT REACHED");
 } catch (e) {
   console.log("Final init failed:", e);
 }
 
 }); // ✅ closes DOMContentLoaded
+
 
 
 
