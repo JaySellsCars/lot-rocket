@@ -2117,7 +2117,6 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
 // ==================================================
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
-
 try {
   normalizeSocialReady();
 
@@ -2126,7 +2125,9 @@ try {
   renderSocialStrip();
   wireObjectionCoach();
 
+  console.log("FINAL INIT REACHED");
+} catch (e) {
+  console.log("Final init failed:", e);
+}
 
-});// close DOMContentLoaded
-
-
+}); // close DOMContentLoaded
