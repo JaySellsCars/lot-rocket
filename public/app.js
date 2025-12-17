@@ -2058,22 +2058,21 @@ function getSelectedStep1Urls(max = 24) {
   }
 
   
-  // ==================================================
+// ==================================================
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
 try {
   normalizeSocialReady();
-  renderPhotosGrid(STORE.creativePhotos || []);
+  renderPhotosGrid(STORE?.creativePhotos || []);
   renderCreativeThumbs();
   renderSocialStrip();
   wireObjectionCoach();
-console.log("FINAL INIT REACHED");
-try {
+
+  console.log("FINAL INIT REACHED");
 } catch (e) {
-  console.log(e);
+  console.log("Final init failed:", e);
 }
 
-
-
 }); // ✅ closes DOMContentLoaded
+
 
