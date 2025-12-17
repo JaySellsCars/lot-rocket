@@ -1423,15 +1423,17 @@ creativeToolButtons.forEach((btn) => {
     nodes.forEach((node) => {
       if (node.name() === "BackgroundLayer") return;
       if (node.getClassName && node.getClassName() === "Transformer") return;
+const li = DOC.createElement("li");
+li.className = "layer-item";
+li.textContent = node.name() || node.getClassName();
 
-      const li = document.createElement("li");
-      li.className = "layer-item";
-      li.textContent = node.name() || node.getClassName();
-      if (node === studioSelectedNode) li.classList.add("layer-item-selected");
-      li.addEventListener("click", () => selectStudioNode(node));
-      layersList.appendChild(li);
-    });
-  }
+if (node === studioSelectedNode) {
+  li.classList.add("layer-item-selected");
+}
+
+li.addEventListener("click", () => selectStudioNode(node));
+layersList.appendChild(li);
+
 
   function syncLayerControlsWithSelection() {
     if (!studioSelectedNode) {
