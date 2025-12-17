@@ -2059,7 +2059,7 @@ function getSelectedStep1Urls(max = 24) {
     renderCreativeThumbs();
     renderSocialStrip();
     wireObjectionCoach();
-  } catch (e) {
-console.error("❌ Final init failed:", e);
-  }
-});
+} catch (e) {
+  console.error("Final init failed:", e);
+}
+
