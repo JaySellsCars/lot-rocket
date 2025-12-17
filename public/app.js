@@ -847,7 +847,8 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
     STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
 
     STORE.creativePhotos.forEach((url) => {
-      const img = document.createElement("img");
+  const img = DOC.createElement("img");
+
       img.src = url;
       img.alt = "Creative photo";
       img.loading = "lazy";
