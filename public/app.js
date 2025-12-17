@@ -459,7 +459,8 @@ console.log("BOOST PARSED:", {
     renderStep1Photos(STORE?.creativePhotos || []);
 
 
-      console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
+    console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
+
     } catch (err) {
       console.error("❌ Boost failed:", err);
       alert(err?.message || "Boost failed.");
