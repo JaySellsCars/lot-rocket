@@ -2060,6 +2060,6 @@ function getSelectedStep1Urls(max = 24) {
     renderSocialStrip();
     wireObjectionCoach();
   } catch (e) {
-    console.error("❌ Final init failed:", e);
+console.error("❌ Final init failed:", e);
   }
 });
