@@ -2113,10 +2113,10 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
     });
   }
 
-  
 // ==================================================
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
+
 try {
   normalizeSocialReady();
 
