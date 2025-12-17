@@ -243,11 +243,13 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
 
-  const sendTopBtn =
-    $("sendPhotosToCreative") ||
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendPhotosToCreativeLab");
+const sendTopBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendPhotosToCreative") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendPhotosToCreativeLab");
+
 
   const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
