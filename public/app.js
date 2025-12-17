@@ -458,12 +458,6 @@ function getSelectedStep1Urls(max = 24) {
     renderSocialStrip?.();
     refreshDesignStudioStrip?.();
 
-    console.log("✅ Sent photos to Step 3", {
-      creative: STORE.creativePhotos.length,
-      social: STORE.socialReadyPhotos.length,
-      studio: STORE.designStudioPhotos.length,
-    });
-  }
 
 
 
