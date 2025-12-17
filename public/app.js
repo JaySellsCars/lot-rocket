@@ -305,6 +305,14 @@ STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 const photosGrid = photosGridEl?.get(0);
 
 // 1) Render Step 1 photos
+  console.log("renderStep1Photos called:", {
+  urlsType: typeof urls,
+  isArray: Array.isArray(urls),
+  len: Array.isArray(urls) ? urls.length : -1,
+  sample: Array.isArray(urls) ? urls.slice(0, 3) : urls,
+  photosGridFound: !!photosGrid,
+});
+
 function renderStep1Photos(urls) {
   if (!photosGrid) return;
 const renderPhotosGrid = renderStep1Photos;
