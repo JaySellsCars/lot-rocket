@@ -1237,20 +1237,25 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
     creativeImageInput.value = "";
   });
 
-  creativeToolButtons.forEach((btn) => {
-    if (btn.dataset.wired === "true") return;
-    btn.dataset.wired = "true";
+// MUST use DOC, not document
+const creativeToolButtons = DOC.querySelectorAll(".tool-btn");
+console.log("Tool buttons found:", creativeToolButtons.length);
 
-    btn.addEventListener("click", () => {
-      const tool = btn.getAttribute("data-tool");
-      if (!tool) return;
+creativeToolButtons.forEach((btn) => {
+  if (btn.dataset.wired === "true") return;
+  btn.dataset.wired = "true";
 
-      creativeToolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
-      btn.classList.add("tool-btn-active");
+  btn.addEventListener("click", () => {
+    const tool = btn.getAttribute("data-tool");
+    if (!tool) return;
 
-      if (tool === "uploadImage" && creativeImageInput) creativeImageInput.click();
-    });
+    creativeToolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
+    btn.classList.add("tool-btn-active");
+
+    if (tool === "uploadImage" && creativeImageInput) creativeImageInput.click();
   });
+});
+
 
   // ==================================================
   // DESIGN STUDIO 3.5 (Konva) — stable init + tray
