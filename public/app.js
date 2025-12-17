@@ -153,7 +153,7 @@ function wireObjectionCoach() {
   // UTIL (ONE AND ONLY ONE $)
   // ==================================================
 // DOM helper (safe)
-const $ = (id) => DOC.getElementById(id);
+
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
