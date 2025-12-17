@@ -2113,20 +2113,24 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
       renderSocialStrip();
     });
   }
-// ==================================================
-// FINAL INIT (Safe boot) — SINGLE COPY ONLY
-// ==================================================
-try {
-  normalizeSocialReady();
+  // ==================================================
+  // FINAL INIT (Safe boot) — SINGLE COPY ONLY
+  // STRUCTURE ONLY: do not change logic here
+  // ==================================================
+  try {
+    // If these functions exist in your file, they will run.
+    // If not, remove only the missing call(s) AFTER syntax is stable.
+    normalizeSocialReady();
 
-  renderStep1Photos(STORE?.creativePhotos || []);
-  renderCreativeThumbs?.();
-  renderSocialStrip?.();
-  wireObjectionCoach?.();
+    renderStep1Photos(STORE && STORE.creativePhotos ? STORE.creativePhotos : []);
+    renderCreativeThumbs();
+    renderSocialStrip();
+    wireObjectionCoach();
 
-  console.log("FINAL INIT REACHED");
-} catch (e) {
-  console.log("Final init failed:", e);
-}
+    console.log("FINAL INIT REACHED");
+  } catch (e) {
+    console.log("Final init failed:", e);
+  }
 
-}); // ✅ closes DOMContentLoaded
+}); // closes DOMContentLoaded
+
