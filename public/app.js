@@ -272,14 +272,14 @@ function getProxiedImageUrl(rawUrl) {
     modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
   }
 
-  // ==================================================
-  // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
-  // ==================================================
-  const dealerUrlInput = $("dealerUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceOfferInput = $("priceOffer");
+// ==================================================
+// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
+// ==================================================
+const dealerUrlInput = $("dealerUrl");
+const vehicleLabelInput = $("vehicleLabel");
+const priceOfferInput = $("priceOffer");
 
-  const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
+const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
 
 const sendTopBtn =
   $("sendTopPhotosBtn") ||
@@ -288,10 +288,11 @@ const sendTopBtn =
   $("sendTopPhotosToCreativeLab") ||
   $("sendPhotosToCreativeLab");
 
+const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
 
-  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
-const photosGridEl = $("#photosGrid");
+const photosGridEl = $("photosGrid"); // ✅ correct for your $ helper
+
 
 
 // ================================
@@ -301,8 +302,7 @@ const photosGridEl = $("#photosGrid");
 STORE = window.LOTROCKET;
 STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
-// map jQuery → DOM
-const photosGrid = photosGridEl?.get(0);
+
 
 // 1) Render Step 1 photos
   console.log("renderStep1Photos called:", {
