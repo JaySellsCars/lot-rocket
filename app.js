@@ -175,18 +175,17 @@ function isBlockedProxyTarget(urlStr) {
     return true;
   }
 }
-// ===============================
 // BOOST LISTING (Step 1)
 // POST /api/boost
 // body: { url, labelOverride, priceOverride, maxPhotos }
 // returns: { title, price, photos: [] }
-// ===============================
+
 app.post("/api/boost", async (req, res) => {
   try {
     const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
     if (!url) return res.status(400).json({ error: "Missing url" });
 
-    const scraped = await scrapePage(url); // <-- your real scraper
+    const scraped = await scrapePage(url); // <-- your real scraper function
 
     const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
 
@@ -203,17 +202,6 @@ app.post("/api/boost", async (req, res) => {
   }
 });
 
-
-    const title = (labelOverride || scraped.title || "").trim();
-    const price = (priceOverride || scraped.price || "").trim();
-    const photos = Array.isArray(scraped.photos) ? scraped.photos.slice(0, safeMax) : [];
-
-    return res.json({ title, price, photos });
-  } catch (err) {
-    console.error("❌ /api/boost failed:", err);
-    return res.status(500).json({ error: "Boost failed" });
-  }
-});
 
 
 // ======================================================
