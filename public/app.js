@@ -429,15 +429,7 @@ function getSelectedStep1Urls(max = 24) {
 
 
 
-    console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
 
-    } catch (err) {
-      console.error("❌ Boost failed:", err);
-      alert(err?.message || "Boost failed.");
-    } finally {
-      if (boostBtn) boostBtn.disabled = false;
-    }
-  }
 
   function sendSelectedToCreative() {
     const selected = getSelectedGridUrls();
