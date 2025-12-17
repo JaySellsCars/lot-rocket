@@ -1,8 +1,11 @@
 
-
 window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
+
+
+});
+
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
   if (window.__LOTROCKET_BOOTED__) {
@@ -1975,21 +1978,23 @@ img.alt = "Design photo";
   });
 
   studioPhotoTray.appendChild(img);
-});
 
 
-    const konvaContainer = $("konvaStageContainer");
-    if (konvaContainer && !studioDnDWired) {
-      studioDnDWired = true;
-      konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
-      konvaContainer.addEventListener("drop", (e) => {
-        e.preventDefault();
-        let url = "";
-        try { url = e.dataTransfer.getData("text/plain"); } catch {}
-        if (url) addStudioImageFromUrl(url, false);
-      });
-    }
-  }
+
+const konvaContainer = $("konvaStageContainer");
+if (konvaContainer && !studioDnDWired) {
+  studioDnDWired = true;
+
+  konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
+
+  konvaContainer.addEventListener("drop", (e) => {
+    e.preventDefault();
+    let url = "";
+    try { url = e.dataTransfer.getData("text/plain"); } catch {}
+    if (url) addStudioImageFromUrl(url, false);
+  });
+} // ✅ IMPORTANT: this is just "}" — NOT "});"
+
 
   function openDesignStudio(forceSources) {
     if (!designStudioOverlay) return;
@@ -2128,21 +2133,23 @@ STORE.creativePhotos = capMax(
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
 try {
-  // Normalize state FIRST
   if (typeof normalizeSocialReady === "function") normalizeSocialReady();
 
-  // Then render UI
   if (typeof renderPhotosGrid === "function") {
     renderPhotosGrid(STORE?.creativePhotos || []);
   }
+
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
 
-  // Wire Objection Coach ONCE
+  // ✅ Wire once so the form submit works when modal opens
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
+
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
+
+
 }); // closes DOMContentLoaded
 
 
