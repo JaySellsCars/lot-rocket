@@ -2049,7 +2049,6 @@ function getSelectedStep1Urls(max = 24) {
       renderSocialStrip();
     });
   }
-
   // ==================================================
   // FINAL INIT (safe boot) — SINGLE COPY ONLY
   // ==================================================
@@ -2059,7 +2058,9 @@ function getSelectedStep1Urls(max = 24) {
     renderCreativeThumbs();
     renderSocialStrip();
     wireObjectionCoach();
-} catch (e) {
-  console.error("Final init failed:", e);
-}
+  } catch (e) {
+    console.error("Final init failed:", e);
+  }
+
+}); // ✅ closes DOMContentLoaded
 
