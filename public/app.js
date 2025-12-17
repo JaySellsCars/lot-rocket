@@ -42,10 +42,9 @@ function closeSideModal(modal) {
   modal.setAttribute("aria-hidden", "true");
   modal.dispatchEvent(new CustomEvent("lr:close", { detail: { modalId: modal.id } }));
 }
-
 // Click delegation for open + close
 DOC.addEventListener("click", (e) => {
-  // OPEN modal
+  // OPEN
   const openBtn = e.target.closest("[data-modal-target]");
   if (openBtn) {
     const targetId = openBtn.getAttribute("data-modal-target");
@@ -53,7 +52,7 @@ DOC.addEventListener("click", (e) => {
     return;
   }
 
-  // CLOSE via button
+  // CLOSE (button)
   const closeBtn = e.target.closest("[data-close]");
   if (closeBtn) {
     const modal = closeBtn.closest(".side-modal");
@@ -61,24 +60,24 @@ DOC.addEventListener("click", (e) => {
     return;
   }
 
-  // CLOSE via backdrop
-  const backdrop =
-    e.target.classList.contains("side-modal") ? e.target : null;
-
+  // CLOSE (backdrop click)
+  const backdrop = e.target.classList.contains("side-modal") ? e.target : null;
   if (backdrop && !backdrop.classList.contains("hidden")) {
     closeSideModal(backdrop);
   }
 });
 
-
 // ESC closes topmost open modal
 DOC.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
+
   const openModals = Array.from(DOC.querySelectorAll(".side-modal"))
     .filter((m) => !m.classList.contains("hidden"));
+
   const top = openModals[openModals.length - 1];
   if (top) closeSideModal(top);
 });
+
 
 
 // ==================================================
@@ -2095,32 +2094,23 @@ STORE.creativePhotos = capMax(
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
 try {
+  // Normalize state FIRST
+  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+
+  // Then render UI
   if (typeof renderPhotosGrid === "function") {
-    renderPhotosGrid(STORE.creativePhotos || []);
+    renderPhotosGrid(STORE?.creativePhotos || []);
   }
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
 
-  if (typeof renderCreativeThumbs === "function") {
-    renderCreativeThumbs();
-  }
-
-  if (typeof renderSocialStrip === "function") {
-    renderSocialStrip();
-  }
-
-  if (typeof normalizeSocialReady === "function") {
-    normalizeSocialReady();
-  }
-
-  // ✅ Objection Coach — bind once, after DOM + modals exist
-  if (typeof wireObjectionCoach === "function") {
-    wireObjectionCoach();
-  }
-
+  // Wire Objection Coach ONCE
+  if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
+}); // closes DOMContentLoaded
 
-}); // ✅ closes DOMContentLoaded
 
 
 
