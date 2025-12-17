@@ -317,20 +317,24 @@ async function boostListing() {
 
     const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-    let title = "";
-    let price = "";
-    let photos = [];
+let title = "";
+let price = "";
+let photos = [];
 
-    title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-    price = data?.price || data?.offer || data?.vehiclePrice || "";
-    photos = Array.isArray(data?.photos)
-      ? data.photos
-      : Array.isArray(data?.images)
-      ? data.images
-      : [];
+title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+price = data?.price || data?.offer || data?.vehiclePrice || "";
+photos = Array.isArray(data?.photos)
+  ? data.photos
+  : Array.isArray(data?.images)
+  ? data.images
+  : [];
 
-    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+STORE.lastTitle = title;
+STORE.lastPrice = price;
+
+if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
 
     // store RAW urls (cap elsewhere if you want)
     STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
