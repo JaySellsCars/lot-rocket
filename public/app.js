@@ -215,11 +215,11 @@ function wireObjectionCoach() {
 
   function triggerDownload(url, filename) {
     if (!url) return;
-    const a = document.createElement("a");
+    const a = doc.createElement("a");
     a.href = url;
     a.download = filename || "lot-rocket.jpg";
     a.rel = "noopener";
-    document.body.appendChild(a);
+    doc.body.appendChild(a);
     a.click();
     a.remove();
   }
