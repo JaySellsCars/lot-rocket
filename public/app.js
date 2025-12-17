@@ -312,15 +312,16 @@ function renderPhotosGrid(urls) {
   clean.forEach((rawUrl, idx) => {
     const url = getProxiedImageUrl(rawUrl);
 
-    const wrap = document.createElement("button");
-    wrap.type = "button";
-    wrap.className = "photo-thumb";
-    wrap.title = "Click to toggle select";
+const wrap = DOC.createElement("button");
+wrap.type = "button";
+wrap.className = "photo-thumb";
+wrap.title = "Click to toggle select";
 
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = `photo ${idx + 1}`;
-    img.loading = "lazy";
+const img = DOC.createElement("img");
+img.src = url;
+img.alt = `photo ${idx + 1}`;
+img.loading = "lazy";
+
 
     // selected defaults ON
     wrap.dataset.selected = "1";
