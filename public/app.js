@@ -1,8 +1,11 @@
 
-
-document.addEventListener("DOMContentLoaded", () => {
+window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
+
+  // ...rest of your app.js...
+});
+
   
 
 
