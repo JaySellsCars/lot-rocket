@@ -2084,30 +2084,41 @@ if (sendDesignToStripBtn && sendDesignToStripBtn.dataset.wired !== "true") {
 
     addToSocialReady(objectUrl, true);
 
-    STORE.creativePhotos = capMax(uniqueUrls([...(STORE.creativePhotos || []), objectUrl]), MAX_PHOTOS);
-    renderCreativeThumbs();
-  });
-}
+STORE.creativePhotos = capMax(
+  uniqueUrls([...(STORE.creativePhotos || []), objectUrl]),
+  MAX_PHOTOS
+);
 // ==================================================
 // FINAL INIT (safe boot) — SINGLE COPY ONLY
 // ==================================================
 try {
   if (typeof renderPhotosGrid === "function") {
-    renderPhotosGrid(STORE?.creativePhotos || []);
+    renderPhotosGrid(STORE.creativePhotos || []);
   }
 
-  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-  if (typeof renderSocialStrip === "function") renderSocialStrip();
-  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+  if (typeof renderCreativeThumbs === "function") {
+    renderCreativeThumbs();
+  }
 
-  // ✅ ADD THIS LINE RIGHT HERE
-  if (typeof wireObjectionCoach === "function") wireObjectionCoach();
+  if (typeof renderSocialStrip === "function") {
+    renderSocialStrip();
+  }
+
+  if (typeof normalizeSocialReady === "function") {
+    normalizeSocialReady();
+  }
+
+  // ✅ Objection Coach — bind once, after DOM + modals exist
+  if (typeof wireObjectionCoach === "function") {
+    wireObjectionCoach();
+  }
 
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
 
-}); // closes DOMContentLoaded
+}); // ✅ closes DOMContentLoaded
+
 
 
 
