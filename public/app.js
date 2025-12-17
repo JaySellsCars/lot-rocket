@@ -3,7 +3,8 @@
 
 window.document.addEventListener("DOMContentLoaded", () => {
  console.log("🚀 JS FILE LOADED");
- 
+ console.log("STEP-2 REACHED");
+
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
 
