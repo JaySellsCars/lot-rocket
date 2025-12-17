@@ -365,6 +365,20 @@ function getSelectedStep1Urls(max = 24) {
       };
 
       const data = await postJSON(`${apiBase}/api/boost`, payload);
+console.log("BOOST RAW DATA:", data);
+
+const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+const price = data?.price || data?.offer || data?.vehiclePrice || "";
+const photos = data?.photos || data?.images || [];
+
+console.log("BOOST PARSED:", {
+  title,
+  price,
+  photosType: typeof photos,
+  photosIsArray: Array.isArray(photos),
+  photosLen: Array.isArray(photos) ? photos.length : -1,
+  photosSample: Array.isArray(photos) ? photos.slice(0, 3) : photos,
+});
 
       const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
       const price = data?.price || data?.offer || data?.vehiclePrice || "";
