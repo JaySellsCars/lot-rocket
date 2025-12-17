@@ -1952,30 +1952,57 @@ function gatherImageUrlsForStudios() {
 }
 
 
-  function renderStudioPhotoTray() {
-    if (!studioPhotoTray) return;
-    studioPhotoTray.innerHTML = "";
+function renderStudioPhotoTray() {
+  if (!studioPhotoTray) return;
+  studioPhotoTray.innerHTML = "";
 
-if (!studioAvailablePhotos?.length) {
-const msg = DOC.createElement("p");
-msg.className = "small-note";
-msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
-studioPhotoTray.appendChild(msg);
+  // Empty state
+  if (!Array.isArray(studioAvailablePhotos) || !studioAvailablePhotos.length) {
+    const msg = DOC.createElement("p");
+    msg.className = "small-note";
+    msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
+    studioPhotoTray.appendChild(msg);
+    return;
+  }
 
-const img = DOC.createElement("img");
-img.src = url;
-img.alt = "Design photo";
+  // Thumbs
+  studioAvailablePhotos.forEach((url) => {
+    const img = DOC.createElement("img");
+    img.src = url;
+    img.alt = "Design photo";
+    img.loading = "lazy";
+    img.className = "studio-photo-thumb";
+    img.draggable = true;
 
-  img.loading = "lazy";
-  img.className = "studio-photo-thumb";
-  img.draggable = true;
+    img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
+    img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
 
-  img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
-  img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
+    img.addEventListener("dragstart", (e) => {
+      try {
+        e.dataTransfer.setData("text/plain", url);
+      } catch {}
+    });
 
-  img.addEventListener("dragstart", (e) => {
-    try { e.dataTransfer.setData("text/plain", url); } catch {}
+    studioPhotoTray.appendChild(img);
   });
+
+  // Enable drop onto stage container (one-time)
+  const konvaContainer = $("konvaStageContainer");
+  if (konvaContainer && !studioDnDWired) {
+    studioDnDWired = true;
+
+    konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
+    konvaContainer.addEventListener("drop", (e) => {
+      e.preventDefault();
+      let url = "";
+      try {
+        url = e.dataTransfer.getData("text/plain");
+      } catch {}
+      if (url) addStudioImageFromUrl(url, false);
+    });
+  }
+}
+
 
   studioPhotoTray.appendChild(img);
 
