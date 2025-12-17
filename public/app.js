@@ -1,10 +1,11 @@
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
+// Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
 
 window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
 
-  // ✅ BOOT GUARD (must be inside DOMContentLoaded)
+  // ✅ BOOT GUARD
   if (window.__LOTROCKET_BOOTED__) {
     console.warn("🚫 Lot Rocket boot blocked (double init)");
     return;
@@ -14,132 +15,8 @@ window.document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
 
-  // ... EVERYTHING ELSE in app.js stays BELOW this line ...
-
-
-
-
-
-  
-
-
-// ==================================================
-// UNIVERSAL SIDE-MODAL SYSTEM (single source of truth)
-// ==================================================
-function openSideModalById(modalId) {
-  if (!modalId) return;
-  const modal = DOC.getElementById(modalId);
-  if (!modal) return console.warn("⚠️ Modal not found:", modalId);
-
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-  modal.dispatchEvent(new CustomEvent("lr:open", { detail: { modalId } }));
-}
-
-function closeSideModal(modal) {
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
-  modal.dispatchEvent(new CustomEvent("lr:close", { detail: { modalId: modal.id } }));
-}
-// Click delegation for open + close
-DOC.addEventListener("click", (e) => {
-  // OPEN
-  const openBtn = e.target.closest("[data-modal-target]");
-  if (openBtn) {
-    const targetId = openBtn.getAttribute("data-modal-target");
-    openSideModalById(targetId);
-    return;
-  }
-
-  // CLOSE (button)
-  const closeBtn = e.target.closest("[data-close]");
-  if (closeBtn) {
-    const modal = closeBtn.closest(".side-modal");
-    closeSideModal(modal);
-    return;
-  }
-
-  // CLOSE (backdrop click)
-  const backdrop = e.target.classList.contains("side-modal") ? e.target : null;
-  if (backdrop && !backdrop.classList.contains("hidden")) {
-    closeSideModal(backdrop);
-  }
-});
-
-// ESC closes topmost open modal
-DOC.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-
-  const openModals = Array.from(DOC.querySelectorAll(".side-modal"))
-    .filter((m) => !m.classList.contains("hidden"));
-
-  const top = openModals[openModals.length - 1];
-  if (top) closeSideModal(top);
-});
-
-
-
-// ==================================================
-// OBJECTION COACH — INIT ON MODAL OPEN (ONCE)
-// ==================================================
-// --------------------------------------------------
-// OBJECTION COACH (bind once, runs on submit)
-// --------------------------------------------------
-function wireObjectionCoach() {
-  const modal = $("objectionModal");
-  if (!modal || modal.dataset.wired === "true") return;
-  modal.dataset.wired = "true";
-
-  const form = $("objectionForm");
-  const input = $("objectionInput");
-  const output = $("objectionOutput");
-
-  if (!form || !input || !output) {
-    console.warn("[LotRocket] Objection Coach elements missing.");
-    return;
-  }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const objection = (input.value || "").trim();
-    if (!objection) return;
-
-    output.textContent = "Thinking…";
-
-    try {
-      const res = await fetch(apiBase + "/api/objection-coach", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ objection }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Request failed");
-      output.textContent = data.reply || "No response.";
-    } catch (err) {
-      console.error(err);
-      output.textContent = "Error generating response.";
-    }
-  });
-
-
-  // Optional: focus input when modal opens (using your universal system)
-  modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
-}
-
-  
-
-
-
-
-
-
-
-
-
   // ==================================================
-  // CORE CONSTANTS + GLOBAL STORE
+  // CORE CONSTANTS + SINGLE GLOBAL STORE
   // ==================================================
   const MAX_PHOTOS = 24;
 
@@ -148,14 +25,14 @@ function wireObjectionCoach() {
 
   STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // urls (strings)
   STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls (strings)
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : []; // objects (normalized below)
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : []; // objects normalized
+
+  // Social carousel index (must exist before normalizeSocialReady)
+  let socialIndex = 0;
 
   // ==================================================
-  // UTIL (ONE AND ONLY ONE $)
+  // UTIL
   // ==================================================
-// DOM helper (safe)
-
-
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
   function autoResizeTextarea(el) {
@@ -202,7 +79,13 @@ function wireObjectionCoach() {
     if (!rawUrl) return rawUrl;
     try {
       const u = new URL(rawUrl, window.location.origin);
-      if (u.origin === window.location.origin || u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
+      if (
+        u.origin === window.location.origin ||
+        u.protocol === "blob:" ||
+        u.protocol === "data:"
+      )
+        return rawUrl;
+
       if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
       return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
     } catch {
@@ -212,11 +95,11 @@ function wireObjectionCoach() {
 
   function triggerDownload(url, filename) {
     if (!url) return;
-    const a = doc.createElement("a");
+    const a = DOC.createElement("a");
     a.href = url;
     a.download = filename || "lot-rocket.jpg";
     a.rel = "noopener";
-    doc.body.appendChild(a);
+    DOC.body.appendChild(a);
     a.click();
     a.remove();
   }
@@ -239,388 +122,444 @@ function wireObjectionCoach() {
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
       DOC.body.classList.toggle("dark-theme", !!isDark);
-
       themeToggleInput.checked = !!isDark;
     };
     applyTheme(true);
     themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
   }
 
-  // Auto-grow ALL textareas
-DOC.querySelectorAll("textarea").forEach((ta) => {
+  // Auto-grow ALL textareas (one-time)
+  DOC.querySelectorAll("textarea").forEach((ta) => {
     autoResizeTextarea(ta);
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
 
-// ==================================================
-// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
-// Depends on helpers elsewhere:
-//   $, capMax, uniqueUrls, getProxiedImageUrl, normalizeSocialReady,
-//   MAX_PHOTOS, STORE, apiBase
-// ==================================================
+  // ==================================================
+  // UNIVERSAL SIDE-MODAL SYSTEM (single source of truth)
+  // ==================================================
+  function openSideModalById(modalId) {
+    if (!modalId) return;
+    const modal = DOC.getElementById(modalId);
+    if (!modal) return console.warn("⚠️ Modal not found:", modalId);
 
-// Inputs
-const dealerUrlInput    = $("dealerUrl");
-const vehicleLabelInput = $("vehicleLabel");
-const priceOfferInput   = $("priceOffer");
-
-// Buttons (supports multiple possible IDs)
-const boostBtn =
-  $("boostListingBtn") ||
-  $("boostThisListing") ||
-  $("boostButton");
-
-const sendTopBtn =
-  $("sendPhotosToCreative") ||
-  $("sendTopPhotosToCreative") ||
-  $("sendTopPhotosToCreativeLab") ||
-  $("sendPhotosToCreativeLab");
-
-// Output targets
-const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
-const photosGridEl   = $("photosGrid");
-
-// --------------------------------------------------
-// Backend helper
-// --------------------------------------------------
-async function postJSON(url, body) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {}),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = data?.error || data?.message || `Request failed (${res.status})`;
-    throw new Error(msg);
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    modal.dispatchEvent(new CustomEvent("lr:open", { detail: { modalId } }));
   }
-  return data;
-}
 
-// --------------------------------------------------
-// Render photos grid (selectable)
-// --------------------------------------------------
-function renderPhotosGrid(urls) {
-  if (!photosGridEl) return;
+  function closeSideModal(modal) {
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    modal.dispatchEvent(new CustomEvent("lr:close", { detail: { modalId: modal.id } }));
+  }
 
-  const clean = uniqueUrls(capMax(urls || [], MAX_PHOTOS));
-  photosGridEl.innerHTML = "";
+  // Click delegation for open + close
+  DOC.addEventListener("click", (e) => {
+    // OPEN
+    const openBtn = e.target.closest("[data-modal-target]");
+    if (openBtn) {
+      const targetId = openBtn.getAttribute("data-modal-target");
+      openSideModalById(targetId);
+      return;
+    }
 
-  clean.forEach((rawUrl, idx) => {
-    const url = getProxiedImageUrl(rawUrl);
+    // CLOSE (button)
+    const closeBtn = e.target.closest("[data-close]");
+    if (closeBtn) {
+      const modal = closeBtn.closest(".side-modal");
+      closeSideModal(modal);
+      return;
+    }
 
-const wrap = DOC.createElement("button");
-wrap.type = "button";
-wrap.className = "photo-thumb";
-wrap.title = "Click to toggle select";
+    // CLOSE (backdrop click)
+    const backdrop = e.target.classList.contains("side-modal") ? e.target : null;
+    if (backdrop && !backdrop.classList.contains("hidden")) {
+      closeSideModal(backdrop);
+    }
+  });
 
-const img = DOC.createElement("img");
-img.src = url;
-img.alt = `photo ${idx + 1}`;
-img.loading = "lazy";
+  // ESC closes topmost open modal
+  DOC.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
 
+    const openModals = Array.from(DOC.querySelectorAll(".side-modal")).filter(
+      (m) => !m.classList.contains("hidden")
+    );
 
-    // selected defaults ON
-    wrap.dataset.selected = "1";
-    wrap.addEventListener("click", () => {
-      const isSel = wrap.dataset.selected === "1";
-      wrap.dataset.selected = isSel ? "0" : "1";
-      wrap.classList.toggle("is-off", isSel);
+    const top = openModals[openModals.length - 1];
+    if (top) closeSideModal(top);
+  });
+
+  // ==================================================
+  // OBJECTION COACH (bind once, runs on submit)
+  // ==================================================
+  function wireObjectionCoach() {
+    const modal = $("objectionModal");
+    if (!modal || modal.dataset.wired === "true") return;
+    modal.dataset.wired = "true";
+
+    const form = $("objectionForm");
+    const input = $("objectionInput");
+    const output = $("objectionOutput");
+
+    if (!form || !input || !output) {
+      console.warn("[LotRocket] Objection Coach elements missing.");
+      return;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const objection = (input.value || "").trim();
+      if (!objection) return;
+
+      output.textContent = "Thinking…";
+
+      try {
+        const res = await fetch(apiBase + "/api/objection-coach", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ objection }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Request failed");
+        output.textContent = data.reply || "No response.";
+      } catch (err) {
+        console.error(err);
+        output.textContent = "Error generating response.";
+      }
     });
 
-    wrap.appendChild(img);
-    photosGridEl.appendChild(wrap);
-  });
-
-  console.log(`✅ Rendered ${clean.length} photos`);
-}
-
-function getSelectedGridUrls() {
-  if (!photosGridEl) return [];
-  const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
-  const selected = btns
-    .filter((b) => b.dataset.selected === "1")
-    .map((b) => b.querySelector("img")?.src)
-    .filter(Boolean);
-
-  return uniqueUrls(capMax(selected, MAX_PHOTOS));
-}
-
-// --------------------------------------------------
-// BOOST (scrape) — expects backend returns:
-// { title, price, photos: [url...] }  (or photos/images)
-// --------------------------------------------------
-async function boostListing() {
-  const url = (dealerUrlInput?.value || "").trim();
-  if (!url) {
-    alert("Paste a dealer URL first.");
-    return;
+    modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
   }
 
-  if (boostBtn) boostBtn.disabled = true;
+  // ==================================================
+  // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
+  // ==================================================
+  const dealerUrlInput = $("dealerUrl");
+  const vehicleLabelInput = $("vehicleLabel");
+  const priceOfferInput = $("priceOffer");
 
-  try {
-    const payload = {
-      url,
-      labelOverride: (vehicleLabelInput?.value || "").trim(),
-      priceOverride: (priceOfferInput?.value || "").trim(),
-      maxPhotos: MAX_PHOTOS,
-    };
+  const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
 
-    const data = await postJSON(`${apiBase}/api/boost`, payload);
+  const sendTopBtn =
+    $("sendPhotosToCreative") ||
+    $("sendTopPhotosToCreative") ||
+    $("sendTopPhotosToCreativeLab") ||
+    $("sendPhotosToCreativeLab");
 
-    const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-    const price = data?.price || data?.offer || data?.vehiclePrice || "";
-    const photos = data?.photos || data?.images || [];
+  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+  const photosGridEl = $("photosGrid");
 
-    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
-
-    // store RAW urls
-    STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
-
-    renderPhotosGrid(STORE.creativePhotos);
-
-    console.log("✅ Boost complete", {
-      title,
-      price,
-      photos: STORE.creativePhotos.length,
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
     });
-  } catch (err) {
-    console.error("❌ Boost failed:", err);
-    alert(err?.message || "Boost failed.");
-  } finally {
-    if (boostBtn) boostBtn.disabled = false;
-  }
-}
-
-// --------------------------------------------------
-// Send selected -> Step 3 (Creative + Social + Studio)
-// --------------------------------------------------
-function sendSelectedToCreative() {
-  const selected = getSelectedGridUrls();
-  if (!selected.length) {
-    alert("Select at least 1 photo first.");
-    return;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error || data?.message || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+    return data;
   }
 
-  STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+  function renderPhotosGrid(urls) {
+    if (!photosGridEl) return;
 
-  STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
-    url: u,
-    originalUrl: u,
-    selected: true,
-    locked: false,
-  }));
+    const clean = uniqueUrls(capMax(urls || [], MAX_PHOTOS));
+    photosGridEl.innerHTML = "";
 
-  STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+    clean.forEach((rawUrl, idx) => {
+      const url = getProxiedImageUrl(rawUrl);
 
-  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+      const wrap = DOC.createElement("button");
+      wrap.type = "button";
+      wrap.className = "photo-thumb";
+      wrap.title = "Click to toggle select";
 
-  if (typeof window.renderCreativePhotoStrip === "function") window.renderCreativePhotoStrip();
-  if (typeof window.renderSocialCarousel === "function") window.renderSocialCarousel();
-  if (typeof window.refreshDesignStudioStrip === "function") window.refreshDesignStudioStrip();
+      const img = DOC.createElement("img");
+      img.src = url;
+      img.alt = `photo ${idx + 1}`;
+      img.loading = "lazy";
 
-  console.log("✅ Sent photos to Step 3", {
-    creative: STORE.creativePhotos.length,
-    social: STORE.socialReadyPhotos.length,
-    studio: STORE.designStudioPhotos.length,
-  });
-}
+      // selected defaults ON
+      wrap.dataset.selected = "1";
+      wrap.addEventListener("click", () => {
+        const isSel = wrap.dataset.selected === "1";
+        wrap.dataset.selected = isSel ? "0" : "1";
+        wrap.classList.toggle("is-off", isSel);
+      });
 
-// --------------------------------------------------
-// Wire buttons
-// --------------------------------------------------
-if (boostBtn && boostBtn.dataset.wired !== "true") {
-  boostBtn.dataset.wired = "true";
-  boostBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    boostListing();
-  });
-} else if (!boostBtn) {
-  console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
-}
+      wrap.appendChild(img);
+      photosGridEl.appendChild(wrap);
+    });
 
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-  sendTopBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    sendSelectedToCreative();
-  });
-} else if (!sendTopBtn) {
-  console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
-}
-
-
-
-
-
-
-// ==================================================
-// DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
-// ==================================================
-(() => {
-  const drillLauncher = $("drillLauncher");
-  const drillModal = $("drillModeModal");
-  const closeDrillModeBtn = $("closeDrillMode");
-
-  const drillObjectionText = $("drillObjectionText");
-  const getDrillObjectionBtn = $("getDrillObjection");
-
-  const drillReplyInput = $("drillReplyInput");
-  const gradeDrillReplyBtn = $("gradeDrillReply");
-
-  const drillResult = $("drillResult");
-  const drillTimerDisplay = $("drillTimer");
-
-  if (!drillModal) return;
-
-  const DRILL_OBJECTIONS = [
-    "The price is too high.",
-    "I need to talk to my spouse first.",
-    "I want to think about it.",
-    "Can you send me some numbers and I’ll get back to you?",
-    "I’m just looking right now, not ready to buy.",
-    "My payment can’t go up at all.",
-    "I found something cheaper online.",
-    "I don’t want to run my credit.",
-  ];
-
-  let currentDrillObjection = "";
-  let drillTimerId = null;
-  let drillSecondsLeft = 0;
-
-  function setDrillResult(message = "", show = false) {
-    if (!drillResult) return;
-    drillResult.textContent = message;
-    drillResult.classList.toggle("hidden", !show);
+    console.log(`✅ Rendered ${clean.length} photos`);
   }
 
-  function stopDrillTimer() {
-    if (drillTimerId) {
-      clearInterval(drillTimerId);
-      drillTimerId = null;
+  function getSelectedGridUrls() {
+    if (!photosGridEl) return [];
+    const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
+    const selected = btns
+      .filter((b) => b.dataset.selected === "1")
+      .map((b) => b.querySelector("img")?.src)
+      .filter(Boolean);
+
+    return uniqueUrls(capMax(selected, MAX_PHOTOS));
+  }
+
+  async function boostListing() {
+    const url = (dealerUrlInput?.value || "").trim();
+    if (!url) {
+      alert("Paste a dealer URL first.");
+      return;
+    }
+
+    if (boostBtn) boostBtn.disabled = true;
+
+    try {
+      const payload = {
+        url,
+        labelOverride: (vehicleLabelInput?.value || "").trim(),
+        priceOverride: (priceOfferInput?.value || "").trim(),
+        maxPhotos: MAX_PHOTOS,
+      };
+
+      const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+      const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+      const price = data?.price || data?.offer || data?.vehiclePrice || "";
+      const photos = data?.photos || data?.images || [];
+
+      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+      // store RAW urls
+      STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+      renderPhotosGrid(STORE.creativePhotos);
+
+      console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
+    } catch (err) {
+      console.error("❌ Boost failed:", err);
+      alert(err?.message || "Boost failed.");
+    } finally {
+      if (boostBtn) boostBtn.disabled = false;
     }
   }
 
-  function resetDrillState() {
-    if (drillReplyInput) drillReplyInput.value = "";
-    setDrillResult("", false);
-    if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
+  function sendSelectedToCreative() {
+    const selected = getSelectedGridUrls();
+    if (!selected.length) {
+      alert("Select at least 1 photo first.");
+      return;
+    }
+
+    STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+    STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
+      url: u,
+      originalUrl: u,
+      selected: true,
+      locked: false,
+    }));
+    STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+
+    normalizeSocialReady();
+
+    // Our internal renderers (defined later) – safe calls
+    renderCreativeThumbs?.();
+    renderSocialStrip?.();
+    refreshDesignStudioStrip?.();
+
+    console.log("✅ Sent photos to Step 3", {
+      creative: STORE.creativePhotos.length,
+      social: STORE.socialReadyPhotos.length,
+      studio: STORE.designStudioPhotos.length,
+    });
   }
 
-  function startDrillTimer(startSeconds = 60) {
-    if (!drillTimerDisplay) return;
-    stopDrillTimer();
-    drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
-    drillTimerDisplay.textContent = String(drillSecondsLeft);
-
-    drillTimerId = setInterval(() => {
-      drillSecondsLeft = Math.max(0, drillSecondsLeft - 1);
-      drillTimerDisplay.textContent = String(drillSecondsLeft);
-      if (drillSecondsLeft <= 0) stopDrillTimer();
-    }, 1000);
-  }
-
-  // Launch / Close (optional if your universal modal system handles it)
-  if (drillLauncher && drillLauncher.dataset.wired !== "true") {
-    drillLauncher.dataset.wired = "true";
-    drillLauncher.addEventListener("click", (e) => {
+  // Wire buttons
+  if (boostBtn && boostBtn.dataset.wired !== "true") {
+    boostBtn.dataset.wired = "true";
+    boostBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      resetDrillState();
+      boostListing();
     });
+  } else if (!boostBtn) {
+    console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
   }
 
-  if (closeDrillModeBtn && closeDrillModeBtn.dataset.wired !== "true") {
-    closeDrillModeBtn.dataset.wired = "true";
-    closeDrillModeBtn.addEventListener("click", () => {
-      stopDrillTimer();
-      resetDrillState();
+  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+    sendTopBtn.dataset.wired = "true";
+    sendTopBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      sendSelectedToCreative();
     });
+  } else if (!sendTopBtn) {
+    console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
   }
 
-  if (getDrillObjectionBtn && getDrillObjectionBtn.dataset.wired !== "true") {
-    getDrillObjectionBtn.dataset.wired = "true";
-    getDrillObjectionBtn.addEventListener("click", () => {
-      const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
-      currentDrillObjection = DRILL_OBJECTIONS[idx];
-      if (drillObjectionText) drillObjectionText.textContent = currentDrillObjection;
-      resetDrillState();
-      startDrillTimer(60);
-      drillReplyInput?.focus?.();
-    });
-  }
+  // ==================================================
+  // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
+  // ==================================================
+  (() => {
+    const drillLauncher = $("drillLauncher");
+    const drillModal = $("drillModeModal");
+    const closeDrillModeBtn = $("closeDrillMode");
 
-  if (gradeDrillReplyBtn && gradeDrillReplyBtn.dataset.wired !== "true") {
-    gradeDrillReplyBtn.dataset.wired = "true";
-    gradeDrillReplyBtn.addEventListener("click", async () => {
-      const reply = (drillReplyInput?.value || "").trim();
+    const drillObjectionText = $("drillObjectionText");
+    const getDrillObjectionBtn = $("getDrillObjection");
 
-      if (!currentDrillObjection) {
-        setDrillResult('Hit “Give Me an Objection” first.', true);
-        return;
+    const drillReplyInput = $("drillReplyInput");
+    const gradeDrillReplyBtn = $("gradeDrillReply");
+
+    const drillResult = $("drillResult");
+    const drillTimerDisplay = $("drillTimer");
+
+    if (!drillModal) return;
+
+    const DRILL_OBJECTIONS = [
+      "The price is too high.",
+      "I need to talk to my spouse first.",
+      "I want to think about it.",
+      "Can you send me some numbers and I’ll get back to you?",
+      "I’m just looking right now, not ready to buy.",
+      "My payment can’t go up at all.",
+      "I found something cheaper online.",
+      "I don’t want to run my credit.",
+    ];
+
+    let currentDrillObjection = "";
+    let drillTimerId = null;
+    let drillSecondsLeft = 0;
+
+    function setDrillResult(message = "", show = false) {
+      if (!drillResult) return;
+      drillResult.textContent = message;
+      drillResult.classList.toggle("hidden", !show);
+    }
+
+    function stopDrillTimer() {
+      if (drillTimerId) {
+        clearInterval(drillTimerId);
+        drillTimerId = null;
       }
-      if (!reply) {
-        setDrillResult("Type your response first, then I’ll grade it.", true);
-        return;
-      }
+    }
 
+    function resetDrillState() {
+      if (drillReplyInput) drillReplyInput.value = "";
+      setDrillResult("", false);
+      if (drillTimerDisplay) drillTimerDisplay.textContent = "60";
+    }
+
+    function startDrillTimer(startSeconds = 60) {
+      if (!drillTimerDisplay) return;
       stopDrillTimer();
-      setDrillResult("Grading your reply…", true);
+      drillSecondsLeft = Number.isFinite(startSeconds) ? startSeconds : 60;
+      drillTimerDisplay.textContent = String(drillSecondsLeft);
 
-      const payload = {
-        objection: currentDrillObjection,
-        reply,
-        secondsRemaining: drillSecondsLeft,
-        rubric: {
-          tone: "confident, friendly, professional",
-          target: "set appointment or move to numbers",
-        },
-      };
+      drillTimerId = setInterval(() => {
+        drillSecondsLeft = Math.max(0, drillSecondsLeft - 1);
+        drillTimerDisplay.textContent = String(drillSecondsLeft);
+        if (drillSecondsLeft <= 0) stopDrillTimer();
+      }, 1000);
+    }
 
-      try {
-        let res = await fetch(apiBase + "/api/drill-grade", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+    if (drillLauncher && drillLauncher.dataset.wired !== "true") {
+      drillLauncher.dataset.wired = "true";
+      drillLauncher.addEventListener("click", (e) => {
+        e.preventDefault();
+        resetDrillState();
+      });
+    }
 
-        if (!res.ok) {
-          // fallback (optional)
-          res = await fetch(apiBase + "/api/message-helper", {
+    if (closeDrillModeBtn && closeDrillModeBtn.dataset.wired !== "true") {
+      closeDrillModeBtn.dataset.wired = "true";
+      closeDrillModeBtn.addEventListener("click", () => {
+        stopDrillTimer();
+        resetDrillState();
+      });
+    }
+
+    if (getDrillObjectionBtn && getDrillObjectionBtn.dataset.wired !== "true") {
+      getDrillObjectionBtn.dataset.wired = "true";
+      getDrillObjectionBtn.addEventListener("click", () => {
+        const idx = Math.floor(Math.random() * DRILL_OBJECTIONS.length);
+        currentDrillObjection = DRILL_OBJECTIONS[idx];
+        if (drillObjectionText) drillObjectionText.textContent = currentDrillObjection;
+        resetDrillState();
+        startDrillTimer(60);
+        drillReplyInput?.focus?.();
+      });
+    }
+
+    if (gradeDrillReplyBtn && gradeDrillReplyBtn.dataset.wired !== "true") {
+      gradeDrillReplyBtn.dataset.wired = "true";
+      gradeDrillReplyBtn.addEventListener("click", async () => {
+        const reply = (drillReplyInput?.value || "").trim();
+
+        if (!currentDrillObjection) {
+          setDrillResult('Hit “Give Me an Objection” first.', true);
+          return;
+        }
+        if (!reply) {
+          setDrillResult("Type your response first, then I’ll grade it.", true);
+          return;
+        }
+
+        stopDrillTimer();
+        setDrillResult("Grading your reply…", true);
+
+        const payload = {
+          objection: currentDrillObjection,
+          reply,
+          secondsRemaining: drillSecondsLeft,
+          rubric: {
+            tone: "confident, friendly, professional",
+            target: "set appointment or move to numbers",
+          },
+        };
+
+        try {
+          let res = await fetch(apiBase + "/api/drill-grade", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mode: "objection-drill", ...payload }),
+            body: JSON.stringify(payload),
           });
+
+          if (!res.ok) {
+            // fallback
+            res = await fetch(apiBase + "/api/message-helper", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ mode: "objection-drill", ...payload }),
+            });
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
+
+          if (typeof data?.score === "number") {
+            const msg =
+              `Score: ${data.score}/100\n\n` +
+              `✅ What you did well:\n${data.what_you_did_well || "—"}\n\n` +
+              `🔧 What to fix:\n${data.what_to_fix || "—"}\n\n` +
+              `🔥 Better response:\n${data.better_response || "—"}\n\n` +
+              `Coach tip: ${data.one_sentence_coaching_tip || "—"}`;
+            setDrillResult(msg, true);
+          } else {
+            setDrillResult(data.text || "Couldn’t grade that one. Try another objection.", true);
+          }
+        } catch (err) {
+          console.error("Drill grading error:", err);
+          setDrillResult(err?.message || "Error talking to AI. Try again in a moment.", true);
         }
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `AI grading failed (HTTP ${res.status}).`);
-
-        if (typeof data?.score === "number") {
-          const msg =
-            `Score: ${data.score}/100\n\n` +
-            `✅ What you did well:\n${data.what_you_did_well || "—"}\n\n` +
-            `🔧 What to fix:\n${data.what_to_fix || "—"}\n\n` +
-            `🔥 Better response:\n${data.better_response || "—"}\n\n` +
-            `Coach tip: ${data.one_sentence_coaching_tip || "—"}`;
-          setDrillResult(msg, true);
-        } else {
-          setDrillResult(data.text || "Couldn’t grade that one. Try another objection.", true);
-        }
-      } catch (err) {
-        console.error("Drill grading error:", err);
-        setDrillResult(err?.message || "Error talking to AI. Try again in a moment.", true);
-      }
-    });
-  }
-})();
-
-
-
-
-
+      });
+    }
+  })();
 
   // ==================================================
   // VIDEO BUILDER (message-helper: video-brief)
@@ -658,7 +597,8 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   }
 
   function parseVideoSections(full) {
-    if (!full || typeof full !== "string") return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
+    if (!full || typeof full !== "string")
+      return { script: "", shots: "", aiPrompt: "", thumbPrompt: "" };
 
     const h1 = "### 1. Video Script";
     const h2 = "### 2. Shot List";
@@ -725,46 +665,10 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     });
   }
 
-// ==================================================
-// STEP 3 – CREATIVE LAB (thumbs + tuner + upload)
-// ==================================================
-
-// Step 1 -> Send Top Photos into Creative + Social Strip
-const step1SendTopBtn = $("sendTopPhotosBtn");
-if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
-  step1SendTopBtn.dataset.wired = "true";
-
-  step1SendTopBtn.addEventListener("click", () => {
-    const selected =
-      typeof getSelectedGridUrls === "function"
-        ? getSelectedGridUrls()
-        : [];
-
-    if (!selected.length) {
-      alert("Select at least 1 photo in the grid first.");
-      return;
-    }
-
-    STORE.creativePhotos = capMax(uniqueUrls(selected), MAX_PHOTOS);
-    STORE.designStudioPhotos = capMax(uniqueUrls(selected), MAX_PHOTOS);
-
-    STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
-      url: u,
-      originalUrl: u,
-      selected: true,
-      locked: false,
-    }));
-
-    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
-    renderCreativeThumbs();
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
-
-    step1SendTopBtn.classList.add("success");
-    setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
-  });
-}
-
+  // ==================================================
+  // STEP 3 – CREATIVE LAB (thumbs + tuner + upload)
+  // ==================================================
+  const step1SendTopBtn = $("sendTopPhotosBtn");
   const photoDropZone = $("photoDropZone");
   const photoFileInput = $("photoFileInput");
   const creativeThumbGrid = $("creativeThumbGrid");
@@ -776,8 +680,7 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
   const tunerSaturation = $("tunerSaturation");
   const autoEnhanceBtn = $("autoEnhanceBtn");
 
- const hiddenTunerCanvas = DOC.createElement("canvas");
-
+  const hiddenTunerCanvas = DOC.createElement("canvas");
   const hiddenTunerCtx = hiddenTunerCanvas.getContext ? hiddenTunerCanvas.getContext("2d") : null;
   let currentTunerFilter = "";
 
@@ -840,47 +743,6 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
     });
   }
 
-  function renderCreativeThumbs() {
-    if (!creativeThumbGrid) return;
-    creativeThumbGrid.innerHTML = "";
-
-    STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
-
-    STORE.creativePhotos.forEach((url) => {
-  const img = DOC.createElement("img");
-
-      img.src = url;
-      img.alt = "Creative photo";
-      img.loading = "lazy";
-      img.className = "creative-thumb";
-      img.title = "Click to select. Double-click to send edited copy to Social Strip.";
-
-      img.addEventListener("click", () => {
-        img.classList.toggle("selected");
-        if (tunerPreviewImg) {
-          tunerPreviewImg.src = url;
-          applyTunerFilters();
-        }
-      });
-
-      img.addEventListener("dblclick", async () => {
-        const edited = await buildEditedDataUrl(url);
-        addToSocialReady(edited, true);
-      });
-
-      creativeThumbGrid.appendChild(img);
-    });
-
-    if (
-      tunerPreviewImg &&
-      (!tunerPreviewImg.getAttribute("src") || tunerPreviewImg.src === "") &&
-      STORE.creativePhotos.length
-    ) {
-      tunerPreviewImg.src = STORE.creativePhotos[0];
-      applyTunerFilters();
-    }
-  }
-
   function handleCreativeFiles(fileList) {
     const files = Array.from(fileList || []);
     if (!files.length) return;
@@ -893,6 +755,37 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
 
     STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
     renderCreativeThumbs();
+  }
+
+  // Step 1 -> Send Top Photos into Creative + Social Strip
+  if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
+    step1SendTopBtn.dataset.wired = "true";
+
+    step1SendTopBtn.addEventListener("click", () => {
+      const selected = getSelectedGridUrls();
+      if (!selected.length) {
+        alert("Select at least 1 photo in the grid first.");
+        return;
+      }
+
+      STORE.creativePhotos = capMax(uniqueUrls(selected), MAX_PHOTOS);
+      STORE.designStudioPhotos = capMax(uniqueUrls(selected), MAX_PHOTOS);
+
+      STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
+        url: u,
+        originalUrl: u,
+        selected: true,
+        locked: false,
+      }));
+
+      normalizeSocialReady();
+      renderCreativeThumbs();
+      renderSocialStrip();
+      refreshDesignStudioStrip();
+
+      step1SendTopBtn.classList.add("success");
+      setTimeout(() => step1SendTopBtn.classList.remove("success"), 700);
+    });
   }
 
   if (photoDropZone && photoFileInput && photoDropZone.dataset.wired !== "true") {
@@ -945,8 +838,6 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
     });
   }
 
-
-
   // ==================================================
   // SOCIAL READY STRIP (ONE MODULE ONLY)
   // ==================================================
@@ -960,93 +851,6 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
   const downloadAllEditedBtn = $("downloadAllEditedBtn");
   const openDesignFromCarouselBtn = $("openDesignFromCarouselBtn");
   const openCanvasFromCarouselBtn = $("openCanvasFromCarouselBtn");
-
-  function renderSocialStrip() {
-    normalizeSocialReady();
-    if (!socialCarousel) return;
-
-    socialCarousel.innerHTML = "";
-
-STORE.socialReadyPhotos.forEach((photo, index) => {
-  const item = DOC.createElement("button");
-  item.type = "button";
-  item.className =
-    "social-carousel-item" +
-    (index === socialIndex ? " selected" : "") +
-    (photo.selected ? " picked" : "") +
-    (photo.locked ? " locked" : "");
-  item.title = "Click: select for actions • Double-click: remove";
-
-  const img = DOC.createElement("img");
-  img.src = photo.url;
-  img.alt = `Social-ready ${index + 1}`;
-  img.loading = "lazy";
-  img.className = "social-carousel-img";
-
-  item.appendChild(img);
-
-  item.addEventListener("click", () => {
-    socialIndex = index;
-    photo.selected = !photo.selected;
-    renderSocialStrip();
-  });
-
-  item.addEventListener("dblclick", (e) => {
-    e.preventDefault();
-    if (photo.locked) {
-      alert("This photo is locked. Unlock it first to remove it.");
-      return;
-    }
-    STORE.socialReadyPhotos.splice(index, 1);
-    socialIndex = clamp(
-      socialIndex,
-      0,
-      Math.max(0, STORE.socialReadyPhotos.length - 1)
-    );
-    renderSocialStrip();
-  });
-
-  socialCarousel.appendChild(item);
-});
-
-
-      item.appendChild(img);
-
-      item.addEventListener("click", () => {
-        socialIndex = index;
-        photo.selected = !photo.selected;
-        renderSocialStrip();
-      });
-
-      item.addEventListener("dblclick", (e) => {
-        e.preventDefault();
-        if (photo.locked) {
-          alert("This photo is locked. Unlock it first to remove it.");
-          return;
-        }
-        STORE.socialReadyPhotos.splice(index, 1);
-        socialIndex = clamp(socialIndex, 0, Math.max(0, STORE.socialReadyPhotos.length - 1));
-        renderSocialStrip();
-      });
-
-socialCarousel.appendChild(item);
-
-
-    if (socialPreviewImg) {
-      const active = STORE.socialReadyPhotos[socialIndex];
-      socialPreviewImg.src = active?.url || "";
-      socialPreviewImg.alt = active?.url ? "Social preview" : "";
-    }
-
-    if (socialStatus) {
-      if (!STORE.socialReadyPhotos.length) {
-        socialStatus.textContent = "No social-ready photos yet. Double-click a Creative photo to add it.";
-      } else {
-        const selectedCount = STORE.socialReadyPhotos.filter((p) => p.selected).length;
-        socialStatus.textContent = `Photo ${socialIndex + 1}/${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`;
-      }
-    }
-  }
 
   function addToSocialReady(url, selected = true) {
     if (!url) return;
@@ -1072,10 +876,73 @@ socialCarousel.appendChild(item);
     renderSocialStrip();
   }
 
+  function renderSocialStrip() {
+    normalizeSocialReady();
+    if (!socialCarousel) return;
+
+    socialCarousel.innerHTML = "";
+
+    STORE.socialReadyPhotos.forEach((photo, index) => {
+      const item = DOC.createElement("button");
+      item.type = "button";
+      item.className =
+        "social-carousel-item" +
+        (index === socialIndex ? " selected" : "") +
+        (photo.selected ? " picked" : "") +
+        (photo.locked ? " locked" : "");
+      item.title = "Click: select for actions • Double-click: remove";
+
+      const img = DOC.createElement("img");
+      img.src = photo.url;
+      img.alt = `Social-ready ${index + 1}`;
+      img.loading = "lazy";
+      img.className = "social-carousel-img";
+
+      item.appendChild(img);
+
+      item.addEventListener("click", () => {
+        socialIndex = index;
+        photo.selected = !photo.selected;
+        renderSocialStrip();
+      });
+
+      item.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        if (photo.locked) {
+          alert("This photo is locked. Unlock it first to remove it.");
+          return;
+        }
+        STORE.socialReadyPhotos.splice(index, 1);
+        socialIndex = clamp(socialIndex, 0, Math.max(0, STORE.socialReadyPhotos.length - 1));
+        renderSocialStrip();
+      });
+
+      socialCarousel.appendChild(item);
+    });
+
+    if (socialPreviewImg) {
+      const active = STORE.socialReadyPhotos[socialIndex];
+      socialPreviewImg.src = active?.url || "";
+      socialPreviewImg.alt = active?.url ? "Social preview" : "";
+    }
+
+    if (socialStatus) {
+      if (!STORE.socialReadyPhotos.length) {
+        socialStatus.textContent =
+          "No social-ready photos yet. Double-click a Creative photo to add it.";
+      } else {
+        const selectedCount = STORE.socialReadyPhotos.filter((p) => p.selected).length;
+        socialStatus.textContent =
+          `Photo ${socialIndex + 1}/${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`;
+      }
+    }
+  }
+
   socialPrevBtn?.addEventListener("click", () => {
     normalizeSocialReady();
     if (!STORE.socialReadyPhotos.length) return;
-    socialIndex = (socialIndex - 1 + STORE.socialReadyPhotos.length) % STORE.socialReadyPhotos.length;
+    socialIndex =
+      (socialIndex - 1 + STORE.socialReadyPhotos.length) % STORE.socialReadyPhotos.length;
     renderSocialStrip();
   });
 
@@ -1117,7 +984,50 @@ socialCarousel.appendChild(item);
   });
 
   // ==================================================
-  // CANVAS STUDIO (Fabric) — stable minimal
+  // CREATIVE THUMB GRID (depends on social: addToSocialReady)
+  // ==================================================
+  function renderCreativeThumbs() {
+    if (!creativeThumbGrid) return;
+    creativeThumbGrid.innerHTML = "";
+
+    STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
+
+    STORE.creativePhotos.forEach((url) => {
+      const img = DOC.createElement("img");
+      img.src = url;
+      img.alt = "Creative photo";
+      img.loading = "lazy";
+      img.className = "creative-thumb";
+      img.title = "Click: select • Double-click: send edited copy to Social Strip";
+
+      img.addEventListener("click", () => {
+        img.classList.toggle("selected");
+        if (tunerPreviewImg) {
+          tunerPreviewImg.src = url;
+          applyTunerFilters();
+        }
+      });
+
+      img.addEventListener("dblclick", async () => {
+        const edited = await buildEditedDataUrl(url);
+        addToSocialReady(edited, true);
+      });
+
+      creativeThumbGrid.appendChild(img);
+    });
+
+    if (
+      tunerPreviewImg &&
+      (!tunerPreviewImg.getAttribute("src") || tunerPreviewImg.src === "") &&
+      STORE.creativePhotos.length
+    ) {
+      tunerPreviewImg.src = STORE.creativePhotos[0];
+      applyTunerFilters();
+    }
+  }
+
+  // ==================================================
+  // CANVAS STUDIO (Fabric)
   // ==================================================
   const creativeStudioOverlay = $("creativeStudioOverlay");
   const creativeCloseBtn = $("creativeClose");
@@ -1129,8 +1039,6 @@ socialCarousel.appendChild(item);
   const creativeDelete = $("creativeDelete");
   const creativeExportPng = $("creativeExportPng");
   const creativeImageInput = $("creativeImageInput");
- DOC.querySelectorAll("textarea").forEach((ta) => {
-
 
   let creativeCanvas = null;
   let creativeHistory = [];
@@ -1172,7 +1080,12 @@ socialCarousel.appendChild(item);
       safeUrl,
       (img) => {
         if (!img) return;
-        const scale = Math.min(canvas.width / (img.width * 1.2), canvas.height / (img.height * 1.2), 1);
+        const scale = Math.min(
+          canvas.width / (img.width * 1.2),
+          canvas.height / (img.height * 1.2),
+          1
+        );
+
         img.set({
           left: canvas.width / 2,
           top: canvas.height / 2,
@@ -1180,6 +1093,7 @@ socialCarousel.appendChild(item);
           originY: "center",
           selectable: true,
         });
+
         img.scale(scale);
         canvas.add(img);
         canvas.setActiveObject(img);
@@ -1270,29 +1184,24 @@ socialCarousel.appendChild(item);
     creativeImageInput.value = "";
   });
 
-// MUST use DOC, not document
-const creativeToolButtons = DOC.querySelectorAll(".tool-btn");
-console.log("Tool buttons found:", creativeToolButtons.length);
+  // Tool buttons (one-time)
+  const creativeToolButtons = DOC.querySelectorAll(".tool-btn");
+  creativeToolButtons.forEach((btn) => {
+    if (btn.dataset.wired === "true") return;
+    btn.dataset.wired = "true";
+    btn.addEventListener("click", () => {
+      const tool = btn.getAttribute("data-tool");
+      if (!tool) return;
 
-creativeToolButtons.forEach((btn) => {
-  if (btn.dataset.wired === "true") return;
-  btn.dataset.wired = "true";
+      creativeToolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
+      btn.classList.add("tool-btn-active");
 
-  btn.addEventListener("click", () => {
-    const tool = btn.getAttribute("data-tool");
-    if (!tool) return;
-
-    creativeToolButtons.forEach((b) => b.classList.remove("tool-btn-active"));
-    btn.classList.add("tool-btn-active");
-
-    if (tool === "uploadImage" && creativeImageInput) creativeImageInput.click();
+      if (tool === "uploadImage" && creativeImageInput) creativeImageInput.click();
+    });
   });
-});
-
 
   // ==================================================
-  // DESIGN STUDIO 3.5 (Konva) — stable init + tray
-  // (Your original section kept, just cleaned for wiring consistency)
+  // DESIGN STUDIO 3.5 (Konva)
   // ==================================================
   const designStudioOverlay = $("designStudioOverlay");
   const designLauncher = $("designLauncher");
@@ -1446,22 +1355,22 @@ creativeToolButtons.forEach((btn) => {
   function rebuildLayersList() {
     if (!layersList || !studioLayer) return;
     layersList.innerHTML = "";
-    const nodes = studioLayer.getChildren();
 
+    const nodes = studioLayer.getChildren();
     nodes.forEach((node) => {
       if (node.name() === "BackgroundLayer") return;
       if (node.getClassName && node.getClassName() === "Transformer") return;
-const li = DOC.createElement("li");
-li.className = "layer-item";
-li.textContent = node.name() || node.getClassName();
 
-if (node === studioSelectedNode) {
-  li.classList.add("layer-item-selected");
-}
+      const li = DOC.createElement("li");
+      li.className = "layer-item";
+      li.textContent = node.name() || node.getClassName();
 
-li.addEventListener("click", () => selectStudioNode(node));
-layersList.appendChild(li);
+      if (node === studioSelectedNode) li.classList.add("layer-item-selected");
+      li.addEventListener("click", () => selectStudioNode(node));
 
+      layersList.appendChild(li);
+    });
+  }
 
   function syncLayerControlsWithSelection() {
     if (!studioSelectedNode) {
@@ -1565,7 +1474,8 @@ layersList.appendChild(li);
     const safeUrl = getProxiedImageUrl(url);
 
     img.onload = () => {
-      const fitRatio = Math.min(studioStage.width() / img.width, studioStage.height() / img.height) || 1;
+      const fitRatio =
+        Math.min(studioStage.width() / img.width, studioStage.height() / img.height) || 1;
       const finalRatio = fitRatio * 0.9;
       const w = img.width * finalRatio;
       const h = img.height * finalRatio;
@@ -1615,6 +1525,7 @@ layersList.appendChild(li);
     if (!studioStage || !studioLayer || !studioSizePreset) return;
     const [w, h] = (studioSizePreset.value || "").split("x").map(Number);
     if (!w || !h) return;
+
     studioStage.width(w);
     studioStage.height(h);
 
@@ -1798,6 +1709,7 @@ layersList.appendChild(li);
     const stored = localStorage.getItem(STUDIO_STORAGE_KEY);
     if (!stored) return alert("No saved design found yet.");
     if (!window.Konva) return alert("Design Studio is not available (Konva missing).");
+
     const container = $("konvaStageContainer");
     if (!container) return alert("Design Studio area not found.");
 
@@ -1935,88 +1847,60 @@ layersList.appendChild(li);
     saveStudioHistory();
   }
 
-function gatherImageUrlsForStudios() {
-  const urls = new Set();
-
-  STORE.creativePhotos.forEach((u) => u && urls.add(u));
-  STORE.socialReadyPhotos.forEach((p) => p?.url && urls.add(p.url));
-
- 
-
-  return Array.from(urls).slice(0, MAX_PHOTOS);
-}
-
-
-function renderStudioPhotoTray() {
-  if (!studioPhotoTray) return;
-  studioPhotoTray.innerHTML = "";
-
-  // Empty state
-  if (!Array.isArray(studioAvailablePhotos) || !studioAvailablePhotos.length) {
-    const msg = DOC.createElement("p");
-    msg.className = "small-note";
-    msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
-    studioPhotoTray.appendChild(msg);
-    return;
+  function gatherImageUrlsForStudios() {
+    const urls = new Set();
+    (STORE.creativePhotos || []).forEach((u) => u && urls.add(u));
+    (STORE.socialReadyPhotos || []).forEach((p) => p?.url && urls.add(p.url));
+    return Array.from(urls).slice(0, MAX_PHOTOS);
   }
 
-  // Thumbs
-  studioAvailablePhotos.forEach((url) => {
-    const img = DOC.createElement("img");
-    img.src = url;
-    img.alt = "Design photo";
-    img.loading = "lazy";
-    img.className = "studio-photo-thumb";
-    img.draggable = true;
+  function renderStudioPhotoTray() {
+    if (!studioPhotoTray) return;
+    studioPhotoTray.innerHTML = "";
 
-    img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
-    img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
+    if (!Array.isArray(studioAvailablePhotos) || !studioAvailablePhotos.length) {
+      const msg = DOC.createElement("p");
+      msg.className = "small-note";
+      msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
+      studioPhotoTray.appendChild(msg);
+      return;
+    }
 
-    img.addEventListener("dragstart", (e) => {
-      try {
-        e.dataTransfer.setData("text/plain", url);
-      } catch {}
+    studioAvailablePhotos.forEach((url) => {
+      const img = DOC.createElement("img");
+      img.src = url;
+      img.alt = "Design photo";
+      img.loading = "lazy";
+      img.className = "studio-photo-thumb";
+      img.draggable = true;
+
+      img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
+      img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
+
+      img.addEventListener("dragstart", (e) => {
+        try {
+          e.dataTransfer.setData("text/plain", url);
+        } catch {}
+      });
+
+      studioPhotoTray.appendChild(img);
     });
 
-    studioPhotoTray.appendChild(img);
-  });
+    const konvaContainer = $("konvaStageContainer");
+    if (konvaContainer && !studioDnDWired) {
+      studioDnDWired = true;
 
-  // Enable drop onto stage container (one-time)
-  const konvaContainer = $("konvaStageContainer");
-  if (konvaContainer && !studioDnDWired) {
-    studioDnDWired = true;
-
-    konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
-    konvaContainer.addEventListener("drop", (e) => {
-      e.preventDefault();
-      let url = "";
-      try {
-        url = e.dataTransfer.getData("text/plain");
-      } catch {}
-      if (url) addStudioImageFromUrl(url, false);
-    });
+      konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
+      konvaContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        let url = "";
+        try {
+          url = e.dataTransfer.getData("text/plain");
+        } catch {}
+        if (url) addStudioImageFromUrl(url, false);
+      });
+    }
   }
-}
-
-
-  studioPhotoTray.appendChild(img);
-
-
-
-const konvaContainer = $("konvaStageContainer");
-if (konvaContainer && !studioDnDWired) {
-  studioDnDWired = true;
-
-  konvaContainer.addEventListener("dragover", (e) => e.preventDefault());
-
-  konvaContainer.addEventListener("drop", (e) => {
-    e.preventDefault();
-    let url = "";
-    try { url = e.dataTransfer.getData("text/plain"); } catch {}
-    if (url) addStudioImageFromUrl(url, false);
-  });
-} // ✅ IMPORTANT: this is just "}" — NOT "});"
-
 
   function openDesignStudio(forceSources) {
     if (!designStudioOverlay) return;
@@ -2045,18 +1929,17 @@ if (konvaContainer && !studioDnDWired) {
     });
   }
 
-if (designCloseBtn && designStudioOverlay && designCloseBtn.dataset.wired !== "true") {
-  designCloseBtn.dataset.wired = "true";
-  designCloseBtn.addEventListener("click", closeDesignStudio);
+  if (designCloseBtn && designStudioOverlay && designCloseBtn.dataset.wired !== "true") {
+    designCloseBtn.dataset.wired = "true";
+    designCloseBtn.addEventListener("click", closeDesignStudio);
 
-  if (designStudioOverlay.dataset.backdropWired !== "true") {
-    designStudioOverlay.dataset.backdropWired = "true";
-    designStudioOverlay.addEventListener("click", (e) => {
-      if (e.target === designStudioOverlay) closeDesignStudio();
-    });
+    if (designStudioOverlay.dataset.backdropWired !== "true") {
+      designStudioOverlay.dataset.backdropWired = "true";
+      designStudioOverlay.addEventListener("click", (e) => {
+        if (e.target === designStudioOverlay) closeDesignStudio();
+      });
+    }
   }
-}
-
 
   function pushUrlsIntoDesignStudio(urls) {
     const list = capMax(uniqueUrls((urls || []).filter(Boolean)), MAX_PHOTOS);
@@ -2066,116 +1949,114 @@ if (designCloseBtn && designStudioOverlay && designCloseBtn.dataset.wired !== "t
     if (list[0]) addStudioImageFromUrl(list[0], true);
   }
 
-  // Step 3 → send selected photos into Design Studio
-if (sendToDesignStudioBtn && sendToDesignStudioBtn.dataset.wired !== "true") {
-  sendToDesignStudioBtn.dataset.wired = "true";
-  sendToDesignStudioBtn.addEventListener("click", () => {
-    let urls = [];
-
-    const selectedThumbs =
-      creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
-
-    if (selectedThumbs.length) {
-      selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
-    }
-
-    if (!urls.length) urls = (STORE.creativePhotos || []).slice(0, MAX_PHOTOS);
-
-    if (!urls.length) {
-      alert("Load or select a photo first before sending to Design Studio.");
-      return;
-    }
-
-    pushUrlsIntoDesignStudio(urls);
-  });
-}
-
-
-// ==================================================
-// SOCIAL STRIP ↔ STUDIOS (Design / Fabric) + Export
-// ==================================================
-
-// Social strip → open Design Studio
-if (openDesignFromCarouselBtn && openDesignFromCarouselBtn.dataset.wired !== "true") {
-  openDesignFromCarouselBtn.dataset.wired = "true";
-  openDesignFromCarouselBtn.addEventListener("click", () => {
-    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
-    if (!STORE?.socialReadyPhotos?.length) return alert("No social-ready photos yet.");
-
-    const selected = STORE.socialReadyPhotos.filter((p) => p?.selected).map((p) => p?.url).filter(Boolean);
-    const chosen = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p?.url).filter(Boolean))
-      .slice(0, MAX_PHOTOS);
-
-    pushUrlsIntoDesignStudio(chosen);
-  });
-}
-
-// Social strip → open Canvas Studio (Fabric)
-if (openCanvasFromCarouselBtn && openCanvasFromCarouselBtn.dataset.wired !== "true") {
-  openCanvasFromCarouselBtn.dataset.wired = "true";
-  openCanvasFromCarouselBtn.addEventListener("click", () => {
-    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
-    if (!STORE?.socialReadyPhotos?.length) return alert("No social-ready photos yet.");
-
-    const selected = STORE.socialReadyPhotos.filter((p) => p?.selected).map((p) => p?.url).filter(Boolean);
-    const urls = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p?.url).filter(Boolean))
-      .slice(0, MAX_PHOTOS);
-
-    openCreativeStudio();
-    urls.forEach((u) => addImageFromUrl(u));
-  });
-}
-
-// Design Studio → Send to Social Strip
-if (sendDesignToStripBtn && sendDesignToStripBtn.dataset.wired !== "true") {
-  sendDesignToStripBtn.dataset.wired = "true";
-  sendDesignToStripBtn.addEventListener("click", async () => {
-    if (!studioStage) return;
-
-    let dataUrl;
-    try {
-      dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
-    } catch (e) {
-      console.error("❌ Konva toDataURL failed:", e);
-      alert("Design export failed (CORS). Try using proxied images or uploads.");
-      return;
-    }
-
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-
-    addToSocialReady(objectUrl, true);
-
-STORE.creativePhotos = capMax(
-  uniqueUrls([...(STORE.creativePhotos || []), objectUrl]),
-  MAX_PHOTOS
-);
-// ==================================================
-// FINAL INIT (safe boot) — SINGLE COPY ONLY
-// ==================================================
-try {
-  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
-
-  if (typeof renderPhotosGrid === "function") {
-    renderPhotosGrid(STORE?.creativePhotos || []);
+  // "Refresh" hook (used by other parts safely)
+  function refreshDesignStudioStrip() {
+    // This project uses the tray in Design Studio itself.
+    // If you later add a Step-3 mini strip for Design Studio, wire it here.
+    return;
   }
 
-  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-  if (typeof renderSocialStrip === "function") renderSocialStrip();
+  // Step 3 → send selected photos into Design Studio
+  if (sendToDesignStudioBtn && sendToDesignStudioBtn.dataset.wired !== "true") {
+    sendToDesignStudioBtn.dataset.wired = "true";
+    sendToDesignStudioBtn.addEventListener("click", () => {
+      let urls = [];
 
-  // ✅ Wire once so the form submit works when modal opens
-  if (typeof wireObjectionCoach === "function") wireObjectionCoach();
+      const selectedThumbs = creativeThumbGrid?.querySelectorAll(".creative-thumb.selected") || [];
+      if (selectedThumbs.length) selectedThumbs.forEach((img) => img?.src && urls.push(img.src));
 
-} catch (e) {
-  console.error("❌ Final init failed:", e);
-}
+      if (!urls.length) urls = (STORE.creativePhotos || []).slice(0, MAX_PHOTOS);
 
+      if (!urls.length) {
+        alert("Load or select a photo first before sending to Design Studio.");
+        return;
+      }
 
-}); // closes DOMContentLoaded
+      pushUrlsIntoDesignStudio(urls);
+    });
+  }
 
+  // ==================================================
+  // SOCIAL STRIP ↔ STUDIOS (Design / Fabric)
+  // ==================================================
+  if (openDesignFromCarouselBtn && openDesignFromCarouselBtn.dataset.wired !== "true") {
+    openDesignFromCarouselBtn.dataset.wired = "true";
+    openDesignFromCarouselBtn.addEventListener("click", () => {
+      normalizeSocialReady();
+      if (!STORE?.socialReadyPhotos?.length) return alert("No social-ready photos yet.");
 
+      const selected = STORE.socialReadyPhotos
+        .filter((p) => p?.selected)
+        .map((p) => p?.url)
+        .filter(Boolean);
 
+      const chosen = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p?.url).filter(Boolean)).slice(
+        0,
+        MAX_PHOTOS
+      );
 
+      pushUrlsIntoDesignStudio(chosen);
+    });
+  }
 
+  if (openCanvasFromCarouselBtn && openCanvasFromCarouselBtn.dataset.wired !== "true") {
+    openCanvasFromCarouselBtn.dataset.wired = "true";
+    openCanvasFromCarouselBtn.addEventListener("click", () => {
+      normalizeSocialReady();
+      if (!STORE?.socialReadyPhotos?.length) return alert("No social-ready photos yet.");
 
+      const selected = STORE.socialReadyPhotos
+        .filter((p) => p?.selected)
+        .map((p) => p?.url)
+        .filter(Boolean);
+
+      const urls = (selected.length ? selected : STORE.socialReadyPhotos.map((p) => p?.url).filter(Boolean)).slice(
+        0,
+        MAX_PHOTOS
+      );
+
+      openCreativeStudio();
+      urls.forEach((u) => addImageFromUrl(u));
+    });
+  }
+
+  // Design Studio → Send to Social Strip
+  if (sendDesignToStripBtn && sendDesignToStripBtn.dataset.wired !== "true") {
+    sendDesignToStripBtn.dataset.wired = "true";
+    sendDesignToStripBtn.addEventListener("click", async () => {
+      if (!studioStage) return;
+
+      let dataUrl;
+      try {
+        dataUrl = studioStage.toDataURL({ pixelRatio: 2 });
+      } catch (e) {
+        console.error("❌ Konva toDataURL failed:", e);
+        alert("Design export failed (CORS). Try using proxied images or uploads.");
+        return;
+      }
+
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      addToSocialReady(objectUrl, true);
+
+      STORE.creativePhotos = capMax(uniqueUrls([...(STORE.creativePhotos || []), objectUrl]), MAX_PHOTOS);
+      renderCreativeThumbs();
+      renderSocialStrip();
+    });
+  }
+
+  // ==================================================
+  // FINAL INIT (safe boot) — SINGLE COPY ONLY
+  // ==================================================
+  try {
+    normalizeSocialReady();
+    renderPhotosGrid(STORE?.creativePhotos || []);
+    renderCreativeThumbs();
+    renderSocialStrip();
+    wireObjectionCoach();
+  } catch (e) {
+    console.error("❌ Final init failed:", e);
+  }
+});
