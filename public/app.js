@@ -2113,21 +2113,19 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
       renderSocialStrip();
     });
   }
-
 // ==================================================
-// FINAL INIT (safe boot) — SINGLE COPY ONLY
+// FINAL INIT (Safe boot) — SINGLE COPY ONLY
 // ==================================================
 try {
   normalizeSocialReady();
 
-  renderStep1Photos((STORE && STORE.creativePhotos) ? STORE.creativePhotos : []);
-  renderCreativeThumbs();
-  renderSocialStrip();
-  wireObjectionCoach();
+  renderStep1Photos(STORE?.creativePhotos || []);
+  renderCreativeThumbs?.();
+  renderSocialStrip?.();
+  wireObjectionCoach?.();
 
   console.log("FINAL INIT REACHED");
 } catch (e) {
   console.log("Final init failed:", e);
 }
 
-}); // close DOMContentLoaded
