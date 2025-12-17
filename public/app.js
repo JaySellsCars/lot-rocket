@@ -423,45 +423,6 @@ function getSelectedStep1Urls(max = 24) {
 }
 
 
-  async function boostListing() {
-    const url = (dealerUrlInput?.value || "").trim();
-    if (!url) {
-      alert("Paste a dealer URL first.");
-      return;
-    }
-
-    if (boostBtn) boostBtn.disabled = true;
-
-    try {
-      const payload = {
-        url,
-        labelOverride: (vehicleLabelInput?.value || "").trim(),
-        priceOverride: (priceOfferInput?.value || "").trim(),
-        maxPhotos: MAX_PHOTOS,
-      };
-
-      const data = await postJSON(`${apiBase}/api/boost`, payload);
-console.log("BOOST RAW DATA:", data);
-
-
-
-console.log("BOOST PARSED:", {
-  title,
-  price,
-  photosType: typeof photos,
-  photosIsArray: Array.isArray(photos),
-  photosLen: Array.isArray(photos) ? photos.length : -1,
-  photosSample: Array.isArray(photos) ? photos.slice(0, 3) : photos,
-});
-
-
-
-      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
-
-      // store RAW urls
-      STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
-    renderStep1Photos(STORE?.creativePhotos || []);
 
 
     console.log("✅ Boost complete", { title, price, photos: STORE.creativePhotos.length });
