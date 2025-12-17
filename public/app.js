@@ -966,21 +966,48 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
 
     socialCarousel.innerHTML = "";
 
-    STORE.socialReadyPhotos.forEach((photo, index) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className =
-        "social-carousel-item" +
-        (index === socialIndex ? " selected" : "") +
-        (photo.selected ? " picked" : "") +
-        (photo.locked ? " locked" : "");
-      item.title = "Click: select for actions • Double-click: remove";
+STORE.socialReadyPhotos.forEach((photo, index) => {
+  const item = DOC.createElement("button");
+  item.type = "button";
+  item.className =
+    "social-carousel-item" +
+    (index === socialIndex ? " selected" : "") +
+    (photo.selected ? " picked" : "") +
+    (photo.locked ? " locked" : "");
+  item.title = "Click: select for actions • Double-click: remove";
 
-      const img = document.createElement("img");
-      img.src = photo.url;
-      img.alt = `Social-ready ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "social-carousel-img";
+  const img = DOC.createElement("img");
+  img.src = photo.url;
+  img.alt = `Social-ready ${index + 1}`;
+  img.loading = "lazy";
+  img.className = "social-carousel-img";
+
+  item.appendChild(img);
+
+  item.addEventListener("click", () => {
+    socialIndex = index;
+    photo.selected = !photo.selected;
+    renderSocialStrip();
+  });
+
+  item.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    if (photo.locked) {
+      alert("This photo is locked. Unlock it first to remove it.");
+      return;
+    }
+    STORE.socialReadyPhotos.splice(index, 1);
+    socialIndex = clamp(
+      socialIndex,
+      0,
+      Math.max(0, STORE.socialReadyPhotos.length - 1)
+    );
+    renderSocialStrip();
+  });
+
+  socialCarousel.appendChild(item);
+});
+
 
       item.appendChild(img);
 
