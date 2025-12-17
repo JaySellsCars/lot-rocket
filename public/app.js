@@ -1,8 +1,5 @@
-
-
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
 // Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
-
 
 window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
@@ -18,7 +15,6 @@ window.document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
 
-  
   // ==================================================
   // CORE CONSTANTS + SINGLE GLOBAL STORE
   // ==================================================
@@ -32,48 +28,23 @@ window.document.addEventListener("DOMContentLoaded", () => {
   STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls
   STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : []; // objects
 
+  // Stable summary fields (global reads must use STORE / DOM, never raw vars)
+  STORE.lastTitle = STORE.lastTitle || "";
+  STORE.lastPrice = STORE.lastPrice || "";
+
   // Social carousel index (must exist before normalizeSocialReady)
   let socialIndex = 0;
-STORE.lastTitle = STORE.lastTitle || "";
-STORE.lastPrice = STORE.lastPrice || "";
 
-// ==================================================
-// UTIL
-// ==================================================
-const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  // ==================================================
+  // UTIL
+  // ==================================================
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-function autoResizeTextarea(el) {
-  if (!el) return;
-  el.style.height = "auto";
-  el.style.height = (el.scrollHeight + 4) + "px";
-}
-
-// ================================
-// POST JSON helper (REQUIRED)
-// ================================
-async function postJSON(url, body) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {}),
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    const msg =
-      data?.error ||
-      data?.message ||
-      `Request failed (${res.status})`;
-    throw new Error(msg);
+  function autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = (el.scrollHeight + 4) + "px";
   }
-
-  return data;
-}
-
-
-  // ... your code continues below
-
 
   function capMax(arr, max = MAX_PHOTOS) {
     return Array.isArray(arr) ? arr.slice(0, max) : [];
@@ -89,6 +60,26 @@ async function postJSON(url, body) {
       out.push(u);
     });
     return out;
+  }
+
+  // ================================
+  // POST JSON helper (REQUIRED)
+  // ================================
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const msg = data?.error || data?.message || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    return data;
   }
 
   function normalizeSocialReady() {
@@ -109,29 +100,28 @@ async function postJSON(url, body) {
   }
 
   // Proxy helper for CORS-sensitive images
-function getProxiedImageUrl(rawUrl) {
-  if (!rawUrl) return rawUrl;
+  function getProxiedImageUrl(rawUrl) {
+    if (!rawUrl) return rawUrl;
 
-  try {
-    const u = new URL(rawUrl, window.location.origin);
+    try {
+      const u = new URL(rawUrl, window.location.origin);
 
-    if (
-      u.origin === window.location.origin ||
-      u.protocol === "blob:" ||
-      u.protocol === "data:"
-    ) {
+      if (
+        u.origin === window.location.origin ||
+        u.protocol === "blob:" ||
+        u.protocol === "data:"
+      ) {
+        return rawUrl;
+      }
+
+      // If already proxied, keep it
+      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
+
+      return `/api/proxy-image?url=${encodeURIComponent(u.href)}`;
+    } catch (e) {
       return rawUrl;
     }
-
-    // If already proxied, keep it
-    if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
-
-    return `/api/proxy-image?url=${encodeURIComponent(u.href)}`;
-  } catch (e) {
-    return rawUrl;
   }
-}
-
 
   function triggerDownload(url, filename) {
     if (!url) return;
@@ -273,96 +263,103 @@ function getProxiedImageUrl(rawUrl) {
 
     modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
   }
-// ==================================================
-// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
-// ==================================================
-const dealerUrlInput = $("dealerUrl");
-const vehicleLabelInput = $("vehicleLabel");
-const priceOfferInput = $("priceOffer");
 
-const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
+  // ==================================================
+  // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
+  // ==================================================
+  const dealerUrlInput = $("dealerUrl");
+  const vehicleLabelInput = $("vehicleLabel");
+  const priceOfferInput = $("priceOffer");
 
-const sendTopBtn =
-  $("sendTopPhotosBtn") ||
-  $("sendPhotosToCreative") ||
-  $("sendTopPhotosToCreative") ||
-  $("sendTopPhotosToCreativeLab") ||
-  $("sendPhotosToCreativeLab");
+  const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
 
-const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+  const sendTopBtn =
+    $("sendTopPhotosBtn") ||
+    $("sendPhotosToCreative") ||
+    $("sendTopPhotosToCreative") ||
+    $("sendTopPhotosToCreativeLab") ||
+    $("sendPhotosToCreativeLab");
 
-const photosGridEl = $("photosGrid"); // uses your $ helper
+  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+  const photosGridEl = $("photosGrid"); // uses your $ helper
 
+  // ------------------------------------
+  // Boost handler (NO refactor)
+  // ------------------------------------
+  async function boostListing() {
+    const url = (dealerUrlInput?.value || "").trim();
+    if (!url) {
+      alert("Paste a dealer URL first.");
+      return;
+    }
 
-// ------------------------------------
-// Boost handler (NO refactor)
-// ------------------------------------
-async function boostListing() {
-  const url = (dealerUrlInput?.value || "").trim();
-  if (!url) {
-    alert("Paste a dealer URL first.");
-    return;
+    if (boostBtn) boostBtn.disabled = true;
+
+    try {
+      const payload = {
+        url,
+        labelOverride: (vehicleLabelInput?.value || "").trim(),
+        priceOverride: (priceOfferInput?.value || "").trim(),
+        maxPhotos: MAX_PHOTOS,
+      };
+
+      const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+      let title = "";
+      let price = "";
+      let photos = [];
+
+      title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+      price = data?.price || data?.offer || data?.vehiclePrice || "";
+      photos = Array.isArray(data?.photos)
+        ? data.photos
+        : Array.isArray(data?.images)
+        ? data.images
+        : [];
+
+      // Persist for any other UI/script builders (prevents "title is not defined")
+      STORE.lastTitle = title;
+      STORE.lastPrice = price;
+
+      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+      // store RAW urls (cap)
+      STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+
+      // Step 1 render (must exist below)
+      renderStep1Photos(STORE.creativePhotos);
+
+      console.log("✅ Boost complete", {
+        title,
+        price,
+        photos: STORE.creativePhotos.length,
+      });
+    } catch (e) {
+      console.log("❌ Boost failed:", e);
+      alert(e?.message || "Boost failed.");
+    } finally {
+      if (boostBtn) boostBtn.disabled = false;
+    }
   }
 
-  if (boostBtn) boostBtn.disabled = true;
-
-  try {
-    const payload = {
-      url,
-      labelOverride: (vehicleLabelInput?.value || "").trim(),
-      priceOverride: (priceOfferInput?.value || "").trim(),
-      maxPhotos: MAX_PHOTOS,
-    };
-
-    const data = await postJSON(`${apiBase}/api/boost`, payload);
-
-let title = "";
-let price = "";
-let photos = [];
-
-title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-price = data?.price || data?.offer || data?.vehiclePrice || "";
-photos = Array.isArray(data?.photos)
-  ? data.photos
-  : Array.isArray(data?.images)
-  ? data.images
-  : [];
-
-STORE.lastTitle = title;
-STORE.lastPrice = price;
-
-if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
-
-
-    // store RAW urls (cap elsewhere if you want)
-    STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
-
-    // Step 1 render
-    renderStep1Photos(STORE.creativePhotos);
-
-    console.log("✅ Boost complete", {
-      title,
-      price,
-      photos: STORE.creativePhotos.length,
+  // Wire Boost click (bind once)
+  if (boostBtn && boostBtn.dataset.wired !== "true") {
+    boostBtn.dataset.wired = "true";
+    boostBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      boostListing();
     });
-  } catch (e) {
-    console.log("❌ Boost failed:", e);
-    alert(e?.message || "Boost failed.");
-  } finally {
-    if (boostBtn) boostBtn.disabled = false;
+  } else if (!boostBtn) {
+    console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
   }
-}
 
-// ------------------------------------
-// Boost button click
-// ------------------------------------
-boostBtn?.addEventListener("click", boostListing);
+  // NOTE: Send Top wiring remains below in your Step 1 selection section.
+  // ================================
+  // STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
+  // ================================
 
-// ================================
-// STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
-// ================================
 
 
 STORE = window.LOTROCKET;
