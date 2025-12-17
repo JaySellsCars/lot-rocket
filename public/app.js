@@ -3,7 +3,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
-  ...
+  
 
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
