@@ -253,66 +253,59 @@ const sendTopBtn =
 
   const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
-  const photosGridEl = $("photosGrid");
+const photosGridEl = $("#photosGrid");
 
-  async function postJSON(url, body) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = data?.error || data?.message || `Request failed (${res.status})`;
-      throw new Error(msg);
-    }
-    return data;
-  }
+// ================================
+// STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
+// ================================
+window.LOTROCKET = window.LOTROCKET || {};
+const STORE = window.LOTROCKET;
+STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
-  function renderPhotosGrid(urls) {
-    if (!photosGridEl) return;
+// map jQuery → DOM
+const photosGrid = photosGridEl?.get(0);
 
-    const clean = uniqueUrls(capMax(urls || [], MAX_PHOTOS));
-    photosGridEl.innerHTML = "";
+// 1) Render Step 1 photos
+function renderStep1Photos(urls) {
+  if (!photosGrid) return;
 
-    clean.forEach((rawUrl, idx) => {
-      const url = getProxiedImageUrl(rawUrl);
+  const clean = (Array.isArray(urls) ? urls : []).filter(Boolean);
 
-      const wrap = DOC.createElement("button");
-      wrap.type = "button";
-      wrap.className = "photo-thumb";
-      wrap.title = "Click to toggle select";
+  STORE.step1Photos = clean.map((url) => ({ url, selected: true }));
 
-      const img = DOC.createElement("img");
-      img.src = url;
-      img.alt = `photo ${idx + 1}`;
-      img.loading = "lazy";
+  photosGrid.innerHTML = STORE.step1Photos
+    .map((p, i) => `
+      <button type="button" data-i="${i}" style="position:relative">
+        <img src="${p.url}" style="width:100%; opacity:1" />
+        <span class="photo-check">✓</span>
+      </button>
+    `)
+    .join("");
+}
 
-      // selected defaults ON
-      wrap.dataset.selected = "1";
-      wrap.addEventListener("click", () => {
-        const isSel = wrap.dataset.selected === "1";
-        wrap.dataset.selected = isSel ? "0" : "1";
-        wrap.classList.toggle("is-off", isSel);
-      });
+// 2) Toggle select
+photosGrid?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-i]");
+  if (!btn) return;
 
-      wrap.appendChild(img);
-      photosGridEl.appendChild(wrap);
-    });
+  const i = Number(btn.dataset.i);
+  const photo = STORE.step1Photos[i];
+  if (!photo) return;
 
-    console.log(`✅ Rendered ${clean.length} photos`);
-  }
+  photo.selected = !photo.selected;
 
-  function getSelectedGridUrls() {
-    if (!photosGridEl) return [];
-    const btns = Array.from(photosGridEl.querySelectorAll(".photo-thumb"));
-    const selected = btns
-      .filter((b) => b.dataset.selected === "1")
-      .map((b) => b.querySelector("img")?.src)
-      .filter(Boolean);
+  btn.querySelector("img").style.opacity = photo.selected ? "1" : "0.35";
+  btn.querySelector(".photo-check").style.display = photo.selected ? "block" : "none";
+});
 
-    return uniqueUrls(capMax(selected, MAX_PHOTOS));
-  }
+// 3) Collect selected
+function getSelectedStep1Urls(max = 24) {
+  return STORE.step1Photos
+    .filter(p => p.selected)
+    .map(p => p.url)
+    .slice(0, max);
+}
+
 
   async function boostListing() {
     const url = (dealerUrlInput?.value || "").trim();
