@@ -457,10 +457,11 @@ function getSelectedStep1Urls(max = 24) {
 
     normalizeSocialReady();
 
-    // Our internal renderers (defined later) – safe calls
-    renderCreativeThumbs?.();
-    renderSocialStrip?.();
-    refreshDesignStudioStrip?.();
+// Our internal renderers (defined later) – safe calls
+if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+if (typeof renderSocialStrip === "function") renderSocialStrip();
+if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+
 
 
 
