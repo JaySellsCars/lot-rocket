@@ -368,46 +368,51 @@ STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
 
 // 1) Render Step 1 photos
-  console.log("renderStep1Photos called:", {
-  urlsType: typeof urls,
-  isArray: Array.isArray(urls),
-  len: Array.isArray(urls) ? urls.length : -1,
-  sample: Array.isArray(urls) ? urls.slice(0, 3) : urls,
-  photosGridFound: !!photosGrid,
-});
+  
 
 function renderStep1Photos(urls) {
-  if (!photosGrid) return;
-const renderPhotosGrid = renderStep1Photos;
+  console.log("renderStep1Photos called:", {
+    urlsType: typeof urls,
+    isArray: Array.isArray(urls),
+    len: Array.isArray(urls) ? urls.length : -1,
+    sample: Array.isArray(urls) ? urls.slice(0, 3) : urls,
+    photosGridFound: !!photosGridEl,
+  });
+
+  if (!photosGridEl) return;
 
   const clean = (Array.isArray(urls) ? urls : []).filter(Boolean);
 
-  STORE.step1Photos = clean.map((url) => ({ url, selected: true }));
+  STORE.step1Photos = clean.map((url) => ({
+    url,
+    selected: true,
+  }));
 
-  photosGrid.innerHTML = STORE.step1Photos
-    .map((p, i) => `
-      <button type="button" data-i="${i}" style="position:relative">
-        <img src="${p.url}" style="width:100%; opacity:1" />
+  photosGridEl.innerHTML = STORE.step1Photos
+    .map(
+      (p, i) => `
+      <button type="button" data-i="${i}" class="photo-thumb">
+        <img src="${getProxiedImageUrl(p.url)}" style="width:100%; opacity:1" />
         <span class="photo-check">✓</span>
       </button>
-    `)
+    `
+    )
     .join("");
+
+  // Toggle select
+  photosGridEl.onclick = (e) => {
+    const btn = e.target.closest("[data-i]");
+    if (!btn) return;
+
+    const i = Number(btn.dataset.i);
+    const item = STORE.step1Photos[i];
+    if (!item) return;
+
+    item.selected = !item.selected;
+    btn.classList.toggle("is-off", !item.selected);
+  };
 }
 
-// 2) Toggle select
-photosGrid?.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-i]");
-  if (!btn) return;
-
-  const i = Number(btn.dataset.i);
-  const photo = STORE.step1Photos[i];
-  if (!photo) return;
-
-  photo.selected = !photo.selected;
-
-  btn.querySelector("img").style.opacity = photo.selected ? "1" : "0.35";
-  btn.querySelector(".photo-check").style.display = photo.selected ? "block" : "none";
-});
 
 // 3) Collect selected
 function getSelectedStep1Urls(max = 24) {
