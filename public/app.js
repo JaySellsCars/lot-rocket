@@ -34,6 +34,8 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   // Social carousel index (must exist before normalizeSocialReady)
   let socialIndex = 0;
+STORE.lastTitle = STORE.lastTitle || "";
+STORE.lastPrice = STORE.lastPrice || "";
 
 // ==================================================
 // UTIL
@@ -289,7 +291,9 @@ const sendTopBtn =
 
 const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
 const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+
 const photosGridEl = $("photosGrid"); // uses your $ helper
+
 
 // ------------------------------------
 // Boost handler (NO refactor)
