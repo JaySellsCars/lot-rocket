@@ -1921,31 +1921,30 @@ function gatherImageUrlsForStudios() {
     if (!studioPhotoTray) return;
     studioPhotoTray.innerHTML = "";
 
-    if (!studioAvailablePhotos?.length) {
-      const msg = document.createElement("p");
-      msg.className = "small-note";
-      msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
-      studioPhotoTray.appendChild(msg);
-      return;
-    }
+if (!studioAvailablePhotos?.length) {
+const msg = DOC.createElement("p");
+msg.className = "small-note";
+msg.textContent = "No photos yet. Boost a listing or add photos in Creative Lab.";
+studioPhotoTray.appendChild(msg);
 
-    studioAvailablePhotos.forEach((url) => {
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "Design photo";
-      img.loading = "lazy";
-      img.className = "studio-photo-thumb";
-      img.draggable = true;
+const img = DOC.createElement("img");
+img.src = url;
+img.alt = "Design photo";
 
-      img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
-      img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
+  img.loading = "lazy";
+  img.className = "studio-photo-thumb";
+  img.draggable = true;
 
-      img.addEventListener("dragstart", (e) => {
-        try { e.dataTransfer.setData("text/plain", url); } catch {}
-      });
+  img.addEventListener("click", (e) => addStudioImageFromUrl(url, !!e.shiftKey));
+  img.addEventListener("dblclick", () => addStudioImageFromUrl(url, true));
 
-      studioPhotoTray.appendChild(img);
-    });
+  img.addEventListener("dragstart", (e) => {
+    try { e.dataTransfer.setData("text/plain", url); } catch {}
+  });
+
+  studioPhotoTray.appendChild(img);
+});
+
 
     const konvaContainer = $("konvaStageContainer");
     if (konvaContainer && !studioDnDWired) {
