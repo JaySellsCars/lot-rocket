@@ -45,7 +45,7 @@ function closeSideModal(modal) {
 
 // Click delegation for open + close
 DOC.addEventListener("click", (e) => {
-  // OPEN
+  // OPEN modal
   const openBtn = e.target.closest("[data-modal-target]");
   if (openBtn) {
     const targetId = openBtn.getAttribute("data-modal-target");
@@ -53,7 +53,7 @@ DOC.addEventListener("click", (e) => {
     return;
   }
 
-  // CLOSE (button)
+  // CLOSE via button
   const closeBtn = e.target.closest("[data-close]");
   if (closeBtn) {
     const modal = closeBtn.closest(".side-modal");
@@ -61,12 +61,15 @@ DOC.addEventListener("click", (e) => {
     return;
   }
 
-  // CLOSE (backdrop click)
-  const modalBackdrop = e.target.classList.contains("side-modal") ? e.target : null;
-  if (modalBackdrop && !modalBackdrop.classList.contains("hidden")) {
-    closeSideModal(modalBackdrop);
+  // CLOSE via backdrop
+  const backdrop =
+    e.target.classList.contains("side-modal") ? e.target : null;
+
+  if (backdrop && !backdrop.classList.contains("hidden")) {
+    closeSideModal(backdrop);
   }
 });
+
 
 // ESC closes topmost open modal
 DOC.addEventListener("keydown", (e) => {
