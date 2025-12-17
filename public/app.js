@@ -262,6 +262,7 @@ const sendTopBtn =
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
 const photosGridEl = $("#photosGrid");
 
+
 // ================================
 // STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
 // ================================
