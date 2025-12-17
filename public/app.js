@@ -3,6 +3,7 @@
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
 // Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
 
+
 window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
