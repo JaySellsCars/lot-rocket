@@ -2063,7 +2063,10 @@ function getSelectedStep1Urls(max = 24) {
 // ==================================================
 try {
   normalizeSocialReady();
-  renderPhotosGrid(STORE?.creativePhotos || []);
+
+  // Step 1 grid renderer (Option A)
+  renderStep1Photos(STORE?.creativePhotos || []);
+
   renderCreativeThumbs();
   renderSocialStrip();
   wireObjectionCoach();
@@ -2074,5 +2077,6 @@ try {
 }
 
 }); // ✅ closes DOMContentLoaded
+
 
 
