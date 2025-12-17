@@ -241,7 +241,8 @@ function wireObjectionCoach() {
   const themeToggleInput = $("themeToggle");
   if (themeToggleInput) {
     const applyTheme = (isDark) => {
-      document.body.classList.toggle("dark-theme", !!isDark);
+      DOC.body.classList.toggle("dark-theme", !!isDark);
+
       themeToggleInput.checked = !!isDark;
     };
     applyTheme(true);
