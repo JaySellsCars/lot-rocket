@@ -1096,7 +1096,8 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
   const creativeDelete = $("creativeDelete");
   const creativeExportPng = $("creativeExportPng");
   const creativeImageInput = $("creativeImageInput");
-  const creativeToolButtons = document.querySelectorAll(".tool-btn");
+ DOC.querySelectorAll("textarea").forEach((ta) => {
+
 
   let creativeCanvas = null;
   let creativeHistory = [];
