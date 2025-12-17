@@ -28,13 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==================================================
 function openSideModalById(modalId) {
   if (!modalId) return;
-  const modal = document.getElementById(modalId);
+  const modal = DOC.getElementById(modalId);
   if (!modal) return console.warn("⚠️ Modal not found:", modalId);
 
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
-
-  // fire "on open" hooks (Objection Coach will attach here)
   modal.dispatchEvent(new CustomEvent("lr:open", { detail: { modalId } }));
 }
 
@@ -46,7 +44,7 @@ function closeSideModal(modal) {
 }
 
 // Click delegation for open + close
-DOC.addEventListener("click", ...)
+DOC.addEventListener("click", (e) => {
   // OPEN
   const openBtn = e.target.closest("[data-modal-target]");
   if (openBtn) {
@@ -71,13 +69,14 @@ DOC.addEventListener("click", ...)
 });
 
 // ESC closes topmost open modal
-DOC.addEventListener("keydown", ...)
-
+DOC.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-  const openModals = Array.from(document.querySelectorAll(".side-modal"))
+  const openModals = Array.from(DOC.querySelectorAll(".side-modal"))
     .filter((m) => !m.classList.contains("hidden"));
   const top = openModals[openModals.length - 1];
   if (top) closeSideModal(top);
+});
+
 
 // ==================================================
 // OBJECTION COACH — INIT ON MODAL OPEN (ONCE)
