@@ -21,7 +21,8 @@ window.document.addEventListener("DOMContentLoaded", () => {
   const MAX_PHOTOS = 24;
 
   window.LOTROCKET = window.LOTROCKET || {};
-  const STORE = window.LOTROCKET;
+const STORE = window.LOTROCKET;
+
 
   STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // urls (strings)
   STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls (strings)
