@@ -2126,11 +2126,7 @@ try {
   renderSocialStrip();
   wireObjectionCoach();
 
-  console.log("FINAL INIT REACHED");
-} catch (e) {
-  console.log("Final init failed:", e);
-}
+
+});// close DOMContentLoaded
 
 
-
-});// closes DOMContentLoaded
