@@ -1,12 +1,8 @@
 
+
 window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
-
-
-
-  
-
 
   // ✅ BOOT GUARD (must be inside DOMContentLoaded)
   if (window.__LOTROCKET_BOOTED__) {
@@ -15,10 +11,14 @@ window.document.addEventListener("DOMContentLoaded", () => {
   }
   window.__LOTROCKET_BOOTED__ = true;
 
-
-
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
+
+  // ... EVERYTHING ELSE in app.js stays below ...
+
+  // (only ONE closing brace at the very bottom of the file)
+});
+
 
 
 
