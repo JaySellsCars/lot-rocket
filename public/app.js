@@ -267,7 +267,7 @@ const photosGridEl = $("#photosGrid");
 // STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
 // ================================
 window.LOTROCKET = window.LOTROCKET || {};
-const STORE = window.LOTROCKET;
+STORE = window.LOTROCKET;
 STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
 // map jQuery → DOM
