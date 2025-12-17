@@ -202,65 +202,134 @@ app.post("/api/boost", async (req, res) => {
   }
 });
 
+function absUrl(base, maybeUrl) {
+  if (!maybeUrl) return null;
+  const u = String(maybeUrl).trim().replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
+  if (!u || u === "#" || u.startsWith("data:")) return null;
+  try {
+    return new URL(u, base).toString();
+  } catch {
+    return null;
+  }
+}
+
+function parseSrcset(srcset) {
+  if (!srcset) return [];
+  // "url1 640w, url2 1024w" => [url1, url2]
+  return String(srcset)
+    .split(",")
+    .map(s => s.trim().split(/\s+/)[0])
+    .filter(Boolean);
+}
+
+function extractImageUrlsFromHtml(html, baseUrl) {
+  const $ = require("cheerio").load(html);
+
+  const candidates = [];
+
+  // 1) IMG tags (src + common lazy attrs + srcset)
+  $("img").each((_, el) => {
+    const $img = $(el);
+
+    const src = $img.attr("src");
+    const dataSrc =
+      $img.attr("data-src") ||
+      $img.attr("data-lazy") ||
+      $img.attr("data-original") ||
+      $img.attr("data-url") ||
+      $img.attr("data-image");
+
+    const srcset = $img.attr("srcset") || $img.attr("data-srcset");
+
+    [src, dataSrc, ...parseSrcset(srcset)].forEach((u) => {
+      const a = absUrl(baseUrl, u);
+      if (a) candidates.push(a);
+    });
+  });
+
+  // 2) Inline style background-image
+  $("[style]").each((_, el) => {
+    const style = String($(el).attr("style") || "");
+    const matches = style.match(/background-image\s*:\s*url\(([^)]+)\)/gi);
+    if (matches) {
+      matches.forEach((m) => {
+        const inner = m.match(/url\(([^)]+)\)/i);
+        if (inner && inner[1]) {
+          const a = absUrl(baseUrl, inner[1]);
+          if (a) candidates.push(a);
+        }
+      });
+    }
+  });
+
+  // 3) Script blobs: grab obvious .jpg/.png/.webp urls that appear inside JSON
+  $("script").each((_, el) => {
+    const txt = $(el).html();
+    if (!txt) return;
+
+    const found = txt.match(/https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi);
+    if (found) found.forEach((u) => candidates.push(u));
+
+    // Sometimes relative URLs show up in JSON
+    const rel = txt.match(/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi);
+    if (rel) rel.forEach((u) => {
+      const a = absUrl(baseUrl, u);
+      if (a) candidates.push(a);
+    });
+  });
+
+  // Cleanup + filter + dedupe
+  const cleaned = candidates
+    .map(u => u.trim())
+    .filter(Boolean)
+    .filter(u => /\.(jpg|jpeg|png|webp)(\?|$)/i.test(u))
+    .filter(u => !/logo|sprite|icon|placeholder/i.test(u));
+
+  return Array.from(new Set(cleaned));
+}
 
 
 // ======================================================
 // Scraping (single path)
 // ======================================================
-
 async function scrapePage(url) {
   const res = await fetchWithTimeout(url, {}, 20000);
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
 
   const html = await res.text();
-  const $ = cheerio.load(html);
 
-  const title = $("title").first().text().trim();
-  const metaDesc = $('meta[name="description"]').attr("content") || "";
+  // Basic title (keep your existing logic if you already do better)
+  const $ = require("cheerio").load(html);
+  const title =
+    ($("meta[property='og:title']").attr("content") ||
+      $("meta[name='twitter:title']").attr("content") ||
+      $("title").text() ||
+      "")
+      .trim();
 
-  // Visible text extraction
-  let visibleText = "";
-  $("body *")
-    .not("script, style, noscript")
-    .each((_, el) => {
-      const text = $(el).text().replace(/\s+/g, " ").trim();
-      if (text.length > 40 && text.length < 500) visibleText += text + "\n";
-    });
+  // Price (optional — depends on site)
+  const price =
+    ($("meta[property='product:price:amount']").attr("content") ||
+      $("meta[property='og:price:amount']").attr("content") ||
+      $("meta[itemprop='price']").attr("content") ||
+      "")
+      .trim();
 
-  return { title, metaDesc, visibleText, $ };
-}
+  // ✅ The important part: pull image URLs from many sources
+  const photos = extractImageUrlsFromHtml(html, url).slice(0, 24);
 
-function scrapeVehiclePhotosFromCheerio($, baseUrl) {
-  const urls = new Set();
-  const base = new URL(baseUrl);
-
-  $("img").each((_, el) => {
-    let src = $(el).attr("data-src") || $(el).attr("src");
-    if (!src) return;
-
-    src = String(src).trim();
-    const lower = src.toLowerCase();
-
-    // Skip obvious non-vehicle images
-    if (
-      lower.includes("logo") ||
-      lower.includes("icon") ||
-      lower.includes("sprite") ||
-      lower.endsWith(".svg")
-    ) {
-      return;
-    }
-
-    try {
-      const abs = new URL(src, base).href;
-      urls.add(abs);
-    } catch {
-      // ignore invalid urls
-    }
+  // Debug logging (TEMPORARY but very useful right now)
+  console.log("SCRAPE DEBUG:", {
+    url,
+    titleLen: title.length,
+    price,
+    photosFound: photos.length,
+    sample: photos.slice(0, 5),
   });
 
-  return Array.from(urls).slice(0, 24);
+  return { title, price, photos };
 }
+
 
 // ======================================================
 // AI: Photo Processing (gpt-image-1)
