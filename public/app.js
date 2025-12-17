@@ -2061,9 +2061,13 @@ try {
   renderCreativeThumbs();
   renderSocialStrip();
   wireObjectionCoach();
+console.log("FINAL INIT REACHED");
+try {
 } catch (e) {
-  console.error("Final init failed:", e);
+  console.log(e);
 }
+
+
 
 }); // ✅ closes DOMContentLoaded
 
