@@ -465,16 +465,7 @@ function getSelectedStep1Urls(max = 24) {
     });
   }
 
-  // Wire buttons
-  if (boostBtn && boostBtn.dataset.wired !== "true") {
-    boostBtn.dataset.wired = "true";
-    boostBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      boostListing();
-    });
-  } else if (!boostBtn) {
-    console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
-  }
+
 
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
