@@ -83,23 +83,29 @@ window.document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Proxy helper for CORS-sensitive images
-  function getProxiedImageUrl(rawUrl) {
-    if (!rawUrl) return rawUrl;
-    try {
-      const u = new URL(rawUrl, window.location.origin);
-      if (
-        u.origin === window.location.origin ||
-        u.protocol === "blob:" ||
-        u.protocol === "data:"
-      )
-        return rawUrl;
+function getProxiedImageUrl(rawUrl) {
+  if (!rawUrl) return rawUrl;
 
-      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
-      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
-    } catch {
+  try {
+    const u = new URL(rawUrl, window.location.origin);
+
+    if (
+      u.origin === window.location.origin ||
+      u.protocol === "blob:" ||
+      u.protocol === "data:"
+    ) {
       return rawUrl;
     }
+
+    // If already proxied, keep it
+    if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
+
+    return `/api/proxy-image?url=${encodeURIComponent(u.href)}`;
+  } catch (e) {
+    return rawUrl;
   }
+}
+
 
   function triggerDownload(url, filename) {
     if (!url) return;
