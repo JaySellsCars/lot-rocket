@@ -175,27 +175,41 @@ function isBlockedProxyTarget(urlStr) {
     return true;
   }
 }
+// ===============================
+// BOOST LISTING (Step 1)
+// POST /api/boost
+// body: { url, labelOverride, priceOverride, maxPhotos }
+// returns: { title, price, photos: [] }
+// ===============================
 app.post("/api/boost", async (req, res) => {
   try {
     const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
     if (!url) return res.status(400).json({ error: "Missing url" });
 
-    const scraped = await scrapePage(url); // <-- your real scraper
+    // If you already have a scraper function, call it here.
+    // Example: const scraped = await scrapeDealerPage(url, { maxPhotos });
+    // For now, this is a safe placeholder that proves wiring works.
 
     const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
 
-    const title = (labelOverride || scraped?.title || scraped?.vehicleTitle || "").trim();
-    const price = (priceOverride || scraped?.price || scraped?.vehiclePrice || "").trim();
+    // TODO: Replace this with real scraping output
+    const scraped = {
+      title: "Vehicle Title (replace with scrape)",
+      price: "Price (replace with scrape)",
+      photos: [],
+    };
 
-    const photosRaw = scraped?.photos || scraped?.images || [];
-    const photos = Array.isArray(photosRaw) ? photosRaw.slice(0, safeMax) : [];
+    const title = (labelOverride || scraped.title || "").trim();
+    const price = (priceOverride || scraped.price || "").trim();
+    const photos = Array.isArray(scraped.photos) ? scraped.photos.slice(0, safeMax) : [];
 
     return res.json({ title, price, photos });
   } catch (err) {
     console.error("❌ /api/boost failed:", err);
-    return res.status(500).json({ error: err?.message || "Boost failed" });
+    return res.status(500).json({ error: "Boost failed" });
   }
 });
+
 
 // ======================================================
 // Scraping (single path)
