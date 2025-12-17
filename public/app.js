@@ -777,7 +777,8 @@ if (step1SendTopBtn && step1SendTopBtn.dataset.wired !== "true") {
   const tunerSaturation = $("tunerSaturation");
   const autoEnhanceBtn = $("autoEnhanceBtn");
 
-  const hiddenTunerCanvas = document.createElement("canvas");
+ const hiddenTunerCanvas = DOC.createElement("canvas");
+
   const hiddenTunerCtx = hiddenTunerCanvas.getContext ? hiddenTunerCanvas.getContext("2d") : null;
   let currentTunerFilter = "";
 
