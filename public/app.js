@@ -244,7 +244,7 @@ function wireObjectionCoach() {
   }
 
   // Auto-grow ALL textareas
-  document.querySelectorAll("textarea").forEach((ta) => {
+DOC.querySelectorAll("textarea").forEach((ta) => {
     autoResizeTextarea(ta);
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
