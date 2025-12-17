@@ -35,16 +35,40 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // Social carousel index (must exist before normalizeSocialReady)
   let socialIndex = 0;
 
-  // ==================================================
-  // UTIL
-  // ==================================================
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+// ==================================================
+// UTIL
+// ==================================================
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-  function autoResizeTextarea(el) {
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = (el.scrollHeight + 4) + "px";
+function autoResizeTextarea(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = (el.scrollHeight + 4) + "px";
+}
+
+// ================================
+// POST JSON helper (REQUIRED)
+// ================================
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg =
+      data?.error ||
+      data?.message ||
+      `Request failed (${res.status})`;
+    throw new Error(msg);
   }
+
+  return data;
+}
+
 
   // ... your code continues below
 
