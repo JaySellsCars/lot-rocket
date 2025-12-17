@@ -2121,8 +2121,7 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
 try {
   normalizeSocialReady();
 
-renderStep1Photos((STORE && STORE.creativePhotos) ? STORE.creativePhotos : []);
-
+  renderStep1Photos((STORE && STORE.creativePhotos) ? STORE.creativePhotos : []);
   renderCreativeThumbs();
   renderSocialStrip();
   wireObjectionCoach();
@@ -2132,14 +2131,7 @@ renderStep1Photos((STORE && STORE.creativePhotos) ? STORE.creativePhotos : []);
   console.log("Final init failed:", e);
 }
 
-}); // ✅ closes DOMContentLoaded
-
-
-
-
-
-
-
+}); // closes DOMContentLoaded
 
 
 
