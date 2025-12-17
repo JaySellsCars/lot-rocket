@@ -1031,8 +1031,8 @@ STORE.socialReadyPhotos.forEach((photo, index) => {
         renderSocialStrip();
       });
 
-      socialCarousel.appendChild(item);
-    });
+socialCarousel.appendChild(item);
+
 
     if (socialPreviewImg) {
       const active = STORE.socialReadyPhotos[socialIndex];
