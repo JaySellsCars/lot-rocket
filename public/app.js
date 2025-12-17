@@ -388,7 +388,7 @@ console.log("BOOST PARSED:", {
   photosSample: Array.isArray(photos) ? photos.slice(0, 3) : photos,
 });
 
-      const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+       title = data?.title || data?.vehicle || data?.vehicleTitle || "";
       const price = data?.price || data?.offer || data?.vehiclePrice || "";
       const photos = data?.photos || data?.images || [];
 
