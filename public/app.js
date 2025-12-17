@@ -274,6 +274,7 @@ window.document.addEventListener("DOMContentLoaded", () => {
   const priceOfferInput = $("priceOffer");
 
   const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
+console.log("🔎 BOOST BTN FOUND:", boostBtn);
 
   const sendTopBtn =
     $("sendTopPhotosBtn") ||
