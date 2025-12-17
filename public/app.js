@@ -2,6 +2,8 @@
 // Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
 
 window.document.addEventListener("DOMContentLoaded", () => {
+ console.log("🚀 JS FILE LOADED");
+ 
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
 
