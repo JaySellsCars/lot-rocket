@@ -1,6 +1,9 @@
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
 // Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
 
+// public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
+// Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
+
 window.document.addEventListener("DOMContentLoaded", () => {
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
@@ -21,12 +24,12 @@ window.document.addEventListener("DOMContentLoaded", () => {
   const MAX_PHOTOS = 24;
 
   window.LOTROCKET = window.LOTROCKET || {};
-const STORE = window.LOTROCKET;
+  let STORE = window.LOTROCKET; // IMPORTANT: let (not const)
 
-
-  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // urls (strings)
-  STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls (strings)
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : []; // objects normalized
+  // Normalize store buckets once
+  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : []; // urls
+  STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : []; // urls
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : []; // objects
 
   // Social carousel index (must exist before normalizeSocialReady)
   let socialIndex = 0;
@@ -41,6 +44,9 @@ const STORE = window.LOTROCKET;
     el.style.height = "auto";
     el.style.height = (el.scrollHeight + 4) + "px";
   }
+
+  // ... your code continues below
+
 
   function capMax(arr, max = MAX_PHOTOS) {
     return Array.isArray(arr) ? arr.slice(0, max) : [];
