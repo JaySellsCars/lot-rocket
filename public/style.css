@@ -680,3 +680,15 @@ textarea{
    If you *still* have those legacy elements in HTML, delete them
    OR tell me and I’ll re-add a compatibility block.
    ====================================================== */
+/* Emergency anti-overflow guard */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+.column-left, .column-middle, .column-right,
+.main-layout, .summary-box, .step2-grid, .photo-grid {
+  max-width: 100%;
+}
+
+p, h1, h2, h3, h4, div, section {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
