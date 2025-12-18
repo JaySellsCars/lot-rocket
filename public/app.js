@@ -379,17 +379,31 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
       selected: true,
     }));
 
-    photosGridEl.innerHTML = STORE.step1Photos
-      .map((p, i) => {
-        const src = getProxiedImageUrl(p.url);
-        return (
-          '<button type="button" data-i="' + i + '" class="photo-thumb">' +
-            '<img src="' + src + '" style="width:100%; opacity:1" />' +
-            '<span class="photo-check">✓</span>' +
-          "</button>"
-        );
-      })
-      .join("");
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(auto-fill, minmax(160px, 1fr))";
+  photosGridEl.style.gap = "10px";
+  photosGridEl.style.alignItems = "stretch";
+
+  photosGridEl.innerHTML = STORE.step1Photos
+    .map((p, i) => {
+      const src = getProxiedImageUrl(p.url);
+      return (
+        '<button type="button" data-i="' + i + '" class="photo-thumb" ' +
+          'style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;' +
+                 'border:2px solid rgba(148,163,184,.55);border-radius:12px;' +
+                 'background:#0b1120;padding:0;cursor:pointer;">' +
+          '<img src="' + src + '" ' +
+               'style="width:100%;height:100%;display:block;object-fit:cover;" />' +
+          '<span class="photo-check" ' +
+                'style="position:absolute;right:8px;top:8px;width:26px;height:26px;' +
+                       'border-radius:999px;display:grid;place-items:center;' +
+                       'font-weight:800;background:rgba(0,0,0,.55);color:#fff;' +
+                       'border:2px solid rgba(255,255,255,.35);">✓</span>' +
+        "</button>"
+      );
+    })
+    .join("");
+
 
     photosGridEl.onclick = (e) => {
       const btn = e.target.closest("[data-i]");
