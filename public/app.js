@@ -390,7 +390,8 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
       const src = getProxiedImageUrl(p.url);
       return (
         '<button type="button" data-i="' + i + '" class="photo-thumb" ' +
-          'style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;' +
+      'style="position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;'
+
                  'border:2px solid rgba(148,163,184,.55);border-radius:12px;' +
                  'background:#0b1120;padding:0;cursor:pointer;">' +
           '<img src="' + src + '" ' +
