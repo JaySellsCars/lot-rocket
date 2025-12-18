@@ -795,6 +795,41 @@ body.dark-theme select {
 /* HARD DARK BACKGROUND (html paints white if body is transparent) */
 
 
+/* ================================
+   FINAL THEME LOCK (put LAST)
+   ================================ */
+
+/* Default (light) */
+html, body {
+  min-height: 100%;
+  background: #f9fafb;
+  color: #0b1120;
+}
+
+/* Dark mode */
+body.dark-theme {
+  background: #020617 !important;
+  color: #e5e7eb !important;
+}
+
+/* Make sure the page canvas itself isn't white */
+body.dark-theme html,
+html:has(body.dark-theme) {
+  background: #020617 !important;
+}
+
+/* Common wrappers that might still be painting white */
+body.dark-theme main,
+body.dark-theme section,
+body.dark-theme .panel,
+body.dark-theme .card,
+body.dark-theme .summary-box,
+body.dark-theme .container,
+body.dark-theme #app,
+body.dark-theme #root {
+  background: rgba(2, 6, 23, 0.85) !important;
+  color: #e5e7eb !important;
+}
 
 
 
