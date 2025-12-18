@@ -422,8 +422,18 @@ img.onerror = (function (buttonEl, index) {
     var item = STORE.step1Photos[idx];
     if (!item) return;
 
-    item.selected = !item.selected;
-    btnEl.style.opacity = item.selected ? "1" : "0.35";
+item.selected = !item.selected;
+
+// Visual state
+btnEl.classList.toggle("photo-thumb-selected", item.selected);
+btnEl.style.opacity = item.selected ? "1" : "0.35";
+
+// Checkmark (if present)
+const check = btnEl.querySelector(".photo-check");
+if (check) {
+  check.style.display = item.selected ? "grid" : "none";
+}
+
   };
 }
 
