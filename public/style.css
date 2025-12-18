@@ -829,6 +829,28 @@ body.dark-theme #root {
   background: rgba(2, 6, 23, 0.85) !important;
   color: #e5e7eb !important;
 }
+/* ===== FINAL OVERRIDE (must be last) ===== */
+
+/* Make the page canvas dark so there is never white behind body */
+html { background: #020617 !important; }
+
+/* Give body a real background when dark-theme is on */
+body.dark-theme {
+  background: #020617 !important;
+  color: #f9fafb !important;
+}
+
+/* If any container is painting white, force it transparent in dark mode */
+body.dark-theme main,
+body.dark-theme section,
+body.dark-theme .container,
+body.dark-theme .panel,
+body.dark-theme .card,
+body.dark-theme #app,
+body.dark-theme #root {
+  background: transparent !important;
+  color: inherit !important;
+}
 
 
 
