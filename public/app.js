@@ -151,16 +151,30 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
 
+// ==================================================
+// THEME TOGGLE (single source of truth)
+// Uses: body.dark-theme in CSS
+// ==================================================
 const themeToggleInput = $("themeToggle");
-if (themeToggleInput) {
-  const applyTheme = (isDark) => {
-    DOC.body.classList.toggle("dark-theme", !!isDark);
-    themeToggleInput.checked = !!isDark;
-  };
 
-  applyTheme(true); // start in DARK
-  themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
+function applyTheme(isDark) {
+  DOC.body.classList.toggle("dark-theme", !!isDark);
+  if (themeToggleInput) themeToggleInput.checked = !!isDark;
 }
+
+if (themeToggleInput) {
+  // Default ON = dark mode
+  applyTheme(true);
+
+  themeToggleInput.addEventListener("change", () => {
+    applyTheme(themeToggleInput.checked);
+  });
+} else {
+  // If toggle not found, still force dark mode so you don't get white flash
+  applyTheme(true);
+}
+
+
 
 
   // Auto-grow ALL textareas (one-time)
