@@ -459,9 +459,13 @@ function renderStep1Photos(urls) {
 // ------------------------------------
 async function boostListing() {
   const url = (dealerUrlInput?.value || "").trim();
-  if (!url) return alert("Paste a dealer URL first.");
+  if (!url) {
+    alert("Paste a dealer URL first.");
+    return;
+  }
 
-  if (boostBtn) boostBtn.disabled = true;
+  // ✅ ADD THIS (TOP OF FUNCTION)
+  setBtnLoading(boostBtn, true, "Boosting…");
 
   try {
     const payload = {
@@ -473,19 +477,31 @@ async function boostListing() {
 
     const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-    const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-    const price = data?.price || data?.offer || data?.vehiclePrice || "";
-    const photos = Array.isArray(data?.photos)
-      ? data.photos
-      : Array.isArray(data?.images)
-      ? data.images
-      : [];
+    let title = "";
+    let price = "";
+    let photos = [];
+
+    title = data?.title || data?.vehicle || "";
+    price = data?.price || "";
+    photos = Array.isArray(data?.photos) ? data.photos : [];
 
     STORE.lastTitle = title;
     STORE.lastPrice = price;
 
     if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
     if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    renderStep1Photos(photos);
+
+  } catch (e) {
+    console.error("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    // ✅ ADD THIS (BOTTOM OF FUNCTION)
+    setBtnLoading(boostBtn, false);
+  }
+}
+
 
     // ✅ Keep raw boosted photos in its own bucket
     STORE.lastBoostPhotos = uniqCleanCap(photos, MAX_PHOTOS);
