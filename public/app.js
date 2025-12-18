@@ -362,103 +362,88 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn?.id);
 
   // NOTE: Send Top wiring remains below in your Step 1 selection section.
   // ================================
-  // STEP 1 — PHOTO SELECTION (v2.6 TEST MODE PATCH)
+  // STEP 1 — PHOTO SELECTION (CLEAN / STRUCTURE-SAFE)
   // ================================
+  STORE = window.LOTROCKET;
+  STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
+  // Render Step 1 photos into grid + selection state
+  function renderStep1Photos(urls) {
+    if (!photosGridEl) return;
 
+    const clean = (Array.isArray(urls) ? urls : []).filter(Boolean);
 
-STORE = window.LOTROCKET;
-STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+    STORE.step1Photos = clean.map((url) => ({
+      url: url,
+      selected: true,
+    }));
 
+    photosGridEl.innerHTML = STORE.step1Photos
+      .map((p, i) => {
+        const src = getProxiedImageUrl(p.url);
+        return (
+          '<button type="button" data-i="' + i + '" class="photo-thumb">' +
+            '<img src="' + src + '" style="width:100%; opacity:1" />' +
+            '<span class="photo-check">✓</span>' +
+          "</button>"
+        );
+      })
+      .join("");
 
+    photosGridEl.onclick = (e) => {
+      const btn = e.target.closest("[data-i]");
+      if (!btn) return;
 
-// 1) Render Step 1 photos
-  
+      const idx = Number(btn.getAttribute("data-i"));
+      const item = STORE.step1Photos[idx];
+      if (!item) return;
 
-function renderStep1Photos(urls) {
-  console.log("renderStep1Photos called:", {
-    urlsType: typeof urls,
-    isArray: Array.isArray(urls),
-    len: Array.isArray(urls) ? urls.length : -1,
-    sample: Array.isArray(urls) ? urls.slice(0, 3) : urls,
-    photosGridFound: !!photosGridEl,
-  });
+      item.selected = !item.selected;
+      btn.classList.toggle("is-off", !item.selected);
+    };
+  }
 
-  if (!photosGridEl) return;
+  // Collect selected Step 1 urls
+  function getSelectedStep1Urls(max) {
+    const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
+    return (STORE.step1Photos || [])
+      .filter((p) => p && p.selected && p.url)
+      .map((p) => p.url)
+      .slice(0, lim);
+  }
 
-  const clean = (Array.isArray(urls) ? urls : []).filter(Boolean);
+  // Compatibility: other parts of your file call getSelectedGridUrls()
+  function getSelectedGridUrls() {
+    return getSelectedStep1Urls(MAX_PHOTOS);
+  }
 
-  STORE.step1Photos = clean.map((url) => ({
-    url,
-    selected: true,
-  }));
-
-  photosGridEl.innerHTML = STORE.step1Photos
-    .map(
-      (p, i) => `
-      <button type="button" data-i="${i}" class="photo-thumb">
-        <img src="${getProxiedImageUrl(p.url)}" style="width:100%; opacity:1" />
-        <span class="photo-check">✓</span>
-      </button>
-    `
-    )
-    .join("");
-
-  // Toggle select
-  photosGridEl.onclick = (e) => {
-    const btn = e.target.closest("[data-i]");
-    if (!btn) return;
-
-    const i = Number(btn.dataset.i);
-    const item = STORE.step1Photos[i];
-    if (!item) return;
-
-    item.selected = !item.selected;
-    btn.classList.toggle("is-off", !item.selected);
-  };
-}
-
-
-// 3) Collect selected
-function getSelectedStep1Urls(max = 24) {
-  return STORE.step1Photos
-    .filter(p => p.selected)
-    .map(p => p.url)
-    .slice(0, max);
-}
-
-
-
-
-
-
+  // Send selected Step 1 photos → Creative + Social + Design
   function sendSelectedToCreative() {
-    const selected = getSelectedGridUrls();
+    const selected = getSelectedStep1Urls(MAX_PHOTOS);
     if (!selected.length) {
       alert("Select at least 1 photo first.");
       return;
     }
 
     STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
+
     STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
       url: u,
       originalUrl: u,
       selected: true,
       locked: false,
     }));
+
     STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
     normalizeSocialReady();
 
-// Our internal renderers (defined later) – safe calls
-if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-if (typeof renderSocialStrip === "function") renderSocialStrip();
-if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+  }
 
-
-
-
-
+  // Wire Send Top button (bind once) — MUST be outside functions
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
     sendTopBtn.addEventListener("click", (e) => {
@@ -468,6 +453,7 @@ if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
   } else if (!sendTopBtn) {
     console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
   }
+
 
   // ==================================================
   // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
