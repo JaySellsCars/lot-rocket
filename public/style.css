@@ -275,6 +275,39 @@ textarea{
   opacity: 1;
   filter: brightness(1.2) contrast(1.1) saturate(1.2);
 }
+/* Step 1 thumbs – make them feel alive */
+.photo-thumb-btn,
+.photo-thumb {
+  background: rgba(10, 15, 28, 0.95) !important;
+}
+
+/* brighten the image itself */
+.photo-thumb-img,
+#photosGrid .photo-thumb img {
+  filter: brightness(1.12) contrast(1.08) saturate(1.12);
+  transition: filter .12s ease, opacity .12s ease, transform .12s ease;
+}
+
+/* hover pop */
+.photo-thumb-btn:hover .photo-thumb-img,
+#photosGrid .photo-thumb:hover img {
+  filter: brightness(1.2) contrast(1.1) saturate(1.2);
+  transform: scale(1.01);
+}
+
+/* unselected state = dim (instead of dead on load) */
+.photo-thumb-btn:not(.photo-thumb-selected) .photo-thumb-img,
+#photosGrid .photo-thumb:not(.photo-thumb-selected) img {
+  opacity: 0.75;
+  filter: brightness(0.95) contrast(1.05) saturate(1.05);
+}
+
+/* selected state = bright */
+.photo-thumb-selected .photo-thumb-img,
+.photo-thumb-selected img {
+  opacity: 1;
+  filter: brightness(1.2) contrast(1.1) saturate(1.2);
+}
 
 
 .photo-grid {
