@@ -317,6 +317,7 @@ photosGridEl.style.alignContent = "start";         // ✅ prevents stretch
 photosGridEl.style.alignItems = "stretch";
 
 
+
   // Build tiles
   photosGridEl.innerHTML = "";
   for (var k = 0; k < STORE.step1Photos.length; k++) {
