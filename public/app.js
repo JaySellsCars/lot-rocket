@@ -151,15 +151,17 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
 
-  const themeToggleInput = $("themeToggle");
-  if (themeToggleInput) {
-    const applyTheme = (isDark) => {
-      DOC.body.classList.toggle("dark-theme", !!isDark);
-      themeToggleInput.checked = !!isDark;
-    };
-    applyTheme(true);
-    themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
-  }
+const themeToggleInput = $("themeToggle");
+if (themeToggleInput) {
+  const applyTheme = (isDark) => {
+    DOC.body.classList.toggle("dark-theme", !!isDark);
+    themeToggleInput.checked = !!isDark;
+  };
+
+  applyTheme(true); // start in DARK
+  themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
+}
+
 
   // Auto-grow ALL textareas (one-time)
   DOC.querySelectorAll("textarea").forEach((ta) => {
