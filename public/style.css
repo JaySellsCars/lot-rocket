@@ -796,6 +796,5 @@ body.dark-theme select {
 
 
 
-body.dark-theme { background: transparent !important; }
-html:has(body.dark-theme) { background: #020617 !important; }
+
 
