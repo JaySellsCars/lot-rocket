@@ -930,5 +930,14 @@ body.dark-theme {
   background: #020617 !important;
   color: #f9fafb !important;
 }
+/* ===== CANVAS PAINT FIX (FINAL) ===== */
+html {
+  background: #ffffff;
+}
+
+body.dark-theme {
+  background: #020617 !important;
+  color: #f9fafb !important;
+}
 
 
