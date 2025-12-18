@@ -45,6 +45,21 @@ body.dark-theme{
   background: radial-gradient(circle at top left, #020617, #020617);
   color: var(--text-main);
 }
+/* ===== FORCE DARK UI CONTAINERS ===== */
+body.dark-theme .panel,
+body.dark-theme .card,
+body.dark-theme .summary-box,
+body.dark-theme .step,
+body.dark-theme section,
+body.dark-theme main,
+body.dark-theme .container {
+  background: rgba(2, 6, 23, 0.85);
+  color: #f9fafb;
+  border-color: rgba(148,163,184,.35);
+}
+
+/* Inputs + textareas */
+body.dark-theme input,
 
 /* ---------- TYPOGRAPHY ---------- */
 h1,h2,h3{ margin: 0 0 .6rem 0; }
