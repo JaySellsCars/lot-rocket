@@ -368,55 +368,7 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
   STORE = window.LOTROCKET;
   STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
-function renderStep1Photos(urls) {
-  if (!photosGridEl) return;
 
-  const clean = (Array.isArray(urls) ? urls : []).filter(Boolean).slice(0, MAX_PHOTOS);
-
-  // store selection objects
-  STORE.step1Photos = clean.map(function (url) {
-    return { url: url, selected: true };
-  });
-
-  // Grid layout (4 across)
-  photosGridEl.style.display = "grid";
-  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-  photosGridEl.style.gap = "10px";
-  photosGridEl.style.width = "100%";
-
-  var html = "";
-  for (var i = 0; i < STORE.step1Photos.length; i++) {
-    var src = getProxiedImageUrl(STORE.step1Photos[i].url);
-
-    html +=
-      '<button type="button" class="photo-thumb" data-i="' + i + '"' +
-      ' style="position:relative;height:80px;border-radius:12px;overflow:hidden;' +
-      ' border:1px solid rgba(148,163,184,.55);background:#0b1120;padding:0;cursor:pointer;">' +
-      '<img src="' + src + '" alt="photo"' +
-      ' style="width:100%;height:100%;display:block;object-fit:cover;" />' +
-      '<span class="photo-check"' +
-      ' style="position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;' +
-      ' background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:18px;text-align:center;">✓</span>' +
-      "</button>";
-  }
-
-  photosGridEl.innerHTML = html;
-
-  // click toggle
-  photosGridEl.onclick = function (e) {
-    var btn = e.target && e.target.closest ? e.target.closest("[data-i]") : null;
-    if (!btn) return;
-
-    var idx = Number(btn.getAttribute("data-i"));
-    var item = STORE.step1Photos[idx];
-    if (!item) return;
-
-    item.selected = !item.selected;
-
-    // simple visual: dim when off
-    btn.style.opacity = item.selected ? "1" : "0.35";
-  };
-}
 
 
 
