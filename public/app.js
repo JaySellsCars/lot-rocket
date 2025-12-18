@@ -158,7 +158,8 @@ window.document.addEventListener("DOMContentLoaded", () => {
 const themeToggleInput = $("themeToggle");
 
 function applyTheme(isDark) {
-  DOC.body.classList.toggle("dark-theme", !!isDark);
+  DOC.body.classList.toggle("dark-theme", isDark);
+
   if (themeToggleInput) themeToggleInput.checked = !!isDark;
 }
 
