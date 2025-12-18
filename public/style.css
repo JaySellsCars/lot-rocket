@@ -880,6 +880,16 @@ body.dark-theme .card,
 body.dark-theme .summary-box {
   background: transparent !important;
 }
+/* ===== NUCLEAR: FORCE PAGE CANVAS DARK (PUT LAST) ===== */
+html, body {
+  background-color: #020617 !important;
+  background-image: none !important;
+}
+body.dark-theme {
+  background-color: #020617 !important;
+  background-image: none !important;
+  color: #f9fafb !important;
+}
 
 
 
