@@ -780,9 +780,8 @@ body.dark-theme .container,
 body.dark-theme .app,
 body.dark-theme #app,
 body.dark-theme #root {
-  background: transparent !important; /* let body show through */
-  color: #f9fafb !important;
-}
+ 
+
 
 /* Inputs */
 body.dark-theme input,
