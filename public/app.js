@@ -307,12 +307,15 @@ function renderStep1Photos(urls) {
     STORE.step1Photos.push({ url: clean[j], selected: true });
   }
 
-  // Grid layout (small thumbs)
-  photosGridEl.style.display = "grid";
-  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-  photosGridEl.style.gap = "10px";
-  photosGridEl.style.width = "100%";
-  photosGridEl.style.alignItems = "stretch";
+photosGridEl.style.display = "grid";
+photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+photosGridEl.style.gridAutoRows = "78px";          // ✅ fixed row height
+photosGridEl.style.gap = "10px";
+photosGridEl.style.width = "100%";
+photosGridEl.style.maxWidth = "520px";             // ✅ keeps it in the Step 1 box
+photosGridEl.style.alignContent = "start";         // ✅ prevents stretch
+photosGridEl.style.alignItems = "stretch";
+
 
   // Build tiles
   photosGridEl.innerHTML = "";
