@@ -380,11 +380,12 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
     }));
 
   photosGridEl.style.display = "grid";
-  photosGridEl.style.gridTemplateColumns = "repeat(auto-fill, minmax(160px, 1fr))";
-  photosGridEl.style.gap = "10px";
-  photosGridEl.style.alignItems = "stretch";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "12px";
+  photosGridEl.style.width = "100%";
+  photosGridEl.style.maxWidth = "100%";
+  photosGridEl.style.overflow = "hidden";
 
-  photosGridEl.innerHTML = STORE.step1Photos
     .map((p, i) => {
       const src = getProxiedImageUrl(p.url);
       return (
