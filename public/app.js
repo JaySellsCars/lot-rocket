@@ -156,20 +156,16 @@ window.document.addEventListener("DOMContentLoaded", () => {
 // Uses: body.dark-theme in CSS
 // ==================================================
 const themeToggleInput = $("themeToggle");
+if (themeToggleInput) {
+  const applyTheme = (isDark) => {
+    DOC.body.classList.toggle("dark-theme", !!isDark); // ✅ MUST be "dark-theme"
+    themeToggleInput.checked = !!isDark;
+  };
 
-function applyTheme(isDark) {
-  DOC.body.classList.toggle("dark-theme", !!isDark);
-  if (themeToggleInput) themeToggleInput.checked = !!isDark;
+  applyTheme(true); // start dark
+  themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
 }
 
-if (themeToggleInput) {
-  // Default ON = dark mode
-  applyTheme(true);
-
-  themeToggleInput.addEventListener("change", () => {
-    applyTheme(themeToggleInput.checked);
-  });
-} else {
   // If toggle not found, still force dark mode so you don't get white flash
   applyTheme(true);
 }
