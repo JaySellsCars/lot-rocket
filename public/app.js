@@ -837,7 +837,7 @@ function renderStep1Photos(urls) {
     step1SendTopBtn.dataset.wired = "true";
 
     step1SendTopBtn.addEventListener("click", () => {
-      const selected = getSelectedGridUrls();
+const selected = getSelectedStep1Urls(MAX_PHOTOS);
       if (!selected.length) {
         alert("Select at least 1 photo in the grid first.");
         return;
