@@ -343,6 +343,8 @@ btn.style.maxHeight = "78px";
     img.alt = "photo";
     img.style.width = "100%";
     img.style.height = "100%";
+   img.style.maxHeight = "100%";
+
     img.style.display = "block";
     img.style.objectFit = "cover";
 
