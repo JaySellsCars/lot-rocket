@@ -368,17 +368,10 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
   STORE = window.LOTROCKET;
   STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 
-  // Render Step 1 photos into grid + selection state
-  function renderStep1Photos(urls) {
-    if (!photosGridEl) return;
+function renderStep1Photos(urls) {
+  if (!photosGridEl) return;
 
-    const clean = (Array.isArray(urls) ? urls : []).filter(Boolean);
-
-    STORE.step1Photos = clean.map((url) => ({
-      url: url,
-      selected: true,
-    }));
-
+  // Locked layout to match old UI: 4 across, wide tiles
   photosGridEl.style.display = "grid";
   photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
   photosGridEl.style.gap = "12px";
@@ -386,39 +379,51 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
   photosGridEl.style.maxWidth = "100%";
   photosGridEl.style.overflow = "hidden";
 
-    .map((p, i) => {
-      const src = getProxiedImageUrl(p.url);
-      return (
-        '<button type="button" data-i="' + i + '" class="photo-thumb" ' +
-      'style="position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;'
+  const clean = (Array.isArray(urls) ? urls : []).filter(function (u) {
+    return u && typeof u === "string" && u.length > 10;
+  });
 
-                 'border:2px solid rgba(148,163,184,.55);border-radius:12px;' +
-                 'background:#0b1120;padding:0;cursor:pointer;">' +
-          '<img src="' + src + '" ' +
-               'style="width:100%;height:100%;display:block;object-fit:cover;" />' +
-          '<span class="photo-check" ' +
-                'style="position:absolute;right:8px;top:8px;width:26px;height:26px;' +
-                       'border-radius:999px;display:grid;place-items:center;' +
-                       'font-weight:800;background:rgba(0,0,0,.55);color:#fff;' +
-                       'border:2px solid rgba(255,255,255,.35);">✓</span>' +
-        "</button>"
-      );
-    })
-    .join("");
+  STORE.step1Photos = clean.map(function (url) {
+    return { url: url, selected: true };
+  });
 
+  var html = "";
+  for (var i = 0; i < STORE.step1Photos.length; i++) {
+    var src = getProxiedImageUrl(STORE.step1Photos[i].url);
 
-    photosGridEl.onclick = (e) => {
-      const btn = e.target.closest("[data-i]");
-      if (!btn) return;
-
-      const idx = Number(btn.getAttribute("data-i"));
-      const item = STORE.step1Photos[idx];
-      if (!item) return;
-
-      item.selected = !item.selected;
-      btn.classList.toggle("is-off", !item.selected);
-    };
+    html +=
+      '<button type="button" data-i="' + i + '" class="photo-thumb" ' +
+        'style="position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;' +
+               'border:2px solid rgba(148,163,184,.55);border-radius:12px;' +
+               'background:#0b1120;padding:0;cursor:pointer;">' +
+        '<img src="' + src + '" ' +
+             'style="width:100%;height:100%;display:block;object-fit:cover;" />' +
+        '<span class="photo-check" ' +
+              'style="position:absolute;right:8px;top:8px;width:22px;height:22px;' +
+                     'border-radius:999px;display:grid;place-items:center;' +
+                     'font-weight:800;background:rgba(0,0,0,.55);color:#fff;' +
+                     'border:2px solid rgba(255,255,255,.35);">✓</span>' +
+      "</button>";
   }
+
+  photosGridEl.innerHTML = html;
+
+  photosGridEl.onclick = function (e) {
+    var btn = e.target.closest("[data-i]");
+    if (!btn) return;
+
+    var idx = Number(btn.getAttribute("data-i"));
+    var item = STORE.step1Photos[idx];
+    if (!item) return;
+
+    item.selected = !item.selected;
+    btn.classList.toggle("is-off", !item.selected);
+  };
+}
+
+
+
+
 
   // Collect selected Step 1 urls
   function getSelectedStep1Urls(max) {
