@@ -907,5 +907,19 @@ html, body {
   background-color: #020617 !important;
   color: #f9fafb !important;
 }
+/* ===== FINAL PAGE CANVAS LOCK (MUST BE LAST) ===== */
+html {
+  background-color: #020617 !important;
+}
+
+body {
+  background-color: #020617 !important;
+  color: #f9fafb !important;
+}
+
+body.dark-theme {
+  background-color: #020617 !important;
+  color: #f9fafb !important;
+}
 
 
