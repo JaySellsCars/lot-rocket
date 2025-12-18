@@ -41,6 +41,7 @@ html, body {
 }
 
 body.dark-theme{
+
   background: radial-gradient(circle at top left, #020617, #020617);
   color: var(--text-main);
 }
