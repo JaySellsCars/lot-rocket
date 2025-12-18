@@ -276,7 +276,8 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
 console.log("🔎 BOOST BTN FOUND:", boostBtn);
-console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn?.id);
+console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
+
 
   const sendTopBtn =
     $("sendTopPhotosBtn") ||
