@@ -371,45 +371,40 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
 function renderStep1Photos(urls) {
   if (!photosGridEl) return;
 
-  // Locked layout to match old UI: 4 across, wide tiles
-  photosGridEl.style.display = "grid";
-  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-  photosGridEl.style.gap = "12px";
-  photosGridEl.style.width = "100%";
-  photosGridEl.style.maxWidth = "100%";
-  photosGridEl.style.overflow = "hidden";
+  const clean = (Array.isArray(urls) ? urls : []).filter(Boolean).slice(0, MAX_PHOTOS);
 
-  const clean = (Array.isArray(urls) ? urls : []).filter(function (u) {
-    return u && typeof u === "string" && u.length > 10;
-  });
-
+  // store selection objects
   STORE.step1Photos = clean.map(function (url) {
     return { url: url, selected: true };
   });
+
+  // Grid layout (4 across)
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "10px";
+  photosGridEl.style.width = "100%";
 
   var html = "";
   for (var i = 0; i < STORE.step1Photos.length; i++) {
     var src = getProxiedImageUrl(STORE.step1Photos[i].url);
 
     html +=
-      '<button type="button" data-i="' + i + '" class="photo-thumb" ' +
-        'style="position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;' +
-               'border:2px solid rgba(148,163,184,.55);border-radius:12px;' +
-               'background:#0b1120;padding:0;cursor:pointer;">' +
-        '<img src="' + src + '" ' +
-             'style="width:100%;height:100%;display:block;object-fit:cover;" />' +
-        '<span class="photo-check" ' +
-              'style="position:absolute;right:8px;top:8px;width:22px;height:22px;' +
-                     'border-radius:999px;display:grid;place-items:center;' +
-                     'font-weight:800;background:rgba(0,0,0,.55);color:#fff;' +
-                     'border:2px solid rgba(255,255,255,.35);">✓</span>' +
+      '<button type="button" class="photo-thumb" data-i="' + i + '"' +
+      ' style="position:relative;height:80px;border-radius:12px;overflow:hidden;' +
+      ' border:1px solid rgba(148,163,184,.55);background:#0b1120;padding:0;cursor:pointer;">' +
+      '<img src="' + src + '" alt="photo"' +
+      ' style="width:100%;height:100%;display:block;object-fit:cover;" />' +
+      '<span class="photo-check"' +
+      ' style="position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;' +
+      ' background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:18px;text-align:center;">✓</span>' +
       "</button>";
   }
 
   photosGridEl.innerHTML = html;
 
+  // click toggle
   photosGridEl.onclick = function (e) {
-    var btn = e.target.closest("[data-i]");
+    var btn = e.target && e.target.closest ? e.target.closest("[data-i]") : null;
     if (!btn) return;
 
     var idx = Number(btn.getAttribute("data-i"));
@@ -417,9 +412,12 @@ function renderStep1Photos(urls) {
     if (!item) return;
 
     item.selected = !item.selected;
-    btn.classList.toggle("is-off", !item.selected);
+
+    // simple visual: dim when off
+    btn.style.opacity = item.selected ? "1" : "0.35";
   };
 }
+
 
 
 
