@@ -901,5 +901,11 @@ body.dark-theme {
   background-color: #020617 !important;
   color: #f9fafb !important;
 }
+/* ===== FINAL CANVAS LOCK (MUST BE LAST) ===== */
+html, body {
+  background: #020617 !important;
+  background-color: #020617 !important;
+  color: #f9fafb !important;
+}
 
 
