@@ -167,12 +167,18 @@ function applyTheme(isDark) {
 applyTheme(true);
 
 // wire toggle once (if it exists)
-if (themeToggleInput && themeToggleInput.dataset.wired !== "true") {
-  themeToggleInput.dataset.wired = "true";
-  themeToggleInput.addEventListener("change", () => {
-    applyTheme(themeToggleInput.checked);
-  });
+if (themeToggleInput) {
+  const applyTheme = (isDark) => {
+    DOC.body.classList.toggle("dark-theme", isDark);
+    themeToggleInput.checked = isDark;
+  };
+
+  applyTheme(true); // start dark
+  themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
+} else {
+  DOC.body.classList.add("dark-theme"); // force dark if toggle missing
 }
+
 
 
 
