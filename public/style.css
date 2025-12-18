@@ -793,8 +793,8 @@ body.dark-theme select {
   border-color: rgba(148,163,184,.45) !important;
 }
 /* HARD DARK BACKGROUND (html paints white if body is transparent) */
-html { background: #ffffff; }           /* default/light */
-body { background: transparent; }
+
+
 
 body.dark-theme { background: transparent !important; }
 html:has(body.dark-theme) { background: #020617 !important; }
