@@ -369,11 +369,18 @@ btn.style.maxHeight = "64px";
     img.style.objectFit = "cover";
 
     // If an image fails, remove its tile (kills gray blanks)
-    img.onerror = (function (buttonEl) {
-      return function () {
-        buttonEl.remove();
-      };
-    })(btn);
+img.onerror = (function (buttonEl, index) {
+  return function () {
+    // mark dead
+    if (STORE.step1Photos && STORE.step1Photos[index]) {
+      STORE.step1Photos[index].dead = true;
+      STORE.step1Photos[index].selected = false;
+    }
+    // remove tile
+    buttonEl.remove();
+  };
+})(btn, k);
+
 
     var check = DOC.createElement("span");
     check.textContent = "✓";
