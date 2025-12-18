@@ -758,4 +758,34 @@ p, h1, h2, h3, h4, div, section {
   color: #fff;
   border: 2px solid rgba(255,255,255,0.35);
 }
+/* ===== HARD OVERRIDE: DARK MODE MUST WIN ===== */
+html, body { min-height: 100%; }
+
+body.dark-theme,
+html.dark-theme body {
+  background: #020617 !important;
+  color: #f9fafb !important;
+}
+
+/* If any wrapper is painting white, force it dark too */
+body.dark-theme main,
+body.dark-theme section,
+body.dark-theme .panel,
+body.dark-theme .card,
+body.dark-theme .container,
+body.dark-theme .app,
+body.dark-theme #app,
+body.dark-theme #root {
+  background: transparent !important; /* let body show through */
+  color: #f9fafb !important;
+}
+
+/* Inputs */
+body.dark-theme input,
+body.dark-theme textarea,
+body.dark-theme select {
+  background: rgba(2, 6, 23, 0.85) !important;
+  color: #f9fafb !important;
+  border-color: rgba(148,163,184,.45) !important;
+}
 
