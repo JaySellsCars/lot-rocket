@@ -328,7 +328,9 @@ photosGridEl.style.alignItems = "stretch";
     btn.className = "photo-thumb";
     btn.setAttribute("data-i", String(k));
     btn.style.position = "relative";
-    btn.style.height = "78px";
+   btn.style.height = "78px";
+btn.style.maxHeight = "78px";
+
     btn.style.borderRadius = "12px";
     btn.style.overflow = "hidden";
     btn.style.border = "1px solid rgba(148,163,184,.55)";
