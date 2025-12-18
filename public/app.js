@@ -153,31 +153,35 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
 // ==================================================
 // THEME TOGGLE (single source of truth)
-// Uses: body.dark-theme in CSS
+// CSS uses: body.dark-theme { ... }
 // ==================================================
 const themeToggleInput = $("themeToggle");
-if (themeToggleInput) {
-  const applyTheme = (isDark) => {
-    DOC.body.classList.toggle("dark-theme", !!isDark); // ✅ MUST be "dark-theme"
-    themeToggleInput.checked = !!isDark;
-  };
 
-  applyTheme(true); // start dark
-  themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
+function applyTheme(isDark) {
+  DOC.body.classList.toggle("dark-theme", !!isDark);
+  if (themeToggleInput) themeToggleInput.checked = !!isDark;
 }
 
-  // If toggle not found, still force dark mode so you don't get white flash
-  applyTheme(true);
-}
+// default: start dark
+applyTheme(true);
 
-
-
-
-  // Auto-grow ALL textareas (one-time)
-  DOC.querySelectorAll("textarea").forEach((ta) => {
-    autoResizeTextarea(ta);
-    ta.addEventListener("input", () => autoResizeTextarea(ta));
+// wire toggle once (if it exists)
+if (themeToggleInput && themeToggleInput.dataset.wired !== "true") {
+  themeToggleInput.dataset.wired = "true";
+  themeToggleInput.addEventListener("change", () => {
+    applyTheme(themeToggleInput.checked);
   });
+}
+
+
+
+
+
+// Auto-grow ALL textareas (one-time)
+DOC.querySelectorAll("textarea").forEach((ta) => {
+  autoResizeTextarea(ta);
+  ta.addEventListener("input", () => autoResizeTextarea(ta));
+});
 
   // ==================================================
   // UNIVERSAL SIDE-MODAL SYSTEM (single source of truth)
