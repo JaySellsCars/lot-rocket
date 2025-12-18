@@ -286,7 +286,8 @@ DOC.querySelectorAll("textarea").forEach((ta) => {
   }
 
 // ==================================================
-// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE, CLEAN)
+// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE, CLEAN v2.6)
+// Fixes: duplicates + blanks, button feedback, stable selection state
 // ==================================================
 const dealerUrlInput = $("dealerUrl");
 const vehicleLabelInput = $("vehicleLabel");
@@ -299,43 +300,45 @@ const sendTopBtn =
   $("sendPhotosToCreative") ||
   $("sendTopPhotosToCreative") ||
   $("sendTopPhotosToCreativeLab") ||
-  $("sendPhotosToCreativeLab");
+  $("sendPhotosToCreativeLab") ||
+  $("sendTopPhotosToDesignStudio") ||
+  $("sendPhotosToStudio") ||
+  $("sendPhotosToDesignStudio");
 
 const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
 const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
 const photosGridEl = $("photosGrid");
 
 // Ensure canonical store fields exist once
-STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
+STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];       // [{url, selected, dead}]
+STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : []; // [url]
 
 // ------- helpers -------
 function uniqCleanCap(urls, cap) {
   const list = Array.isArray(urls) ? urls : [];
   const out = [];
   const seen = new Set();
+  const lim = Number.isFinite(cap) ? cap : MAX_PHOTOS;
 
   for (let i = 0; i < list.length; i++) {
     let u = list[i];
     if (typeof u !== "string") continue;
     u = u.trim();
-    if (u.length < 8) continue;
-
-    if (!seen.has(u)) {
-      seen.add(u);
-      out.push(u);
-      if (out.length >= cap) break;
-    }
+    if (u.length < 8) continue;                 // drop blanks / junk
+    if (seen.has(u)) continue;                  // simple dedupe (your global uniqueUrls can still run later)
+    seen.add(u);
+    out.push(u);
+    if (out.length >= lim) break;
   }
   return out;
 }
 
-// ✅ BUTTON LOADING HELPER (PUT IT HERE)
+// ✅ BUTTON LOADING HELPER (single copy)
 function setBtnLoading(btn, isLoading, label) {
   if (!btn) return;
 
   if (isLoading) {
-    btn.dataset.originalText = btn.textContent;
+    if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
     btn.textContent = label || "Working…";
     btn.classList.add("btn-loading");
     btn.disabled = true;
@@ -346,10 +349,12 @@ function setBtnLoading(btn, isLoading, label) {
   }
 }
 
-
 function setStep1FromUrls(urls) {
   const clean = uniqCleanCap(urls, MAX_PHOTOS);
-  STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
+  // preserve selection state when possible
+  const prev = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+  const prevMap = new Map(prev.map((p) => [p?.url, !!p?.selected]));
+  STORE.step1Photos = clean.map((u) => ({ url: u, selected: prevMap.get(u) || false, dead: false }));
 }
 
 function getSelectedStep1Urls(max) {
@@ -372,19 +377,18 @@ function renderStep1Photos(urls) {
   // Update store from urls
   setStep1FromUrls(urls);
 
-  // Grid layout (let CSS do most; minimal inline only)
+  // Grid layout (prefer CSS; minimal inline only)
   photosGridEl.style.display = "grid";
   photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
   photosGridEl.style.gap = "8px";
-
   photosGridEl.innerHTML = "";
 
-  STORE.step1Photos.forEach((item, idx) => {
-    const src = getProxiedImageUrl(item.url);
+  (STORE.step1Photos || []).forEach((item, idx) => {
+    const src = (typeof getProxiedImageUrl === "function") ? getProxiedImageUrl(item.url) : item.url;
 
     const btn = DOC.createElement("button");
     btn.type = "button";
-    btn.className = "photo-thumb";        // keep your class for existing CSS
+    btn.className = "photo-thumb"; // keep your class for existing CSS
     btn.setAttribute("data-i", String(idx));
     btn.style.position = "relative";
     btn.style.height = "64px";
@@ -394,11 +398,12 @@ function renderStep1Photos(urls) {
     btn.style.background = "#0b1120";
     btn.style.padding = "0";
     btn.style.cursor = "pointer";
-    btn.style.opacity = "0.35";           // START UNSELECTED
+    btn.style.opacity = item.selected ? "1" : "0.45"; // brighter default than 0.35
 
     const img = DOC.createElement("img");
     img.src = src;
     img.alt = "photo";
+    img.loading = "lazy";
     img.style.width = "100%";
     img.style.height = "100%";
     img.style.display = "block";
@@ -428,17 +433,16 @@ function renderStep1Photos(urls) {
     check.style.fontSize = "12px";
     check.style.lineHeight = "18px";
     check.style.textAlign = "center";
-    check.style.display = "none";         // ✅ START HIDDEN
+    check.style.display = item.selected ? "block" : "none";
 
     btn.appendChild(img);
     btn.appendChild(check);
     photosGridEl.appendChild(btn);
   });
 
-  // ONE click handler, toggles store + visuals
+  // ONE click handler, toggles store + visuals (bind once per render)
   photosGridEl.onclick = (e) => {
-    const t = e.target;
-    const btnEl = t && t.closest ? t.closest("[data-i]") : null;
+    const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
     if (!btnEl) return;
 
     const idx = Number(btnEl.getAttribute("data-i"));
@@ -448,23 +452,19 @@ function renderStep1Photos(urls) {
     item.selected = !item.selected;
 
     // visuals
-    btnEl.style.opacity = item.selected ? "1" : "0.35";
+    btnEl.style.opacity = item.selected ? "1" : "0.45";
     const check = btnEl.querySelector(".photo-check");
     if (check) check.style.display = item.selected ? "block" : "none";
   };
 }
 
 // ------------------------------------
-// Boost handler (keeps Step 1 raw list separate)
+// Boost handler (canonical, single copy)
 // ------------------------------------
 async function boostListing() {
   const url = (dealerUrlInput?.value || "").trim();
-  if (!url) {
-    alert("Paste a dealer URL first.");
-    return;
-  }
+  if (!url) return alert("Paste a dealer URL first.");
 
-  // ✅ ADD THIS (TOP OF FUNCTION)
   setBtnLoading(boostBtn, true, "Boosting…");
 
   try {
@@ -477,13 +477,9 @@ async function boostListing() {
 
     const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-    let title = "";
-    let price = "";
-    let photos = [];
-
-    title = data?.title || data?.vehicle || "";
-    price = data?.price || "";
-    photos = Array.isArray(data?.photos) ? data.photos : [];
+    const title = data?.title || data?.vehicle || "";
+    const price = data?.price || "";
+    const photos = Array.isArray(data?.photos) ? data.photos : [];
 
     STORE.lastTitle = title;
     STORE.lastPrice = price;
@@ -491,30 +487,18 @@ async function boostListing() {
     if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
     if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
 
-    renderStep1Photos(photos);
-
-  } catch (e) {
-    console.error("❌ Boost failed:", e);
-    alert(e?.message || "Boost failed.");
-  } finally {
-    // ✅ ADD THIS (BOTTOM OF FUNCTION)
-    setBtnLoading(boostBtn, false);
-  }
-}
-
-
-    // ✅ Keep raw boosted photos in its own bucket
+    // ✅ Keep raw boosted photos in its own bucket (deduped + capped)
     STORE.lastBoostPhotos = uniqCleanCap(photos, MAX_PHOTOS);
 
-    // ✅ Render Step 1 from raw boosted photos (unselected)
+    // ✅ Render Step 1 from raw boosted photos (selection starts off)
     renderStep1Photos(STORE.lastBoostPhotos);
 
     console.log("✅ Boost complete", { title, price, photos: STORE.lastBoostPhotos.length });
   } catch (e) {
-    console.log("❌ Boost failed:", e);
+    console.error("❌ Boost failed:", e);
     alert(e?.message || "Boost failed.");
   } finally {
-    if (boostBtn) boostBtn.disabled = false;
+    setBtnLoading(boostBtn, false);
   }
 }
 
@@ -528,40 +512,44 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 }
 
 // ------------------------------------
-// Send selected Step 1 → Creative + Social + Design
+// Send selected Step 1 → Creative + Social + Design (single copy)
 // ------------------------------------
 function sendSelectedToCreative() {
-
-  // ✅ ADD THIS FIRST
   setBtnLoading(sendTopBtn, true, "Sending…");
 
-  const selected = getSelectedStep1Urls(MAX_PHOTOS);
-  if (!selected.length) {
-    alert("Select at least 1 photo first.");
-    setBtnLoading(sendTopBtn, false); // safety reset
-    return;
+  try {
+    const selected = getSelectedStep1Urls(MAX_PHOTOS);
+    if (!selected.length) {
+      alert("Select at least 1 photo first.");
+      return;
+    }
+
+    // Prefer your global helpers if they exist; fallback to uniqCleanCap
+    const capped = (typeof capMax === "function") ? capMax(selected, MAX_PHOTOS) : selected.slice(0, MAX_PHOTOS);
+    const deduped = (typeof uniqueUrls === "function") ? uniqueUrls(capped) : uniqCleanCap(capped, MAX_PHOTOS);
+
+    STORE.creativePhotos = deduped;
+    STORE.socialReadyPhotos = deduped.map((u) => ({
+      url: u,
+      originalUrl: u,
+      selected: true,
+      locked: false,
+    }));
+    STORE.designStudioPhotos = deduped;
+
+    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+
+    console.log("✅ Sent to Step 3", { count: deduped.length });
+  } catch (e) {
+    console.error("❌ Send to Step 3 failed:", e);
+    alert(e?.message || "Send failed.");
+  } finally {
+    setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
   }
-
-  STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-  STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
-    url: u,
-    originalUrl: u,
-    selected: true,
-    locked: false,
-  }));
-  STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-
-  normalizeSocialReady();
-  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-  if (typeof renderSocialStrip === "function") renderSocialStrip();
-  if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
-
-  // ✅ RESET AFTER UI UPDATE
-  setTimeout(() => {
-    setBtnLoading(sendTopBtn, false);
-  }, 400);
 }
-
 
 // Wire Send Top (bind once)
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
@@ -573,8 +561,8 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 }
 
 
+ // ===========================================
 
-  // ==================================================
   // DRILL MODE – Q&A + GRADING (prefers /api/drill-grade)
   // ==================================================
   (() => {
