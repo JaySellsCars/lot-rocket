@@ -151,33 +151,28 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   const STUDIO_STORAGE_KEY = "lotRocketDesignStudio";
 
-// ==================================================
-// THEME TOGGLE (single source of truth)
-// CSS uses: body.dark-theme { ... }
-// ==================================================
+// ================================
+// THEME TOGGLE (SINGLE SOURCE)
+// ================================
 const themeToggleInput = $("themeToggle");
 
 function applyTheme(isDark) {
   DOC.body.classList.toggle("dark-theme", isDark);
-
-  if (themeToggleInput) themeToggleInput.checked = !!isDark;
+  if (themeToggleInput) {
+    themeToggleInput.checked = isDark; // ✅ correct direction
+  }
 }
 
-// default: start dark
+// Start in dark mode by default
 applyTheme(true);
 
-// wire toggle once (if it exists)
+// Wire toggle if it exists
 if (themeToggleInput) {
-  const applyTheme = (isDark) => {
-    DOC.body.classList.toggle("dark-theme", isDark);
-    themeToggleInput.checked = isDark;
-  };
-
-  applyTheme(true); // start dark
-  themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
-} else {
-  DOC.body.classList.add("dark-theme"); // force dark if toggle missing
+  themeToggleInput.addEventListener("change", () => {
+    applyTheme(themeToggleInput.checked);
+  });
 }
+
 
 
 
