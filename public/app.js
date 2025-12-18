@@ -531,26 +531,37 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 // Send selected Step 1 → Creative + Social + Design
 // ------------------------------------
 function sendSelectedToCreative() {
+
+  // ✅ ADD THIS FIRST
+  setBtnLoading(sendTopBtn, true, "Sending…");
+
   const selected = getSelectedStep1Urls(MAX_PHOTOS);
-  if (!selected.length) return alert("Select at least 1 photo first.");
+  if (!selected.length) {
+    alert("Select at least 1 photo first.");
+    setBtnLoading(sendTopBtn, false); // safety reset
+    return;
+  }
 
   STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-
   STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
     url: u,
     originalUrl: u,
     selected: true,
     locked: false,
   }));
-
   STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
   normalizeSocialReady();
-
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
   if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+
+  // ✅ RESET AFTER UI UPDATE
+  setTimeout(() => {
+    setBtnLoading(sendTopBtn, false);
+  }, 400);
 }
+
 
 // Wire Send Top (bind once)
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
