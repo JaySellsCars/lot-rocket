@@ -309,17 +309,18 @@ const photosGridEl = $("photosGrid");
 STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
 
-// -------- helpers --------
+// ------- helpers -------
 function uniqCleanCap(urls, cap) {
   const list = Array.isArray(urls) ? urls : [];
   const out = [];
   const seen = new Set();
+
   for (let i = 0; i < list.length; i++) {
     let u = list[i];
     if (typeof u !== "string") continue;
     u = u.trim();
     if (u.length < 8) continue;
-    // normalize tiny differences
+
     if (!seen.has(u)) {
       seen.add(u);
       out.push(u);
@@ -328,6 +329,23 @@ function uniqCleanCap(urls, cap) {
   }
   return out;
 }
+
+// ✅ BUTTON LOADING HELPER (PUT IT HERE)
+function setBtnLoading(btn, isLoading, label) {
+  if (!btn) return;
+
+  if (isLoading) {
+    btn.dataset.originalText = btn.textContent;
+    btn.textContent = label || "Working…";
+    btn.classList.add("btn-loading");
+    btn.disabled = true;
+  } else {
+    btn.textContent = btn.dataset.originalText || btn.textContent;
+    btn.classList.remove("btn-loading");
+    btn.disabled = false;
+  }
+}
+
 
 function setStep1FromUrls(urls) {
   const clean = uniqCleanCap(urls, MAX_PHOTOS);
