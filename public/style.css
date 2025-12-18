@@ -891,5 +891,15 @@ body.dark-theme {
   color: #f9fafb !important;
 }
 
+/* ===== FINAL LOCK: DARK CANVAS WINS ===== */
+html, body {
+  background-color: #020617 !important;
+  color: #f9fafb !important;
+}
+
+body.dark-theme {
+  background-color: #020617 !important;
+  color: #f9fafb !important;
+}
 
 
