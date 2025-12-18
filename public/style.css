@@ -706,7 +706,8 @@ p, h1, h2, h3, h4, div, section {
 #photosGrid .photo-thumb {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+ aspect-ratio: 16 / 10;
+
   border: 2px solid rgba(148, 163, 184, 0.55);
   border-radius: 12px;
   overflow: hidden;
