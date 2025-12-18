@@ -285,115 +285,119 @@ DOC.querySelectorAll("textarea").forEach((ta) => {
     modal.addEventListener("lr:open", () => setTimeout(() => input.focus?.(), 0));
   }
 
-  // ==================================================
-  // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
-  // ==================================================
-  const dealerUrlInput = $("dealerUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceOfferInput = $("priceOffer");
+// ==================================================
+// STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE, CLEAN)
+// ==================================================
+const dealerUrlInput = $("dealerUrl");
+const vehicleLabelInput = $("vehicleLabel");
+const priceOfferInput = $("priceOffer");
 
-  const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
-console.log("🔎 BOOST BTN FOUND:", boostBtn);
-console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
+const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
 
+const sendTopBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendPhotosToCreative") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendPhotosToCreativeLab");
 
-  const sendTopBtn =
-    $("sendTopPhotosBtn") ||
-    $("sendPhotosToCreative") ||
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendPhotosToCreativeLab");
+const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+const photosGridEl = $("photosGrid");
 
-  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
-  const photosGridEl = $("photosGrid"); // uses your $ helper
+// Ensure canonical store fields exist once
+STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
+
+// -------- helpers --------
+function uniqCleanCap(urls, cap) {
+  const list = Array.isArray(urls) ? urls : [];
+  const out = [];
+  const seen = new Set();
+  for (let i = 0; i < list.length; i++) {
+    let u = list[i];
+    if (typeof u !== "string") continue;
+    u = u.trim();
+    if (u.length < 8) continue;
+    // normalize tiny differences
+    if (!seen.has(u)) {
+      seen.add(u);
+      out.push(u);
+      if (out.length >= cap) break;
+    }
+  }
+  return out;
+}
+
+function setStep1FromUrls(urls) {
+  const clean = uniqCleanCap(urls, MAX_PHOTOS);
+  STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
+}
+
+function getSelectedStep1Urls(max) {
+  const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
+  return (STORE.step1Photos || [])
+    .filter((p) => p && !p.dead && p.selected && p.url)
+    .map((p) => p.url)
+    .slice(0, lim);
+}
+
+// Compatibility (other parts call this)
+function getSelectedGridUrls() {
+  return getSelectedStep1Urls(MAX_PHOTOS);
+}
+
+// -------- render --------
 function renderStep1Photos(urls) {
   if (!photosGridEl) return;
 
-// Clean urls → unique → cap
-var list = Array.isArray(urls) ? urls : [];
-var clean = [];
-var seen = {};
+  // Update store from urls
+  setStep1FromUrls(urls);
 
-for (var i = 0; i < list.length; i++) {
-  var u = list[i];
-  if (typeof u !== "string") continue;
-  u = u.trim();
-  if (u.length < 8) continue;
+  // Grid layout (let CSS do most; minimal inline only)
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "8px";
 
-  if (!seen[u]) {
-    seen[u] = true;
-    clean.push(u);
-    if (clean.length >= MAX_PHOTOS) break;
-  }
-}
-
-// Selection store (START UNSELECTED)
-STORE.step1Photos = [];
-for (var j = 0; j < clean.length; j++) {
-  STORE.step1Photos.push({ url: clean[j], selected: false });
-}
-
-
-
-photosGridEl.style.display = "grid";
-photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-photosGridEl.style.gridAutoRows = "64px";
-photosGridEl.style.gap = "8px";
-
-photosGridEl.style.width = "100%";
-photosGridEl.style.maxWidth = "520px";             // ✅ keeps it in the Step 1 box
-photosGridEl.style.alignContent = "start";         // ✅ prevents stretch
-photosGridEl.style.alignItems = "stretch";
-
-
-
-  // Build tiles
   photosGridEl.innerHTML = "";
-  for (var k = 0; k < STORE.step1Photos.length; k++) {
-    var src = getProxiedImageUrl(STORE.step1Photos[k].url);
 
-    var btn = DOC.createElement("button");
+  STORE.step1Photos.forEach((item, idx) => {
+    const src = getProxiedImageUrl(item.url);
+
+    const btn = DOC.createElement("button");
     btn.type = "button";
-    btn.className = "photo-thumb";
-    btn.setAttribute("data-i", String(k));
+    btn.className = "photo-thumb";        // keep your class for existing CSS
+    btn.setAttribute("data-i", String(idx));
     btn.style.position = "relative";
-btn.style.height = "64px";
-btn.style.maxHeight = "64px";
-
-
+    btn.style.height = "64px";
     btn.style.borderRadius = "12px";
     btn.style.overflow = "hidden";
     btn.style.border = "1px solid rgba(148,163,184,.55)";
     btn.style.background = "#0b1120";
     btn.style.padding = "0";
     btn.style.cursor = "pointer";
+    btn.style.opacity = "0.35";           // START UNSELECTED
 
-    var img = DOC.createElement("img");
+    const img = DOC.createElement("img");
     img.src = src;
     img.alt = "photo";
     img.style.width = "100%";
     img.style.height = "100%";
-   img.style.maxHeight = "100%";
-
     img.style.display = "block";
     img.style.objectFit = "cover";
 
-    // If an image fails, remove its tile (kills gray blanks)
-img.onerror = (function (buttonEl, index) {
-  return function () {
-    // mark dead
-    if (STORE.step1Photos && STORE.step1Photos[index]) {
-      STORE.step1Photos[index].dead = true;
-      STORE.step1Photos[index].selected = false;
-    }
-    // remove tile
-    buttonEl.remove();
-  };
-})(btn, k);
+    // kill blanks: mark dead + remove tile
+    img.onerror = () => {
+      if (STORE.step1Photos[idx]) {
+        STORE.step1Photos[idx].dead = true;
+        STORE.step1Photos[idx].selected = false;
+      }
+      btn.remove();
+    };
 
-
-    var check = DOC.createElement("span");
+    // ✅ checkmark element MUST have class photo-check
+    const check = DOC.createElement("span");
+    check.className = "photo-check";
     check.textContent = "✓";
     check.style.position = "absolute";
     check.style.top = "6px";
@@ -406,174 +410,123 @@ img.onerror = (function (buttonEl, index) {
     check.style.fontSize = "12px";
     check.style.lineHeight = "18px";
     check.style.textAlign = "center";
+    check.style.display = "none";         // ✅ START HIDDEN
 
     btn.appendChild(img);
     btn.appendChild(check);
     photosGridEl.appendChild(btn);
-  }
+  });
 
-  // Toggle selection (dim when off)
-  photosGridEl.onclick = function (e) {
-    var t = e.target;
-    var btnEl = t && t.closest ? t.closest("[data-i]") : null;
+  // ONE click handler, toggles store + visuals
+  photosGridEl.onclick = (e) => {
+    const t = e.target;
+    const btnEl = t && t.closest ? t.closest("[data-i]") : null;
     if (!btnEl) return;
 
-    var idx = Number(btnEl.getAttribute("data-i"));
-    var item = STORE.step1Photos[idx];
-    if (!item) return;
+    const idx = Number(btnEl.getAttribute("data-i"));
+    const item = STORE.step1Photos[idx];
+    if (!item || item.dead) return;
 
-item.selected = !item.selected;
+    item.selected = !item.selected;
 
-// Visual state
-btnEl.classList.toggle("photo-thumb-selected", item.selected);
-btnEl.style.opacity = item.selected ? "1" : "0.35";
-
-// Checkmark (if present)
-const check = btnEl.querySelector(".photo-check");
-if (check) {
-  check.style.display = item.selected ? "grid" : "none";
-}
-
+    // visuals
+    btnEl.style.opacity = item.selected ? "1" : "0.35";
+    const check = btnEl.querySelector(".photo-check");
+    if (check) check.style.display = item.selected ? "block" : "none";
   };
 }
 
-  // ------------------------------------
-  // Boost handler (NO refactor)
-  // ------------------------------------
-  async function boostListing() {
-    const url = (dealerUrlInput?.value || "").trim();
-    if (!url) {
-      alert("Paste a dealer URL first.");
-      return;
-    }
+// ------------------------------------
+// Boost handler (keeps Step 1 raw list separate)
+// ------------------------------------
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) return alert("Paste a dealer URL first.");
 
-    if (boostBtn) boostBtn.disabled = true;
+  if (boostBtn) boostBtn.disabled = true;
 
-    try {
-      const payload = {
-        url,
-        labelOverride: (vehicleLabelInput?.value || "").trim(),
-        priceOverride: (priceOfferInput?.value || "").trim(),
-        maxPhotos: MAX_PHOTOS,
-      };
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
 
-      const data = await postJSON(`${apiBase}/api/boost`, payload);
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-      let title = "";
-      let price = "";
-      let photos = [];
+    const title = data?.title || data?.vehicle || data?.vehicleTitle || "";
+    const price = data?.price || data?.offer || data?.vehiclePrice || "";
+    const photos = Array.isArray(data?.photos)
+      ? data.photos
+      : Array.isArray(data?.images)
+      ? data.images
+      : [];
 
-      title = data?.title || data?.vehicle || data?.vehicleTitle || "";
-      price = data?.price || data?.offer || data?.vehiclePrice || "";
-      photos = Array.isArray(data?.photos)
-        ? data.photos
-        : Array.isArray(data?.images)
-        ? data.images
-        : [];
+    STORE.lastTitle = title;
+    STORE.lastPrice = price;
 
-      // Persist for any other UI/script builders (prevents "title is not defined")
-      STORE.lastTitle = title;
-      STORE.lastPrice = price;
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
 
-      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+    // ✅ Keep raw boosted photos in its own bucket
+    STORE.lastBoostPhotos = uniqCleanCap(photos, MAX_PHOTOS);
 
-      // store RAW urls (cap)
-      STORE.creativePhotos = uniqueUrls(capMax(photos, MAX_PHOTOS));
+    // ✅ Render Step 1 from raw boosted photos (unselected)
+    renderStep1Photos(STORE.lastBoostPhotos);
 
-      // Step 1 render (must exist below)
-      renderStep1Photos(STORE.creativePhotos);
-
-      console.log("✅ Boost complete", {
-        title,
-        price,
-        photos: STORE.creativePhotos.length,
-      });
-    } catch (e) {
-      console.log("❌ Boost failed:", e);
-      alert(e?.message || "Boost failed.");
-    } finally {
-      if (boostBtn) boostBtn.disabled = false;
-    }
+    console.log("✅ Boost complete", { title, price, photos: STORE.lastBoostPhotos.length });
+  } catch (e) {
+    console.log("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    if (boostBtn) boostBtn.disabled = false;
   }
+}
 
-  // Wire Boost click (bind once)
-  if (boostBtn && boostBtn.dataset.wired !== "true") {
-    boostBtn.dataset.wired = "true";
-    boostBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      boostListing();
-    });
-  } else if (!boostBtn) {
-    console.warn("⚠️ boost button not found (boostListingBtn / boostThisListing / boostButton)");
-  }
+// Wire Boost click (bind once)
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+  boostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    boostListing();
+  });
+}
 
-  // NOTE: Send Top wiring remains below in your Step 1 selection section.
-  // ================================
-  // STEP 1 — PHOTO SELECTION (CLEAN / STRUCTURE-SAFE)
-  // ================================
-  STORE = window.LOTROCKET;
-  STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+// ------------------------------------
+// Send selected Step 1 → Creative + Social + Design
+// ------------------------------------
+function sendSelectedToCreative() {
+  const selected = getSelectedStep1Urls(MAX_PHOTOS);
+  if (!selected.length) return alert("Select at least 1 photo first.");
 
+  STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
+  STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
+    url: u,
+    originalUrl: u,
+    selected: true,
+    locked: false,
+  }));
 
+  STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
 
+  normalizeSocialReady();
 
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+  if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+}
 
+// Wire Send Top (bind once)
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sendSelectedToCreative();
+  });
+}
 
-
-
-
-  // Collect selected Step 1 urls
-  function getSelectedStep1Urls(max) {
-    const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
-    return (STORE.step1Photos || [])
-      .filter((p) => p && p.selected && p.url)
-      .map((p) => p.url)
-      .slice(0, lim);
-  }
-
-  // Compatibility: other parts of your file call getSelectedGridUrls()
-  function getSelectedGridUrls() {
-    return getSelectedStep1Urls(MAX_PHOTOS);
-  }
-
-  // Send selected Step 1 photos → Creative + Social + Design
-  function sendSelectedToCreative() {
-    const selected = getSelectedStep1Urls(MAX_PHOTOS);
-    if (!selected.length) {
-      alert("Select at least 1 photo first.");
-      return;
-    }
-
-    STORE.creativePhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-
-    STORE.socialReadyPhotos = STORE.creativePhotos.map((u) => ({
-      url: u,
-      originalUrl: u,
-      selected: true,
-      locked: false,
-    }));
-
-    STORE.designStudioPhotos = uniqueUrls(capMax(selected, MAX_PHOTOS));
-
-    normalizeSocialReady();
-
-    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
-  }
-
-  // Wire Send Top button (bind once) — MUST be outside functions
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-    sendTopBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      sendSelectedToCreative();
-    });
-  } else if (!sendTopBtn) {
-    console.warn("⚠️ sendTop button not found (sendPhotosToCreative / sendTopPhotosToCreative...)");
-  }
 
 
   // ==================================================
