@@ -425,6 +425,7 @@ function renderStep1Photos(urls) {
 
 
 
+
   // Collect selected Step 1 urls
   function getSelectedStep1Urls(max) {
     const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
