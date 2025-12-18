@@ -310,8 +310,8 @@ function renderStep1Photos(urls) {
 photosGridEl.style.display = "grid";
 photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
 photosGridEl.style.gridAutoRows = "64px";
+photosGridEl.style.gap = "8px";
 
-photosGridEl.style.gap = "10px";
 photosGridEl.style.width = "100%";
 photosGridEl.style.maxWidth = "520px";             // ✅ keeps it in the Step 1 box
 photosGridEl.style.alignContent = "start";         // ✅ prevents stretch
