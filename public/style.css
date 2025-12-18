@@ -851,6 +851,35 @@ body.dark-theme #root {
   background: transparent !important;
   color: inherit !important;
 }
+/* ===== FINAL CANONICAL DARK MODE (LAST RULES) ===== */
+
+html {
+  background-color: #020617 !important;
+}
+
+body {
+  background-color: #020617 !important;
+}
+
+body.dark-theme {
+  background-color: #020617 !important;
+  color: #f9fafb !important;
+}
+
+/* Kill any white wrappers */
+body.dark-theme main,
+body.dark-theme section,
+body.dark-theme .layout,
+body.dark-theme .column,
+body.dark-theme .column-left,
+body.dark-theme .column-middle,
+body.dark-theme .column-right,
+body.dark-theme .container,
+body.dark-theme .panel,
+body.dark-theme .card,
+body.dark-theme .summary-box {
+  background: transparent !important;
+}
 
 
 
