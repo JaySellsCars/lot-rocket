@@ -58,8 +58,15 @@ body.dark-theme .container {
   border-color: rgba(148,163,184,.35);
 }
 
-/* Inputs + textareas */
+/* Inputs + textareas (dark mode) */
 body.dark-theme input,
+body.dark-theme textarea,
+body.dark-theme select {
+  background: rgba(2, 6, 23, 0.85);
+  color: #f9fafb;
+  border-color: rgba(148,163,184,.45);
+}
+
 
 /* ---------- TYPOGRAPHY ---------- */
 h1,h2,h3{ margin: 0 0 .6rem 0; }
