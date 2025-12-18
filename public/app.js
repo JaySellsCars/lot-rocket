@@ -319,11 +319,22 @@ function renderStep1Photos(urls) {
     if (clean.length >= MAX_PHOTOS) break;
   }
 
-  // Selection store (Step 1 canonical)
-  STORE.step1Photos = [];
-  for (var j = 0; j < clean.length; j++) {
-    STORE.step1Photos.push({ url: clean[j], selected: true });
-  }
+// Selection store (Step 1 canonical)
+STORE.step1Photos = [];
+
+for (var j = 0; j < clean.length; j++) {
+  var url = clean[j];
+
+  // Skip bad / empty urls defensively
+  if (!url || typeof url !== "string") continue;
+
+  STORE.step1Photos.push({
+    url: url,
+    selected: false,   // ❗ start UNSELECTED (click to check)
+    dead: false        // allows blank images to be removed later
+  });
+}
+
 
 photosGridEl.style.display = "grid";
 photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
