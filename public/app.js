@@ -289,6 +289,97 @@ console.log("BOOST BTN FOUND:", !!boostBtn, boostBtn ? boostBtn.id : null);
   const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
   const photosGridEl = $("photosGrid"); // uses your $ helper
+function renderStep1Photos(urls) {
+  if (!photosGridEl) return;
+
+  // Clean urls
+  var list = Array.isArray(urls) ? urls : [];
+  var clean = [];
+  for (var i = 0; i < list.length; i++) {
+    var u = list[i];
+    if (typeof u === "string" && u.length > 8) clean.push(u);
+    if (clean.length >= MAX_PHOTOS) break;
+  }
+
+  // Selection store (Step 1 canonical)
+  STORE.step1Photos = [];
+  for (var j = 0; j < clean.length; j++) {
+    STORE.step1Photos.push({ url: clean[j], selected: true });
+  }
+
+  // Grid layout (small thumbs)
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "10px";
+  photosGridEl.style.width = "100%";
+  photosGridEl.style.alignItems = "stretch";
+
+  // Build tiles
+  photosGridEl.innerHTML = "";
+  for (var k = 0; k < STORE.step1Photos.length; k++) {
+    var src = getProxiedImageUrl(STORE.step1Photos[k].url);
+
+    var btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "photo-thumb";
+    btn.setAttribute("data-i", String(k));
+    btn.style.position = "relative";
+    btn.style.height = "78px";
+    btn.style.borderRadius = "12px";
+    btn.style.overflow = "hidden";
+    btn.style.border = "1px solid rgba(148,163,184,.55)";
+    btn.style.background = "#0b1120";
+    btn.style.padding = "0";
+    btn.style.cursor = "pointer";
+
+    var img = DOC.createElement("img");
+    img.src = src;
+    img.alt = "photo";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.display = "block";
+    img.style.objectFit = "cover";
+
+    // If an image fails, remove its tile (kills gray blanks)
+    img.onerror = (function (buttonEl) {
+      return function () {
+        buttonEl.remove();
+      };
+    })(btn);
+
+    var check = DOC.createElement("span");
+    check.textContent = "✓";
+    check.style.position = "absolute";
+    check.style.top = "6px";
+    check.style.right = "6px";
+    check.style.width = "18px";
+    check.style.height = "18px";
+    check.style.borderRadius = "999px";
+    check.style.background = "rgba(0,0,0,.55)";
+    check.style.color = "#fff";
+    check.style.fontSize = "12px";
+    check.style.lineHeight = "18px";
+    check.style.textAlign = "center";
+
+    btn.appendChild(img);
+    btn.appendChild(check);
+    photosGridEl.appendChild(btn);
+  }
+
+  // Toggle selection (dim when off)
+  photosGridEl.onclick = function (e) {
+    var t = e.target;
+    var btnEl = t && t.closest ? t.closest("[data-i]") : null;
+    if (!btnEl) return;
+
+    var idx = Number(btnEl.getAttribute("data-i"));
+    var item = STORE.step1Photos[idx];
+    if (!item) return;
+
+    item.selected = !item.selected;
+    btnEl.style.opacity = item.selected ? "1" : "0.35";
+  };
+}
 
   // ------------------------------------
   // Boost handler (NO refactor)
