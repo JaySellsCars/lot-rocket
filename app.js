@@ -401,16 +401,45 @@ async function scrapePage(url) {
 
 async function scrapePageRendered(url) {
   if (!playwright) throw new Error("Playwright not installed");
-  const browser = await playwright.chromium.launch({ args: ["--no-sandbox"] });
-  try {
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
-    await page.waitForTimeout(1500);
-    return await page.content();
-  } finally {
-    await browser.close();
-  }
+
+  const browser = await playwright.chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  const page = await browser.newPage();
+
+  await page.goto(url, {
+    waitUntil: "networkidle",
+    timeout: 60000,
+  });
+
+  // HARD WAIT for JS galleries (interiors)
+  await page.waitForTimeout(3000);
+
+  // Extract rendered images
+  const imageUrls = await page.evaluate(() => {
+    const urls = new Set();
+
+    document.querySelectorAll("img").forEach(img => {
+      if (img.src) urls.add(img.src);
+      if (img.dataset?.src) urls.add(img.dataset.src);
+      if (img.dataset?.lazy) urls.add(img.dataset.lazy);
+    });
+
+    document.querySelectorAll("[style*='background-image']").forEach(el => {
+      const match = el.style.backgroundImage.match(/url\(["']?(.*?)["']?\)/);
+      if (match && match[1]) urls.add(match[1]);
+    });
+
+    return Array.from(urls);
+  });
+
+  await browser.close();
+
+  return imageUrls;
 }
+
 
 
 // ======================================================
