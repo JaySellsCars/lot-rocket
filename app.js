@@ -455,14 +455,7 @@ app.post("/api/boost", async (req, res) => {
       });
     }
 
-    // ✅ LaFontaine fix: expand ".../ip/1.jpg" => ip/1..ip/24
-    photos = expandIpSequence(photos, safeMax);
-
-// 🔥 Expand dealer ip/ gallery sequences (interiors live here)
-photos = expandIpSequence(photos, 24);
-
-// 🧼 Deduplicate after expansion
-photos = uniqStrings(photos);
+  
 
 // 🎯 Final cap (ALWAYS last)
 photos = photos.slice(0, safeMax);
