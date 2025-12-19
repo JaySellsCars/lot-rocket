@@ -314,6 +314,48 @@ STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];  
 STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : []; // [url]
 
 // ------- helpers -------
+ function extractPhotoUrlsFromDom() {
+  const urls = [];
+
+  // img src + lazy attrs
+  document.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src");
+    const d1 = img.getAttribute("data-src");
+    const d2 = img.getAttribute("data-lazy");
+    const d3 = img.getAttribute("data-original");
+    const srcset = img.getAttribute("srcset");
+
+    if (d1) urls.push(d1);
+    if (d2) urls.push(d2);
+    if (d3) urls.push(d3);
+    if (src) urls.push(src);
+
+    if (srcset) {
+      const pick = srcset
+        .split(",")
+        .map(s => s.trim().split(" ")[0])
+        .filter(Boolean)
+        .pop();
+      if (pick) urls.push(pick);
+    }
+  });
+
+  // background-image urls (common for interior thumbs)
+  document.querySelectorAll("[style*='background']").forEach((el) => {
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/background-image\s*:\s*url\(["']?(.*?)["']?\)/i);
+    if (m && m[1]) urls.push(m[1]);
+  });
+
+  // anchor links to images
+  document.querySelectorAll("a[href]").forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    if (/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(href)) urls.push(href);
+  });
+
+  return urls;
+}
+
 function normalizeUrl(u) {
   u = (typeof u === "string" ? u.trim() : "");
   if (!u) return "";
