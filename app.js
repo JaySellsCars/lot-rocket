@@ -1248,6 +1248,7 @@ Respond with clear, helpful content a salesperson can use immediately.
       ],
     });
 
+
     const text =
       (getResponseText(completion) || "").trim() ||
       "Lot Rocket could not generate a response. Please try again.";
