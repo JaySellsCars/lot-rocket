@@ -454,12 +454,15 @@ app.post("/api/boost", async (req, res) => {
       photos = uniqStrings(photos);
     }
 
-    // ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
-    photos = expandIpSequence(photos, safeMax);
-    photos = uniqStrings(photos);
+// ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
+photos = expandIpSequence(photos, safeMax);
 
-    // 🎯 Final cap ALWAYS LAST
-    photos = photos.slice(0, safeMax);
+// 🧼 Deduplicate AFTER expansion
+photos = uniqStrings(photos);
+
+// 🎯 Final cap (ALWAYS last)
+photos = photos.slice(0, safeMax);
+
 
     console.log("✅ BOOST FINAL:", { count: photos.length, sample: photos.slice(0, 10) });
 
