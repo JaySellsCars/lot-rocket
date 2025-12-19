@@ -421,6 +421,7 @@ console.log("🧪 BOOST backend photos count =", photos.length, photos.slice(0, 
       // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
       const domPhotos = extractPhotoUrlsFromDom();
       const merged = [...photos, ...domPhotos];
+console.log("🧪 BOOST dom photos count =", domPhotos.length, domPhotos.slice(0, 5));
 
       STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
 
