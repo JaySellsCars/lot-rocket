@@ -442,7 +442,7 @@ async function scrapePageRendered(url) {
   await browser.close();
 
   return Array.from(foundUrls);
-
+}
 
 
 
