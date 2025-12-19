@@ -159,34 +159,7 @@ function absUrl(base, maybeUrl) {
   }
 }
 
-function parseSrcset(srcset) {
-  if (!srcset) return [];
-  return String(srcset)
-    .split(",")
-    .map((s) => s.trim().split(/\s+/)[0])
-    .filter(Boolean);
-}
-function uniqStrings(arr) {
-  return Array.from(new Set(arr.filter(Boolean)));
-}
 
-function expandIpSequence(urls, max = 24) {
-  const out = new Set(urls);
-
-  urls.forEach((u) => {
-    const m = u.match(/(\/ip\/)(\d+)(\.\w+)/i);
-    if (!m) return;
-
-    const base = u.replace(/\/ip\/\d+\.\w+/i, "/ip/");
-    const ext = m[3];
-
-    for (let i = 1; i <= max; i++) {
-      out.add(`${base}${i}${ext}`);
-    }
-  });
-
-  return Array.from(out);
-}
 
 // ======================================================
 // Image extraction (single copy)
