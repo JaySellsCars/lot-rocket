@@ -343,6 +343,39 @@ async function scrapePageRendered(url) {
     await browser.close();
   }
 }
+// ======================================================
+// Helpers — arrays / photos
+// ======================================================
+
+/** Deduplicate string array safely */
+function uniqStrings(arr) {
+  if (!Array.isArray(arr)) return [];
+  return Array.from(new Set(arr.map(v => String(v).trim()).filter(Boolean)));
+}
+
+/**
+ * Expand LaFontaine-style image sequences:
+ *  .../ip/1.jpg  → ip/1.jpg ... ip/24.jpg
+ */
+function expandIpSequence(urls, max = 24) {
+  if (!Array.isArray(urls) || !urls.length) return [];
+
+  const out = new Set(urls);
+
+  for (const url of urls) {
+    const match = url.match(/\/ip\/(\d+)\.(jpg|jpeg|png|webp)(\?.*)?$/i);
+    if (!match) continue;
+
+    const base = url.replace(/\/ip\/\d+\.(jpg|jpeg|png|webp)(\?.*)?$/i, "");
+    const ext = match[2];
+
+    for (let i = 1; i <= max; i++) {
+      out.add(`${base}/ip/${i}.${ext}`);
+    }
+  }
+
+  return Array.from(out);
+}
 
 // ======================================================
 // Routes
