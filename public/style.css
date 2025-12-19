@@ -362,6 +362,32 @@ textarea{
 .btn-loading:disabled {
   filter: grayscale(0.25);
 }
+/* ==================================================
+   STEP 1 — FINAL BRIGHTNESS + LIFE FIX (v2.6)
+   Put this at the END of the Step 1 Photos Grid section
+   ================================================== */
+
+/* Base image brightness — fixes “dark / dead” look */
+#photosGrid .photo-thumb img,
+#photosGrid .photo-thumb-img {
+  filter: brightness(1.22) contrast(1.14) saturate(1.2);
+}
+
+/* Unselected = still alive (NOT dark) */
+#photosGrid .photo-thumb:not(.photo-thumb-selected) img {
+  filter: brightness(1.15) contrast(1.12) saturate(1.18);
+}
+
+/* Selected = pop */
+#photosGrid .photo-thumb-selected img {
+  filter: brightness(1.32) contrast(1.18) saturate(1.25);
+}
+
+/* Prevent JS opacity from killing brightness */
+#photosGrid .photo-thumb,
+.photo-thumb-btn {
+  opacity: 1 !important;
+}
 
 /* ---------- STEP 2 “TILES” ---------- */
 .step2-subtitle{ margin: .2rem 0 1rem; }
