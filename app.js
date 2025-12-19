@@ -1206,7 +1206,7 @@ Match the channel (text / email / DM) if provided.
 
       case "ask":
         systemPrompt = `
-You are Lot Rocket's general AI assistant for car salespeople.
+You are Lot Rocket's AI assistant.
 Answer clearly and practically with a focus on selling more cars and helping customers.
 `.trim();
         userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
@@ -1237,7 +1237,8 @@ Respond with clear, helpful content a salesperson can use immediately.
 `.trim();
         userPrompt = fields.prompt || rawContext || "Help me with sales & marketing.";
         break;
-    }
+    } // ✅ CLOSES switch (mode)
+
 
     const completion = await client.responses.create({
       model: "gpt-4o-mini",
