@@ -399,7 +399,9 @@ async function proxyImageHandler(req, res) {
     }
 
     const upstream = await fetchWithTimeout(target, {}, 20000);
-    if (!upstream.ok) return res.status(502).json({ error: `Upstream error ${upstream.status}` });
+    if (!upstream.ok) {
+      return res.status(502).json({ error: `Upstream error ${upstream.status}` });
+    }
 
     const contentType = upstream.headers.get("content-type") || "image/jpeg";
     res.setHeader("Content-Type", contentType);
@@ -455,20 +457,28 @@ app.post("/api/boost", async (req, res) => {
       });
     }
 
-  
+    // ✅ LaFontaine / inventoryphotos "ip/" fix: expand to pull interior sequences too
+    // Expand FIRST → Dedup SECOND → Slice LAST
+    photos = expandIpSequence(photos, 24);
+    photos = uniqStrings(photos);
 
-// 🎯 Final cap (ALWAYS last)
-photos = photos.slice(0, safeMax);
+    // 🎯 Final cap (ALWAYS last)
+    photos = photos.slice(0, safeMax);
 
-console.log("✅ BOOST FINAL PHOTOS:", {
-  count: photos.length,
-  sample: photos.slice(0, 10),
+    console.log("✅ BOOST FINAL PHOTOS:", {
+      count: photos.length,
+      sample: photos.slice(0, 10),
+    });
+
+    return res.json({ title, price, photos });
+  } catch (err) {
+    console.error("❌ /api/boost failed:", err);
+    return res.status(500).json({ error: err?.message || "Boost failed" });
+  }
 });
 
-return res.json({ title, price, photos });
-
-
 // ---------- ZIP download ----------
+
 app.post("/api/social-photos-zip", async (req, res) => {
   try {
     const urls = Array.isArray(req.body?.urls) ? req.body.urls.filter(Boolean) : [];
