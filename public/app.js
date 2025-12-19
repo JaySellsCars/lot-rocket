@@ -343,19 +343,17 @@ function normalizeUrl(u) {
 function dedupeKey(u) {
   u = normalizeUrl(u);
   if (!u) return "";
+
+  // Less aggressive: key = origin + pathname (NO filename size stripping)
+  // This stops collapsing different legitimate images into one.
   try {
     const url = new URL(u);
-
-    // normalize filename size tokens
-    let path = (url.pathname || "")
-      .replace(/[-_]\d{2,5}x\d{2,5}(?=\.\w+$)/i, "")
-      .replace(/[-_]\d{2,5}(?=\.\w+$)/i, "");
-
-    return (url.origin + path).toLowerCase();
+    return (url.origin + url.pathname).toLowerCase();
   } catch {
     return u.toLowerCase();
   }
 }
+
 
 function uniqCleanCap(urls, cap) {
   const list = Array.isArray(urls) ? urls : [];
