@@ -415,7 +415,28 @@ async function scrapePageRendered(url) {
   });
 
   // HARD WAIT for JS galleries (interiors)
-  await page.waitForTimeout(3000);
+// Give page time to mount galleries
+await page.waitForTimeout(2000);
+
+// Try to advance image galleries (dealer sites need this)
+try {
+  const nextButtons = await page.$$(
+    "button, div, span"
+  );
+
+  for (const btn of nextButtons) {
+    const text = (await btn.innerText().catch(() => "")).toLowerCase();
+    if (text.includes("next") || text.includes("›") || text.includes(">")) {
+      await btn.click().catch(() => {});
+      await page.waitForTimeout(800);
+    }
+  }
+} catch (e) {
+  // silent
+}
+
+// Final wait after interaction
+await page.waitForTimeout(2000);
 
   // Extract rendered images
   const imageUrls = await page.evaluate(() => {
