@@ -458,9 +458,7 @@ app.post("/api/boost", async (req, res) => {
     }
 
     // ✅ LaFontaine / inventoryphotos "ip/" fix: expand to pull interior sequences too
-    // Expand FIRST → Dedup SECOND → Slice LAST
-    photos = expandIpSequence(photos, 24);
-    photos = uniqStrings(photos);
+  
 
     // 🎯 Final cap (ALWAYS last)
     photos = photos.slice(0, safeMax);
