@@ -4,7 +4,6 @@
  *
  * Key endpoints used by frontend:
  * - POST /api/boost
- * - POST /api/social-kit (if you add later)
  * - GET  /api/proxy-image?url=
  * - POST /api/social-photos-zip
  * - POST /api/objection-coach
@@ -40,7 +39,9 @@ app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/", (_req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
 
 // -------------------- OpenAI Client --------------------
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -48,28 +49,6 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
-function scrapeVehiclePhotosFromCheerio($, baseUrl) {
-  const urls = new Set();
-  let base;
-  try { base = new URL(baseUrl); } catch { base = null; }
-
-  $("img").each((_, el) => {
-    let src = $(el).attr("data-src") || $(el).attr("src");
-    if (!src) return;
-    src = String(src).trim();
-    if (!src) return;
-
-    const lower = src.toLowerCase();
-    if (lower.includes("logo") || lower.includes("icon") || lower.includes("sprite") || lower.endsWith(".svg")) return;
-
-    try {
-      const abs = base ? new URL(src, base).href : src;
-      urls.add(abs);
-    } catch {}
-  });
-
-  return Array.from(urls);
-}
 
 function normalizeUrl(raw) {
   if (!raw) return null;
@@ -101,11 +80,9 @@ function safeJsonParse(str, fallback = null) {
   }
 }
 
-// ✅ Robust for OpenAI Responses API (handles different shapes)
 function getResponseText(response) {
   if (!response) return "";
   if (typeof response.output_text === "string") return response.output_text;
-  // older shape
   return response?.output?.[0]?.content?.[0]?.text || "";
 }
 
@@ -185,9 +162,7 @@ function absUrl(base, maybeUrl) {
   }
 }
 
-// ======================================================
-// ✅ REQUIRED: srcset parser (WAS MISSING -> caused parseSrcset not defined)
-// ======================================================
+// ✅ REQUIRED srcset parser
 function parseSrcset(srcset) {
   if (!srcset) return [];
   return String(srcset)
@@ -195,10 +170,6 @@ function parseSrcset(srcset) {
     .map((s) => s.trim().split(/\s+/)[0])
     .filter(Boolean);
 }
-
-// ======================================================
-// Helpers — arrays / photos
-// ======================================================
 
 function uniqStrings(arr) {
   if (!Array.isArray(arr)) return [];
@@ -218,7 +189,10 @@ function expandIpSequence(urls, max = 24) {
     const match = String(url).match(/\/ip\/(\d+)\.(jpg|jpeg|png|webp)(\?.*)?$/i);
     if (!match) continue;
 
-    const base = String(url).replace(/\/ip\/\d+\.(jpg|jpeg|png|webp)(\?.*)?$/i, "");
+    const base = String(url).replace(
+      /\/ip\/\d+\.(jpg|jpeg|png|webp)(\?.*)?$/i,
+      ""
+    );
     const ext = match[2];
 
     for (let i = 1; i <= max; i++) {
@@ -229,14 +203,45 @@ function expandIpSequence(urls, max = 24) {
   return Array.from(out);
 }
 
+function scrapeVehiclePhotosFromCheerio($, baseUrl) {
+  const urls = new Set();
+  let base;
+  try {
+    base = new URL(baseUrl);
+  } catch {
+    base = null;
+  }
+
+  $("img").each((_, el) => {
+    let src = $(el).attr("data-src") || $(el).attr("src");
+    if (!src) return;
+    src = String(src).trim();
+    if (!src) return;
+
+    const lower = src.toLowerCase();
+    if (
+      lower.includes("logo") ||
+      lower.includes("icon") ||
+      lower.includes("sprite") ||
+      lower.endsWith(".svg")
+    )
+      return;
+
+    try {
+      const abs = base ? new URL(src, base).href : src;
+      urls.add(abs);
+    } catch {}
+  });
+
+  return Array.from(urls);
+}
+
 // ======================================================
 // Image extraction (single copy)
 // ======================================================
 function extractImageUrlsFromHtml(html, baseUrl) {
   const $ = cheerio.load(html);
   const candidates = [];
-
-
 
   const push = (u) => {
     const a = absUrl(baseUrl, u);
@@ -319,9 +324,7 @@ function extractImageUrlsFromHtml(html, baseUrl) {
         }
       };
       walk(json);
-    } catch {
-      // ignore
-    }
+    } catch {}
   });
 
   // Script blobs (absolute + escaped + relative)
@@ -337,13 +340,16 @@ function extractImageUrlsFromHtml(html, baseUrl) {
     const foundEsc = txt.match(
       /\\\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(?:\\\?[^"'\\\s]*)?/gi
     );
-    if (foundEsc)
+    if (foundEsc) {
       foundEsc.forEach((u) => {
         const unescaped = u.replace(/\\\//g, "/").replace(/\\\?/g, "?");
         push(unescaped);
       });
+    }
 
-    const foundRel = txt.match(/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi);
+    const foundRel = txt.match(
+      /\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi
+    );
     if (foundRel) foundRel.forEach(push);
   });
 
@@ -456,8 +462,7 @@ app.get("/api/image-proxy", proxyImageHandler);
 app.post("/api/boost", async (req, res) => {
   try {
     const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
-const pageUrl = normalizeUrl(url);
-
+    const pageUrl = normalizeUrl(url);
     if (!pageUrl) return res.status(400).json({ error: "Missing/invalid url" });
 
     const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
@@ -470,47 +475,46 @@ const pageUrl = normalizeUrl(url);
 
     let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
     photos = uniqStrings(photos);
-// ✅ Cheerio <img> pass (old behavior) — MERGE, don’t replace
-try {
-  const $ = cheerio.load(scraped.html || "");
-  const cheerioPhotos = scrapeVehiclePhotosFromCheerio($, pageUrl);
-  if (cheerioPhotos && cheerioPhotos.length) {
-    photos = uniqStrings([].concat(photos, cheerioPhotos));
-  }
-} catch (e) {
-  console.log("Cheerio merge failed:", e && e.message ? e.message : e);
-}
 
-// 2) Rendered supplement (JS gallery / interiors) — MERGE, don’t replace
-if (playwright) {
-  try {
-    console.log("🎭 Rendered scrape merge (interiors). Static count:", photos.length);
-    const renderedHtml = await scrapePageRendered(pageUrl);
-    const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
-console.log("🧪 RENDERED extracted raw count =", photos.length);
-console.log("🧪 RENDERED sample 40 =", photos.slice(0, 40));
-
-    if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
-      photos = uniqStrings([].concat(photos, renderedPhotos));
+    // ✅ Cheerio <img> pass (old behavior) — MERGE, don’t replace
+    try {
+      const $ = cheerio.load(scraped.html || "");
+      const cheerioPhotos = scrapeVehiclePhotosFromCheerio($, pageUrl);
+      if (cheerioPhotos && cheerioPhotos.length) {
+        photos = uniqStrings([].concat(photos, cheerioPhotos));
+      }
+    } catch (e) {
+      console.log("Cheerio merge failed:", e?.message || e);
     }
-  } catch (e) {
-    console.log("Rendered scrape failed:", e && e.message ? e.message : e);
-  }
-}
 
+    // 2) Rendered supplement (JS gallery / interiors) — MERGE, don’t replace
+    if (playwright) {
+      try {
+        console.log("🎭 Rendered scrape merge (interiors). Static count:", photos.length);
+        const renderedHtml = await scrapePageRendered(pageUrl);
+        const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
 
-// ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
-photos = expandIpSequence(photos, safeMax);
+        console.log("🧪 RENDERED extracted raw count =", renderedPhotos.length);
+        console.log("🧪 RENDERED sample 40 =", renderedPhotos.slice(0, 40));
 
-// 🧼 Deduplicate AFTER expansion
-photos = uniqStrings(photos);
+        if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
+          photos = uniqStrings([].concat(photos, renderedPhotos));
+        }
+      } catch (e) {
+        console.log("Rendered scrape failed:", e?.message || e);
+      }
+    }
 
-// 🎯 Final cap (ALWAYS last)
-photos = photos.slice(0, safeMax);
+    // ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
+    photos = expandIpSequence(photos, safeMax);
 
+    // 🧼 Deduplicate AFTER expansion
+    photos = uniqStrings(photos);
+
+    // 🎯 Final cap (ALWAYS last)
+    photos = photos.slice(0, safeMax);
 
     console.log("✅ BOOST FINAL:", { count: photos.length, sample: photos.slice(0, 10) });
-console.log("🧪 BOOST FIRST 12:", photos.slice(0, 12));
 
     return res.json({ title, price, photos });
   } catch (err) {
@@ -587,7 +591,6 @@ ${objection || "(none provided)"}
     });
 
     const reply = (getResponseText(completion) || "").trim() || "No response.";
-    // ✅ FRONTEND EXPECTS data.reply
     return res.json({ reply });
   } catch (err) {
     return sendAIError(res, err, "Failed to coach objection.");
@@ -606,7 +609,10 @@ app.post("/api/payment-helper", (req, res) => {
     const taxRate = Number(req.body.tax || 0) / 100;
 
     if (!price || !term) {
-      return res.status(400).json({ error: "missing_inputs", message: "Price and term are required." });
+      return res.status(400).json({
+        error: "missing_inputs",
+        message: "Price and term are required.",
+      });
     }
 
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
@@ -631,7 +637,9 @@ app.post("/api/payment-helper", (req, res) => {
 // ---------- Income helper ----------
 app.post("/api/income-helper", (req, res) => {
   try {
-    const grossToDate = Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
+    const grossToDate = Number(
+      req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0
+    );
 
     const lastPayDateStr =
       req.body.lastPayDate ||
@@ -640,12 +648,18 @@ app.post("/api/income-helper", (req, res) => {
       req.body.date;
 
     if (!grossToDate || !lastPayDateStr) {
-      return res.status(400).json({ error: "income_inputs", message: "Income + last paycheck date required." });
+      return res.status(400).json({
+        error: "income_inputs",
+        message: "Income + last paycheck date required.",
+      });
     }
 
     const lastPayDate = new Date(lastPayDateStr);
     if (Number.isNaN(lastPayDate.getTime())) {
-      return res.status(400).json({ error: "bad_date", message: "Could not read last paycheck date." });
+      return res.status(400).json({
+        error: "bad_date",
+        message: "Could not read last paycheck date.",
+      });
     }
 
     const year = lastPayDate.getFullYear();
@@ -657,10 +671,13 @@ app.post("/api/income-helper", (req, res) => {
     const estimatedYearly = (grossToDate / weeksIntoYear) * 52;
     const estimatedMonthly = estimatedYearly / 12;
 
-    const formatMoney = (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    const formatMoney = (n) =>
+      `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
     return res.json({
-      result: `Estimated Yearly Gross: ${formatMoney(estimatedYearly)} | Est Monthly: ${formatMoney(estimatedMonthly)}`
+      result: `Estimated Yearly Gross: ${formatMoney(
+        estimatedYearly
+      )} | Est Monthly: ${formatMoney(estimatedMonthly)}`,
     });
   } catch (err) {
     console.error("income-helper error", err);
