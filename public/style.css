@@ -353,6 +353,15 @@ textarea{
   border-color: rgba(56,189,248,0.9);
   box-shadow: 0 0 18px rgba(56,189,248,0.55);
 }
+/* Step 1 button loading feedback */
+.btn-loading {
+  opacity: 0.75;
+  cursor: progress;
+}
+
+.btn-loading:disabled {
+  filter: grayscale(0.25);
+}
 
 /* ---------- STEP 2 “TILES” ---------- */
 .step2-subtitle{ margin: .2rem 0 1rem; }
