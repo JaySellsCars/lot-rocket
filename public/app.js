@@ -389,6 +389,31 @@ function normalizeUrl(input) {
       if (check) check.style.display = item.selected ? "block" : "none";
     };
   }
+function uniqCleanCap(arr, cap) {
+  var max = (typeof cap === "number" && cap > 0) ? cap : 24;
+  if (!Array.isArray(arr)) return [];
+
+  var out = [];
+  var seen = new Set();
+
+  for (var i = 0; i < arr.length; i++) {
+    var raw = arr[i];
+
+    // Support accidental objects like {url:"..."}
+    if (raw && typeof raw === "object" && raw.url) raw = raw.url;
+
+    var u = normalizeUrl(raw);
+    if (!u) continue;
+
+    if (!seen.has(u)) {
+      seen.add(u);
+      out.push(u);
+      if (out.length >= max) break;
+    }
+  }
+
+  return out;
+}
 
   async function boostListing() {
     const url = (dealerUrlInput?.value || "").trim();
