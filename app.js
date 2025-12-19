@@ -376,15 +376,16 @@ function extractImageUrlsFromHtml(html, baseUrl) {
     });
   });
 
-// Cleanup + filter + dedupe (single FINAL return — keep only this once)
-const cleaned = candidates
-  .map((u) => String(u || "").trim())
-  .filter(Boolean)
-  .filter((u) => /\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u))
-  .filter((u) => !/logo|sprite|icon|placeholder|spacer|pixel|1x1/i.test(u));
+  // Cleanup + filter + dedupe (ONLY ONE RETURN AT THE END)
+  const cleaned = candidates
+    .map((u) => String(u || "").trim())
+    .filter(Boolean)
+    .filter((u) => /\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u))
+    .filter((u) => !/logo|sprite|icon|placeholder|spacer|pixel|1x1/i.test(u));
 
-return Array.from(new Set(cleaned));
+  return Array.from(new Set(cleaned));
 }
+
 
 
 // ======================================================
