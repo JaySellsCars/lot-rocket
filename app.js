@@ -409,6 +409,7 @@ async function scrapePageRendered(url) {
 
   const page = await browser.newPage();
   const foundUrls = new Set();
+console.log("🟣 Playwright capture start:", url);
 
   // Capture images from network traffic (this is the key)
   page.on("response", async (response) => {
