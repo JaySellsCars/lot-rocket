@@ -185,22 +185,29 @@ app.post("/api/boost", async (req, res) => {
     const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
     if (!url) return res.status(400).json({ error: "Missing url" });
 
-    const scraped = await scrapePage(url); // <-- your real scraper function
+const scraped = await scrapePage(url); // static HTML scrape first
 
-    const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
+const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
 
-    const title = (labelOverride || scraped?.title || scraped?.vehicleTitle || "").trim();
-    const price = (priceOverride || scraped?.price || scraped?.vehiclePrice || "").trim();
+const title = (labelOverride || scraped?.title || scraped?.vehicleTitle || "").trim();
+const price = (priceOverride || scraped?.price || scraped?.vehiclePrice || "").trim();
 
-    const photosRaw = scraped?.photos || scraped?.images || [];
-    const photos = Array.isArray(photosRaw) ? photosRaw.slice(0, safeMax) : [];
+let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
 
-    return res.json({ title, price, photos });
-  } catch (err) {
-    console.error("❌ /api/boost failed:", err);
-    return res.status(500).json({ error: err?.message || "Boost failed" });
-  }
-});
+// 🔁 FALLBACK: if gallery is JS-loaded, re-scrape with rendered DOM
+if (photos.length < 10) {
+  console.log("⚠️ Low photo count from static HTML. Trying rendered scrape…", photos.length);
+  const renderedHtml = await scrapePageRendered(url);
+  photos = extractImageUrlsFromHtml(renderedHtml, url);
+}
+
+// Final cap (frontend already dedupes)
+photos = photos.slice(0, safeMax);
+
+console.log("✅ BOOST FINAL PHOTOS:", photos.length);
+
+return res.json({ title, price, photos });
+
 
 function absUrl(base, maybeUrl) {
   if (!maybeUrl) return null;
