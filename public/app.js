@@ -416,6 +416,7 @@ window.document.addEventListener("DOMContentLoaded", () => {
       const title = data?.title || data?.vehicle || "";
       const price = data?.price || "";
       const photos = Array.isArray(data?.photos) ? data.photos : [];
+console.log("🧪 BOOST backend photos count =", photos.length, photos.slice(0, 5));
 
       // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
       const domPhotos = extractPhotoUrlsFromDom();
