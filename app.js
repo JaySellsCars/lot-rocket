@@ -456,7 +456,8 @@ app.get("/api/image-proxy", proxyImageHandler);
 app.post("/api/boost", async (req, res) => {
   try {
     const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
-    const pageUrl = normalizeUrl(url);
+const pageUrl = normalizeUrl(url);
+
     if (!pageUrl) return res.status(400).json({ error: "Missing/invalid url" });
 
     const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
