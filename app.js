@@ -410,13 +410,44 @@ console.log("📸 BOOST DEBUG:", {
   hasPlaywright: !!playwright,
 });
 
+// ---------- BOOST (Step 1) ----------
+app.post("/api/boost", async (req, res) => {
+  try {
+    const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
+    const pageUrl = normalizeUrl(url);
+    if (!pageUrl) return res.status(400).json({ error: "Missing/invalid url" });
+
+    const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
+
+    // 1) Static scrape
+    const scraped = await scrapePage(pageUrl);
+
+    const title = (labelOverride || scraped.title || "").trim();
+    const price = (priceOverride || scraped.price || "").trim();
+    let photos = Array.isArray(scraped.photos) ? scraped.photos : [];
+
+    // ✅ DEBUG (shows if static is low + whether playwright exists)
+    console.log("📸 BOOST DEBUG:", {
+      staticCount: photos.length,
+      staticSample: photos.slice(0, 6),
+      hasPlaywright: !!playwright,
+    });
+
     // 2) Rendered fallback if too few photos (often interior photos are JS gallery)
     if (photos.length < 10 && playwright) {
       console.log("⚠️ Low photo count from static HTML. Trying rendered scrape…", photos.length);
+
+      console.log("🎬 Rendered scrape starting…");
       const renderedHtml = await scrapePageRendered(pageUrl);
       photos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
+
+      console.log("🎬 Rendered scrape done:", {
+        renderedCount: photos.length,
+        renderedSample: photos.slice(0, 6),
+      });
     }
 
+    // Final cap
     photos = photos.slice(0, safeMax);
 
     console.log("✅ BOOST FINAL PHOTOS:", photos.length);
@@ -426,6 +457,7 @@ console.log("📸 BOOST DEBUG:", {
     return res.status(500).json({ error: err?.message || "Boost failed" });
   }
 });
+
 
 // ---------- ZIP download ----------
 app.post("/api/social-photos-zip", async (req, res) => {
