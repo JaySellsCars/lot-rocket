@@ -485,16 +485,22 @@ app.post("/api/boost", async (req, res) => {
     // ✅ LaFontaine fix: expand ".../ip/1.jpg" => ip/1..ip/24
     photos = expandIpSequence(photos, safeMax);
 
-    // Final cap
-    photos = photos.slice(0, safeMax);
+// 🔥 Expand dealer ip/ gallery sequences (interiors live here)
+photos = expandIpSequence(photos, 24);
 
-    console.log("✅ BOOST FINAL PHOTOS:", photos.length);
-    return res.json({ title, price, photos });
-  } catch (err) {
-    console.error("❌ /api/boost failed:", err);
-    return res.status(500).json({ error: err?.message || "Boost failed" });
-  }
+// 🧼 Deduplicate after expansion
+photos = uniqStrings(photos);
+
+// 🎯 Final cap (ALWAYS last)
+photos = photos.slice(0, safeMax);
+
+console.log("✅ BOOST FINAL PHOTOS:", {
+  count: photos.length,
+  sample: photos.slice(0, 10),
 });
+
+return res.json({ title, price, photos });
+
 
 // ---------- ZIP download ----------
 app.post("/api/social-photos-zip", async (req, res) => {
