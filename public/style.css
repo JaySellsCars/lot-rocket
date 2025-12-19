@@ -105,6 +105,13 @@ body {
   column-gap: 24px;
   row-gap: 24px;
 }
+/* Keep main content perfectly centered even when side modal is open */
+@media (min-width: 1280px) {
+  .layout {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 
 /* Step 1 left column */
 .column-left {
@@ -528,12 +535,12 @@ textarea {
   position: fixed;
   top: 0;
   right: 0;
-  width: 360px;
+  width: 380px;              /* was 360 – a bit wider */
   max-width: 100%;
   height: 100vh;
-  background: rgba(8, 10, 20, 0.96);
-  box-shadow: -4px 0 14px rgba(0, 0, 0, 0.45);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 10, 20, 0.98);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);  /* stronger shadow so it feels "on top" */
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -697,6 +704,33 @@ textarea {
 .basic-calc-panel button[data-calc="C"],
 .basic-calc-panel button[data-calc="DEL"] {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================================================
+   AI VIDEO GENERATION HELPER – SPECIAL FIXES
+   ========================================================= */
+
+/* Make the Video Generation Helper body scroll instead of
+   letting content cover the Copy button */
+#videoGenModal .side-modal-body {
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  padding-bottom: 18px;
+}
+
+/* Ensure its textareas grow but stop before the button row */
+#videoGenModal #videoGenPrompt,
+#videoGenModal #videoGenOutput {
+  height: auto !important;
+  min-height: 160px;
+  max-height: none !important;
+  overflow-y: visible !important;
+  margin-bottom: 10px;
+}
+
+/* Give the Copy Brief row a bit of breathing room */
+#videoGenModal .btn-row {
+  margin-top: 4px;
 }
 
 /* =========================================================
