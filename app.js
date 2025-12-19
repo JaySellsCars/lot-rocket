@@ -391,10 +391,12 @@ function extractImageUrlsFromHtml(html, baseUrl) {
 // Scraping (static HTML path)
 // ======================================================
 async function scrapePage(url) {
-  const res = await fetchWithTimeout(url, {}, 20000);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch URL: ${res.status}`);
-  }
+const res = await fetchWithTimeout(url, {}, 20000);
+
+if (!res.ok) {
+  throw new Error(`Failed to fetch URL: ${res.status}`);
+}
+
 
   const html = await res.text();
   const cheerio = require("cheerio");
