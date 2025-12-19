@@ -439,6 +439,8 @@ console.log("🟣 Playwright capture start:", url);
 
   // Let gallery/network finish loading
   await page.waitForTimeout(4000);
+console.log("🟣 Playwright captured URL count:", foundUrls.size);
+console.log("🟣 Sample URLs:", Array.from(foundUrls).slice(0, 20));
 
   await browser.close();
 
