@@ -473,6 +473,7 @@ photos = photos.slice(0, safeMax);
 
 
     console.log("✅ BOOST FINAL:", { count: photos.length, sample: photos.slice(0, 10) });
+console.log("🧪 BOOST FIRST 12:", photos.slice(0, 12));
 
     return res.json({ title, price, photos });
   } catch (err) {
