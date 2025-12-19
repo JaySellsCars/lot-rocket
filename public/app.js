@@ -569,7 +569,13 @@ async function boostListing() {
     const title = data?.title || data?.vehicle || "";
     const price = data?.price || "";
     const photos = Array.isArray(data?.photos) ? data.photos : [];
+// Merge backend + whatever is already in the DOM (helps interiors / lazy galleries)
+const domPhotos = extractPhotoUrlsFromDom();
+const merged = [...photos, ...domPhotos];
 
+// Use your dedupe+cap function
+STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
+renderStep1Photos(STORE.lastBoostPhotos);
     STORE.lastTitle = title;
     STORE.lastPrice = price;
 
