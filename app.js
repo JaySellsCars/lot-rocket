@@ -452,6 +452,8 @@ if (playwright) {
     console.log("🎭 Rendered scrape merge (interiors). Static count:", photos.length);
     const renderedHtml = await scrapePageRendered(pageUrl);
     const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
+console.log("🧪 RENDERED extracted raw count =", photos.length);
+console.log("🧪 RENDERED sample 40 =", photos.slice(0, 40));
 
     if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
       photos = uniqStrings([].concat(photos, renderedPhotos));
