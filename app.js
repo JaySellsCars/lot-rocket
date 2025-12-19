@@ -48,6 +48,28 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
+function scrapeVehiclePhotosFromCheerio($, baseUrl) {
+  const urls = new Set();
+  let base;
+  try { base = new URL(baseUrl); } catch { base = null; }
+
+  $("img").each((_, el) => {
+    let src = $(el).attr("data-src") || $(el).attr("src");
+    if (!src) return;
+    src = String(src).trim();
+    if (!src) return;
+
+    const lower = src.toLowerCase();
+    if (lower.includes("logo") || lower.includes("icon") || lower.includes("sprite") || lower.endsWith(".svg")) return;
+
+    try {
+      const abs = base ? new URL(src, base).href : src;
+      urls.add(abs);
+    } catch {}
+  });
+
+  return Array.from(urls);
+}
 
 function normalizeUrl(raw) {
   if (!raw) return null;
