@@ -404,6 +404,11 @@ app.post("/api/boost", async (req, res) => {
     const title = (labelOverride || scraped.title || "").trim();
     const price = (priceOverride || scraped.price || "").trim();
     let photos = Array.isArray(scraped.photos) ? scraped.photos : [];
+console.log("📸 BOOST DEBUG:", {
+  staticCount: photos.length,
+  staticSample: photos.slice(0, 6),
+  hasPlaywright: !!playwright,
+});
 
     // 2) Rendered fallback if too few photos (often interior photos are JS gallery)
     if (photos.length < 10 && playwright) {
