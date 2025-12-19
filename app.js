@@ -235,6 +235,10 @@ function expandIpSequence(urls, max = 24) {
 function extractImageUrlsFromHtml(html, baseUrl) {
   const $ = cheerio.load(html);
   const candidates = [];
+const cheerioPhotos = scrapeVehiclePhotosFromCheerio($, pageUrl);
+if (cheerioPhotos && cheerioPhotos.length) {
+  photos = uniqStrings([].concat(photos, cheerioPhotos));
+}
 
   const push = (u) => {
     const a = absUrl(baseUrl, u);
