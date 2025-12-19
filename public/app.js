@@ -430,6 +430,7 @@ function uniqCleanCap(arr, cap) {
       };
 
       const data = await postJSON(`${apiBase}/api/boost`, payload);
+const data = await res.json();
 
       const title = data?.title || data?.vehicle || "";
       const price = data?.price || "";
