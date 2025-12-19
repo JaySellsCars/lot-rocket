@@ -455,13 +455,17 @@ btn.style.opacity = "1";
     img.style.objectFit = "cover";
 
     // kill blanks: mark dead + remove tile
-    img.onerror = () => {
-      if (STORE.step1Photos[idx]) {
-        STORE.step1Photos[idx].dead = true;
-        STORE.step1Photos[idx].selected = false;
-      }
-      btn.remove();
-    };
+img.onload = () => {
+  // some dealer URLs return a tiny/blank image that still "loads"
+  if (img.naturalWidth < 80 || img.naturalHeight < 80) {
+    if (STORE.step1Photos[idx]) {
+      STORE.step1Photos[idx].dead = true;
+      STORE.step1Photos[idx].selected = false;
+    }
+    btn.remove();
+  }
+};
+
 
     // ✅ checkmark element MUST have class photo-check
     const check = DOC.createElement("span");
