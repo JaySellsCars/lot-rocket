@@ -408,58 +408,41 @@ async function scrapePageRendered(url) {
   });
 
   const page = await browser.newPage();
+  const foundUrls = new Set();
+
+  // Capture images from network traffic (this is the key)
+  page.on("response", async (response) => {
+    try {
+      const ct = response.headers()["content-type"] || "";
+      const resUrl = response.url();
+
+      if (
+        ct.includes("image") ||
+        resUrl.match(/\.(jpg|jpeg|png|webp)/i)
+      ) {
+        foundUrls.add(resUrl);
+      }
+
+      if (ct.includes("application/json")) {
+        const text = await response.text();
+        const matches = text.match(/https?:\/\/[^"'\\]+?\.(jpg|jpeg|png|webp)/gi);
+        if (matches) matches.forEach(u => foundUrls.add(u));
+      }
+    } catch (_) {}
+  });
 
   await page.goto(url, {
     waitUntil: "networkidle",
     timeout: 60000,
   });
 
-  // HARD WAIT for JS galleries (interiors)
-// Give page time to mount galleries
-await page.waitForTimeout(2000);
-
-// Try to advance image galleries (dealer sites need this)
-try {
-  const nextButtons = await page.$$(
-    "button, div, span"
-  );
-
-  for (const btn of nextButtons) {
-    const text = (await btn.innerText().catch(() => "")).toLowerCase();
-    if (text.includes("next") || text.includes("›") || text.includes(">")) {
-      await btn.click().catch(() => {});
-      await page.waitForTimeout(800);
-    }
-  }
-} catch (e) {
-  // silent
-}
-
-// Final wait after interaction
-await page.waitForTimeout(2000);
-
-  // Extract rendered images
-  const imageUrls = await page.evaluate(() => {
-    const urls = new Set();
-
-    document.querySelectorAll("img").forEach(img => {
-      if (img.src) urls.add(img.src);
-      if (img.dataset?.src) urls.add(img.dataset.src);
-      if (img.dataset?.lazy) urls.add(img.dataset.lazy);
-    });
-
-    document.querySelectorAll("[style*='background-image']").forEach(el => {
-      const match = el.style.backgroundImage.match(/url\(["']?(.*?)["']?\)/);
-      if (match && match[1]) urls.add(match[1]);
-    });
-
-    return Array.from(urls);
-  });
+  // Let gallery/network finish loading
+  await page.waitForTimeout(4000);
 
   await browser.close();
 
-  return imageUrls;
-}
+  return Array.from(foundUrls);
+
 
 
 
