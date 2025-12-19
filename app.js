@@ -349,33 +349,6 @@ function extractImageUrlsFromHtml(html, baseUrl) {
     if (foundRel) foundRel.forEach(push);
   });
 
-  // Cleanup + filter + dedupe (keep interiors; only remove obvious junk)
-  const cleaned = candidates
-    .map((u) => String(u || "").trim())
-    .filter(Boolean)
-    .filter((u) => /\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u))
-    .filter((u) => !/sprite|icon|placeholder|spacer|pixel|1x1/i.test(u));
-
-  return Array.from(new Set(cleaned));
-}
-
-
-  // 3) Script blobs: grab obvious .jpg/.png/.webp urls that appear inside JSON
-  $("script").each((_, el) => {
-    const txt = $(el).html();
-    if (!txt) return;
-
-    const found = txt.match(/https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi);
-    if (found) found.forEach((u) => candidates.push(u));
-
-    // Sometimes relative URLs show up in JSON
-    const rel = txt.match(/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi);
-    if (rel) rel.forEach((u) => {
-      const a = absUrl(baseUrl, u);
-      if (a) candidates.push(a);
-    });
-  });
-
   // Cleanup + filter + dedupe (ONLY ONE RETURN AT THE END)
   const cleaned = candidates
     .map((u) => String(u || "").trim())
@@ -385,6 +358,7 @@ function extractImageUrlsFromHtml(html, baseUrl) {
 
   return Array.from(new Set(cleaned));
 }
+
 
 
 
