@@ -469,6 +469,16 @@ app.post("/api/boost", async (req, res) => {
 
     let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
     photos = uniqStrings(photos);
+// ✅ Cheerio <img> pass (old behavior) — MERGE, don’t replace
+try {
+  const $ = cheerio.load(scraped.html || "");
+  const cheerioPhotos = scrapeVehiclePhotosFromCheerio($, pageUrl);
+  if (cheerioPhotos && cheerioPhotos.length) {
+    photos = uniqStrings([].concat(photos, cheerioPhotos));
+  }
+} catch (e) {
+  console.log("Cheerio merge failed:", e && e.message ? e.message : e);
+}
 
 // 2) Rendered supplement (JS gallery / interiors) — MERGE, don’t replace
 if (playwright) {
