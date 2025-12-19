@@ -314,24 +314,69 @@ STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];  
 STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : []; // [url]
 
 // ------- helpers -------
+function normalizeUrl(u) {
+  u = (typeof u === "string" ? u.trim() : "");
+  if (!u) return "";
+
+  // protocol-relative
+  if (u.startsWith("//")) u = location.protocol + u;
+
+  // drop obvious placeholders
+  const bad = ["placeholder", "spacer", "blank", "1x1", "pixel", "transparent"];
+  if (bad.some((k) => u.toLowerCase().includes(k))) return "";
+
+  try {
+    const url = new URL(u);
+
+    // remove params that create duplicates (same image, different sizing/cache)
+    ["w","width","h","height","q","quality","dpr","fit","crop","cb","cache","v","ver","version","sig"].forEach((p) =>
+      url.searchParams.delete(p)
+    );
+
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return u;
+  }
+}
+
+function dedupeKey(u) {
+  u = normalizeUrl(u);
+  if (!u) return "";
+  try {
+    const url = new URL(u);
+
+    // normalize filename size tokens
+    let path = (url.pathname || "")
+      .replace(/[-_]\d{2,5}x\d{2,5}(?=\.\w+$)/i, "")
+      .replace(/[-_]\d{2,5}(?=\.\w+$)/i, "");
+
+    return (url.origin + path).toLowerCase();
+  } catch {
+    return u.toLowerCase();
+  }
+}
+
 function uniqCleanCap(urls, cap) {
   const list = Array.isArray(urls) ? urls : [];
   const out = [];
   const seen = new Set();
   const lim = Number.isFinite(cap) ? cap : MAX_PHOTOS;
 
-  for (let i = 0; i < list.length; i++) {
-    let u = list[i];
-    if (typeof u !== "string") continue;
-    u = u.trim();
-    if (u.length < 8) continue;                 // drop blanks / junk
-    if (seen.has(u)) continue;                  // simple dedupe (your global uniqueUrls can still run later)
-    seen.add(u);
+  for (const raw of list) {
+    const u = normalizeUrl(raw);
+    if (!u || u.length < 8) continue;
+
+    const key = dedupeKey(u);
+    if (!key || seen.has(key)) continue;
+
+    seen.add(key);
     out.push(u);
     if (out.length >= lim) break;
   }
   return out;
 }
+
 
 // ✅ BUTTON LOADING HELPER (single copy)
 function setBtnLoading(btn, isLoading, label) {
