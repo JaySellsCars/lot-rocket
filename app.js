@@ -401,51 +401,35 @@ app.post("/api/boost", async (req, res) => {
     // 1) Static scrape
     const scraped = await scrapePage(pageUrl);
 
-    const title = (labelOverride || scraped.title || "").trim();
-    const price = (priceOverride || scraped.price || "").trim();
-    let photos = Array.isArray(scraped.photos) ? scraped.photos : [];
-console.log("📸 BOOST DEBUG:", {
-  staticCount: photos.length,
-  staticSample: photos.slice(0, 6),
-  hasPlaywright: !!playwright,
-});
+    const title = (labelOverride || scraped?.title || "").trim();
+    const price = (priceOverride || scraped?.price || "").trim();
 
-// ---------- BOOST (Step 1) ----------
-app.post("/api/boost", async (req, res) => {
-  try {
-    const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
-    const pageUrl = normalizeUrl(url);
-    if (!pageUrl) return res.status(400).json({ error: "Missing/invalid url" });
+    let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
+    photos = uniqStrings(photos);
 
-    const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
-
-    // 1) Static scrape
-    const scraped = await scrapePage(pageUrl);
-
-    const title = (labelOverride || scraped.title || "").trim();
-    const price = (priceOverride || scraped.price || "").trim();
-    let photos = Array.isArray(scraped.photos) ? scraped.photos : [];
-
-    // ✅ DEBUG (shows if static is low + whether playwright exists)
     console.log("📸 BOOST DEBUG:", {
       staticCount: photos.length,
       staticSample: photos.slice(0, 6),
-      hasPlaywright: !!playwright,
+      hasPlaywright: typeof playwright !== "undefined" && !!playwright,
     });
 
-    // 2) Rendered fallback if too few photos (often interior photos are JS gallery)
-    if (photos.length < 10 && playwright) {
+    // 2) Rendered fallback if too few photos (JS gallery / interiors)
+    if (photos.length < 10 && typeof playwright !== "undefined" && playwright) {
       console.log("⚠️ Low photo count from static HTML. Trying rendered scrape…", photos.length);
 
       console.log("🎬 Rendered scrape starting…");
       const renderedHtml = await scrapePageRendered(pageUrl);
       photos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
+      photos = uniqStrings(photos);
 
       console.log("🎬 Rendered scrape done:", {
         renderedCount: photos.length,
         renderedSample: photos.slice(0, 6),
       });
     }
+
+    // ✅ LaFontaine fix: expand ".../ip/1.jpg" => ip/1..ip/24
+    photos = expandIpSequence(photos, safeMax);
 
     // Final cap
     photos = photos.slice(0, safeMax);
@@ -457,7 +441,6 @@ app.post("/api/boost", async (req, res) => {
     return res.status(500).json({ error: err?.message || "Boost failed" });
   }
 });
-
 
 // ---------- ZIP download ----------
 app.post("/api/social-photos-zip", async (req, res) => {
@@ -479,9 +462,9 @@ app.post("/api/social-photos-zip", async (req, res) => {
     archive.pipe(res);
 
     for (let i = 0; i < urls.length; i++) {
-      const url = urls[i];
+      const u = urls[i];
       try {
-        const resp = await fetchWithTimeout(url, {}, 20000);
+        const resp = await fetchWithTimeout(u, {}, 20000);
         if (!resp.ok || !resp.body) continue;
         archive.append(resp.body, { name: `photo-${i + 1}.jpg` });
       } catch {
@@ -645,6 +628,8 @@ Output (Markdown):
 });
 
 // ---------- Message helper ----------
+// (keep your existing /api/message-helper route below this line)
+
 app.post("/api/message-helper", async (req, res) => {
   try {
     const body = req.body || {};
