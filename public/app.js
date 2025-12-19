@@ -79,6 +79,13 @@ function parseSrcset(srcset) {
     .map(s => s.trim().split(/\s+/)[0])
     .filter(Boolean);
 }
+function parseSrcset(srcset) {
+  if (!srcset) return [];
+  return String(srcset)
+    .split(",")
+    .map(s => s.trim().split(/\s+/)[0])
+    .filter(Boolean);
+}
 
   // ================================
   // POST JSON helper (REQUIRED)
