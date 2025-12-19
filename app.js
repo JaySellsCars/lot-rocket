@@ -4,7 +4,7 @@
  *
  * Key endpoints used by frontend:
  * - POST /api/boost
- * - POST /api/social-kit
+ * - POST /api/social-kit (if you add later)
  * - GET  /api/proxy-image?url=
  * - POST /api/social-photos-zip
  * - POST /api/objection-coach
@@ -29,7 +29,6 @@ let playwright = null;
 try {
   playwright = require("playwright");
 } catch {
-  // OK: app still runs without it, you just won't get JS-rendered interior galleries.
   console.warn("⚠️ Playwright not installed. JS-rendered gallery fallback disabled.");
 }
 
@@ -80,7 +79,11 @@ function safeJsonParse(str, fallback = null) {
   }
 }
 
+// ✅ Robust for OpenAI Responses API (handles different shapes)
 function getResponseText(response) {
+  if (!response) return "";
+  if (typeof response.output_text === "string") return response.output_text;
+  // older shape
   return response?.output?.[0]?.content?.[0]?.text || "";
 }
 
@@ -129,6 +132,7 @@ function isBlockedProxyTarget(urlStr) {
 
     if (host === "localhost" || host.endsWith(".localhost")) return true;
 
+    // block private IP ranges
     if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
       if (host.startsWith("127.")) return true;
       if (host.startsWith("10.")) return true;
@@ -159,7 +163,49 @@ function absUrl(base, maybeUrl) {
   }
 }
 
+// ======================================================
+// ✅ REQUIRED: srcset parser (WAS MISSING -> caused parseSrcset not defined)
+// ======================================================
+function parseSrcset(srcset) {
+  if (!srcset) return [];
+  return String(srcset)
+    .split(",")
+    .map((s) => s.trim().split(/\s+/)[0])
+    .filter(Boolean);
+}
 
+// ======================================================
+// Helpers — arrays / photos
+// ======================================================
+
+function uniqStrings(arr) {
+  if (!Array.isArray(arr)) return [];
+  return Array.from(new Set(arr.map((v) => String(v).trim()).filter(Boolean)));
+}
+
+/**
+ * Expand LaFontaine-style image sequences:
+ *  .../ip/1.jpg  → ip/1.jpg ... ip/24.jpg
+ */
+function expandIpSequence(urls, max = 24) {
+  if (!Array.isArray(urls) || !urls.length) return [];
+
+  const out = new Set(urls);
+
+  for (const url of urls) {
+    const match = String(url).match(/\/ip\/(\d+)\.(jpg|jpeg|png|webp)(\?.*)?$/i);
+    if (!match) continue;
+
+    const base = String(url).replace(/\/ip\/\d+\.(jpg|jpeg|png|webp)(\?.*)?$/i, "");
+    const ext = match[2];
+
+    for (let i = 1; i <= max; i++) {
+      out.add(`${base}/ip/${i}.${ext}`);
+    }
+  }
+
+  return Array.from(out);
+}
 
 // ======================================================
 // Image extraction (single copy)
@@ -325,56 +371,20 @@ async function scrapePage(url) {
 
 async function scrapePageRendered(url) {
   if (!playwright) throw new Error("Playwright not installed");
-
   const browser = await playwright.chromium.launch({ args: ["--no-sandbox"] });
   try {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "networkidle", timeout: 45000 });
-    // Give lazy galleries a moment
     await page.waitForTimeout(1500);
     return await page.content();
   } finally {
     await browser.close();
   }
 }
-// ======================================================
-// Helpers — arrays / photos
-// ======================================================
-
-/** Deduplicate string array safely */
-function uniqStrings(arr) {
-  if (!Array.isArray(arr)) return [];
-  return Array.from(new Set(arr.map(v => String(v).trim()).filter(Boolean)));
-}
-
-/**
- * Expand LaFontaine-style image sequences:
- *  .../ip/1.jpg  → ip/1.jpg ... ip/24.jpg
- */
-function expandIpSequence(urls, max = 24) {
-  if (!Array.isArray(urls) || !urls.length) return [];
-
-  const out = new Set(urls);
-
-  for (const url of urls) {
-    const match = url.match(/\/ip\/(\d+)\.(jpg|jpeg|png|webp)(\?.*)?$/i);
-    if (!match) continue;
-
-    const base = url.replace(/\/ip\/\d+\.(jpg|jpeg|png|webp)(\?.*)?$/i, "");
-    const ext = match[2];
-
-    for (let i = 1; i <= max; i++) {
-      out.add(`${base}/ip/${i}.${ext}`);
-    }
-  }
-
-  return Array.from(out);
-}
 
 // ======================================================
 // Routes
 // ======================================================
-
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // ---------- Image proxy ----------
@@ -436,37 +446,22 @@ app.post("/api/boost", async (req, res) => {
     let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
     photos = uniqStrings(photos);
 
-    console.log("📸 BOOST DEBUG:", {
-      staticCount: photos.length,
-      staticSample: photos.slice(0, 6),
-      hasPlaywright: typeof playwright !== "undefined" && !!playwright,
-    });
-
     // 2) Rendered fallback if too few photos (JS gallery / interiors)
-    if (photos.length < 10 && typeof playwright !== "undefined" && playwright) {
-      console.log("⚠️ Low photo count from static HTML. Trying rendered scrape…", photos.length);
-
-      console.log("🎬 Rendered scrape starting…");
+    if (photos.length < 10 && playwright) {
+      console.log("⚠️ Low static photo count. Trying rendered scrape…", photos.length);
       const renderedHtml = await scrapePageRendered(pageUrl);
       photos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
       photos = uniqStrings(photos);
-
-      console.log("🎬 Rendered scrape done:", {
-        renderedCount: photos.length,
-        renderedSample: photos.slice(0, 6),
-      });
     }
 
-    // ✅ LaFontaine / inventoryphotos "ip/" fix: expand to pull interior sequences too
-  
+    // ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
+    photos = expandIpSequence(photos, safeMax);
+    photos = uniqStrings(photos);
 
-    // 🎯 Final cap (ALWAYS last)
+    // 🎯 Final cap ALWAYS LAST
     photos = photos.slice(0, safeMax);
 
-    console.log("✅ BOOST FINAL PHOTOS:", {
-      count: photos.length,
-      sample: photos.slice(0, 10),
-    });
+    console.log("✅ BOOST FINAL:", { count: photos.length, sample: photos.slice(0, 10) });
 
     return res.json({ title, price, photos });
   } catch (err) {
@@ -476,7 +471,6 @@ app.post("/api/boost", async (req, res) => {
 });
 
 // ---------- ZIP download ----------
-
 app.post("/api/social-photos-zip", async (req, res) => {
   try {
     const urls = Array.isArray(req.body?.urls) ? req.body.urls.filter(Boolean) : [];
@@ -543,8 +537,9 @@ ${objection || "(none provided)"}
       ],
     });
 
-    const answer = (getResponseText(completion) || "").trim();
-    return res.json({ answer });
+    const reply = (getResponseText(completion) || "").trim() || "No response.";
+    // ✅ FRONTEND EXPECTS data.reply
+    return res.json({ reply });
   } catch (err) {
     return sendAIError(res, err, "Failed to coach objection.");
   }
@@ -587,8 +582,7 @@ app.post("/api/payment-helper", (req, res) => {
 // ---------- Income helper ----------
 app.post("/api/income-helper", (req, res) => {
   try {
-    const grossToDate =
-      Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
+    const grossToDate = Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
 
     const lastPayDateStr =
       req.body.lastPayDate ||
@@ -614,8 +608,7 @@ app.post("/api/income-helper", (req, res) => {
     const estimatedYearly = (grossToDate / weeksIntoYear) * 52;
     const estimatedMonthly = estimatedYearly / 12;
 
-    const formatMoney = (n) =>
-      `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    const formatMoney = (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
     return res.json({
       result: `Estimated Yearly Gross: ${formatMoney(estimatedYearly)} | Est Monthly: ${formatMoney(estimatedMonthly)}`
@@ -662,8 +655,6 @@ Output (Markdown):
 });
 
 // ---------- Message helper ----------
-// (keep your existing /api/message-helper route below this line)
-
 app.post("/api/message-helper", async (req, res) => {
   try {
     const body = req.body || {};
