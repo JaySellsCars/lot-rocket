@@ -376,14 +376,14 @@ function extractImageUrlsFromHtml(html, baseUrl) {
     });
   });
 
-  // Cleanup + filter + dedupe
-  const cleaned = candidates
-    .map(u => u.trim())
-    .filter(Boolean)
-    .filter(u => /\.(jpg|jpeg|png|webp)(\?|$)/i.test(u))
-    .filter(u => !/logo|sprite|icon|placeholder/i.test(u));
+// Cleanup + filter + dedupe (single FINAL return — keep only this once)
+const cleaned = candidates
+  .map((u) => String(u || "").trim())
+  .filter(Boolean)
+  .filter((u) => /\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u))
+  .filter((u) => !/logo|sprite|icon|placeholder|spacer|pixel|1x1/i.test(u));
 
-  return Array.from(new Set(cleaned));
+return Array.from(new Set(cleaned));
 }
 
 
@@ -391,12 +391,11 @@ function extractImageUrlsFromHtml(html, baseUrl) {
 // Scraping (static HTML path)
 // ======================================================
 async function scrapePage(url) {
-const res = await fetchWithTimeout(url, {}, 20000);
+  const res = await fetchWithTimeout(url, {}, 20000);
 
-if (!res.ok) {
-  throw new Error(`Failed to fetch URL: ${res.status}`);
-}
-
+  if (!res.ok) {
+    throw new Error(`Failed to fetch URL: ${res.status}`);
+  }
 
   const html = await res.text();
   const cheerio = require("cheerio");
@@ -442,10 +441,10 @@ if (!res.ok) {
 }
 
 
-
 // ======================================================
 // AI: Photo Processing (gpt-image-1)
 // ======================================================
+
 
 async function processSinglePhoto(photoUrl, vehicleLabel = "") {
   const prompt = `
