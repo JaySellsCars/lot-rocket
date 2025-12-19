@@ -16,7 +16,12 @@ body {
     sans-serif;
 }
 
-/* Dark background – current default look */
+/* Simple utility so modals start hidden */
+.hidden {
+  display: none !important;
+}
+
+/* Dark background – default look */
 body {
   background: radial-gradient(circle at top, #24104f 0, #050612 55%, #02030a 100%);
   color: #f5f5ff;
@@ -105,11 +110,11 @@ body {
   column-gap: 24px;
   row-gap: 24px;
 }
-/* Keep main content perfectly centered even when side modal is open */
-@media (min-width: 1280px) {
+
+/* keep main content from hiding under tools on large widths */
+@media (min-width: 1024px) {
   .layout {
-    margin-left: auto;
-    margin-right: auto;
+    padding-right: 220px;  /* space for the floating tool stack */
   }
 }
 
@@ -118,7 +123,7 @@ body {
   grid-area: step1;
 }
 
-/* Step 2 center / right */
+/* Step 2 center/right */
 .column-middle {
   grid-area: step2;
 }
@@ -245,7 +250,7 @@ textarea {
 
 .column-middle {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* two tall columns */
   grid-auto-rows: auto;
   gap: 16px;
 }
@@ -255,17 +260,22 @@ textarea {
   grid-column: 1 / -1;
 }
 
-/* Social cards themselves */
+/* Social cards – tall and skinny, text area fills card */
+.platform-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;    /* tall cards */
+}
+
 .platform-card h3 {
   margin: 0 0 6px;
   font-size: 14px;
 }
 
-/* Taller, scroll-free textareas for posts */
 .platform-card textarea {
-  width: 100%;
-  min-height: 260px;
-  max-height: none;
+  flex: 1;
+  min-height: 0;        /* let flexbox control height */
+  margin-top: 6px;
   line-height: 1.3;
 }
 
@@ -351,11 +361,11 @@ textarea {
   position: fixed;
   top: 76px;
   right: 24px;
-  width: 180px;
+  width: 190px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 30;
+  z-index: 150;
 }
 
 .tool-button {
@@ -366,13 +376,6 @@ textarea {
   font-size: 11px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* keep main content from hiding under tools on large widths */
-@media (min-width: 1024px) {
-  .layout {
-    padding-right: 220px;
-  }
 }
 
 /* =========================================================
@@ -386,7 +389,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 40;
+  z-index: 160;
 }
 
 .creative-overlay.hidden {
@@ -527,34 +530,34 @@ textarea {
 }
 
 /* =========================================================
-   SIDE MODALS – AI Tools (Objection Coach, Workflow, etc.)
+   SIDE MODALS – AI Tools (Objection Coach, etc.)
    ========================================================= */
 
-/* Outer modal container */
+/* Outer overlay for slide-over */
 .side-modal {
   position: fixed;
   top: 0;
   right: 0;
-  width: 380px;              /* was 360 – a bit wider */
+  bottom: 0;
+  width: 380px;
   max-width: 100%;
-  height: 100vh;
-  background: rgba(8, 10, 20, 0.98);
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);  /* stronger shadow so it feels "on top" */
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
   z-index: 200;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+/* Panel itself */
+.side-modal-content {
+  background: rgba(8, 10, 20, 0.98);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  width: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Inner scroll wrapper */
-.side-modal-inner {
-  flex: 1;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-/* Header bar */
 .side-modal-header {
   padding: 14px 16px;
   background: linear-gradient(90deg, #1e083b, #3b145c);
@@ -581,11 +584,12 @@ textarea {
   margin: 8px 0 12px;
 }
 
-/* Body */
+/* Scrollable body inside panel */
 .side-modal-body {
-  max-height: none !important;
-  overflow-y: visible !important;
-  padding-bottom: 30px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  padding-bottom: 24px;
 }
 
 .side-modal-body label {
@@ -597,6 +601,7 @@ textarea {
 
 .side-modal-body input[type="text"],
 .side-modal-body input[type="number"],
+.side-modal-body input[type="date"],
 .side-modal-body textarea {
   width: 100%;
   padding: 8px 10px;
@@ -607,13 +612,10 @@ textarea {
   font-size: 13px;
 }
 
-/* Auto-growing textareas in all AI modals */
+/* Auto-growing-ish textareas in AI modals */
 .side-modal-body textarea {
-  height: auto !important;
-  min-height: 180px;
-  max-height: none !important;
-  overflow: visible !important;
-  resize: vertical;
+  min-height: 160px;
+  max-height: none;
   line-height: 1.45;
 }
 
@@ -627,7 +629,7 @@ textarea {
 #carOutput,
 #imageOutput,
 #videoGenOutput {
-  min-height: 260px !important;
+  min-height: 260px;
 }
 
 /* Primary buttons inside modals */
@@ -635,16 +637,7 @@ textarea {
   width: 100%;
   margin-top: 12px;
   padding: 10px 0;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  color: #fff;
   font-size: 14px;
-  cursor: pointer;
-}
-
-.side-modal-body .primary-btn:hover {
-  filter: brightness(1.07);
 }
 
 /* Small helper text */
@@ -652,12 +645,9 @@ textarea {
   margin-top: 6px;
 }
 
-/* =========================================================
-   BASIC CALCULATOR STYLING (inside Calculator modal)
-   ========================================================= */
-
-.basic-calc-wrapper {
-  margin-top: 10px;
+/* Basic calculator frame */
+.basic-calc {
+  margin-top: 8px;
 }
 
 .basic-calc-display {
@@ -670,67 +660,6 @@ textarea {
   font-size: 16px;
   text-align: right;
   min-height: 32px;
-}
-
-.basic-calc-panel {
-  background: radial-gradient(circle at top left, #1b1f33 0, #050712 60%, #02030a 100%);
-  border-radius: 12px;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.basic-calc-panel button {
-  border-radius: 8px;
-  border: none;
-  padding: 8px 0;
-  font-size: 13px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.basic-calc-panel button:hover {
-  filter: brightness(1.1);
-}
-
-.basic-calc-panel button[data-calc="="] {
-  background: linear-gradient(90deg, #ff4b2b, #ff416c);
-  font-weight: 600;
-}
-
-.basic-calc-panel button[data-calc="C"],
-.basic-calc-panel button[data-calc="DEL"] {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* =========================================================
-   AI VIDEO GENERATION HELPER – SPECIAL FIXES
-   ========================================================= */
-
-/* Make the Video Generation Helper body scroll instead of
-   letting content cover the Copy button */
-#videoGenModal .side-modal-body {
-  max-height: calc(100vh - 72px);
-  overflow-y: auto;
-  padding-bottom: 18px;
-}
-
-/* Ensure its textareas grow but stop before the button row */
-#videoGenModal #videoGenPrompt,
-#videoGenModal #videoGenOutput {
-  height: auto !important;
-  min-height: 160px;
-  max-height: none !important;
-  overflow-y: visible !important;
-  margin-bottom: 10px;
-}
-
-/* Give the Copy Brief row a bit of breathing room */
-#videoGenModal .btn-row {
-  margin-top: 4px;
 }
 
 /* =========================================================
@@ -767,6 +696,7 @@ textarea {
   }
 
   .side-modal {
+    left: 0;
     width: 100%;
   }
 }
