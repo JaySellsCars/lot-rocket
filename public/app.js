@@ -55,6 +55,13 @@ function parseSrcset(srcset) {
     .map(s => s.trim().split(/\s+/)[0])
     .filter(Boolean);
 }
+function parseSrcset(srcset) {
+  if (!srcset) return [];
+  return String(srcset)
+    .split(",")
+    .map(s => s.trim().split(/\s+/)[0])
+    .filter(Boolean);
+}
 
   function capMax(arr, max = MAX_PHOTOS) {
     return Array.isArray(arr) ? arr.slice(0, max) : [];
