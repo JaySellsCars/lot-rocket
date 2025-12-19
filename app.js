@@ -446,13 +446,21 @@ app.post("/api/boost", async (req, res) => {
     let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
     photos = uniqStrings(photos);
 
-    // 2) Rendered fallback if too few photos (JS gallery / interiors)
-    if (photos.length < 10 && playwright) {
-      console.log("⚠️ Low static photo count. Trying rendered scrape…", photos.length);
-      const renderedHtml = await scrapePageRendered(pageUrl);
-      photos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
-      photos = uniqStrings(photos);
+// 2) Rendered supplement (JS gallery / interiors) — MERGE, don’t replace
+if (playwright) {
+  try {
+    console.log("🎭 Rendered scrape merge (interiors). Static count:", photos.length);
+    const renderedHtml = await scrapePageRendered(pageUrl);
+    const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
+
+    if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
+      photos = uniqStrings([].concat(photos, renderedPhotos));
     }
+  } catch (e) {
+    console.log("Rendered scrape failed:", e && e.message ? e.message : e);
+  }
+}
+
 
 // ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
 photos = expandIpSequence(photos, safeMax);
