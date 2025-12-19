@@ -429,13 +429,22 @@ function uniqCleanCap(arr, cap) {
         maxPhotos: MAX_PHOTOS,
       };
 
-      const data = await postJSON(`${apiBase}/api/boost`, payload);
-const data = await res.json();
+const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-      const title = data?.title || data?.vehicle || "";
-      const price = data?.price || "";
-      const photos = Array.isArray(data?.photos) ? data.photos : [];
-console.log("🧪 BOOST backend photos count =", photos.length, photos.slice(0, 5));
+const imageUrls =
+  data?.imageUrls ||
+  data?.photos ||
+  data?.images ||
+  [];
+
+renderStep1Photos(imageUrls);
+
+const title = data?.title || data?.vehicle || "";
+const price = data?.price || "";
+const photos = Array.isArray(data?.photos) ? data.photos : [];
+
+console.log("🚀 BOOST backend photos count =", photos.length, photos.slice(0, 5));
+
 
       // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
       const domPhotos = extractPhotoUrlsFromDom();
