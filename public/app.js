@@ -227,26 +227,37 @@ window.document.addEventListener("DOMContentLoaded", () => {
     return urls;
   }
 
-  function normalizeUrl(u) {
-    u = (typeof u === "string" ? u.trim() : "");
-    if (!u) return "";
+function normalizeUrl(input) {
+  if (!input) return "";
+  var u = ("" + input).trim();
+  if (!u) return "";
 
-    if (u.startsWith("//")) u = location.protocol + u;
+  // Keep blob/object URLs as-is
+  if (u.indexOf("blob:") === 0) return u;
+  if (u.indexOf("data:") === 0) return u;
 
-    const bad = ["placeholder", "spacer", "blank", "1x1", "pixel", "transparent"];
-    if (bad.some((k) => u.toLowerCase().includes(k))) return "";
-
-    try {
-      const url = new URL(u);
-      ["w","width","h","height","q","quality","dpr","fit","crop","cb","cache","v","ver","version","sig"].forEach((p) =>
-        url.searchParams.delete(p)
-      );
-      url.hash = "";
-      return url.toString();
-    } catch {
-      return u;
-    }
+  // Strip wrapping quotes
+  if ((u[0] === '"' && u[u.length - 1] === '"') || (u[0] === "'" && u[u.length - 1] === "'")) {
+    u = u.slice(1, -1).trim();
   }
+
+  // Normalize protocol-relative
+  if (u.indexOf("//") === 0) u = "https:" + u;
+
+  try {
+    var url = new URL(u, window.location.href);
+
+    // Remove tracking params ONLY
+    var kill = ["utm_source","utm_medium","utm_campaign","utm_term","utm_content","fbclid","gclid"];
+    for (var i = 0; i < kill.length; i++) url.searchParams.delete(kill[i]);
+
+    // Keep query string (important for photo uniqueness)
+    return url.origin + url.pathname + (url.search ? url.search : "");
+  } catch (e) {
+    return u;
+  }
+}
+
 
   function dedupeKey(u) {
     u = normalizeUrl(u);
@@ -259,25 +270,7 @@ window.document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function uniqCleanCap(urls, cap) {
-    const list = Array.isArray(urls) ? urls : [];
-    const out = [];
-    const seen = new Set();
-    const lim = Number.isFinite(cap) ? cap : MAX_PHOTOS;
 
-    for (const raw of list) {
-      const u = normalizeUrl(raw);
-      if (!u || u.length < 8) continue;
-
-      const key = dedupeKey(u);
-      if (!key || seen.has(key)) continue;
-
-      seen.add(key);
-      out.push(u);
-      if (out.length >= lim) break;
-    }
-    return out;
-  }
 
   function setBtnLoading(btn, isLoading, label) {
     if (!btn) return;
