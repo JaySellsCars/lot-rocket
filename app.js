@@ -388,38 +388,49 @@ function extractImageUrlsFromHtml(html, baseUrl) {
 
 
 // ======================================================
-// Scraping (single path)
+// Scraping (static HTML path)
 // ======================================================
 async function scrapePage(url) {
   const res = await fetchWithTimeout(url, {}, 20000);
-  if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch URL: ${res.status}`);
+  }
 
   const html = await res.text();
+  const cheerio = require("cheerio");
+  const $ = cheerio.load(html);
 
-  // Basic title (keep your existing logic if you already do better)
-  const $ = require("cheerio").load(html);
-  const title =
-    ($("meta[property='og:title']").attr("content") ||
-      $("meta[name='twitter:title']").attr("content") ||
-      $("title").text() ||
-      "")
-      .trim();
+  // -----------------------------
+  // Title
+  // -----------------------------
+  const title = (
+    $("meta[property='og:title']").attr("content") ||
+    $("meta[name='twitter:title']").attr("content") ||
+    $("title").text() ||
+    ""
+  ).trim();
 
-  // Price (optional — depends on site)
-  const price =
-    ($("meta[property='product:price:amount']").attr("content") ||
-      $("meta[property='og:price:amount']").attr("content") ||
-      $("meta[itemprop='price']").attr("content") ||
-      "")
-      .trim();
+  // -----------------------------
+  // Price (best-effort)
+  // -----------------------------
+  const price = (
+    $("meta[property='product:price:amount']").attr("content") ||
+    $("meta[property='og:price:amount']").attr("content") ||
+    $("meta[itemprop='price']").attr("content") ||
+    ""
+  ).trim();
 
-  // ✅ The important part: pull image URLs from many sources
+  // -----------------------------
+  // Photos (static HTML scrape)
+  // -----------------------------
   const photos = extractImageUrlsFromHtml(html, url).slice(0, 24);
 
-  // Debug logging (TEMPORARY but very useful right now)
+  // -----------------------------
+  // Debug (TEMP — remove later)
+  // -----------------------------
   console.log("SCRAPE DEBUG:", {
     url,
-    titleLen: title.length,
+    titleLength: title.length,
     price,
     photosFound: photos.length,
     sample: photos.slice(0, 5),
@@ -427,6 +438,7 @@ async function scrapePage(url) {
 
   return { title, price, photos };
 }
+
 
 
 // ======================================================
