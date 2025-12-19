@@ -424,6 +424,7 @@ console.log("🧪 BOOST backend photos count =", photos.length, photos.slice(0, 
 console.log("🧪 BOOST dom photos count =", domPhotos.length, domPhotos.slice(0, 5));
 
       STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
+console.log("🧪 BOOST merged photos count =", STORE.lastBoostPhotos.length);
 
       STORE.lastTitle = title;
       STORE.lastPrice = price;
