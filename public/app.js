@@ -398,7 +398,7 @@ function renderStep1Photos(urls) {
     btn.style.background = "#0b1120";
     btn.style.padding = "0";
     btn.style.cursor = "pointer";
-    btn.style.opacity = item.selected ? "1" : "0.45"; // brighter default than 0.35
+btn.style.opacity = "1";
 
     const img = DOC.createElement("img");
     img.src = src;
