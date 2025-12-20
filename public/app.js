@@ -73,32 +73,33 @@ let imageUrls = [];
   }
   pick.dataset.wired = "true";
 
-  pick.addEventListener(
-    "click",
-    async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+pick.addEventListener(
+  "click",
+  async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      console.log("🟢 BOOST CLICKED:", pick.id);
+    console.log("🟢 BOOST CLICKED:", pick.id);
 
-      // Overlay test (runs on click)
-      const r = pick.getBoundingClientRect();
-      const topEl = DOC.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      console.log(
-        "🧱 Element on top of Boost:",
-        topEl ? (topEl.id ? `#${topEl.id}` : topEl.tagName) : "NONE",
-        topEl
-      );
+    // 👇 THIS is the tail you sent — it is clean and valid
+    const r = pick.getBoundingClientRect();
+    const topEl = DOC.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    console.log(
+      "🧱 Element on top of Boost:",
+      topEl ? (topEl.id ? `#${topEl.id}` : topEl.tagName) : "NONE",
+      topEl
+    );
 
-      try {
-        await boostListing();
-        console.log("🟢 boostListing finished");
-      } catch (err) {
-        console.error("❌ boostListing error:", err);
-      }
-    },
-    true
-  );
+    try {
+      await boostListing();
+      console.log("🟢 boostListing finished");
+    } catch (err) {
+      console.error("❌ boostListing error:", err);
+    }
+  },
+  true
+);
+
 
   console.log("✅ Boost wired (pick):", pick.id);
 })();
