@@ -27,6 +27,7 @@ const boostBtn = boostIds.map(id => DOC.getElementById(id)).find(Boolean);
 
 console.log("🔎 Boost btn found:", boostBtn ? `#${boostBtn.id}` : "NONE");
 
+
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
 
