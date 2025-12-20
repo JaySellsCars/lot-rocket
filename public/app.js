@@ -237,9 +237,10 @@ pick.addEventListener(
 // BOOST ACTION (REQUIRED) — backend call + render Step 1
 // ==================================================
 function extractBoostPhotosFromResponse(data) {
-  const arr = data?.imageUrls || data?.photos || data?.images || [];
+  const arr = data?.photos || data?.imageUrls || data?.images || [];
   return Array.isArray(arr) ? arr : [];
 }
+
 
 function extractBoostTitleFromResponse(data) {
   return data?.title || data?.vehicle || data?.name || "";
