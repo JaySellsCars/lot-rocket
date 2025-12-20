@@ -432,19 +432,19 @@ function uniqCleanCap(arr, cap) {
 
 const data = await postJSON(`${apiBase}/api/boost`, payload);
 
-const imageUrls =
+const title = data?.title || data?.vehicle || "";
+const price = data?.price || "";
+
+const backendPhotos =
   data?.imageUrls ||
   data?.photos ||
   data?.images ||
   [];
 
-renderStep1Photos(imageUrls);
-
-const title = data?.title || data?.vehicle || "";
-const price = data?.price || "";
-const photos = Array.isArray(data?.photos) ? data.photos : [];
+const photos = Array.isArray(backendPhotos) ? backendPhotos : [];
 
 console.log("🚀 BOOST backend photos count =", photos.length, photos.slice(0, 5));
+
 
 
       // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
@@ -466,7 +466,8 @@ console.log("🧪 BOOST merged photos count =", STORE.lastBoostPhotos.length);
       console.log("✅ Boost complete", { title, price, photos: STORE.lastBoostPhotos.length });
     } catch (e) {
       console.error("❌ Boost failed:", e);
-      alert(e?.message || "Boost failed.");
+  
+
     } finally {
       setBtnLoading(boostBtn, false);
     }
