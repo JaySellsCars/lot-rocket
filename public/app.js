@@ -299,6 +299,73 @@ let imageUrls = [];
         if (pick) urls.push(pick);
       }
     });
+// ==================================================
+// BOOST ACTION (REQUIRED) — calls backend and renders Step 1 grid
+// ==================================================
+function extractBoostPhotosFromResponse(data) {
+  const arr = data?.imageUrls || data?.photos || data?.images || [];
+  return Array.isArray(arr) ? arr : [];
+}
+
+function getBoostTitleFromResponse(data) {
+  return data?.title || data?.vehicle || data?.name || "";
+}
+
+function getBoostPriceFromResponse(data) {
+  return data?.price || data?.msrp || data?.internetPrice || "";
+}
+
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) return alert("Paste a dealer URL first.");
+
+  if (!boostBtn) return alert("Boost button not found.");
+
+  setBtnLoading(boostBtn, true, "Boosting…");
+
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
+
+    console.log("🚀 Boost payload:", payload);
+
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+    const title = getBoostTitleFromResponse(data);
+    const price = getBoostPriceFromResponse(data);
+    const photos = extractBoostPhotosFromResponse(data);
+
+    // Merge with any DOM images we can see (safe)
+    const domPhotos = (typeof extractPhotoUrlsFromDom === "function")
+      ? (extractPhotoUrlsFromDom() || [])
+      : [];
+
+    const merged = [
+      ...(Array.isArray(photos) ? photos : []),
+      ...(Array.isArray(domPhotos) ? domPhotos : []),
+    ];
+
+    STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
+    STORE.lastTitle = title;
+    STORE.lastPrice = price;
+
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    renderStep1Photos(STORE.lastBoostPhotos);
+
+    console.log("✅ Boost complete", { count: STORE.lastBoostPhotos.length });
+  } catch (e) {
+    console.error("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    setBtnLoading(boostBtn, false);
+  }
+}
 
     DOC.querySelectorAll("[style*='background']").forEach((el) => {
       const style = el.getAttribute("style") || "";
