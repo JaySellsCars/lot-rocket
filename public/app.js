@@ -574,26 +574,7 @@ function sendSelectedToCreative() {
   }
 }
 
-    const check = DOC.createElement("span");
-    check.className = "photo-check";
-    check.textContent = "✓";
-    check.style.position = "absolute";
-    check.style.top = "6px";
-    check.style.right = "6px";
-    check.style.width = "18px";
-    check.style.height = "18px";
-    check.style.borderRadius = "999px";
-    check.style.background = "rgba(0,0,0,.55)";
-    check.style.color = "#fff";
-    check.style.fontSize = "12px";
-    check.style.lineHeight = "18px";
-    check.style.textAlign = "center";
-    check.style.display = item.selected ? "block" : "none";
-
-    btn.appendChild(img);
-    btn.appendChild(check);
-    photosGridEl.appendChild(btn);
-  });
+   
 
   photosGridEl.onclick = (e) => {
     const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
