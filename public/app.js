@@ -499,82 +499,104 @@ function uniqCleanCap(arr, cap) {
 
 
 
-      // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
-      const domPhotos = extractPhotoUrlsFromDom();
-      const merged = [...photos, ...domPhotos];
-console.log("🧪 BOOST dom photos count =", domPhotos.length, domPhotos.slice(0, 5));
+// ==================================================
+// BOOST FLOW — MERGE + RENDER + WIRING (CLEAN)
+// ==================================================
 
-      STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
-console.log("🧪 BOOST merged photos count =", STORE.lastBoostPhotos.length);
+try {
+  // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
+  const domPhotos = (typeof extractPhotoUrlsFromDom === "function")
+    ? (extractPhotoUrlsFromDom() || [])
+    : [];
 
-      STORE.lastTitle = title;
-      STORE.lastPrice = price;
+  console.log("🧪 BOOST dom photos count =", domPhotos.length, domPhotos.slice(0, 5));
 
-      if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-      if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+  const merged = [
+    ...(Array.isArray(photos) ? photos : []),
+    ...(Array.isArray(domPhotos) ? domPhotos : []),
+  ];
 
-      renderStep1Photos(STORE.lastBoostPhotos);
+  STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
 
-      console.log("✅ Boost complete", { title, price, photos: STORE.lastBoostPhotos.length });
-    } catch (e) {
-      console.error("❌ Boost failed:", e);
-  
+  console.log("🧪 BOOST merged photos count =", STORE.lastBoostPhotos.length);
 
-    } finally {
-      setBtnLoading(boostBtn, false);
+  STORE.lastTitle = title;
+  STORE.lastPrice = price;
+
+  if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+  if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+  renderStep1Photos(STORE.lastBoostPhotos);
+
+  console.log("✅ Boost complete", {
+    title,
+    price,
+    photos: STORE.lastBoostPhotos.length,
+  });
+} catch (e) {
+  console.error("❌ Boost failed:", e);
+} finally {
+  if (typeof setBtnLoading === "function" && boostBtn) {
+    setBtnLoading(boostBtn, false);
+  }
+}
+
+// ==================================================
+// BOOST BUTTON — WIRE ONCE
+// ==================================================
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+  boostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    boostListing(); // capital L — required
+  });
+}
+
+// ==================================================
+// SEND SELECTED TO CREATIVE (STEP 3)
+// ==================================================
+function sendSelectedToCreative() {
+  setBtnLoading(sendTopBtn, true, "Sending…");
+
+  try {
+    const selected = getSelectedStep1Urls(MAX_PHOTOS);
+    if (!selected.length) {
+      console.warn("No photos selected.");
+      return;
     }
+
+    const deduped = uniqCleanCap(selected, MAX_PHOTOS);
+
+    STORE.creativePhotos = deduped;
+    STORE.designStudioPhotos = deduped;
+    STORE.socialReadyPhotos = deduped.map((u) => ({
+      url: u,
+      originalUrl: u,
+      selected: true,
+      locked: false,
+    }));
+
+    normalizeSocialReady();
+    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+
+    console.log("✅ Sent to Step 3", { count: deduped.length });
+  } catch (e) {
+    console.error("❌ Send to Step 3 failed:", e);
+  } finally {
+    setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
   }
+}
 
-  if (boostBtn && boostBtn.dataset.wired !== "true") {
-    boostBtn.dataset.wired = "true";
-    boostBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      boostListing();
-    });
-  }
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sendSelectedToCreative();
+  });
+}
 
-  function sendSelectedToCreative() {
-    setBtnLoading(sendTopBtn, true, "Sending…");
-
-    try {
-      const selected = getSelectedStep1Urls(MAX_PHOTOS);
-      if (!selected.length) {
-        alert("Select at least 1 photo first.");
-        return;
-      }
-
-      const deduped = uniqCleanCap(selected, MAX_PHOTOS);
-
-      STORE.creativePhotos = deduped;
-      STORE.designStudioPhotos = deduped;
-      STORE.socialReadyPhotos = deduped.map((u) => ({
-        url: u,
-        originalUrl: u,
-        selected: true,
-        locked: false,
-      }));
-
-      normalizeSocialReady();
-      if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-      if (typeof renderSocialStrip === "function") renderSocialStrip();
-      if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
-
-      console.log("✅ Sent to Step 3", { count: deduped.length });
-    } catch (e) {
-      console.error("❌ Send to Step 3 failed:", e);
-      
-    } finally {
-      setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
-    }
-  }
-
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-    sendTopBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      sendSelectedToCreative();
-    });
-  }
 
   // ==================================================
   // FINAL INIT (Safe boot) — SINGLE COPY ONLY
