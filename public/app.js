@@ -545,6 +545,24 @@ async function boostListing() {
     setBtnLoading(boostBtn, false);
   }
 }
+// ---------- Wire buttons ONCE ----------
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+  boostBtn.type = "button";
+  boostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    boostListing();
+  });
+}
+
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.type = "button";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sendSelectedToCreative();
+  });
+}
 
 // ---------- Send selected to Step 3 ----------
 function sendSelectedToCreative() {
