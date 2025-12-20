@@ -588,11 +588,11 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 
 
 // ==================================================
-// FINAL INIT (Safe boot) — SINGLE COPY ONLY
+// FINAL INIT (SAFE BOOT)
 // ==================================================
 try {
   console.log("✅ FINAL INIT REACHED");
 } catch (e) {
   console.error("Final init failed:", e);
 }
-}); // ✅ closes DOMContentLoaded
+}); // ✅ closes DOMContentLoaded — DO NOT ADD ANYTHING AFTER THIS
