@@ -18,6 +18,39 @@ window.document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
 let imageUrls = [];
+// ===============================
+// BOOST BUTTON — DEAD BUTTON FIX
+// ===============================
+const boostIds = ["boostThisListingBtn", "boostListingBtn", "boostThisListing", "boostButton"];
+const boostBtn = boostIds.map(id => DOC.getElementById(id)).find(Boolean);
+
+
+console.log("🔎 Boost btn found:", boostBtn ? `#${boostBtn.id}` : "NONE");
+
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+
+  boostBtn.style.pointerEvents = "auto";
+  boostBtn.style.cursor = "pointer";
+  boostBtn.setAttribute("type", "button");
+  boostBtn.onclick = null;
+
+  boostBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log("🟢 BOOST CLICKED");
+
+    try {
+      await boostListing();
+      console.log("🟢 boostListing finished");
+    } catch (err) {
+      console.error("❌ boostListing error:", err);
+    }
+  });
+
+  console.log("✅ Boost wired:", boostBtn.id);
+}
 
   // ==================================================
   // CORE CONSTANTS + SINGLE GLOBAL STORE
