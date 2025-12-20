@@ -19,28 +19,48 @@ window.document.addEventListener("DOMContentLoaded", () => {
   const apiBase = "";
 let imageUrls = [];
 // ===============================
-// BOOST BUTTON — DEAD BUTTON FIX
+// BOOST BUTTON — BULLETPROOF WIRE
 // ===============================
-const boostIds = ["boostThisListingBtn", "boostListingBtn", "boostThisListing", "boostButton"];
-const boostBtn = boostIds.map(id => DOC.getElementById(id)).find(Boolean);
+(function wireBoostBulletproof() {
+  const ids = ["boostThisListingBtn", "boostListingBtn", "boostThisListing", "boostButton"];
 
+  // collect ALL matches (in case duplicates exist)
+  const candidates = ids.flatMap((id) => Array.from(DOC.querySelectorAll(`#${CSS.escape(id)}`)));
 
-console.log("🔎 Boost btn found:", boostBtn ? `#${boostBtn.id}` : "NONE");
+  // pick the first one that is actually visible/clickable
+  const pick = candidates.find((el) => {
+    const r = el.getBoundingClientRect();
+    const visible = r.width > 0 && r.height > 0;
+    const notHidden = !!(el.offsetParent || el.getClientRects().length);
+    return visible && notHidden;
+  }) || null;
 
+  console.log("🔎 Boost candidates:", candidates.map(e => `#${e.id}`).join(", ") || "NONE");
+  console.log("🔎 Boost picked:", pick ? `#${pick.id}` : "NONE");
 
-if (boostBtn && boostBtn.dataset.wired !== "true") {
-  boostBtn.dataset.wired = "true";
+  if (!pick) return;
 
-  boostBtn.style.pointerEvents = "auto";
-  boostBtn.style.cursor = "pointer";
-  boostBtn.setAttribute("type", "button");
-  boostBtn.onclick = null;
+  // Force it clickable
+  pick.disabled = false;
+  pick.removeAttribute("disabled");
+  pick.removeAttribute("aria-disabled");
+  pick.style.pointerEvents = "auto";
+  pick.style.cursor = "pointer";
+  pick.style.position = pick.style.position || "relative";
+  pick.style.zIndex = "9999";
 
-  boostBtn.addEventListener("click", async (e) => {
+  // Wire once
+  if (pick.dataset.wired === "true") {
+    console.log("ℹ️ Boost already wired:", pick.id);
+    return;
+  }
+  pick.dataset.wired = "true";
+
+  pick.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    console.log("🟢 BOOST CLICKED");
+    console.log("🟢 BOOST CLICKED:", pick.id);
 
     try {
       await boostListing();
@@ -48,10 +68,16 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
     } catch (err) {
       console.error("❌ boostListing error:", err);
     }
-  });
+  }, true);
 
-  console.log("✅ Boost wired:", boostBtn.id);
-}
+  console.log("✅ Boost wired:", pick.id);
+
+  // Overlay test: what's actually on top of the button?
+  const r = pick.getBoundingClientRect();
+  const topEl = DOC.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  console.log("🧱 Element on top of Boost:", topEl ? (topEl.id ? `#${topEl.id}` : topEl.tagName) : "NONE", topEl);
+})();
+
 
   // ==================================================
   // CORE CONSTANTS + SINGLE GLOBAL STORE
