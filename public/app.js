@@ -81,7 +81,7 @@ pick.addEventListener(
 
     console.log("🟢 BOOST CLICKED:", pick.id);
 
-    // 👇 THIS is the tail you sent — it is clean and valid
+    // Overlay test (runs on click)
     const r = pick.getBoundingClientRect();
     const topEl = DOC.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     console.log(
@@ -99,6 +99,7 @@ pick.addEventListener(
   },
   true
 );
+
 
 
   console.log("✅ Boost wired (pick):", pick.id);
