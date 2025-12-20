@@ -343,19 +343,42 @@ async function boostListing() {
 
 
 
-    DOC.querySelectorAll("[style*='background']").forEach((el) => {
-      const style = el.getAttribute("style") || "";
-      const m = style.match(/background-image\s*:\s*url\(["']?(.*?)["']?\)/i);
-      if (m && m[1]) urls.push(m[1]);
-    });
+function extractPhotoUrlsFromDom() {
+  const urls = [];
 
-    DOC.querySelectorAll("a[href]").forEach((a) => {
-      const href = a.getAttribute("href") || "";
-      if (/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(href)) urls.push(href);
-    });
+  DOC.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src");
+    const d1 = img.getAttribute("data-src");
+    const d2 = img.getAttribute("data-lazy");
+    const d3 = img.getAttribute("data-original");
+    const srcset = img.getAttribute("srcset");
 
-    return urls;
-  }
+    if (d1) urls.push(d1);
+    if (d2) urls.push(d2);
+    if (d3) urls.push(d3);
+    if (src) urls.push(src);
+
+    if (srcset) {
+      const parsed = parseSrcset(srcset);
+      const pick = parsed[parsed.length - 1];
+      if (pick) urls.push(pick);
+    }
+  });
+
+  DOC.querySelectorAll("[style*='background']").forEach((el) => {
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/background-image\s*:\s*url\(["']?(.*?)["']?\)/i);
+    if (m && m[1]) urls.push(m[1]);
+  });
+
+  DOC.querySelectorAll("a[href]").forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    if (/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(href)) urls.push(href);
+  });
+
+  return urls;
+}
+
 
 function normalizeUrl(input) {
   if (!input) return "";
