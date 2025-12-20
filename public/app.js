@@ -611,21 +611,8 @@ function sendSelectedToCreative() {
 
    
 
-  photosGridEl.onclick = (e) => {
-    const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
-    if (!btnEl) return;
 
-    const idx = Number(btnEl.getAttribute("data-i"));
-    const item = STORE.step1Photos[idx];
-    if (!item || item.dead) return;
 
-    item.selected = !item.selected;
-
-    btnEl.style.opacity = item.selected ? "1" : "0.45";
-    const check = btnEl.querySelector(".photo-check");
-    if (check) check.style.display = item.selected ? "block" : "none";
-  };
-} // ✅ END renderStep1Photos()
 
 
 
