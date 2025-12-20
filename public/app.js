@@ -587,15 +587,16 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 }
 
 
-// ==================================================
+// ===============================
 // FINAL INIT (SAFE BOOT) — SINGLE COPY ONLY
-// ==================================================
+// ===============================
 try {
   console.log("✅ FINAL INIT REACHED");
 
   if (typeof renderStep1Photos === "function" && Array.isArray(STORE?.lastBoostPhotos)) {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
+
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
