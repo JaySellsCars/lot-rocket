@@ -587,21 +587,12 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 }
 
 
-  // ==================================================
-  // FINAL INIT (Safe boot) — SINGLE COPY ONLY
-  // ==================================================
-  try {
-    normalizeSocialReady();
-
-    // ✅ Step 1 should NOT render creativePhotos. It renders boosted photos.
-    renderStep1Photos(STORE.lastBoostPhotos || []);
-
-    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-    if (typeof wireObjectionCoach === "function") wireObjectionCoach();
-
-    console.log("FINAL INIT REACHED");
-  } catch (e) {
-    console.log("Final init failed:", e);
-  }
-});
+// ==================================================
+// FINAL INIT (Safe boot) — SINGLE COPY ONLY
+// ==================================================
+try {
+  console.log("✅ FINAL INIT REACHED");
+} catch (e) {
+  console.error("Final init failed:", e);
+}
+}); // ✅ closes DOMContentLoaded
