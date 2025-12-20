@@ -509,6 +509,7 @@ function uniqCleanCap(arr, cap) {
 
 
 
+try {
   const merged = [
     ...(Array.isArray(photos) ? photos : []),
     ...(Array.isArray(domPhotos) ? domPhotos : []),
@@ -538,6 +539,7 @@ function uniqCleanCap(arr, cap) {
     setBtnLoading(boostBtn, false);
   }
 }
+
 
 
 
