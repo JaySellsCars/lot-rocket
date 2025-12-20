@@ -510,7 +510,7 @@ console.log("🧪 BOOST merged photos count =", STORE.lastBoostPhotos.length);
       console.log("✅ Sent to Step 3", { count: deduped.length });
     } catch (e) {
       console.error("❌ Send to Step 3 failed:", e);
-      alert(e?.message || "Send failed.");
+      
     } finally {
       setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
     }
