@@ -318,30 +318,42 @@ async function boostListing() {
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
 
-  // ==================================================
-  // STEP 1 — BOOST + PHOTO GRID (SINGLE SOURCE)
-  // ==================================================
-  const dealerUrlInput = $("dealerUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceOfferInput = $("priceOffer");
+// ==================================================
+// STEP 1 — BOOST + PHOTO GRID (SINGLE COPY ONLY)
+// ==================================================
+const dealerUrlInput = $("dealerUrl");
+const vehicleLabelInput = $("vehicleLabel");
+const priceOfferInput = $("priceOffer");
 
-  const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
+const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
+const sendTopBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendPhotosToCreative") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendPhotosToCreativeLab") ||
+  $("sendTopPhotosToDesignStudio") ||
+  $("sendPhotosToStudio") ||
+  $("sendPhotosToDesignStudio");
 
-  const sendTopBtn =
-    $("sendTopPhotosBtn") ||
-    $("sendPhotosToCreative") ||
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendPhotosToCreativeLab") ||
-    $("sendTopPhotosToDesignStudio") ||
-    $("sendPhotosToStudio") ||
-    $("sendPhotosToDesignStudio");
+const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+const photosGridEl = $("photosGrid");
 
-  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
-  const photosGridEl = $("photosGrid");
-
-
+// ---------- helpers ----------
+function setBtnLoading(btn, isLoading, label) {
+  if (!btn) return;
+  if (isLoading) {
+    if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+    btn.textContent = label || "Working…";
+    btn.disabled = true;
+    btn.classList.add("btn-loading");
+  } else {
+    btn.textContent = btn.dataset.originalText || btn.textContent;
+    btn.disabled = false;
+    btn.classList.remove("btn-loading");
+  }
+}
 
 function extractPhotoUrlsFromDom() {
   const urls = [];
@@ -358,7 +370,7 @@ function extractPhotoUrlsFromDom() {
     if (d3) urls.push(d3);
     if (src) urls.push(src);
 
-    if (srcset) {
+    if (srcset && typeof parseSrcset === "function") {
       const parsed = parseSrcset(srcset);
       const pick = parsed[parsed.length - 1];
       if (pick) urls.push(pick);
@@ -379,76 +391,28 @@ function extractPhotoUrlsFromDom() {
   return urls;
 }
 
-
-function normalizeUrl(input) {
-  if (!input) return "";
-  var u = ("" + input).trim();
-  if (!u) return "";
-
-  // Keep blob/object URLs as-is
-  if (u.indexOf("blob:") === 0) return u;
-  if (u.indexOf("data:") === 0) return u;
-
-  // Strip wrapping quotes
-  if ((u[0] === '"' && u[u.length - 1] === '"') || (u[0] === "'" && u[u.length - 1] === "'")) {
-    u = u.slice(1, -1).trim();
-  }
-
-  // Normalize protocol-relative
-  if (u.indexOf("//") === 0) u = "https:" + u;
-
-  try {
-    var url = new URL(u, window.location.href);
-
-    // Remove tracking params ONLY
-    var kill = ["utm_source","utm_medium","utm_campaign","utm_term","utm_content","fbclid","gclid"];
-    for (var i = 0; i < kill.length; i++) url.searchParams.delete(kill[i]);
-
-    // Keep query string (important for photo uniqueness)
-    return url.origin + url.pathname + (url.search ? url.search : "");
-  } catch (e) {
-    return u;
-  }
+function extractBoostPhotosFromResponse(data) {
+  // BACKEND RETURNS: { title, price, photos }
+  const arr = data?.photos || data?.imageUrls || data?.images || [];
+  return Array.isArray(arr) ? arr : [];
+}
+function extractBoostTitleFromResponse(data) {
+  return data?.title || data?.vehicle || data?.name || "";
+}
+function extractBoostPriceFromResponse(data) {
+  return data?.price || data?.msrp || data?.internetPrice || "";
 }
 
+// Step 1 selection model: STORE.step1Photos = [{url, selected, dead}]
+STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
 
-  function dedupeKey(u) {
-    u = normalizeUrl(u);
-    if (!u) return "";
-    try {
-      const url = new URL(u);
-      return (url.origin + url.pathname).toLowerCase();
-    } catch {
-      return u.toLowerCase();
-    }
-  }
-
-
-
-  function setBtnLoading(btn, isLoading, label) {
-    if (!btn) return;
-    if (isLoading) {
-      if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
-      btn.textContent = label || "Working…";
-      btn.classList.add("btn-loading");
-      btn.disabled = true;
-    } else {
-      btn.textContent = btn.dataset.originalText || btn.textContent;
-      btn.classList.remove("btn-loading");
-      btn.disabled = false;
-    }
-  }
-
-  function setStep1FromUrls(urls) {
-    const clean = uniqCleanCap(urls, MAX_PHOTOS);
-    const prev = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-    const prevMap = new Map(prev.map((p) => [p?.url, !!p?.selected]));
-    STORE.step1Photos = clean.map((u) => ({
-      url: u,
-      selected: prevMap.get(u) || false,
-      dead: false
-    }));
-  }
+function setStep1FromUrls(urls) {
+  const clean = (typeof uniqCleanCap === "function") ? uniqCleanCap(urls, MAX_PHOTOS) : (urls || []).slice(0, MAX_PHOTOS);
+  const prev = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+  const prevSel = new Map(prev.map((p) => [p?.url, !!p?.selected]));
+  STORE.step1Photos = clean.map((u) => ({ url: u, selected: prevSel.get(u) || false, dead: false }));
+}
 
 function getSelectedStep1Urls(max) {
   const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
@@ -460,6 +424,173 @@ function getSelectedStep1Urls(max) {
 
 function renderStep1Photos(urls) {
   if (!photosGridEl) return;
+
+  setStep1FromUrls(urls);
+
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "8px";
+  photosGridEl.innerHTML = "";
+
+  (STORE.step1Photos || []).forEach((item, idx) => {
+    const src = (typeof getProxiedImageUrl === "function")
+      ? getProxiedImageUrl(item.url)
+      : item.url;
+
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "photo-thumb";
+    btn.setAttribute("data-i", String(idx));
+    btn.style.position = "relative";
+    btn.style.height = "64px";
+    btn.style.borderRadius = "12px";
+    btn.style.overflow = "hidden";
+    btn.style.border = "1px solid rgba(148,163,184,.55)";
+    btn.style.background = "#0b1120";
+    btn.style.padding = "0";
+    btn.style.cursor = "pointer";
+    btn.style.opacity = item.selected ? "1" : "0.85";
+
+    const img = DOC.createElement("img");
+    img.src = src;
+    img.alt = "photo";
+    img.loading = "lazy";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.display = "block";
+    img.style.objectFit = "cover";
+
+    const check = DOC.createElement("span");
+    check.textContent = "✓";
+    check.style.position = "absolute";
+    check.style.top = "6px";
+    check.style.right = "6px";
+    check.style.width = "18px";
+    check.style.height = "18px";
+    check.style.borderRadius = "999px";
+    check.style.background = "rgba(0,0,0,.55)";
+    check.style.color = "#fff";
+    check.style.fontSize = "12px";
+    check.style.lineHeight = "18px";
+    check.style.textAlign = "center";
+    check.style.display = item.selected ? "block" : "none";
+
+    btn.appendChild(img);
+    btn.appendChild(check);
+    photosGridEl.appendChild(btn);
+  });
+
+  photosGridEl.onclick = (e) => {
+    const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
+    if (!btnEl) return;
+    const idx = Number(btnEl.getAttribute("data-i"));
+    const item = STORE.step1Photos[idx];
+    if (!item || item.dead) return;
+
+    item.selected = !item.selected;
+    btnEl.style.opacity = item.selected ? "1" : "0.45";
+    const check = btnEl.querySelector("span");
+    if (check) check.style.display = item.selected ? "block" : "none";
+  };
+}
+
+// ---------- Boost action ----------
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) return alert("Paste a dealer URL first.");
+
+  if (!boostBtn) return alert("Boost button not found.");
+
+  setBtnLoading(boostBtn, true, "Boosting…");
+
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
+
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+    const title = extractBoostTitleFromResponse(data);
+    const price = extractBoostPriceFromResponse(data);
+    const photos = extractBoostPhotosFromResponse(data);
+
+    const domPhotos = extractPhotoUrlsFromDom();
+    const merged = [...photos, ...domPhotos];
+
+    STORE.lastBoostPhotos = (typeof uniqCleanCap === "function")
+      ? uniqCleanCap(merged, MAX_PHOTOS)
+      : merged.slice(0, MAX_PHOTOS);
+
+    STORE.lastTitle = title;
+    STORE.lastPrice = price;
+
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    renderStep1Photos(STORE.lastBoostPhotos);
+
+    console.log("✅ Boost complete", { count: STORE.lastBoostPhotos.length });
+  } catch (e) {
+    console.error("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    setBtnLoading(boostBtn, false);
+  }
+}
+
+// ---------- Send selected to Step 3 ----------
+function sendSelectedToCreative() {
+  if (!sendTopBtn) return;
+
+  setBtnLoading(sendTopBtn, true, "Sending…");
+
+  try {
+    const selected = getSelectedStep1Urls(MAX_PHOTOS);
+    if (!selected.length) return alert("Select at least 1 photo first.");
+
+    const deduped = (typeof uniqCleanCap === "function")
+      ? uniqCleanCap(selected, MAX_PHOTOS)
+      : selected.slice(0, MAX_PHOTOS);
+
+    STORE.creativePhotos = deduped;
+    STORE.designStudioPhotos = deduped;
+    STORE.socialReadyPhotos = deduped.map((u) => ({ url: u, originalUrl: u, selected: true, locked: false }));
+
+    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+    if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
+
+    console.log("✅ Sent to Step 3", { count: deduped.length });
+  } catch (e) {
+    console.error("❌ Send to Step 3 failed:", e);
+  } finally {
+    setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
+  }
+}
+
+// ---------- Wire buttons ONCE ----------
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+  boostBtn.type = "button";
+  boostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    boostListing();
+  });
+}
+
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.type = "button";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sendSelectedToCreative();
+  });
+}
+
 
   setStep1FromUrls(urls);
 
