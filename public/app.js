@@ -586,7 +586,6 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   });
 }
 
-
 // ===============================
 // FINAL INIT (SAFE BOOT) — SINGLE COPY ONLY
 // ===============================
@@ -605,3 +604,4 @@ try {
   console.error("❌ Final init failed:", e);
 }
 }); // ✅ CLOSES DOMContentLoaded — NOTHING AFTER THIS LINE
+
