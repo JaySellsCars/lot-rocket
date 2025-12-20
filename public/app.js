@@ -545,16 +545,24 @@ try {
 // SEND SELECTED TO CREATIVE (STEP 3)
 // ==================================================
 function sendSelectedToCreative() {
+  // Guard
+  if (!sendTopBtn || typeof setBtnLoading !== "function") return;
+
   setBtnLoading(sendTopBtn, true, "Sending…");
 
   try {
-    const selected = getSelectedStep1Urls(MAX_PHOTOS);
+    const selected = (typeof getSelectedStep1Urls === "function")
+      ? (getSelectedStep1Urls(MAX_PHOTOS) || [])
+      : [];
+
     if (!selected.length) {
       console.warn("No photos selected.");
       return;
     }
 
-    const deduped = uniqCleanCap(selected, MAX_PHOTOS);
+    const deduped = (typeof uniqCleanCap === "function")
+      ? uniqCleanCap(selected, MAX_PHOTOS)
+      : selected.slice(0, MAX_PHOTOS);
 
     STORE.creativePhotos = deduped;
     STORE.designStudioPhotos = deduped;
@@ -565,7 +573,7 @@ function sendSelectedToCreative() {
       locked: false,
     }));
 
-    normalizeSocialReady();
+    if (typeof normalizeSocialReady === "function") normalizeSocialReady();
     if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
     if (typeof renderSocialStrip === "function") renderSocialStrip();
     if (typeof refreshDesignStudioStrip === "function") refreshDesignStudioStrip();
@@ -574,7 +582,9 @@ function sendSelectedToCreative() {
   } catch (e) {
     console.error("❌ Send to Step 3 failed:", e);
   } finally {
-    setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
+    setTimeout(() => {
+      try { setBtnLoading(sendTopBtn, false); } catch (_) {}
+    }, 250);
   }
 }
 
@@ -599,9 +609,9 @@ try {
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
-
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
-}); // ✅ CLOSES DOMContentLoaded — NOTHING AFTER THIS LINE
 
+// ✅ CLOSE DOMContentLoaded (must match the opener exactly)
+}); // ✅ CLOSES DOMContentLoaded — NOTHING AFTER THIS LINE
