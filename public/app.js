@@ -588,11 +588,20 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 
 
 // ==================================================
-// FINAL INIT (SAFE BOOT)
+// FINAL INIT (SAFE BOOT) — SINGLE COPY ONLY
 // ==================================================
 try {
   console.log("✅ FINAL INIT REACHED");
+
+  // Optional final renders (safe-guarded)
+  if (typeof renderStep1Photos === "function" && Array.isArray(STORE?.lastBoostPhotos)) {
+    renderStep1Photos(STORE.lastBoostPhotos);
+  }
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+  if (typeof wireObjectionCoach === "function") wireObjectionCoach();
+
 } catch (e) {
-  console.error("Final init failed:", e);
+  console.error("❌ Final init failed:", e);
 }
-}); // ✅ closes DOMContentLoaded — DO NOT ADD ANYTHING AFTER THIS
+}); // ✅ CLOSES DOMContentLoaded — NOTHING AFTER THIS LINE
