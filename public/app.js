@@ -592,50 +592,7 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 }
 
 
-  setStep1FromUrls(urls);
 
-  photosGridEl.style.display = "grid";
-  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-  photosGridEl.style.gap = "8px";
-  photosGridEl.innerHTML = "";
-
-  (STORE.step1Photos || []).forEach((item, idx) => {
-    const src = getProxiedImageUrl(item.url);
-
-    const btn = DOC.createElement("button");
-    btn.type = "button";
-    btn.className = "photo-thumb";
-    btn.setAttribute("data-i", String(idx));
-    btn.style.position = "relative";
-    btn.style.height = "64px";
-    btn.style.borderRadius = "12px";
-    btn.style.overflow = "hidden";
-    btn.style.border = "1px solid rgba(148,163,184,.55)";
-    btn.style.background = "#0b1120";
-    btn.style.padding = "0";
-    btn.style.cursor = "pointer";
-
-    // brighter default
-    btn.style.opacity = item.selected ? "1" : "0.85";
-
-    const img = DOC.createElement("img");
-    img.src = src;
-    img.alt = "photo";
-    img.loading = "lazy";
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.display = "block";
-    img.style.objectFit = "cover";
-
-    img.onload = () => {
-      if (img.naturalWidth < 80 || img.naturalHeight < 80) {
-        if (STORE.step1Photos[idx]) {
-          STORE.step1Photos[idx].dead = true;
-          STORE.step1Photos[idx].selected = false;
-        }
-        btn.remove();
-      }
-    };
 
     const check = DOC.createElement("span");
     check.className = "photo-check";
@@ -744,13 +701,7 @@ function sendSelectedToCreative() {
   }
 }
 
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-  sendTopBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    sendSelectedToCreative();
-  });
-}
+
 
 // ===============================
 // FINAL INIT (SAFE BOOT) — SINGLE COPY ONLY
