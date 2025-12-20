@@ -79,15 +79,13 @@ let imageUrls = [];
 
     console.log("🟢 BOOST CLICKED:", pick.id);
 
-    try {
-      await boostListing();
-      console.log("🟢 boostListing finished");
-    } catch (err) {
-      console.error("❌ boostListing error:", err);
-    }
-  }, true);
+try {
+  await boostListing();
+  console.log("🟢 boostListing finished");
+} catch (err) {
+  console.error("❌ boostListing error:", err);
+}
 
-  console.log("✅ Boost wired:", pick.id);
 
   // Overlay test: what's actually on top of the button?
   const r = pick.getBoundingClientRect();
