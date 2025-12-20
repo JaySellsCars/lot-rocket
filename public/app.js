@@ -17,6 +17,7 @@ window.document.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
+let imageUrls = [];
 
   // ==================================================
   // CORE CONSTANTS + SINGLE GLOBAL STORE
