@@ -294,6 +294,126 @@ async function boostListing() {
     setBtnLoading(boostBtn, false);
   }
 }
+// ==================================================
+// STEP 1 — ELEMENTS (must exist before boostListing runs)
+// ==================================================
+const dealerUrlInput = $("dealerUrl");
+const vehicleLabelInput = $("vehicleLabel");
+const priceOfferInput = $("priceOffer");
+
+const boostBtn = $("boostListingBtn") || $("boostThisListing") || $("boostButton");
+
+const sendTopBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendPhotosToCreative") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendPhotosToCreativeLab") ||
+  $("sendTopPhotosToDesignStudio") ||
+  $("sendPhotosToStudio") ||
+  $("sendPhotosToDesignStudio");
+
+const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
+const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+const photosGridEl = $("photosGrid");
+
+// ==================================================
+// BOOST HELPERS (SINGLE COPY)
+// ==================================================
+function extractPhotoUrlsFromDom() {
+  const urls = [];
+
+  DOC.querySelectorAll("img").forEach((img) => {
+    const src = img.getAttribute("src");
+    const d1 = img.getAttribute("data-src");
+    const d2 = img.getAttribute("data-lazy");
+    const d3 = img.getAttribute("data-original");
+    const srcset = img.getAttribute("srcset");
+
+    if (d1) urls.push(d1);
+    if (d2) urls.push(d2);
+    if (d3) urls.push(d3);
+    if (src) urls.push(src);
+
+    if (srcset) {
+      const parsed = parseSrcset(srcset);
+      const pick = parsed[parsed.length - 1];
+      if (pick) urls.push(pick);
+    }
+  });
+
+  DOC.querySelectorAll("[style*='background']").forEach((el) => {
+    const style = el.getAttribute("style") || "";
+    const m = style.match(/background-image\s*:\s*url\(["']?(.*?)["']?\)/i);
+    if (m && m[1]) urls.push(m[1]);
+  });
+
+  DOC.querySelectorAll("a[href]").forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    if (/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(href)) urls.push(href);
+  });
+
+  return urls;
+}
+
+function extractBoostPhotosFromResponse(data) {
+  // backend returns { photos }, but tolerate others
+  const arr = data?.photos || data?.imageUrls || data?.images || [];
+  return Array.isArray(arr) ? arr : [];
+}
+
+function extractBoostTitleFromResponse(data) {
+  return data?.title || data?.vehicle || data?.name || "";
+}
+
+function extractBoostPriceFromResponse(data) {
+  return data?.price || data?.msrp || data?.internetPrice || "";
+}
+
+// ==================================================
+// BOOST ACTION (SINGLE COPY) — backend call + render Step 1
+// ==================================================
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) return alert("Paste a dealer URL first.");
+  if (!boostBtn) return alert("Boost button not found.");
+
+  setBtnLoading(boostBtn, true, "Boosting…");
+
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
+
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+    const title = extractBoostTitleFromResponse(data);
+    const price = extractBoostPriceFromResponse(data);
+    const photos = extractBoostPhotosFromResponse(data);
+
+    const domPhotos = extractPhotoUrlsFromDom();
+    const merged = [...photos, ...domPhotos];
+
+    STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
+    STORE.lastTitle = title;
+    STORE.lastPrice = price;
+
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    renderStep1Photos(STORE.lastBoostPhotos);
+
+    console.log("✅ Boost complete", { count: STORE.lastBoostPhotos.length });
+  } catch (e) {
+    console.error("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    setBtnLoading(boostBtn, false);
+  }
+}
 
   // --------------------------------------------------
   // THEME TOGGLE (single source)
