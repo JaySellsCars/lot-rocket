@@ -2,14 +2,24 @@
 // Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
 
 window.document.addEventListener("DOMContentLoaded", () => {
+  // ===============================
+  // BOOT + DEBUG HOOKS
+  // ===============================
+  const DOC = window.document;
+  const $ = (id) => DOC.getElementById(id);
+
+  if (window.__LOTROCKET_BOOTED__) {
+    console.warn("🚫 Lot Rocket boot blocked (double init)");
+    return;
+  }
+  window.__LOTROCKET_BOOTED__ = true;
+
   console.log("🚀 JS FILE LOADED");
+  console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
 
-  // ===============================
-  // TRUTH HOOK — PROVE CLICKS / OVERLAYS
-  // ===============================
+  // TRUTH HOOK — prove clicks / errors
   console.log("🧪 TRUTH HOOK ACTIVE");
-
-  document.addEventListener(
+  DOC.addEventListener(
     "click",
     (e) => {
       const el = e.target;
@@ -17,7 +27,6 @@ window.document.addEventListener("DOMContentLoaded", () => {
     },
     true
   );
-
   window.addEventListener("error", (e) => {
     console.error("💥 WINDOW ERROR:", e.message, e.filename, e.lineno);
   });
@@ -25,48 +34,33 @@ window.document.addEventListener("DOMContentLoaded", () => {
     console.error("💥 PROMISE REJECTION:", e.reason);
   });
 
-  const DOC = window.document;
-  const $ = (id) => DOC.getElementById(id);
-
-  // ✅ BOOT GUARD
-  if (window.__LOTROCKET_BOOTED__) {
-    console.warn("🚫 Lot Rocket boot blocked (double init)");
-    return;
-  }
-  window.__LOTROCKET_BOOTED__ = true;
-
-  console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
-let imageUrls = [];
-
-  // ==================================================
-  // CORE CONSTANTS + SINGLE GLOBAL STORE
-  // ==================================================
   const MAX_PHOTOS = 24;
 
+  // ===============================
+  // SINGLE STORE
+  // ===============================
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
 
   STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
   STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : [];
   STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-
-  STORE.lastTitle = STORE.lastTitle || "";
-  STORE.lastPrice = STORE.lastPrice || "";
-
   STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : []; // [{url, selected, dead}]
   STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : []; // [url]
+  STORE.lastTitle = STORE.lastTitle || "";
+  STORE.lastPrice = STORE.lastPrice || "";
 
   let socialIndex = 0;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-  // ==================================================
+  // ===============================
   // UTIL
-  // ==================================================
+  // ===============================
   function autoResizeTextarea(el) {
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = el.scrollHeight + 4 + "px";
+    el.style.height = (el.scrollHeight + 4) + "px";
   }
 
   function parseSrcset(srcset) {
@@ -77,6 +71,7 @@ let imageUrls = [];
       .filter(Boolean);
   }
 
+  // ✅ FIX: postJSON must NOT reference any undeclared vars like "imageUrls"
   async function postJSON(url, body) {
     const res = await fetch(url, {
       method: "POST",
@@ -125,33 +120,66 @@ let imageUrls = [];
     }
   }
 
-  function triggerDownload(url, filename) {
-    if (!url) return;
-    const a = DOC.createElement("a");
-    a.href = url;
-    a.download = filename || "lot-rocket.jpg";
-    a.rel = "noopener";
-    DOC.body.appendChild(a);
-    a.click();
-    a.remove();
+  // ✅ REQUIRED: normalizeUrl + uniqCleanCap (so you don't get "normalizeUrl is not defined")
+  function normalizeUrl(input) {
+    if (!input) return "";
+    let u = ("" + input).trim();
+    if (!u) return "";
+
+    if (u.startsWith("blob:") || u.startsWith("data:")) return u;
+
+    if ((u.startsWith('"') && u.endsWith('"')) || (u.startsWith("'") && u.endsWith("'"))) {
+      u = u.slice(1, -1).trim();
+    }
+
+    if (u.startsWith("//")) u = "https:" + u;
+
+    try {
+      const url = new URL(u, window.location.href);
+      ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"].forEach((k) =>
+        url.searchParams.delete(k)
+      );
+      return url.origin + url.pathname + (url.search ? url.search : "");
+    } catch {
+      return u;
+    }
   }
 
-  // ==================================================
-  // THEME TOGGLE (single source)
-  // ==================================================
-  const themeToggleInput = $("themeToggle");
+  function uniqCleanCap(arr, cap) {
+    const max = typeof cap === "number" && cap > 0 ? cap : MAX_PHOTOS;
+    if (!Array.isArray(arr)) return [];
 
+    const out = [];
+    const seen = new Set();
+
+    for (let i = 0; i < arr.length; i++) {
+      let raw = arr[i];
+      if (raw && typeof raw === "object" && raw.url) raw = raw.url;
+
+      const u = normalizeUrl(raw);
+      if (!u) continue;
+
+      if (!seen.has(u)) {
+        seen.add(u);
+        out.push(u);
+        if (out.length >= max) break;
+      }
+    }
+    return out;
+  }
+
+  // ===============================
+  // THEME TOGGLE
+  // ===============================
+  const themeToggleInput = $("themeToggle");
   function applyTheme(isDark) {
     DOC.body.classList.toggle("dark-theme", isDark);
     if (themeToggleInput) themeToggleInput.checked = isDark;
   }
-
   applyTheme(true);
 
   if (themeToggleInput) {
-    themeToggleInput.addEventListener("change", () => {
-      applyTheme(themeToggleInput.checked);
-    });
+    themeToggleInput.addEventListener("change", () => applyTheme(themeToggleInput.checked));
   }
 
   DOC.querySelectorAll("textarea").forEach((ta) => {
@@ -159,14 +187,14 @@ let imageUrls = [];
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
 
-  // ==================================================
-  // STEP 1 — BOOST + PHOTO GRID (SINGLE COPY ONLY)
-  // ==================================================
+  // ===============================
+  // STEP 1 — ELEMENTS (SINGLE COPY)
+  // ===============================
   const dealerUrlInput = $("dealerUrl");
   const vehicleLabelInput = $("vehicleLabel");
   const priceOfferInput = $("priceOffer");
 
-  // IMPORTANT: boostBtn is LET because bulletproof picker will override it
+  // LET so bulletproof picker can overwrite with the visible one
   let boostBtn =
     $("boostListingBtn") || $("boostThisListingBtn") || $("boostThisListing") || $("boostButton") || null;
 
@@ -236,71 +264,19 @@ let imageUrls = [];
   }
 
   function extractBoostPhotosFromResponse(data) {
-    // BACKEND RETURNS: { title, price, photos }
+    // backend returns { photos }, but tolerate others
     const arr = data?.photos || data?.imageUrls || data?.images || [];
     return Array.isArray(arr) ? arr : [];
   }
-
   function extractBoostTitleFromResponse(data) {
     return data?.title || data?.vehicle || data?.name || "";
   }
-
   function extractBoostPriceFromResponse(data) {
     return data?.price || data?.msrp || data?.internetPrice || "";
   }
 
-  // ✅ REQUIRED: normalizeUrl (fixes "normalizeUrl is not defined")
-  function normalizeUrl(input) {
-    if (!input) return "";
-    let u = ("" + input).trim();
-    if (!u) return "";
-
-    if (u.startsWith("blob:")) return u;
-    if (u.startsWith("data:")) return u;
-
-    if ((u.startsWith('"') && u.endsWith('"')) || (u.startsWith("'") && u.endsWith("'"))) {
-      u = u.slice(1, -1).trim();
-    }
-
-    if (u.startsWith("//")) u = "https:" + u;
-
-    try {
-      const url = new URL(u, window.location.href);
-      ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"].forEach((k) =>
-        url.searchParams.delete(k)
-      );
-      return url.origin + url.pathname + (url.search ? url.search : "");
-    } catch {
-      return u;
-    }
-  }
-
-  function uniqCleanCap(arr, cap) {
-    const max = typeof cap === "number" && cap > 0 ? cap : MAX_PHOTOS;
-    if (!Array.isArray(arr)) return [];
-
-    const out = [];
-    const seen = new Set();
-
-    for (let i = 0; i < arr.length; i++) {
-      let raw = arr[i];
-      if (raw && typeof raw === "object" && raw.url) raw = raw.url;
-
-      const u = normalizeUrl(raw);
-      if (!u) continue;
-
-      if (!seen.has(u)) {
-        seen.add(u);
-        out.push(u);
-        if (out.length >= max) break;
-      }
-    }
-    return out;
-  }
-
   function setStep1FromUrls(urls) {
     const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
-
     const prev = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
     const prevSel = new Map(prev.map((p) => [p?.url, !!p?.selected]));
 
@@ -390,7 +366,7 @@ let imageUrls = [];
       const check = btnEl.querySelector(".photo-check");
       if (check) check.style.display = item.selected ? "block" : "none";
     };
-  }
+  } // ✅ END renderStep1Photos()
 
   async function boostListing() {
     const url = (dealerUrlInput?.value || "").trim();
@@ -414,11 +390,12 @@ let imageUrls = [];
       const photos = extractBoostPhotosFromResponse(data);
 
       const domPhotos = extractPhotoUrlsFromDom();
-     const merged = [
-  ...(Array.isArray(photos) ? photos : []),
-  ...(Array.isArray(domPhotos) ? domPhotos : []),
-];
 
+      // ✅ YES: the "..." spreads are correct JS
+      const merged = [
+        ...(Array.isArray(photos) ? photos : []),
+        ...(Array.isArray(domPhotos) ? domPhotos : []),
+      ];
 
       STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
       STORE.lastTitle = title;
@@ -428,7 +405,6 @@ let imageUrls = [];
       if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
 
       renderStep1Photos(STORE.lastBoostPhotos);
-
       console.log("✅ Boost complete", { count: STORE.lastBoostPhotos.length });
     } catch (e) {
       console.error("❌ Boost failed:", e);
@@ -481,8 +457,7 @@ let imageUrls = [];
   }
 
   // ===============================
-  // BOOST BUTTON — BULLETPROOF WIRE
-  // Sets boostBtn to the actual visible/clickable element.
+  // BOOST BUTTON — BULLETPROOF WIRE (SINGLE COPY)
   // ===============================
   (function wireBoostBulletproof() {
     const ids = ["boostThisListingBtn", "boostListingBtn", "boostThisListing", "boostButton"];
@@ -518,6 +493,7 @@ let imageUrls = [];
       console.log("ℹ️ Boost already wired:", pick.id);
       return;
     }
+
     pick.dataset.wired = "true";
     pick.type = "button";
 
@@ -550,7 +526,9 @@ let imageUrls = [];
     console.log("✅ Boost wired (pick):", pick.id);
   })();
 
-  // ---------- Wire SEND TOP button ONCE ----------
+  // ===============================
+  // WIRE SEND TOP (SINGLE COPY)
+  // ===============================
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
     sendTopBtn.type = "button";
@@ -561,7 +539,7 @@ let imageUrls = [];
   }
 
   // ===============================
-  // FINAL INIT (SAFE BOOT) — SINGLE COPY ONLY
+  // FINAL INIT (SAFE BOOT)
   // ===============================
   try {
     console.log("✅ FINAL INIT REACHED");
