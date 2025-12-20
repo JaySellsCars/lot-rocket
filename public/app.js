@@ -36,23 +36,24 @@ window.addEventListener("unhandledrejection", (e) => {
   const apiBase = "";
 let imageUrls = [];
 // ===============================
-// BOOST BUTTON — BULLETPROOF WIRE
+// BOOST BUTTON — BULLETPROOF WIRE (FIXED SYNTAX)
 // ===============================
 (function wireBoostBulletproof() {
   const ids = ["boostThisListingBtn", "boostListingBtn", "boostThisListing", "boostButton"];
 
-  // collect ALL matches (in case duplicates exist)
-  const candidates = ids.flatMap((id) => Array.from(DOC.querySelectorAll(`#${CSS.escape(id)}`)));
+  const candidates = ids.flatMap((id) =>
+    Array.from(DOC.querySelectorAll(`#${CSS.escape(id)}`))
+  );
 
-  // pick the first one that is actually visible/clickable
-  const pick = candidates.find((el) => {
-    const r = el.getBoundingClientRect();
-    const visible = r.width > 0 && r.height > 0;
-    const notHidden = !!(el.offsetParent || el.getClientRects().length);
-    return visible && notHidden;
-  }) || null;
+  const pick =
+    candidates.find((el) => {
+      const r = el.getBoundingClientRect();
+      const visible = r.width > 0 && r.height > 0;
+      const notHidden = !!(el.offsetParent || el.getClientRects().length);
+      return visible && notHidden;
+    }) || null;
 
-  console.log("🔎 Boost candidates:", candidates.map(e => `#${e.id}`).join(", ") || "NONE");
+  console.log("🔎 Boost candidates:", candidates.map((e) => `#${e.id}`).join(", ") || "NONE");
   console.log("🔎 Boost picked:", pick ? `#${pick.id}` : "NONE");
 
   if (!pick) return;
@@ -63,35 +64,45 @@ let imageUrls = [];
   pick.removeAttribute("aria-disabled");
   pick.style.pointerEvents = "auto";
   pick.style.cursor = "pointer";
-  pick.style.position = pick.style.position || "relative";
   pick.style.zIndex = "9999";
+  pick.onclick = null;
 
-  // Wire once
   if (pick.dataset.wired === "true") {
     console.log("ℹ️ Boost already wired:", pick.id);
     return;
   }
   pick.dataset.wired = "true";
 
-  pick.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  pick.addEventListener(
+    "click",
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    console.log("🟢 BOOST CLICKED:", pick.id);
+      console.log("🟢 BOOST CLICKED:", pick.id);
 
-try {
-  await boostListing();
-  console.log("🟢 boostListing finished");
-} catch (err) {
-  console.error("❌ boostListing error:", err);
-}
+      // Overlay test (runs on click)
+      const r = pick.getBoundingClientRect();
+      const topEl = DOC.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      console.log(
+        "🧱 Element on top of Boost:",
+        topEl ? (topEl.id ? `#${topEl.id}` : topEl.tagName) : "NONE",
+        topEl
+      );
 
+      try {
+        await boostListing();
+        console.log("🟢 boostListing finished");
+      } catch (err) {
+        console.error("❌ boostListing error:", err);
+      }
+    },
+    true
+  );
 
-  // Overlay test: what's actually on top of the button?
-  const r = pick.getBoundingClientRect();
-  const topEl = DOC.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-  console.log("🧱 Element on top of Boost:", topEl ? (topEl.id ? `#${topEl.id}` : topEl.tagName) : "NONE", topEl);
+  console.log("✅ Boost wired (pick):", pick.id);
 })();
+
 
 
   // ==================================================
