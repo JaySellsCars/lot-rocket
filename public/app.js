@@ -414,7 +414,11 @@ let imageUrls = [];
       const photos = extractBoostPhotosFromResponse(data);
 
       const domPhotos = extractPhotoUrlsFromDom();
-      const merged = [...(photos || []), ...(domPhotos || [])];
+     const merged = [
+  ...(Array.isArray(photos) ? photos : []),
+  ...(Array.isArray(domPhotos) ? domPhotos : []),
+];
+
 
       STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
       STORE.lastTitle = title;
