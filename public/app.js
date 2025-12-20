@@ -416,34 +416,44 @@ function uniqCleanCap(arr, cap) {
   return out;
 }
 
-  async function boostListing() {
-    const url = (dealerUrlInput?.value || "").trim();
-    if (!url) return alert("Paste a dealer URL first.");
+// ===============================
+// BOOST BUTTON — HARD WIRE (ONCE)
+// ===============================
+const boostBtn =
+  document.getElementById("boostListingBtn") ||
+  document.getElementById("boostThisListing") ||
+  document.getElementById("boostButton");
 
-    setBtnLoading(boostBtn, true, "Boosting…");
+if (!boostBtn) {
+  console.error("❌ Boost button not found (check HTML id)");
+} else if (boostBtn.dataset.wired === "true") {
+  console.log("ℹ️ Boost button already wired");
+} else {
+  boostBtn.dataset.wired = "true";
+
+  // Prevent form submission if inside a form
+  if (boostBtn.tagName === "BUTTON") {
+    boostBtn.type = "button";
+  }
+
+  boostBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log("🟢 BOOST CLICKED");
 
     try {
-      const payload = {
-        url,
-        labelOverride: (vehicleLabelInput?.value || "").trim(),
-        priceOverride: (priceOfferInput?.value || "").trim(),
-        maxPhotos: MAX_PHOTOS,
-      };
+      await boostListing();
+      console.log("🟢 boostListing() finished");
+    } catch (err) {
+      console.error("❌ boostListing() threw:", err);
+    }
+  });
 
-const data = await postJSON(`${apiBase}/api/boost`, payload);
+  console.log("✅ Boost button wired:", boostBtn.id);
+}
 
-const title = data?.title || data?.vehicle || "";
-const price = data?.price || "";
 
-const backendPhotos =
-  data?.imageUrls ||
-  data?.photos ||
-  data?.images ||
-  [];
-
-const photos = Array.isArray(backendPhotos) ? backendPhotos : [];
-
-console.log("🚀 BOOST backend photos count =", photos.length, photos.slice(0, 5));
 
 
 
