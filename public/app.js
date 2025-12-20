@@ -508,17 +508,6 @@ function uniqCleanCap(arr, cap) {
 
 
 
-// ==================================================
-// BOOST FLOW — MERGE + RENDER + WIRING (CLEAN)
-// ==================================================
-
-try {
-  // ✅ SINGLE SOURCE: merge backend + DOM, then dedupe+cap ONCE
-  const domPhotos = (typeof extractPhotoUrlsFromDom === "function")
-    ? (extractPhotoUrlsFromDom() || [])
-    : [];
-
-  console.log("🧪 BOOST dom photos count =", domPhotos.length, domPhotos.slice(0, 5));
 
   const merged = [
     ...(Array.isArray(photos) ? photos : []),
