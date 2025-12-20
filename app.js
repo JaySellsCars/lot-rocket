@@ -248,128 +248,56 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 // ======================================================
 function extractImageUrlsFromHtml(html, baseUrl) {
   const $ = cheerio.load(html);
-  const candidates = [];
-console.log("🟣 Using rendered URLs count:", candidates.length);
+  const seen = new Set();
+  const results = [];
 
-
-  const push = (u) => {
-    const a = absUrl(baseUrl, u);
-    if (a) candidates.push(a);
+  const isJunk = (u) => {
+    const s = u.toLowerCase();
+    return (
+      s.includes("logo") ||
+      s.includes("brand") ||
+      s.includes("dealer") ||
+      s.includes("placeholder") ||
+      s.includes("sprite") ||
+      s.includes("icon") ||
+      s.endsWith(".svg")
+    );
   };
 
-  // meta hints
-  push($("meta[property='og:image']").attr("content"));
-  push($("meta[name='twitter:image']").attr("content"));
-  push($("link[rel='image_src']").attr("href"));
+  const push = (u) => {
+    if (!u || typeof u !== "string") return;
+    u = u.trim();
+    if (!u) return;
+    if (u.startsWith("data:")) return;
+    if (u.startsWith("blob:")) return;
+    if (isJunk(u)) return;
 
-  // img + lazy attrs + srcset
-  $("img").each((_, el) => {
-    const $img = $(el);
-    const src = $img.attr("src");
-    const dataSrc =
-      $img.attr("data-src") ||
-      $img.attr("data-lazy") ||
-      $img.attr("data-original") ||
-      $img.attr("data-url") ||
-      $img.attr("data-image") ||
-      $img.attr("data-full") ||
-      $img.attr("data-large") ||
-      $img.attr("data-zoom-image");
+    const abs = absolutizeUrl(baseUrl, u);
+    if (!abs) return;
+    if (seen.has(abs)) return;
 
-    const srcset = $img.attr("srcset") || $img.attr("data-srcset");
-    [src, dataSrc, ...parseSrcset(srcset)].forEach(push);
-  });
+    seen.add(abs);
+    results.push(abs);
+  };
 
-  // noscript galleries
-  $("noscript").each((_, el) => {
-    const inner = $(el).html();
-    if (!inner) return;
-    const $$ = cheerio.load(inner);
-    $$("img").each((_, img) => {
-      push($$(img).attr("src"));
-      push($$(img).attr("data-src"));
-      const ss = $$(img).attr("srcset");
-      if (ss) parseSrcset(ss).forEach(push);
-    });
-  });
+  $("img").each((_, img) => {
+    push($(img).attr("src"));
+    push($(img).attr("data-src"));
+    push($(img).attr("data-lazy"));
+    push($(img).attr("data-original"));
 
-  // picture source srcset
-  $("picture source").each((_, el) => {
-    const ss = $(el).attr("srcset");
-    if (ss) parseSrcset(ss).forEach(push);
-  });
-
-  // inline background-image urls
-  $("[style]").each((_, el) => {
-    const style = String($(el).attr("style") || "");
-    const matches = style.match(/url\(([^)]+)\)/gi);
-    if (matches) {
-      matches.forEach((m) => {
-        const mm = m.match(/url\(([^)]+)\)/i);
-        if (mm && mm[1]) push(mm[1]);
+    const srcset = $(img).attr("srcset");
+    if (srcset) {
+      srcset.split(",").forEach(part => {
+        const u = part.trim().split(" ")[0];
+        push(u);
       });
     }
   });
 
-  // LD+JSON image arrays
-  $("script[type='application/ld+json']").each((_, el) => {
-    const txt = $(el).html();
-    if (!txt) return;
-    try {
-      const json = JSON.parse(txt.trim());
-      const walk = (node) => {
-        if (!node) return;
-        if (Array.isArray(node)) return node.forEach(walk);
-        if (typeof node === "object") {
-          if (node.image) walk(node.image);
-          if (node.images) walk(node.images);
-          if (node.photo) walk(node.photo);
-          if (node.photos) walk(node.photos);
-          for (const v of Object.values(node)) walk(v);
-          return;
-        }
-        if (typeof node === "string") {
-          if (/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(node)) push(node);
-        }
-      };
-      walk(json);
-    } catch {}
-  });
-
-  // Script blobs (absolute + escaped + relative)
-  $("script").each((_, el) => {
-    const txt = $(el).html();
-    if (!txt) return;
-
-    const foundAbs = txt.match(
-      /https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi
-    );
-    if (foundAbs) foundAbs.forEach((u) => candidates.push(u));
-
-    const foundEsc = txt.match(
-      /\\\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(?:\\\?[^"'\\\s]*)?/gi
-    );
-    if (foundEsc) {
-      foundEsc.forEach((u) => {
-        const unescaped = u.replace(/\\\//g, "/").replace(/\\\?/g, "?");
-        push(unescaped);
-      });
-    }
-
-    const foundRel = txt.match(
-      /\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(\?[^"'\\\s]*)?/gi
-    );
-    if (foundRel) foundRel.forEach(push);
-  });
-
-  const cleaned = candidates
-    .map((u) => String(u || "").trim())
-    .filter(Boolean)
-    .filter((u) => /\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u))
-    .filter((u) => !/logo|sprite|icon|placeholder|spacer|pixel|1x1/i.test(u));
-
-  return Array.from(new Set(cleaned));
+  return results;
 }
+
 
 // ======================================================
 // Scraping
