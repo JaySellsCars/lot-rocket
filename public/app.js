@@ -34,7 +34,7 @@ window.addEventListener("unhandledrejection", (e) => {
 
   console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
   const apiBase = "";
-let imageUrls = [];
+
 // ===============================
 // BOOST BUTTON — BULLETPROOF WIRE (FIXED SYNTAX)
 // ===============================
