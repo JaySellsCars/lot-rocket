@@ -516,113 +516,113 @@ function normalizeUrl(input) {
     }));
   }
 
-  function getSelectedStep1Urls(max) {
-    const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
-    return (STORE.step1Photos || [])
-      .filter((p) => p && !p.dead && p.selected && p.url)
-      .map((p) => p.url)
-      .slice(0, lim);
-  }
+function getSelectedStep1Urls(max) {
+  const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
+  return (STORE.step1Photos || [])
+    .filter((p) => p && !p.dead && p.selected && p.url)
+    .map((p) => p.url)
+    .slice(0, lim);
+}
 
- renderStep1Photos(STORE.lastBoostPhotos || []);
+function renderStep1Photos(urls) {
+  if (!photosGridEl) return;
 
-    if (!photosGridEl) return;
+  setStep1FromUrls(urls);
 
-    setStep1FromUrls(urls);
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "8px";
+  photosGridEl.innerHTML = "";
 
-    photosGridEl.style.display = "grid";
-    photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-    photosGridEl.style.gap = "8px";
-    photosGridEl.innerHTML = "";
+  (STORE.step1Photos || []).forEach((item, idx) => {
+    const src = getProxiedImageUrl(item.url);
 
-    (STORE.step1Photos || []).forEach((item, idx) => {
-      const src = getProxiedImageUrl(item.url);
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "photo-thumb";
+    btn.setAttribute("data-i", String(idx));
+    btn.style.position = "relative";
+    btn.style.height = "64px";
+    btn.style.borderRadius = "12px";
+    btn.style.overflow = "hidden";
+    btn.style.border = "1px solid rgba(148,163,184,.55)";
+    btn.style.background = "#0b1120";
+    btn.style.padding = "0";
+    btn.style.cursor = "pointer";
 
-      const btn = DOC.createElement("button");
-      btn.type = "button";
-      btn.className = "photo-thumb";
-      btn.setAttribute("data-i", String(idx));
-      btn.style.position = "relative";
-      btn.style.height = "64px";
-      btn.style.borderRadius = "12px";
-      btn.style.overflow = "hidden";
-      btn.style.border = "1px solid rgba(148,163,184,.55)";
-      btn.style.background = "#0b1120";
-      btn.style.padding = "0";
-      btn.style.cursor = "pointer";
+    // brighter default
+    btn.style.opacity = item.selected ? "1" : "0.85";
 
-      // ✅ brighter default so it doesn’t look dead
-      btn.style.opacity = item.selected ? "1" : "0.85";
+    const img = DOC.createElement("img");
+    img.src = src;
+    img.alt = "photo";
+    img.loading = "lazy";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.display = "block";
+    img.style.objectFit = "cover";
 
-      const img = DOC.createElement("img");
-      img.src = src;
-      img.alt = "photo";
-      img.loading = "lazy";
-      img.style.width = "100%";
-      img.style.height = "100%";
-      img.style.display = "block";
-      img.style.objectFit = "cover";
-
-      img.onload = () => {
-        if (img.naturalWidth < 80 || img.naturalHeight < 80) {
-          if (STORE.step1Photos[idx]) {
-            STORE.step1Photos[idx].dead = true;
-            STORE.step1Photos[idx].selected = false;
-          }
-          btn.remove();
+    img.onload = () => {
+      if (img.naturalWidth < 80 || img.naturalHeight < 80) {
+        if (STORE.step1Photos[idx]) {
+          STORE.step1Photos[idx].dead = true;
+          STORE.step1Photos[idx].selected = false;
         }
-      };
-
-      const check = DOC.createElement("span");
-      check.className = "photo-check";
-      check.textContent = "✓";
-      check.style.position = "absolute";
-      check.style.top = "6px";
-      check.style.right = "6px";
-      check.style.width = "18px";
-      check.style.height = "18px";
-      check.style.borderRadius = "999px";
-      check.style.background = "rgba(0,0,0,.55)";
-      check.style.color = "#fff";
-      check.style.fontSize = "12px";
-      check.style.lineHeight = "18px";
-      check.style.textAlign = "center";
-      check.style.display = item.selected ? "block" : "none";
-
-      btn.appendChild(img);
-      btn.appendChild(check);
-      photosGridEl.appendChild(btn);
-    });
-
-    photosGridEl.onclick = (e) => {
-      const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
-      if (!btnEl) return;
-
-      const idx = Number(btnEl.getAttribute("data-i"));
-      const item = STORE.step1Photos[idx];
-      if (!item || item.dead) return;
-
-      item.selected = !item.selected;
-
-      btnEl.style.opacity = item.selected ? "1" : "0.45";
-      const check = btnEl.querySelector(".photo-check");
-      if (check) check.style.display = item.selected ? "block" : "none";
+        btn.remove();
+      }
     };
-  }
+
+    const check = DOC.createElement("span");
+    check.className = "photo-check";
+    check.textContent = "✓";
+    check.style.position = "absolute";
+    check.style.top = "6px";
+    check.style.right = "6px";
+    check.style.width = "18px";
+    check.style.height = "18px";
+    check.style.borderRadius = "999px";
+    check.style.background = "rgba(0,0,0,.55)";
+    check.style.color = "#fff";
+    check.style.fontSize = "12px";
+    check.style.lineHeight = "18px";
+    check.style.textAlign = "center";
+    check.style.display = item.selected ? "block" : "none";
+
+    btn.appendChild(img);
+    btn.appendChild(check);
+    photosGridEl.appendChild(btn);
+  });
+
+  photosGridEl.onclick = (e) => {
+    const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
+    if (!btnEl) return;
+
+    const idx = Number(btnEl.getAttribute("data-i"));
+    const item = STORE.step1Photos[idx];
+    if (!item || item.dead) return;
+
+    item.selected = !item.selected;
+
+    btnEl.style.opacity = item.selected ? "1" : "0.45";
+    const check = btnEl.querySelector(".photo-check");
+    if (check) check.style.display = item.selected ? "block" : "none";
+  };
+}
+
 function uniqCleanCap(arr, cap) {
-  var max = (typeof cap === "number" && cap > 0) ? cap : 24;
+  const max = (typeof cap === "number" && cap > 0) ? cap : 24;
   if (!Array.isArray(arr)) return [];
 
-  var out = [];
-  var seen = new Set();
+  const out = [];
+  const seen = new Set();
 
-  for (var i = 0; i < arr.length; i++) {
-    var raw = arr[i];
+  for (let i = 0; i < arr.length; i++) {
+    let raw = arr[i];
 
     // Support accidental objects like {url:"..."}
     if (raw && typeof raw === "object" && raw.url) raw = raw.url;
 
-    var u = normalizeUrl(raw);
+    const u = normalizeUrl(raw);
     if (!u) continue;
 
     if (!seen.has(u)) {
@@ -635,21 +635,6 @@ function uniqCleanCap(arr, cap) {
   return out;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-// ==================================================
-// SEND SELECTED TO CREATIVE (STEP 3)
-// ==================================================
 function sendSelectedToCreative() {
   // Guard
   if (!sendTopBtn || typeof setBtnLoading !== "function") return;
