@@ -49,6 +49,13 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
+function absolutizeUrl(baseUrl, src) {
+  try {
+    return new URL(src, baseUrl).href;
+  } catch {
+    return null;
+  }
+}
 
 function normalizeUrl(raw) {
   if (!raw) return null;
