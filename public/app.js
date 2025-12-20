@@ -541,16 +541,7 @@ try {
   }
 }
 
-// ==================================================
-// BOOST BUTTON — WIRE ONCE
-// ==================================================
-if (boostBtn && boostBtn.dataset.wired !== "true") {
-  boostBtn.dataset.wired = "true";
-  boostBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    boostListing(); // capital L — required
-  });
-}
+
 
 // ==================================================
 // SEND SELECTED TO CREATIVE (STEP 3)
