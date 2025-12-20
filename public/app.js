@@ -493,42 +493,7 @@ function uniqCleanCap(arr, cap) {
   return out;
 }
 
-// ===============================
-// BOOST BUTTON — HARD WIRE (ONCE)
-// ===============================
-const boostBtn =
-  document.getElementById("boostListingBtn") ||
-  document.getElementById("boostThisListing") ||
-  document.getElementById("boostButton");
 
-if (!boostBtn) {
-  console.error("❌ Boost button not found (check HTML id)");
-} else if (boostBtn.dataset.wired === "true") {
-  console.log("ℹ️ Boost button already wired");
-} else {
-  boostBtn.dataset.wired = "true";
-
-  // Prevent form submission if inside a form
-  if (boostBtn.tagName === "BUTTON") {
-    boostBtn.type = "button";
-  }
-
-  boostBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    console.log("🟢 BOOST CLICKED");
-
-    try {
-      await boostListing();
-      console.log("🟢 boostListing() finished");
-    } catch (err) {
-      console.error("❌ boostListing() threw:", err);
-    }
-  });
-
-  console.log("✅ Boost button wired:", boostBtn.id);
-}
 
 
 
