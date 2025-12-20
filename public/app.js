@@ -606,8 +606,6 @@ function uniqCleanCap(arr, cap) {
 
   for (let i = 0; i < arr.length; i++) {
     let raw = arr[i];
-
-    // Support accidental objects like {url:"..."}
     if (raw && typeof raw === "object" && raw.url) raw = raw.url;
 
     const u = normalizeUrl(raw);
@@ -619,9 +617,9 @@ function uniqCleanCap(arr, cap) {
       if (out.length >= max) break;
     }
   }
-
   return out;
 }
+
 
 
 
