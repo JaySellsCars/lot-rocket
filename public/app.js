@@ -524,7 +524,8 @@ function normalizeUrl(input) {
       .slice(0, lim);
   }
 
-  function renderStep1Photos(urls) {
+ renderStep1Photos(STORE.lastBoostPhotos || []);
+
     if (!photosGridEl) return;
 
     setStep1FromUrls(urls);
