@@ -233,6 +233,69 @@ pick.addEventListener(
     a.click();
     a.remove();
   }
+// ==================================================
+// BOOST ACTION (REQUIRED) — backend call + render Step 1
+// ==================================================
+function extractBoostPhotosFromResponse(data) {
+  const arr = data?.imageUrls || data?.photos || data?.images || [];
+  return Array.isArray(arr) ? arr : [];
+}
+
+function extractBoostTitleFromResponse(data) {
+  return data?.title || data?.vehicle || data?.name || "";
+}
+
+function extractBoostPriceFromResponse(data) {
+  return data?.price || data?.msrp || data?.internetPrice || "";
+}
+
+async function boostListing() {
+  const url = (dealerUrlInput?.value || "").trim();
+  if (!url) return alert("Paste a dealer URL first.");
+  if (!boostBtn) return alert("Boost button not found.");
+
+  setBtnLoading(boostBtn, true, "Boosting…");
+
+  try {
+    const payload = {
+      url,
+      labelOverride: (vehicleLabelInput?.value || "").trim(),
+      priceOverride: (priceOfferInput?.value || "").trim(),
+      maxPhotos: MAX_PHOTOS,
+    };
+
+    const data = await postJSON(`${apiBase}/api/boost`, payload);
+
+    const title = extractBoostTitleFromResponse(data);
+    const price = extractBoostPriceFromResponse(data);
+    const photos = extractBoostPhotosFromResponse(data);
+
+    const domPhotos = (typeof extractPhotoUrlsFromDom === "function")
+      ? (extractPhotoUrlsFromDom() || [])
+      : [];
+
+    const merged = [
+      ...(Array.isArray(photos) ? photos : []),
+      ...(Array.isArray(domPhotos) ? domPhotos : []),
+    ];
+
+    STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
+    STORE.lastTitle = title;
+    STORE.lastPrice = price;
+
+    if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
+    if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
+
+    renderStep1Photos(STORE.lastBoostPhotos);
+
+    console.log("✅ Boost complete", { count: STORE.lastBoostPhotos.length });
+  } catch (e) {
+    console.error("❌ Boost failed:", e);
+    alert(e?.message || "Boost failed.");
+  } finally {
+    setBtnLoading(boostBtn, false);
+  }
+}
 
   // --------------------------------------------------
   // THEME TOGGLE (single source)
