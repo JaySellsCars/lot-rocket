@@ -251,18 +251,26 @@ function extractImageUrlsFromHtml(html, baseUrl) {
   const seen = new Set();
   const results = [];
 
-  const isJunk = (u) => {
-    const s = u.toLowerCase();
-    return (
-      s.includes("logo") ||
-      s.includes("brand") ||
-      s.includes("dealer") ||
-      s.includes("placeholder") ||
-      s.includes("sprite") ||
-      s.includes("icon") ||
-      s.endsWith(".svg")
-    );
-  };
+const isJunk = (u) => {
+  const s = u.toLowerCase();
+
+  return (
+    s.includes("logo") ||
+    s.includes("brand") ||
+    s.includes("dealer") ||
+    s.includes("oem") ||
+    s.includes("chevrolet") ||
+    s.includes("chevy") ||
+    s.includes("buick") ||
+    s.includes("gmc") ||
+    s.includes("onstar") ||
+    s.includes("icon") ||
+    s.includes("sprite") ||
+    s.includes("placeholder") ||
+    s.endsWith(".svg")
+  );
+};
+
 
   const push = (u) => {
     if (!u || typeof u !== "string") return;
