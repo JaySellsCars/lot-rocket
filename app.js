@@ -242,7 +242,8 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 function extractImageUrlsFromHtml(html, baseUrl) {
   const $ = cheerio.load(html);
   const candidates = [];
-console.log("🟣 Using rendered URLs count:", Array.isArray(imageUrls) ? imageUrls.length : 0);
+console.log("🟣 Using rendered URLs count:", candidates.length);
+
 
   const push = (u) => {
     const a = absUrl(baseUrl, u);
