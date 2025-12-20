@@ -572,28 +572,6 @@ function sendSelectedToCreative() {
   }
 }
 
-// ---------- Wire buttons ONCE ----------
-if (boostBtn && boostBtn.dataset.wired !== "true") {
-  boostBtn.dataset.wired = "true";
-  boostBtn.type = "button";
-  boostBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    boostListing();
-  });
-}
-
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-  sendTopBtn.type = "button";
-  sendTopBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    sendSelectedToCreative();
-  });
-}
-
-
-
-
     const check = DOC.createElement("span");
     check.className = "photo-check";
     check.textContent = "✓";
@@ -629,7 +607,9 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     const check = btnEl.querySelector(".photo-check");
     if (check) check.style.display = item.selected ? "block" : "none";
   };
-}
+} // ✅ END renderStep1Photos()
+
+
 
 function uniqCleanCap(arr, cap) {
   const max = (typeof cap === "number" && cap > 0) ? cap : 24;
@@ -657,6 +637,8 @@ function uniqCleanCap(arr, cap) {
   return out;
 }
 
+
+
 function sendSelectedToCreative() {
   // Guard
   if (!sendTopBtn || typeof setBtnLoading !== "function") return;
@@ -664,18 +646,21 @@ function sendSelectedToCreative() {
   setBtnLoading(sendTopBtn, true, "Sending…");
 
   try {
-    const selected = (typeof getSelectedStep1Urls === "function")
-      ? (getSelectedStep1Urls(MAX_PHOTOS) || [])
-      : [];
+    const selected =
+      (typeof getSelectedStep1Urls === "function")
+        ? (getSelectedStep1Urls(MAX_PHOTOS) || [])
+        : [];
 
     if (!selected.length) {
       console.warn("No photos selected.");
+      alert("Select at least 1 photo first.");
       return;
     }
 
-    const deduped = (typeof uniqCleanCap === "function")
-      ? uniqCleanCap(selected, MAX_PHOTOS)
-      : selected.slice(0, MAX_PHOTOS);
+    const deduped =
+      (typeof uniqCleanCap === "function")
+        ? uniqCleanCap(selected, MAX_PHOTOS)
+        : selected.slice(0, MAX_PHOTOS);
 
     STORE.creativePhotos = deduped;
     STORE.designStudioPhotos = deduped;
@@ -694,6 +679,7 @@ function sendSelectedToCreative() {
     console.log("✅ Sent to Step 3", { count: deduped.length });
   } catch (e) {
     console.error("❌ Send to Step 3 failed:", e);
+    alert(e?.message || "Send failed.");
   } finally {
     setTimeout(() => {
       try { setBtnLoading(sendTopBtn, false); } catch (_) {}
@@ -703,9 +689,31 @@ function sendSelectedToCreative() {
 
 
 
+// ---------- Wire buttons ONCE (MUST be OUTSIDE renderStep1Photos) ----------
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+  boostBtn.type = "button";
+  boostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    boostListing();
+  });
+}
+
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.type = "button";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    sendSelectedToCreative();
+  });
+}
+
+
+
 // ===============================
 // FINAL INIT (SAFE BOOT) — SINGLE COPY ONLY
 // ===============================
+
 try {
   console.log("✅ FINAL INIT REACHED");
 
