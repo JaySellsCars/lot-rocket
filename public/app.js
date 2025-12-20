@@ -548,13 +548,19 @@ async function boostListing() {
 
 // ---------- Send selected to Step 3 ----------
 function sendSelectedToCreative() {
-  if (!sendTopBtn) return;
+  if (!sendTopBtn || typeof setBtnLoading !== "function") return;
 
   setBtnLoading(sendTopBtn, true, "Sending…");
 
   try {
-    const selected = getSelectedStep1Urls(MAX_PHOTOS);
-    if (!selected.length) return alert("Select at least 1 photo first.");
+    const selected = (typeof getSelectedStep1Urls === "function")
+      ? (getSelectedStep1Urls(MAX_PHOTOS) || [])
+      : [];
+
+    if (!selected.length) {
+      alert("Select at least 1 photo first.");
+      return;
+    }
 
     const deduped = (typeof uniqCleanCap === "function")
       ? uniqCleanCap(selected, MAX_PHOTOS)
@@ -562,7 +568,12 @@ function sendSelectedToCreative() {
 
     STORE.creativePhotos = deduped;
     STORE.designStudioPhotos = deduped;
-    STORE.socialReadyPhotos = deduped.map((u) => ({ url: u, originalUrl: u, selected: true, locked: false }));
+    STORE.socialReadyPhotos = deduped.map((u) => ({
+      url: u,
+      originalUrl: u,
+      selected: true,
+      locked: false,
+    }));
 
     if (typeof normalizeSocialReady === "function") normalizeSocialReady();
     if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
@@ -573,9 +584,12 @@ function sendSelectedToCreative() {
   } catch (e) {
     console.error("❌ Send to Step 3 failed:", e);
   } finally {
-    setTimeout(() => setBtnLoading(sendTopBtn, false), 250);
+    setTimeout(() => {
+      try { setBtnLoading(sendTopBtn, false); } catch (_) {}
+    }, 250);
   }
 }
+
 
    
 
