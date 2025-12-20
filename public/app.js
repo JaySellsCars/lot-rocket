@@ -3,6 +3,23 @@
 
 window.document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 JS FILE LOADED");
+  // ===============================
+// TRUTH HOOK — PROVE CLICKS / OVERLAYS
+// ===============================
+console.log("🧪 TRUTH HOOK ACTIVE");
+
+document.addEventListener("click", (e) => {
+  const el = e.target;
+  console.log("🖱️ CLICK:", el.tagName, el.id ? `#${el.id}` : "", el.className || "");
+}, true);
+
+window.addEventListener("error", (e) => {
+  console.error("💥 WINDOW ERROR:", e.message, e.filename, e.lineno);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("💥 PROMISE REJECTION:", e.reason);
+});
+
   console.log("STEP-2 REACHED");
 
   const DOC = window.document;
