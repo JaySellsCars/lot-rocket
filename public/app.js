@@ -509,36 +509,7 @@ function uniqCleanCap(arr, cap) {
 
 
 
-try {
-  const merged = [
-    ...(Array.isArray(photos) ? photos : []),
-    ...(Array.isArray(domPhotos) ? domPhotos : []),
-  ];
 
-  STORE.lastBoostPhotos = uniqCleanCap(merged, MAX_PHOTOS);
-
-  console.log("🧪 BOOST merged photos count =", STORE.lastBoostPhotos.length);
-
-  STORE.lastTitle = title;
-  STORE.lastPrice = price;
-
-  if (vehicleTitleEl) vehicleTitleEl.textContent = title || "—";
-  if (vehiclePriceEl) vehiclePriceEl.textContent = price || "—";
-
-  renderStep1Photos(STORE.lastBoostPhotos);
-
-  console.log("✅ Boost complete", {
-    title,
-    price,
-    photos: STORE.lastBoostPhotos.length,
-  });
-} catch (e) {
-  console.error("❌ Boost failed:", e);
-} finally {
-  if (typeof setBtnLoading === "function" && boostBtn) {
-    setBtnLoading(boostBtn, false);
-  }
-}
 
 
 
