@@ -367,6 +367,7 @@ console.log("🟣 Using rendered URLs count:", candidates.length);
 // ======================================================
 // Scraping
 // ======================================================
+
 async function scrapePage(url) {
   const res = await fetchWithTimeout(url, {}, 20000);
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
@@ -401,6 +402,51 @@ async function scrapePage(url) {
   return { title, price, photos, html };
 }
 
+// ======================================================
+// Image extraction (single clean source)
+// ======================================================
+function extractImageUrlsFromHtml(html, baseUrl) {
+  const $ = cheerio.load(html);
+  const seen = new Set();
+  const results = [];
+
+  const push = (u) => {
+    if (!u || typeof u !== "string") return;
+    u = u.trim();
+    if (!u) return;
+    if (u.startsWith("data:")) return;
+    if (u.startsWith("blob:")) return;
+    if (u.includes("placeholder")) return;
+
+    const abs = absolutizeUrl(baseUrl, u);
+    if (!abs) return;
+    if (seen.has(abs)) return;
+
+    seen.add(abs);
+    results.push(abs);
+  };
+
+  $("img").each((_, img) => {
+    push($(img).attr("src"));
+    push($(img).attr("data-src"));
+    push($(img).attr("data-lazy"));
+    push($(img).attr("data-original"));
+
+    const srcset = $(img).attr("srcset");
+    if (srcset) {
+      srcset.split(",").forEach(part => {
+        const u = part.trim().split(" ")[0];
+        push(u);
+      });
+    }
+  });
+
+  return results;
+}
+
+// ======================================================
+// Rendered scrape (Playwright) — interiors + JS galleries
+// ======================================================
 async function scrapePageRendered(url) {
   if (!playwright) throw new Error("Playwright not installed");
 
@@ -411,18 +457,15 @@ async function scrapePageRendered(url) {
 
   const page = await browser.newPage();
   const foundUrls = new Set();
-console.log("🟣 Playwright capture start:", url);
 
-  // Capture images from network traffic (this is the key)
+  console.log("🟣 Playwright capture start:", url);
+
   page.on("response", async (response) => {
     try {
       const ct = response.headers()["content-type"] || "";
       const resUrl = response.url();
 
-      if (
-        ct.includes("image") ||
-        resUrl.match(/\.(jpg|jpeg|png|webp)/i)
-      ) {
+      if (ct.includes("image") || resUrl.match(/\.(jpg|jpeg|png|webp)/i)) {
         foundUrls.add(resUrl);
       }
 
@@ -439,15 +482,20 @@ console.log("🟣 Playwright capture start:", url);
     timeout: 60000,
   });
 
-  // Let gallery/network finish loading
   await page.waitForTimeout(4000);
-console.log("🟣 Playwright captured URL count:", foundUrls.size);
-console.log("🟣 Sample URLs:", Array.from(foundUrls).slice(0, 20));
+
+  console.log("🟣 Playwright captured URL count:", foundUrls.size);
+  console.log("🟣 Sample URLs:", Array.from(foundUrls).slice(0, 20));
 
   await browser.close();
 
   return Array.from(foundUrls);
 }
+
+
+
+
+// ======================================================
 
 
 
