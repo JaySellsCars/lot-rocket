@@ -175,27 +175,31 @@ function normalizeImgUrl(u) {
  */
 function isLikelyJunkImage(url) {
   const u = (url || "").toLowerCase();
-
   if (!u.startsWith("http")) return true;
 
-  // allow URLs w/o extensions? many CDNs include extensions; but some don't.
-  // We still prefer real image extensions for now to drop junk fast.
-  const isImgExt = /\.(jpg|jpeg|png|webp)(\?|$)/i.test(u);
-  if (!isImgExt) return true;
+  // must look like an image
+  if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
 
+  // kill obvious non-vehicle/promotional tiles
   const bad = [
-    "logo", "brand", "dealer", "dealership",
-    "icon", "favicon", "sprite", "badge",
-    "placeholder", "blank", "spacer",
-    "loading", "loader", "spinner",
-    "button", "cta", "banner", "header", "footer",
-    "facebook", "instagram", "tiktok", "youtube",
+    "logo","brand","dealer","dealership",
+    "icon","favicon","sprite","badge",
+    "placeholder","blank","spacer",
+    "loading","loader","spinner",
+    "button","cta","banner","header","footer",
+    "facebook","instagram","tiktok","youtube",
+    "carfax","autocheck","kbb","edmunds",
+    "special","offer","sale","finance","payment",
+    "play","video","youtube",
+    "overlay","watermark",
     ".svg"
   ];
+
   if (bad.some((w) => u.includes(w))) return true;
 
   return false;
 }
+
 
 function cleanPhotoList(urls, max = 300) {
   const seen = new Set();
