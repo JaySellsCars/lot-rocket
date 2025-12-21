@@ -50,6 +50,50 @@ app.use(express.static("public"));
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
+function normalizeUrl(u) {
+  if (!u) return "";
+  return String(u).trim().replace(/&amp;/g, "&");
+}
+
+function isLikelyJunkImage(url) {
+  const u = (url || "").toLowerCase();
+
+  // obvious non-vehicle assets
+  const badWords = [
+    "logo", "brand", "dealer", "dealership",
+    "sprite", "icon", "favicon", "badge",
+    "placeholder", "blank", "spacer",
+    "loading", "loader", "spinner",
+    "button", "cta", "banner", "header", "footer",
+    "facebook", "instagram", "tiktok", "youtube",
+    "svg", ".svg"
+  ];
+
+  if (!u.startsWith("http")) return true;
+  if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
+  if (badWords.some((w) => u.includes(w))) return true;
+
+  return false;
+}
+
+function cleanPhotoList(urls, max = 200) {
+  const seen = new Set();
+  const out = [];
+
+  for (const raw of urls || []) {
+    const u = normalizeUrl(raw);
+    if (!u) continue;
+    if (seen.has(u)) continue;
+    seen.add(u);
+
+    if (isLikelyJunkImage(u)) continue;
+
+    out.push(u);
+    if (out.length >= max) break;
+  }
+
+  return out;
+}
 
 /** Normalize user input into an absolute http(s) URL; return null if invalid. */
 function normalizeUrl(raw) {
