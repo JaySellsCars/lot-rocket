@@ -246,126 +246,156 @@ document.addEventListener("DOMContentLoaded", () => {
     modalFound: !!resolveFirstExisting(t.modalIds),
   })));
 
-  // ==================================================
-  // STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
-  // ==================================================
-  const vehicleUrlInput = $("vehicleUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceInfoInput = $("priceInfo");
-  const boostButton = $("boostButton");
-  const statusText = $("statusText");
+// ==================================================
+// STEP 1 – SOCIAL KIT + DEALER PHOTOS GRID
+// ==================================================
+const vehicleUrlInput = $("vehicleUrl");
+const vehicleLabelInput = $("vehicleLabel");
+const priceInfoInput = $("priceInfo");
+const boostButton = $("boostButton");
+const statusText = $("statusText");
 
-  const summaryLabel = $("summaryLabel");
-  const summaryPrice = $("summaryPrice");
+const summaryLabel = $("summaryLabel");
+const summaryPrice = $("summaryPrice");
 
-  const facebookPost = $("facebookPost");
-  const instagramPost = $("instagramPost");
-  const tiktokPost = $("tiktokPost");
-  const linkedinPost = $("linkedinPost");
-  const twitterPost = $("twitterPost");
-  const textBlurb = $("textBlurb");
-  const marketplacePost = $("marketplacePost");
-  const hashtags = $("hashtags");
+const facebookPost = $("facebookPost");
+const instagramPost = $("instagramPost");
+const tiktokPost = $("tiktokPost");
+const linkedinPost = $("linkedinPost");
+const twitterPost = $("twitterPost");
+const textBlurb = $("textBlurb");
+const marketplacePost = $("marketplacePost");
+const hashtags = $("hashtags");
 
-  const photosGrid = $("photosGrid");
+const photosGrid = $("photosGrid");
 
-  let socialIndex = 0; // preview index
-  let dealerPhotos = []; // [{ src, selected }]
+let socialIndex = 0; // preview index
+let dealerPhotos = []; // [{ src, selected }]
 
-  function setTA(el, v) {
-    if (!el) return;
-    el.value = v || "";
-    autoResizeTextarea(el);
-  }
+// ---------- helpers ----------
+function setTA(el, v) {
+  if (!el) return;
+  el.value = v || "";
+  autoResizeTextarea(el);
+}
 
-  function renderDealerPhotos() {
-    if (!photosGrid) return;
-    photosGrid.innerHTML = "";
+// ---------- grid render (NO FILTERING HERE) ----------
+function renderDealerPhotos() {
+  if (!photosGrid) return;
+  photosGrid.innerHTML = "";
 
- const list = dealerPhotos; // show ALL dealer photos
+  console.log("🖼️ Rendering dealer photos:", dealerPhotos.length);
 
-    list.forEach((photo, index) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
-      btn.dataset.index = String(index);
+  dealerPhotos.forEach((photo, index) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "photo-thumb-btn" + (photo.selected ? " photo-thumb-selected" : "");
+    btn.dataset.index = String(index);
 
-      const img = document.createElement("img");
-      img.src = photo.src;
-      img.alt = `Dealer photo ${index + 1}`;
-      img.loading = "lazy";
-      img.className = "photo-thumb-img";
+    const img = document.createElement("img");
+    img.src = photo.src;
+    img.alt = `Dealer photo ${index + 1}`;
+    img.loading = "lazy";
+    img.className = "photo-thumb-img";
 
-      btn.appendChild(img);
-      photosGrid.appendChild(btn);
+    btn.appendChild(img);
+    photosGrid.appendChild(btn);
 
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.dataset.index || "0");
-        if (!dealerPhotos[idx]) return;
-        dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
-        renderDealerPhotos();
-      });
-    });
-  }
-
-  async function doBoostListing() {
-    if (!vehicleUrlInput || !boostButton) return;
-
-    const url = vehicleUrlInput.value.trim();
-    const labelOverride = vehicleLabelInput?.value.trim() || "";
-    const priceOverride = priceInfoInput?.value.trim() || "";
-
-    if (!url) {
-      alert("Paste a full dealer URL first.");
-      return;
-    }
-
-    boostButton.disabled = true;
-    if (statusText) statusText.textContent = "Scraping dealer page and building kit…";
-
-    try {
-      const res = await fetch(apiBase + "/api/social-kit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, labelOverride, priceOverride }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status}).`);
-
-      if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
-      if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
-
-      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = data.vehicleLabel || "";
-      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = data.priceInfo || "";
-
-      setTA(facebookPost, data.facebook);
-      setTA(instagramPost, data.instagram);
-      setTA(tiktokPost, data.tiktok);
-      setTA(linkedinPost, data.linkedin);
-      setTA(twitterPost, data.twitter);
-      setTA(textBlurb, data.text);
-      setTA(marketplacePost, data.marketplace);
-      setTA(hashtags, data.hashtags);
-
-      const photos = Array.isArray(data.photos) ? data.photos : [];
-      const capped = capMax(photos, MAX_PHOTOS);
-      dealerPhotos = capped.map((src) => ({ src, selected: false }));
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.index || "0");
+      if (!dealerPhotos[idx]) return;
+      dealerPhotos[idx].selected = !dealerPhotos[idx].selected;
       renderDealerPhotos();
+    });
+  });
+}
 
-      document.body.classList.add("kit-ready");
-      if (statusText) statusText.textContent = "Social kit ready ✔";
-    } catch (err) {
-      console.error("❌ Boost error:", err);
-      if (statusText) statusText.textContent = err?.message || "Failed to build kit.";
-    } finally {
-      boostButton.disabled = false;
-    }
+// ---------- BOOST ----------
+async function doBoostListing() {
+  if (!vehicleUrlInput || !boostButton) return;
+
+  const url = vehicleUrlInput.value.trim();
+  const labelOverride = vehicleLabelInput?.value.trim() || "";
+  const priceOverride = priceInfoInput?.value.trim() || "";
+
+  if (!url) {
+    alert("Paste a full dealer URL first.");
+    return;
   }
 
-  boostButton?.addEventListener("click", doBoostListing);
+  boostButton.disabled = true;
+  if (statusText)
+    statusText.textContent = "Scraping dealer page and building kit…";
 
-  // ==================================================
+  try {
+    const res = await fetch(apiBase + "/api/social-kit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, labelOverride, priceOverride }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok)
+      throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
+
+    // Summary
+    if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
+    if (summaryPrice) summaryPrice.textContent = data.priceInfo || "—";
+
+    if (vehicleLabelInput && !vehicleLabelInput.value)
+      vehicleLabelInput.value = data.vehicleLabel || "";
+    if (priceInfoInput && !priceInfoInput.value)
+      priceInfoInput.value = data.priceInfo || "";
+
+    // Copy blocks
+    setTA(facebookPost, data.facebook);
+    setTA(instagramPost, data.instagram);
+    setTA(tiktokPost, data.tiktok);
+    setTA(linkedinPost, data.linkedin);
+    setTA(twitterPost, data.twitter);
+    setTA(textBlurb, data.text);
+    setTA(marketplacePost, data.marketplace);
+    setTA(hashtags, data.hashtags);
+
+    // ---------- DEALER PHOTOS (FILTER ONCE HERE) ----------
+    const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+
+    console.log("📥 Raw photos from backend:", rawPhotos.length);
+
+    dealerPhotos = rawPhotos
+      .filter((url) => {
+        const u = String(url || "").toLowerCase();
+        return (
+          u.match(/\.(jpg|jpeg|png|webp)(\?|$)/) &&
+          !u.includes("logo") &&
+          !u.includes("icon") &&
+          !u.includes("sprite") &&
+          !u.includes("youtube") &&
+          !u.includes("play")
+        );
+      })
+      .map((src) => ({ src, selected: false }));
+
+    console.log("✅ Dealer photos after filter:", dealerPhotos.length);
+
+    renderDealerPhotos();
+
+    document.body.classList.add("kit-ready");
+    if (statusText) statusText.textContent = "Social kit ready ✔";
+  } catch (err) {
+    console.error("❌ Boost error:", err);
+    if (statusText)
+      statusText.textContent = err?.message || "Failed to build kit.";
+  } finally {
+    boostButton.disabled = false;
+  }
+}
+
+boostButton?.addEventListener("click", doBoostListing);
+
+// ==================================================
+
   // COPY / REGEN
   // ==================================================
   document.querySelectorAll(".copy-btn").forEach((btn) => {
