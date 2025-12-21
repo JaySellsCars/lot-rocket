@@ -452,6 +452,27 @@ async function proxyImageHandler(req, res) {
   try {
     const target = req.query.url;
     if (!target) return res.status(400).json({ error: "Missing url parameter" });
+const u = String(target || "").toLowerCase();
+
+if (
+  u.includes("/assets/logo") ||
+  u.includes("/assets/logos") ||
+  u.includes("logo") ||
+  u.includes("brand") ||
+  u.includes("dealer") ||
+  u.includes("oem") ||
+  u.includes("chevrolet") ||
+  u.includes("chevy") ||
+  u.includes("buick") ||
+  u.includes("gmc") ||
+  u.includes("onstar") ||
+  u.includes("sprite") ||
+  u.includes("icon") ||
+  u.endsWith(".svg") ||
+  u.endsWith(".ico")
+) {
+  return res.status(204).end();
+}
 
     let parsed;
     try {
