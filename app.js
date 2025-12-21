@@ -700,7 +700,8 @@ const cleanedRendered = renderedPhotos.filter((u) => {
     photos = expandIpSequence(photos, safeMax);
 
     // 🧼 Deduplicate AFTER expansion
-    photos = uniqStrings(photos);
+   photos = uniqByCanonical(uniqStrings(photos));
+
 
     // 🎯 Final cap (ALWAYS last)
     photos = photos.slice(0, safeMax);
