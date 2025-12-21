@@ -362,10 +362,29 @@ console.log("📥 BOOST sample photos:", (data?.photos || []).slice(0, 20));
     setTA(marketplacePost, data.marketplace);
     setTA(hashtags, data.hashtags);
 
-// ---------- DEALER PHOTOS (FILTER ONCE HERE) ----------
+// ----------- DEALER PHOTOS (FILTER ONCE HERE) -----------
 const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-dealerPhotos = rawPhotos.map((src) => ({ src, selected: false }));
+
+console.log("📥 Raw photos from backend:", rawPhotos.length);
+
+dealerPhotos = rawPhotos
+  .filter((url) => {
+    const u = String(url || "").toLowerCase();
+    return (
+      u.match(/\.(jpg|jpeg|png|webp)(\?|$)/) &&
+      !u.includes("logo") &&
+      !u.includes("icon") &&
+      !u.includes("sprite") &&
+      !u.includes("youtube") &&
+      !u.includes("play")
+    );
+  })
+  .map((src) => ({ src, selected: false }));
+
+console.log("✅ Dealer photos after frontend filter:", dealerPhotos.length);
+
 renderDealerPhotos();
+
 
 
 // ✅ log immediately after we read backend photos
