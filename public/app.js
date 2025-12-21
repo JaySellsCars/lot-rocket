@@ -329,7 +329,8 @@ async function doBoostListing() {
     statusText.textContent = "Scraping dealer page and building kit…";
 
   try {
-    const res = await fetch(apiBase + "/api/social-kit", {
+   const res = await fetch(apiBase + "/api/boost", {
+
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, labelOverride, priceOverride }),
@@ -338,6 +339,9 @@ async function doBoostListing() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok)
       throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
+console.log("✅ BOOST RESPONSE keys:", Object.keys(data || {}));
+console.log("📥 BOOST photos count:", Array.isArray(data?.photos) ? data.photos.length : "no photos array");
+console.log("📥 BOOST sample photos:", (data?.photos || []).slice(0, 20));
 
     // Summary
     if (summaryLabel) summaryLabel.textContent = data.vehicleLabel || "—";
