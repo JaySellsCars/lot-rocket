@@ -336,13 +336,14 @@ const res = await fetchWithTimeout(url, {}, 20000);
 
   const photos = extractImageUrlsFromHtml(html, url).slice(0, 24);
 
-  console.log("SCRAPE DEBUG:", {
-    url,
-    titleLength: title.length,
-    price,
-    photosFound: photos.length,
-    sample: photos.slice(0, 5),
-  });
+console.log("SCRAPE DEBUG:", {
+  url,
+  titleLength: title.length,
+  price,
+  photosFound: photos.length,
+  sample: photos.slice(0, 5),
+});
+
 
   return { title, price, photos, html };
 }
