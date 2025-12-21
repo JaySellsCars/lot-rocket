@@ -258,17 +258,17 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // STEP 1 GRID STATE + RENDER
   // ===============================
-  function setStep1FromUrls(urls) {
-    const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
-    const prev = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-    const prevSel = new Map(prev.map((p) => [p?.url, !!p?.selected]));
+function setStep1FromUrls(urls) {
+  const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
 
-    STORE.step1Photos = clean.map((u) => ({
-      url: u,
-      selected: prevSel.get(u) ?? true, // default selected
-      dead: false,
-    }));
-  }
+  // ✅ When we boost (new set), start unchecked so Jay can pick manually
+  STORE.step1Photos = clean.map((u) => ({
+    url: u,
+    selected: false,
+    dead: false,
+  }));
+}
+
 
   function getSelectedStep1Urls(max = MAX_PHOTOS) {
     const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
