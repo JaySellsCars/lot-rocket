@@ -430,66 +430,6 @@ async function scrapePage(url) {
   return { title, price, photos, html, $ };
 }
 
- const photos = extractImageUrlsFromHtml(html, url); // ✅ NO CAP (frontend caps)
-
-
-  console.log("SCRAPE DEBUG:", {
-    url,
-    titleLength: title.length,
-    price,
-    photosFound: photos.length,
-    sample: photos.slice(0, 8),
-  });
-
-  return { title, price, photos, html };
-}
-
-// Rendered scrape (Playwright) — interiors + JS galleries
-// ======================================================
-async function scrapePageRendered(url) {
-  if (!playwright) throw new Error("Playwright not installed");
-
-  const browser = await playwright.chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-
-  const page = await browser.newPage();
-  const foundUrls = new Set();
-
-  console.log("🟣 Playwright capture start:", url);
-
-  page.on("response", async (response) => {
-    try {
-      const ct = response.headers()["content-type"] || "";
-      const resUrl = response.url();
-
-      if (ct.includes("image") || resUrl.match(/\.(jpg|jpeg|png|webp)/i)) {
-        foundUrls.add(resUrl);
-      }
-
-      if (ct.includes("application/json")) {
-        const text = await response.text();
-        const matches = text.match(/https?:\/\/[^"'\\]+?\.(jpg|jpeg|png|webp)/gi);
-        if (matches) matches.forEach(u => foundUrls.add(u));
-      }
-    } catch (_) {}
-  });
-
-  await page.goto(url, {
-    waitUntil: "networkidle",
-    timeout: 60000,
-  });
-
-  await page.waitForTimeout(4000);
-
-  console.log("🟣 Playwright captured URL count:", foundUrls.size);
-  console.log("🟣 Sample URLs:", Array.from(foundUrls).slice(0, 20));
-
-  await browser.close();
-
-  return Array.from(foundUrls);
-}
 
 
 
