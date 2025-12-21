@@ -416,7 +416,8 @@ async function scrapePage(url) {
   ).trim();
 
   // ✅ Extract (then cap here)
-  const photos = extractImageUrlsFromHtml(html, url).slice(0, 24);
+ const photos = extractImageUrlsFromHtml(html, url); // ✅ NO CAP (frontend caps)
+
 
   console.log("SCRAPE DEBUG:", {
     url,
