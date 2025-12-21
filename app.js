@@ -601,7 +601,10 @@ app.post("/api/boost", async (req, res) => {
     const pageUrl = normalizeUrl(url);
     if (!pageUrl) return res.status(400).json({ error: "Missing/invalid url" });
 
-    const safeMax = Math.max(1, Math.min(Number(maxPhotos) || 24, 24));
+   // Allow scraping more than 24. We'll cap only for safety (not UI selection).
+const SCRAPE_HARD_MAX = 300; // safety cap to prevent runaway pages
+const safeMax = Math.max(1, Math.min(Number(maxPhotos) || SCRAPE_HARD_MAX, SCRAPE_HARD_MAX));
+
 
     // 1) Static scrape
     const scraped = await scrapePage(pageUrl);
