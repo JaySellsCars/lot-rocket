@@ -360,7 +360,7 @@ async function doBoostListing() {
 
     // ---------- DEALER PHOTOS (FILTER ONCE HERE) ----------
     const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-alert("RAW PHOTOS COUNT: " + rawPhotos.length);
+
 
     console.log("📥 Raw photos from backend:", rawPhotos.length);
 
