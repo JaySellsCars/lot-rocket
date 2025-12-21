@@ -611,27 +611,27 @@ app.post("/api/social-kit", async (req, res) => {
 
     const pageInfo = await scrapePage(pageUrl);
 
-    // ✅ SCRAPE ALL PHOTOS (NO CAP HERE)
-    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+    // ✅ SCRAPE → CLEAN (FIXES GARBAGE IMAGES)
+    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+    const photos = cleanPhotoList(rawPhotos, 300);
 
     const kit = await buildSocialKit({
       pageInfo,
       labelOverride,
       priceOverride,
-      photos, // ✅ return ALL photos to frontend
+      photos, // ✅ cleaned photos only
     });
 
-    // ✅ AI PIPELINE: cap to 24 (keep cost controlled)
+    // ✅ AI PIPELINE: cap to 24 (cost control only)
     kit.editedPhotos = processPhotos
       ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
       : [];
 
-    // ✅ helpful debug (optional, safe)
     console.log("✅ /api/social-kit:", {
       url: pageUrl,
-      photosFound: Array.isArray(photos) ? photos.length : 0,
-      editedPhotos: Array.isArray(kit.editedPhotos) ? kit.editedPhotos.length : 0,
-      processPhotos,
+      rawPhotos: Array.isArray(rawPhotos) ? rawPhotos.length : 0,
+      photosAfterClean: photos.length,
+      editedPhotos: kit.editedPhotos.length,
     });
 
     return res.json(kit);
@@ -639,6 +639,7 @@ app.post("/api/social-kit", async (req, res) => {
     return sendAIError(res, err, "Failed to build social kit.");
   }
 });
+
 
 // --------------------------------------------------
 // /api/social-photos-zip (download URLs as zip)
