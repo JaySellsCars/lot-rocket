@@ -383,7 +383,8 @@ window.document.addEventListener("DOMContentLoaded", () => {
         maxPhotos: MAX_PHOTOS,
       };
 
-      const data = await postJSON(`${apiBase}/api/boost`, payload);
+      const data = await postJSON(`${apiBase}/boost`, payload);
+
 
       const title = extractBoostTitleFromResponse(data);
       const price = extractBoostPriceFromResponse(data);
