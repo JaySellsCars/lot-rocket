@@ -693,7 +693,7 @@ return !(
 
 
     // 🎯 Final cap (ALWAYS last)
-    photos = photos.slice(0, safeMax);
+  
 
     console.log("✅ BOOST FINAL:", { count: photos.length, sample: photos.slice(0, 10) });
 
