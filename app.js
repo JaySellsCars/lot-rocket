@@ -251,6 +251,67 @@ function uniqStrings(arr) {
   if (!Array.isArray(arr)) return [];
   return Array.from(new Set(arr.map((v) => String(v).trim()).filter(Boolean)));
 }
+// ======================================================
+// Photo cleaning (single source of truth) ✅ REQUIRED
+// ======================================================
+function cleanPhotoList(urls, max = 300) {
+  const arr = Array.isArray(urls) ? urls : [];
+  const out = [];
+  const seen = new Set();
+
+  for (const u of arr) {
+    if (!u) continue;
+
+    const s = String(u).trim();
+    if (!s) continue;
+
+    const low = s.toLowerCase();
+
+    // ignore non-real images
+    if (low.startsWith("data:")) continue;
+    if (low.startsWith("blob:")) continue;
+
+    // must look like an image file
+    if (!/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(low)) continue;
+
+    // junk / branding / ui
+    if (
+      low.includes("/assets/logos/") ||
+      low.includes("/assets/logo/") ||
+      low.includes("/assets/branding/") ||
+      low.includes("/static/brand-") ||
+      low.includes("/static/dealer-") ||
+      low.includes("logo") ||
+      low.includes("favicon") ||
+      low.includes("sprite") ||
+      low.endsWith(".svg") ||
+      low.endsWith(".ico")
+    ) {
+      continue;
+    }
+
+    // absolutize if needed
+    let abs = s;
+    try {
+      abs = new URL(s).toString();
+    } catch {
+      // if it's relative, skip unless we can safely absolutize later
+      abs = s;
+    }
+
+    // dedupe by canonical key if available
+    const key =
+      typeof canonicalImageKey === "function" ? canonicalImageKey(abs) : abs;
+
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+
+    out.push(abs);
+    if (out.length >= max) break;
+  }
+
+  return out;
+}
 
 /**
  * Expand LaFontaine-style image sequences:
