@@ -604,29 +604,42 @@ async function boostHandler(req, res) {
       });
     }
 
-    // 1) Static HTML scrape
-    const pageInfo = await scrapePage(pageUrl);
+// 1) Static HTML scrape
+const pageInfo = await scrapePage(pageUrl);
 
-    // 2) Static photos -> clean
-    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
-    let photos = cleanPhotoList(rawPhotos, safeMax);
+// 2) Static photos -> clean
+const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+let photos = cleanPhotoList(rawPhotos, safeMax);
 
-    // 3) OPTIONAL rendered merge (only if enabled + functions exist)
-    if (useRendered && typeof scrapePageRendered === "function" && typeof extractImageUrlsFromHtml === "function") {
-      try {
-        console.log("🟡 Rendered merge ON. Static count:", photos.length);
+// 3) OPTIONAL rendered merge (only if enabled + functions exist)
+if (
+  useRendered &&
+  typeof scrapePageRendered === "function" &&
+  typeof extractImageUrlsFromHtml === "function"
+) {
+  try {
+    console.log("🟡 Rendered merge ON. Static count:", photos.length);
 
-        const renderedHtml = await scrapePageRendered(pageUrl);
-        const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
-        const cleanedRendered = cleanPhotoList(renderedPhotos, safeMax);
+    const rendered = await scrapePageRendered(pageUrl);
 
-        photos = cleanPhotoList([...(photos || []), ...(cleanedRendered || [])], safeMax);
+    // accept either a string OR { html: "..." }
+    const renderedHtml =
+      typeof rendered === "string" ? rendered : (rendered && rendered.html) || "";
 
-        console.log("🟢 AFTER MERGE count:", photos.length);
-      } catch (e) {
-        console.log("Rendered merge failed:", e?.message || e);
-      }
-    }
+    const renderedPhotos = renderedHtml
+      ? extractImageUrlsFromHtml(renderedHtml, pageUrl)
+      : [];
+
+    const cleanedRendered = cleanPhotoList(renderedPhotos, safeMax);
+
+    photos = cleanPhotoList([...(photos || []), ...(cleanedRendered || [])], safeMax);
+
+    console.log("🟢 AFTER MERGE count:", photos.length);
+  } catch (e) {
+    console.log("Rendered merge failed:", e?.message || e);
+  }
+}
+
 
     // 4) OPTIONAL ip/ expansion (only if helper exists)
     if (typeof expandIpSequence === "function") {
