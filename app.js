@@ -671,6 +671,15 @@ app.post("/api/social-kit", async (req, res) => {
     kit.editedPhotos = processPhotos
       ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
       : [];
+kit._debugPhotos = {
+  rawCount: rawPhotos.length,
+  cleanedCount: cleaned.length,
+  finalCount: finalPhotos.length,
+  rawSample: rawPhotos.slice(0, 30),
+  finalSample: finalPhotos.slice(0, 30),
+};
+
+return res.json(kit);
 
     console.log("✅ /api/social-kit:", {
       url: pageUrl,
