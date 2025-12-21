@@ -507,7 +507,16 @@ if (
   s.includes("/assets/branding/") ||
   s.includes("/assets/brand/")
 ) {
-  return res.status(204).end();
+// Return a tiny transparent PNG to avoid broken-image icons in the UI
+const transparentPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/axn1XcAAAAASUVORK5CYII=",
+  "base64"
+);
+res.setHeader("Content-Type", "image/png");
+res.setHeader("Cache-Control", "public, max-age=86400");
+res.setHeader("Access-Control-Allow-Origin", "*");
+return res.status(200).send(transparentPng);
+
 }
 
 
