@@ -595,116 +595,113 @@ app.get("/api/proxy-image", proxyImageHandler);
 app.get("/api/image-proxy", proxyImageHandler);
 
 // ---------- BOOST (Step 1) ----------
-app.post("/api/boost", async (req, res) => {
+// --------------------------------------------------
+// BOOST HANDLER (single source of truth)
+// Supports BOTH:
+//   POST /boost
+//   POST /api/boost
+// --------------------------------------------------
+async function boostHandler(req, res) {
   try {
-    const { url, labelOverride, priceOverride, maxPhotos } = req.body || {};
-    const pageUrl = normalizeUrl(url);
-    if (!pageUrl) return res.status(400).json({ error: "Missing/invalid url" });
+    const pageUrl = normalizeUrl(req.body?.url);
+    const labelOverride = req.body?.labelOverride || "";
+    const priceOverride = req.body?.priceOverride || "";
+    const processPhotos = req.body?.processPhotos !== false; // default true
 
-   // Allow scraping more than 24. We'll cap only for safety (not UI selection).
-const SCRAPE_HARD_MAX = 300; // safety cap to prevent runaway pages
-const safeMax = Math.max(1, Math.min(Number(maxPhotos) || SCRAPE_HARD_MAX, SCRAPE_HARD_MAX));
+    // backend safety cap (frontend will choose up to 24)
+    const safeMax = 300;
 
+    // optional: enable rendered scrape (JS gallery / interiors)
+    const useRendered = req.body?.useRendered === true;
 
-    // 1) Static scrape
-    const scraped = await scrapePage(pageUrl);
-
-    const title = (labelOverride || scraped?.title || "").trim();
-    const price = (priceOverride || scraped?.price || "").trim();
-
-    let photos = Array.isArray(scraped?.photos) ? scraped.photos : [];
-    photos = uniqStrings(photos);
-
-    // ✅ Cheerio <img> pass (old behavior) — MERGE, don’t replace
-    // ✅ Script / JSON image pass (hidden galleries)
-try {
-  const scriptPhotos = extractImageUrlsFromScripts(
-    scraped.html || "",
-    pageUrl
-  );
-  if (scriptPhotos.length) {
-    photos = uniqStrings([].concat(photos, scriptPhotos));
-  }
-} catch (e) {
-  console.log("Script JSON merge failed:", e?.message || e);
-}
-
-    try {
-      const $ = cheerio.load(scraped.html || "");
-      const cheerioPhotos = scrapeVehiclePhotosFromCheerio($, pageUrl);
-      if (cheerioPhotos && cheerioPhotos.length) {
-        photos = uniqStrings([].concat(photos, cheerioPhotos));
-      }
-    } catch (e) {
-      console.log("Cheerio merge failed:", e?.message || e);
+    if (!pageUrl) {
+      return res.status(400).json({
+        error: "bad_url",
+        message: "Invalid or missing URL.",
+      });
     }
 
-    // 2) Rendered supplement (JS gallery / interiors) — MERGE, don’t replace
-    if (playwright) {
+    // 1) Static HTML scrape
+    const pageInfo = await scrapePage(pageUrl);
+
+    // 2) Static photos → clean
+    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+    let photos = cleanPhotoList(rawPhotos, safeMax);
+
+    // 3) Rendered supplement (JS gallery / interiors) — MERGE
+    // NOTE: only runs if you have playwright + scrapePageRendered wired up
+    if (useRendered && typeof scrapePageRendered === "function") {
       try {
-        console.log("🎭 Rendered scrape merge (interiors). Static count:", photos.length);
+        console.log("🟡 Rendered scrape merge (interiors). Static count:", photos.length);
+
         const renderedHtml = await scrapePageRendered(pageUrl);
         const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
 
-        console.log("🧪 RENDERED extracted raw count =", renderedPhotos.length);
-        console.log("🧪 RENDERED sample 40 =", renderedPhotos.slice(0, 40));
+        console.log("🟡 RENDERED extracted raw count =", Array.isArray(renderedPhotos) ? renderedPhotos.length : 0);
 
-if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
-const cleanedRendered = renderedPhotos.filter((u) => {
-  const raw = String(u || "");
-  const lower = raw.toLowerCase();
+        const cleanedRendered = cleanPhotoList(renderedPhotos, safeMax);
 
-  // If this is our proxy route, decode the real target URL for filtering
-  let target = raw;
-  if (lower.includes("proxy-image") && lower.includes("url=")) {
-    try {
-      const qs = raw.split("url=")[1] || "";
-      target = decodeURIComponent(qs.split("&")[0] || qs);
-    } catch {}
-  }
+        // merge + re-clean for dedupe + junk filtering
+        photos = cleanPhotoList([...(photos || []), ...(cleanedRendered || [])], safeMax);
 
-  const s = String(target || "").toLowerCase();
-
-return !(
-  s.includes("/assets/logo") ||
-  s.includes("/assets/logos") ||
-  s.includes("/assets/branding") ||
-  s.includes("/assets/brand") ||
-  s.endsWith(".svg") ||
-  s.endsWith(".ico")
-);
-
-});
-
-
-  photos = uniqStrings([].concat(photos, cleanedRendered));
-}
-
+        console.log("🟢 AFTER MERGE photo count =", photos.length);
       } catch (e) {
-        console.log("Rendered scrape failed:", e?.message || e);
+        console.log("Rendered scrape merge failed:", e?.message || e);
       }
     }
 
-    // ✅ LaFontaine / inventoryphotos "ip/" fix: expand interior sequences
-    photos = expandIpSequence(photos, safeMax);
+    // 4) LaFontaine inventoryphotos "ip/" sequence expansion (if helper exists)
+    if (typeof expandIpSequence === "function") {
+      photos = expandIpSequence(photos, safeMax);
+    }
 
-    // 🧼 Deduplicate AFTER expansion
-   photos = uniqByCanonical(uniqStrings(photos));
+    // 5) Final dedupe (if helpers exist)
+    if (typeof uniqStrings === "function" && typeof uniqByCanonical === "function") {
+      photos = uniqByCanonical(uniqStrings(photos));
+    } else {
+      // fallback dedupe
+      photos = Array.from(new Set(photos || []));
+    }
 
+    // 6) Final cap (ALWAYS last)
+    if (Array.isArray(photos) && photos.length > safeMax) photos = photos.slice(0, safeMax);
 
-    // 🎯 Final cap (ALWAYS last)
-  
+    // 7) Build social kit (returns copy + photos)
+    const kit = await buildSocialKit({
+      pageInfo,
+      labelOverride,
+      priceOverride,
+      photos,
+    });
 
-    console.log("✅ BOOST FINAL:", { count: photos.length, sample: photos.slice(0, 10) });
+    // 8) AI pipeline: cap to 24 (cost control only)
+    kit.editedPhotos = processPhotos
+      ? await processPhotoBatch((photos || []).slice(0, 24), kit.vehicleLabel)
+      : [];
 
-    return res.json({ title, price, photos });
+    // 9) Debug
+    console.log("✅ BOOST:", {
+      url: pageUrl,
+      rawPhotos: Array.isArray(rawPhotos) ? rawPhotos.length : 0,
+      photosAfterClean: Array.isArray(photos) ? photos.length : 0,
+      editedPhotos: Array.isArray(kit.editedPhotos) ? kit.editedPhotos.length : 0,
+      processPhotos,
+      useRendered,
+      sample: (photos || []).slice(0, 10),
+    });
+
+    return res.json(kit);
   } catch (err) {
-    console.error("❌ /api/boost failed:", err);
-    return res.status(500).json({ error: err?.message || "Boost failed" });
+    return sendAIError(res, err, "Boost failed.");
   }
-});
+}
+
+// ✅ Support both paths (NO DUPLICATE LOGIC)
+app.post("/boost", boostHandler);
+app.post("/api/boost", boostHandler);
 
 // ---------- ZIP download ----------
+
 app.post("/api/social-photos-zip", async (req, res) => {
   try {
     const urls = Array.isArray(req.body?.urls) ? req.body.urls.filter(Boolean) : [];
