@@ -364,6 +364,9 @@ console.log("📥 BOOST sample photos:", (data?.photos || []).slice(0, 20));
 
 // ---------- DEALER PHOTOS (FILTER ONCE HERE) ----------
 const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+dealerPhotos = rawPhotos.map((src) => ({ src, selected: false }));
+renderDealerPhotos();
+
 
 // ✅ log immediately after we read backend photos
 console.log("📥 Raw photos from backend:", rawPhotos.length);
