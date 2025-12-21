@@ -668,23 +668,15 @@ const cleanedRendered = renderedPhotos.filter((u) => {
 
   const s = String(target || "").toLowerCase();
 
-  return !(
-    s.includes("/assets/logo") ||
-    s.includes("/assets/logos") ||
-    s.includes("logo") ||
-    s.includes("brand") ||
-    s.includes("dealer") ||
-    s.includes("oem") ||
-    s.includes("chevrolet") ||
-    s.includes("chevy") ||
-    s.includes("buick") ||
-    s.includes("gmc") ||
-    s.includes("onstar") ||
-    s.includes("icon") ||
-    s.includes("sprite") ||
-    s.endsWith(".svg") ||
-    s.endsWith(".ico")
-  );
+return !(
+  s.includes("/assets/logo") ||
+  s.includes("/assets/logos") ||
+  s.includes("/assets/branding") ||
+  s.includes("/assets/brand") ||
+  s.endsWith(".svg") ||
+  s.endsWith(".ico")
+);
+
 });
 
 
