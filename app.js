@@ -458,6 +458,51 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
 // NOTE: by default we keep existing behavior: it DOES process photos.
 // You can disable by sending { processPhotos: false }.
 // --------------------------------------------------
+// --------------------------------------------------
+// BACK-COMPAT: frontend still calls /boost
+// --------------------------------------------------
+app.post("/boost", async (req, res) => {
+  try {
+    const pageUrl = normalizeUrl(req.body?.url);
+    const labelOverride = req.body?.labelOverride || "";
+    const priceOverride = req.body?.priceOverride || "";
+    const processPhotos = req.body?.processPhotos !== false; // default true
+
+    if (!pageUrl) {
+      return res.status(400).json({
+        error: "bad_url",
+        message: "Invalid or missing URL.",
+      });
+    }
+
+    const pageInfo = await scrapePage(pageUrl);
+
+    // ✅ SCRAPE ALL DEALER PHOTOS (NO CAP)
+    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+
+    const kit = await buildSocialKit({
+      pageInfo,
+      labelOverride,
+      priceOverride,
+      photos, // <-- ALL photos returned to frontend
+    });
+
+    // ✅ AI PHOTO PIPELINE IS CAPPED (COST CONTROL ONLY)
+    kit.editedPhotos = processPhotos
+      ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
+      : [];
+
+    console.log("✅ /boost:", {
+      photosFound: photos.length,
+      editedPhotos: kit.editedPhotos.length,
+    });
+
+    return res.json(kit);
+  } catch (err) {
+    return sendAIError(res, err, "Boost failed.");
+  }
+});
+
 app.post("/api/social-kit", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
