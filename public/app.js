@@ -271,6 +271,16 @@ const photosGrid = $("photosGrid");
 
 let socialIndex = 0; // preview index
 let dealerPhotos = []; // [{ src, selected }]
+// ================================
+// STEP A — LAUNCH VERIFICATION LOGS
+// ================================
+function confirm(label) {
+  console.log(`🚀 [STEP A CONFIRMED]: ${label}`);
+}
+
+boostButton?.addEventListener("click", () => {
+  confirm("Boost Listing button clicked");
+});
 
 // ---------- helpers ----------
 function setTA(el, v) {
