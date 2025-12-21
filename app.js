@@ -462,9 +462,15 @@ try {
 const s = decoded.toLowerCase();
 
 // ONLY block known logo asset paths (no keyword blocking)
-if (s.includes("/assets/logos/") || s.includes("/assets/logo/")) {
+if (
+  s.includes("/assets/logos/") ||
+  s.includes("/assets/logo/") ||
+  s.includes("/assets/branding/") ||
+  s.includes("/assets/brand/")
+) {
   return res.status(204).end();
 }
+
 
 
     let parsed;
