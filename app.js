@@ -570,6 +570,13 @@ app.post("/boost", async (req, res) => {
     // ✅ SCRAPE ALL DEALER PHOTOS (NO CAP)
    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
 const photos = cleanPhotoList(rawPhotos, 300);
+console.log("🧪 PHOTO SAMPLE AFTER CLEAN:", photos.slice(0, 12));
+console.log("🧪 PHOTO SAMPLE RAW:", (rawPhotos || []).slice(0, 12));
+const photosHard = photos.filter(u =>
+  /inventory|vehicle|vdp|media|photos|images|cdn|cloudfront|dealerinspire|vauto|cargurus|dealer\.com|home\.delivery|spincar|imagerelay|gubagoo/i.test(u)
+);
+
+const finalPhotos = photosHard.length ? photosHard : photos;
 
 
     const kit = await buildSocialKit({
