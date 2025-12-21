@@ -312,7 +312,8 @@ const isJunk = (u) => {
 // ======================================================
 
 async function scrapePage(url) {
-const res = await fetch(apiBase + "/api/boost", {
+const res = await fetchWithTimeout(url, {}, 20000);
+
 
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
 
