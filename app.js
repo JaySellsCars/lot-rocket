@@ -415,7 +415,21 @@ async function scrapePage(url) {
     ""
   ).trim();
 
-  // ✅ Extract (then cap here)
+  // ✅ Extract ALL image URLs (NO CAP here — frontend caps)
+  const photos = extractImageUrlsFromHtml(html, url);
+
+  console.log("SCRAPE DEBUG:", {
+    url,
+    titleLength: title.length,
+    price,
+    photosFound: Array.isArray(photos) ? photos.length : 0,
+    sample: (photos || []).slice(0, 8),
+  });
+
+  // ✅ IMPORTANT: return $ so scrapeVehiclePhotosFromCheerio(pageInfo.$, ...) works
+  return { title, price, photos, html, $ };
+}
+
  const photos = extractImageUrlsFromHtml(html, url); // ✅ NO CAP (frontend caps)
 
 
