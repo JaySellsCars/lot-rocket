@@ -528,23 +528,40 @@ app.post("/api/boost", async (req, res) => {
         console.log("🧪 RENDERED sample 40 =", renderedPhotos.slice(0, 40));
 
 if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
-  const cleanedRendered = renderedPhotos.filter(u => {
-    const s = String(u).toLowerCase();
-    return !(
-      s.includes("logo") ||
-      s.includes("brand") ||
-      s.includes("dealer") ||
-      s.includes("oem") ||
-      s.includes("chevrolet") ||
-      s.includes("chevy") ||
-      s.includes("buick") ||
-      s.includes("gmc") ||
-      s.includes("onstar") ||
-      s.includes("icon") ||
-      s.includes("sprite") ||
-      s.endsWith(".svg")
-    );
-  });
+const cleanedRendered = renderedPhotos.filter((u) => {
+  const raw = String(u || "");
+  const lower = raw.toLowerCase();
+
+  // If this is our proxy route, decode the real target URL for filtering
+  let target = raw;
+  if (lower.includes("proxy-image") && lower.includes("url=")) {
+    try {
+      const qs = raw.split("url=")[1] || "";
+      target = decodeURIComponent(qs.split("&")[0] || qs);
+    } catch {}
+  }
+
+  const s = String(target || "").toLowerCase();
+
+  return !(
+    s.includes("/assets/logo") ||
+    s.includes("/assets/logos") ||
+    s.includes("logo") ||
+    s.includes("brand") ||
+    s.includes("dealer") ||
+    s.includes("oem") ||
+    s.includes("chevrolet") ||
+    s.includes("chevy") ||
+    s.includes("buick") ||
+    s.includes("gmc") ||
+    s.includes("onstar") ||
+    s.includes("icon") ||
+    s.includes("sprite") ||
+    s.endsWith(".svg") ||
+    s.endsWith(".ico")
+  );
+});
+
 
   photos = uniqStrings([].concat(photos, cleanedRendered));
 }
