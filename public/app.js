@@ -189,12 +189,18 @@ window.document.addEventListener("DOMContentLoaded", () => {
 // ==================================================
 // STEP 1 → Send Top Photos to Creative Lab + Strip
 // ==================================================
-const sendTopPhotosBtn =
+// PREDECLARE to avoid TDZ errors
+let sendTopBtn = null;
+
+// Resolve Send Top Photos button (Creative Lab ONLY)
+sendTopBtn =
   $("sendTopPhotosBtn") ||
   $("sendTopPhotosToCreative") ||
   $("sendTopPhotosToCreativeLab") ||
   $("sendTopPhotosToCreativeLabBtn") ||
-  $("sendTopPhotosToCreativeLabStripBtn");
+  $("sendTopPhotosToCreativeLabStripBtn") ||
+  null;
+
 // ===============================
 // STEP 1 → SEND TOP PHOTOS (CREATIVE LAB ONLY)
 // ===============================
