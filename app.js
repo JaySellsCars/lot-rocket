@@ -527,9 +527,28 @@ app.post("/api/boost", async (req, res) => {
         console.log("🧪 RENDERED extracted raw count =", renderedPhotos.length);
         console.log("🧪 RENDERED sample 40 =", renderedPhotos.slice(0, 40));
 
-        if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
-          photos = uniqStrings([].concat(photos, renderedPhotos));
-        }
+if (Array.isArray(renderedPhotos) && renderedPhotos.length) {
+  const cleanedRendered = renderedPhotos.filter(u => {
+    const s = String(u).toLowerCase();
+    return !(
+      s.includes("logo") ||
+      s.includes("brand") ||
+      s.includes("dealer") ||
+      s.includes("oem") ||
+      s.includes("chevrolet") ||
+      s.includes("chevy") ||
+      s.includes("buick") ||
+      s.includes("gmc") ||
+      s.includes("onstar") ||
+      s.includes("icon") ||
+      s.includes("sprite") ||
+      s.endsWith(".svg")
+    );
+  });
+
+  photos = uniqStrings([].concat(photos, cleanedRendered));
+}
+
       } catch (e) {
         console.log("Rendered scrape failed:", e?.message || e);
       }
