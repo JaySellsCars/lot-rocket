@@ -622,6 +622,15 @@ app.post("/boost", async (req, res) => {
       final: finalPhotos.length,
       edited: kit.editedPhotos.length,
     });
+kit._debugPhotos = {
+  rawCount: rawPhotos.length,
+  cleanedCount: cleaned.length,
+  finalCount: finalPhotos.length,
+  rawSample: rawPhotos.slice(0, 30),
+  finalSample: finalPhotos.slice(0, 30),
+};
+
+return res.json(kit);
 
     return res.json(kit);
   } catch (err) {
