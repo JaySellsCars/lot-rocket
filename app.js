@@ -594,7 +594,6 @@ if (isLogoAsset) {
 app.get("/api/proxy-image", proxyImageHandler);
 app.get("/api/image-proxy", proxyImageHandler);
 
-// ---------- BOOST (Step 1) ----------
 // --------------------------------------------------
 // BOOST HANDLER (single source of truth)
 // Supports BOTH:
@@ -606,12 +605,12 @@ async function boostHandler(req, res) {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
-    const processPhotos = req.body?.processPhotos !== false; // default true
 
-    // backend safety cap (frontend will choose up to 24)
+    // defaults
+    const processPhotos = req.body?.processPhotos !== false; // default true
     const safeMax = 300;
 
-    // optional: enable rendered scrape (JS gallery / interiors)
+    // only runs if caller sets true AND the functions exist
     const useRendered = req.body?.useRendered === true;
 
     if (!pageUrl) {
@@ -624,62 +623,84 @@ async function boostHandler(req, res) {
     // 1) Static HTML scrape
     const pageInfo = await scrapePage(pageUrl);
 
-    // 2) Static photos → clean
+    // 2) Static photos -> clean
     const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
     let photos = cleanPhotoList(rawPhotos, safeMax);
 
-    // 3) Rendered supplement (JS gallery / interiors) — MERGE
-    // NOTE: only runs if you have playwright + scrapePageRendered wired up
-    if (useRendered && typeof scrapePageRendered === "function") {
+    // 3) OPTIONAL rendered merge (only if enabled + functions exist)
+    if (useRendered && typeof scrapePageRendered === "function" && typeof extractImageUrlsFromHtml === "function") {
       try {
-        console.log("🟡 Rendered scrape merge (interiors). Static count:", photos.length);
+        console.log("🟡 Rendered merge ON. Static count:", photos.length);
 
         const renderedHtml = await scrapePageRendered(pageUrl);
         const renderedPhotos = extractImageUrlsFromHtml(renderedHtml, pageUrl);
-
-        console.log("🟡 RENDERED extracted raw count =", Array.isArray(renderedPhotos) ? renderedPhotos.length : 0);
-
         const cleanedRendered = cleanPhotoList(renderedPhotos, safeMax);
 
-        // merge + re-clean for dedupe + junk filtering
         photos = cleanPhotoList([...(photos || []), ...(cleanedRendered || [])], safeMax);
 
-        console.log("🟢 AFTER MERGE photo count =", photos.length);
+        console.log("🟢 AFTER MERGE count:", photos.length);
       } catch (e) {
-        console.log("Rendered scrape merge failed:", e?.message || e);
+        console.log("Rendered merge failed:", e?.message || e);
       }
     }
 
-    // 4) LaFontaine inventoryphotos "ip/" sequence expansion (if helper exists)
+    // 4) OPTIONAL ip/ expansion (only if helper exists)
     if (typeof expandIpSequence === "function") {
       photos = expandIpSequence(photos, safeMax);
     }
 
-    // 5) Final dedupe (if helpers exist)
+    // 5) Dedupe (safe fallback)
     if (typeof uniqStrings === "function" && typeof uniqByCanonical === "function") {
       photos = uniqByCanonical(uniqStrings(photos));
     } else {
-      // fallback dedupe
       photos = Array.from(new Set(photos || []));
     }
 
-    // 6) Final cap (ALWAYS last)
+    // 6) Final cap
     if (Array.isArray(photos) && photos.length > safeMax) photos = photos.slice(0, safeMax);
 
-    // 7) Build social kit (returns copy + photos)
-    const kit = await buildSocialKit({
-      pageInfo,
-      labelOverride,
-      priceOverride,
+    // 7) Build kit (DO NOT HARD FAIL)
+    let kit = {
+      vehicleLabel: labelOverride || "",
+      priceInfo: priceOverride || "",
+      facebook: "",
+      instagram: "",
+      tiktok: "",
+      linkedin: "",
+      twitter: "",
+      text: "",
+      marketplace: "",
+      hashtags: "",
+      selfieScript: "",
+      shotPlan: "",
+      designIdea: "",
       photos,
-    });
+      editedPhotos: [],
+    };
 
-    // 8) AI pipeline: cap to 24 (cost control only)
-    kit.editedPhotos = processPhotos
-      ? await processPhotoBatch((photos || []).slice(0, 24), kit.vehicleLabel)
-      : [];
+    try {
+      kit = await buildSocialKit({
+        pageInfo,
+        labelOverride,
+        priceOverride,
+        photos,
+      });
+      kit.photos = photos; // force our cleaned photos
+    } catch (e) {
+      console.log("⚠️ buildSocialKit failed (returning photos anyway):", e?.message || e);
+      kit.photos = photos;
+    }
 
-    // 9) Debug
+    // 8) AI photos (best-effort, DO NOT HARD FAIL)
+    if (processPhotos) {
+      try {
+        kit.editedPhotos = await processPhotoBatch((photos || []).slice(0, 24), kit.vehicleLabel);
+      } catch (e) {
+        console.log("⚠️ processPhotoBatch failed (continuing):", e?.message || e);
+        kit.editedPhotos = [];
+      }
+    }
+
     console.log("✅ BOOST:", {
       url: pageUrl,
       rawPhotos: Array.isArray(rawPhotos) ? rawPhotos.length : 0,
@@ -699,6 +720,7 @@ async function boostHandler(req, res) {
 // ✅ Support both paths (NO DUPLICATE LOGIC)
 app.post("/boost", boostHandler);
 app.post("/api/boost", boostHandler);
+
 
 // ---------- ZIP download ----------
 
