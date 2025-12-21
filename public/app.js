@@ -195,6 +195,85 @@ const sendTopPhotosBtn =
   $("sendTopPhotosToCreativeLab") ||
   $("sendTopPhotosToCreativeLabBtn") ||
   $("sendTopPhotosToCreativeLabStripBtn");
+// ===============================
+// STEP 1 → SEND TOP PHOTOS (CREATIVE LAB ONLY)
+// ===============================
+function getSelectedStep1PhotoUrls() {
+  // 1) STORE-based (if Step 1 uses store objects)
+  const candidates =
+    (Array.isArray(STORE.step1Photos) && STORE.step1Photos) ||
+    (Array.isArray(STORE.boostPhotos) && STORE.boostPhotos) ||
+    (Array.isArray(STORE.photos) && STORE.photos) ||
+    [];
+
+  // objects: { url, selected }
+  if (candidates.length && typeof candidates[0] === "object") {
+    const picked = candidates.filter(p => p && p.selected && p.url).map(p => p.url);
+    if (picked.length) return picked.slice(0, MAX_PHOTOS);
+    return candidates.filter(p => p && p.url).map(p => p.url).slice(0, MAX_PHOTOS);
+  }
+
+  // strings
+  if (candidates.length && typeof candidates[0] === "string") {
+    return candidates.slice(0, MAX_PHOTOS);
+  }
+
+  // 2) DOM fallback (selected thumbs)
+  const selectedBtns = Array.from(document.querySelectorAll(".photo-thumb-btn.photo-thumb-selected"));
+  const domPicked = selectedBtns
+    .map(b => b.querySelector("img")?.src)
+    .filter(Boolean)
+    .slice(0, MAX_PHOTOS);
+  if (domPicked.length) return domPicked;
+
+  // 3) last fallback: any thumbs
+  return Array.from(document.querySelectorAll("#photosGrid img.photo-thumb-img, #photosGrid img"))
+    .map(img => img.src)
+    .filter(Boolean)
+    .slice(0, MAX_PHOTOS);
+}
+
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+
+  sendTopBtn.addEventListener("click", () => {
+    try {
+      const urls = getSelectedStep1PhotoUrls();
+
+      console.log("📤 SEND TOP → CREATIVE clicked. urls:", urls.length, urls.slice(0, 5));
+
+      if (!urls.length) {
+        alert("No photos selected. Click photos first (or Boost again).");
+        return;
+      }
+
+      // Ensure creative array
+      STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
+
+      // Merge + cap
+      STORE.creativePhotos = capMax(
+        uniqueUrls([...(STORE.creativePhotos || []), ...urls]),
+        MAX_PHOTOS
+      );
+
+      // Render Creative thumbs
+      renderCreativeThumbs?.();
+
+      // Open Creative Lab if you have a function (safe)
+      if (typeof openCreativeStudio === "function") openCreativeStudio();
+
+      // Button feedback
+      const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
+      sendTopBtn.dataset.originalText = og;
+      sendTopBtn.textContent = "✅ Sent to Creative Lab";
+      setTimeout(() => (sendTopBtn.textContent = og), 1200);
+
+    } catch (e) {
+      console.error("❌ Send Top Photos → Creative failed:", e);
+      alert("Send failed. Check console.");
+    }
+  });
+}
 
 // Pull selected URLs from the Step 1 photo grid (fallback: all visible thumbs)
 function getStep1ChosenUrls(max = 24) {
