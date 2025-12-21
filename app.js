@@ -231,7 +231,8 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     }
   });
 
-  return Array.from(urls).slice(0, 24);
+return Array.from(urls);
+
 }
 
 // ======================================================
