@@ -489,16 +489,7 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   });
 }
 
-  const sendTopBtn =
-    $("sendTopPhotosBtn") ||
-    $("sendPhotosToCreative") ||
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendPhotosToCreativeLab") ||
-    $("sendTopPhotosToDesignStudio") ||
-    $("sendPhotosToStudio") ||
-    $("sendPhotosToDesignStudio") ||
-    null;
+
 
   const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
