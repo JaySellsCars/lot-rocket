@@ -279,38 +279,44 @@ function expandIpSequence(urls, max = 24) {
   return Array.from(out);
 }
 
-function scrapeVehiclePhotosFromCheerio($, baseUrl) {
-  const urls = new Set();
-  let base;
-  try {
-    base = new URL(baseUrl);
-  } catch {
-    base = null;
+function scrapeVehiclePhotosFromCheerio(cheerioRoot, baseUrl) {
+  if (!cheerioRoot || typeof cheerioRoot !== "function") {
+    throw new Error("Cheerio root ($) not passed into scrapeVehiclePhotosFromCheerio");
   }
 
-  $("img").each((_, el) => {
-    let src = $(el).attr("data-src") || $(el).attr("src");
-    if (!src) return;
-    src = String(src).trim();
+  const urls = new Set();
+  const base = new URL(baseUrl);
+
+  cheerioRoot("img").each((_, el) => {
+    let src =
+      cheerioRoot(el).attr("data-src") ||
+      cheerioRoot(el).attr("src");
+
     if (!src) return;
 
-    const lower = src.toLowerCase();
+    src = String(src).trim().toLowerCase();
+
+    // hard filter junk
     if (
-      lower.includes("logo") ||
-      lower.includes("icon") ||
-      lower.includes("sprite") ||
-      lower.endsWith(".svg")
-    )
+      src.includes("logo") ||
+      src.includes("icon") ||
+      src.includes("sprite") ||
+      src.endsWith(".svg")
+    ) {
       return;
+    }
 
     try {
-      const abs = base ? new URL(src, base).href : src;
+      const abs = new URL(src, base).href;
       urls.add(abs);
-    } catch {}
+    } catch {
+      // ignore bad urls
+    }
   });
 
   return Array.from(urls);
 }
+
 
 // ======================================================
 // Image extraction (single copy)
