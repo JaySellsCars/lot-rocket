@@ -237,6 +237,15 @@ textarea{
 .glow-send{
   box-shadow: 0 0 28px rgba(249,115,22,0.55);
 }
+#boostListingBtn, #boostThisListingBtn, #boostThisListing, #boostButton {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.btn-loading {
+  opacity: .7;
+  cursor: progress !important;
+}
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
 /* v2.6 JS renders buttons with:
