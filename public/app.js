@@ -282,7 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!photosGrid) return;
     photosGrid.innerHTML = "";
 
-    const list = capMax(dealerPhotos, MAX_PHOTOS);
+ const list = dealerPhotos; // show ALL dealer photos
+
     list.forEach((photo, index) => {
       const btn = document.createElement("button");
       btn.type = "button";
