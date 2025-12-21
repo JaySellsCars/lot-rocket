@@ -480,20 +480,29 @@ app.post("/api/social-kit", async (req, res) => {
     }
 
     const pageInfo = await scrapePage(pageUrl);
+
+    // ✅ SCRAPE ALL PHOTOS (NO CAP HERE)
     const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
 
     const kit = await buildSocialKit({
       pageInfo,
       labelOverride,
       priceOverride,
-      photos,
+      photos, // ✅ return ALL photos to frontend
     });
 
-// Photo pipeline (expensive) — only process up to 24 selected/top photos
-kit.editedPhotos = processPhotos
-  ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
-  : [];
+    // ✅ AI PIPELINE: cap to 24 (keep cost controlled)
+    kit.editedPhotos = processPhotos
+      ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
+      : [];
 
+    // ✅ helpful debug (optional, safe)
+    console.log("✅ /api/social-kit:", {
+      url: pageUrl,
+      photosFound: Array.isArray(photos) ? photos.length : 0,
+      editedPhotos: Array.isArray(kit.editedPhotos) ? kit.editedPhotos.length : 0,
+      processPhotos,
+    });
 
     return res.json(kit);
   } catch (err) {
@@ -598,6 +607,7 @@ Include a call-to-action to DM or message the salesperson.
 // --------------------------------------------------
 // /api/new-script (selfie script OR generic script idea)
 // --------------------------------------------------
+
 app.post("/api/new-script", async (req, res) => {
   try {
     const { kind, url, vehicle, hook, style, length } = req.body || {};
