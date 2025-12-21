@@ -566,6 +566,19 @@ app.post("/api/boost", async (req, res) => {
     photos = uniqStrings(photos);
 
     // ✅ Cheerio <img> pass (old behavior) — MERGE, don’t replace
+    // ✅ Script / JSON image pass (hidden galleries)
+try {
+  const scriptPhotos = extractImageUrlsFromScripts(
+    scraped.html || "",
+    pageUrl
+  );
+  if (scriptPhotos.length) {
+    photos = uniqStrings([].concat(photos, scriptPhotos));
+  }
+} catch (e) {
+  console.log("Script JSON merge failed:", e?.message || e);
+}
+
     try {
       const $ = cheerio.load(scraped.html || "");
       const cheerioPhotos = scrapeVehiclePhotosFromCheerio($, pageUrl);
