@@ -186,6 +186,124 @@ window.document.addEventListener("DOMContentLoaded", () => {
     autoResizeTextarea(ta);
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
+// ==================================================
+// STEP 1 → Send Top Photos to Creative Lab + Strip
+// ==================================================
+const sendTopPhotosBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendTopPhotosToCreativeLabBtn") ||
+  $("sendTopPhotosToCreativeLabStripBtn");
+
+// Pull selected URLs from the Step 1 photo grid (fallback: all visible thumbs)
+function getStep1ChosenUrls(max = 24) {
+  const grid =
+    $("photosGrid") ||
+    $("step1PhotosGrid") ||
+    document.querySelector(".photo-grid");
+
+  if (!grid) return [];
+
+  const btns = Array.from(grid.querySelectorAll("button, .photo-thumb-btn"));
+  const selectedBtns = btns.filter((b) =>
+    b.classList.contains("photo-thumb-selected")
+  );
+
+  const takeFrom = selectedBtns.length ? selectedBtns : btns;
+
+  const urls = takeFrom
+    .map((b) => b.querySelector("img")?.src || b.querySelector("img")?.getAttribute("src"))
+    .filter(Boolean)
+    .slice(0, max);
+
+  // de-dupe
+  return Array.from(new Set(urls));
+}
+
+function ensureSocialReadyStore() {
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
+    ? STORE.socialReadyPhotos
+    : [];
+
+  // normalize to objects: { url, originalUrl, selected, locked }
+  STORE.socialReadyPhotos = STORE.socialReadyPhotos
+    .map((p) => (typeof p === "string" ? { url: p, originalUrl: p, selected: true, locked: false } : p))
+    .filter((p) => p && p.url);
+}
+
+function addUrlsToSocialReady(urls) {
+  ensureSocialReadyStore();
+
+  const existing = new Set(STORE.socialReadyPhotos.map((p) => p.url));
+  urls.forEach((u) => {
+    if (!existing.has(u)) {
+      STORE.socialReadyPhotos.push({
+        url: u,
+        originalUrl: u,
+        selected: true,
+        locked: false,
+      });
+      existing.add(u);
+    }
+  });
+
+  // cap
+  if (STORE.socialReadyPhotos.length > MAX_PHOTOS) {
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
+  }
+}
+
+function addUrlsToCreativeLab(urls) {
+  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
+  const existing = new Set(STORE.creativePhotos);
+  urls.forEach((u) => {
+    if (!existing.has(u)) {
+      STORE.creativePhotos.push(u);
+      existing.add(u);
+    }
+  });
+
+  // cap
+  if (STORE.creativePhotos.length > MAX_PHOTOS) {
+    STORE.creativePhotos = STORE.creativePhotos.slice(0, MAX_PHOTOS);
+  }
+}
+
+if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
+  sendTopPhotosBtn.dataset.wired = "true";
+
+  sendTopPhotosBtn.addEventListener("click", () => {
+    const urls = getStep1ChosenUrls(MAX_PHOTOS);
+
+    if (!urls.length) {
+      alert("No photos found to send.");
+      return;
+    }
+
+    // UX feedback
+    const oldText = sendTopPhotosBtn.textContent;
+    sendTopPhotosBtn.disabled = true;
+    sendTopPhotosBtn.textContent = "Sent ✅";
+
+    // push into BOTH places
+    addUrlsToCreativeLab(urls);
+    addUrlsToSocialReady(urls);
+
+    // refresh UI if functions exist
+    try { typeof renderCreativeThumbs === "function" && renderCreativeThumbs(); } catch {}
+    try { typeof renderSocialStrip === "function" && renderSocialStrip(); } catch {}
+
+    // optional: auto-open Creative Lab if you have a function
+    try { typeof openCreativeStudio === "function" && openCreativeStudio(); } catch {}
+
+    // restore button
+    setTimeout(() => {
+      sendTopPhotosBtn.disabled = false;
+      sendTopPhotosBtn.textContent = oldText || "Send Top Photos to Creative Lab + Strip";
+    }, 900);
+  });
+}
 
   // ===============================
   // STEP 1 — ELEMENTS (SINGLE COPY)
