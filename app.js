@@ -319,43 +319,53 @@ function scrapeVehiclePhotosFromCheerio(cheerioRoot, baseUrl) {
 
 
 // ======================================================
-// Image extraction (single copy)
+// Image extraction (single clean source)
 // ======================================================
 function extractImageUrlsFromHtml(html, baseUrl) {
   const $ = cheerio.load(html);
   const seen = new Set();
   const results = [];
 
-const isJunk = (u) => {
-  const s = u.toLowerCase();
+  const isLikelyJunkImage = (u) => {
+    const s = String(u || "").toLowerCase();
 
-  return (
-    s.includes("logo") ||
-    s.includes("brand") ||
-    s.includes("dealer") ||
-    s.includes("oem") ||
-    s.includes("chevrolet") ||
-    s.includes("chevy") ||
-    s.includes("buick") ||
-    s.includes("gmc") ||
-    s.includes("onstar") ||
-    s.includes("icon") ||
-    s.includes("sprite") ||
-    s.includes("placeholder") ||
-    s.endsWith(".svg")
-  );
-};
+    // ignore non-http(s) + data/blob
+    if (!s) return true;
+    if (s.startsWith("data:")) return true;
+    if (s.startsWith("blob:")) return true;
 
+    // must look like an image file
+    if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(s)) return true;
+
+    // common junk/ui/branding
+    const badWords = [
+      "logo", "logos", "brand", "branding",
+      "dealer", "dealership", "oem",
+      "icon", "sprite", "favicon", "badge",
+      "placeholder", "spacer", "blank",
+      "loader", "loading", "spinner",
+      "banner", "header", "footer", "button", "cta",
+      "facebook", "instagram", "tiktok", "youtube",
+      "onstar",
+      ".svg"
+    ];
+    if (badWords.some((w) => s.includes(w))) return true;
+
+    // optional: block manufacturer brand image paths (these often kill interiors)
+    // NOTE: keep these LIGHT. Overblocking can remove real vehicle photos.
+    const maybeBadBrandPaths = ["/assets/logos/", "/static/brand-", "/static/dealer-"];
+    if (maybeBadBrandPaths.some((w) => s.includes(w))) return true;
+
+    return false;
+  };
 
   const push = (u) => {
     if (!u || typeof u !== "string") return;
-    u = u.trim();
-    if (!u) return;
-    if (u.startsWith("data:")) return;
-    if (u.startsWith("blob:")) return;
-    if (isJunk(u)) return;
+    const raw = u.trim();
+    if (!raw) return;
+    if (isLikelyJunkImage(raw)) return;
 
-    const abs = absolutizeUrl(baseUrl, u);
+    const abs = absolutizeUrl(baseUrl, raw);
     if (!abs) return;
     if (seen.has(abs)) return;
 
@@ -371,9 +381,9 @@ const isJunk = (u) => {
 
     const srcset = $(img).attr("srcset");
     if (srcset) {
-      srcset.split(",").forEach(part => {
-        const u = part.trim().split(" ")[0];
-        push(u);
+      srcset.split(",").forEach((part) => {
+        const first = part.trim().split(/\s+/)[0];
+        push(first);
       });
     }
   });
@@ -381,15 +391,11 @@ const isJunk = (u) => {
   return results;
 }
 
-
 // ======================================================
 // Scraping
 // ======================================================
-
 async function scrapePage(url) {
-const res = await fetchWithTimeout(url, {}, 20000);
-
-
+  const res = await fetchWithTimeout(url, {}, 20000);
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
 
   const html = await res.text();
@@ -409,63 +415,20 @@ const res = await fetchWithTimeout(url, {}, 20000);
     ""
   ).trim();
 
+  // ✅ Extract (then cap here)
   const photos = extractImageUrlsFromHtml(html, url).slice(0, 24);
 
-console.log("SCRAPE DEBUG:", {
-  url,
-  titleLength: title.length,
-  price,
-  photosFound: photos.length,
-  sample: photos.slice(0, 5),
-});
-
+  console.log("SCRAPE DEBUG:", {
+    url,
+    titleLength: title.length,
+    price,
+    photosFound: photos.length,
+    sample: photos.slice(0, 8),
+  });
 
   return { title, price, photos, html };
 }
 
-// ======================================================
-// Image extraction (single clean source)
-// ======================================================
-function extractImageUrlsFromHtml(html, baseUrl) {
-  const $ = cheerio.load(html);
-  const seen = new Set();
-  const results = [];
-
-  const push = (u) => {
-    if (!u || typeof u !== "string") return;
-    u = u.trim();
-    if (!u) return;
-    if (u.startsWith("data:")) return;
-    if (u.startsWith("blob:")) return;
-    if (u.includes("placeholder")) return;
-
-    const abs = absolutizeUrl(baseUrl, u);
-    if (!abs) return;
-    if (seen.has(abs)) return;
-
-    seen.add(abs);
-    results.push(abs);
-  };
-
-  $("img").each((_, img) => {
-    push($(img).attr("src"));
-    push($(img).attr("data-src"));
-    push($(img).attr("data-lazy"));
-    push($(img).attr("data-original"));
-
-    const srcset = $(img).attr("srcset");
-    if (srcset) {
-      srcset.split(",").forEach(part => {
-        const u = part.trim().split(" ")[0];
-        push(u);
-      });
-    }
-  });
-
-  return results;
-}
-
-// ======================================================
 // Rendered scrape (Playwright) — interiors + JS galleries
 // ======================================================
 async function scrapePageRendered(url) {
