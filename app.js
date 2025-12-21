@@ -256,6 +256,7 @@ async function scrapePage(url) {
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
+
   let base;
   try {
     base = new URL(baseUrl);
@@ -263,28 +264,104 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     return [];
   }
 
-  $("img").each((_, el) => {
-    let src = $(el).attr("data-src") || $(el).attr("src");
-    if (!src) return;
+  const addUrl = (raw) => {
+    if (!raw) return;
+    const s = String(raw).trim();
+    if (!s) return;
 
-    src = String(src).trim();
-    const lower = src.toLowerCase();
-
-    // quick skips before absolute resolution
-    if (lower.includes("logo") || lower.includes("icon") || lower.includes("sprite") || lower.endsWith(".svg")) {
-      return;
-    }
+    // strip css url("...") wrappers
+    const cleaned = s.replace(/^url\(["']?/, "").replace(/["']?\)$/, "").trim();
 
     try {
-      const abs = new URL(src, base).href;
+      const abs = new URL(cleaned, base).href;
       urls.add(abs);
     } catch {
       // ignore
+    }
+  };
+
+  const pickBestFromSrcset = (srcset) => {
+    if (!srcset) return null;
+    const parts = String(srcset)
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    // choose the largest "w" candidate if available, else last
+    let best = null;
+    let bestW = -1;
+
+    for (const p of parts) {
+      const [u, w] = p.split(/\s+/);
+      const m = (w || "").match(/^(\d+)w$/);
+      if (m) {
+        const ww = Number(m[1]);
+        if (ww > bestW) {
+          bestW = ww;
+          best = u;
+        }
+      } else {
+        best = u; // fallback
+      }
+    }
+    return best;
+  };
+
+  // 1) <img> and common lazy attrs + srcset
+  $("img").each((_, el) => {
+    const $el = $(el);
+
+    const src =
+      $el.attr("data-src") ||
+      $el.attr("data-original") ||
+      $el.attr("data-lazy") ||
+      $el.attr("data-lazy-src") ||
+      $el.attr("data-zoom") ||
+      $el.attr("src");
+
+    const srcset = $el.attr("srcset") || $el.attr("data-srcset");
+    const bestFromSrcset = pickBestFromSrcset(srcset);
+
+    addUrl(bestFromSrcset);
+    addUrl(src);
+  });
+
+  // 2) <picture><source srcset=...>
+  $("source").each((_, el) => {
+    const $el = $(el);
+    const srcset = $el.attr("srcset") || $el.attr("data-srcset");
+    const best = pickBestFromSrcset(srcset);
+    addUrl(best);
+  });
+
+  // 3) background-image urls in inline style
+  $("[style]").each((_, el) => {
+    const style = String($(el).attr("style") || "");
+    const matches = style.match(/background-image\s*:\s*url\(([^)]+)\)/gi);
+    if (!matches) return;
+
+    for (const m of matches) {
+      const inner = m.match(/url\(([^)]+)\)/i);
+      if (inner && inner[1]) addUrl(inner[1]);
+    }
+  });
+
+  // 4) URLs inside script tags (VDPs often store photo arrays here)
+  $("script").each((_, el) => {
+    const txt = $(el).html();
+    if (!txt) return;
+
+    // pull ANY jpg/png/webp urls from scripts
+    const re = /https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\\s]*)?/gi;
+    const found = txt.match(re);
+    if (found && found.length) {
+      found.forEach(addUrl);
     }
   });
 
   return Array.from(urls);
 }
+
 
 // ======================================================
 // AI: Photo Processing (gpt-image-1)
