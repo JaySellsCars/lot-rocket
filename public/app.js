@@ -358,42 +358,95 @@ async function doBoostListing() {
     setTA(marketplacePost, data.marketplace);
     setTA(hashtags, data.hashtags);
 
-    // ---------- DEALER PHOTOS (FILTER ONCE HERE) ----------
-    const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+// ---------- DEALER PHOTOS (FILTER ONCE HERE) ----------
+const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
 
+// ✅ log immediately after we read backend photos
+console.log("📥 Raw photos from backend:", rawPhotos.length);
 
-    console.log("📥 Raw photos from backend:", rawPhotos.length);
+// 1) clean + dedupe early
+const cleaned = Array.from(
+  new Set(
+    rawPhotos
+      .map((u) => String(u || "").trim())
+      .filter(Boolean)
+  )
+);
 
-    dealerPhotos = rawPhotos
-      .filter((url) => {
-        const u = String(url || "").toLowerCase();
-        return (
-          u.match(/\.(jpg|jpeg|png|webp)(\?|$)/) &&
-          !u.includes("logo") &&
-          !u.includes("icon") &&
-          !u.includes("sprite") &&
-          !u.includes("youtube") &&
-          !u.includes("play")
-        );
-      })
-      .map((src) => ({ src, selected: false }));
+// 2) strong junk detector (cross-dealer)
+function isJunkUrl(u) {
+  const s = String(u || "").toLowerCase();
 
-    console.log("✅ Dealer photos after filter:", dealerPhotos.length);
+  // not photos
+  if (s.startsWith("data:") || s.startsWith("blob:")) return true;
 
-    renderDealerPhotos();
+  // wrong filetypes
+  if (/\.(svg|ico|gif|mp4|webm|css|js)(\?|$)/i.test(s)) return true;
 
-    document.body.classList.add("kit-ready");
-    if (statusText) statusText.textContent = "Social kit ready ✔";
-  } catch (err) {
-    console.error("❌ Boost error:", err);
-    if (statusText)
-      statusText.textContent = err?.message || "Failed to build kit.";
-  } finally {
-    boostButton.disabled = false;
-  }
+  // must look like an image file OR common photo endpoints
+  const looksLikeImage =
+    /\.(jpg|jpeg|png|webp)(\?|$)/i.test(s) ||
+    s.includes("inventoryphotos") ||
+    s.includes("image") ||
+    s.includes("photo") ||
+    s.includes("media");
+
+  if (!looksLikeImage) return true;
+
+  // obvious junk keywords
+  if (
+    s.includes("logo") ||
+    s.includes("brand") ||
+    s.includes("dealer") ||
+    s.includes("favicon") ||
+    s.includes("sprite") ||
+    s.includes("icon") ||
+    s.includes("placeholder") ||
+    s.includes("loading") ||
+    s.includes("spacer") ||
+    s.includes("blank") ||
+    s.includes("pixel") ||
+    s.includes("carfax") ||
+    s.includes("autocheck") ||
+    s.includes("onstar") ||
+    s.includes("youtube") ||
+    s.includes("play") ||
+    s.includes("special") ||
+    s.includes("banner") ||
+    s.includes("badge")
+  ) return true;
+
+  return false;
 }
 
-boostButton?.addEventListener("click", doBoostListing);
+// 3) prefer obvious vehicle photo feeds if we have enough
+const preferred = cleaned.filter((u) => {
+  const s = u.toLowerCase();
+  return (
+    !isJunkUrl(u) &&
+    (
+      s.includes("inventoryphotos") ||
+      s.includes("/photos/") ||
+      s.includes("/images/") ||
+      s.includes("vehicle") ||
+      s.includes("gallery") ||
+      s.includes("cdn")
+    )
+  );
+});
+
+const finalList =
+  preferred.length >= 10
+    ? preferred
+    : cleaned.filter((u) => !isJunkUrl(u));
+
+dealerPhotos = finalList.map((src) => ({ src, selected: false }));
+
+// ✅ log after filter + map
+console.log("✅ Dealer photos after filter:", dealerPhotos.length);
+
+renderDealerPhotos();
+
 
 // ==================================================
 
