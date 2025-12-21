@@ -410,19 +410,21 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
   const photosGridEl = $("photosGrid");
 
-  function setBtnLoading(btn, isLoading, label) {
-    if (!btn) return;
-    if (isLoading) {
-      if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
-      btn.textContent = label || "Working…";
-      btn.disabled = true;
-      btn.classList.add("btn-loading");
-    } else {
-      btn.textContent = btn.dataset.originalText || btn.textContent;
-      btn.disabled = false;
-      btn.classList.remove("btn-loading");
-    }
+function setBtnLoading(btn, isLoading, label) {
+  if (!btn) return;
+
+  if (isLoading) {
+    if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+    btn.textContent = label || "Working…";
+    btn.disabled = true;
+    btn.classList.add("btn-loading");
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("btn-loading");
+    btn.textContent = btn.dataset.originalText || btn.textContent;
   }
+}
+
 
   function extractPhotoUrlsFromDom() {
     const urls = [];
