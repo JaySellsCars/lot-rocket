@@ -489,8 +489,11 @@ app.post("/api/social-kit", async (req, res) => {
       photos,
     });
 
-    // Photo pipeline (expensive) — controlled by processPhotos
-    kit.editedPhotos = processPhotos ? await processPhotoBatch(photos, kit.vehicleLabel) : [];
+// Photo pipeline (expensive) — only process up to 24 selected/top photos
+kit.editedPhotos = processPhotos
+  ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
+  : [];
+
 
     return res.json(kit);
   } catch (err) {
