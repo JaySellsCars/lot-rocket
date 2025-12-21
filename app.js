@@ -56,7 +56,43 @@ function absolutizeUrl(baseUrl, src) {
     return null;
   }
 }
+function extractImageUrlsFromScripts(html, baseUrl) {
+  if (!html) return [];
 
+  const results = [];
+  const seen = new Set();
+
+  const push = (u) => {
+    if (!u || typeof u !== "string") return;
+    u = u.trim();
+    if (!u) return;
+
+    u = u.replace(/\\\//g, "/");
+
+    const low = u.toLowerCase();
+    if (low.startsWith("data:") || low.startsWith("blob:")) return;
+    if (!/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u)) return;
+
+    let abs;
+    try {
+      abs = new URL(u, baseUrl).toString();
+    } catch {
+      return;
+    }
+
+    if (seen.has(abs)) return;
+    seen.add(abs);
+    results.push(abs);
+  };
+
+  const re =
+    /https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\\s]*)?/gi;
+
+  const matches = String(html).match(re) || [];
+  matches.forEach(push);
+
+  return results;
+}
 function normalizeUrl(raw) {
   if (!raw) return null;
   let url = String(raw).trim();
