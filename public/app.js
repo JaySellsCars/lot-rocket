@@ -382,6 +382,98 @@ function setStep1FromUrls(urls) {
     $("sendTopPhotosToCreativeLabBtn") ||
     $("sendTopPhotosToCreativeLabStripBtn") ||
     null;
+function openCreativeLabUI() {
+  // 1) Known function names (if your build has them)
+  const fn =
+    (typeof openCreativeStudio === "function" && openCreativeStudio) ||
+    (typeof openCreativeLab === "function" && openCreativeLab) ||
+    (typeof openCanvasStudio === "function" && openCanvasStudio) ||
+    (typeof openCreative === "function" && openCreative) ||
+    null;
+
+  if (fn) {
+    fn();
+    console.log("✅ Creative Lab opened via function");
+    return true;
+  }
+
+  // 2) Try clicking a launcher button by common IDs
+  const idCandidates = [
+    "openCreativeLabBtn",
+    "openCreativeStudioBtn",
+    "openCreativeBtn",
+    "creativeLabBtn",
+    "creativeStudioBtn",
+    "canvasStudioBtn",
+    "openCanvasStudioBtn",
+  ];
+
+  for (const id of idCandidates) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.click();
+      console.log("✅ Creative Lab opened via click id:", id);
+      return true;
+    }
+  }
+
+  // 3) Try clicking by data-attributes (common patterns)
+  const dataCandidates = [
+    "[data-open='creative']",
+    "[data-open='creativeLab']",
+    "[data-open='creativeStudio']",
+    "[data-target='creative']",
+    "[data-target='creativeLab']",
+    "[data-target='creativeStudio']",
+  ];
+
+  for (const sel of dataCandidates) {
+    const el = document.querySelector(sel);
+    if (el) {
+      el.click();
+      console.log("✅ Creative Lab opened via click selector:", sel);
+      return true;
+    }
+  }
+
+  // 4) Try clicking ANY button that contains text "Creative Lab"
+  const btns = Array.from(document.querySelectorAll("button, a, .tool-btn, .side-btn"));
+  const byText = btns.find((b) => /creative lab/i.test((b.textContent || "").trim()));
+  if (byText) {
+    byText.click();
+    console.log("✅ Creative Lab opened via text match");
+    return true;
+  }
+
+  // 5) Force-show likely panels/modals (if it exists but is hidden)
+  const panelIds = [
+    "creativeLab",
+    "creativeLabSection",
+    "creativeLabPanel",
+    "creativeStudio",
+    "creativeStudioPanel",
+    "canvasStudio",
+    "step3",
+    "step3Panel",
+  ];
+
+  for (const id of panelIds) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove("hidden");
+      el.style.display = "";
+      el.setAttribute("aria-hidden", "false");
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      console.log("✅ Creative Lab revealed/scroll via panel id:", id);
+      return true;
+    }
+  }
+
+  console.warn(
+    "⚠️ No Creative Lab open method found. Add/confirm the Creative Lab launcher button id or panel id."
+  );
+  return false;
+}
 
 function sendSelectedToCreativeLabOnly() {
   if (!sendTopBtn) return;
