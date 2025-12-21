@@ -394,6 +394,55 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
   // LET so bulletproof picker can overwrite with the visible one
   let boostBtn =
     $("boostListingBtn") || $("boostThisListingBtn") || $("boostThisListing") || $("boostButton") || null;
+// ======================================================
+// BOOST CLICK HANDLER (Step 1)
+// ======================================================
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+
+  boostBtn.addEventListener("click", async () => {
+    try {
+      console.log("🚀 Boost clicked");
+
+      setBtnLoading(boostBtn, true, "Boosting...");
+
+      const payload = {
+        url: dealerUrlInput?.value?.trim(),
+        labelOverride: vehicleLabelInput?.value?.trim() || "",
+        priceOverride: priceOfferInput?.value?.trim() || "",
+        processPhotos: true,
+      };
+
+      if (!payload.url) {
+        alert("Paste a vehicle URL first.");
+        return;
+      }
+
+      console.log("📤 Boost payload:", payload);
+
+      const data = await postJSON(`${apiBase}/boost`, payload);
+
+      console.log("📥 Boost response:", data);
+
+      // ✅ Step 1 result handling
+      if (Array.isArray(data?.photos)) {
+        STORE.dealerPhotos = data.photos.map((url) => ({
+          url,
+          selected: true,
+        }));
+
+        renderDealerPhotos();
+      }
+
+    } catch (err) {
+      console.error("❌ Boost failed:", err);
+      alert("Boost failed. Check console.");
+    } finally {
+      // 🔑 THIS FIXES THE DEAD BUTTON
+      setBtnLoading(boostBtn, false);
+    }
+  });
+}
 
   const sendTopBtn =
     $("sendTopPhotosBtn") ||
