@@ -507,19 +507,8 @@ function sendSelectedToCreativeLabOnly() {
 
     // Try to open Creative Lab (supports multiple possible function names)
     const openFn =
-      (typeof openCreativeStudio === "function" && openCreativeStudio) ||
-      (typeof openCreativeLab === "function" && openCreativeLab) ||
-      (typeof openCanvasStudio === "function" && openCanvasStudio) ||
-      null;
+openCreativeLabUI();
 
-    if (openFn) {
-      openFn();
-      console.log("✅ Creative Lab opened");
-    } else {
-      console.warn("⚠️ No Creative Lab open function found (openCreativeStudio/openCreativeLab/openCanvasStudio).");
-    }
-
-    console.log("✅ Sent to Creative Lab", { count: deduped.length });
 
     // button feedback
     const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
