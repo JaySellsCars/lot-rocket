@@ -3,7 +3,7 @@
  * Version: 2.6-clean
  *
  * What this file does:
- * - Scrapes dealer page (title/meta/text) + pulls up to 24 non-logo images
+ * - Scrapes dealer page (title/meta/text) "pulls all non-logo images (frontend selects up to 24)"
  * - Generates social kit copy (multi-platform JSON)
  * - Generates/edits photos via gpt-image-1 (returns data URLs)
  * - Provides regen endpoints (single platform post, scripts, shot plans, design ideas)
