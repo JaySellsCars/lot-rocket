@@ -187,13 +187,9 @@ window.document.addEventListener("DOMContentLoaded", () => {
     ta.addEventListener("input", () => autoResizeTextarea(ta));
   });
 // ==================================================
-// STEP 1 → Send Top Photos to Creative Lab + Strip
+// STEP 1 → SEND TOP PHOTOS (CREATIVE LAB ONLY) — SINGLE COPY
 // ==================================================
-// PREDECLARE to avoid TDZ errors
-let sendTopBtn = null;
-
-// Resolve Send Top Photos button (Creative Lab ONLY)
-sendTopBtn =
+let sendTopBtn =
   $("sendTopPhotosBtn") ||
   $("sendTopPhotosToCreative") ||
   $("sendTopPhotosToCreativeLab") ||
@@ -201,46 +197,89 @@ sendTopBtn =
   $("sendTopPhotosToCreativeLabStripBtn") ||
   null;
 
-// ===============================
-// STEP 1 → SEND TOP PHOTOS (CREATIVE LAB ONLY)
-// ===============================
-function getSelectedStep1PhotoUrls() {
-  // 1) STORE-based (if Step 1 uses store objects)
-  const candidates =
-    (Array.isArray(STORE.step1Photos) && STORE.step1Photos) ||
-    (Array.isArray(STORE.boostPhotos) && STORE.boostPhotos) ||
-    (Array.isArray(STORE.photos) && STORE.photos) ||
-    [];
+// Pull selected URLs from STORE.step1Photos (fallback: selected DOM thumbs)
+function getSelectedStep1Urls(max = MAX_PHOTOS) {
+  // 1) STORE-based
+  if (Array.isArray(STORE.step1Photos) && STORE.step1Photos.length) {
+    const picked = STORE.step1Photos
+      .filter((p) => p && !p.dead && p.selected && p.url)
+      .map((p) => p.url)
+      .slice(0, max);
 
-  // objects: { url, selected }
-  if (candidates.length && typeof candidates[0] === "object") {
-    const picked = candidates.filter(p => p && p.selected && p.url).map(p => p.url);
-    if (picked.length) return picked.slice(0, MAX_PHOTOS);
-    return candidates.filter(p => p && p.url).map(p => p.url).slice(0, MAX_PHOTOS);
+    if (picked.length) return picked;
+    return STORE.step1Photos
+      .filter((p) => p && p.url)
+      .map((p) => p.url)
+      .slice(0, max);
   }
 
-  // strings
-  if (candidates.length && typeof candidates[0] === "string") {
-    return candidates.slice(0, MAX_PHOTOS);
-  }
+  // 2) DOM fallback: selected thumbs
+  const selectedBtns = Array.from(
+    DOC.querySelectorAll(".photo-thumb-btn.photo-thumb-selected, .photo-thumb.photo-thumb-selected")
+  );
 
-  // 2) DOM fallback (selected thumbs)
-  const selectedBtns = Array.from(document.querySelectorAll(".photo-thumb-btn.photo-thumb-selected"));
   const domPicked = selectedBtns
-    .map(b => b.querySelector("img")?.src)
+    .map((b) => b.querySelector("img")?.src)
     .filter(Boolean)
-    .slice(0, MAX_PHOTOS);
+    .slice(0, max);
+
   if (domPicked.length) return domPicked;
 
   // 3) last fallback: any thumbs
-  return Array.from(document.querySelectorAll("#photosGrid img.photo-thumb-img, #photosGrid img"))
-    .map(img => img.src)
+  return Array.from(DOC.querySelectorAll("#photosGrid img, .photo-grid img"))
+    .map((img) => img.src)
     .filter(Boolean)
-    .slice(0, MAX_PHOTOS);
+    .slice(0, max);
 }
 
+// Send selected Step 1 photos → Creative Lab ONLY
+function sendSelectedToCreativeLabOnly() {
+  if (!sendTopBtn) return;
+
+  setBtnLoading(sendTopBtn, true, "Sending…");
+
+  try {
+    const urls = getSelectedStep1Urls(MAX_PHOTOS);
+    if (!urls.length) {
+      alert("Select at least 1 photo first.");
+      return;
+    }
+
+    const deduped = uniqCleanCap(urls, MAX_PHOTOS);
+
+    // ✅ Creative Lab ONLY
+    STORE.creativePhotos = deduped;
+
+    // refresh Creative Lab UI if available
+    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    if (typeof openCreativeStudio === "function") openCreativeStudio();
+
+    console.log("✅ Sent to Creative Lab", { count: deduped.length });
+
+    // quick button feedback
+    const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
+    sendTopBtn.dataset.originalText = og;
+    sendTopBtn.textContent = "✅ Sent to Creative Lab";
+    setTimeout(() => (sendTopBtn.textContent = og), 900);
+  } catch (e) {
+    console.error("❌ Send Top Photos failed:", e);
+    alert(e?.message || "Send failed.");
+  } finally {
+    setTimeout(() => setBtnLoading(sendTopBtn, false), 150);
+  }
+}
+
+// Wire once
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   sendTopBtn.dataset.wired = "true";
+  sendTopBtn.type = "button";
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sendSelectedToCreativeLabOnly();
+  });
+}
+
 
   sendTopBtn.addEventListener("click", () => {
     try {
