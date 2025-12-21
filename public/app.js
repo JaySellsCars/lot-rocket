@@ -436,38 +436,26 @@ function openCreativeLabUI() {
     }
   }
 
-  // 4) Try clicking ANY button that contains text "Creative Lab"
-  const btns = Array.from(document.querySelectorAll("button, a, .tool-btn, .side-btn"));
-  const byText = btns.find((b) => /creative lab/i.test((b.textContent || "").trim()));
-  if (byText) {
-    byText.click();
-    console.log("✅ Creative Lab opened via text match");
+// 4) Try clicking by text (your app labels)
+const btns = Array.from(document.querySelectorAll("button, a, .tool-btn, .side-btn"));
+
+const textMatchers = [
+  /open\s+creative\s+studio/i,     // ✅ "Open Creative Studio 3.5"
+  /creative\s+studio/i,
+  /canvas\s+studio/i,              // fallback option
+  /open\s+in\s+canvas\s+studio/i,
+  /design\s+studio/i,              // last fallback if you want
+];
+
+for (const re of textMatchers) {
+  const hit = btns.find((b) => re.test((b.textContent || "").trim()));
+  if (hit) {
+    hit.click();
+    console.log("✅ Opened via text match:", re.toString(), "→", (hit.textContent || "").trim());
     return true;
   }
+}
 
-  // 5) Force-show likely panels/modals (if it exists but is hidden)
-  const panelIds = [
-    "creativeLab",
-    "creativeLabSection",
-    "creativeLabPanel",
-    "creativeStudio",
-    "creativeStudioPanel",
-    "canvasStudio",
-    "step3",
-    "step3Panel",
-  ];
-
-  for (const id of panelIds) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.classList.remove("hidden");
-      el.style.display = "";
-      el.setAttribute("aria-hidden", "false");
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      console.log("✅ Creative Lab revealed/scroll via panel id:", id);
-      return true;
-    }
-  }
 
   console.warn(
     "⚠️ No Creative Lab open method found. Add/confirm the Creative Lab launcher button id or panel id."
