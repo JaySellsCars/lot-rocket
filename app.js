@@ -50,6 +50,52 @@ app.use(express.static("public"));
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
+function normalizeImgUrl(u) {
+  if (!u) return "";
+  return String(u).trim().replace(/&amp;/g, "&");
+}
+
+function isLikelyJunkImage(url) {
+  const u = (url || "").toLowerCase();
+
+  // must be a real image URL
+  if (!u.startsWith("http")) return true;
+  if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
+
+  // block obvious UI/branding assets
+  const bad = [
+    "logo","brand","dealer","dealership",
+    "icon","favicon","sprite","badge",
+    "placeholder","blank","spacer",
+    "loading","loader","spinner",
+    "button","cta","banner","header","footer",
+    "facebook","instagram","tiktok","youtube",
+    ".svg"
+  ];
+  if (bad.some((w) => u.includes(w))) return true;
+
+  return false;
+}
+
+function cleanPhotoList(urls, max = 300) {
+  const seen = new Set();
+  const out = [];
+
+  for (const raw of urls || []) {
+    const u = normalizeImgUrl(raw);
+    if (!u) continue;
+    if (seen.has(u)) continue;
+    seen.add(u);
+
+    if (isLikelyJunkImage(u)) continue;
+
+    out.push(u);
+    if (out.length >= max) break;
+  }
+
+  return out;
+}
+
 function normalizeUrl(u) {
   if (!u) return "";
   return String(u).trim().replace(/&amp;/g, "&");
