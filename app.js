@@ -56,6 +56,39 @@ function absolutizeUrl(baseUrl, src) {
     return null;
   }
 }
+function canonicalImageKey(u) {
+  try {
+    const x = new URL(u);
+    // Remove junk params that cause duplicates across sizes
+    const drop = new Set([
+      "w","width","h","height","quality","q","fit","crop",
+      "auto","format","fm","dpr","bg","pad",
+      "timestamp","ts","t","cache","cb","v","ver",
+      "imagetemp","img","size"
+    ]);
+    for (const k of Array.from(x.searchParams.keys())) {
+      if (drop.has(k.toLowerCase())) x.searchParams.delete(k);
+    }
+    // Keep path + cleaned params
+    return (x.origin + x.pathname + "?" + x.searchParams.toString()).replace(/\?$/, "");
+  } catch {
+    return String(u || "");
+  }
+}
+
+function uniqByCanonical(urls) {
+  const out = [];
+  const seen = new Set();
+  for (const u of urls || []) {
+    if (!u) continue;
+    const key = canonicalImageKey(u);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(u);
+  }
+  return out;
+}
+
 function extractImageUrlsFromScripts(html, baseUrl) {
   if (!html) return [];
 
