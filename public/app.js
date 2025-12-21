@@ -383,41 +383,65 @@ function setStep1FromUrls(urls) {
     $("sendTopPhotosToCreativeLabStripBtn") ||
     null;
 
-  function sendSelectedToCreativeLabOnly() {
-    if (!sendTopBtn) return;
+function sendSelectedToCreativeLabOnly() {
+  if (!sendTopBtn) return;
 
-    setBtnLoading(sendTopBtn, true, "Sending…");
+  setBtnLoading(sendTopBtn, true, "Sending…");
 
-    try {
-      const urls = getSelectedStep1Urls(MAX_PHOTOS);
-      if (!urls.length) {
-        alert("Select at least 1 photo first.");
-        return;
-      }
+  try {
+    const urls = getSelectedStep1Urls(MAX_PHOTOS);
 
-      const deduped = uniqCleanCap(urls, MAX_PHOTOS);
+    console.log("📤 SEND TOP clicked:", {
+      selectedCount: urls.length,
+      sample: urls.slice(0, 4),
+    });
 
-      // ✅ Creative Lab ONLY (NOT Social Strip, NOT Design Studio)
-      STORE.creativePhotos = deduped;
-
-      // refresh Creative Lab UI if available
-      if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-      if (typeof openCreativeStudio === "function") openCreativeStudio();
-
-      console.log("✅ Sent to Creative Lab", { count: deduped.length });
-
-      // quick feedback
-      const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
-      sendTopBtn.dataset.originalText = og;
-      sendTopBtn.textContent = "✅ Sent to Creative Lab";
-      setTimeout(() => (sendTopBtn.textContent = og), 900);
-    } catch (e) {
-      console.error("❌ Send Top Photos failed:", e);
-      alert(e?.message || "Send failed.");
-    } finally {
-      setTimeout(() => setBtnLoading(sendTopBtn, false), 150);
+    if (!urls.length) {
+      alert("Select at least 1 photo first.");
+      return;
     }
+
+    const deduped = uniqCleanCap(urls, MAX_PHOTOS);
+
+    // ✅ Creative Lab ONLY
+    STORE.creativePhotos = deduped;
+
+    // Try to refresh thumbs (if your build has it)
+    try {
+      if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    } catch (e) {
+      console.warn("renderCreativeThumbs failed:", e);
+    }
+
+    // Try to open Creative Lab (supports multiple possible function names)
+    const openFn =
+      (typeof openCreativeStudio === "function" && openCreativeStudio) ||
+      (typeof openCreativeLab === "function" && openCreativeLab) ||
+      (typeof openCanvasStudio === "function" && openCanvasStudio) ||
+      null;
+
+    if (openFn) {
+      openFn();
+      console.log("✅ Creative Lab opened");
+    } else {
+      console.warn("⚠️ No Creative Lab open function found (openCreativeStudio/openCreativeLab/openCanvasStudio).");
+    }
+
+    console.log("✅ Sent to Creative Lab", { count: deduped.length });
+
+    // button feedback
+    const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
+    sendTopBtn.dataset.originalText = og;
+    sendTopBtn.textContent = "✅ Sent";
+    setTimeout(() => (sendTopBtn.textContent = og), 900);
+  } catch (e) {
+    console.error("❌ Send Top Photos failed:", e);
+    alert(e?.message || "Send failed.");
+  } finally {
+    setTimeout(() => setBtnLoading(sendTopBtn, false), 150);
   }
+}
+
 
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
