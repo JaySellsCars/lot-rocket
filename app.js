@@ -1,9 +1,9 @@
 /**
  * app.js — Lot Rocket Backend (CLEAN / DEDUPED / CONSISTENT)
- * Version: 2.6-clean
+ * Version: 2.6-clean (ROCKET-6)
  *
  * What this file does:
- * - Scrapes dealer page (title/meta/text) "pulls all non-logo images (frontend selects up to 24)"
+ * - Scrapes dealer page (title/meta/text) + pulls images
  * - Generates social kit copy (multi-platform JSON)
  * - Generates/edits photos via gpt-image-1 (returns data URLs)
  * - Provides regen endpoints (single platform post, scripts, shot plans, design ideas)
@@ -12,9 +12,10 @@
  * - Provides ZIP download for photos
  *
  * Cleanup goals:
- * - Single naming conventions
- * - No duplicate endpoints / logic paths
- * - One OpenAI text call style (Responses API) everywhere
+ * - One app init
+ * - No duplicate helpers
+ * - Single normalizeUrl behavior (strict)
+ * - Photo scraping returns ALL candidates; cleaner removes junk; frontend selects
  * - Shared error handling
  */
 
@@ -28,15 +29,8 @@ const OpenAI = require("openai");
 const fetch = require("node-fetch");
 const archiver = require("archiver");
 
-
-
-
-
-// API routes BELOW this
-// app.post("/scrape", ...)
-// app.post("/generate", ...)
-
-
+// -------------------- App --------------------
+const app = express();
 
 // -------------------- OpenAI Client --------------------
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -50,96 +44,6 @@ app.use(express.static("public"));
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
-function normalizeImgUrl(u) {
-  if (!u) return "";
-  return String(u).trim().replace(/&amp;/g, "&");
-}
-
-function isLikelyJunkImage(url) {
-  const u = (url || "").toLowerCase();
-
-  // must be a real image URL
-  if (!u.startsWith("http")) return true;
-  if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
-
-  // block obvious UI/branding assets
-  const bad = [
-    "logo","brand","dealer","dealership",
-    "icon","favicon","sprite","badge",
-    "placeholder","blank","spacer",
-    "loading","loader","spinner",
-    "button","cta","banner","header","footer",
-    "facebook","instagram","tiktok","youtube",
-    ".svg"
-  ];
-  if (bad.some((w) => u.includes(w))) return true;
-
-  return false;
-}
-
-function cleanPhotoList(urls, max = 300) {
-  const seen = new Set();
-  const out = [];
-
-  for (const raw of urls || []) {
-    const u = normalizeImgUrl(raw);
-    if (!u) continue;
-    if (seen.has(u)) continue;
-    seen.add(u);
-
-    if (isLikelyJunkImage(u)) continue;
-
-    out.push(u);
-    if (out.length >= max) break;
-  }
-
-  return out;
-}
-
-function normalizeUrl(u) {
-  if (!u) return "";
-  return String(u).trim().replace(/&amp;/g, "&");
-}
-
-function isLikelyJunkImage(url) {
-  const u = (url || "").toLowerCase();
-
-  // obvious non-vehicle assets
-  const badWords = [
-    "logo", "brand", "dealer", "dealership",
-    "sprite", "icon", "favicon", "badge",
-    "placeholder", "blank", "spacer",
-    "loading", "loader", "spinner",
-    "button", "cta", "banner", "header", "footer",
-    "facebook", "instagram", "tiktok", "youtube",
-    "svg", ".svg"
-  ];
-
-  if (!u.startsWith("http")) return true;
-  if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
-  if (badWords.some((w) => u.includes(w))) return true;
-
-  return false;
-}
-
-function cleanPhotoList(urls, max = 200) {
-  const seen = new Set();
-  const out = [];
-
-  for (const raw of urls || []) {
-    const u = normalizeUrl(raw);
-    if (!u) continue;
-    if (seen.has(u)) continue;
-    seen.add(u);
-
-    if (isLikelyJunkImage(u)) continue;
-
-    out.push(u);
-    if (out.length >= max) break;
-  }
-
-  return out;
-}
 
 /** Normalize user input into an absolute http(s) URL; return null if invalid. */
 function normalizeUrl(raw) {
@@ -182,7 +86,6 @@ function safeJsonParse(str, fallback = null) {
 
 /** Extract text from OpenAI Responses API result */
 function getResponseText(response) {
-  // safest: walk the first output block
   return response?.output?.[0]?.content?.[0]?.text || "";
 }
 
@@ -238,17 +141,14 @@ function isBlockedProxyTarget(urlStr) {
     const u = new URL(urlStr);
     const host = u.hostname?.toLowerCase() || "";
 
-    // obvious localhost names
     if (host === "localhost" || host.endsWith(".localhost")) return true;
 
-    // IPv4 checks (simple prefix blocks)
     if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
       if (host.startsWith("127.")) return true;
       if (host.startsWith("10.")) return true;
       if (host.startsWith("192.168.")) return true;
-      if (host.startsWith("169.254.")) return true; // link-local
+      if (host.startsWith("169.254.")) return true;
 
-      // 172.16.0.0–172.31.255.255
       const parts = host.split(".").map((n) => Number(n));
       if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
     }
@@ -257,6 +157,76 @@ function isBlockedProxyTarget(urlStr) {
   } catch {
     return true;
   }
+}
+
+// ======================================================
+// Photo cleaning (DEDUPED + CONSISTENT)
+// ======================================================
+
+function normalizeImgUrl(u) {
+  if (!u) return "";
+  return String(u).trim().replace(/&amp;/g, "&");
+}
+
+/**
+ * IMPORTANT:
+ * We do NOT "perfectly detect vehicle photos" on every dealer site.
+ * We DO aggressively remove obvious junk: logos/icons/svg/buttons/social headers/etc.
+ */
+function isLikelyJunkImage(url) {
+  const u = (url || "").toLowerCase();
+
+  if (!u.startsWith("http")) return true;
+
+  // allow URLs w/o extensions? many CDNs include extensions; but some don't.
+  // We still prefer real image extensions for now to drop junk fast.
+  const isImgExt = /\.(jpg|jpeg|png|webp)(\?|$)/i.test(u);
+  if (!isImgExt) return true;
+
+  const bad = [
+    "logo", "brand", "dealer", "dealership",
+    "icon", "favicon", "sprite", "badge",
+    "placeholder", "blank", "spacer",
+    "loading", "loader", "spinner",
+    "button", "cta", "banner", "header", "footer",
+    "facebook", "instagram", "tiktok", "youtube",
+    ".svg"
+  ];
+  if (bad.some((w) => u.includes(w))) return true;
+
+  return false;
+}
+
+function cleanPhotoList(urls, max = 300) {
+  const seen = new Set();
+  const out = [];
+
+  for (const raw of urls || []) {
+    const u = normalizeImgUrl(raw);
+    if (!u) continue;
+    if (seen.has(u)) continue;
+    seen.add(u);
+
+    if (isLikelyJunkImage(u)) continue;
+
+    out.push(u);
+    if (out.length >= max) break;
+  }
+
+  return out;
+}
+
+/**
+ * Hard preference filter (optional):
+ * If we have matches that look like vehicle gallery / CDN inventory images,
+ * return those; otherwise return the cleaned list.
+ */
+function preferVehicleGalleryPhotos(cleanedUrls) {
+  const re =
+    /inventory|vehicle|vdp|media|photos|images|cdn|cloudfront|dealerinspire|vauto|cargurus|dealer\.com|spincar|imagerelay|gubagoo/i;
+
+  const preferred = (cleanedUrls || []).filter((u) => re.test(String(u)));
+  return preferred.length ? preferred : (cleanedUrls || []);
 }
 
 // ======================================================
@@ -273,7 +243,6 @@ async function scrapePage(url) {
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-  // Visible text extraction
   let visibleText = "";
   $("body *")
     .not("script, style, noscript")
@@ -287,7 +256,12 @@ async function scrapePage(url) {
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
-  const base = new URL(baseUrl);
+  let base;
+  try {
+    base = new URL(baseUrl);
+  } catch {
+    return [];
+  }
 
   $("img").each((_, el) => {
     let src = $(el).attr("data-src") || $(el).attr("src");
@@ -296,13 +270,8 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     src = String(src).trim();
     const lower = src.toLowerCase();
 
-    // Skip obvious non-vehicle images
-    if (
-      lower.includes("logo") ||
-      lower.includes("icon") ||
-      lower.includes("sprite") ||
-      lower.endsWith(".svg")
-    ) {
+    // quick skips before absolute resolution
+    if (lower.includes("logo") || lower.includes("icon") || lower.includes("sprite") || lower.endsWith(".svg")) {
       return;
     }
 
@@ -310,19 +279,18 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
       const abs = new URL(src, base).href;
       urls.add(abs);
     } catch {
-      // ignore invalid urls
+      // ignore
     }
   });
 
-return Array.from(urls);
-
+  return Array.from(urls);
 }
 
 // ======================================================
 // AI: Photo Processing (gpt-image-1)
 // ======================================================
 
-async function processSinglePhoto(photoUrl, vehicleLabel = "") {
+async function processSinglePhoto(_photoUrl, vehicleLabel = "") {
   const prompt = `
 Ultra-realistic, cinematic dealership marketing photo of THIS car,
 isolated on a dramatic but clean showroom-style background.
@@ -331,10 +299,6 @@ movie-quality lighting. No people, no text, no dealer logos or watermarks.
 Vehicle context (optional): ${vehicleLabel || "n/a"}
   `.trim();
 
-  console.log("[LotRocket] gpt-image-1 processing:", photoUrl);
-
-  // NOTE: gpt-image-1 here does NOT “use” the URL; it creates a new image from prompt.
-  // If later you want true editing/inpainting, we’ll switch to image edit endpoints with an input image.
   const result = await client.images.generate({
     model: "gpt-image-1",
     prompt,
@@ -348,10 +312,9 @@ Vehicle context (optional): ${vehicleLabel || "n/a"}
   return `data:image/png;base64,${base64}`;
 }
 
-/** Process many photos safely (keeps original if AI fails) */
 async function processPhotoBatch(photoUrls, vehicleLabel = "") {
   const results = [];
-  for (const url of photoUrls) {
+  for (const url of photoUrls || []) {
     if (!url) continue;
     try {
       const processedUrl = await processSinglePhoto(url, vehicleLabel);
@@ -450,14 +413,13 @@ Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
 // Routes
 // ======================================================
 
-// Health check
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
 // IMAGE PROXY (Fixes CORS tainted canvas)
 // Supports both:
 //   /api/proxy-image?url=...
-//   /api/image-proxy?url=...   (back-compat)
+//   /api/image-proxy?url=... (back-compat)
 // --------------------------------------------------
 async function proxyImageHandler(req, res) {
   try {
@@ -500,7 +462,7 @@ async function proxyImageHandler(req, res) {
 }
 
 app.get("/api/proxy-image", proxyImageHandler);
-app.get("/api/image-proxy", proxyImageHandler); // back-compat
+app.get("/api/image-proxy", proxyImageHandler);
 
 // --------------------------------------------------
 // /api/process-photos (batch enhance)
@@ -516,7 +478,6 @@ app.post("/api/process-photos", async (req, res) => {
     const editedPhotos = await processPhotoBatch(photoUrls.slice(0, 24), vehicleLabel || "");
     return res.json({ editedPhotos });
   } catch (err) {
-    console.error("❌ /api/process-photos error:", err);
     return sendAIError(res, err, "Photo processing failed.");
   }
 });
@@ -544,11 +505,6 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
 });
 
 // --------------------------------------------------
-// /api/social-kit (scrape + kit + optional photo pipeline)
-// NOTE: by default we keep existing behavior: it DOES process photos.
-// You can disable by sending { processPhotos: false }.
-// --------------------------------------------------
-// --------------------------------------------------
 // BACK-COMPAT: frontend still calls /boost
 // --------------------------------------------------
 app.post("/boost", async (req, res) => {
@@ -556,44 +512,34 @@ app.post("/boost", async (req, res) => {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
-    const processPhotos = req.body?.processPhotos !== false; // default true
+    const processPhotos = req.body?.processPhotos !== false;
 
     if (!pageUrl) {
-      return res.status(400).json({
-        error: "bad_url",
-        message: "Invalid or missing URL.",
-      });
+      return res.status(400).json({ error: "bad_url", message: "Invalid or missing URL." });
     }
 
     const pageInfo = await scrapePage(pageUrl);
 
-    // ✅ SCRAPE ALL DEALER PHOTOS (NO CAP)
-   const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
-const photos = cleanPhotoList(rawPhotos, 300);
-console.log("🧪 PHOTO SAMPLE AFTER CLEAN:", photos.slice(0, 12));
-console.log("🧪 PHOTO SAMPLE RAW:", (rawPhotos || []).slice(0, 12));
-const photosHard = photos.filter(u =>
-  /inventory|vehicle|vdp|media|photos|images|cdn|cloudfront|dealerinspire|vauto|cargurus|dealer\.com|home\.delivery|spincar|imagerelay|gubagoo/i.test(u)
-);
-
-const finalPhotos = photosHard.length ? photosHard : photos;
-
+    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+    const cleaned = cleanPhotoList(rawPhotos, 300);
+    const finalPhotos = preferVehicleGalleryPhotos(cleaned);
 
     const kit = await buildSocialKit({
       pageInfo,
       labelOverride,
       priceOverride,
-      photos, // <-- ALL photos returned to frontend
+      photos: finalPhotos,
     });
 
-    // ✅ AI PHOTO PIPELINE IS CAPPED (COST CONTROL ONLY)
     kit.editedPhotos = processPhotos
-      ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
+      ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
       : [];
 
     console.log("✅ /boost:", {
-      photosFound: photos.length,
-      editedPhotos: kit.editedPhotos.length,
+      raw: rawPhotos.length,
+      cleaned: cleaned.length,
+      final: finalPhotos.length,
+      edited: kit.editedPhotos.length,
     });
 
     return res.json(kit);
@@ -602,12 +548,15 @@ const finalPhotos = photosHard.length ? photosHard : photos;
   }
 });
 
+// --------------------------------------------------
+// /api/social-kit (scrape + kit + optional photo pipeline)
+// --------------------------------------------------
 app.post("/api/social-kit", async (req, res) => {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
-    const processPhotos = req.body?.processPhotos !== false; // default true
+    const processPhotos = req.body?.processPhotos !== false;
 
     if (!pageUrl) {
       return res.status(400).json({
@@ -618,27 +567,28 @@ app.post("/api/social-kit", async (req, res) => {
 
     const pageInfo = await scrapePage(pageUrl);
 
-    // ✅ SCRAPE → CLEAN (FIXES GARBAGE IMAGES)
     const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
-    const photos = cleanPhotoList(rawPhotos, 300);
+    const cleaned = cleanPhotoList(rawPhotos, 300);
+    const finalPhotos = preferVehicleGalleryPhotos(cleaned);
 
     const kit = await buildSocialKit({
       pageInfo,
       labelOverride,
       priceOverride,
-      photos, // ✅ cleaned photos only
+      photos: finalPhotos,
     });
 
-    // ✅ AI PIPELINE: cap to 24 (cost control only)
     kit.editedPhotos = processPhotos
-      ? await processPhotoBatch(photos.slice(0, 24), kit.vehicleLabel)
+      ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
       : [];
 
     console.log("✅ /api/social-kit:", {
       url: pageUrl,
-      rawPhotos: Array.isArray(rawPhotos) ? rawPhotos.length : 0,
-      photosAfterClean: photos.length,
-      editedPhotos: kit.editedPhotos.length,
+      raw: rawPhotos.length,
+      cleaned: cleaned.length,
+      final: finalPhotos.length,
+      edited: kit.editedPhotos.length,
+      processPhotos,
     });
 
     return res.json(kit);
@@ -646,7 +596,6 @@ app.post("/api/social-kit", async (req, res) => {
     return sendAIError(res, err, "Failed to build social kit.");
   }
 });
-
 
 // --------------------------------------------------
 // /api/social-photos-zip (download URLs as zip)
@@ -743,9 +692,8 @@ Include a call-to-action to DM or message the salesperson.
 });
 
 // --------------------------------------------------
-// /api/new-script (selfie script OR generic script idea)
+// /api/new-script (selfie or generic)
 // --------------------------------------------------
-
 app.post("/api/new-script", async (req, res) => {
   try {
     const { kind, url, vehicle, hook, style, length } = req.body || {};
@@ -815,6 +763,7 @@ Write:
 
 // --------------------------------------------------
 // /api/video-from-photos (shot plan)
+// NOTE: uses FINAL photos (cleaned + preferred)
 // --------------------------------------------------
 app.post("/api/video-from-photos", async (req, res) => {
   try {
@@ -822,7 +771,10 @@ app.post("/api/video-from-photos", async (req, res) => {
     if (!pageUrl) return res.status(400).json({ error: "Invalid or missing URL" });
 
     const pageInfo = await scrapePage(pageUrl);
-    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+
+    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+    const cleaned = cleanPhotoList(rawPhotos, 300);
+    const finalPhotos = preferVehicleGalleryPhotos(cleaned);
 
     const system = `
 You are Lot Rocket, a video director for car salespeople.
@@ -834,7 +786,7 @@ Return plain text with bullet points or numbered steps.
 Dealer page title: ${pageInfo.title}
 Meta: ${pageInfo.metaDesc}
 
-You have ${photos.length} exterior/interior still photos.
+You have ${finalPhotos.length} exterior/interior still photos.
 Create a shot plan for a 30–45 second vertical video that uses these photos
 with text overlays and pacing notes.
 `.trim();
@@ -855,7 +807,7 @@ with text overlays and pacing notes.
 });
 
 // --------------------------------------------------
-// /api/design-idea (Canva layout idea)
+// /api/design-idea
 // --------------------------------------------------
 app.post("/api/design-idea", async (req, res) => {
   try {
@@ -943,7 +895,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper (math only)
+// /api/payment-helper
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
@@ -963,11 +915,7 @@ app.post("/api/payment-helper", (req, res) => {
     }
 
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
-
-    // Negative equity: only add payoff that is ABOVE trade value
     const negativeEquity = Math.max(payoff - trade, 0);
-
-    // Amount financed after down payment and trade equity/negative equity
     const amountFinanced = Math.max(taxedPrice - down + negativeEquity, 0);
 
     let payment;
@@ -979,10 +927,7 @@ app.post("/api/payment-helper", (req, res) => {
         (Math.pow(1 + rate, term) - 1);
     }
 
-    const result = `~$${payment.toFixed(
-      2
-    )} per month (rough estimate only, not a binding quote).`;
-
+    const result = `~$${payment.toFixed(2)} per month (rough estimate only, not a binding quote).`;
     return res.json({ result });
   } catch (err) {
     console.error("payment-helper error", err);
@@ -991,7 +936,7 @@ app.post("/api/payment-helper", (req, res) => {
 });
 
 // --------------------------------------------------
-// /api/income-helper (annualize gross-to-date using last paycheck date)
+// /api/income-helper
 // --------------------------------------------------
 app.post("/api/income-helper", (req, res) => {
   try {
@@ -1007,8 +952,7 @@ app.post("/api/income-helper", (req, res) => {
     if (!grossToDate || !lastPayDateStr) {
       return res.status(400).json({
         error: "income_inputs",
-        message:
-          "Month-to-date / year-to-date income and last paycheck date are required.",
+        message: "Month-to-date / year-to-date income and last paycheck date are required.",
       });
     }
 
@@ -1039,9 +983,7 @@ app.post("/api/income-helper", (req, res) => {
     const formatMoney = (n) =>
       `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
-    const result = `Estimated Yearly Gross: ${formatMoney(
-      estimatedYearly
-    )} | Weeks into Year: ${weeksIntoYear.toFixed(
+    const result = `Estimated Yearly Gross: ${formatMoney(estimatedYearly)} | Weeks into Year: ${weeksIntoYear.toFixed(
       1
     )} | Estimated Average Monthly Income: ${formatMoney(estimatedMonthly)}`;
 
@@ -1053,8 +995,7 @@ app.post("/api/income-helper", (req, res) => {
 });
 
 // --------------------------------------------------
-// /ai/workflow (standalone route used by workflow modal)
-// KEEP THIS PATH: your frontend already calls /ai/workflow
+// /ai/workflow (KEEP PATH)
 // --------------------------------------------------
 app.post("/ai/workflow", async (req, res) => {
   try {
@@ -1098,9 +1039,7 @@ For each touch:
 });
 
 // --------------------------------------------------
-// /api/message-helper (workflow/message/ask/car/image-brief/video-brief)
-// NOTE: returns { text } always.
-// If mode === "video-brief" and model returns valid JSON, also returns fields.
+// /api/message-helper
 // --------------------------------------------------
 app.post("/api/message-helper", async (req, res) => {
   try {
@@ -1157,53 +1096,32 @@ Write:
       }
 
       case "workflow":
-        systemPrompt = `
-You are Lot Rocket's AI Workflow Expert.
-Be concise, direct, action-focused for car sales pros.
-`.trim();
+        systemPrompt = `You are Lot Rocket's AI Workflow Expert. Be concise, direct, action-focused for car sales pros.`.trim();
         userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
 
       case "message":
-        systemPrompt = `
-You are Lot Rocket's AI Message Builder.
-Write high-converting, friendly, conversational messages for car shoppers.
-Match the channel (text / email / DM) if provided.
-`.trim();
+        systemPrompt = `You are Lot Rocket's AI Message Builder. Write high-converting, friendly, conversational messages for car shoppers.`.trim();
         userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
-        systemPrompt = `
-You are Lot Rocket's general AI assistant for car salespeople.
-Answer clearly and practically with a focus on selling more cars and helping customers.
-`.trim();
+        systemPrompt = `You are Lot Rocket's general AI assistant for car salespeople. Answer clearly and practically with a focus on selling more cars.`.trim();
         userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
       case "car":
-        systemPrompt = `
-You are The Master Automotive Analyst, integrated into Lot Rocket.
-Be technical, precise, blunt, and confident. Analyze—do not summarize.
-Include: powertrain, trim decoding, best/avoid years, known issues, verdict, and sales application.
-`.trim();
+        systemPrompt = `You are The Master Automotive Analyst. Be technical, precise, blunt, and confident.`.trim();
         userPrompt = fields.prompt || rawContext || "Explain this vehicle to a customer.";
         break;
 
       case "image-brief":
-        systemPrompt = `
-You are Lot Rocket's AI Image Brief generator.
-Create concise prompts for an AI image model to generate marketing graphics for car dealers.
-Return ONLY the prompt text, no explanations.
-`.trim();
+        systemPrompt = `You are Lot Rocket's AI Image Brief generator. Return ONLY the prompt text.`.trim();
         userPrompt = fields.prompt || rawContext || "Generate an image brief for a dealership post.";
         break;
 
       default:
-        systemPrompt = `
-You are Lot Rocket's AI assistant for car dealers.
-Respond with clear, helpful content a salesperson can use immediately.
-`.trim();
+        systemPrompt = `You are Lot Rocket's AI assistant for car dealers.`.trim();
         userPrompt = fields.prompt || rawContext || "Help me with sales & marketing.";
         break;
     }
@@ -1246,4 +1164,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
-
