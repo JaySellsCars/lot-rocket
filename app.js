@@ -568,7 +568,9 @@ app.post("/boost", async (req, res) => {
     const pageInfo = await scrapePage(pageUrl);
 
     // ✅ SCRAPE ALL DEALER PHOTOS (NO CAP)
-    const photos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+   const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+const photos = cleanPhotoList(rawPhotos, 300);
+
 
     const kit = await buildSocialKit({
       pageInfo,
