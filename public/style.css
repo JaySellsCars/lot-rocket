@@ -227,12 +227,15 @@ textarea{
 }
 
 .photo-thumb-btn{
+  position: relative;            /* ✅ add */
+  width: 100%;                   /* ✅ add */
+  height: 86px;                  /* ✅ add (locks thumbnail size) */
   padding: 0;
   border: 1px solid rgba(148,163,184,.35);
   border-radius: 12px;
   background: rgba(2,6,23,.6);
   cursor: pointer;
-  overflow: hidden;
+  overflow: hidden;              /* ✅ keep (required for crop) */
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 
@@ -243,7 +246,7 @@ textarea{
 
 .photo-thumb-img{
   width: 100%;
-  height: 86px;
+  height: 100%;                  /* ✅ change from 86px -> 100% */
   object-fit: cover;
   display: block;
 }
@@ -315,6 +318,7 @@ textarea{
 }
 
 /* ---------- STEP 3 CREATIVE HUB ---------- */
+
 .creative-hub{
   display: grid;
   grid-template-columns: 1.65fr .95fr;
