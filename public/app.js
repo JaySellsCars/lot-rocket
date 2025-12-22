@@ -126,11 +126,16 @@ const zone = $("photoDropZone");
   }
 
 function loadPhotoTuner(url) {
-  const img = $("photoTunerPreview");
+  const img = $("tunerPreviewImg");
   if (!img) {
-    console.warn("⚠️ photoTunerPreview not found");
+    console.warn("⚠️ tunerPreviewImg not found");
     return;
   }
+  if (!url) return;
+
+  img.src = getProxiedImageUrl(url);
+}
+
   if (!url) {
     console.warn("⚠️ loadPhotoTuner called with empty url");
     return;
