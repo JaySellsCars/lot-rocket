@@ -260,6 +260,49 @@ button.btn-loading,
 .primary-btn.full.btn-loading {
   cursor: progress !important;
 }
+
+/* ===============================
+   GLOW BUTTONS (Photo Tuner)
+   =============================== */
+.secondary-btn.cinematic-like{
+  border: 1px solid rgba(59,130,246,.45);
+  background: radial-gradient(120% 120% at 50% 0%, rgba(59,130,246,.25), rgba(2,6,23,.92));
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.35),
+    0 0 0 1px rgba(59,130,246,.18) inset,
+    0 0 28px rgba(59,130,246,.18);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+}
+
+.secondary-btn.cinematic-like:hover{
+  transform: translateY(-1px);
+  border-color: rgba(59,130,246,.75);
+  box-shadow:
+    0 12px 28px rgba(0,0,0,.40),
+    0 0 0 1px rgba(59,130,246,.22) inset,
+    0 0 38px rgba(59,130,246,.28);
+}
+
+.secondary-btn.cinematic-like.btn-pressed{
+  transform: translateY(0px) scale(.99);
+  filter: brightness(1.06);
+}
+
+.secondary-btn.cinematic-like.is-loading{
+  opacity: .85;
+  cursor: progress;
+}
+
+/* pulse class from pulseBtn() */
+.is-fired{
+  animation: lrPulse .26s ease-out;
+}
+@keyframes lrPulse{
+  0% { box-shadow: 0 0 0 0 rgba(59,130,246,.0); }
+  60%{ box-shadow: 0 0 0 6px rgba(59,130,246,.18); }
+  100%{ box-shadow: 0 0 0 0 rgba(59,130,246,.0); }
+}
+
 /* ===== Photo Tuner action buttons (glow + feedback) ===== */
 .tuner-actions{
   display: flex;
