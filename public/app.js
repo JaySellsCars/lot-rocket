@@ -138,6 +138,32 @@ function loadPhotoTuner(url) {
 
   img.src = safeUrl;
 }
+function applyTunerFilters() {
+  const img = $("tunerPreviewImg") || $("photoTunerPreview");
+  if (!img) return;
+
+  const bEl = $("tunerBrightness");
+  const cEl = $("tunerContrast");
+  const sEl = $("tunerSaturation");
+
+  const b = bEl ? Number(bEl.value || 100) : 100;
+  const c = cEl ? Number(cEl.value || 100) : 100;
+  const s = sEl ? Number(sEl.value || 100) : 100;
+
+  img.style.filter = "brightness(" + (b / 100) + ") contrast(" + (c / 100) + ") saturate(" + (s / 100) + ")";
+}
+
+function setTunerDefaults(brightness, contrast, saturation) {
+  const bEl = $("tunerBrightness");
+  const cEl = $("tunerContrast");
+  const sEl = $("tunerSaturation");
+
+  if (bEl) bEl.value = String(brightness);
+  if (cEl) cEl.value = String(contrast);
+  if (sEl) sEl.value = String(saturation);
+
+  applyTunerFilters();
+}
 
 
 
