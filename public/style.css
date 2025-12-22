@@ -76,6 +76,40 @@ h3 { font-size:1.05rem; }
 .creativeHubFull {
   grid-column:1 / -1;
 }
+/* ================= STEP 2 – SOCIAL MEDIA KIT (RESTORE) ================= */
+.step2-subtitle { margin: .2rem 0 1rem; }
+
+.step2-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2, minmax(0,1fr)) !important;
+  gap:1.2rem !important;
+  align-items:stretch;
+}
+
+.step2-card{
+  background:var(--bg-panel) !important;
+  border:1px solid var(--border-soft) !important;
+  border-radius:var(--radius-lg) !important;
+  padding:1rem !important;
+  min-height:260px !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+.step2-card h3{
+  font-size:.88rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(229,231,235,.95);
+  margin:0 0 .75rem 0;
+}
+
+.step2-card textarea{
+  flex:1 !important;
+  min-height:140px !important;
+  border-radius:16px !important;
+  background:rgba(2,6,23,.85) !important;
+}
 
 /* ================= PANELS ================= */
 .summary-box,
