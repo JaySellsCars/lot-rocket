@@ -484,33 +484,7 @@ if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
 
 
 
-      // add to social-ready store (object format)
-      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-      STORE.socialReadyPhotos.push({ url: url, originalUrl: url, selected: true, locked: false });
-
-      // normalize + cap
-      normalizeSocialReady();
-
-      if (typeof renderSocialStrip === "function") renderSocialStrip();
-
-      sendToSocialStripBtn.textContent = "✅ Sent";
-      setTimeout(() => {
-        sendToSocialStripBtn.textContent = sendToSocialStripBtn.dataset.originalText || "Send to Social-ready Strip";
-      }, 800);
-
-      console.log("📤 Sent to Social-ready:", url);
-    } catch (e) {
-      console.error("❌ Send to Social-ready failed:", e);
-      alert("Send failed.");
-    } finally {
-      setTimeout(() => {
-        setBtnLoading(sendToSocialStripBtn, false);
-        sendToSocialStripBtn.classList.remove("btn-pressed");
-      }, 150);
-    }
-  });
-}
-
+   
     STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
     STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || null;
 
