@@ -287,12 +287,13 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
     if (typeof pulseBtn === "function") pulseBtn(sendToSocialStripBtn);
 
     try {
-      // Prefer a tracked "current tuned" photo, fallback to preview <img>.src
+      // Prefer current tuned preview <img>. These IDs exist in your HTML.
       const previewEl =
         $("tunerPreviewImg") || $("photoTunerPreview") || $("photoTunerPreviewImg");
 
       const srcFromPreview = previewEl?.src || "";
 
+      // Prefer tracked "current tuned" photo if you store it, else fallback to preview src
       const url =
         STORE.activeHoldingPhoto ||
         STORE.activePhotoTunerUrl ||
@@ -304,49 +305,41 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
         return;
       }
 
-      // Normalize social-ready container
-      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
-        ? STORE.socialReadyPhotos
-        : [];
+      // Normalize container (objects)
+      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
 
-      // If already exists, just select it; if not, add it (as object)
-      const already = STORE.socialReadyPhotos.find((p) => p?.url === url);
-
-      if (!already) {
-        // Unselect all, then add newest selected at front
-        STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
-          ...p,
-          selected: false,
-        }));
-
+      // Add or select
+      const exists = STORE.socialReadyPhotos.some((p) => p?.url === url);
+      if (!exists) {
         STORE.socialReadyPhotos.unshift({
           url,
           originalUrl: url,
           selected: true,
-          locked: false,
+          locked: false
         });
       } else {
         STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
           ...p,
-          selected: p?.url === url,
+          selected: p.url === url
         }));
       }
 
-      // Cap to MAX_PHOTOS if present
+      // Cap length
       if (typeof MAX_PHOTOS === "number" && STORE.socialReadyPhotos.length > MAX_PHOTOS) {
         STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
       }
 
-      // Render (normalize first, then render)
+      // Render (call normalize first so downstream assumes correct shape)
       if (typeof normalizeSocialReady === "function") normalizeSocialReady();
       if (typeof renderSocialStrip === "function") renderSocialStrip();
       if (typeof renderSocialCarousel === "function") renderSocialCarousel();
+      if (typeof renderSocialReady === "function") renderSocialReady();
 
     } catch (e) {
       console.error("❌ Send to Social-ready Strip failed:", e);
       alert("Send to Social-ready Strip failed. Check console.");
     } finally {
-      // Remove "hard" press feel
+      // Remove loading feel
       window.setTimeout(() => {
         sendToSocialStripBtn.classList.remove("is-loading");
         sendToSocialStripBtn.classList.remove("btn-pressed");
@@ -354,6 +347,7 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
     }
   });
 }
+
 
 
   // ===============================
