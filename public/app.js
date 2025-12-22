@@ -82,13 +82,11 @@ console.log("🔎 BOOST BTN FOUND:", boostBtn ? ("#" + boostBtn.id) : "NONE");
   const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
   const photosGridEl = $("photosGrid");
 
-  const sendTopBtn =
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosBtn") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendTopPhotosToCreativeLabBtn") ||
-    $("sendTopPhotosToCreativeLabStripBtn") ||
-    null;
+const sendTopBtn = $("sendTopPhotosToCreative");
+if (!sendTopBtn) {
+  console.warn("⚠️ Send Photos button not found");
+}
+
 
   // ===============================
   // STEP 3 — HOLDING ZONE RENDER
