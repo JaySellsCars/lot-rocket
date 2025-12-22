@@ -468,19 +468,7 @@ if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
   });
 }
 
-const sendToSocialStripBtn = $("sendToSocialStripBtn");
-if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
-  sendToSocialStripBtn.dataset.wired = "true";
-  sendToSocialStripBtn.addEventListener("click", () => {
-    sendToSocialStripBtn.classList.add("btn-pressed");
-    setBtnLoading(sendToSocialStripBtn, true, "Sending...");
 
-    try {
-      const url = STORE.activeHoldingPhoto || null;
-      if (!url) {
-        alert("Select a photo in the Holding Zone first.");
-        return;
-      }
 
       // add to social-ready store (object format)
       STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
