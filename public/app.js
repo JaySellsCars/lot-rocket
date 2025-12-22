@@ -535,19 +535,19 @@ openCreativeLabUI();
     setBtnLoading(boostBtn, true, "Boosting…");
 
     try {
-      const payload = {
-url: (() => {
-  let u = (dealerUrlInput?.value || "").trim();
-  if (!u) return "";
-  if (u.startsWith("//")) u = "https:" + u;
-  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
-  return u;
-})(),
+const payload = {
+  url: (() => {
+    let u = (dealerUrlInput?.value || "").trim();
+    if (!u) return "";
+    if (u.startsWith("//")) u = "https:" + u;
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    return u;
+  })(),
+  labelOverride: vehicleLabelInput?.value?.trim() || "",
+  priceOverride: priceOfferInput?.value?.trim() || "",
+  processPhotos: true,
+};
 
-        labelOverride: (vehicleLabelInput?.value || "").trim(),
-        priceOverride: (priceOfferInput?.value || "").trim(),
-        processPhotos: true,
-      };
 console.log("🧾 BOOST URL RAW:", dealerUrlInput?.value);
 console.log("🧾 BOOST URL TRIM:", payload.url);
 
