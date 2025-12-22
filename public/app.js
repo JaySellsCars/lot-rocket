@@ -87,6 +87,11 @@ if (!sendTopBtn) {
   console.warn("⚠️ Send Photos button not found");
 }
 
+function pulseBtn(btn) {
+  if (!btn) return;
+  btn.classList.add("is-fired");
+  window.setTimeout(() => btn.classList.remove("is-fired"), 260);
+}
 
   // ===============================
   // STEP 3 — HOLDING ZONE RENDER
