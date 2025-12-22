@@ -406,9 +406,7 @@ try {
 
   // Restore Step 3 holding zone + Photo Tuner preview
   if (Array.isArray(STORE.holdingZonePhotos) && STORE.holdingZonePhotos.length) {
-    STORE.activeHoldingPhoto =
-      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
-
+    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
     renderHoldingZone();
     loadPhotoTuner(STORE.activeHoldingPhoto);
   }
@@ -416,4 +414,6 @@ try {
 } catch (e) {
   console.error("❌ Final init failed:", e);
 }
+
+}); // ✅ CLOSE DOMContentLoaded (DO NOT DELETE)
 
