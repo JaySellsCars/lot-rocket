@@ -540,9 +540,6 @@ function loadPhotoTuner(url) {
 
 
 
-      // ✅ Creative Lab ONLY
-      STORE.creativePhotos = urls;
-
 // ===============================
 // SEND TOP PHOTOS → STEP 3 HOLDING ZONE
 // ===============================
@@ -563,6 +560,45 @@ sendTopBtn.addEventListener("click", () => {
 });
 
 
+// ===============================
+// BOOST — SINGLE IMPLEMENTATION
+// ===============================
+boostBtn.addEventListener("click", async () => {
+  console.log("🚀 BOOST CLICKED");
+
+  if (!dealerUrlInput || !dealerUrlInput.value.trim()) {
+    alert("Enter a vehicle URL first.");
+    return;
+  }
+
+  setBtnLoading(boostBtn, true, "Boosting...");
+
+  try {
+    const res = await fetch("/boost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: dealerUrlInput.value.trim()
+      })
+    });
+
+    const data = await res.json();
+
+    STORE.step1Photos = (data.photos || []).map(url => ({
+      url,
+      selected: false
+    }));
+
+    renderStep1Photos(STORE.step1Photos);
+
+    console.log("✅ BOOST SUCCESS", STORE.step1Photos.length);
+  } catch (e) {
+    console.error("❌ BOOST FAILED", e);
+    alert("Boost failed.");
+  } finally {
+    setBtnLoading(boostBtn, false);
+  }
+});
 
   // ===============================
   // BOOST — SINGLE IMPLEMENTATION
