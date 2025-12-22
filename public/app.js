@@ -585,18 +585,22 @@ function loadPhotoTuner(url) {
     }
   }
 
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-    sendTopBtn.type = "button";
-    sendTopBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      sendSelectedToCreativeLabOnly();
-    });
-    console.log("✅ Send Top wired:", sendTopBtn.id || "(no id)");
-  } else {
-    console.warn("⚠️ Send Top button missing OR already wired.");
-  }
+sendTopBtn.addEventListener("click", () => {
+  const selected = STORE.step1Photos
+    .filter(p => p.selected)
+    .map(p => p.url);
+
+  if (!selected.length) return;
+
+  STORE.holdingZonePhotos = selected.slice(0, 24);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0];
+
+  renderHoldingZone();
+  loadPhotoTuner(STORE.activeHoldingPhoto);
+
+  console.log("📦 STEP 3 HOLDING ZONE LOADED", STORE.holdingZonePhotos.length);
+});
+
 
   // ===============================
   // BOOST — SINGLE IMPLEMENTATION
