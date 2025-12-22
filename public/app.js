@@ -191,9 +191,20 @@ function renderSocialStrip() {
 }
 
   
-  function getActivePhotoUrl() {
-    return STORE.activeHoldingPhoto || "";
-  }
+function getActivePhotoUrl() {
+  // 1️⃣ Explicit holding zone selection
+  if (STORE.activeHoldingPhoto) return STORE.activeHoldingPhoto;
+
+  // 2️⃣ Photo tuner preview fallback
+  const img =
+    $("tunerPreviewImg") ||
+    $("photoTunerPreview");
+
+  if (img && img.src) return img.src;
+
+  return "";
+}
+
 
   function pushToSocialReady(url) {
     if (!url) return false;
