@@ -280,6 +280,68 @@ function setTunerDefaults(brightness, contrast, saturation) {
       return rawUrl;
     }
   }
+const sendToSocialStripBtn = $("sendToSocialStripBtn");
+
+if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
+  sendToSocialStripBtn.dataset.wired = "true";
+
+  sendToSocialStripBtn.addEventListener("click", () => {
+    try {
+      // Visual feedback
+      sendToSocialStripBtn.classList.add("is-loading");
+      pulseBtn(sendToSocialStripBtn);
+
+      // We need a source image to send
+      const previewEl =
+        $("tunerPreviewImg") || $("photoTunerPreview") || $("photoTunerPreviewImg");
+
+      const srcFromPreview = previewEl?.src || "";
+
+      // Prefer your current active photo if you track it
+      const url =
+        STORE.activeHoldingPhoto ||
+        STORE.activePhotoTunerUrl ||
+        srcFromPreview ||
+        "";
+
+      if (!url) {
+        alert("No tuned photo selected yet.");
+        return;
+      }
+
+      // Normalize container
+      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+
+      // Add as object entry (consistent)
+      const exists = STORE.socialReadyPhotos.some((p) => p?.url === url);
+      if (!exists) {
+        STORE.socialReadyPhotos.unshift({ url, originalUrl: url, selected: true, locked: false });
+      } else {
+        // If it already exists, select it
+        STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
+          ...p,
+          selected: p.url === url,
+        }));
+      }
+
+      // Cap if you have MAX_PHOTOS
+      if (typeof MAX_PHOTOS === "number" && STORE.socialReadyPhotos.length > MAX_PHOTOS) {
+        STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
+      }
+
+      // Render (use whichever functions exist in your file)
+      if (typeof renderSocialStrip === "function") renderSocialStrip();
+      if (typeof renderSocialCarousel === "function") renderSocialCarousel();
+      if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+
+    } catch (e) {
+      console.error("❌ Send to Social-ready Strip failed:", e);
+      alert("Send to Social-ready Strip failed. Check console.");
+    } finally {
+      sendToSocialStripBtn.classList.remove("is-loading");
+    }
+  });
+}
 
   // ===============================
   // STEP 1 GRID STATE + RENDER
