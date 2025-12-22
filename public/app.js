@@ -459,6 +459,13 @@ try {
     renderHoldingZone();
     loadPhotoTuner(STORE.activeHoldingPhoto);
   }
+const bEl = $("tunerBrightness");
+const cEl = $("tunerContrast");
+const sEl = $("tunerSaturation");
+
+if (bEl) bEl.addEventListener("input", applyTunerFilters);
+if (cEl) cEl.addEventListener("input", applyTunerFilters);
+if (sEl) sEl.addEventListener("input", applyTunerFilters);
 
 } catch (e) {
   console.error("❌ Final init failed:", e);
