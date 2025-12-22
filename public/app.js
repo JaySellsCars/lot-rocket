@@ -429,84 +429,61 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
     };
   }
 
-  // ===============================
-  // SEND TOP PHOTOS → STEP 3 HOLDING ZONE
-  // ===============================
-sendTopBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+// ===============================
+// SEND TOP PHOTOS → STEP 3 HOLDING ZONE
+// ===============================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
 
-  if (!sendTopBtn) return;
+  sendTopBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  // instant “pressed” feel
-  sendTopBtn.classList.add("btn-pressed");
-
-  setBtnLoading(sendTopBtn, true, "Sending...");
-
-  try {
-    const selected = (STORE.step1Photos || [])
-      .filter((p) => p && p.selected && p.url)
-      .map((p) => p.url);
-
-    if (!selected.length) {
-      alert("Select photos first.");
-      return;
-    }
-const autoEnhanceBtn = $("autoEnhanceBtn");
-if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
-  autoEnhanceBtn.dataset.wired = "true";
-  autoEnhanceBtn.addEventListener("click", () => {
-    autoEnhanceBtn.classList.add("btn-pressed");
-    setBtnLoading(autoEnhanceBtn, true, "Enhancing...");
+    // instant “pressed” feel
+    sendTopBtn.classList.add("btn-pressed");
+    setBtnLoading(sendTopBtn, true, "Sending...");
 
     try {
-      // good “looks better” defaults (safe + not crazy)
-      setTunerDefaults(112, 112, 118);
+      const selected = (STORE.step1Photos || [])
+        .filter((p) => p && p.selected && p.url)
+        .map((p) => p.url);
 
-      autoEnhanceBtn.textContent = "✅ Enhanced";
+      if (!selected.length) {
+        alert("Select photos first.");
+        return;
+      }
+
+      STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || null;
+
+      renderHoldingZone();
+      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+
+      // success flash
+      sendTopBtn.textContent = "✅ Sent";
       setTimeout(() => {
-        autoEnhanceBtn.textContent = autoEnhanceBtn.dataset.originalText || "Auto Enhance";
-      }, 800);
+        sendTopBtn.textContent =
+          sendTopBtn.dataset.originalText || "Send Photos to Creative Lab";
+      }, 900);
+
+      console.log("📦 STEP 3 LOADED", STORE.holdingZonePhotos.length);
+    } catch (err) {
+      console.error("❌ Send failed:", err);
+      alert("Send failed.");
     } finally {
       setTimeout(() => {
-        setBtnLoading(autoEnhanceBtn, false);
-        autoEnhanceBtn.classList.remove("btn-pressed");
+        setBtnLoading(sendTopBtn, false);
+        sendTopBtn.classList.remove("btn-pressed");
       }, 150);
     }
   });
 }
 
 
+// ===============================
+// BOOST — SINGLE IMPLEMENTATION
+// ===============================
 
-   
-    STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || null;
-
-    renderHoldingZone();
-    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-
-    // success flash
-    sendTopBtn.textContent = "✅ Sent";
-    setTimeout(() => {
-      sendTopBtn.textContent = sendTopBtn.dataset.originalText || "Send Photos to Creative Lab";
-    }, 900);
-
-    console.log("📦 STEP 3 LOADED", STORE.holdingZonePhotos.length);
-  } catch (err) {
-    console.error("❌ Send failed:", err);
-    alert("Send failed.");
-  } finally {
-    setTimeout(() => {
-      setBtnLoading(sendTopBtn, false);
-      sendTopBtn.classList.remove("btn-pressed");
-    }, 150);
-  }
-});
-
-
-  // ===============================
-  // BOOST — SINGLE IMPLEMENTATION
-  // ===============================
   if (boostBtn) {
     boostBtn.addEventListener("click", async () => {
       console.log("🚀 BOOST CLICKED");
