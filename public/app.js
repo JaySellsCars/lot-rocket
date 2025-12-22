@@ -538,20 +538,7 @@ function loadPhotoTuner(url) {
     return false;
   }
 
-  function sendSelectedToCreativeLabOnly() {
-    if (!sendTopBtn) return alert("Send Top Photos button not found.");
 
-    setBtnLoading(sendTopBtn, true, "Sending…");
-
-    try {
-      const urls = uniqCleanCap(getSelectedStep1Urls(MAX_PHOTOS), MAX_PHOTOS);
-
-      console.log("📤 SEND TOP → CREATIVE", { count: urls.length, sample: urls.slice(0, 4) });
-
-      if (!urls.length) {
-        alert("Select at least 1 photo first.");
-        return;
-      }
 
       // ✅ Creative Lab ONLY
       STORE.creativePhotos = urls;
