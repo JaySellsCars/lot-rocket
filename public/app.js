@@ -200,18 +200,16 @@ function renderSocialStrip() {
 
   
 function getActivePhotoUrl() {
-  // 1️⃣ Explicit holding zone selection
-  if (STORE.activeHoldingPhoto) return STORE.activeHoldingPhoto;
+  if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
+    return STORE.activeHoldingPhoto;
+  }
 
-  // 2️⃣ Photo tuner preview fallback
-  const img =
-    $("tunerPreviewImg") ||
-    $("photoTunerPreview");
-
+  const img = $("tunerPreviewImg");
   if (img && img.src) return img.src;
 
   return "";
 }
+
 
 
   function pushToSocialReady(url) {
