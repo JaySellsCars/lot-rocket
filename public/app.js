@@ -366,6 +366,70 @@ sendTopBtn.addEventListener("click", (e) => {
       alert("Select photos first.");
       return;
     }
+const autoEnhanceBtn = $("autoEnhanceBtn");
+if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
+  autoEnhanceBtn.dataset.wired = "true";
+  autoEnhanceBtn.addEventListener("click", () => {
+    autoEnhanceBtn.classList.add("btn-pressed");
+    setBtnLoading(autoEnhanceBtn, true, "Enhancing...");
+
+    try {
+      // good “looks better” defaults (safe + not crazy)
+      setTunerDefaults(112, 112, 118);
+
+      autoEnhanceBtn.textContent = "✅ Enhanced";
+      setTimeout(() => {
+        autoEnhanceBtn.textContent = autoEnhanceBtn.dataset.originalText || "Auto Enhance";
+      }, 800);
+    } finally {
+      setTimeout(() => {
+        setBtnLoading(autoEnhanceBtn, false);
+        autoEnhanceBtn.classList.remove("btn-pressed");
+      }, 150);
+    }
+  });
+}
+
+const sendToSocialStripBtn = $("sendToSocialStripBtn");
+if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
+  sendToSocialStripBtn.dataset.wired = "true";
+  sendToSocialStripBtn.addEventListener("click", () => {
+    sendToSocialStripBtn.classList.add("btn-pressed");
+    setBtnLoading(sendToSocialStripBtn, true, "Sending...");
+
+    try {
+      const url = STORE.activeHoldingPhoto || null;
+      if (!url) {
+        alert("Select a photo in the Holding Zone first.");
+        return;
+      }
+
+      // add to social-ready store (object format)
+      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+      STORE.socialReadyPhotos.push({ url: url, originalUrl: url, selected: true, locked: false });
+
+      // normalize + cap
+      normalizeSocialReady();
+
+      if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+      sendToSocialStripBtn.textContent = "✅ Sent";
+      setTimeout(() => {
+        sendToSocialStripBtn.textContent = sendToSocialStripBtn.dataset.originalText || "Send to Social-ready Strip";
+      }, 800);
+
+      console.log("📤 Sent to Social-ready:", url);
+    } catch (e) {
+      console.error("❌ Send to Social-ready failed:", e);
+      alert("Send failed.");
+    } finally {
+      setTimeout(() => {
+        setBtnLoading(sendToSocialStripBtn, false);
+        sendToSocialStripBtn.classList.remove("btn-pressed");
+      }, 150);
+    }
+  });
+}
 
     STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
     STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || null;
