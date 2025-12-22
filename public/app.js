@@ -33,6 +33,10 @@ window.document.addEventListener("DOMContentLoaded", () => {
   );
 
   const MAX_PHOTOS = 24;
+// 🚫 Disable legacy uploadmanager image hijack
+if (window.uploadManager && typeof window.uploadManager === "object") {
+  window.uploadManager.enabled = false;
+}
 
   // ===============================
   // SINGLE STORE (LOCKED)
