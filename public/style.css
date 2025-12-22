@@ -605,6 +605,26 @@ button.btn-loading,
 .slider-block input[type="range"]{
   width: 100%;
 }
+.tuner-actions{
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.tuner-actions .cinematic-like{
+  flex: 1;
+}
+
+/* quick “pressed” feedback */
+.btn-pressed{
+  transform: scale(.99);
+}
+
+/* ensure these never look stuck */
+.cinematic-like.btn-loading{
+  cursor: progress !important;
+  opacity: .85;
+}
 
 /* ---------- Social-ready strip (v2.6 JS uses .social-carousel-item) ---------- */
 .social-ready-panel{ margin-top: 1.5rem; }
