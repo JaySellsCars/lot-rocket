@@ -101,9 +101,9 @@ function pulseBtn(btn) {
   // STEP 3 — HOLDING ZONE RENDER
   // ===============================
 function renderHoldingZone() {
-const zone = $("photoDropZone");
+const zone = $("holdingZone") || $("photoDropZone");
+if (!zone) return;
 
-  if (!zone) return;
 
 
   // (prevents layout blowups if HTML placement is wrong)
