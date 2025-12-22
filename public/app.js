@@ -407,6 +407,7 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   // ===============================
   // STEP 1 GRID STATE + RENDER
   // ===============================
+
   function setStep1FromUrls(urls) {
     const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
     STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
