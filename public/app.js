@@ -95,13 +95,7 @@ function pulseBtn(btn) {
 
 
 
-    // Push tuned photo into social-ready store
-    addToSocialReady(STORE.activeHoldingPhoto, true);
 
-    // Re-render strip
-    renderSocialStrip();
-  });
-}
 
   // ===============================
   // STEP 3 — HOLDING ZONE RENDER
