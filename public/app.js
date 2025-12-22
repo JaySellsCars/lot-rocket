@@ -543,35 +543,9 @@ function loadPhotoTuner(url) {
       // ✅ Creative Lab ONLY
       STORE.creativePhotos = urls;
 
-      // 1) Try your real renderer if it exists
-      if (typeof renderCreativeThumbs === "function") {
-        try {
-          renderCreativeThumbs();
-          console.log("✅ renderCreativeThumbs() ran");
-        } catch (e) {
-          console.warn("renderCreativeThumbs threw:", e);
-          renderCreativeThumbsFallback();
-        }
-      } else {
-        renderCreativeThumbsFallback();
-      }
-
-      // 2) Open Creative Lab
-      openCreativeLabUI();
-
-      // button feedback
-      const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
-      sendTopBtn.dataset.originalText = og;
-      sendTopBtn.textContent = "✅ Sent";
-      setTimeout(() => (sendTopBtn.textContent = og), 900);
-    } catch (e) {
-      console.error("❌ Send Top Photos failed:", e);
-      alert(e?.message || "Send failed.");
-    } finally {
-      setTimeout(() => setBtnLoading(sendTopBtn, false), 150);
-    }
-  }
-
+// ===============================
+// SEND TOP PHOTOS → STEP 3 HOLDING ZONE
+// ===============================
 sendTopBtn.addEventListener("click", () => {
   const selected = STORE.step1Photos
     .filter(p => p.selected)
@@ -587,6 +561,7 @@ sendTopBtn.addEventListener("click", () => {
 
   console.log("📦 STEP 3 HOLDING ZONE LOADED", STORE.holdingZonePhotos.length);
 });
+
 
 
   // ===============================
