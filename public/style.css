@@ -576,6 +576,36 @@ button.btn-loading,
   position: relative;
   z-index: 50;
 }
+/* ===============================
+   SOCIAL-READY STRIP (LOCKED)
+   =============================== */
+
+#socialReadyStrip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 12px;
+  align-items: center;
+}
+
+.social-ready-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+.social-ready-thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
+}
+
+.social-ready-thumb[style*="opacity: 1"] {
+  box-shadow: 0 0 0 2px #ff7a18;
+}
 
 /* ---------- FLOATING TOOLS ---------- */
 .floating-tools{
