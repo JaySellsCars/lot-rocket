@@ -111,8 +111,7 @@ function renderHoldingZone() {
     return;
   }
 
-    const zone = $("holdingZone");
-    if (!zone) return;
+
 
     zone.innerHTML = "";
 
