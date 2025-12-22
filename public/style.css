@@ -295,6 +295,15 @@ button.btn-loading,
   opacity: .75;
   cursor: progress;
 }
+.cinematic-like {
+  position: relative;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.cinematic-like.is-fired {
+  transform: scale(0.97);
+  box-shadow: 0 0 18px rgba(99,102,241,.65);
+}
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
 /* v2.6 JS renders buttons with:
