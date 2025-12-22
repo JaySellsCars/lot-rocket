@@ -273,24 +273,27 @@ function setTunerDefaults(brightness, contrast, saturation) {
       return rawUrl;
     }
   }
+// ===============================
+// SEND TO SOCIAL-READY STRIP (SINGLE SOURCE)
+// ===============================
 const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
 if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   sendToSocialStripBtn.dataset.wired = "true";
 
   sendToSocialStripBtn.addEventListener("click", () => {
-    try {
-      // Visual feedback
-      sendToSocialStripBtn.classList.add("is-loading");
-      pulseBtn(sendToSocialStripBtn);
+    // Visual feedback (instant)
+    sendToSocialStripBtn.classList.add("is-loading");
+    sendToSocialStripBtn.classList.add("btn-pressed");
+    if (typeof pulseBtn === "function") pulseBtn(sendToSocialStripBtn);
 
-      // We need a source image to send
+    try {
+      // Prefer a tracked "current tuned" photo, fallback to preview <img>.src
       const previewEl =
         $("tunerPreviewImg") || $("photoTunerPreview") || $("photoTunerPreviewImg");
 
       const srcFromPreview = previewEl?.src || "";
 
-      // Prefer your current active photo if you track it
       const url =
         STORE.activeHoldingPhoto ||
         STORE.activePhotoTunerUrl ||
@@ -302,39 +305,57 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
         return;
       }
 
-      // Normalize container
-      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+      // Normalize social-ready container
+      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
+        ? STORE.socialReadyPhotos
+        : [];
 
-      // Add as object entry (consistent)
-      const exists = STORE.socialReadyPhotos.some((p) => p?.url === url);
-      if (!exists) {
-        STORE.socialReadyPhotos.unshift({ url, originalUrl: url, selected: true, locked: false });
-      } else {
-        // If it already exists, select it
+      // If already exists, just select it; if not, add it (as object)
+      const already = STORE.socialReadyPhotos.find((p) => p?.url === url);
+
+      if (!already) {
+        // Unselect all, then add newest selected at front
         STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
           ...p,
-          selected: p.url === url,
+          selected: false,
+        }));
+
+        STORE.socialReadyPhotos.unshift({
+          url,
+          originalUrl: url,
+          selected: true,
+          locked: false,
+        });
+      } else {
+        STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
+          ...p,
+          selected: p?.url === url,
         }));
       }
 
-      // Cap if you have MAX_PHOTOS
+      // Cap to MAX_PHOTOS if present
       if (typeof MAX_PHOTOS === "number" && STORE.socialReadyPhotos.length > MAX_PHOTOS) {
         STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
       }
 
-      // Render (use whichever functions exist in your file)
+      // Render (normalize first, then render)
+      if (typeof normalizeSocialReady === "function") normalizeSocialReady();
       if (typeof renderSocialStrip === "function") renderSocialStrip();
       if (typeof renderSocialCarousel === "function") renderSocialCarousel();
-      if (typeof normalizeSocialReady === "function") normalizeSocialReady();
 
     } catch (e) {
       console.error("❌ Send to Social-ready Strip failed:", e);
       alert("Send to Social-ready Strip failed. Check console.");
     } finally {
-      sendToSocialStripBtn.classList.remove("is-loading");
+      // Remove "hard" press feel
+      window.setTimeout(() => {
+        sendToSocialStripBtn.classList.remove("is-loading");
+        sendToSocialStripBtn.classList.remove("btn-pressed");
+      }, 220);
     }
   });
 }
+
 
   // ===============================
   // STEP 1 GRID STATE + RENDER
