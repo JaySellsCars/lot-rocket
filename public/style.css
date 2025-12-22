@@ -260,6 +260,41 @@ button.btn-loading,
 .primary-btn.full.btn-loading {
   cursor: progress !important;
 }
+/* ===== Photo Tuner action buttons (glow + feedback) ===== */
+.tuner-actions{
+  display: flex;
+  gap: 12px;               /* adds the spacing you wanted */
+  margin-top: 14px;
+}
+
+.tuner-actions .cinematic-like{
+  position: relative;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.55);
+}
+
+.tuner-actions .cinematic-like:hover{
+  box-shadow: 0 0 0 2px rgba(99,102,241,.22), 0 0 18px rgba(99,102,241,.22);
+  border-color: rgba(99,102,241,.55);
+}
+
+.tuner-actions .cinematic-like:active{
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+
+/* “I was clicked” feedback (brief) */
+.tuner-actions .cinematic-like.is-fired{
+  box-shadow: 0 0 0 2px rgba(236,72,153,.25), 0 0 22px rgba(236,72,153,.22);
+  border-color: rgba(236,72,153,.65);
+}
+
+/* loading state (optional) */
+.tuner-actions .cinematic-like.is-loading{
+  opacity: .75;
+  cursor: progress;
+}
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
 /* v2.6 JS renders buttons with:
