@@ -50,9 +50,41 @@ window.document.addEventListener("DOMContentLoaded", () => {
   STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : []; // [url]
   STORE.lastTitle = STORE.lastTitle || "";
   STORE.lastPrice = STORE.lastPrice || "";
+// ===============================
+// STEP 3 — HOLDING ZONE (SOURCE OF TRUTH)
+// ===============================
+STORE.holdingZonePhotos = [];
+STORE.activeHoldingPhoto = null;
 
   let socialIndex = 0;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+// ===============================
+// STEP 3 — HOLDING ZONE RENDER
+// ===============================
+function renderHoldingZone() {
+  const zone = document.getElementById("holdingZone");
+  if (!zone) return;
+
+  zone.innerHTML = "";
+
+  STORE.holdingZonePhotos.forEach((url) => {
+    const img = document.createElement("img");
+    img.src = url;
+    img.className = "holding-thumb";
+
+    if (url === STORE.activeHoldingPhoto) {
+      img.classList.add("active");
+    }
+
+    img.addEventListener("click", () => {
+      STORE.activeHoldingPhoto = url;
+      renderHoldingZone();
+      loadPhotoTuner(url);
+    });
+
+    zone.appendChild(img);
+  });
+}
 
   // ===============================
   // UTIL
