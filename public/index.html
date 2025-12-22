@@ -1,11 +1,3 @@
-<!--
-  Lot Rocket – AI Social Media Kit & Creative Lab
-  Version: 2.6 (HTML CLEAN + JS-ALIGNED)
-  Focus:
-    - One-and-only-one element per required ID
-    - No duplicate preview images / buttons
-    - Keep Step 3 preview INSIDE Photo Tuner (no ghost box)
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,659 +17,124 @@
 
 <body class="dark-theme">
 
-  <!-- HEADER -->
-  <header class="app-header">
-    <div class="branding">
-      <h1>🚀 Lot Rocket</h1>
-      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
-    </div>
+<!-- ================= HEADER ================= -->
+<header class="app-header">
+  <div class="branding">
+    <h1>🚀 Lot Rocket</h1>
+    <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+  </div>
+</header>
 
-    <div class="header-controls">
-      <label class="theme-switch">
-        <span>Dark</span>
-        <input type="checkbox" id="themeToggle" checked />
-        <span class="slider"></span>
-        <span>Light</span>
-      </label>
-    </div>
-  </header>
+<main class="layout">
 
-  <!-- MAIN -->
-  <main class="layout">
+<!-- ================= STEP 1 ================= -->
+<section class="column-left column">
+  <h2>Step 1 – Dealer URL Scraper</h2>
 
-    <!-- ========================================= -->
-    <!-- STEP 1 – Dealer URL Scraper (LEFT)       -->
-    <!-- ========================================= -->
-    <section class="column-left column">
-      <h2>Step 1 – Dealer URL Scraper</h2>
+  <div class="summary-box">
+    <label class="field">
+      <span>Dealer Vehicle URL</span>
+      <input id="dealerUrl" type="text" placeholder="Paste dealer URL" />
+    </label>
 
-      <div class="summary-box">
-        <h3>Vehicle Details</h3>
+    <button id="boostListingBtn" class="primary-btn full" type="button">
+      Boost This Listing
+    </button>
+  </div>
 
-        <label class="field">
-          <span>Dealer Vehicle URL</span>
-          <input
-            type="text"
-            id="dealerUrl"
-            placeholder="Paste full dealer listing URL here..."
-            autocomplete="off"
-          />
-        </label>
+  <div class="summary-box">
+    <h3>Photos pulled from dealer site</h3>
 
-        <label class="field">
-          <span>Vehicle Label (optional override)</span>
-          <input
-            type="text"
-            id="vehicleLabel"
-            placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
-            autocomplete="off"
-          />
-        </label>
+    <button
+      id="sendTopPhotosToCreative"
+      class="primary-btn full glow-send"
+      type="button"
+    >
+      Send Photos to Creative Lab
+    </button>
 
-        <label class="field">
-          <span>Price / Offer (optional override)</span>
-          <input
-            type="text"
-            id="priceOffer"
-            placeholder="Example: $699/mo or $47,995 + tax"
-            autocomplete="off"
-          />
-        </label>
+    <div id="photosGrid"></div>
+  </div>
+</section>
 
-        <p class="small-note">
-          Lot Rocket will scrape the page and clean up the title, description, and photos.
-        </p>
+<!-- ================= STEP 2 ================= -->
+<section class="column-middle column">
+  <h2>Step 2 – Social Media Kit</h2>
 
-        <div class="summary-box inner-summary">
-          <h3>Summary Snapshot</h3>
-          <p>Vehicle: <span id="summaryLabel">—</span></p>
-          <p>Price: <span id="summaryPrice">—</span></p>
+  <textarea id="facebookPost" placeholder="Facebook post…"></textarea>
+  <textarea id="instagramPost" placeholder="Instagram caption…"></textarea>
+  <textarea id="tiktokPost" placeholder="TikTok caption…"></textarea>
+  <textarea id="linkedinPost" placeholder="LinkedIn post…"></textarea>
+  <textarea id="twitterPost" placeholder="X / Twitter post…"></textarea>
+  <textarea id="textBlurb" placeholder="Text / DM…"></textarea>
+  <textarea id="marketplacePost" placeholder="Marketplace description…"></textarea>
+  <textarea id="hashtags" placeholder="Hashtags…"></textarea>
+</section>
+
+<!-- ================= STEP 3 ================= -->
+<section id="creativeHub" class="creativeHubFull">
+  <div class="lab-card">
+    <h3>Step 3 – Creative Lab</h3>
+
+    <!-- Holding Zone -->
+    <div id="holdingZone" class="holding-zone"></div>
+
+    <div class="creative-hub">
+
+      <!-- LEFT -->
+      <div class="creative-left">
+        <h3>Photos</h3>
+        <div id="creativeThumbGrid"></div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="creative-right">
+        <h3>Photo Tuner</h3>
+
+        <div class="tuner-preview">
+          <img id="tunerPreviewImg" alt="Preview" />
         </div>
 
-        <button id="boostListingBtn" class="primary-btn summary-btn" type="button">
-          Boost This Listing
+        <div class="slider-block">
+          <label>Brightness</label>
+          <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
+        </div>
+
+        <div class="slider-block">
+          <label>Contrast</label>
+          <input type="range" id="tunerContrast" min="50" max="150" value="100" />
+        </div>
+
+        <div class="slider-block">
+          <label>Saturation</label>
+          <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
+        </div>
+
+        <button id="autoEnhanceBtn" class="secondary-btn full" type="button">
+          Auto Enhance
         </button>
 
-        <div id="statusText" class="status-text"></div>
-      </div>
-
-      <div class="summary-box">
-        <h3>Photos pulled from dealer site</h3>
-        <p class="small-note">
-          Click "Boost This Listing" to refresh photos. Up to 24 images, logos removed when possible.
-        </p>
-
-        <button
-          id="sendTopPhotosToCreative"
-          class="primary-btn full glow-send"
-          type="button"
-        >
-          Send Photos to Creative Lab
+        <button id="sendToSocialStripBtn" class="secondary-btn full" type="button">
+          Send to Social-ready Strip
         </button>
-
-        <div id="photosGrid" class="photo-grid"></div>
       </div>
+    </div>
+
+    <!-- SOCIAL READY STRIP -->
+    <section class="panel social-ready-panel">
+      <h3>Social-ready Photo Strip</h3>
+      <div id="socialReadyStrip"></div>
     </section>
 
-    <!-- ============================== -->
-    <!-- STEP 2 – Social Media Kit     -->
-    <!-- ============================== -->
-    <section class="column-middle column">
-      <h2>Step 2 – Social Media Kit</h2>
-      <p class="small-note step2-subtitle">
-        Copy, tweak, and paste into each platform. Spin fresh versions anytime.
-      </p>
-
-      <div class="step2-grid">
-        <div class="platform-card step2-card facebook-card">
-          <h3>Facebook Post</h3>
-          <textarea id="facebookPost" placeholder="Facebook post will appear here after Boost."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="facebook">New Post</button>
-            <button type="button" class="copy-btn" data-copy-target="facebookPost">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card instagram-card">
-          <h3>Instagram Caption</h3>
-          <textarea id="instagramPost" placeholder="Instagram caption will appear here after Boost."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="instagram">New Post</button>
-            <button type="button" class="copy-btn" data-copy-target="instagramPost">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card tiktok-card">
-          <h3>TikTok Caption</h3>
-          <textarea id="tiktokPost" placeholder="TikTok caption + hook will appear here."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="tiktok">New Post</button>
-            <button type="button" class="copy-btn" data-copy-target="tiktokPost">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card linkedin-card">
-          <h3>LinkedIn Post</h3>
-          <textarea id="linkedinPost" placeholder="LinkedIn post will appear here."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="linkedin">New Post</button>
-            <button type="button" class="copy-btn" data-copy-target="linkedinPost">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card twitter-card">
-          <h3>X / Twitter Post</h3>
-          <textarea id="twitterPost" placeholder="X / Twitter post will appear here."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="twitter">New Post</button>
-            <button type="button" class="copy-btn" data-copy-target="twitterPost">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card textdm-card">
-          <h3>Text / DM</h3>
-          <textarea id="textBlurb" placeholder="Short, high-converting text / DM will appear here."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="text">New Text</button>
-            <button type="button" class="copy-btn" data-copy-target="textBlurb">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card marketplace-card">
-          <h3>Marketplace Listing</h3>
-          <textarea id="marketplacePost" placeholder="Marketplace description will appear here."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="marketplace">New Post</button>
-            <button type="button" class="copy-btn" data-copy-target="marketplacePost">Copy</button>
-          </div>
-        </div>
-
-        <div class="platform-card step2-card hashtags-card">
-          <h3>Hashtag Set</h3>
-          <textarea id="hashtags" placeholder="Hashtag set will appear here."></textarea>
-          <div class="btn-row">
-            <button type="button" class="regen-btn" data-platform="hashtags">New Set</button>
-            <button type="button" class="copy-btn" data-copy-target="hashtags">Copy</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =============================== -->
-    <!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
-    <!-- =============================== -->
-    <section id="creativeHub" class="creativeHubFull">
-      <div class="lab-card">
-        <h3>Step 3 – Creative Lab</h3>
-
-        <!-- OPTIONAL: if your public/app.js renders holding thumbnails, keep this -->
-        <div id="holdingZone" class="holding-zone"></div>
-
-        <div class="creative-hub">
-          <!-- LEFT: Upload + thumbs -->
-          <div class="creative-left">
-            <h3>Photos</h3>
-
-            <div id="photoDropZone" class="photo-dropzone">
-              <p>
-                Drag & Drop Photos Here<br />
-                <span>(or click to upload)</span>
-              </p>
-              <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
-            </div>
-
-            <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
-
-            <button id="sendToDesignStudio" type="button" class="secondary-btn full">
-              Send Selected to Design Studio 3.5
-            </button>
-          </div>
-
-<div class="creative-right">
-  <h3>Photo Tuner</h3>
-
-  <div class="tuner-preview">
-    <img id="tunerPreviewImg" src="" alt="Preview" />
   </div>
+</section>
 
+</main>
 
-
-
-            <div class="slider-block">
-              <label for="tunerBrightness">Brightness</label>
-              <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
-            </div>
-
-            <div class="slider-block">
-              <label for="tunerContrast">Contrast</label>
-              <input type="range" id="tunerContrast" min="50" max="150" value="100" />
-            </div>
-
-            <div class="slider-block">
-              <label for="tunerSaturation">Saturation</label>
-              <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
-            </div>
-
-            <!-- Buttons under sliders -->
-            <div class="tuner-actions">
-              <button id="autoEnhanceBtn" type="button" class="secondary-btn full cinematic-like">
-                Auto Enhance
-              </button>
-
-              <button id="sendToSocialStripBtn" type="button" class="secondary-btn full cinematic-like">
-                Send to Social-ready Strip
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Social-ready strip -->
-        <section class="panel social-ready-panel">
-          <div class="panel-header">
-            <h3>Social-ready Photo Strip</h3>
-            <p>Your best edited photos, ready to post as an IG/FB carousel or send into Design Studio 3.5.</p>
-          </div>
-
-          <div class="social-carousel-shell">
-            <div class="social-carousel-preview">
-              <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
-              <img id="socialCarouselPreviewImg" alt="Selected social-ready photo" />
-              <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
-            </div>
-<div id="socialReadyStrip"></div>
-
-            <p id="socialCarouselStatus" class="small-note"></p>
-            <div id="socialCarousel" class="social-carousel"></div>
-
-            <div class="social-carousel-actions">
-              <button id="openDesignFromCarouselBtn" type="button" class="primary-btn">
-                Open / Replace in Design Studio 3.5
-              </button>
-
-              <button id="openCanvasFromCarouselBtn" type="button" class="secondary-btn">
-                Open in Canvas Studio
-              </button>
-
-              <button id="downloadAllEditedBtn" type="button" class="secondary-btn">
-                Download JPGs for IG / FB Carousel
-              </button>
-
-              <button id="revertSocialPhotoBtn" type="button" class="secondary-btn">
-                Revert Selected to Original
-              </button>
-            </div>
-          </div>
-        </section>
-
-      </div>
-    </section>
-
-  </main>
-
-  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
-  <aside class="floating-tools">
-    <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
-      <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
-    </button>
-
-    <button id="drillLauncher" class="tool-button" type="button" data-modal-target="drillModeModal">
-      <span class="tool-icon">🎯</span><span class="tool-label">Drill Mode</span>
-    </button>
-
-    <button id="calcLauncher" class="tool-button" type="button" data-modal-target="calcModal">
-      <span class="tool-icon">🧮</span><span class="tool-label">Calculator</span>
-    </button>
-
-    <button id="paymentLauncher" class="tool-button" type="button" data-modal-target="paymentModal">
-      <span class="tool-icon">💵</span><span class="tool-label">Payment Calculator</span>
-    </button>
-
-    <button id="incomeLauncher" class="tool-button" type="button" data-modal-target="incomeModal">
-      <span class="tool-icon">📊</span><span class="tool-label">Income Calculator</span>
-    </button>
-
-    <button id="workflowLauncher" class="tool-button" type="button" data-modal-target="workflowModal">
-      <span class="tool-icon">📋</span><span class="tool-label">AI Work Flow Expert</span>
-    </button>
-
-    <button id="messageLauncher" class="tool-button" type="button" data-modal-target="messageModal">
-      <span class="tool-icon">💬</span><span class="tool-label">AI Message Builder</span>
-    </button>
-
-    <button id="askLauncher" class="tool-button" type="button" data-modal-target="askModal">
-      <span class="tool-icon">❓</span><span class="tool-label">Ask A.I.</span>
-    </button>
-
-    <button id="carLauncher" class="tool-button" type="button" data-modal-target="carModal">
-      <span class="tool-icon">🚗</span><span class="tool-label">AI Car Expert</span>
-    </button>
-
-    <button id="imageLauncher" class="tool-button" type="button" data-modal-target="imageModal">
-      <span class="tool-icon">🖼</span><span class="tool-label">AI Image Generation</span>
-    </button>
-
-    <button id="videoLauncher" class="tool-button" type="button" data-modal-target="videoModal">
-      <span class="tool-icon">🎥</span><span class="tool-label">AI Video Generation</span>
-    </button>
-
-    <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
-      <span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span>
-    </button>
-
-    <button id="designLauncher" class="tool-button" type="button" data-overlay-target="designStudioOverlay">
-      <span class="tool-icon">🧩</span><span class="tool-label">Design Studio</span>
-    </button>
-  </aside>
-
-  <!-- BOTTOM VIDEO OUTPUT DISPLAY -->
-  <section id="videoOutputBottom" class="video-output-bottom">
-    <h3>1. Video Script (Spoken)</h3>
-    <button type="button" class="copy-btn" data-copy-target="videoScriptOutputBottom">Copy</button>
-    <textarea id="videoScriptOutputBottom" rows="6" readonly placeholder="Your full spoken script will appear here."></textarea>
-
-    <h3>2. Shot List (Timeline)</h3>
-    <button type="button" class="copy-btn" data-copy-target="videoShotListOutputBottom">Copy</button>
-    <textarea id="videoShotListOutputBottom" rows="6" readonly placeholder="Your shot-by-shot breakdown will appear here."></textarea>
-
-    <h3>3. AI Video Generator Prompt</h3>
-    <button type="button" class="copy-btn" data-copy-target="videoAIPromptOutputBottom">Copy</button>
-    <textarea id="videoAIPromptOutputBottom" rows="4" readonly placeholder="Paste this into Pika, Runway, or Luma."></textarea>
-
-    <h3>4. Thumbnail Prompt</h3>
-    <button type="button" class="copy-btn" data-copy-target="videoThumbPromptOutputBottom">Copy</button>
-    <textarea id="videoThumbPromptOutputBottom" rows="3" readonly placeholder="Thumbnail concept will appear here."></textarea>
-  </section>
-
-  <!-- CANVAS CREATIVE STUDIO (Fabric) -->
-  <div id="creativeStudioOverlay" class="creative-overlay hidden">
-    <div class="creative-modal">
-      <div class="creative-header">
-        <h2>Canvas Studio – Creative Overlay</h2>
-        <button id="creativeClose" class="modal-close-btn" type="button">✕</button>
-      </div>
-
-      <div class="creative-top-bar">
-        <span class="preset-label">Canvas preset</span>
-        <select id="creativeCanvasPreset">
-          <option value="1080x1080">Square – 1080x1080</option>
-          <option value="1080x1920">Story – 1080x1920</option>
-          <option value="1920x1080">Landscape – 1920x1080</option>
-        </select>
-
-        <div class="creative-actions">
-          <button id="creativeUndo" type="button">Undo</button>
-          <button id="creativeRedo" type="button">Redo</button>
-          <button id="creativeDelete" type="button">Delete</button>
-          <button id="creativeExportPng" type="button">Export PNG</button>
-        </div>
-      </div>
-
-      <div class="creative-body">
-        <aside class="creative-tools">
-          <h3>Canvas Tools</h3>
-          <button class="pill-btn tool-btn" type="button" data-tool="select">Select / Move</button>
-          <button class="pill-btn tool-btn" type="button" data-tool="addText">Add Text</button>
-          <button class="pill-btn tool-btn" type="button" data-tool="addRect">Add Banner Bar</button>
-          <button class="pill-btn tool-btn" type="button" data-tool="addBadge">Add Badge</button>
-          <button class="pill-btn tool-btn" type="button" data-tool="uploadImage">Upload Image</button>
-          <input type="file" id="creativeImageInput" accept="image/*" multiple hidden />
-        </aside>
-
-        <div class="creative-canvas-wrap">
-          <canvas id="creativeCanvas" width="1080" height="1080"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DESIGN STUDIO (Konva) -->
-  <div id="designStudioOverlay" class="modal-overlay hidden">
-    <div class="ds3-shell">
-      <header class="ds3-header">
-        <div class="ds3-title"><h2>Design Studio 3.0 (Beta)</h2></div>
-
-        <div class="ds3-header-main">
-          <div class="ds3-preset-row">
-            <label class="ds3-preset-label">
-              <span>Canvas preset</span>
-              <select id="studioSizePreset">
-                <option value="1080x1080">Square – 1080×1080</option>
-                <option value="1080x1350">Portrait – 1080×1350</option>
-                <option value="1920x1080">Landscape – 1920×1080</option>
-              </select>
-            </label>
-
-            <div class="ds3-header-actions">
-              <button id="studioUndoBtn" class="ds3-btn" type="button">Undo</button>
-              <button id="studioRedoBtn" class="ds3-btn" type="button">Redo</button>
-              <button id="studioExportPng" class="ds3-btn" type="button">Download PNG</button>
-              <button id="studioToStep3Btn" class="ds3-btn ds3-btn-accent" type="button">Send to Step 3</button>
-            </div>
-          </div>
-
-          <div id="studioPhotoTray" class="ds3-photo-tray"></div>
-        </div>
-
-        <button id="designClose" class="ds3-close" type="button">✕</button>
-      </header>
-
-      <div class="ds3-body">
-        <aside class="ds3-left">
-          <section class="ds3-panel">
-            <h3 class="ds3-panel-title">Tools</h3>
-            <div class="ds3-btn-column">
-              <button id="toolAddText" class="ds3-btn" type="button">Add Text</button>
-              <button id="toolAddShape" class="ds3-btn" type="button">Add Banner Bar</button>
-              <button id="toolAddBadge" class="ds3-btn" type="button">Add Price Badge</button>
-              <button id="toolSetBackground" class="ds3-btn" type="button">Set Background</button>
-            </div>
-          </section>
-
-          <section class="ds3-panel">
-            <h3 class="ds3-panel-title">Templates</h3>
-            <div class="ds3-btn-column">
-              <button id="templatePayment" class="ds3-btn" type="button">Payment Promo</button>
-              <button id="templateArrival" class="ds3-btn" type="button">Just Arrived</button>
-              <button id="templateSale" class="ds3-btn" type="button">Sale Blast</button>
-            </div>
-          </section>
-
-          <section class="ds3-panel">
-            <h3 class="ds3-panel-title">Design</h3>
-            <div class="ds3-btn-column">
-              <button id="saveDesignBtn" class="ds3-btn" type="button">Save Design</button>
-              <button id="loadDesignBtn" class="ds3-btn" type="button">Load Design</button>
-            </div>
-          </section>
-        </aside>
-
-        <main class="ds3-center">
-          <div id="konvaStageContainer" class="ds3-stage"></div>
-        </main>
-
-        <aside class="ds3-right">
-          <section class="ds3-panel">
-            <h3 class="ds3-panel-title">Layers</h3>
-            <ul id="layersList" class="ds3-layers-list"></ul>
-          </section>
-
-          <section class="ds3-panel">
-            <h3 class="ds3-panel-title">Selected Layer</h3>
-
-            <label class="ds3-field">
-              <span>Text</span>
-              <input id="layerTextInput" type="text" placeholder="Edit text…" />
-            </label>
-
-            <label class="ds3-field">
-              <span>Font size</span>
-              <input id="layerFontSizeInput" type="number" min="12" max="200" step="2" />
-            </label>
-
-            <label class="ds3-field">
-              <span>Opacity</span>
-              <input id="layerOpacityInput" type="range" min="0" max="1" step="0.05" value="1" />
-            </label>
-
-            <button id="layerDeleteBtn" class="ds3-btn ds3-btn-danger" type="button">
-              Delete Layer
-            </button>
-          </section>
-        </aside>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ REQUIRED SIDE MODALS (must exist once) ============ -->
-  <section id="objectionModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Objection Coach</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="objectionForm">
-          <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
-          <button type="submit">Coach Me</button>
-        </form>
-        <div id="objectionOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Drill Mode</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <div id="drillOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="calcModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <div id="calcOutput">Calculator UI goes here</div>
-      </div>
-    </div>
-  </section>
-
-  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Payment Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="paymentForm"></form>
-        <div id="paymentOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Income Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="incomeForm"></form>
-        <div id="incomeOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Workflow Builder</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="workflowForm"></form>
-        <div id="workflowOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="messageModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Message Builder</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="messageForm"></form>
-        <div id="messageOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="askModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Ask AI</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="askForm"></form>
-        <div id="askOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="carModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Car Expert</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-
-      </div>
-      <div class="side-modal-body">
-        <form id="carForm"></form>
-        <div id="carOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="imageModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Image Generation</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="imageForm"></form>
-        <div id="imageOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="videoModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Video Generation</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="videoForm"></form>
-        <div id="videoOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- TEST BRANCH BADGE -->
-  <div style="position:fixed; bottom:6px; right:6px; font-size:11px; opacity:0.6; z-index:9999;">
-    🚧 TEST BRANCH — clean-rewrite
-  </div>
+<!-- TEST BADGE -->
+<div style="position:fixed; bottom:6px; right:6px; font-size:11px; opacity:0.6;">
+  🚧 TEST BRANCH — clean-rewrite
+</div>
 
 </body>
 </html>
