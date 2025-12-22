@@ -466,7 +466,7 @@ for (const re of textMatchers) {
 function sendSelectedToCreativeLabOnly() {
   if (!sendTopBtn) return;
 
-  setBtnLoading(sendTopBtn, true, "Sending…");
+setBtnLoading(sendTopBtn, true, "Sending to Creative Studio…");
 
   try {
     const urls = getSelectedStep1Urls(MAX_PHOTOS);
