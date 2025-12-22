@@ -92,6 +92,24 @@ function pulseBtn(btn) {
   btn.classList.add("is-fired");
   window.setTimeout(() => btn.classList.remove("is-fired"), 260);
 }
+const sendToSocialStripBtn = $("sendToSocialStripBtn");
+
+if (sendToSocialStripBtn) {
+  sendToSocialStripBtn.addEventListener("click", () => {
+    if (!STORE.activeHoldingPhoto) {
+      alert("No tuned photo selected.");
+      return;
+    }
+
+    pulseBtn(sendToSocialStripBtn);
+
+    // Push tuned photo into social-ready store
+    addToSocialReady(STORE.activeHoldingPhoto, true);
+
+    // Re-render strip
+    renderSocialStrip();
+  });
+}
 
   // ===============================
   // STEP 3 — HOLDING ZONE RENDER
