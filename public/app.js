@@ -258,17 +258,16 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // STEP 1 GRID STATE + RENDER
   // ===============================
-function setStep1FromUrls(urls) {
-  const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
+  function setStep1FromUrls(urls) {
+    const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
 
-  // ✅ When we boost (new set), start unchecked so Jay can pick manually
-  STORE.step1Photos = clean.map((u) => ({
-    url: u,
-    selected: false,
-    dead: false,
-  }));
-}
-
+    // ✅ On new Boost: start unchecked so you can pick manually
+    STORE.step1Photos = clean.map((u) => ({
+      url: u,
+      selected: false,
+      dead: false,
+    }));
+  }
 
   function getSelectedStep1Urls(max = MAX_PHOTOS) {
     const lim = Number.isFinite(max) ? max : MAX_PHOTOS;
@@ -281,6 +280,7 @@ function setStep1FromUrls(urls) {
 
       if (picked.length) return picked;
 
+      // fallback to "all urls" if none selected
       return STORE.step1Photos
         .filter((p) => p && p.url)
         .map((p) => p.url)
@@ -352,7 +352,7 @@ function setStep1FromUrls(urls) {
       photosGridEl.appendChild(btn);
     });
 
-    // single click handler
+    // Single click handler for toggles
     photosGridEl.onclick = (e) => {
       const btnEl = e?.target?.closest ? e.target.closest("[data-i]") : null;
       if (!btnEl) return;
@@ -367,150 +367,186 @@ function setStep1FromUrls(urls) {
       const check = btnEl.querySelector(".photo-check");
       if (check) check.style.display = item.selected ? "block" : "none";
 
-      // optional class for CSS if you use it
       btnEl.classList.toggle("photo-thumb-selected", item.selected);
     };
   }
 
-  // ===============================
-  // STEP 1 → SEND TOP PHOTOS (CREATIVE LAB ONLY) — SINGLE COPY
-  // ===============================
+  // ==================================================
+  // STEP 1 → SEND TOP PHOTOS → CREATIVE LAB ONLY (SINGLE COPY)
+  // ==================================================
   const sendTopBtn =
-    $("sendTopPhotosBtn") ||
     $("sendTopPhotosToCreative") ||
+    $("sendTopPhotosBtn") ||
     $("sendTopPhotosToCreativeLab") ||
     $("sendTopPhotosToCreativeLabBtn") ||
     $("sendTopPhotosToCreativeLabStripBtn") ||
     null;
-function openCreativeLabUI() {
-  // 1) Known function names (if your build has them)
-  const fn =
-    (typeof openCreativeStudio === "function" && openCreativeStudio) ||
-    (typeof openCreativeLab === "function" && openCreativeLab) ||
-    (typeof openCanvasStudio === "function" && openCanvasStudio) ||
-    (typeof openCreative === "function" && openCreative) ||
-    null;
 
-  if (fn) {
-    fn();
-    console.log("✅ Creative Lab opened via function");
-    return true;
-  }
+  function renderCreativeThumbsFallback() {
+    const host =
+      $("creativeThumbGrid") ||
+      $("creativeThumbs") ||
+      $("creativePhotosGrid") ||
+      DOC.querySelector(".creative-thumb-grid") ||
+      null;
 
-  // 2) Try clicking a launcher button by common IDs
-  const idCandidates = [
-    "openCreativeLabBtn",
-    "openCreativeStudioBtn",
-    "openCreativeBtn",
-    "creativeLabBtn",
-    "creativeStudioBtn",
-    "canvasStudioBtn",
-    "openCanvasStudioBtn",
-  ];
-
-  for (const id of idCandidates) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.click();
-      console.log("✅ Creative Lab opened via click id:", id);
-      return true;
+    if (!host) {
+      console.warn("⚠️ No creative thumbs container found (creativeThumbGrid/creativeThumbs/creativePhotosGrid).");
+      return false;
     }
-  }
 
-  // 3) Try clicking by data-attributes (common patterns)
-  const dataCandidates = [
-    "[data-open='creative']",
-    "[data-open='creativeLab']",
-    "[data-open='creativeStudio']",
-    "[data-target='creative']",
-    "[data-target='creativeLab']",
-    "[data-target='creativeStudio']",
-  ];
+    const urls = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
+    host.innerHTML = "";
 
-  for (const sel of dataCandidates) {
-    const el = document.querySelector(sel);
-    if (el) {
-      el.click();
-      console.log("✅ Creative Lab opened via click selector:", sel);
-      return true;
-    }
-  }
+    urls.slice(0, MAX_PHOTOS).forEach((u) => {
+      const btn = DOC.createElement("button");
+      btn.type = "button";
+      btn.className = "creative-thumb-btn";
+      btn.style.padding = "0";
+      btn.style.border = "1px solid rgba(148,163,184,.35)";
+      btn.style.borderRadius = "12px";
+      btn.style.overflow = "hidden";
+      btn.style.background = "rgba(2,6,23,.6)";
+      btn.style.cursor = "pointer";
 
-// 4) Try clicking by text (your app labels)
-const btns = Array.from(document.querySelectorAll("button, a, .tool-btn, .side-btn"));
+      const img = DOC.createElement("img");
+      img.src = u;
+      img.alt = "creative";
+      img.loading = "lazy";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.display = "block";
+      img.style.objectFit = "cover";
 
-const textMatchers = [
-  /open\s+creative\s+studio/i,     // ✅ "Open Creative Studio 3.5"
-  /creative\s+studio/i,
-  /canvas\s+studio/i,              // fallback option
-  /open\s+in\s+canvas\s+studio/i,
-  /design\s+studio/i,              // last fallback if you want
-];
-
-for (const re of textMatchers) {
-  const hit = btns.find((b) => re.test((b.textContent || "").trim()));
-  if (hit) {
-    hit.click();
-    console.log("✅ Opened via text match:", re.toString(), "→", (hit.textContent || "").trim());
-    return true;
-  }
-}
-
-
-  console.warn(
-    "⚠️ No Creative Lab open method found. Add/confirm the Creative Lab launcher button id or panel id."
-  );
-  return false;
-}
-
-function sendSelectedToCreativeLabOnly() {
-  if (!sendTopBtn) return;
-
-setBtnLoading(sendTopBtn, true, "Sending to Creative Studio…");
-
-  try {
-    const urls = getSelectedStep1Urls(MAX_PHOTOS);
-
-    console.log("📤 SEND TOP clicked:", {
-      selectedCount: urls.length,
-      sample: urls.slice(0, 4),
+      btn.appendChild(img);
+      host.appendChild(btn);
     });
 
-    if (!urls.length) {
-      alert("Select at least 1 photo first.");
-      return;
-    }
-
-    const deduped = uniqCleanCap(urls, MAX_PHOTOS);
-
-    // ✅ Creative Lab ONLY
-    STORE.creativePhotos = deduped;
-
-    // Try to refresh thumbs (if your build has it)
-    try {
-      if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-    } catch (e) {
-      console.warn("renderCreativeThumbs failed:", e);
-    }
-
-    // Try to open Creative Lab (supports multiple possible function names)
-    const openFn =
-openCreativeLabUI();
-
-
-    // button feedback
-    const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
-    sendTopBtn.dataset.originalText = og;
-    sendTopBtn.textContent = "✅ Sent";
-    setTimeout(() => (sendTopBtn.textContent = og), 900);
-  } catch (e) {
-    console.error("❌ Send Top Photos failed:", e);
-    alert(e?.message || "Send failed.");
-  } finally {
-    setTimeout(() => setBtnLoading(sendTopBtn, false), 150);
+    console.log("✅ Fallback Creative thumbs rendered:", urls.length);
+    return true;
   }
-}
 
+  function openCreativeLabUI() {
+    // 1) Known function names (if they exist)
+    const fn =
+      (typeof openCreativeStudio === "function" && openCreativeStudio) ||
+      (typeof openCreativeLab === "function" && openCreativeLab) ||
+      (typeof openCanvasStudio === "function" && openCanvasStudio) ||
+      null;
+
+    if (fn) {
+      fn();
+      console.log("✅ Creative Lab opened via function");
+      return true;
+    }
+
+    // 2) Click by common IDs
+    const idCandidates = [
+      "openCreativeLabBtn",
+      "openCreativeStudioBtn",
+      "creativeLabBtn",
+      "creativeStudioBtn",
+      "canvasStudioBtn",
+      "openCanvasStudioBtn",
+    ];
+
+    for (const id of idCandidates) {
+      const el = DOC.getElementById(id);
+      if (el) {
+        el.click();
+        console.log("✅ Creative Lab opened via click id:", id);
+        return true;
+      }
+    }
+
+    // 3) Click by common data-attributes
+    const dataCandidates = [
+      "[data-open='creative']",
+      "[data-open='creativeLab']",
+      "[data-open='creativeStudio']",
+      "[data-target='creative']",
+      "[data-target='creativeLab']",
+      "[data-target='creativeStudio']",
+    ];
+
+    for (const sel of dataCandidates) {
+      const el = DOC.querySelector(sel);
+      if (el) {
+        el.click();
+        console.log("✅ Creative Lab opened via click selector:", sel);
+        return true;
+      }
+    }
+
+    // 4) Click by TEXT (your real UI labels)
+    const btns = Array.from(DOC.querySelectorAll("button, a, .tool-btn, .side-btn"));
+
+    const textMatchers = [
+      /open\s+creative\s+studio/i, // "Open Creative Studio 3.5"
+      /creative\s+studio/i,
+      /canvas\s+studio/i,
+      /open\s+in\s+canvas\s+studio/i,
+    ];
+
+    for (const re of textMatchers) {
+      const hit = btns.find((b) => re.test((b.textContent || "").trim()));
+      if (hit) {
+        hit.click();
+        console.log("✅ Opened via text match:", re.toString(), "→", (hit.textContent || "").trim());
+        return true;
+      }
+    }
+
+    console.warn("⚠️ No Creative Lab open method found.");
+    return false;
+  }
+
+  function sendSelectedToCreativeLabOnly() {
+    if (!sendTopBtn) return alert("Send Top Photos button not found.");
+
+    setBtnLoading(sendTopBtn, true, "Sending…");
+
+    try {
+      const urls = uniqCleanCap(getSelectedStep1Urls(MAX_PHOTOS), MAX_PHOTOS);
+
+      console.log("📤 SEND TOP → CREATIVE", { count: urls.length, sample: urls.slice(0, 4) });
+
+      if (!urls.length) {
+        alert("Select at least 1 photo first.");
+        return;
+      }
+
+      // ✅ Creative Lab ONLY
+      STORE.creativePhotos = urls;
+
+      // 1) Try your real renderer if it exists
+      if (typeof renderCreativeThumbs === "function") {
+        try {
+          renderCreativeThumbs();
+          console.log("✅ renderCreativeThumbs() ran");
+        } catch (e) {
+          console.warn("renderCreativeThumbs threw:", e);
+          renderCreativeThumbsFallback();
+        }
+      } else {
+        renderCreativeThumbsFallback();
+      }
+
+      // 2) Open Creative Lab
+      openCreativeLabUI();
+
+      // button feedback
+      const og = sendTopBtn.dataset.originalText || sendTopBtn.textContent;
+      sendTopBtn.dataset.originalText = og;
+      sendTopBtn.textContent = "✅ Sent";
+      setTimeout(() => (sendTopBtn.textContent = og), 900);
+    } catch (e) {
+      console.error("❌ Send Top Photos failed:", e);
+      alert(e?.message || "Send failed.");
+    } finally {
+      setTimeout(() => setBtnLoading(sendTopBtn, false), 150);
+    }
+  }
 
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
@@ -520,6 +556,9 @@ openCreativeLabUI();
       e.stopPropagation();
       sendSelectedToCreativeLabOnly();
     });
+    console.log("✅ Send Top wired:", sendTopBtn.id || "(no id)");
+  } else {
+    console.warn("⚠️ Send Top button missing OR already wired.");
   }
 
   // ===============================
@@ -528,28 +567,27 @@ openCreativeLabUI();
   let boostBtn = null;
 
   async function boostListing() {
-    const url = (dealerUrlInput?.value || "").trim();
-    if (!url) return alert("Paste a dealer URL first.");
+    const urlRaw = (dealerUrlInput?.value || "").trim();
+    if (!urlRaw) return alert("Paste a dealer URL first.");
     if (!boostBtn) return alert("Boost button not found.");
 
     setBtnLoading(boostBtn, true, "Boosting…");
 
     try {
-const payload = {
-  url: (() => {
-    let u = (dealerUrlInput?.value || "").trim();
-    if (!u) return "";
-    if (u.startsWith("//")) u = "https:" + u;
-    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
-    return u;
-  })(),
-  labelOverride: vehicleLabelInput?.value?.trim() || "",
-  priceOverride: priceOfferInput?.value?.trim() || "",
-  processPhotos: true,
-};
+      const payload = {
+        url: (() => {
+          let u = urlRaw;
+          if (u.startsWith("//")) u = "https:" + u;
+          if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+          return u;
+        })(),
+        labelOverride: vehicleLabelInput?.value?.trim() || "",
+        priceOverride: priceOfferInput?.value?.trim() || "",
+        processPhotos: true,
+      };
 
-console.log("🧾 BOOST URL RAW:", dealerUrlInput?.value);
-console.log("🧾 BOOST URL TRIM:", payload.url);
+      console.log("🧾 BOOST URL RAW:", urlRaw);
+      console.log("🧾 BOOST URL FIX:", payload.url);
 
       const data = await postJSON(`${apiBase}/boost`, payload);
 
@@ -660,6 +698,7 @@ console.log("🧾 BOOST URL TRIM:", payload.url);
       renderStep1Photos(STORE.lastBoostPhotos);
     }
 
+    // These are optional — only run if they exist
     if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
     if (typeof renderSocialStrip === "function") renderSocialStrip();
     if (typeof wireObjectionCoach === "function") wireObjectionCoach();
