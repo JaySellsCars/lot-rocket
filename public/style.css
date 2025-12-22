@@ -246,6 +246,20 @@ textarea{
   opacity: .7;
   cursor: progress !important;
 }
+.btn-loading {
+  opacity: .75;
+  filter: saturate(1.1);
+}
+
+.btn-pressed {
+  transform: scale(.99);
+}
+
+button.btn-loading,
+.primary-btn.btn-loading,
+.primary-btn.full.btn-loading {
+  cursor: progress !important;
+}
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
 /* v2.6 JS renders buttons with:
