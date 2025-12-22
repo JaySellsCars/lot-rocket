@@ -126,11 +126,19 @@ window.document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function loadPhotoTuner(url) {
-    const img = $("tunerPreviewImg");
-    if (!img || !url) return;
-    img.src = getProxiedImageUrl(url);
-  }
+function loadPhotoTuner(url) {
+  const img = $("tunerPreviewImg");
+  if (!img || !url) return;
+
+  // 🔒 FORCE source of truth
+  STORE.activeHoldingPhoto = url;
+
+  img.onload = () => console.log("✅ Photo Tuner loaded");
+  img.onerror = () => console.warn("❌ Photo Tuner failed to load:", url);
+
+  img.src = getProxiedImageUrl(url);
+}
+
 
   function applyTunerFilters() {
     const img = $("tunerPreviewImg");
