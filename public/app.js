@@ -302,78 +302,105 @@ function setTunerDefaults(brightness, contrast, saturation) {
 // ===============================
 // SEND TO SOCIAL-READY STRIP (SINGLE SOURCE)
 // ===============================
+function extractOriginalFromProxy(src) {
+  if (!src) return "";
+  try {
+    // If preview is proxied like /api/proxy-image?url=https%3A%2F%2F...
+    if (src.includes("/api/proxy-image?url=")) {
+      const u = new URL(src, window.location.origin);
+      const raw = u.searchParams.get("url") || "";
+      return raw ? decodeURIComponent(raw) : src;
+    }
+  } catch {}
+  return src;
+}
+
+function pushToSocialReady(url) {
+  if (!url) return false;
+
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+
+  // Use object format always
+  const exists = STORE.socialReadyPhotos.some((p) => p && p.url === url);
+
+  if (!exists) {
+    // select this one, unselect others
+    STORE.socialReadyPhotos = [
+      { url, originalUrl: url, selected: true, locked: false },
+      ...STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false })),
+    ];
+  } else {
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
+      ...p,
+      selected: p.url === url,
+    }));
+  }
+
+  // Cap
+  if (typeof MAX_PHOTOS === "number" && STORE.socialReadyPhotos.length > MAX_PHOTOS) {
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
+  }
+
+  // Normalize + render (if they exist)
+  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+  if (typeof renderSocialCarousel === "function") renderSocialCarousel();
+  if (typeof renderSocialReady === "function") renderSocialReady();
+
+  return true;
+}
+
 const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
 if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   sendToSocialStripBtn.dataset.wired = "true";
 
   sendToSocialStripBtn.addEventListener("click", () => {
-    // Visual feedback (instant)
-    sendToSocialStripBtn.classList.add("is-loading");
-    sendToSocialStripBtn.classList.add("btn-pressed");
-    if (typeof pulseBtn === "function") pulseBtn(sendToSocialStripBtn);
-
     try {
-      // Prefer current tuned preview <img>. These IDs exist in your HTML.
-      const previewEl =
-        $("tunerPreviewImg") || $("photoTunerPreview") || $("photoTunerPreviewImg");
+      sendToSocialStripBtn.classList.add("btn-pressed");
+      sendToSocialStripBtn.classList.add("is-loading");
+      if (typeof pulseBtn === "function") pulseBtn(sendToSocialStripBtn);
 
-      const srcFromPreview = previewEl?.src || "";
+      // BEST source: the actual selected holding photo (not proxied)
+      let url = STORE.activeHoldingPhoto || "";
 
-      // Prefer tracked "current tuned" photo if you store it, else fallback to preview src
-      const url =
-        STORE.activeHoldingPhoto ||
-        STORE.activePhotoTunerUrl ||
-        srcFromPreview ||
-        "";
+      // Fallback: pull from preview <img>
+      if (!url) {
+        const previewEl = $("tunerPreviewImg") || $("photoTunerPreview") || $("photoTunerPreviewImg");
+        const src = previewEl?.src || "";
+        url = extractOriginalFromProxy(src);
+      }
 
       if (!url) {
         alert("No tuned photo selected yet.");
         return;
       }
 
-      // Normalize container (objects)
-      STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-
-      // Add or select
-      const exists = STORE.socialReadyPhotos.some((p) => p?.url === url);
-      if (!exists) {
-        STORE.socialReadyPhotos.unshift({
-          url,
-          originalUrl: url,
-          selected: true,
-          locked: false
-        });
-      } else {
-        STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
-          ...p,
-          selected: p.url === url
-        }));
+      const ok = pushToSocialReady(url);
+      if (!ok) {
+        alert("Could not send photo. Check console.");
+        return;
       }
 
-      // Cap length
-      if (typeof MAX_PHOTOS === "number" && STORE.socialReadyPhotos.length > MAX_PHOTOS) {
-        STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
-      }
+      // quick success flash
+      const originalText = sendToSocialStripBtn.dataset.originalText || sendToSocialStripBtn.textContent;
+      sendToSocialStripBtn.dataset.originalText = originalText;
+      sendToSocialStripBtn.textContent = "✅ Sent";
+      window.setTimeout(() => (sendToSocialStripBtn.textContent = originalText), 700);
 
-      // Render (call normalize first so downstream assumes correct shape)
-      if (typeof normalizeSocialReady === "function") normalizeSocialReady();
-      if (typeof renderSocialStrip === "function") renderSocialStrip();
-      if (typeof renderSocialCarousel === "function") renderSocialCarousel();
-      if (typeof renderSocialReady === "function") renderSocialReady();
-
+      console.log("📤 Sent to Social-ready:", url);
     } catch (e) {
       console.error("❌ Send to Social-ready Strip failed:", e);
       alert("Send to Social-ready Strip failed. Check console.");
     } finally {
-      // Remove loading feel
       window.setTimeout(() => {
         sendToSocialStripBtn.classList.remove("is-loading");
         sendToSocialStripBtn.classList.remove("btn-pressed");
-      }, 220);
+      }, 200);
     }
   });
 }
+
 
 
 
