@@ -217,7 +217,31 @@ function renderSocialStrip() {
       setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
     };
   }
-function setStep1FromUrls(urls) {
+
+  function uniqCleanCap(arr, cap) {
+  const max = typeof cap === "number" && cap > 0 ? cap : MAX_PHOTOS;
+  if (!Array.isArray(arr)) return [];
+
+  const out = [];
+  const seen = new Set();
+
+  for (let i = 0; i < arr.length; i++) {
+    let raw = arr[i];
+    if (raw && typeof raw === "object" && raw.url) raw = raw.url;
+
+    if (!raw) continue;
+    if (seen.has(raw)) continue;
+
+    seen.add(raw);
+    out.push(raw);
+
+    if (out.length >= max) break;
+  }
+
+  return out;
+}
+
+  function setStep1FromUrls(urls) {
   const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
   STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
 }
