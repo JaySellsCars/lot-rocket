@@ -217,6 +217,10 @@ function renderSocialStrip() {
       setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
     };
   }
+function setStep1FromUrls(urls) {
+  const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
+  STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
+}
 
   // ===============================
   // STEP 1 — GRID
