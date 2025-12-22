@@ -221,30 +221,84 @@ function renderSocialStrip() {
   // ===============================
   // STEP 1 — GRID
   // ===============================
-  function renderStep1Photos(urls) {
-    if (!photosGridEl) return;
-    STORE.step1Photos = uniqCap(urls).map((u) => ({ url: u, selected: false }));
-    photosGridEl.innerHTML = "";
+function renderStep1Photos(urls) {
+  if (!photosGridEl) return;
 
-    STORE.step1Photos.forEach((item, i) => {
-      const btn = DOC.createElement("button");
-      btn.dataset.i = i;
-      btn.className = "photo-thumb-btn";
-      btn.style.opacity = item.selected ? "1" : "0.45";
+  setStep1FromUrls(urls);
 
-      const img = DOC.createElement("img");
-      img.src = getProxiedImageUrl(item.url);
-      img.className = "photo-thumb-img";
+  // FORCE: 4-column thumbnail grid
+  photosGridEl.style.display = "grid";
+  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
+  photosGridEl.style.gap = "8px";
+  photosGridEl.style.marginTop = "10px";
+  photosGridEl.innerHTML = "";
 
-      btn.onclick = () => {
-        item.selected = !item.selected;
-        btn.style.opacity = item.selected ? "1" : "0.45";
-      };
+  (STORE.step1Photos || []).forEach((item, idx) => {
+    const src = getProxiedImageUrl(item.url);
 
-      btn.appendChild(img);
-      photosGridEl.appendChild(btn);
-    });
-  }
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "photo-thumb-btn";
+    btn.setAttribute("data-i", String(idx));
+    btn.style.position = "relative";
+    btn.style.height = "72px";
+    btn.style.borderRadius = "12px";
+    btn.style.overflow = "hidden";
+    btn.style.border = "1px solid rgba(148,163,184,.55)";
+    btn.style.background = "#0b1120";
+    btn.style.padding = "0";
+    btn.style.cursor = "pointer";
+    btn.style.opacity = item.selected ? "1" : "0.45";
+
+    const img = DOC.createElement("img");
+    img.className = "photo-thumb-img";
+    img.src = src;
+    img.alt = "photo";
+    img.loading = "lazy";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.display = "block";
+    img.style.objectFit = "cover";
+
+    const check = DOC.createElement("span");
+    check.className = "photo-check";
+    check.textContent = "✓";
+    check.style.position = "absolute";
+    check.style.top = "6px";
+    check.style.right = "6px";
+    check.style.width = "18px";
+    check.style.height = "18px";
+    check.style.borderRadius = "999px";
+    check.style.background = "rgba(0,0,0,.55)";
+    check.style.color = "#fff";
+    check.style.fontSize = "12px";
+    check.style.lineHeight = "18px";
+    check.style.textAlign = "center";
+    check.style.display = item.selected ? "block" : "none";
+
+    btn.appendChild(img);
+    btn.appendChild(check);
+    photosGridEl.appendChild(btn);
+  });
+
+  // click delegation
+  photosGridEl.onclick = (e) => {
+    const btnEl = e.target?.closest?.("[data-i]");
+    if (!btnEl) return;
+
+    const idx = Number(btnEl.getAttribute("data-i"));
+    const item = STORE.step1Photos[idx];
+    if (!item || item.dead) return;
+
+    item.selected = !item.selected;
+
+    btnEl.style.opacity = item.selected ? "1" : "0.45";
+    const check = btnEl.querySelector(".photo-check");
+    if (check) check.style.display = item.selected ? "block" : "none";
+    btnEl.classList.toggle("photo-thumb-selected", item.selected);
+  };
+}
+
 
   // ===============================
   // SEND TOP PHOTOS → STEP 3
