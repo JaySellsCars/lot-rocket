@@ -2,10 +2,9 @@
   Lot Rocket – AI Social Media Kit & Creative Lab
   Version: 2.6 (HTML CLEAN + JS-ALIGNED)
   Focus:
-    - Remove/avoid duplicate IDs
-    - Ensure launcher IDs + targets match app.js exactly
-    - Keep one-and-only-one element per required ID
-    - Standardize modal/overlay target naming (data-* is fine, JS uses IDs)
+    - One-and-only-one element per required ID
+    - No duplicate preview images / buttons
+    - Keep Step 3 preview INSIDE Photo Tuner (no ghost box)
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -21,8 +20,6 @@
   <meta name="theme-color" content="#111827" />
 
   <link rel="stylesheet" href="/style.css?v=261" />
-
-  <!-- ✅ ONLY ONE public js include (REMOVE DUPLICATE) -->
   <script src="/app.js?v=261" defer></script>
 </head>
 
@@ -59,7 +56,6 @@
 
         <label class="field">
           <span>Dealer Vehicle URL</span>
-          <!-- ✅ public js expects dealerUrl -->
           <input
             type="text"
             id="dealerUrl"
@@ -78,17 +74,15 @@
           />
         </label>
 
-
-
-<label class="field">
-  <span>Price / Offer (optional override)</span>
-  <input
-    type="text"
-    id="priceOffer"
-    placeholder="Example: $699/mo or $47,995 + tax"
-    autocomplete="off"
-  />
-</label>
+        <label class="field">
+          <span>Price / Offer (optional override)</span>
+          <input
+            type="text"
+            id="priceOffer"
+            placeholder="Example: $699/mo or $47,995 + tax"
+            autocomplete="off"
+          />
+        </label>
 
         <p class="small-note">
           Lot Rocket will scrape the page and clean up the title, description, and photos.
@@ -100,10 +94,10 @@
           <p>Price: <span id="summaryPrice">—</span></p>
         </div>
 
-        <!-- ✅ public js expects boostListingBtn -->
         <button id="boostListingBtn" class="primary-btn summary-btn" type="button">
           Boost This Listing
         </button>
+
         <div id="statusText" class="status-text"></div>
       </div>
 
@@ -113,16 +107,14 @@
           Click "Boost This Listing" to refresh photos. Up to 24 images, logos removed when possible.
         </p>
 
-<button
-  id="sendTopPhotosToCreative"
-  class="primary-btn full glow-send"
-  type="button"
->
-  Send Photos to Creative Lab
-</button>
+        <button
+          id="sendTopPhotosToCreative"
+          class="primary-btn full glow-send"
+          type="button"
+        >
+          Send Photos to Creative Lab
+        </button>
 
-
-        <!-- ✅ public js expects: photosGrid -->
         <div id="photosGrid" class="photo-grid"></div>
       </div>
     </section>
@@ -137,7 +129,6 @@
       </p>
 
       <div class="step2-grid">
-
         <div class="platform-card step2-card facebook-card">
           <h3>Facebook Post</h3>
           <textarea id="facebookPost" placeholder="Facebook post will appear here after Boost."></textarea>
@@ -209,36 +200,24 @@
             <button type="button" class="copy-btn" data-copy-target="hashtags">Copy</button>
           </div>
         </div>
-
       </div>
     </section>
 
     <!-- =============================== -->
     <!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
     <!-- =============================== -->
-
-    <!-- ===============================
-     STEP 3 — HOLDING ZONE
-=============================== -->
-<div class="tuner-preview">
-  <img id="photoTunerPreview" class="photo-tuner-preview" src="" alt="Preview" />
-</div>
-
-
-<!-- ===============================
-     PHOTO TUNER PREVIEW
-=============================== -->
-
-
     <section id="creativeHub" class="creativeHubFull">
       <div class="lab-card">
         <h3>Step 3 – Creative Lab</h3>
 
+        <!-- OPTIONAL: if your public/app.js renders holding thumbnails, keep this -->
+        <div id="holdingZone" class="holding-zone"></div>
+
         <div class="creative-hub">
+          <!-- LEFT: Upload + thumbs -->
           <div class="creative-left">
             <h3>Photos</h3>
 
-            <!-- ✅ public js expects: photoDropZone + photoFileInput -->
             <div id="photoDropZone" class="photo-dropzone">
               <p>
                 Drag & Drop Photos Here<br />
@@ -247,20 +226,20 @@
               <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
             </div>
 
-            <!-- ✅ public js expects: creativeThumbGrid -->
             <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-            <!-- ✅ public js expects: sendToDesignStudio -->
             <button id="sendToDesignStudio" type="button" class="secondary-btn full">
               Send Selected to Design Studio 3.5
             </button>
           </div>
 
+          <!-- RIGHT: Photo Tuner -->
           <div class="creative-right">
             <h3>Photo Tuner</h3>
 
+            <!-- ✅ ONE preview image ONLY (no duplicates, no ghost box) -->
             <div class="tuner-preview">
-              <img id="tunerPreviewImg" src="" alt="Preview" />
+              <img id="photoTunerPreview" class="photo-tuner-preview" src="" alt="Preview" />
             </div>
 
             <div class="slider-block">
@@ -278,19 +257,18 @@
               <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
             </div>
 
+            <!-- Buttons under sliders -->
+            <div class="tuner-actions">
+              <button id="autoEnhanceBtn" type="button" class="secondary-btn full cinematic-like">
+                Auto Enhance
+              </button>
 
-            <!-- safe to keep -->
-<div class="tuner-actions">
-  <button id="autoEnhanceBtn" type="button" class="secondary-btn full cinematic-like">
-    Auto Enhance
-  </button>
-
-  <button id="sendToSocialStripBtn" type="button" class="secondary-btn full cinematic-like">
-    Send to Social-ready Strip
-  </button>
-</div>
-
-
+              <button id="sendToSocialStripBtn" type="button" class="secondary-btn full cinematic-like">
+                Send to Social-ready Strip
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- Social-ready strip -->
         <section class="panel social-ready-panel">
@@ -328,6 +306,7 @@
             </div>
           </div>
         </section>
+
       </div>
     </section>
 
@@ -379,7 +358,6 @@
       <span class="tool-icon">🎥</span><span class="tool-label">AI Video Generation</span>
     </button>
 
-    <!-- Studios (overlays) -->
     <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
       <span class="tool-icon">🖌️</span><span class="tool-label">Canvas Studio</span>
     </button>
@@ -658,7 +636,7 @@
     <div class="side-modal-content">
       <div class="side-modal-header">
         <h3>AI Car Expert</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
+        <button class="side-modal-close" type="button" dataz data-close>✕</button>
       </div>
       <div class="side-modal-body">
         <form id="carForm"></form>
@@ -694,14 +672,7 @@
   </section>
 
   <!-- TEST BRANCH BADGE -->
-  <div style="
-    position:fixed;
-    bottom:6px;
-    right:6px;
-    font-size:11px;
-    opacity:0.6;
-    z-index:9999;
-  ">
+  <div style="position:fixed; bottom:6px; right:6px; font-size:11px; opacity:0.6; z-index:9999;">
     🚧 TEST BRANCH — clean-rewrite
   </div>
 
