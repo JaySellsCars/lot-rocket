@@ -161,6 +161,36 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // SEND TO SOCIAL-READY STRIP (ONE SOURCE)
   // ===============================
+  // ===============================
+// SOCIAL-READY STRIP — RENDER (SINGLE SOURCE)
+// ===============================
+function renderSocialStrip() {
+  const strip = $("socialReadyStrip");
+  if (!strip) return;
+
+  strip.innerHTML = "";
+
+  (STORE.socialReadyPhotos || []).forEach((item, idx) => {
+    if (!item || !item.url) return;
+
+    const img = DOC.createElement("img");
+    img.src = item.url;
+    img.className = "social-ready-thumb";
+    img.style.opacity = item.selected ? "1" : "0.5";
+
+    img.onclick = () => {
+      STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
+        ...p,
+        selected: i === idx
+      }));
+      renderSocialStrip();
+    };
+
+    strip.appendChild(img);
+  });
+}
+
+  
   function getActivePhotoUrl() {
     return STORE.activeHoldingPhoto || "";
   }
