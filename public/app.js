@@ -93,6 +93,45 @@ function pulseBtn(btn) {
   window.setTimeout(() => btn.classList.remove("is-fired"), 260);
 }
 
+// ===============================
+// AUTO ENHANCE (WIRE ONCE)
+// ===============================
+const autoEnhanceBtn = $("autoEnhanceBtn");
+
+if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
+  autoEnhanceBtn.dataset.wired = "true";
+
+  autoEnhanceBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    autoEnhanceBtn.classList.add("btn-pressed");
+    setBtnLoading(autoEnhanceBtn, true, "Enhancing...");
+
+    try {
+      // good “looks better” defaults (safe + not crazy)
+      setTunerDefaults(112, 112, 118);
+
+      // instant render (in case setTunerDefaults doesn’t call apply)
+      if (typeof applyTunerFilters === "function") applyTunerFilters();
+
+      // success flash
+      autoEnhanceBtn.textContent = "✅ Enhanced";
+      setTimeout(() => {
+        autoEnhanceBtn.textContent =
+          autoEnhanceBtn.dataset.originalText || "Auto Enhance";
+      }, 800);
+    } catch (err) {
+      console.error("❌ Auto Enhance failed:", err);
+      alert("Auto Enhance failed.");
+    } finally {
+      setTimeout(() => {
+        setBtnLoading(autoEnhanceBtn, false);
+        autoEnhanceBtn.classList.remove("btn-pressed");
+      }, 150);
+    }
+  });
+}
 
 
 
