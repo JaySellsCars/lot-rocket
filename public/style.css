@@ -428,21 +428,22 @@ textarea{
   background: rgba(2,6,23,.85);
 }
 /* ===============================
-   STEP 3 — HOLDING ZONE (LOCKED)
-=============================== */
-#holdingZone{
+   STEP 3 — PHOTO DROP ZONE (THUMBS ONLY)
+   =============================== */
+
+#photoDropZone{
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   padding: 10px;
   border-radius: 14px;
-  border: 1px solid rgba(148,163,184,.25);
+  border: 1px dashed rgba(148,163,184,.35);
   background: rgba(2,6,23,.35);
   max-width: 100%;
   overflow: hidden;
 }
 
-#holdingZone .holding-thumb{
+#photoDropZone img{
   width: 100%;
   height: 64px;
   object-fit: cover;
@@ -451,6 +452,11 @@ textarea{
   border: 1px solid rgba(148,163,184,.35);
   cursor: pointer;
 }
+
+#photoDropZone img.active{
+  outline: 2px solid rgba(255, 103, 186, .75);
+}
+
 
 #holdingZone .holding-thumb.active{
   outline: 2px solid rgba(255, 103, 186, .75);
