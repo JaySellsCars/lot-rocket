@@ -85,6 +85,11 @@ function renderHoldingZone() {
     zone.appendChild(img);
   });
 }
+function loadPhotoTuner(url) {
+  const img = document.getElementById("photoTunerPreview");
+  if (!img) return;
+  img.src = url;
+}
 
   // ===============================
   // UTIL
