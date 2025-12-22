@@ -66,7 +66,13 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // ELEMENT REFERENCES (SINGLE COPY)
   // ===============================
-  const boostBtn = $("boostListingBtn");
+  const boostBtn =
+  $("boostListingBtn") ||
+  $("boostThisListingBtn") ||
+  $("boostThisListing") ||
+  $("boostButton") ||
+  null;
+
   const dealerUrlInput = $("dealerUrl");
   const vehicleLabelInput = $("vehicleLabel");
   const priceOfferInput = $("priceOffer");
