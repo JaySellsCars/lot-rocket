@@ -5,8 +5,15 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // BOOT + DEBUG HOOKS
   // ===============================
-  const DOC = window.document;
-  const $ = (id) => DOC.getElementById(id);
+const DOC = window.document;
+const $ = (id) => DOC.getElementById(id);
+
+// ===============================
+// BUTTON REFERENCES (MUST BE EARLY)
+// ===============================
+const boostBtn = $("boostListingBtn");
+const sendTopBtn = $("sendTopPhotosBtn");
+const dealerUrlInput = $("dealerUrl");
 
   if (window.__LOTROCKET_BOOTED__) {
     console.warn("🚫 Lot Rocket boot blocked (double init)");
