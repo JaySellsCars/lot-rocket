@@ -94,7 +94,8 @@ console.log("🔎 BOOST BTN FOUND:", boostBtn ? ("#" + boostBtn.id) : "NONE");
   // STEP 3 — HOLDING ZONE RENDER
   // ===============================
 function renderHoldingZone() {
-  const zone = $("holdingZone");
+const zone = $("photoDropZone");
+
   if (!zone) return;
 
   // Guard: holdingZone must live inside Step 3 area
