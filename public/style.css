@@ -464,6 +464,11 @@ textarea{
   border-radius: 16px;
   border: 1px solid rgba(148,163,184,.25);
 }
+#boostListingBtn, #boostThisListingBtn, #boostThisListing, #boostButton {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 50;
+}
 
 /* ---------- FLOATING TOOLS ---------- */
 .floating-tools{
