@@ -94,7 +94,6 @@ function pulseBtn(btn) {
 }
 
 
-    pulseBtn(sendToSocialStripBtn);
 
     // Push tuned photo into social-ready store
     addToSocialReady(STORE.activeHoldingPhoto, true);
