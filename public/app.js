@@ -98,19 +98,9 @@ const zone = $("photoDropZone");
 
   if (!zone) return;
 
-  // Guard: holdingZone must live inside Step 3 area
-  // (prevents layout blowups if HTML placement is wrong)
-  const step3Host =
-    $("step3") ||
-    $("creativeLab") ||
-    $("creativeLabSection") ||
-    $("step3Section") ||
-    null;
 
-if (step3Host && !step3Host.contains(zone)) {
-    console.warn("⚠️ holdingZone is not inside Step 3 container. Fix HTML placement.");
-    return;
-  }
+  // (prevents layout blowups if HTML placement is wrong)
+
 
 
 
