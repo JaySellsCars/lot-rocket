@@ -352,3 +352,48 @@ section.column-middle{
   min-height: 260px !important;
   box-shadow: 0 20px 50px rgba(0,0,0,.6) !important;
 }
+/* ======================================================
+   STEP 2 — RESTORE TILE/CARD LAYOUT (PUT AT VERY BOTTOM)
+   ====================================================== */
+
+.column-middle { min-width: 0; }
+
+.step2-subtitle{
+  margin: .2rem 0 1rem;
+}
+
+.step2-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.step2-card{
+  background: rgba(2,6,23,.85);
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,.55);
+  min-height: 260px;
+}
+
+.step2-card h3{
+  font-size: .88rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(229,231,235,.95);
+  margin-bottom: .75rem;
+}
+
+.step2-card textarea{
+  min-height: 140px;
+  border-radius: 16px;
+  background: rgba(2,6,23,.85);
+}
+
+.btn-row{
+  display: flex;
+  gap: .6rem;
+  justify-content: flex-end;
+  margin-top: .7rem;
+}
