@@ -669,6 +669,46 @@ button.btn-loading,
   cursor: progress !important;
   opacity: .85;
 }
+/* ===============================
+   STEP 3 — HOLDING ZONE THUMBS
+   =============================== */
+.holding-zone{
+  display: grid;
+  grid-template-columns: repeat(6, 64px);
+  gap: 10px;
+  align-items: start;
+  justify-content: start;
+  padding: 10px;
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 14px;
+  background: rgba(2,6,23,.35);
+  margin: 10px 0 14px;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.holding-thumb{
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.35);
+  cursor: pointer;
+  opacity: .75;
+  transition: transform .12s ease, opacity .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.holding-thumb:hover{
+  opacity: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.20);
+}
+
+.holding-thumb.active{
+  opacity: 1;
+  border-color: rgba(59,130,246,.9);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.28);
+}
 
 /* ---------- Social-ready strip (v2.6 JS uses .social-carousel-item) ---------- */
 .social-ready-panel{ margin-top: 1.5rem; }
