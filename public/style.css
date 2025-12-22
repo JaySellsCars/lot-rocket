@@ -320,3 +320,35 @@ textarea {
     justify-content:center;
   }
 }
+/* ================= EMERGENCY: RESTORE STEP 2 VISIBILITY + CARDS ================= */
+
+/* Force Step 2 section to exist in layout */
+.column-middle,
+section.column-middle{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  height:auto !important;
+  min-height: 200px !important;
+}
+
+/* Force the Step 2 grid/cards to render */
+.step2-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2, minmax(0,1fr)) !important;
+  gap:16px !important;
+}
+
+.step2-grid > *{
+  display:block !important;
+}
+
+/* Make cards look like cards again */
+.platform-card.step2-card{
+  background: rgba(2,6,23,.85) !important;
+  border: 1px solid rgba(148,163,184,.35) !important;
+  border-radius: 18px !important;
+  padding: 16px !important;
+  min-height: 260px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.6) !important;
+}
