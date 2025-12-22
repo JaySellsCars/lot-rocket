@@ -435,3 +435,67 @@ section.column-middle{
   justify-content: flex-end;
   margin-top: .7rem;
 }
+/* ===============================
+   STEP 2 — MODERN CARDS (LOCK)
+   Paste at END of style.css
+   =============================== */
+
+.step2-subtitle{
+  margin: .2rem 0 1rem;
+  color: var(--text-muted);
+}
+
+.step2-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.step2-card{
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  min-height: 260px;
+  background: rgba(2,6,23,.75);
+  border: 1px solid rgba(148,163,184,.28);
+  box-shadow: 0 18px 44px rgba(0,0,0,.55);
+}
+
+.step2-card h3{
+  font-size: .88rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(229,231,235,.95);
+  margin-bottom: .75rem;
+}
+
+.step2-card textarea{
+  min-height: 140px;
+  border-radius: 16px;
+  background: rgba(2,6,23,.85);
+  border: 1px solid rgba(148,163,184,.25);
+}
+
+.btn-row{
+  display:flex;
+  gap:.6rem;
+  justify-content:flex-end;
+  margin-top:.7rem;
+}
+
+.copy-btn,
+.regen-btn{
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.85);
+  color: var(--text-main);
+  padding:.45rem 1rem;
+  cursor:pointer;
+  font-weight:700;
+  font-size:.82rem;
+}
+
+.copy-btn:hover,
+.regen-btn:hover{
+  box-shadow: 0 0 16px rgba(56,189,248,.22);
+  border-color: rgba(56,189,248,.45);
+}
