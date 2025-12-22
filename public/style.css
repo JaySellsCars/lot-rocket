@@ -1300,5 +1300,28 @@ body.dark-theme {
   background: #020617 !important;
   color: #f9fafb !important;
 }
+/* ===============================
+   STEP 1 — THUMB GRID (LOCKED)
+   =============================== */
+
+#photosGrid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px !important;
+}
+
+.photo-thumb-btn {
+  height: 72px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.photo-thumb-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
 
 
