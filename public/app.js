@@ -86,7 +86,24 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // STEP 3 — HOLDING ZONE RENDER
   // ===============================
-  function renderHoldingZone() {
+function renderHoldingZone() {
+  const zone = $("holdingZone");
+  if (!zone) return;
+
+  // Guard: holdingZone must live inside Step 3 area
+  // (prevents layout blowups if HTML placement is wrong)
+  const step3Host =
+    $("step3") ||
+    $("creativeLab") ||
+    $("creativeLabSection") ||
+    $("step3Section") ||
+    null;
+
+  if (step3Host && !step3Host.contains(zone)) {
+    console.warn("⚠️ holdingZone is not inside Step 3 container. Fix HTML placement.");
+    return;
+  }
+
     const zone = $("holdingZone");
     if (!zone) return;
 
