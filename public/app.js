@@ -37,8 +37,9 @@ window.document.addEventListener("DOMContentLoaded", () => {
   // ===============================
   // SINGLE STORE (LOCKED)
   // ===============================
-  window.LOTROCKET = window.LOTROCKET || {};
-  const STORE = window.LOTROCKET;
+window.STORE = window.LOTROCKET;
+const STORE = window.STORE;
+
 
   STORE.step1Photos ||= [];
   STORE.lastBoostPhotos ||= [];
