@@ -14,223 +14,64 @@ window.document.addEventListener("DOMContentLoaded", () => {
   }
   window.__LOTROCKET_BOOTED__ = true;
 
-  console.log("🚀 JS FILE LOADED");
-  console.log("✅ Lot Rocket frontend loaded (v2.6 clean) BRANCH: test/clean-rewrite");
+  console.log("🚀 Lot Rocket frontend loaded (v2.6 clean)");
 
-  // TRUTH HOOK — prove clicks / errors
-  console.log("🧪 TRUTH HOOK ACTIVE");
   DOC.addEventListener(
     "click",
     (e) => {
       const el = e.target;
-      const tag = el && el.tagName ? el.tagName : "";
-      const id = el && el.id ? "#" + el.id : "";
-      const cls = el && el.className ? el.className : "";
-      console.log("🖱️ CLICK:", tag, id, cls);
+      console.log("🖱️ CLICK:", el?.tagName, el?.id ? "#" + el.id : "", el?.className || "");
     },
     true
   );
-  window.addEventListener("error", (e) => {
-    console.error("💥 WINDOW ERROR:", e.message, e.filename, e.lineno);
-  });
-  window.addEventListener("unhandledrejection", (e) => {
-    console.error("💥 PROMISE REJECTION:", e.reason);
-  });
 
-  const apiBase = "";
+  window.addEventListener("error", (e) =>
+    console.error("💥 WINDOW ERROR:", e.message, e.filename, e.lineno)
+  );
+  window.addEventListener("unhandledrejection", (e) =>
+    console.error("💥 PROMISE REJECTION:", e.reason)
+  );
+
   const MAX_PHOTOS = 24;
 
   // ===============================
-  // SINGLE STORE
+  // SINGLE STORE (LOCKED)
   // ===============================
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
 
-  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
-  STORE.designStudioPhotos = Array.isArray(STORE.designStudioPhotos) ? STORE.designStudioPhotos : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-  STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-  STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
-  STORE.lastTitle = STORE.lastTitle || "";
-  STORE.lastPrice = STORE.lastPrice || "";
-
-  // ===============================
-  // STEP 3 — HOLDING ZONE (SOURCE OF TRUTH)
-  // ===============================
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-  STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || null;
-
-  let socialIndex = 0;
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  STORE.step1Photos ||= [];
+  STORE.lastBoostPhotos ||= [];
+  STORE.holdingZonePhotos ||= [];
+  STORE.socialReadyPhotos ||= [];
+  STORE.activeHoldingPhoto ||= null;
+  STORE.lastTitle ||= "";
+  STORE.lastPrice ||= "";
 
   // ===============================
   // ELEMENT REFERENCES (SINGLE COPY)
   // ===============================
   const boostBtn =
-  $("boostListingBtn") ||
-  $("boostThisListingBtn") ||
-  $("boostThisListing") ||
-  $("boostButton") ||
-  null;
-console.log("🔎 BOOST BTN FOUND:", boostBtn ? ("#" + boostBtn.id) : "NONE");
+    $("boostListingBtn") ||
+    $("boostThisListingBtn") ||
+    $("boostThisListing") ||
+    $("boostButton");
 
   const dealerUrlInput = $("dealerUrl");
-  const vehicleLabelInput = $("vehicleLabel");
-  const priceOfferInput = $("priceOffer");
-
-  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName") || $("summaryVehicle");
-  const vehiclePriceEl = $("vehiclePrice") || $("summaryPrice");
+  const vehicleTitleEl = $("vehicleTitle") || $("vehicleName");
+  const vehiclePriceEl = $("vehiclePrice");
   const photosGridEl = $("photosGrid");
-
-const sendTopBtn = $("sendTopPhotosToCreative");
-if (!sendTopBtn) {
-  console.warn("⚠️ Send Photos button not found");
-}
-
-function pulseBtn(btn) {
-  if (!btn) return;
-  btn.classList.add("is-fired");
-  window.setTimeout(() => btn.classList.remove("is-fired"), 260);
-}
-
-// ===============================
-// AUTO ENHANCE (WIRE ONCE)
-// ===============================
-const autoEnhanceBtn = $("autoEnhanceBtn");
-
-if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
-  autoEnhanceBtn.dataset.wired = "true";
-
-  autoEnhanceBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    autoEnhanceBtn.classList.add("btn-pressed");
-    setBtnLoading(autoEnhanceBtn, true, "Enhancing...");
-
-    try {
-      // good “looks better” defaults (safe + not crazy)
-      setTunerDefaults(112, 112, 118);
-
-      // instant render (in case setTunerDefaults doesn’t call apply)
-      if (typeof applyTunerFilters === "function") applyTunerFilters();
-
-      // success flash
-      autoEnhanceBtn.textContent = "✅ Enhanced";
-      setTimeout(() => {
-        autoEnhanceBtn.textContent =
-          autoEnhanceBtn.dataset.originalText || "Auto Enhance";
-      }, 800);
-    } catch (err) {
-      console.error("❌ Auto Enhance failed:", err);
-      alert("Auto Enhance failed.");
-    } finally {
-      setTimeout(() => {
-        setBtnLoading(autoEnhanceBtn, false);
-        autoEnhanceBtn.classList.remove("btn-pressed");
-      }, 150);
-    }
-  });
-}
-
-
-
+  const sendTopBtn = $("sendTopPhotosToCreative");
+  const autoEnhanceBtn = $("autoEnhanceBtn");
+  const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
   // ===============================
-  // STEP 3 — HOLDING ZONE RENDER
+  // UTILITIES
   // ===============================
-function renderHoldingZone() {
-  const zone = $("holdingZone");
-  if (!zone) return;
-
-  zone.innerHTML = "";
-
-  STORE.holdingZonePhotos.forEach((url) => {
-    const img = DOC.createElement("img");
-    img.src = url;
-    img.className = "holding-thumb";
-
-    if (url === STORE.activeHoldingPhoto) {
-      img.classList.add("active");
-    }
-
-    img.addEventListener("click", () => {
-      STORE.activeHoldingPhoto = url;
-      renderHoldingZone();
-      loadPhotoTuner(url);
-    });
-
-    zone.appendChild(img);
-  });
-}
-
-
-function loadPhotoTuner(url) {
-  const img = $("tunerPreviewImg");
-  if (!img) {
-    console.warn("⚠️ tunerPreviewImg not found");
-    return;
-  }
-  if (!url) return;
-
-  const safeUrl = getProxiedImageUrl(url);
-
-  img.onload = () => console.log("✅ Photo Tuner loaded");
-  img.onerror = () => console.warn("❌ Photo Tuner failed to load:", safeUrl);
-
-  img.src = safeUrl;
-}
-function applyTunerFilters() {
-  const img = $("tunerPreviewImg") || $("photoTunerPreview");
-  if (!img) return;
-
-  const bEl = $("tunerBrightness");
-  const cEl = $("tunerContrast");
-  const sEl = $("tunerSaturation");
-
-  const b = bEl ? Number(bEl.value || 100) : 100;
-  const c = cEl ? Number(cEl.value || 100) : 100;
-  const s = sEl ? Number(sEl.value || 100) : 100;
-
-  img.style.filter = "brightness(" + (b / 100) + ") contrast(" + (c / 100) + ") saturate(" + (s / 100) + ")";
-}
-
-function setTunerDefaults(brightness, contrast, saturation) {
-  const bEl = $("tunerBrightness");
-  const cEl = $("tunerContrast");
-  const sEl = $("tunerSaturation");
-
-  if (bEl) bEl.value = String(brightness);
-  if (cEl) cEl.value = String(contrast);
-  if (sEl) sEl.value = String(saturation);
-
-  applyTunerFilters();
-}
-
-
-
-  // ===============================
-  // UTIL
-  // ===============================
-  function autoResizeTextarea(el) {
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = el.scrollHeight + 4 + "px";
-  }
-
-  function parseSrcset(srcset) {
-    if (!srcset) return [];
-    return String(srcset)
-      .split(",")
-      .map((s) => s.trim().split(/\s+/)[0])
-      .filter(Boolean);
-  }
-
-  function setBtnLoading(btn, isLoading, label) {
+  function setBtnLoading(btn, on, label) {
     if (!btn) return;
-
-    if (isLoading) {
-      if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+    if (on) {
+      btn.dataset.originalText ||= btn.textContent;
       btn.textContent = label || "Working…";
       btn.disabled = true;
       btn.classList.add("btn-loading");
@@ -241,320 +82,162 @@ function setTunerDefaults(brightness, contrast, saturation) {
     }
   }
 
-  function normalizeUrl(input) {
-    if (!input) return "";
-    let u = ("" + input).trim();
-    if (!u) return "";
-
-    if (u.startsWith("blob:") || u.startsWith("data:")) return u;
-
-    if ((u.startsWith('"') && u.endsWith('"')) || (u.startsWith("'") && u.endsWith("'"))) {
-      u = u.slice(1, -1).trim();
-    }
-
-    if (u.startsWith("//")) u = "https:" + u;
-
-    try {
-      const url = new URL(u, window.location.href);
-      ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"].forEach((k) =>
-        url.searchParams.delete(k)
-      );
-      return url.origin + url.pathname + (url.search ? url.search : "");
-    } catch {
-      return u;
-    }
-  }
-
-  function uniqCleanCap(arr, cap) {
-    const max = typeof cap === "number" && cap > 0 ? cap : MAX_PHOTOS;
-    if (!Array.isArray(arr)) return [];
-
-    const out = [];
+  function uniqCap(arr, cap = MAX_PHOTOS) {
     const seen = new Set();
-
-    for (let i = 0; i < arr.length; i++) {
-      let raw = arr[i];
-      if (raw && typeof raw === "object" && raw.url) raw = raw.url;
-
-      const u = normalizeUrl(raw);
-      if (!u) continue;
-
-      if (!seen.has(u)) {
-        seen.add(u);
-        out.push(u);
-        if (out.length >= max) break;
-      }
+    const out = [];
+    for (const u of arr) {
+      if (!u || seen.has(u)) continue;
+      seen.add(u);
+      out.push(u);
+      if (out.length >= cap) break;
     }
     return out;
   }
 
-  function getProxiedImageUrl(rawUrl) {
-    if (!rawUrl) return rawUrl;
+  function getProxiedImageUrl(url) {
+    if (!url) return url;
     try {
-      const u = new URL(rawUrl, window.location.origin);
-      if (u.origin === window.location.origin || u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
-      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
+      const u = new URL(url, location.origin);
+      if (u.origin === location.origin) return url;
       return "/api/proxy-image?url=" + encodeURIComponent(u.href);
     } catch {
-      return rawUrl;
+      return url;
     }
   }
-// ===============================
-// SEND TO SOCIAL-READY STRIP (SINGLE SOURCE)
-// ===============================
-function extractOriginalFromProxy(src) {
-  if (!src) return "";
-  try {
-    // If preview is proxied like /api/proxy-image?url=https%3A%2F%2F...
-    if (src.includes("/api/proxy-image?url=")) {
-      const u = new URL(src, window.location.origin);
-      const raw = u.searchParams.get("url") || "";
-      return raw ? decodeURIComponent(raw) : src;
-    }
-  } catch {}
-  return src;
-}
-
-function pushToSocialReady(url) {
-  if (!url) return false;
-
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-
-  // Use object format always
-  const exists = STORE.socialReadyPhotos.some((p) => p && p.url === url);
-
-  if (!exists) {
-    // select this one, unselect others
-    STORE.socialReadyPhotos = [
-      { url, originalUrl: url, selected: true, locked: false },
-      ...STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false })),
-    ];
-  } else {
-    STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({
-      ...p,
-      selected: p.url === url,
-    }));
-  }
-
-  // Cap
-  if (typeof MAX_PHOTOS === "number" && STORE.socialReadyPhotos.length > MAX_PHOTOS) {
-    STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
-  }
-
-  // Normalize + render (if they exist)
-  if (typeof normalizeSocialReady === "function") normalizeSocialReady();
-  if (typeof renderSocialStrip === "function") renderSocialStrip();
-  if (typeof renderSocialCarousel === "function") renderSocialCarousel();
-  if (typeof renderSocialReady === "function") renderSocialReady();
-
-  return true;
-}
-
-const sendToSocialStripBtn = $("sendToSocialStripBtn");
-
-if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
-  sendToSocialStripBtn.dataset.wired = "true";
-
-  sendToSocialStripBtn.addEventListener("click", () => {
-    try {
-      sendToSocialStripBtn.classList.add("btn-pressed");
-      sendToSocialStripBtn.classList.add("is-loading");
-      if (typeof pulseBtn === "function") pulseBtn(sendToSocialStripBtn);
-
-      // BEST source: the actual selected holding photo (not proxied)
-      let url = STORE.activeHoldingPhoto || "";
-
-      // Fallback: pull from preview <img>
-      if (!url) {
-        const previewEl = $("tunerPreviewImg") || $("photoTunerPreview") || $("photoTunerPreviewImg");
-        const src = previewEl?.src || "";
-        url = extractOriginalFromProxy(src);
-      }
-
-      if (!url) {
-        alert("No tuned photo selected yet.");
-        return;
-      }
-
-      const ok = pushToSocialReady(url);
-      if (!ok) {
-        alert("Could not send photo. Check console.");
-        return;
-      }
-
-      // quick success flash
-      const originalText = sendToSocialStripBtn.dataset.originalText || sendToSocialStripBtn.textContent;
-      sendToSocialStripBtn.dataset.originalText = originalText;
-      sendToSocialStripBtn.textContent = "✅ Sent";
-      window.setTimeout(() => (sendToSocialStripBtn.textContent = originalText), 700);
-
-      console.log("📤 Sent to Social-ready:", url);
-    } catch (e) {
-      console.error("❌ Send to Social-ready Strip failed:", e);
-      alert("Send to Social-ready Strip failed. Check console.");
-    } finally {
-      window.setTimeout(() => {
-        sendToSocialStripBtn.classList.remove("is-loading");
-        sendToSocialStripBtn.classList.remove("btn-pressed");
-      }, 200);
-    }
-  });
-}
-
-
-
 
   // ===============================
-  // STEP 1 GRID STATE + RENDER
+  // STEP 3 — HOLDING ZONE
   // ===============================
+  function renderHoldingZone() {
+    const zone = $("holdingZone");
+    if (!zone) return;
+    zone.innerHTML = "";
 
-  function setStep1FromUrls(urls) {
-    const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
-    STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
-  }
-
-  function renderStep1Photos(urls) {
-    if (!photosGridEl) return;
-
-    setStep1FromUrls(urls);
-
-    photosGridEl.style.display = "grid";
-    photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-    photosGridEl.style.gap = "8px";
-    photosGridEl.innerHTML = "";
-
-    (STORE.step1Photos || []).forEach((item, idx) => {
-      const src = getProxiedImageUrl(item.url);
-
-      const btn = DOC.createElement("button");
-      btn.type = "button";
-      btn.className = "photo-thumb-btn";
-      btn.setAttribute("data-i", String(idx));
-      btn.style.position = "relative";
-      btn.style.height = "64px";
-      btn.style.borderRadius = "12px";
-      btn.style.overflow = "hidden";
-      btn.style.border = "1px solid rgba(148,163,184,.55)";
-      btn.style.background = "#0b1120";
-      btn.style.padding = "0";
-      btn.style.cursor = "pointer";
-      btn.style.opacity = item.selected ? "1" : "0.45";
-
+    STORE.holdingZonePhotos.forEach((url) => {
       const img = DOC.createElement("img");
-      img.className = "photo-thumb-img";
-      img.src = src;
-      img.alt = "photo";
-      img.loading = "lazy";
-      img.style.width = "100%";
-      img.style.height = "100%";
-      img.style.display = "block";
-      img.style.objectFit = "cover";
-
-      const check = DOC.createElement("span");
-      check.className = "photo-check";
-      check.textContent = "✓";
-      check.style.position = "absolute";
-      check.style.top = "6px";
-      check.style.right = "6px";
-      check.style.width = "18px";
-      check.style.height = "18px";
-      check.style.borderRadius = "999px";
-      check.style.background = "rgba(0,0,0,.55)";
-      check.style.color = "#fff";
-      check.style.fontSize = "12px";
-      check.style.lineHeight = "18px";
-      check.style.textAlign = "center";
-      check.style.display = item.selected ? "block" : "none";
-
-      btn.appendChild(img);
-      btn.appendChild(check);
-      photosGridEl.appendChild(btn);
+      img.src = url;
+      img.className = "holding-thumb" + (url === STORE.activeHoldingPhoto ? " active" : "");
+      img.onclick = () => {
+        STORE.activeHoldingPhoto = url;
+        renderHoldingZone();
+        loadPhotoTuner(url);
+      };
+      zone.appendChild(img);
     });
+  }
 
-    photosGridEl.onclick = (e) => {
-      if (!e || !e.target || !e.target.closest) return;
-      const btnEl = e.target.closest("[data-i]");
-      if (!btnEl) return;
+  function loadPhotoTuner(url) {
+    const img = $("tunerPreviewImg");
+    if (!img || !url) return;
+    img.src = getProxiedImageUrl(url);
+  }
 
-      const idx = Number(btnEl.getAttribute("data-i"));
-      const item = STORE.step1Photos[idx];
-      if (!item || item.dead) return;
+  function applyTunerFilters() {
+    const img = $("tunerPreviewImg");
+    if (!img) return;
 
-      item.selected = !item.selected;
+    const b = Number($("tunerBrightness")?.value || 100) / 100;
+    const c = Number($("tunerContrast")?.value || 100) / 100;
+    const s = Number($("tunerSaturation")?.value || 100) / 100;
 
-      btnEl.style.opacity = item.selected ? "1" : "0.45";
-      const check = btnEl.querySelector(".photo-check");
-      if (check) check.style.display = item.selected ? "block" : "none";
+    img.style.filter = `brightness(${b}) contrast(${c}) saturate(${s})`;
+  }
 
-      btnEl.classList.toggle("photo-thumb-selected", item.selected);
+  // ===============================
+  // AUTO ENHANCE (SINGLE WIRE)
+  // ===============================
+  if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
+    autoEnhanceBtn.dataset.wired = "true";
+    autoEnhanceBtn.onclick = () => {
+      setBtnLoading(autoEnhanceBtn, true, "Enhancing…");
+      $("tunerBrightness").value = 112;
+      $("tunerContrast").value = 112;
+      $("tunerSaturation").value = 118;
+      applyTunerFilters();
+      setTimeout(() => setBtnLoading(autoEnhanceBtn, false), 200);
     };
   }
 
-// ===============================
-// SEND TOP PHOTOS → STEP 3 HOLDING ZONE
-// ===============================
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
+  // ===============================
+  // SEND TO SOCIAL-READY STRIP (ONE SOURCE)
+  // ===============================
+  function getActivePhotoUrl() {
+    return STORE.activeHoldingPhoto || "";
+  }
 
-  sendTopBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  function pushToSocialReady(url) {
+    if (!url) return false;
 
-    // instant “pressed” feel
-    sendTopBtn.classList.add("btn-pressed");
-    setBtnLoading(sendTopBtn, true, "Sending...");
+    STORE.socialReadyPhotos = [
+      { url, selected: true, locked: false },
+      ...STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false })),
+    ].filter((v, i, a) => a.findIndex((x) => x.url === v.url) === i)
+     .slice(0, MAX_PHOTOS);
 
-    try {
-      const selected = (STORE.step1Photos || [])
-        .filter((p) => p && p.selected && p.url)
-        .map((p) => p.url);
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+    return true;
+  }
 
-      if (!selected.length) {
-        alert("Select photos first.");
-        return;
-      }
+  if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
+    sendToSocialStripBtn.dataset.wired = "true";
+    sendToSocialStripBtn.onclick = () => {
+      setBtnLoading(sendToSocialStripBtn, true, "Sending…");
+      const ok = pushToSocialReady(getActivePhotoUrl());
+      if (!ok) alert("No active photo selected.");
+      setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
+    };
+  }
 
+  // ===============================
+  // STEP 1 — GRID
+  // ===============================
+  function renderStep1Photos(urls) {
+    if (!photosGridEl) return;
+    STORE.step1Photos = uniqCap(urls).map((u) => ({ url: u, selected: false }));
+    photosGridEl.innerHTML = "";
+
+    STORE.step1Photos.forEach((item, i) => {
+      const btn = DOC.createElement("button");
+      btn.dataset.i = i;
+      btn.className = "photo-thumb-btn";
+      btn.style.opacity = item.selected ? "1" : "0.45";
+
+      const img = DOC.createElement("img");
+      img.src = getProxiedImageUrl(item.url);
+      img.className = "photo-thumb-img";
+
+      btn.onclick = () => {
+        item.selected = !item.selected;
+        btn.style.opacity = item.selected ? "1" : "0.45";
+      };
+
+      btn.appendChild(img);
+      photosGridEl.appendChild(btn);
+    });
+  }
+
+  // ===============================
+  // SEND TOP PHOTOS → STEP 3
+  // ===============================
+  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+    sendTopBtn.dataset.wired = "true";
+    sendTopBtn.onclick = () => {
+      const selected = STORE.step1Photos.filter((p) => p.selected).map((p) => p.url);
+      if (!selected.length) return alert("Select photos first.");
       STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || null;
-
+      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0];
       renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    };
+  }
 
-      // success flash
-      sendTopBtn.textContent = "✅ Sent";
-      setTimeout(() => {
-        sendTopBtn.textContent =
-          sendTopBtn.dataset.originalText || "Send Photos to Creative Lab";
-      }, 900);
-
-      console.log("📦 STEP 3 LOADED", STORE.holdingZonePhotos.length);
-    } catch (err) {
-      console.error("❌ Send failed:", err);
-      alert("Send failed.");
-    } finally {
-      setTimeout(() => {
-        setBtnLoading(sendTopBtn, false);
-        sendTopBtn.classList.remove("btn-pressed");
-      }, 150);
-    }
-  });
-}
-
-
-// ===============================
-// BOOST — SINGLE IMPLEMENTATION
-// ===============================
-
+  // ===============================
+  // BOOST — SINGLE IMPLEMENTATION
+  // ===============================
   if (boostBtn) {
-    boostBtn.addEventListener("click", async () => {
-      console.log("🚀 BOOST CLICKED");
-
-      if (!dealerUrlInput || !dealerUrlInput.value.trim()) {
-        alert("Enter a vehicle URL first.");
-        return;
-      }
-
-      setBtnLoading(boostBtn, true, "Boosting...");
+    boostBtn.onclick = async () => {
+      if (!dealerUrlInput?.value.trim()) return alert("Enter vehicle URL");
+      setBtnLoading(boostBtn, true, "Boosting…");
 
       try {
         const res = await fetch("/boost", {
@@ -564,62 +247,40 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
         });
 
         const data = await res.json();
+        STORE.lastBoostPhotos = uniqCap(data.photos || []);
+        STORE.lastTitle = data.title || "";
+        STORE.lastPrice = data.price || "";
 
-        const photos = Array.isArray(data.photos) ? data.photos : [];
-        STORE.lastBoostPhotos = uniqCleanCap(photos, MAX_PHOTOS);
-
-        STORE.lastTitle = data.title || STORE.lastTitle || "";
-        STORE.lastPrice = data.price || STORE.lastPrice || "";
-
-        if (vehicleTitleEl) vehicleTitleEl.textContent = STORE.lastTitle || "—";
-        if (vehiclePriceEl) vehiclePriceEl.textContent = STORE.lastPrice || "—";
+        vehicleTitleEl && (vehicleTitleEl.textContent = STORE.lastTitle);
+        vehiclePriceEl && (vehiclePriceEl.textContent = STORE.lastPrice);
 
         renderStep1Photos(STORE.lastBoostPhotos);
-
-        console.log("✅ BOOST SUCCESS", STORE.lastBoostPhotos.length);
       } catch (e) {
         console.error("❌ BOOST FAILED", e);
         alert("Boost failed.");
       } finally {
         setBtnLoading(boostBtn, false);
       }
-    });
+    };
   }
 
-// ===============================
-// FINAL INIT (SAFE BOOT — LOCKED)
-// ===============================
-try {
-  console.log("✅ FINAL INIT REACHED");
+  // ===============================
+  // FINAL INIT (SAFE)
+  // ===============================
+  try {
+    if (STORE.lastBoostPhotos.length) renderStep1Photos(STORE.lastBoostPhotos);
+    if (STORE.holdingZonePhotos.length) {
+      STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0];
+      renderHoldingZone();
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
 
-  // Textarea autosize (one-time wiring)
-  DOC.querySelectorAll("textarea").forEach((ta) => {
-    autoResizeTextarea(ta);
-    ta.addEventListener("input", () => autoResizeTextarea(ta));
-  });
+    ["tunerBrightness", "tunerContrast", "tunerSaturation"].forEach((id) =>
+      $(id)?.addEventListener("input", applyTunerFilters)
+    );
 
-  // Restore Step 1 photos (after refresh / reload)
-  if (Array.isArray(STORE.lastBoostPhotos) && STORE.lastBoostPhotos.length) {
-    renderStep1Photos(STORE.lastBoostPhotos);
+    console.log("✅ FINAL INIT COMPLETE");
+  } catch (e) {
+    console.error("❌ FINAL INIT FAILED", e);
   }
-
-  // Restore Step 3 holding zone + Photo Tuner preview
-  if (Array.isArray(STORE.holdingZonePhotos) && STORE.holdingZonePhotos.length) {
-    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
-    renderHoldingZone();
-    loadPhotoTuner(STORE.activeHoldingPhoto);
-  }
-const bEl = $("tunerBrightness");
-const cEl = $("tunerContrast");
-const sEl = $("tunerSaturation");
-
-if (bEl) bEl.addEventListener("input", applyTunerFilters);
-if (cEl) cEl.addEventListener("input", applyTunerFilters);
-if (sEl) sEl.addEventListener("input", applyTunerFilters);
-
-} catch (e) {
-  console.error("❌ Final init failed:", e);
-}
-
-}); // ✅ CLOSE DOMContentLoaded (DO NOT DELETE)
-
+});
