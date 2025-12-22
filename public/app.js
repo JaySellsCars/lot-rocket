@@ -140,36 +140,30 @@ if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
   // STEP 3 — HOLDING ZONE RENDER
   // ===============================
 function renderHoldingZone() {
-const zone = $("holdingZone") || $("photoDropZone");
-if (!zone) return;
+  const zone = $("holdingZone");
+  if (!zone) return;
 
+  zone.innerHTML = "";
 
+  STORE.holdingZonePhotos.forEach((url) => {
+    const img = DOC.createElement("img");
+    img.src = url;
+    img.className = "holding-thumb";
 
-  // (prevents layout blowups if HTML placement is wrong)
+    if (url === STORE.activeHoldingPhoto) {
+      img.classList.add("active");
+    }
 
-
-
-
-    zone.innerHTML = "";
-
-    STORE.holdingZonePhotos.forEach((url) => {
-      const img = DOC.createElement("img");
-      img.src = url;
-      img.className = "holding-thumb";
-
-      if (url === STORE.activeHoldingPhoto) {
-        img.classList.add("active");
-      }
-
-      img.addEventListener("click", () => {
-        STORE.activeHoldingPhoto = url;
-        renderHoldingZone();
-        loadPhotoTuner(url);
-      });
-
-      zone.appendChild(img);
+    img.addEventListener("click", () => {
+      STORE.activeHoldingPhoto = url;
+      renderHoldingZone();
+      loadPhotoTuner(url);
     });
-  }
+
+    zone.appendChild(img);
+  });
+}
+
 
 function loadPhotoTuner(url) {
   const img = $("tunerPreviewImg");
