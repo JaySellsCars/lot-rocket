@@ -92,14 +92,7 @@ function pulseBtn(btn) {
   btn.classList.add("is-fired");
   window.setTimeout(() => btn.classList.remove("is-fired"), 260);
 }
-const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
-if (sendToSocialStripBtn) {
-  sendToSocialStripBtn.addEventListener("click", () => {
-    if (!STORE.activeHoldingPhoto) {
-      alert("No tuned photo selected.");
-      return;
-    }
 
     pulseBtn(sendToSocialStripBtn);
 
