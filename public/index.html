@@ -2,11 +2,11 @@
   Lot Rocket – AI Social Media Kit & Creative Lab
   Version: 2.6 (HTML CLEAN + JS-ALIGNED)
   Focus:
-    - Remove/avoid duplicate IDs
-    - Ensure launcher IDs + targets match app.js exactly
-    - Keep one-and-only-one element per required ID
-    - Standardize modal/overlay target naming (data-* is fine, JS uses IDs)
+    - One-and-only-one element per required ID
+    - No duplicate preview images / buttons
+    - Keep Step 3 preview INSIDE Photo Tuner (no ghost box)
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,17 +18,13 @@
   <meta charset="UTF-8" />
   <title>Lot Rocket</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
 
-  <!-- Favicons -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <meta name="theme-color" content="#111827">
+  <!-- ✅ ONE stylesheet (LOCKED) -->
+  <link rel="stylesheet" href="/style.css?v=261" />
 
- <script src="/app.js?v=261"></script>
-
+  <!-- ✅ ONE script (LOCKED) -->
+  <script src="/app.js?v=261" defer></script>
 </head>
 
 <body class="dark-theme">
@@ -53,10 +49,10 @@
   <!-- MAIN -->
   <main class="layout">
 
+    <!-- ========================================= -->
+    <!-- STEP 1 – Dealer URL Scraper (LEFT) -->
+    <!-- =========================== -->
 
-    <!-- ========================================= -->
-    <!-- STEP 1 – Dealer URL Scraper (LEFT)       -->
-    <!-- ========================================= -->
     <section class="column-left column">
       <h2>Step 1 – Dealer URL Scraper</h2>
 
