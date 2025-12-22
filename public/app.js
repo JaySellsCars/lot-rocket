@@ -133,15 +133,6 @@ function loadPhotoTuner(url) {
   }
   if (!url) return;
 
-  img.src = getProxiedImageUrl(url);
-}
-
-  if (!url) {
-    console.warn("⚠️ loadPhotoTuner called with empty url");
-    return;
-  }
-
-  // Always use proxied URL to avoid silent image failures
   const safeUrl = getProxiedImageUrl(url);
 
   img.onload = () => console.log("✅ Photo Tuner loaded");
@@ -149,6 +140,7 @@ function loadPhotoTuner(url) {
 
   img.src = safeUrl;
 }
+
 
 
   // ===============================
