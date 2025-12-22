@@ -1,49 +1,21 @@
 // public/app.js – Lot Rocket frontend logic v2.6 (CLEAN SINGLE-PASS)
-// Goal: one boot, one store, one wiring pass, zero duplicate blocks, zero syntax landmines.
 
 window.document.addEventListener("DOMContentLoaded", () => {
-  // ===============================
-  // BOOT + DEBUG HOOKS
-  // ===============================
   const DOC = window.document;
   const $ = (id) => DOC.getElementById(id);
 
-  if (window.__LOTROCKET_BOOTED__) {
-    console.warn("🚫 Lot Rocket boot blocked (double init)");
-    return;
-  }
+  if (window.__LOTROCKET_BOOTED__) return;
   window.__LOTROCKET_BOOTED__ = true;
 
   console.log("🚀 Lot Rocket frontend loaded (v2.6 clean)");
 
-  DOC.addEventListener(
-    "click",
-    (e) => {
-      const el = e.target;
-      console.log("🖱️ CLICK:", el?.tagName, el?.id ? "#" + el.id : "", el?.className || "");
-    },
-    true
-  );
-
-  window.addEventListener("error", (e) =>
-    console.error("💥 WINDOW ERROR:", e.message, e.filename, e.lineno)
-  );
-  window.addEventListener("unhandledrejection", (e) =>
-    console.error("💥 PROMISE REJECTION:", e.reason)
-  );
-
   const MAX_PHOTOS = 24;
-// 🚫 Disable legacy uploadmanager image hijack
-if (window.uploadManager && typeof window.uploadManager === "object") {
-  window.uploadManager.enabled = false;
-}
 
   // ===============================
-  // SINGLE STORE (LOCKED)
+  // GLOBAL STORE (FIXED)
   // ===============================
-window.STORE = window.LOTROCKET;
-const STORE = window.STORE;
-
+  window.LOTROCKET = window.LOTROCKET || {};
+  const STORE = window.LOTROCKET;
 
   STORE.step1Photos ||= [];
   STORE.lastBoostPhotos ||= [];
@@ -54,7 +26,7 @@ const STORE = window.STORE;
   STORE.lastPrice ||= "";
 
   // ===============================
-  // ELEMENT REFERENCES (SINGLE COPY)
+  // ELEMENT REFERENCES
   // ===============================
   const boostBtn =
     $("boostListingBtn") ||
@@ -71,7 +43,7 @@ const STORE = window.STORE;
   const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
   // ===============================
-  // UTILITIES
+  // UTILITIES (SINGLE SOURCE)
   // ===============================
   function setBtnLoading(btn, on, label) {
     if (!btn) return;
@@ -79,10 +51,8 @@ const STORE = window.STORE;
       btn.dataset.originalText ||= btn.textContent;
       btn.textContent = label || "Working…";
       btn.disabled = true;
-      btn.classList.add("btn-loading");
     } else {
       btn.disabled = false;
-      btn.classList.remove("btn-loading");
       btn.textContent = btn.dataset.originalText || btn.textContent;
     }
   }
@@ -90,7 +60,8 @@ const STORE = window.STORE;
   function uniqCap(arr, cap = MAX_PHOTOS) {
     const seen = new Set();
     const out = [];
-    for (const u of arr) {
+    for (let raw of arr || []) {
+      const u = typeof raw === "string" ? raw : raw?.url;
       if (!u || seen.has(u)) continue;
       seen.add(u);
       out.push(u);
@@ -111,6 +82,46 @@ const STORE = window.STORE;
   }
 
   // ===============================
+  // STEP 1 — GRID
+  // ===============================
+  function renderStep1Photos(urls) {
+    if (!photosGridEl) return;
+
+    STORE.step1Photos = uniqCap(urls).map((u) => ({
+      url: u,
+      selected: false,
+    }));
+
+    photosGridEl.innerHTML = "";
+    photosGridEl.style.display = "grid";
+    photosGridEl.style.gridTemplateColumns = "repeat(4,1fr)";
+    photosGridEl.style.gap = "8px";
+
+    STORE.step1Photos.forEach((item, idx) => {
+      const btn = DOC.createElement("button");
+      btn.dataset.i = idx;
+      btn.style.height = "72px";
+      btn.style.borderRadius = "12px";
+      btn.style.overflow = "hidden";
+      btn.style.opacity = item.selected ? "1" : "0.45";
+
+      const img = DOC.createElement("img");
+      img.src = getProxiedImageUrl(item.url);
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+
+      btn.onclick = () => {
+        item.selected = !item.selected;
+        btn.style.opacity = item.selected ? "1" : "0.45";
+      };
+
+      btn.appendChild(img);
+      photosGridEl.appendChild(btn);
+    });
+  }
+
+  // ===============================
   // STEP 3 — HOLDING ZONE
   // ===============================
   function renderHoldingZone() {
@@ -121,242 +132,27 @@ const STORE = window.STORE;
     STORE.holdingZonePhotos.forEach((url) => {
       const img = DOC.createElement("img");
       img.src = url;
-      img.className = "holding-thumb" + (url === STORE.activeHoldingPhoto ? " active" : "");
       img.onclick = () => {
         STORE.activeHoldingPhoto = url;
-        renderHoldingZone();
         loadPhotoTuner(url);
       };
       zone.appendChild(img);
     });
   }
 
-function loadPhotoTuner(url) {
-  const img = $("tunerPreviewImg");
-  if (!img || !url) return;
-
-  // 🔒 FORCE source of truth
-  STORE.activeHoldingPhoto = url;
-
-  img.onload = () => console.log("✅ Photo Tuner loaded");
-  img.onerror = () => console.warn("❌ Photo Tuner failed to load:", url);
-
-  img.src = getProxiedImageUrl(url);
-}
-
-
-  function applyTunerFilters() {
+  function loadPhotoTuner(url) {
     const img = $("tunerPreviewImg");
-    if (!img) return;
-
-    const b = Number($("tunerBrightness")?.value || 100) / 100;
-    const c = Number($("tunerContrast")?.value || 100) / 100;
-    const s = Number($("tunerSaturation")?.value || 100) / 100;
-
-    img.style.filter = `brightness(${b}) contrast(${c}) saturate(${s})`;
+    if (!img || !url) return;
+    STORE.activeHoldingPhoto = url;
+    img.src = getProxiedImageUrl(url);
   }
 
   // ===============================
-  // AUTO ENHANCE (SINGLE WIRE)
+  // SEND TOP → CREATIVE
   // ===============================
-  if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
-    autoEnhanceBtn.dataset.wired = "true";
-    autoEnhanceBtn.onclick = () => {
-      setBtnLoading(autoEnhanceBtn, true, "Enhancing…");
-      $("tunerBrightness").value = 112;
-      $("tunerContrast").value = 112;
-      $("tunerSaturation").value = 118;
-      applyTunerFilters();
-      setTimeout(() => setBtnLoading(autoEnhanceBtn, false), 200);
-    };
-  }
-
-  // ===============================
-  // SEND TO SOCIAL-READY STRIP (ONE SOURCE)
-  // ===============================
-  // ===============================
-// SOCIAL-READY STRIP — RENDER (SINGLE SOURCE)
-// ===============================
-function renderSocialStrip() {
-  const strip = $("socialReadyStrip");
-  if (!strip) return;
-
-  strip.innerHTML = "";
-
-  (STORE.socialReadyPhotos || []).forEach((item, idx) => {
-    if (!item || !item.url) return;
-
-    const img = DOC.createElement("img");
-    img.src = item.url;
-    img.className = "social-ready-thumb";
-    img.style.opacity = item.selected ? "1" : "0.5";
-
-    img.onclick = () => {
-      STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
-        ...p,
-        selected: i === idx
-      }));
-      renderSocialStrip();
-    };
-
-    strip.appendChild(img);
-  });
-}
-
-  
-function getActivePhotoUrl() {
-  if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
-    return STORE.activeHoldingPhoto;
-  }
-
-  const img = $("tunerPreviewImg");
-  if (img && img.src) return img.src;
-
-  return "";
-}
-
-
-
-  function pushToSocialReady(url) {
-    if (!url) return false;
-
-    STORE.socialReadyPhotos = [
-      { url, selected: true, locked: false },
-      ...STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false })),
-    ].filter((v, i, a) => a.findIndex((x) => x.url === v.url) === i)
-     .slice(0, MAX_PHOTOS);
-
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-    return true;
-  }
-
-  if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
-    sendToSocialStripBtn.dataset.wired = "true";
-    sendToSocialStripBtn.onclick = () => {
-      setBtnLoading(sendToSocialStripBtn, true, "Sending…");
-      const ok = pushToSocialReady(getActivePhotoUrl());
-      if (!ok) alert("No active photo selected.");
-      setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
-    };
-  }
-
-  function uniqCleanCap(arr, cap) {
-  const max = typeof cap === "number" && cap > 0 ? cap : MAX_PHOTOS;
-  if (!Array.isArray(arr)) return [];
-
-  const out = [];
-  const seen = new Set();
-
-  for (let i = 0; i < arr.length; i++) {
-    let raw = arr[i];
-    if (raw && typeof raw === "object" && raw.url) raw = raw.url;
-
-    if (!raw) continue;
-    if (seen.has(raw)) continue;
-
-    seen.add(raw);
-    out.push(raw);
-
-    if (out.length >= max) break;
-  }
-
-  return out;
-}
-
-  function setStep1FromUrls(urls) {
-  const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
-  STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
-}
-
-  // ===============================
-  // STEP 1 — GRID
-  // ===============================
-function renderStep1Photos(urls) {
-  if (!photosGridEl) return;
-
-  setStep1FromUrls(urls);
-
-  // FORCE: 4-column thumbnail grid
-  photosGridEl.style.display = "grid";
-  photosGridEl.style.gridTemplateColumns = "repeat(4, 1fr)";
-  photosGridEl.style.gap = "8px";
-  photosGridEl.style.marginTop = "10px";
-  photosGridEl.innerHTML = "";
-
-  (STORE.step1Photos || []).forEach((item, idx) => {
-    const src = getProxiedImageUrl(item.url);
-
-    const btn = DOC.createElement("button");
-    btn.type = "button";
-    btn.className = "photo-thumb-btn";
-    btn.setAttribute("data-i", String(idx));
-    btn.style.position = "relative";
-    btn.style.height = "72px";
-    btn.style.borderRadius = "12px";
-    btn.style.overflow = "hidden";
-    btn.style.border = "1px solid rgba(148,163,184,.55)";
-    btn.style.background = "#0b1120";
-    btn.style.padding = "0";
-    btn.style.cursor = "pointer";
-    btn.style.opacity = item.selected ? "1" : "0.45";
-
-    const img = DOC.createElement("img");
-    img.className = "photo-thumb-img";
-    img.src = src;
-    img.alt = "photo";
-    img.loading = "lazy";
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.display = "block";
-    img.style.objectFit = "cover";
-
-    const check = DOC.createElement("span");
-    check.className = "photo-check";
-    check.textContent = "✓";
-    check.style.position = "absolute";
-    check.style.top = "6px";
-    check.style.right = "6px";
-    check.style.width = "18px";
-    check.style.height = "18px";
-    check.style.borderRadius = "999px";
-    check.style.background = "rgba(0,0,0,.55)";
-    check.style.color = "#fff";
-    check.style.fontSize = "12px";
-    check.style.lineHeight = "18px";
-    check.style.textAlign = "center";
-    check.style.display = item.selected ? "block" : "none";
-
-    btn.appendChild(img);
-    btn.appendChild(check);
-    photosGridEl.appendChild(btn);
-  });
-
-  // click delegation
-  photosGridEl.onclick = (e) => {
-    const btnEl = e.target?.closest?.("[data-i]");
-    if (!btnEl) return;
-
-    const idx = Number(btnEl.getAttribute("data-i"));
-    const item = STORE.step1Photos[idx];
-    if (!item || item.dead) return;
-
-    item.selected = !item.selected;
-
-    btnEl.style.opacity = item.selected ? "1" : "0.45";
-    const check = btnEl.querySelector(".photo-check");
-    if (check) check.style.display = item.selected ? "block" : "none";
-    btnEl.classList.toggle("photo-thumb-selected", item.selected);
-  };
-}
-
-
-  // ===============================
-  // SEND TOP PHOTOS → STEP 3
-  // ===============================
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
+  if (sendTopBtn) {
     sendTopBtn.onclick = () => {
-      const selected = STORE.step1Photos.filter((p) => p.selected).map((p) => p.url);
+      const selected = STORE.step1Photos.filter(p => p.selected).map(p => p.url);
       if (!selected.length) return alert("Select photos first.");
       STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
       STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0];
@@ -366,7 +162,41 @@ function renderStep1Photos(urls) {
   }
 
   // ===============================
-  // BOOST — SINGLE IMPLEMENTATION
+  // SEND TO SOCIAL STRIP
+  // ===============================
+  function renderSocialStrip() {
+    const strip = $("socialReadyStrip");
+    if (!strip) return;
+    strip.innerHTML = "";
+    STORE.socialReadyPhotos.forEach(p => {
+      const img = DOC.createElement("img");
+      img.src = p.url;
+      img.style.width = "96px";
+      img.style.height = "96px";
+      img.style.objectFit = "cover";
+      strip.appendChild(img);
+    });
+  }
+
+  function pushToSocialReady(url) {
+    if (!url) return false;
+    STORE.socialReadyPhotos = uniqCap([
+      url,
+      ...STORE.socialReadyPhotos.map(p => p.url)
+    ]).map(u => ({ url: u, selected: u === url }));
+    renderSocialStrip();
+    return true;
+  }
+
+  if (sendToSocialStripBtn) {
+    sendToSocialStripBtn.onclick = () => {
+      const ok = pushToSocialReady(STORE.activeHoldingPhoto);
+      if (!ok) alert("No active photo.");
+    };
+  }
+
+  // ===============================
+  // BOOST — FIXED
   // ===============================
   if (boostBtn) {
     boostBtn.onclick = async () => {
@@ -398,23 +228,5 @@ function renderStep1Photos(urls) {
     };
   }
 
-  // ===============================
-  // FINAL INIT (SAFE)
-  // ===============================
-  try {
-    if (STORE.lastBoostPhotos.length) renderStep1Photos(STORE.lastBoostPhotos);
-    if (STORE.holdingZonePhotos.length) {
-      STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0];
-      renderHoldingZone();
-      loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
-
-    ["tunerBrightness", "tunerContrast", "tunerSaturation"].forEach((id) =>
-      $(id)?.addEventListener("input", applyTunerFilters)
-    );
-
-    console.log("✅ FINAL INIT COMPLETE");
-  } catch (e) {
-    console.error("❌ FINAL INIT FAILED", e);
-  }
+  console.log("✅ FINAL INIT COMPLETE");
 });
