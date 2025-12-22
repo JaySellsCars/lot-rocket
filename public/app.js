@@ -387,27 +387,33 @@ function loadPhotoTuner(url) {
     });
   }
 
-  // ===============================
-  // FINAL INIT (SAFE BOOT)
-  // ===============================
-  try {
-    console.log("✅ FINAL INIT REACHED");
+// ===============================
+// FINAL INIT (SAFE BOOT — LOCKED)
+// ===============================
+try {
+  console.log("✅ FINAL INIT REACHED");
 
-    DOC.querySelectorAll("textarea").forEach((ta) => {
-      autoResizeTextarea(ta);
-      ta.addEventListener("input", () => autoResizeTextarea(ta));
-    });
+  // Textarea autosize (one-time wiring)
+  DOC.querySelectorAll("textarea").forEach((ta) => {
+    autoResizeTextarea(ta);
+    ta.addEventListener("input", () => autoResizeTextarea(ta));
+  });
 
-    if (Array.isArray(STORE.lastBoostPhotos) && STORE.lastBoostPhotos.length) {
-      renderStep1Photos(STORE.lastBoostPhotos);
-    }
-
-    if (Array.isArray(STORE.holdingZonePhotos) && STORE.holdingZonePhotos.length) {
-      if (!STORE.activeHoldingPhoto) STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0];
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
-  } catch (e) {
-    console.error("❌ Final init failed:", e);
+  // Restore Step 1 photos (after refresh / reload)
+  if (Array.isArray(STORE.lastBoostPhotos) && STORE.lastBoostPhotos.length) {
+    renderStep1Photos(STORE.lastBoostPhotos);
   }
-});
+
+  // Restore Step 3 holding zone + Photo Tuner preview
+  if (Array.isArray(STORE.holdingZonePhotos) && STORE.holdingZonePhotos.length) {
+    STORE.activeHoldingPhoto =
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
+
+    renderHoldingZone();
+    loadPhotoTuner(STORE.activeHoldingPhoto);
+  }
+
+} catch (e) {
+  console.error("❌ Final init failed:", e);
+}
+
