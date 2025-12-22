@@ -541,6 +541,8 @@ openCreativeLabUI();
         priceOverride: (priceOfferInput?.value || "").trim(),
         processPhotos: true,
       };
+console.log("🧾 BOOST URL RAW:", dealerUrlInput?.value);
+console.log("🧾 BOOST URL TRIM:", payload.url);
 
       const data = await postJSON(`${apiBase}/boost`, payload);
 
