@@ -125,11 +125,26 @@ const zone = $("photoDropZone");
     });
   }
 
-  function loadPhotoTuner(url) {
-    const img = $("photoTunerPreview");
-    if (!img) return;
-    img.src = url;
+function loadPhotoTuner(url) {
+  const img = $("photoTunerPreview");
+  if (!img) {
+    console.warn("⚠️ photoTunerPreview not found");
+    return;
   }
+  if (!url) {
+    console.warn("⚠️ loadPhotoTuner called with empty url");
+    return;
+  }
+
+  // Always use proxied URL to avoid silent image failures
+  const safeUrl = getProxiedImageUrl(url);
+
+  img.onload = () => console.log("✅ Photo Tuner loaded");
+  img.onerror = () => console.warn("❌ Photo Tuner failed to load:", safeUrl);
+
+  img.src = safeUrl;
+}
+
 
   // ===============================
   // UTIL
