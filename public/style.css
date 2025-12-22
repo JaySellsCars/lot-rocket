@@ -76,6 +76,44 @@ h3 { font-size:1.05rem; }
 .creativeHubFull {
   grid-column:1 / -1;
 }
+
+/* ================= STEP 2 – SOCIAL MEDIA KIT (RESTORE FORMAT) ================= */
+.step2-subtitle { margin: .2rem 0 1rem; }
+
+.step2-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.step2-card{
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-1);
+  min-height: 260px;
+}
+
+.step2-card h3{
+  font-size: .88rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(229,231,235,.95);
+  margin-bottom: .75rem;
+}
+
+.step2-card textarea{
+  min-height: 140px;
+  border-radius: 16px;
+  background: rgba(2,6,23,.85);
+}
+
+@media (max-width: 1100px){
+  .step2-grid{ grid-template-columns: 1fr; }
+}
+
+
 /* ================= STEP 2 – SOCIAL MEDIA KIT (RESTORE) ================= */
 .step2-subtitle { margin: .2rem 0 1rem; }
 
