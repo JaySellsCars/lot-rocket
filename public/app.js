@@ -106,7 +106,7 @@ function renderHoldingZone() {
     $("step3Section") ||
     null;
 
-  if (step3Host && !step3Host.contains(zone)) {
+if (step3Host && !step3Host.contains(zone)) {
     console.warn("⚠️ holdingZone is not inside Step 3 container. Fix HTML placement.");
     return;
   }
