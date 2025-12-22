@@ -1,15 +1,13 @@
 /* ======================================================
-   LOT ROCKET – CLEAN STABLE CSS (v2.6 – DEDUPED + JS-ALIGNED)
-   Goals:
-   - Remove duplicate/legacy strip CSS that doesn’t match v2.6 HTML/JS
-   - Keep Step 2 tiles + Step 3 2-column Creative Lab
-   - Ensure “selected” styling matches what app.js toggles:
-       - Dealer photos: .photo-thumb-btn + .photo-thumb-selected + .photo-thumb-img
-       - Creative thumbs: .creative-thumb + .selected
-       - Social strip items: .social-carousel-item + .selected + .picked + .locked
+   LOT ROCKET – CLEAN STABLE CSS (v2.6 CANONICAL)
+   Status:
+   - DEDUPED
+   - JS-ALIGNED
+   - DARK MODE LOCKED
+   - NO CONFLICTING OVERRIDES
    ====================================================== */
 
-/* ---------- RESET ---------- */
+/* ================= RESET ================= */
 *,
 *::before,
 *::after { box-sizing: border-box; }
@@ -17,14 +15,15 @@
 html, body {
   margin: 0;
   padding: 0;
+  min-height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* ---------- THEME TOKENS ---------- */
-:root{
+/* ================= THEME TOKENS ================= */
+:root {
   --bg-main: #020617;
-  --bg-panel: #020617;
-  --border-soft: rgba(148, 163, 184, 0.55);
+  --bg-panel: rgba(2,6,23,.85);
+  --border-soft: rgba(148,163,184,.35);
 
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
@@ -32,1296 +31,258 @@ html, body {
   --accent-1: #f97316;
   --accent-2: #ec4899;
 
-  --card-radius: 18px;
-  --inner-radius: 14px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
 
-  --shadow-1: 0 20px 50px rgba(0,0,0,0.6);
-  --glow-1: 0 0 22px rgba(249,115,22,0.65);
-  --glow-2: 0 0 18px rgba(56,189,248,0.55);
+  --shadow-1: 0 20px 50px rgba(0,0,0,.6);
+  --glow-1: 0 0 22px rgba(249,115,22,.65);
+  --glow-2: 0 0 18px rgba(56,189,248,.55);
 }
 
-body.dark-theme{
+/* ================= DARK MODE (CANONICAL) ================= */
+html { background:#020617; }
 
-  background: radial-gradient(circle at top left, #020617, #020617);
-  color: var(--text-main);
-}
-/* ===== FORCE DARK UI CONTAINERS ===== */
-body.dark-theme .panel,
-body.dark-theme .card,
-body.dark-theme .summary-box,
-body.dark-theme .step,
-body.dark-theme section,
-body.dark-theme main,
-body.dark-theme .container {
-  background: rgba(2, 6, 23, 0.85);
-  color: #f9fafb;
-  border-color: rgba(148,163,184,.35);
+body {
+  background:#020617;
+  color:var(--text-main);
 }
 
-/* Inputs + textareas (dark mode) */
-body.dark-theme input,
-body.dark-theme textarea,
-body.dark-theme select {
-  background: rgba(2, 6, 23, 0.85);
-  color: #f9fafb;
-  border-color: rgba(148,163,184,.45);
+body.dark-theme {
+  background:#020617;
+  color:var(--text-main);
 }
 
+/* ================= TYPOGRAPHY ================= */
+h1,h2,h3 { margin:0 0 .6rem 0; }
+h2 { font-size:1.25rem; }
+h3 { font-size:1.05rem; }
 
-/* ---------- TYPOGRAPHY ---------- */
-h1,h2,h3{ margin: 0 0 .6rem 0; }
-h2{ font-size: 1.25rem; letter-spacing: .2px; }
-h3{ font-size: 1.05rem; }
-
-.small-note{
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1.35;
+.small-note {
+  font-size:.85rem;
+  color:var(--text-muted);
 }
 
-/* ---------- FORM FIELDS ---------- */
-label.field,
-.summary-box label,
-.tool-form label{
-  display: block;
-  margin: .65rem 0;
+/* ================= LAYOUT ================= */
+.layout {
+  display:grid;
+  grid-template-columns: 1.05fr 1.6fr;
+  gap:2.5rem;
+  padding:1.5rem 15rem 3rem 3rem;
+  align-items:start;
 }
 
-label.field > span{
-  display:block;
-  font-weight: 600;
-  font-size: .9rem;
-  margin-bottom: .35rem;
+.column { min-width:0; }
+
+.creativeHubFull {
+  grid-column:1 / -1;
+}
+
+/* ================= PANELS ================= */
+.summary-box,
+.platform-card,
+.lab-card,
+.panel {
+  background:var(--bg-panel);
+  border-radius:var(--radius-lg);
+  border:1px solid var(--border-soft);
+  padding:1.1rem;
+  box-shadow:var(--shadow-1);
+}
+
+.summary-box + .summary-box { margin-top:1.2rem; }
+
+/* ================= FORMS ================= */
+input,
+textarea,
+select {
+  width:100%;
+  background:#020617;
+  color:var(--text-main);
+  border:1px solid var(--border-soft);
 }
 
 input[type="text"],
 input[type="number"],
-input[type="date"],
-select{
-  width: 100%;
-  border-radius: 999px;
-  padding: .6rem .9rem;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  outline: none;
+select {
+  border-radius:999px;
+  padding:.6rem .9rem;
 }
 
-input::placeholder{ color: rgba(156,163,175,.7); }
-
-/* ---------- TEXTAREAS (auto-grow friendly) ---------- */
-textarea{
-  width: 100%;
-  resize: none;
-  overflow-y: hidden;
-  line-height: 1.5;
-  border-radius: var(--inner-radius);
-  padding: .75rem;
-  background: #020617;
-  border: 1px solid var(--border-soft);
-  color: var(--text-main);
+textarea {
+  resize:none;
+  padding:.75rem;
+  border-radius:var(--radius-md);
 }
 
-/* ---------- HEADER ---------- */
-.app-header{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.2rem 3rem;
-  border-bottom: 1px solid var(--border-soft);
+/* ================= BUTTONS ================= */
+.primary-btn {
+  border:none;
+  border-radius:999px;
+  padding:.6rem 1.4rem;
+  font-weight:700;
+  cursor:pointer;
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+  color:#020617;
+  box-shadow:var(--glow-1);
 }
 
-.branding h1{ font-size: 1.6rem; }
-.branding p{
-  margin: .25rem 0 0 0;
-  font-size: .85rem;
-  color: var(--text-muted);
-}
-
-/* ---------- LAYOUT ---------- */
-/* Two main columns, leave space on right for floating tools */
-.layout{
-  display: grid;
-  grid-template-columns: 1.05fr 1.6fr;
-  gap: 2.5rem;
-  padding: 1.5rem 15rem 3rem 3rem;
-  align-items: start;
-}
-
-.column{ min-width: 0; }
-
-/* Step 3 should span full width below Step 1 & 2 */
-.creativeHubFull{
-  grid-column: 1 / -1;
-}
-
-/* ---------- PANELS ---------- */
-.summary-box,
-.platform-card,
-.lab-card,
-.panel{
-  background: var(--bg-panel);
-  border-radius: var(--card-radius);
-  border: 1px solid var(--border-soft);
-  padding: 1.1rem;
-  box-shadow: var(--shadow-1);
-}
-
-.summary-box + .summary-box{ margin-top: 1.2rem; }
-
-.inner-summary{
-  margin-top: .85rem;
-  border-radius: var(--inner-radius);
-  padding: 1rem;
-}
-
-/* ---------- BUTTONS ---------- */
-.primary-btn{
-  border-radius: 999px;
-  border: none;
-  padding: .6rem 1.4rem;
-  font-weight: 700;
-  cursor: pointer;
-  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
-  color: #020617;
-  box-shadow: var(--glow-1);
-}
-
-.secondary-btn{
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  padding: .55rem 1.2rem;
-  cursor: pointer;
+.secondary-btn {
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background:#020617;
+  color:var(--text-main);
+  padding:.55rem 1.2rem;
+  cursor:pointer;
 }
 
 .primary-btn.full,
-.secondary-btn.full{
-  width: 100%;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: .5rem;
-}
-
-.summary-btn{
-  margin-top: .8rem;
-  width: 100%;
-}
-
-.btn-row{
-  display: flex;
-  gap: .6rem;
-  justify-content: flex-end;
-  margin-top: .7rem;
-}
-
-.copy-btn,
-.regen-btn{
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  padding: .4rem 1rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: .82rem;
-}
-
-.copy-btn.copied{
-  box-shadow: 0 0 18px rgba(56,189,248,0.65);
-  border-color: rgba(56,189,248,0.7);
-}
-
-.glow-send{
-  box-shadow: 0 0 28px rgba(249,115,22,0.55);
-}
-#boostListingBtn, #boostThisListingBtn, #boostThisListing, #boostButton {
-  cursor: pointer;
-  pointer-events: auto;
+.secondary-btn.full {
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
 .btn-loading {
-  opacity: .7;
-  cursor: progress !important;
-}
-.btn-loading {
-  opacity: .75;
-  filter: saturate(1.1);
+  opacity:.7;
+  cursor:progress !important;
 }
 
-.btn-pressed {
-  transform: scale(.99);
+.btn-pressed { transform:scale(.99); }
+
+/* ================= STEP 1 – PHOTO GRID (LOCKED) ================= */
+#photosGrid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-top:10px;
 }
 
-button.btn-loading,
-.primary-btn.btn-loading,
-.primary-btn.full.btn-loading {
-  cursor: progress !important;
-}
-
-/* ===============================
-   GLOW BUTTONS (Photo Tuner)
-   =============================== */
-.secondary-btn.cinematic-like{
-  border: 1px solid rgba(59,130,246,.45);
-  background: radial-gradient(120% 120% at 50% 0%, rgba(59,130,246,.25), rgba(2,6,23,.92));
-  box-shadow:
-    0 10px 24px rgba(0,0,0,.35),
-    0 0 0 1px rgba(59,130,246,.18) inset,
-    0 0 28px rgba(59,130,246,.18);
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
-}
-
-.secondary-btn.cinematic-like:hover{
-  transform: translateY(-1px);
-  border-color: rgba(59,130,246,.75);
-  box-shadow:
-    0 12px 28px rgba(0,0,0,.40),
-    0 0 0 1px rgba(59,130,246,.22) inset,
-    0 0 38px rgba(59,130,246,.28);
-}
-
-.secondary-btn.cinematic-like.btn-pressed{
-  transform: translateY(0px) scale(.99);
-  filter: brightness(1.06);
-}
-
-.secondary-btn.cinematic-like.is-loading{
-  opacity: .85;
-  cursor: progress;
-}
-
-/* pulse class from pulseBtn() */
-.is-fired{
-  animation: lrPulse .26s ease-out;
-}
-@keyframes lrPulse{
-  0% { box-shadow: 0 0 0 0 rgba(59,130,246,.0); }
-  60%{ box-shadow: 0 0 0 6px rgba(59,130,246,.18); }
-  100%{ box-shadow: 0 0 0 0 rgba(59,130,246,.0); }
-}
-
-/* ===== Photo Tuner action buttons (glow + feedback) ===== */
-.tuner-actions{
-  display: flex;
-  gap: 12px;               /* adds the spacing you wanted */
-  margin-top: 14px;
-}
-
-.tuner-actions .cinematic-like{
-  position: relative;
-  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
-  border: 1px solid rgba(148,163,184,.35);
-  background: rgba(2,6,23,.55);
-}
-
-.tuner-actions .cinematic-like:hover{
-  box-shadow: 0 0 0 2px rgba(99,102,241,.22), 0 0 18px rgba(99,102,241,.22);
-  border-color: rgba(99,102,241,.55);
-}
-
-.tuner-actions .cinematic-like:active{
-  transform: translateY(1px);
-  filter: brightness(1.08);
-}
-
-/* “I was clicked” feedback (brief) */
-.tuner-actions .cinematic-like.is-fired{
-  box-shadow: 0 0 0 2px rgba(236,72,153,.25), 0 0 22px rgba(236,72,153,.22);
-  border-color: rgba(236,72,153,.65);
-}
-
-/* loading state (optional) */
-.tuner-actions .cinematic-like.is-loading{
-  opacity: .75;
-  cursor: progress;
-}
-.cinematic-like {
-  position: relative;
-  transition: transform .12s ease, box-shadow .12s ease;
-}
-
-.cinematic-like.is-fired {
-  transform: scale(0.97);
-  box-shadow: 0 0 18px rgba(99,102,241,.65);
-}
-
-/* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
-/* v2.6 JS renders buttons with:
-   .photo-thumb-btn + .photo-thumb-selected, containing img.photo-thumb-img
-*/
-/* Step 1 thumbs – make them feel alive */
-.photo-thumb-btn,
-.photo-thumb {
-  background: rgba(10, 15, 28, 0.95) !important;
-}
-
-/* brighten the image itself */
-.photo-thumb-img,
-#photosGrid .photo-thumb img {
-  filter: brightness(1.12) contrast(1.08) saturate(1.12);
-  transition: filter .12s ease, opacity .12s ease, transform .12s ease;
-}
-
-/* hover pop */
-.photo-thumb-btn:hover .photo-thumb-img,
-#photosGrid .photo-thumb:hover img {
-  filter: brightness(1.2) contrast(1.1) saturate(1.2);
-  transform: scale(1.01);
-}
-
-/* unselected state = dim (instead of dead on load) */
-.photo-thumb-btn:not(.photo-thumb-selected) .photo-thumb-img,
-#photosGrid .photo-thumb:not(.photo-thumb-selected) img {
-  opacity: 0.75;
-  filter: brightness(0.95) contrast(1.05) saturate(1.05);
-}
-
-/* selected state = bright */
-.photo-thumb-selected .photo-thumb-img,
-.photo-thumb-selected img {
-  opacity: 1;
-  filter: brightness(1.2) contrast(1.1) saturate(1.2);
-}
-/* Step 1 thumbs – make them feel alive */
-.photo-thumb-btn,
-.photo-thumb {
-  background: rgba(10, 15, 28, 0.95) !important;
-}
-
-/* brighten the image itself */
-.photo-thumb-img,
-#photosGrid .photo-thumb img {
-  filter: brightness(1.12) contrast(1.08) saturate(1.12);
-  transition: filter .12s ease, opacity .12s ease, transform .12s ease;
-}
-
-/* hover pop */
-.photo-thumb-btn:hover .photo-thumb-img,
-#photosGrid .photo-thumb:hover img {
-  filter: brightness(1.2) contrast(1.1) saturate(1.2);
-  transform: scale(1.01);
-}
-
-/* unselected state = dim (instead of dead on load) */
-.photo-thumb-btn:not(.photo-thumb-selected) .photo-thumb-img,
-#photosGrid .photo-thumb:not(.photo-thumb-selected) img {
-  opacity: 0.75;
-  filter: brightness(0.95) contrast(1.05) saturate(1.05);
-}
-
-/* selected state = bright */
-.photo-thumb-selected .photo-thumb-img,
-.photo-thumb-selected img {
-  opacity: 1;
-  filter: brightness(1.2) contrast(1.1) saturate(1.2);
-}
-.btn-loading {
-  opacity: 0.8;
-  cursor: wait !important;
-  position: relative;
-}
-
-.btn-loading::after {
-  content: "  ⏳";
-  font-weight: 700;
-}
-
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr); /* was 4 */
-  gap: .45rem;                            /* was .6rem */
-  margin-top: .75rem;                    /* slight tighten */
-}
-
-.photo-thumb-btn{
-  padding: 0;
-  border: 1px solid rgba(148,163,184,.35);
-  border-radius: 12px;
-  background: rgba(2,6,23,.6);
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-
-.photo-thumb-btn:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 0 18px rgba(56,189,248,0.35);
+.photo-thumb-btn {
+  height:72px;
+  border-radius:12px;
+  overflow:hidden;
+  padding:0;
+  border:1px solid rgba(148,163,184,.35);
+  background:#0b1120;
+  cursor:pointer;
 }
 
 .photo-thumb-img {
-  width: 100%;
-  height: 64px;                          /* was 86px */
-  object-fit: cover;
-  display: block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  filter:brightness(1.18) contrast(1.1) saturate(1.15);
 }
 
-.photo-thumb-selected{
-  border-color: rgba(56,189,248,0.9);
-  box-shadow: 0 0 18px rgba(56,189,248,0.55);
-}
-/* Step 1 button loading feedback */
-.btn-loading {
-  opacity: 0.75;
-  cursor: progress;
+.photo-thumb-btn:not(.photo-thumb-selected) .photo-thumb-img {
+  opacity:.8;
 }
 
-.btn-loading:disabled {
-  filter: grayscale(0.25);
-}
-/* ==================================================
-   STEP 1 — FINAL BRIGHTNESS + LIFE FIX (v2.6)
-   Put this at the END of the Step 1 Photos Grid section
-   ================================================== */
-
-/* Base image brightness — fixes “dark / dead” look */
-#photosGrid .photo-thumb img,
-#photosGrid .photo-thumb-img {
-  filter: brightness(1.22) contrast(1.14) saturate(1.2);
+.photo-thumb-selected {
+  border-color:rgba(56,189,248,.9);
+  box-shadow:0 0 18px rgba(56,189,248,.55);
 }
 
-/* Unselected = still alive (NOT dark) */
-#photosGrid .photo-thumb:not(.photo-thumb-selected) img {
-  filter: brightness(1.15) contrast(1.12) saturate(1.18);
+/* ================= STEP 3 – HOLDING ZONE ================= */
+.holding-zone {
+  display:grid;
+  grid-template-columns:repeat(6,64px);
+  gap:10px;
+  padding:10px;
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  background:rgba(2,6,23,.35);
+  margin-bottom:14px;
 }
 
-/* Selected = pop */
-#photosGrid .photo-thumb-selected img {
-  filter: brightness(1.32) contrast(1.18) saturate(1.25);
+.holding-thumb {
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.35);
+  cursor:pointer;
+  opacity:.75;
 }
 
-/* Prevent JS opacity from killing brightness */
-#photosGrid .photo-thumb,
-.photo-thumb-btn {
-  opacity: 1 !important;
+.holding-thumb.active {
+  opacity:1;
+  border-color:rgba(59,130,246,.9);
+  box-shadow:0 0 0 3px rgba(59,130,246,.28);
 }
 
-/* ---------- STEP 2 “TILES” ---------- */
-.step2-subtitle{ margin: .2rem 0 1rem; }
-
-.step2-grid{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.2rem;
+/* ================= PHOTO TUNER ================= */
+.tuner-preview {
+  width:100%;
+  height:220px;
+  border-radius:16px;
+  border:1px solid rgba(148,163,184,.35);
+  overflow:hidden;
+  background:rgba(2,6,23,.7);
 }
 
-.step2-card{
-  padding: 1rem;
-  border-radius: var(--card-radius);
-  position: relative;
-  min-height: 260px;
+.tuner-preview img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
-.step2-card h3{
-  font-size: .88rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(229,231,235,.95);
-  margin-bottom: .75rem;
-}
-
-.step2-card textarea{
-  min-height: 140px;
-  border-radius: 16px;
-  background: rgba(2,6,23,.85);
-}
-/* ===============================
-   STEP 3 — PHOTO DROP ZONE (THUMBS ONLY)
-   =============================== */
-
-#photoDropZone{
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  padding: 10px;
-  border-radius: 14px;
-  border: 1px dashed rgba(148,163,184,.35);
-  background: rgba(2,6,23,.35);
-  max-width: 100%;
-  overflow: hidden;
-}
-
-#photoDropZone img{
-  width: 100%;
-  height: 64px;
-  object-fit: cover;
-  display: block;
-  border-radius: 12px;
-  border: 1px solid rgba(148,163,184,.35);
-  cursor: pointer;
-}
-
-#photoDropZone img.active{
-  outline: 2px solid rgba(255, 103, 186, .75);
-}
-
-
-#holdingZone .holding-thumb.active{
-  outline: 2px solid rgba(255, 103, 186, .75);
-}
-#photoTunerPreview{
-  width: 100%;
-  max-width: 520px;
-  height: auto;
-  display: block;
-  margin-top: 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(148,163,184,.25);
-}
-#boostListingBtn, #boostThisListingBtn, #boostThisListing, #boostButton {
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 50;
-}
-/* ===============================
-   SOCIAL-READY STRIP (LOCKED)
-   =============================== */
-
+/* ================= SOCIAL READY STRIP ================= */
 #socialReadyStrip {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 12px;
-  align-items: center;
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  padding:12px;
 }
 
 .social-ready-thumb {
-  width: 96px;
-  height: 96px;
-  object-fit: cover;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+  width:96px;
+  height:96px;
+  object-fit:cover;
+  border-radius:10px;
+  cursor:pointer;
+  box-shadow:0 0 0 1px rgba(255,255,255,.15);
 }
 
 .social-ready-thumb:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
+  transform:scale(1.05);
 }
 
-.social-ready-thumb[style*="opacity: 1"] {
-  box-shadow: 0 0 0 2px #ff7a18;
-}
-
-/* ---------- FLOATING TOOLS ---------- */
-.floating-tools{
-  position: fixed;
-  right: 1.5rem;
-  top: 150px;
-  display: flex;
-  flex-direction: column;
-  gap: .6rem;
-  z-index: 50;
-}
-
-.tool-button{
-  display: flex;
-  align-items: center;
-  gap: .55rem;
-  padding: .45rem 1rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  font-size: .78rem;
-  cursor: pointer;
-  box-shadow: var(--glow-2);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-
-.tool-button:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 0 26px rgba(56,189,248,0.9);
-}
-
-/* ---------- STEP 3 CREATIVE HUB ---------- */
-.creative-hub{
-  display: grid;
-  grid-template-columns: 1.65fr .95fr;
-  gap: 1.5rem;
-  margin-top: 1rem;
-}
-
-.photo-dropzone{
-  border: 2px dashed rgba(148,163,184,.45);
-  border-radius: 16px;
-  padding: 2.2rem 1.2rem;
-  text-align: center;
-  color: rgba(229,231,235,.9);
-  cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-
-.photo-dropzone span{ color: var(--text-muted); }
-
-.photo-dropzone.dragover{
-  border-color: rgba(56,189,248,.9);
-  box-shadow: 0 0 18px rgba(56,189,248,.35);
-}
-
-.creative-thumb-grid{
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: .65rem;
-  margin: 1rem 0;
-}
-
-/* v2.6 JS uses className: "creative-thumb" and toggles ".selected" */
-.creative-thumb{
-  width: 100%;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid rgba(148,163,184,.35);
-  cursor: pointer;
-  display: block;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-
-.creative-thumb:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 0 18px rgba(56,189,248,0.25);
-}
-
-.creative-thumb.selected{
-  border-color: rgba(56,189,248,0.95);
-  box-shadow: 0 0 18px rgba(56,189,248,0.6);
-}
-
-.tuner-preview{
-  width: 100%;
-  height: 220px;
-  border-radius: 16px;
-  border: 1px solid rgba(148,163,184,.35);
-  overflow: hidden;
-  background: rgba(2,6,23,.7);
-}
-
-.tuner-preview img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.slider-block{
-  margin-top: .9rem;
-}
-
-.slider-block label{
-  display: block;
-  font-size: .85rem;
-  color: var(--text-muted);
-  margin-bottom: .35rem;
-}
-
-.slider-block input[type="range"]{
-  width: 100%;
-}
-.tuner-actions{
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.tuner-actions .cinematic-like{
-  flex: 1;
-}
-
-/* quick “pressed” feedback */
-.btn-pressed{
-  transform: scale(.99);
-}
-
-/* ensure these never look stuck */
-.cinematic-like.btn-loading{
-  cursor: progress !important;
-  opacity: .85;
-}
-/* ===============================
-   STEP 3 — HOLDING ZONE THUMBS
-   =============================== */
-.holding-zone{
-  display: grid;
-  grid-template-columns: repeat(6, 64px);
-  gap: 10px;
-  align-items: start;
-  justify-content: start;
-  padding: 10px;
-  border: 1px solid rgba(148,163,184,.25);
-  border-radius: 14px;
-  background: rgba(2,6,23,.35);
-  margin: 10px 0 14px;
-  max-width: 100%;
-  overflow: auto;
-}
-
-.holding-thumb{
-  width: 64px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid rgba(148,163,184,.35);
-  cursor: pointer;
-  opacity: .75;
-  transition: transform .12s ease, opacity .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-
-.holding-thumb:hover{
-  opacity: 1;
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 3px rgba(59,130,246,.20);
-}
-
-.holding-thumb.active{
-  opacity: 1;
-  border-color: rgba(59,130,246,.9);
-  box-shadow: 0 0 0 3px rgba(59,130,246,.28);
-}
-
-/* ---------- Social-ready strip (v2.6 JS uses .social-carousel-item) ---------- */
-.social-ready-panel{ margin-top: 1.5rem; }
-.panel-header p{ margin: .35rem 0 0; color: var(--text-muted); }
-
-.social-carousel-preview{
-  display: grid;
-  grid-template-columns: 40px 1fr 40px;
-  align-items: center;
-  gap: .75rem;
-  margin-top: 1rem;
-}
-
-.ghost-circle-btn{
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: rgba(2,6,23,.7);
-  color: var(--text-main);
-  cursor: pointer;
-}
-
-#socialCarouselPreviewImg{
-  width: 100%;
-  height: 220px;
-  object-fit: contain;
-  border-radius: 16px;
-  border: 1px solid rgba(148,163,184,.35);
-  background: rgba(2,6,23,.65);
-}
-
-.social-carousel{
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: .6rem;
-  margin-top: 1rem;
-}
-
-/* JS creates buttons with class "social-carousel-item" and img "social-carousel-img" */
-.social-carousel-item{
-  padding: 0;
-  border-radius: 12px;
-  border: 1px solid rgba(148,163,184,.25);
-  background: rgba(2,6,23,.55);
-  overflow: hidden;
-  cursor: pointer;
-  position: relative;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, opacity .12s ease;
-}
-
-.social-carousel-item:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(56,189,248,0.25);
-}
-
-.social-carousel-img{
-  width: 100%;
-  height: 68px;
-  object-fit: cover;
-  display: block;
-}
-
-.social-carousel-item.selected{
-  border-color: rgba(56,189,248,0.95);
-  box-shadow: 0 0 18px rgba(56,189,248,0.55);
-}
-
-.social-carousel-item.picked{
-  outline: 2px solid rgba(249,115,22,0.75);
-  outline-offset: 0px;
-}
-
-.social-carousel-item.locked{
-  opacity: .65;
-}
-
-.social-carousel-item.locked::after{
-  content: "🔒";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  font-size: 14px;
-  background: rgba(0,0,0,.45);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 999px;
-  padding: 2px 6px;
-}
-
-.social-carousel-actions{
-  display: flex;
-  gap: .75rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
-
-/* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
-/* IMPORTANT: wireToolDrawer uses:
-   modal.classList.remove("hidden"); modal.style.display="flex";
-   and close adds hidden + style.display="none"
-*/
-.side-modal{
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: flex-end;
-  background: rgba(0,0,0,.75);
-  z-index: 100;
-}
-
-.side-modal.hidden{ display: none; }
-
-.side-modal-content{
-  width: 360px;
-  background: #020617;
-  border-left: 1px solid var(--border-soft);
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 1rem;
-}
-
-.side-modal-header{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid rgba(148,163,184,.25);
-}
-
-.side-modal-body{
-  padding: 1rem;
-  overflow: auto;
-}
-
-.modal-close-btn,
-.side-modal-close{
-  border: 1px solid rgba(148,163,184,.35);
-  background: rgba(2,6,23,.6);
-  color: var(--text-main);
-  border-radius: 999px;
-  padding: .35rem .7rem;
-  cursor: pointer;
-}
-
-/* ---------- DRILL MODE ---------- */
-#drillModeModal{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 120;
-}
-
-#drillModeModal.hidden{ display: none; }
-
-#drillModeModal .modal-content{
-  width: 420px;
-  background: #0a0f1c;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.1);
-}
-
-.objection-box{
-  background: rgba(255,255,255,.06);
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
-.timer-display{
-  font-size: 2rem;
-  text-align: center;
-  margin: 12px 0;
-  color: var(--accent-1);
-}
-
-.drill-result{
-  margin-top: 14px;
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(255,255,255,.08);
-}
-
-.drill-result.hidden{ display: none; }
-
-/* ---------- TOOLTIP ---------- */
-.tooltip{ position: relative; cursor: pointer; }
-
-.tooltip::after{
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 130%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 220px;
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  padding: 8px;
-  border-radius: 8px;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .2s ease;
-  pointer-events: none;
-}
-
-.tooltip:hover::after{
-  opacity: 1;
-  visibility: visible;
-}
-
-/* ---------- MOBILE / SMALL SCREENS ---------- */
-@media (max-width: 1100px){
-  .layout{
-    grid-template-columns: 1fr;
-    padding: 1.2rem;
-  }
-
-  .step2-grid{
-    grid-template-columns: 1fr;
-  }
-
-  .creative-hub{
-    grid-template-columns: 1fr;
-  }
-
-  .floating-tools{
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 1rem;
-  }
-}
-/* ==================================================
-   ROCKET-2: SIDE TOOLS CLICK FIX
-   If buttons show but don't click, it's usually z-index or pointer-events.
-   ================================================== */
-.floating-tools,
-.floating-tools * {
-  pointer-events: auto !important;
-}
-
+/* ================= FLOATING TOOLS ================= */
 .floating-tools {
-  position: fixed !important;
-  right: 18px !important;
-  top: 120px !important;
-  z-index: 99999 !important;
+  position:fixed;
+  right:18px;
+  top:120px;
+  display:flex;
+  flex-direction:column;
+  gap:.6rem;
+  z-index:9999;
 }
 
-/* Side modals must be above app */
-.side-modal,
-.side-drawer,
-.tool-modal,
-#objectionModal,
-#calcModal,
-#paymentModal,
-#incomeModal,
-#workflowModal,
-#messageModal,
-#askModal,
-#carModal,
-#imageModal,
-#videoModal,
-#drillModeModal {
-  z-index: 100000 !important;
+.tool-button {
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  padding:.45rem 1rem;
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background:#020617;
+  color:var(--text-main);
+  cursor:pointer;
 }
 
-
-/* ======================================================
-   REMOVED (DEDUPED): legacy “social-ready-*” strip CSS
-   Why:
-   - Your v2.6 HTML/JS uses #socialCarousel + .social-carousel-item,
-     not .social-ready-viewport / .social-ready-thumb.
-   If you *still* have those legacy elements in HTML, delete them
-   OR tell me and I’ll re-add a compatibility block.
-   ====================================================== */
-/* Emergency anti-overflow guard */
-html, body { max-width: 100%; overflow-x: hidden; }
-
-.column-left, .column-middle, .column-right,
-.main-layout, .summary-box, .step2-grid, .photo-grid {
-  max-width: 100%;
+/* ================= RESPONSIVE ================= */
+@media (max-width:1100px) {
+  .layout {
+    grid-template-columns:1fr;
+    padding:1.2rem;
+  }
+  .floating-tools {
+    position:static;
+    flex-direction:row;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
 }
-
-p, h1, h2, h3, h4, div, section {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-/* ================================
-   STEP 1 PHOTO GRID – THUMB FIX
-   ================================ */
-
-#photosGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
-  align-items: stretch;
-}
-
-#photosGrid .photo-thumb {
-  position: relative;
-  width: 100%;
- aspect-ratio: 16 / 10;
-
-  border: 2px solid rgba(148, 163, 184, 0.55);
-  border-radius: 12px;
-  overflow: hidden;
-  background: #0b1120;
-  padding: 0;
-  cursor: pointer;
-}
-
-#photosGrid .photo-thumb img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-#photosGrid .photo-thumb.is-off {
-  opacity: 0.45;
-  filter: grayscale(0.6);
-}
-
-#photosGrid .photo-check {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  background: rgba(0,0,0,0.55);
-  color: #fff;
-  border: 2px solid rgba(255,255,255,0.35);
-}
-/* ===== HARD OVERRIDE: DARK MODE MUST WIN ===== */
-html, body { min-height: 100%; }
-
-body.dark-theme,
-html.dark-theme body {
-  background: #020617 !important;
-  color: #f9fafb !important;
-}
-
-/* If any wrapper is painting white, force it dark too */
-body.dark-theme main,
-body.dark-theme section,
-body.dark-theme .panel,
-body.dark-theme .card,
-body.dark-theme .container,
-body.dark-theme .app,
-body.dark-theme #app,
-body.dark-theme #root {
- 
-
-
-/* Inputs */
-body.dark-theme input,
-body.dark-theme textarea,
-body.dark-theme select {
-  background: rgba(2, 6, 23, 0.85) !important;
-  color: #f9fafb !important;
-  border-color: rgba(148,163,184,.45) !important;
-}
-/* HARD DARK BACKGROUND (html paints white if body is transparent) */
-
-
-/* ================================
-   FINAL THEME LOCK (put LAST)
-   ================================ */
-
-/* Default (light) */
-html, body {
-  min-height: 100%;
-  background: #f9fafb;
-  color: #0b1120;
-}
-
-/* Dark mode */
-body.dark-theme {
-  background: #020617 !important;
-  color: #e5e7eb !important;
-}
-
-/* Make sure the page canvas itself isn't white */
-body.dark-theme html,
-html:has(body.dark-theme) {
-  background: #020617 !important;
-}
-
-/* Common wrappers that might still be painting white */
-body.dark-theme main,
-body.dark-theme section,
-body.dark-theme .panel,
-body.dark-theme .card,
-body.dark-theme .summary-box,
-body.dark-theme .container,
-body.dark-theme #app,
-body.dark-theme #root {
-  background: rgba(2, 6, 23, 0.85) !important;
-  color: #e5e7eb !important;
-}
-/* ===== FINAL OVERRIDE (must be last) ===== */
-
-/* Make the page canvas dark so there is never white behind body */
-html { background: #020617 !important; }
-
-/* Give body a real background when dark-theme is on */
-body.dark-theme {
-  background: #020617 !important;
-  color: #f9fafb !important;
-}
-
-/* If any container is painting white, force it transparent in dark mode */
-body.dark-theme main,
-body.dark-theme section,
-body.dark-theme .container,
-body.dark-theme .panel,
-body.dark-theme .card,
-body.dark-theme #app,
-body.dark-theme #root {
-  background: transparent !important;
-  color: inherit !important;
-}
-/* ===== FINAL CANONICAL DARK MODE (LAST RULES) ===== */
-
-html {
-  background-color: #020617 !important;
-}
-
-body {
-  background-color: #020617 !important;
-}
-
-body.dark-theme {
-  background-color: #020617 !important;
-  color: #f9fafb !important;
-}
-
-/* Kill any white wrappers */
-body.dark-theme main,
-body.dark-theme section,
-body.dark-theme .layout,
-body.dark-theme .column,
-body.dark-theme .column-left,
-body.dark-theme .column-middle,
-body.dark-theme .column-right,
-body.dark-theme .container,
-body.dark-theme .panel,
-body.dark-theme .card,
-body.dark-theme .summary-box {
-  background: transparent !important;
-}
-/* ===== NUCLEAR: FORCE PAGE CANVAS DARK (PUT LAST) ===== */
-html, body {
-  background-color: #020617 !important;
-  background-image: none !important;
-}
-body.dark-theme {
-  background-color: #020617 !important;
-  background-image: none !important;
-  color: #f9fafb !important;
-}
-
-/* ===== FINAL LOCK: DARK CANVAS WINS ===== */
-html, body {
-  background-color: #020617 !important;
-  color: #f9fafb !important;
-}
-
-body.dark-theme {
-  background-color: #020617 !important;
-  color: #f9fafb !important;
-}
-/* ===== FINAL CANVAS LOCK (MUST BE LAST) ===== */
-html, body {
-  background: #020617 !important;
-  background-color: #020617 !important;
-  color: #f9fafb !important;
-}
-/* ===== FINAL PAGE CANVAS LOCK (MUST BE LAST) ===== */
-html {
-  background-color: #020617 !important;
-}
-
-body {
-  background-color: #020617 !important;
-  color: #f9fafb !important;
-}
-
-body.dark-theme {
-  background-color: #020617 !important;
-  color: #f9fafb !important;
-}
-/* ===== CANVAS PAINT FIX (FINAL) ===== */
-html {
-  background: #ffffff;
-}
-
-body.dark-theme {
-  background: #020617 !important;
-  color: #f9fafb !important;
-}
-/* ===== CANVAS PAINT FIX (FINAL) ===== */
-html {
-  background: #ffffff;
-}
-
-body.dark-theme {
-  background: #020617 !important;
-  color: #f9fafb !important;
-}
-/* ===============================
-   STEP 1 — THUMB GRID (LOCKED)
-   =============================== */
-
-#photosGrid {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
-  gap: 8px !important;
-}
-
-.photo-thumb-btn {
-  height: 72px !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-}
-
-.photo-thumb-img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-}
-
-
