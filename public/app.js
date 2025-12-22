@@ -72,6 +72,7 @@ window.document.addEventListener("DOMContentLoaded", () => {
   $("boostThisListing") ||
   $("boostButton") ||
   null;
+console.log("🔎 BOOST BTN FOUND:", boostBtn ? ("#" + boostBtn.id) : "NONE");
 
   const dealerUrlInput = $("dealerUrl");
   const vehicleLabelInput = $("vehicleLabel");
