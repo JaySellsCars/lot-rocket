@@ -654,6 +654,128 @@ STORE.lastBoostPhotos = cleaned;
     }
   };
 }
+// ==================================================
+// ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
+// - Stops form submit from closing modal
+// - Stops inside clicks from bubbling to close handlers
+// - Wires any button with [data-ai-action]
+// ==================================================
+function wireAiModals() {
+  const modals = Array.from(DOC.querySelectorAll(".side-modal"));
+  if (!modals.length) {
+    console.warn("🟣 AI-WIRE: no .side-modal found");
+    return;
+  }
+
+  modals.forEach((modal) => {
+    if (modal.dataset.aiWired === "true") return;
+    modal.dataset.aiWired = "true";
+
+    // 1) Stop inside click bubbling (prevents accidental close)
+    const inner =
+      modal.querySelector(".side-modal-content") ||
+      modal.querySelector(".modal-content") ||
+      modal.firstElementChild;
+
+    if (inner && inner.dataset.aiInnerWired !== "true") {
+      inner.dataset.aiInnerWired = "true";
+      inner.addEventListener("click", (e) => e.stopPropagation());
+      inner.addEventListener("pointerdown", (e) => e.stopPropagation());
+    }
+
+    // 2) Block submit (prevents reload/close)
+    const form = modal.querySelector("form");
+    if (form && form.dataset.aiFormWired !== "true") {
+      form.dataset.aiFormWired = "true";
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("🟣 AI-WIRE: submit blocked", modal.id || "(no id)");
+      });
+    }
+
+    // 3) Wire action buttons
+    const actionBtns = Array.from(modal.querySelectorAll("[data-ai-action]"));
+    actionBtns.forEach((btn) => {
+      if (btn.dataset.aiBtnWired === "true") return;
+      btn.dataset.aiBtnWired = "true";
+      btn.type = "button";
+
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const action = (btn.getAttribute("data-ai-action") || "").trim();
+        const modalName = modal.id || modal.getAttribute("data-modal") || "side-modal";
+
+        console.log("🟣 AI-WIRE: action click", { modal: modalName, action });
+
+        // Find nearest input + output targets inside this modal
+        const input =
+          modal.querySelector("[data-ai-input]") ||
+          modal.querySelector("textarea") ||
+          modal.querySelector("input[type='text']");
+
+        const output =
+          modal.querySelector("[data-ai-output]") ||
+          modal.querySelector(".ai-output") ||
+          modal.querySelector(".tool-output") ||
+          modal.querySelector("pre");
+
+        const text = (input?.value || "").trim();
+
+        // Optional: show loading state without CSS edits
+        btn.dataset.originalText ||= btn.textContent;
+        btn.textContent = "Working…";
+        btn.disabled = true;
+
+        try {
+          // ROUTER: call existing handlers if present (no refactor)
+          // You can add more names here safely as your codebase evolves.
+          const handlers = {
+            objection_coach: window.coachMe || window.handleObjectionCoach,
+            ask_ai: window.askAi || window.handleAskAi,
+            drill_master: window.runDrillMaster || window.handleDrillMaster,
+            message_builder: window.buildMessage || window.handleMessageBuilder,
+            workflow_builder: window.buildWorkflow || window.handleWorkflowBuilder,
+            car_expert: window.askCarExpert || window.handleCarExpert,
+          };
+
+          const fn = handlers[action];
+
+          if (!text) {
+            alert("Type your question/objection first.");
+            return;
+          }
+
+          if (typeof fn === "function") {
+            // If your handler returns text, we render it. If it handles UI itself, fine.
+            const res = await fn(text, { modal, input, output, btn });
+            if (typeof res === "string" && output) output.textContent = res;
+          } else {
+            // Fallback so it never feels dead
+            if (output) {
+              output.textContent =
+                `✅ Received (${action}). Handler not connected yet.\n` +
+                `Input: ${text}`;
+            } else {
+              alert(`Received (${action}). Handler not connected yet.`);
+            }
+          }
+        } catch (err) {
+          console.error("🟣 AI-WIRE: action failed", err);
+          if (output) output.textContent = `❌ Error: ${err?.message || err}`;
+          else alert(err?.message || "Action failed");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = btn.dataset.originalText || "Run";
+        }
+      });
+    });
+  });
+
+  console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
+}
 
 // ==================================================
 // FINAL INIT (SAFE)  ✅ MUST BE LAST
