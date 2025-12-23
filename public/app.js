@@ -2796,10 +2796,14 @@ renderDealerPhotos();
     renderCreativeThumbs();
   });
 
-  // ==================================================
-  // FINAL INIT
-  // ==================================================
+// ==================================================
+// FINAL INIT
+// ==================================================
+try {
   renderDealerPhotos();
   renderCreativeThumbs();
   renderSocialStrip();
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
+}
 });
