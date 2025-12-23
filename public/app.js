@@ -501,15 +501,16 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
 // ==================================================
 function renderCreativeThumbs() {
   // 🚫 STOP: Step 3 Social Carousel exists → do NOT render Creative thumbs
+  // (REMOVED — thumbs MUST render in the red box / #creativeThumbGrid)
 
   if (!creativeThumbGrid) return;
   creativeThumbGrid.innerHTML = "";
 
-  STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
+  STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos || []), MAX_PHOTOS);
 
   STORE.creativePhotos.forEach((url) => {
     const img = DOC.createElement("img");
-    img.src = url;
+    img.src = getProxiedImageUrl(url); // ✅ proxy (prevents giant/CORS issues)
     img.alt = "Creative photo";
     img.loading = "lazy";
     img.className = "creative-thumb";
@@ -518,7 +519,7 @@ function renderCreativeThumbs() {
     img.addEventListener("click", () => {
       img.classList.toggle("selected");
       if (tunerPreviewImg) {
-        tunerPreviewImg.src = url;
+        loadPhotoTuner(url); // ✅ keeps your “tuner loaded” message + consistent tuner flow
         applyTunerFilters();
       }
     });
@@ -531,12 +532,13 @@ function renderCreativeThumbs() {
   });
 
   if (tunerPreviewImg && !tunerPreviewImg.src && STORE.creativePhotos.length) {
-    tunerPreviewImg.src = STORE.creativePhotos[0];
+    loadPhotoTuner(STORE.creativePhotos[0]); // ✅ preserves load message
     applyTunerFilters();
   }
 }
 
-  // ==================================================
+// ==================================================
+
   // STEP 1 → SEND TOP PHOTOS → STEP 3
   // ==================================================
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
