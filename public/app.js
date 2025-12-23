@@ -474,6 +474,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       setBtnLoading(boostBtn, true, "Boosting…");
       if (statusText) statusText.textContent = "Boosting…";
+async function postBoost(payload) {
+  let res = await fetch(apiBase + "/api/boost", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  // 🔁 fallback for legacy backend
+  if (res.status === 404) {
+    res = await fetch(apiBase + "/boost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  return res;
+}
 
 // ✅ Boost endpoint fallback: tries /api/boost, then /boost
 async function postBoost(payload) {
