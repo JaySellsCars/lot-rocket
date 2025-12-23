@@ -298,29 +298,11 @@ textarea {
 .tuner-preview img {
   width:100%;
   height:100%;
-  object-fit:cover;
+  object-fit:contain;  /* better for cars */
 }
 
-/* ================= SOCIAL READY STRIP ================= */
-#socialReadyStrip {
-  display:flex;
-  gap:12px;
-  overflow-x:auto;
-  padding:12px;
-}
 
-.social-ready-thumb {
-  width:96px;
-  height:96px;
-  object-fit:cover;
-  border-radius:10px;
-  cursor:pointer;
-  box-shadow:0 0 0 1px rgba(255,255,255,.15);
-}
 
-.social-ready-thumb:hover {
-  transform:scale(1.05);
-}
 /* ===============================
    SOCIAL READY STRIP (THUMBS + VIEWER) — SINGLE CLEAN BLOCK
    Keep BOTH IDs supported:
