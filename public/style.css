@@ -839,12 +839,4 @@ textarea{
   object-fit:cover !important;
   display:block !important;
 }
-/* KILL EXTRA STEP 3 TOP STRIP (the row above "Photos") */
-#creativeHub .creative-right > .creative-thumb-grid:first-of-type,
-#creativeHub .creative-left > .creative-thumb-grid:first-of-type,
-#creativeHub .creativeHubFull .creative-thumb-grid:first-of-type {
-  display: none !important;
-}
-/* Social strip spacing under viewer */
-#socialCarouselStatus { margin: 10px 0 6px !important; }
-#socialCarousel { margin-top: 6px !important; padding-top: 6px !important; }
+
