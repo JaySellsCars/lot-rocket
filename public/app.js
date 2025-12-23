@@ -182,7 +182,7 @@ function renderSocialStrip() {
     if (!item || !item.url) return;
 
     const img = DOC.createElement("img");
-    img.src = item.url;
+img.src = getProxiedImageUrl(item.url);
     img.className = "social-ready-thumb";
     img.style.opacity = item.selected ? "1" : "0.5";
 
