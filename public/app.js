@@ -497,20 +497,32 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   };
 }
 // ==================================================
-// CREATIVE THUMBS (MINIMAL, STABLE) — HARD GUARD
+// CREATIVE THUMBS (MINIMAL, STABLE)
 // ==================================================
 function renderCreativeThumbs() {
-  // 🚫 STOP: Step 3 Social Carousel exists → do NOT render Creative thumbs
-  // (REMOVED — thumbs MUST render in the red box / #creativeThumbGrid)
+  // NOTE:
+  // This function renders ONLY when STORE.creativePhotos has items.
+  // Holding Zone is separate and should be populated by "Send Top Photos".
+  // Creative Thumbs appear ONLY after user explicitly moves photos forward.
 
   if (!creativeThumbGrid) return;
+
+  // 🚫 If nothing has been moved into Creative yet, keep this area empty
+  if (!STORE.creativePhotos || !STORE.creativePhotos.length) {
+    creativeThumbGrid.innerHTML = "";
+    return;
+  }
+
   creativeThumbGrid.innerHTML = "";
 
-  STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos || []), MAX_PHOTOS);
+  STORE.creativePhotos = capMax(
+    uniqueUrls(STORE.creativePhotos || []),
+    MAX_PHOTOS
+  );
 
   STORE.creativePhotos.forEach((url) => {
     const img = DOC.createElement("img");
-    img.src = getProxiedImageUrl(url); // ✅ proxy (prevents giant/CORS issues)
+    img.src = getProxiedImageUrl(url); // proxy prevents giant/CORS issues
     img.alt = "Creative photo";
     img.loading = "lazy";
     img.className = "creative-thumb";
@@ -519,7 +531,7 @@ function renderCreativeThumbs() {
     img.addEventListener("click", () => {
       img.classList.toggle("selected");
       if (tunerPreviewImg) {
-        loadPhotoTuner(url); // ✅ keeps your “tuner loaded” message + consistent tuner flow
+        loadPhotoTuner(url);   // keeps tuner-loaded message
         applyTunerFilters();
       }
     });
@@ -532,12 +544,12 @@ function renderCreativeThumbs() {
   });
 
   if (tunerPreviewImg && !tunerPreviewImg.src && STORE.creativePhotos.length) {
-    loadPhotoTuner(STORE.creativePhotos[0]); // ✅ preserves load message
+    loadPhotoTuner(STORE.creativePhotos[0]);
     applyTunerFilters();
   }
 }
-
 // ==================================================
+
 
   // STEP 1 → SEND TOP PHOTOS → STEP 3
   // ==================================================
