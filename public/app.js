@@ -13,6 +13,87 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
+// ==================================================
+// FLOATING SIDE BUTTONS → SIDE MODALS (SINGLE WIRE)
+// ==================================================
+const SIDE_TOOLS = [
+  { launcherIds: ["objectionLauncher"], modalIds: ["objectionModal"] },
+  { launcherIds: ["calcLauncher"],      modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
+  { launcherIds: ["paymentLauncher"],   modalIds: ["paymentModal"] },
+  { launcherIds: ["incomeLauncher"],    modalIds: ["incomeModal"] },
+  { launcherIds: ["workflowLauncher"],  modalIds: ["workflowModal"] },
+  { launcherIds: ["messageLauncher"],   modalIds: ["messageModal"] },
+  { launcherIds: ["askLauncher"],       modalIds: ["askModal"] },
+  { launcherIds: ["carLauncher"],       modalIds: ["carModal"] },
+  { launcherIds: ["imageLauncher"],     modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
+  { launcherIds: ["videoLauncher"],     modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
+  { launcherIds: ["drillLauncher"],     modalIds: ["drillModeModal"] },
+];
+
+const resolveFirst = (ids) => (ids || []).map((id) => $(id)).find(Boolean) || null;
+
+function openSideModal(modal) {
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.style.display = modal.style.display || ""; // don’t force layout unless your CSS needs it
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeSideModal(modal) {
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+}
+
+// Wire each launcher once
+SIDE_TOOLS.forEach((t) => {
+  const launcher = resolveFirst(t.launcherIds);
+  const modal = resolveFirst(t.modalIds);
+  if (!launcher || !modal) return;
+
+  if (launcher.dataset.wired === "true") return;
+  launcher.dataset.wired = "true";
+
+  launcher.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openSideModal(modal);
+  });
+
+  // click backdrop closes (only if user clicks the modal backdrop itself)
+  if (modal.dataset.backdropWired !== "true") {
+    modal.dataset.backdropWired = "true";
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeSideModal(modal);
+    });
+  }
+});
+
+// Global delegated close buttons + ESC
+if (document.body.dataset.sideCloseWired !== "true") {
+  document.body.dataset.sideCloseWired = "true";
+
+  document.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
+    if (!closeBtn) return;
+    const modal = closeBtn.closest(".side-modal");
+    if (!modal) return;
+    closeSideModal(modal);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".side-modal:not(.hidden)").forEach(closeSideModal);
+  });
+}
+
+// Quick debug report
+console.log("🧰 Side tools report:", SIDE_TOOLS.map((t) => ({
+  launcher: t.launcherIds.find((id) => $(id)) || t.launcherIds[0],
+  launcherFound: !!resolveFirst(t.launcherIds),
+  modal: t.modalIds.find((id) => $(id)) || t.modalIds[0],
+  modalFound: !!resolveFirst(t.modalIds),
+})));
 
   const INSPECT = true;
   const log = (...a) => INSPECT && console.log(...a);
