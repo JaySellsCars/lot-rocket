@@ -14,17 +14,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
 // ==================================================
-// SIDE TOOLS (FLOATING BUTTONS) — HARD WIRED + SAFE
+// SIDE TOOLS (FLOATING BUTTONS) — SINGLE SOURCE (LOCKED)
 // ==================================================
 function openSideModal(modalId) {
-  const m = document.getElementById(modalId);
-  if (!m) return;
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
 
-  m.classList.remove("hidden");
-  m.setAttribute("aria-hidden", "false");
+  // show modal
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  modal.classList.add("open");
 
-  // if your CSS uses .open for animations, keep it safe:
-  m.classList.add("open");
+  // mark launcher active
+  const launcher = document.querySelector(
+    `.floating-tools [data-modal-target="${modalId}"]`
+  );
+  launcher?.classList.add("active");
 
   console.log("✅ OPEN MODAL:", modalId);
 }
@@ -32,67 +37,55 @@ function openSideModal(modalId) {
 function closeSideModal(modalEl) {
   if (!modalEl) return;
 
+  // hide modal
   modalEl.classList.add("hidden");
   modalEl.setAttribute("aria-hidden", "true");
   modalEl.classList.remove("open");
+
+  // remove launcher active state
+  const launcher = document.querySelector(
+    `.floating-tools [data-modal-target="${modalEl.id}"]`
+  );
+  launcher?.classList.remove("active");
 
   console.log("✅ CLOSE MODAL:", modalEl.id);
 }
 
 function wireSideTools() {
-  const launchers = Array.from(document.querySelectorAll(".floating-tools [data-modal-target]"));
-  const report = [];
+  // launchers
+  document
+    .querySelectorAll(".floating-tools [data-modal-target]")
+    .forEach((btn) => {
+      if (btn.dataset.wired === "true") return;
+      btn.dataset.wired = "true";
 
-  launchers.forEach((btn) => {
-    const targetId = btn.getAttribute("data-modal-target");
-    const modal = targetId ? document.getElementById(targetId) : null;
-
-    report.push({
-      launcher: btn.id || "(no id)",
-      launcherFound: true,
-      modal: targetId,
-      modalFound: !!modal,
-    });
-
-    // prevent double-wiring
-    if (btn.dataset.wired === "true") return;
-    btn.dataset.wired = "true";
-
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+      const targetId = btn.getAttribute("data-modal-target");
       if (!targetId) return;
-      openSideModal(targetId);
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openSideModal(targetId);
+      });
     });
-  });
 
-  // CLOSE buttons inside modals
-  const closers = Array.from(document.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close"));
-  closers.forEach((c) => {
-    if (c.dataset.wired === "true") return;
-    c.dataset.wired = "true";
+  // close buttons inside modals
+  document
+    .querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close")
+    .forEach((btn) => {
+      if (btn.dataset.wired === "true") return;
+      btn.dataset.wired = "true";
 
-    c.addEventListener("click", (e) => {
-      e.preventDefault();
-      const modal = c.closest(".side-modal");
-      closeSideModal(modal);
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const modal = btn.closest(".side-modal");
+        closeSideModal(modal);
+      });
     });
-  });
 
-  // click outside modal content closes (optional)
-  const modals = Array.from(document.querySelectorAll(".side-modal"));
-  modals.forEach((m) => {
-    if (m.dataset.wiredBackdrop === "true") return;
-    m.dataset.wiredBackdrop = "true";
-
-    m.addEventListener("click", (e) => {
-      // only close if they click the backdrop area
-      if (e.target === m) closeSideModal(m);
-    });
-  });
-
-  console.log("🧰 Side tools report:", report);
+  console.log("🧰 Side tools wired");
 }
+
 
 
 
