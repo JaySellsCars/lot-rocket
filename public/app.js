@@ -520,8 +520,26 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
       if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
 
       // Photos
-      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-      STORE.lastBoostPhotos = capMax(uniqueUrls(rawPhotos), MAX_PHOTOS);
+const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+
+const seen = new Set();
+const cleaned = [];
+
+for (const u of rawPhotos) {
+  if (!u) continue;
+
+  // normalize to kill CDN duplicates
+  const base = u.split("?")[0].replace(/\/+$/, "");
+  if (seen.has(base)) continue;
+
+  seen.add(base);
+  cleaned.push(u);
+
+  if (cleaned.length >= MAX_PHOTOS) break;
+}
+
+STORE.lastBoostPhotos = cleaned;
+
 
       renderStep1Photos(STORE.lastBoostPhotos);
 
