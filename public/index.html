@@ -203,97 +203,147 @@
       </div>
     </section>
 
-    <!-- =============================== -->
-    <!-- STEP 3 – FULL WIDTH CREATIVE HUB -->
-    <!-- =============================== -->
-    <section id="creativeHub" class="creativeHubFull">
-      <div class="lab-card">
-        <h3>Step 3 – Creative Lab</h3>
+<!-- ================= STEP 3 ================= -->
+<section id="creativeHub" class="creativeHubFull">
+  <div class="lab-card">
+    <h3>Step 3 – Creative Lab</h3>
 
-        <div class="creative-hub">
-          <div class="creative-left">
-            <h3>Photos</h3>
+    <!-- Holding Zone (optional, safe) -->
+    <div id="holdingZone" class="holding-zone"></div>
 
-            <div id="photoDropZone" class="photo-dropzone">
-              <p>
-                Drag & Drop Photos Here<br />
-                <span>(or click to upload)</span>
-              </p>
-              <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
-            </div>
+    <div class="creative-hub">
 
-            <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
+      <!-- LEFT -->
+      <div class="creative-left">
+        <h3>Photos</h3>
 
-            <button id="sendToDesignStudio" type="button" class="secondary-btn full">
-              Send Selected to Design Studio 3.5
-            </button>
-          </div>
-
-          <div class="creative-right">
-            <h3>Photo Tuner</h3>
-
-            <div class="tuner-preview">
-              <img id="tunerPreviewImg" src="" alt="Preview" />
-            </div>
-
-            <div class="slider-block">
-              <label for="tunerBrightness">Brightness</label>
-              <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
-            </div>
-
-            <div class="slider-block">
-              <label for="tunerContrast">Contrast</label>
-              <input type="range" id="tunerContrast" min="50" max="150" value="100" />
-            </div>
-
-            <div class="slider-block">
-              <label for="tunerSaturation">Saturation</label>
-              <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
-            </div>
-
-            <button id="autoEnhanceBtn" type="button" class="secondary-btn full">Auto Enhance</button>
-            <button id="aiCinematicBtn" type="button" class="primary-btn full">AI Cinematic Background</button>
-          </div>
+        <div id="photoDropZone" class="photo-dropzone">
+          <p>
+            Drag & Drop Photos Here<br />
+            <span>(or click to upload)</span>
+          </p>
+          <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
         </div>
 
-        <!-- Social-ready strip -->
-        <section class="panel social-ready-panel">
-          <div class="panel-header">
-            <h3>Social-ready Photo Strip</h3>
-            <p>Your best edited photos, ready to post as an IG/FB carousel or send into Design Studio 3.5.</p>
-          </div>
+        <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-          <div class="social-carousel-shell">
-            <div class="social-carousel-preview">
-              <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
-              <img id="socialCarouselPreviewImg" alt="Selected social-ready photo" />
-              <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
-            </div>
+        <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+          Send Selected to Design Studio 3.5
+        </button>
+      </div>
 
-            <p id="socialCarouselStatus" class="small-note"></p>
-            <div id="socialCarousel" class="social-carousel"></div>
+      <!-- RIGHT -->
+      <div class="creative-right">
+        <h3>Photo Tuner</h3>
 
-            <div class="social-carousel-actions">
-              <button id="openDesignFromCarouselBtn" type="button" class="primary-btn">
-                Open / Replace in Design Studio 3.5
-              </button>
+        <div class="tuner-preview">
+          <img id="tunerPreviewImg" alt="Preview" />
+        </div>
 
-              <button id="openCanvasFromCarouselBtn" type="button" class="secondary-btn">
-                Open in Canvas Studio
-              </button>
+        <div class="slider-block">
+          <label for="tunerBrightness">Brightness</label>
+          <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
+        </div>
 
-              <button id="downloadAllEditedBtn" type="button" class="secondary-btn">
-                Download JPGs for IG / FB Carousel
-              </button>
+        <div class="slider-block">
+          <label for="tunerContrast">Contrast</label>
+          <input type="range" id="tunerContrast" min="50" max="150" value="100" />
+        </div>
 
-              <button id="revertSocialPhotoBtn" type="button" class="secondary-btn">
-                Revert Selected to Original
-              </button>
-            </div>
-          </div>
-        </section>
+        <div class="slider-block">
+          <label for="tunerSaturation">Saturation</label>
+          <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
+        </div>
+
+        <button id="autoEnhanceBtn" class="secondary-btn full" type="button">
+          Auto Enhance
+        </button>
+
+        <button id="sendToSocialStripBtn" class="secondary-btn full" type="button">
+          Send to Social-ready Strip
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= SOCIAL READY STRIP (VIEWER + 24 THUMBS) ================= -->
+    <section class="panel social-ready-panel">
+      <div class="panel-header">
+        <h3>Social-ready Photo Strip</h3>
+        <p>Your best edited photos, ready to post as an IG/FB carousel.</p>
+      </div>
+
+      <div class="social-carousel-shell">
+        <div class="social-carousel-preview">
+          <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
+          <img id="socialCarouselPreviewImg" alt="Selected social-ready photo" />
+          <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
+        </div>
+
+        <p id="socialCarouselStatus" class="small-note"></p>
+
+        <!-- ✅ Thumbnail tray -->
+        <div id="socialCarousel" class="social-carousel"></div>
       </div>
     </section>
+
+  </div>
+</section>
+
+<!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+<aside class="floating-tools">
+  <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
+    <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
+  </button>
+
+  <button id="drillLauncher" class="tool-button" type="button" data-modal-target="drillModeModal">
+    <span class="tool-icon">🎯</span><span class="tool-label">Drill Mode</span>
+  </button>
+
+  <button id="calcLauncher" class="tool-button" type="button" data-modal-target="calcModal">
+    <span class="tool-icon">🧮</span><span class="tool-label">Calculator</span>
+  </button>
+
+  <button id="paymentLauncher" class="tool-button" type="button" data-modal-target="paymentModal">
+    <span class="tool-icon">💵</span><span class="tool-label">Payment</span>
+  </button>
+
+  <button id="incomeLauncher" class="tool-button" type="button" data-modal-target="incomeModal">
+    <span class="tool-icon">📊</span><span class="tool-label">Income</span>
+  </button>
+
+  <button id="workflowLauncher" class="tool-button" type="button" data-modal-target="workflowModal">
+    <span class="tool-icon">📋</span><span class="tool-label">Workflow</span>
+  </button>
+
+  <button id="messageLauncher" class="tool-button" type="button" data-modal-target="messageModal">
+    <span class="tool-icon">💬</span><span class="tool-label">Message AI</span>
+  </button>
+
+  <button id="askLauncher" class="tool-button" type="button" data-modal-target="askModal">
+    <span class="tool-icon">❓</span><span class="tool-label">Ask AI</span>
+  </button>
+
+  <button id="carLauncher" class="tool-button" type="button" data-modal-target="carModal">
+    <span class="tool-icon">🚗</span><span class="tool-label">Car Expert</span>
+  </button>
+
+  <button id="imageLauncher" class="tool-button" type="button" data-modal-target="imageModal">
+    <span class="tool-icon">🖼</span><span class="tool-label">Image AI</span>
+  </button>
+
+  <button id="videoLauncher" class="tool-button" type="button" data-modal-target="videoModal">
+    <span class="tool-icon">🎥</span><span class="tool-label">Video AI</span>
+  </button>
+
+  <button id="canvasLauncher" class="tool-button" type="button" data-overlay-target="creativeStudioOverlay">
+    <span class="tool-icon">🖌️</span><span class="tool-label">Canvas</span>
+  </button>
+
+  <button id="designLauncher" class="tool-button" type="button" data-overlay-target="designStudioOverlay">
+    <span class="tool-icon">🧩</span><span class="tool-label">Design</span>
+  </button>
+</aside>
+
 
   </main>
 
