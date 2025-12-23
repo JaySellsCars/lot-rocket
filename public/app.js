@@ -301,72 +301,82 @@ function wireSideTools() {
   }
 
 // ==================================================
-// HOLDING ZONE — DISABLED FOR STEP 3 (LAUNCH LOCK)
+// HOLDING ZONE (STEP 3 — TUNER SOURCE ONLY)
 // ==================================================
 function renderHoldingZone() {
-  return;
+  if (!holdingZoneEl) return;
+
+  // ✅ Holding Zone is ONLY for tuner input
+  // ❌ It must never visually act as Social-Ready strip
+  holdingZoneEl.innerHTML = "";
+
+  (STORE.holdingZonePhotos || []).forEach((url) => {
+    const img = DOC.createElement("img");
+    img.src = getProxiedImageUrl(url);
+    img.className = "holding-thumb";
+    img.loading = "lazy";
+
+    img.onclick = () => {
+      STORE.activeHoldingPhoto = url;
+      loadPhotoTuner(url);
+    };
+
+    holdingZoneEl.appendChild(img);
+  });
 }
 
+// ==================================================
+// PHOTO TUNER
+// ==================================================
+function loadPhotoTuner(url) {
+  if (!tunerPreviewImg || !url) return;
+  STORE.activeHoldingPhoto = url;
 
-    (STORE.holdingZonePhotos || []).forEach((url) => {
-      const img = DOC.createElement("img");
-      img.src = getProxiedImageUrl(url);
-      img.className = "holding-thumb" + (url === STORE.activeHoldingPhoto ? " active" : "");
-      img.onclick = () => {
-        STORE.activeHoldingPhoto = url;
-        renderHoldingZone();
-        loadPhotoTuner(url);
-      };
-      holdingZoneEl.appendChild(img);
-    });
+  tunerPreviewImg.onload = () => log("✅ Photo Tuner loaded");
+  tunerPreviewImg.onerror = () => warn("❌ Photo Tuner failed:", url);
+
+  tunerPreviewImg.src = getProxiedImageUrl(url);
+}
+
+function applyTunerFilters() {
+  if (!tunerPreviewImg) return;
+
+  const b = Number(tunerBrightness?.value || 100) / 100;
+  const c = Number(tunerContrast?.value || 100) / 100;
+  const s = Number(tunerSaturation?.value || 100) / 100;
+
+  tunerPreviewImg.style.filter = `brightness(${b}) contrast(${c}) saturate(${s})`;
+}
+
+function getActivePhotoUrl() {
+  if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
+    return STORE.activeHoldingPhoto;
   }
-
-  function loadPhotoTuner(url) {
-    if (!tunerPreviewImg || !url) return;
-    STORE.activeHoldingPhoto = url;
-
-    tunerPreviewImg.onload = () => log("✅ Photo Tuner loaded");
-    tunerPreviewImg.onerror = () => warn("❌ Photo Tuner failed:", url);
-
-    tunerPreviewImg.src = getProxiedImageUrl(url);
-  }
-
-  function applyTunerFilters() {
-    if (!tunerPreviewImg) return;
-
-    const b = Number(tunerBrightness?.value || 100) / 100;
-    const c = Number(tunerContrast?.value || 100) / 100;
-    const s = Number(tunerSaturation?.value || 100) / 100;
-
-    tunerPreviewImg.style.filter = `brightness(${b}) contrast(${c}) saturate(${s})`;
-  }
-
-  function getActivePhotoUrl() {
-    if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
-      return STORE.activeHoldingPhoto;
-    }
-    if (tunerPreviewImg?.src) return tunerPreviewImg.src;
-    return "";
-  }
-
-  // Auto Enhance
-  if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
-    autoEnhanceBtn.dataset.wired = "true";
-    autoEnhanceBtn.onclick = () => {
-      setBtnLoading(autoEnhanceBtn, true, "Enhancing…");
-      if (tunerBrightness) tunerBrightness.value = 112;
-      if (tunerContrast) tunerContrast.value = 112;
-      if (tunerSaturation) tunerSaturation.value = 118;
-      applyTunerFilters();
-      setTimeout(() => setBtnLoading(autoEnhanceBtn, false), 200);
-    };
-  }
-
-  tunerBrightness?.addEventListener("input", applyTunerFilters);
-  tunerContrast?.addEventListener("input", applyTunerFilters);
-  tunerSaturation?.addEventListener("input", applyTunerFilters);
+  if (tunerPreviewImg?.src) return tunerPreviewImg.src;
+  return "";
+}
 
 // ==================================================
+// AUTO ENHANCE
+// ==================================================
+if (autoEnhanceBtn && autoEnhanceBtn.dataset.wired !== "true") {
+  autoEnhanceBtn.dataset.wired = "true";
+  autoEnhanceBtn.onclick = () => {
+    setBtnLoading(autoEnhanceBtn, true, "Enhancing…");
+    if (tunerBrightness) tunerBrightness.value = 112;
+    if (tunerContrast) tunerContrast.value = 112;
+    if (tunerSaturation) tunerSaturation.value = 118;
+    applyTunerFilters();
+    setTimeout(() => setBtnLoading(autoEnhanceBtn, false), 200);
+  };
+}
+
+tunerBrightness?.addEventListener("input", applyTunerFilters);
+tunerContrast?.addEventListener("input", applyTunerFilters);
+tunerSaturation?.addEventListener("input", applyTunerFilters);
+
+// ==================================================
+
 // SOCIAL READY STRIP (SINGLE SOURCE) — MAIN HTML TARGETS
 // MUST RENDER ONLY INTO: #socialCarousel
 // PREVIEW IMG: #socialCarouselPreviewImg
