@@ -572,25 +572,39 @@
     </div>
   </div>
 
-  <!-- ==================================================
-       REQUIRED SIDE MODALS (EACH ID EXACTLY ONCE)
-       ================================================== -->
+<!-- ==================================================
+     REQUIRED SIDE MODALS (EACH ID EXACTLY ONCE)
+     ================================================== -->
 
-  <section id="objectionModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Objection Coach</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="objectionForm">
-          <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
-          <button type="submit">Coach Me</button>
-        </form>
-        <div id="objectionOutput"></div>
-      </div>
+<section id="objectionModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Objection Coach</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+
+    <div class="side-modal-body">
+      <form id="objectionForm">
+        <textarea
+          id="objectionInput"
+          data-ai-input
+          placeholder="Type the customer objection…"
+        ></textarea>
+
+        <button
+          id="coachMeBtn"
+          type="button"
+          data-ai-action="objection_coach"
+        >
+          Coach Me
+        </button>
+      </form>
+
+      <div id="objectionOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
+
 
   <section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
