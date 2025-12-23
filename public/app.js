@@ -540,13 +540,14 @@ async function postBoost(payload) {
         renderStep1Photos(STORE.lastBoostPhotos);
 
         if (statusText) statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
-      } catch (e) {
-        err("❌ BOOST FAILED", e);
-        if (statusText) statusText.textContent = "Boost failed.";
-        alert(e?.message || "Boost failed.");
-      } finally {
-        setBtnLoading(boostBtn, false);
-      }
+} catch (e) {
+  console.error("✘ BOOST FAILED", e);
+  if (statusText) statusText.textContent = "Boost failed.";
+  alert(e?.message || "Boost failed.");
+} finally {
+  setBtnLoading(boostBtn, false);
+}
+
     };
   }
 
