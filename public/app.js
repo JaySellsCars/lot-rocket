@@ -555,22 +555,23 @@ function renderCreativeThumbs() {
   // ==================================================
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
-    sendTopBtn.onclick = () => {
-      const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
-      if (!selected.length) return alert("Select photos first.");
+sendTopBtn.onclick = () => {
+  const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
+  if (!selected.length) return alert("Select photos first.");
 
-      STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+  // ✅ HOLDING ONLY
+  STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-      // also push into creative pool
-      STORE.creativePhotos = capMax(uniqueUrls([...(STORE.creativePhotos || []), ...STORE.holdingZonePhotos]), MAX_PHOTOS);
-      renderCreativeThumbs();
+  // ✅ CLEAR CREATIVE so you do NOT see a second row
+  STORE.creativePhotos = [];
+  renderCreativeThumbs(); // clears the grid (because it has the empty-guard)
 
-      log("✅ Sent to Step 3:", STORE.holdingZonePhotos.length);
-    };
-  }
+  renderHoldingZone();
+  if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+
+  log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+};
 
 // ==================================================
 // BOOST (SINGLE IMPLEMENTATION)
