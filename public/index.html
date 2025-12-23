@@ -152,7 +152,7 @@
   <div class="lab-card">
     <h3>Step 3 – Creative Lab</h3>
 
-    <!-- Holding Zone -->
+    <!-- Holding Zone (optional, safe) -->
     <div id="holdingZone" class="holding-zone"></div>
 
     <div class="creative-hub">
@@ -160,7 +160,23 @@
       <!-- LEFT -->
       <div class="creative-left">
         <h3>Photos</h3>
-        <div id="creativeThumbGrid"></div>
+
+        <!-- (Recommended) Drop zone + file input (safe even if you already handle uploads elsewhere) -->
+        <div id="photoDropZone" class="photo-dropzone">
+          <p>
+            Drag & Drop Photos Here<br />
+            <span>(or click to upload)</span>
+          </p>
+          <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
+        </div>
+
+        <!-- ✅ app.js expects this ID -->
+        <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
+
+        <!-- ✅ app.js expects this ID (safe even if you don’t use it yet) -->
+        <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+          Send Selected to Design Studio 3.5
+        </button>
       </div>
 
       <!-- RIGHT -->
@@ -172,39 +188,57 @@
         </div>
 
         <div class="slider-block">
-          <label>Brightness</label>
+          <label for="tunerBrightness">Brightness</label>
           <input type="range" id="tunerBrightness" min="50" max="150" value="100" />
         </div>
 
         <div class="slider-block">
-          <label>Contrast</label>
+          <label for="tunerContrast">Contrast</label>
           <input type="range" id="tunerContrast" min="50" max="150" value="100" />
         </div>
 
         <div class="slider-block">
-          <label>Saturation</label>
+          <label for="tunerSaturation">Saturation</label>
           <input type="range" id="tunerSaturation" min="50" max="150" value="100" />
         </div>
 
+        <!-- ✅ app.js expects this ID -->
         <button id="autoEnhanceBtn" class="secondary-btn full" type="button">
           Auto Enhance
         </button>
 
+        <!-- ✅ app.js expects this ID -->
         <button id="sendToSocialStripBtn" class="secondary-btn full" type="button">
           Send to Social-ready Strip
         </button>
       </div>
     </div>
 
-    <!-- SOCIAL READY STRIP -->
+    <!-- ================= SOCIAL READY STRIP (VIEWER + 24 THUMBS) ================= -->
     <section class="panel social-ready-panel">
-      <h3>Social-ready Photo Strip</h3>
-      <div id="socialReadyStrip"></div>
+      <div class="panel-header">
+        <h3>Social-ready Photo Strip</h3>
+        <p>Your best edited photos, ready to post as an IG/FB carousel.</p>
+      </div>
+
+      <div class="social-carousel-shell">
+        <div class="social-carousel-preview">
+          <button id="socialPrevBtn" type="button" class="ghost-circle-btn">‹</button>
+          <img id="socialCarouselPreviewImg" alt="Selected social-ready photo" />
+          <button id="socialNextBtn" type="button" class="ghost-circle-btn">›</button>
+        </div>
+
+        <p id="socialCarouselStatus" class="small-note"></p>
+
+        <!-- ✅ THIS is the thumbnail tray your JS/CSS must target -->
+        <div id="socialCarousel" class="social-carousel"></div>
+      </div>
     </section>
 
   </div>
 </section>
-  <!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+<!-- FLOATING TOOL BUTTONS (RIGHT SIDE) -->
+
   <aside class="floating-tools">
     <button id="objectionLauncher" class="tool-button" type="button" data-modal-target="objectionModal">
       <span class="tool-icon">💬</span><span class="tool-label">Objection Coach</span>
