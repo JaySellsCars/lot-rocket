@@ -793,6 +793,9 @@ try {
   renderCreativeThumbs();
   renderSocialStrip();
 
+  // ✅ AI tools wiring (must run before side tools)
+  wireAiModals();
+
   // 🔒 MUST BE LAST — after DOM + modals exist
   wireSideTools();
 
@@ -802,5 +805,6 @@ try {
 }
 
 // ✅ make sure you still close DOMContentLoaded at the very bottom:
-}); 
+});
+
 
