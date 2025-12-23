@@ -300,12 +300,13 @@ function wireSideTools() {
     };
   }
 
-  // ==================================================
-  // STEP 3 — HOLDING ZONE + TUNER (SINGLE SOURCE)
-  // ==================================================
-  function renderHoldingZone() {
-    if (!holdingZoneEl) return;
-    holdingZoneEl.innerHTML = "";
+// ==================================================
+// HOLDING ZONE — DISABLED FOR STEP 3 (LAUNCH LOCK)
+// ==================================================
+function renderHoldingZone() {
+  return;
+}
+
 
     (STORE.holdingZonePhotos || []).forEach((url) => {
       const img = DOC.createElement("img");
