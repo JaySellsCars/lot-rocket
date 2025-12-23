@@ -551,33 +551,36 @@ function renderCreativeThumbs() {
 // ==================================================
 
 
-  // STEP 1 → SEND TOP PHOTOS → STEP 3
-  // ==================================================
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-sendTopBtn.onclick = () => {
-  const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
-  if (!selected.length) return alert("Select photos first.");
+// ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3
+// ==================================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.onclick = () => {
+    const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
+    if (!selected.length) return alert("Select photos first.");
 
-  // ✅ HOLDING ONLY
-  STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+    // ✅ HOLDING ONLY
+    STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-  // ✅ CLEAR CREATIVE so you do NOT see a second row
-  STORE.creativePhotos = [];
-  renderCreativeThumbs(); // clears the grid (because it has the empty-guard)
+    // ✅ CLEAR CREATIVE so you do NOT see a second row
+    STORE.creativePhotos = [];
+    renderCreativeThumbs();
 
-  renderHoldingZone();
-  if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+    renderHoldingZone();
+    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
 
-  log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
-};
+    log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+  };
+}
 
 // ==================================================
 // BOOST (SINGLE IMPLEMENTATION)
 // ==================================================
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
+
 
   // 🔒 helper lives OUTSIDE click, defined once
   async function postBoost(payload) {
