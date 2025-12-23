@@ -475,7 +475,11 @@ document.addEventListener("DOMContentLoaded", () => {
       setBtnLoading(boostBtn, true, "Boosting…");
       if (statusText) statusText.textContent = "Boosting…";
 async function postBoost(payload) {
-  let res = await fetch(apiBase + "/api/boost", {
+const res = await postBoost({
+  url,
+  labelOverride: vehicleLabelInput?.value?.trim?.() || "",
+  priceOverride: priceInfoInput?.value?.trim?.() || "",
+});
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
