@@ -622,22 +622,24 @@ STORE.lastBoostPhotos = cleaned;
 // ==================================================
 // FINAL INIT (SAFE)
 // ==================================================
+try {
+  // restore existing state if any
+  if (STORE.lastBoostPhotos?.length) renderStep1Photos(STORE.lastBoostPhotos);
 
-  try {
-    // restore existing state if any
-    if (STORE.lastBoostPhotos.length) renderStep1Photos(STORE.lastBoostPhotos);
-
-    if (STORE.holdingZonePhotos.length) {
-      STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0] || "";
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
-
-    renderCreativeThumbs();
-    renderSocialStrip();
-
-    log("✅ FINAL INIT COMPLETE");
-  } catch (e) {
-    err("❌ FINAL INIT FAILED", e);
+  if (STORE.holdingZonePhotos?.length) {
+    STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0];
+    renderHoldingZone();
+    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
-});
+
+  renderCreativeThumbs?.();
+  renderSocialStrip?.();
+
+  // 🔒 MUST BE LAST — after DOM + modals exist
+  wireSideTools();
+
+  console.log("✅ FINAL INIT COMPLETE");
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
+}
+
