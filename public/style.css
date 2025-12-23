@@ -440,51 +440,60 @@ textarea{
   #photosGrid{ grid-template-columns: repeat(3, 1fr); }
 }
 /* =========================================================
-   HARD LOCK: Social-ready thumbnails MUST be thumbnails
-   (put this at the VERY BOTTOM of style.css)
+   HARD LOCK — Social-ready thumbnails MUST stay thumbnails
+   Paste this block at the VERY BOTTOM of style.css
    ========================================================= */
 
-#socialCarousel.social-carousel{
+/* Thumbnail tray container (locks layout + prevents overlap) */
+#socialCarousel{
   display: grid !important;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important; /* 6 across = 24 thumbs = 6x4 */
   gap: 10px !important;
   align-items: stretch !important;
-}
 
-/* Lock the grid row height so nothing can grow */
-#socialCarousel.social-carousel{
+  /* Lock row height so nothing can grow */
   grid-auto-rows: 92px !important;
+
+  /* Safety: stops giant images bleeding outside the tray */
+  overflow: hidden !important;
 }
 
-/* Target exactly what your JS is rendering now: <img class="social-ready-thumb"> */
-#socialCarousel.social-carousel > img.social-ready-thumb{
+/* Target what JS renders: <img class="social-ready-thumb"> */
+#socialCarousel > img.social-ready-thumb{
+  display: block !important;
   width: 100% !important;
   height: 92px !important;
   max-height: 92px !important;
   object-fit: cover !important;
-  display: block !important;
   border-radius: 14px !important;
+
   border: 1px solid rgba(148,163,184,.28) !important;
   background: rgba(2,6,23,.55) !important;
+
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* In case *any* img sneaks in without the class */
-#socialCarousel.social-carousel > img{
+/* Fallback: if any <img> ends up inside without the class */
+#socialCarousel > img{
+  display: block !important;
   width: 100% !important;
   height: 92px !important;
   max-height: 92px !important;
   object-fit: cover !important;
-  display: block !important;
+  border-radius: 14px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Make sure the PREVIEW image stays big (not affected by the thumb rules) */
+/* Preview image stays big (separate from tray rules) */
 #socialCarouselPreviewImg{
   height: 260px !important;
   object-fit: contain !important;
 }
-/* =========================================================
+
+/* ========================================================= */
+
    STEP 3 — SOCIAL READY STRIP (CANONICAL / SINGLE SOURCE)
    DOM STRUCTURE:
    #socialCarousel > img.social-ready-thumb
