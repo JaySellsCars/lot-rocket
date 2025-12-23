@@ -475,17 +475,27 @@ document.addEventListener("DOMContentLoaded", () => {
       setBtnLoading(boostBtn, true, "Boosting…");
       if (statusText) statusText.textContent = "Boosting…";
 
-      try {
-        // ✅ PRIMARY ENDPOINT (your old version uses /api/boost)
-        const res = await fetch(apiBase + "/api/boost", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url,
-            labelOverride: vehicleLabelInput?.value?.trim?.() || "",
-            priceOverride: priceInfoInput?.value?.trim?.() || "",
-          }),
-        });
+// ✅ Boost endpoint fallback: tries /api/boost, then /boost
+async function postBoost(payload) {
+  // try modern path first
+  let res = await fetch(apiBase + "/api/boost", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  // if that route doesn't exist on this backend, try legacy
+  if (res.status === 404) {
+    res = await fetch(apiBase + "/boost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  return res;
+}
+
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
