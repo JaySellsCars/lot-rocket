@@ -498,7 +498,6 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
 // ==================================================
 function renderCreativeThumbs() {
   // 🚫 STOP: Step 3 Social Carousel exists → do NOT render Creative thumbs
-  if (document.getElementById("socialCarousel")) return;
 
   if (!creativeThumbGrid) return;
   creativeThumbGrid.innerHTML = "";
