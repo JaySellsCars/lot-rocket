@@ -47,6 +47,7 @@ function normalizePhotoUrl(u) {
     url.searchParams.delete("dpr");
     url.searchParams.delete("cache");
     url.searchParams.delete("cb");
+photos = uniqPhotos(photos, 24);
 
     // normalize common CDN patterns by stripping trailing slashes
     url.pathname = url.pathname.replace(/\/+$/, "");
