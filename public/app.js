@@ -257,26 +257,34 @@ function renderSocialStrip() {
 
   normalizeSocialReady();
 
+  const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
   thumbsEl.innerHTML = "";
 
-  if (!STORE.socialReadyPhotos.length) {
+  if (!list.length) {
     previewImg.removeAttribute("src");
     if (statusEl) statusEl.textContent = "No social-ready photos yet.";
     return;
   }
 
-  const selIdx = getSelectedIndex();
-  const selected = STORE.socialReadyPhotos[selIdx] || STORE.socialReadyPhotos[0];
+  // Ensure 1 selected exists
+  let selIdx = getSelectedIndex();
+  if (selIdx < 0 || selIdx >= list.length) selIdx = 0;
+
+  // force selection state
+  STORE.socialReadyPhotos = list.map((p, i) => ({ ...p, selected: i === selIdx }));
+  const selected = STORE.socialReadyPhotos[selIdx];
 
   // big preview
   previewImg.src = getProxiedImageUrl(selected.url);
 
   // status
   const selectedCount = STORE.socialReadyPhotos.filter((p) => p.selected).length;
-  if (statusEl) statusEl.textContent = `Social-ready: ${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`;
+  if (statusEl) {
+    statusEl.textContent = `Social-ready: ${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`;
+  }
 
   // thumbs (up to MAX_PHOTOS)
-  STORE.socialReadyPhotos.forEach((item, idx) => {
+  STORE.socialReadyPhotos.slice(0, MAX_PHOTOS).forEach((item, idx) => {
     const img = DOC.createElement("img");
     img.src = getProxiedImageUrl(item.url);
     img.className = "social-ready-thumb" + (item.selected ? " selected" : "");
@@ -306,6 +314,7 @@ function wireSocialStripNav() {
 
   if (nextBtn && nextBtn.dataset.wired !== "true") {
     nextBtn.dataset.wired = "true";
+    nextBtn.dataset.wired = "true";
     nextBtn.addEventListener("click", () => {
       const idx = getSelectedIndex();
       setSelectedIndex(idx + 1);
@@ -314,8 +323,8 @@ function wireSocialStripNav() {
   }
 }
 
+// ===============================
 
-  // ===============================
   // STEP 1 — GRID
   // ===============================
 function renderStep1Photos(urls) {
