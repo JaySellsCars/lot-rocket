@@ -233,13 +233,21 @@ sendToSocialStripBtn.onclick = () => {
   }
 
   if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
-    sendToSocialStripBtn.dataset.wired = "true";
-    sendToSocialStripBtn.onclick = () => {
-      setBtnLoading(sendToSocialStripBtn, true, "Sending…");
-      const ok = pushToSocialReady(getActivePhotoUrl());
-      if (!ok) alert("No active photo selected.");
-      setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
-    };
+ sendToSocialStripBtn.onclick = () => {
+  setBtnLoading(sendToSocialStripBtn, true, "Sending…");
+
+  const url = getActivePhotoUrl();
+  console.log("📤 SEND TO STRIP url =", url);
+  console.log("🎯 activeHolding =", STORE.activeHoldingPhoto);
+
+  const ok = pushToSocialReady(url);
+  console.log("📌 STRIP COUNT =", (STORE.socialReadyPhotos || []).length);
+  console.log("🧱 stripEl?", !!$("socialReadyStrip"));
+
+  if (!ok) alert("No active photo selected.");
+  setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
+};
+
   }
 
   function uniqCleanCap(arr, cap) {
