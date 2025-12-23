@@ -620,20 +620,20 @@ STORE.lastBoostPhotos = cleaned;
 }
 
 // ==================================================
-// FINAL INIT (SAFE)
+// FINAL INIT (SAFE)  ✅ MUST BE LAST
 // ==================================================
 try {
   // restore existing state if any
   if (STORE.lastBoostPhotos?.length) renderStep1Photos(STORE.lastBoostPhotos);
 
   if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0];
+    STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0] || "";
     renderHoldingZone();
     if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
 
-  renderCreativeThumbs?.();
-  renderSocialStrip?.();
+  renderCreativeThumbs();
+  renderSocialStrip();
 
   // 🔒 MUST BE LAST — after DOM + modals exist
   wireSideTools();
@@ -642,4 +642,7 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
+// ✅ make sure you still close DOMContentLoaded at the very bottom:
+}); 
 
