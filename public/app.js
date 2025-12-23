@@ -199,16 +199,23 @@ function renderSocialStrip() {
 }
 
   
-function getActivePhotoUrl() {
-  if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
-    return STORE.activeHoldingPhoto;
-  }
+sendToSocialStripBtn.onclick = () => {
+  setBtnLoading(sendToSocialStripBtn, true, "Sending…");
 
-  const img = $("tunerPreviewImg");
-  if (img && img.src) return img.src;
+  const url = getActivePhotoUrl();
+  console.log("📤 SEND TO STRIP url =", url);
+  console.log("🎯 activeHolding =", STORE.activeHoldingPhoto);
 
-  return "";
-}
+  const ok = pushToSocialReady(url);
+  console.log("📌 STRIP COUNT =", (STORE.socialReadyPhotos || []).length);
+
+  // Confirm we can see the strip element
+  console.log("🧱 stripEl?", !!$("socialReadyStrip"));
+
+  if (!ok) alert("No active photo selected.");
+  setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
+};
+
 
 
 
