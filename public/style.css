@@ -839,4 +839,8 @@ textarea{
   object-fit:cover !important;
   display:block !important;
 }
+/* KILL THE EXTRA ROW ABOVE STEP 3 (targeted by XPath: /main/section[3]/div/div[1]) */
+main > section:nth-of-type(3) > div > div:first-child {
+  display: none !important;
+}
 
