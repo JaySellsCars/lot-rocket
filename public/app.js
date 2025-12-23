@@ -14,105 +14,86 @@ document.addEventListener("DOMContentLoaded", () => {
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
 // ==================================================
-// FLOATING SIDE BUTTONS → SIDE MODALS (SINGLE WIRE)
+// SIDE TOOLS (FLOATING BUTTONS) — HARD WIRED + SAFE
 // ==================================================
-const SIDE_TOOLS = [
-  { launcherIds: ["objectionLauncher"], modalIds: ["objectionModal"] },
-  { launcherIds: ["calcLauncher"],      modalIds: ["calcModal", "calculatorModal", "calcModeModal"] },
-  { launcherIds: ["paymentLauncher"],   modalIds: ["paymentModal"] },
-  { launcherIds: ["incomeLauncher"],    modalIds: ["incomeModal"] },
-  { launcherIds: ["workflowLauncher"],  modalIds: ["workflowModal"] },
-  { launcherIds: ["messageLauncher"],   modalIds: ["messageModal"] },
-  { launcherIds: ["askLauncher"],       modalIds: ["askModal"] },
-  { launcherIds: ["carLauncher"],       modalIds: ["carModal"] },
-  { launcherIds: ["imageLauncher"],     modalIds: ["imageModal", "imageModeModal", "imageDrawer", "imagePanel"] },
-  { launcherIds: ["videoLauncher"],     modalIds: ["videoModal", "videoModeModal", "videoDrawer", "videoPanel"] },
-  { launcherIds: ["drillLauncher"],     modalIds: ["drillModeModal"] },
-];
+function openSideModal(modalId) {
+  const m = document.getElementById(modalId);
+  if (!m) return;
 
-const resolveFirst = (ids) => (ids || []).map((id) => $(id)).find(Boolean) || null;
+  m.classList.remove("hidden");
+  m.setAttribute("aria-hidden", "false");
 
-function openSideModal(modal) {
-  if (!modal) return;
-  modal.classList.remove("hidden");
-  modal.style.display = modal.style.display || ""; // don’t force layout unless your CSS needs it
-  modal.setAttribute("aria-hidden", "false");
+  // if your CSS uses .open for animations, keep it safe:
+  m.classList.add("open");
+
+  console.log("✅ OPEN MODAL:", modalId);
 }
 
-function closeSideModal(modal) {
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
+function closeSideModal(modalEl) {
+  if (!modalEl) return;
+
+  modalEl.classList.add("hidden");
+  modalEl.setAttribute("aria-hidden", "true");
+  modalEl.classList.remove("open");
+
+  console.log("✅ CLOSE MODAL:", modalEl.id);
 }
 
-// Wire each launcher once
-SIDE_TOOLS.forEach((t) => {
-  const launcher = resolveFirst(t.launcherIds);
-  const modal = resolveFirst(t.modalIds);
-  if (!launcher || !modal) return;
+function wireSideTools() {
+  const launchers = Array.from(document.querySelectorAll(".floating-tools [data-modal-target]"));
+  const report = [];
 
-  if (launcher.dataset.wired === "true") return;
-  launcher.dataset.wired = "true";
+  launchers.forEach((btn) => {
+    const targetId = btn.getAttribute("data-modal-target");
+    const modal = targetId ? document.getElementById(targetId) : null;
 
-  launcher.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openSideModal(modal);
-  });
-
-  // click backdrop closes (only if user clicks the modal backdrop itself)
-  if (modal.dataset.backdropWired !== "true") {
-    modal.dataset.backdropWired = "true";
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeSideModal(modal);
+    report.push({
+      launcher: btn.id || "(no id)",
+      launcherFound: true,
+      modal: targetId,
+      modalFound: !!modal,
     });
-  }
-});
 
-// Global delegated close buttons + ESC
-if (document.body.dataset.sideCloseWired !== "true") {
-  document.body.dataset.sideCloseWired = "true";
+    // prevent double-wiring
+    if (btn.dataset.wired === "true") return;
+    btn.dataset.wired = "true";
 
-  document.addEventListener("click", (e) => {
-    const closeBtn = e.target.closest("[data-close], .side-modal-close, .modal-close-btn");
-    if (!closeBtn) return;
-    const modal = closeBtn.closest(".side-modal");
-    if (!modal) return;
-    closeSideModal(modal);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!targetId) return;
+      openSideModal(targetId);
+    });
   });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    document.querySelectorAll(".side-modal:not(.hidden)").forEach(closeSideModal);
+  // CLOSE buttons inside modals
+  const closers = Array.from(document.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close"));
+  closers.forEach((c) => {
+    if (c.dataset.wired === "true") return;
+    c.dataset.wired = "true";
+
+    c.addEventListener("click", (e) => {
+      e.preventDefault();
+      const modal = c.closest(".side-modal");
+      closeSideModal(modal);
+    });
   });
+
+  // click outside modal content closes (optional)
+  const modals = Array.from(document.querySelectorAll(".side-modal"));
+  modals.forEach((m) => {
+    if (m.dataset.wiredBackdrop === "true") return;
+    m.dataset.wiredBackdrop = "true";
+
+    m.addEventListener("click", (e) => {
+      // only close if they click the backdrop area
+      if (e.target === m) closeSideModal(m);
+    });
+  });
+
+  console.log("🧰 Side tools report:", report);
 }
 
-// Quick debug report
-console.log("🧰 Side tools report:", SIDE_TOOLS.map((t) => ({
-  launcher: t.launcherIds.find((id) => $(id)) || t.launcherIds[0],
-  launcherFound: !!resolveFirst(t.launcherIds),
-  modal: t.modalIds.find((id) => $(id)) || t.modalIds[0],
-  modalFound: !!resolveFirst(t.modalIds),
-})));
-
-  const INSPECT = true;
-  const log = (...a) => INSPECT && console.log(...a);
-  const warn = (...a) => INSPECT && console.warn(...a);
-  const err = (...a) => console.error(...a);
-
-  window.addEventListener("error", (e) => err("💥 WINDOW ERROR:", e.message, e.filename, e.lineno));
-  window.addEventListener("unhandledrejection", (e) => err("💥 PROMISE REJECTION:", e.reason));
-
-  DOC.addEventListener(
-    "click",
-    (e) => {
-      const el = e.target;
-      log("🖱️ CLICK:", el?.tagName, el?.id ? "#" + el.id : "", el?.className || "");
-    },
-    true
-  );
-
-  log("✅ Lot Rocket boot OK");
 
   // ==================================================
   // CONSTANTS + SINGLE STORE
