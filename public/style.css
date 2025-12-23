@@ -814,3 +814,28 @@ textarea{
   max-height: 260px !important;
   object-fit: contain !important; /* prevents huge blow-up */
 }
+/* SOCIAL READY STRIP (THUMBS) — DIRECTLY UNDER VIEWER */
+#socialCarousel{
+  display:flex !important;
+  gap:10px !important;
+  padding:10px !important;
+  overflow:auto !important;
+  max-width:100% !important;
+  margin-top:10px !important;
+}
+
+#socialCarousel .social-thumb-btn{
+  width:92px !important;
+  height:92px !important;
+  padding:0 !important;
+  border-radius:12px !important;
+  overflow:hidden !important;
+  flex:0 0 auto !important;
+}
+
+#socialCarousel .social-thumb-btn img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+}
