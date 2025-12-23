@@ -28,6 +28,47 @@ const cheerio = require("cheerio");
 const OpenAI = require("openai");
 const fetch = require("node-fetch");
 const archiver = require("archiver");
+function normalizePhotoUrl(u) {
+  if (!u) return "";
+  try {
+    const url = new URL(u);
+    // remove junk query params that cause duplicates (size/crop/cache)
+    url.searchParams.delete("width");
+    url.searchParams.delete("height");
+    url.searchParams.delete("w");
+    url.searchParams.delete("h");
+    url.searchParams.delete("fit");
+    url.searchParams.delete("crop");
+    url.searchParams.delete("quality");
+    url.searchParams.delete("q");
+    url.searchParams.delete("auto");
+    url.searchParams.delete("fm");
+    url.searchParams.delete("fmt");
+    url.searchParams.delete("dpr");
+    url.searchParams.delete("cache");
+    url.searchParams.delete("cb");
+
+    // normalize common CDN patterns by stripping trailing slashes
+    url.pathname = url.pathname.replace(/\/+$/, "");
+    return url.toString();
+  } catch {
+    return String(u).trim();
+  }
+}
+
+function uniqPhotos(urls, cap = 24) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of urls || []) {
+    const n = normalizePhotoUrl(raw);
+    if (!n) continue;
+    if (seen.has(n)) continue;
+    seen.add(n);
+    out.push(n);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
 
 // -------------------- App --------------------
 const app = express();
