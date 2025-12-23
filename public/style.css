@@ -716,3 +716,41 @@ textarea{
    If you *still* have those legacy elements in HTML, delete them
    OR tell me and I’ll re-add a compatibility block.
    ====================================================== */
+/* ==============================
+   STEP 3 — HOLDING ZONE THUMBS (SMALL)
+   ============================== */
+#holdingZone{
+  display:flex !important;
+  gap:10px !important;
+  padding:10px !important;
+  overflow:auto !important;
+  max-width:100% !important;
+}
+
+#holdingZone img.holding-thumb{
+  width:92px !important;
+  height:92px !important;
+  object-fit:cover !important;
+  border-radius:10px !important;
+  display:block !important;
+  flex:0 0 auto !important;
+}
+
+/* ==============================
+   STEP 3 — CREATIVE GRID (RED BOX) 24 THUMBS
+   ============================== */
+#creativeThumbGrid{
+  display:grid !important;
+  grid-template-columns:repeat(6, minmax(0, 1fr)) !important;
+  gap:10px !important;
+  padding:10px !important;
+  align-content:start !important;
+}
+
+#creativeThumbGrid img.creative-thumb{
+  width:100% !important;
+  height:92px !important;
+  object-fit:cover !important;
+  border-radius:10px !important;
+  display:block !important;
+}
