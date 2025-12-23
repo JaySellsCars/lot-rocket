@@ -316,6 +316,38 @@ textarea{
   transform: translateY(-1px);
   box-shadow: 0 0 26px rgba(56,189,248,0.9);
 }
+/* =====================================
+   FLOATING TOOLS — MATCH APP BUTTONS
+===================================== */
+.tool-button{
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f97316, #ec4899);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  transition:
+    transform .12s ease,
+    box-shadow .12s ease,
+    filter .12s ease,
+    opacity .12s ease;
+}
+
+/* Hover = alive */
+.tool-button:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 0 0 2px rgba(249,115,22,.25),
+    0 14px 34px rgba(0,0,0,.45);
+}
+
+/* Active = panel is open */
+.tool-button.active{
+  box-shadow:
+    0 0 0 2px rgba(249,115,22,.45),
+    0 18px 44px rgba(0,0,0,.55);
+  filter: brightness(1.1);
+}
 
 /* ---------- STEP 3 CREATIVE HUB ---------- */
 
