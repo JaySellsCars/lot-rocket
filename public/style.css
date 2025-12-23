@@ -689,3 +689,56 @@ section.column-middle{
   object-fit: contain;
   border-radius: 14px;
 }
+/* ===============================
+   FORCE SOCIAL READY THUMBNAILS (OVERRIDE — KEEP AT END)
+   =============================== */
+
+/* the thumbnail tray */
+#socialCarousel{
+  margin-top: 12px;
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important; /* 6 across = 24 = 6x4 */
+  gap: 10px !important;
+  align-items: stretch;
+}
+
+/* ANY image that ends up inside the tray becomes a thumbnail */
+#socialCarousel img{
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 92px !important;          /* ✅ thumbnail height */
+  max-height: 92px !important;
+  object-fit: cover !important;
+  border-radius: 14px !important;
+}
+
+/* if your JS uses .social-ready-thumb, keep it consistent */
+#socialCarousel .social-ready-thumb{
+  border: 1px solid rgba(148,163,184,.28) !important;
+  background: rgba(2,6,23,.55) !important;
+  cursor: pointer;
+  opacity: .85;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease, border-color .12s ease;
+}
+
+#socialCarousel .social-ready-thumb:hover{
+  transform: translateY(-1px);
+  border-color: rgba(236,72,153,.55);
+  box-shadow: 0 0 0 2px rgba(236,72,153,.15);
+  opacity: .95;
+}
+
+#socialCarousel .social-ready-thumb.selected{
+  opacity: 1;
+  border-color: rgba(251,191,36,.9);
+  box-shadow: 0 0 0 2px rgba(251,191,36,.2);
+}
+
+/* big preview stays big (viewer) */
+#socialCarouselPreviewImg{
+  width: 100%;
+  height: 260px;
+  object-fit: contain;
+  border-radius: 14px;
+}
