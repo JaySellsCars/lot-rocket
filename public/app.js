@@ -483,43 +483,45 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   };
 }
 // ==================================================
+// CREATIVE THUMBS (MINIMAL, STABLE) — HARD GUARD
+// ==================================================
+function renderCreativeThumbs() {
+  // 🚫 STOP: Step 3 Social Carousel exists → do NOT render Creative thumbs
+  if (document.getElementById("socialCarousel")) return;
 
-  // CREATIVE THUMBS (MINIMAL, STABLE)
-  // ==================================================
-  function renderCreativeThumbs() {
-    if (!creativeThumbGrid) return;
-    creativeThumbGrid.innerHTML = "";
+  if (!creativeThumbGrid) return;
+  creativeThumbGrid.innerHTML = "";
 
-    STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
+  STORE.creativePhotos = capMax(uniqueUrls(STORE.creativePhotos), MAX_PHOTOS);
 
-    STORE.creativePhotos.forEach((url) => {
-      const img = DOC.createElement("img");
-      img.src = url;
-      img.alt = "Creative photo";
-      img.loading = "lazy";
-      img.className = "creative-thumb";
-      img.title = "Click = select • Double-click = send to Social Strip";
+  STORE.creativePhotos.forEach((url) => {
+    const img = DOC.createElement("img");
+    img.src = url;
+    img.alt = "Creative photo";
+    img.loading = "lazy";
+    img.className = "creative-thumb";
+    img.title = "Click = select • Double-click = send to Social Strip";
 
-      img.addEventListener("click", () => {
-        img.classList.toggle("selected");
-        if (tunerPreviewImg) {
-          tunerPreviewImg.src = url;
-          applyTunerFilters();
-        }
-      });
-
-      img.addEventListener("dblclick", () => {
-        addToSocialReady(url, true);
-      });
-
-      creativeThumbGrid.appendChild(img);
+    img.addEventListener("click", () => {
+      img.classList.toggle("selected");
+      if (tunerPreviewImg) {
+        tunerPreviewImg.src = url;
+        applyTunerFilters();
+      }
     });
 
-    if (tunerPreviewImg && !tunerPreviewImg.src && STORE.creativePhotos.length) {
-      tunerPreviewImg.src = STORE.creativePhotos[0];
-      applyTunerFilters();
-    }
+    img.addEventListener("dblclick", () => {
+      addToSocialReady(url, true);
+    });
+
+    creativeThumbGrid.appendChild(img);
+  });
+
+  if (tunerPreviewImg && !tunerPreviewImg.src && STORE.creativePhotos.length) {
+    tunerPreviewImg.src = STORE.creativePhotos[0];
+    applyTunerFilters();
   }
+}
 
   // ==================================================
   // STEP 1 → SEND TOP PHOTOS → STEP 3
