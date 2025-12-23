@@ -845,3 +845,6 @@ textarea{
 #creativeHub .creativeHubFull .creative-thumb-grid:first-of-type {
   display: none !important;
 }
+/* Social strip spacing under viewer */
+#socialCarouselStatus { margin: 10px 0 6px !important; }
+#socialCarousel { margin-top: 6px !important; padding-top: 6px !important; }
