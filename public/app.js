@@ -313,8 +313,7 @@ function wireSocialStripNav() {
   }
 
   if (nextBtn && nextBtn.dataset.wired !== "true") {
-    nextBtn.dataset.wired = "true";
-    nextBtn.dataset.wired = "true";
+nextBtn.dataset.wired = "true";
     nextBtn.addEventListener("click", () => {
       const idx = getSelectedIndex();
       setSelectedIndex(idx + 1);
