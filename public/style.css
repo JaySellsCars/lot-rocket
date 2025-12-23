@@ -790,3 +790,27 @@ textarea{
   border-radius:10px !important;
   display:block !important;
 }
+/* ==============================
+   SOCIAL READY VIEWER — HARD CLAMP
+   ============================== */
+.social-carousel-preview,
+#socialCarouselPreviewImg{
+  max-width: 100% !important;
+}
+
+.social-carousel-preview{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  border-radius:16px !important;
+  min-height:240px !important;
+}
+
+#socialCarouselPreviewImg{
+  display:block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 260px !important;
+  object-fit: contain !important; /* prevents huge blow-up */
+}
