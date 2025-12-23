@@ -538,3 +538,45 @@ textarea{
   object-fit: contain;
   border-radius: 14px;
 }
+/* =========================================================
+   HARD LOCK: Social-ready thumbnails MUST be thumbnails
+   (put this at the VERY BOTTOM of style.css)
+   ========================================================= */
+
+#socialCarousel{
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+  grid-auto-rows: 92px !important;
+  overflow: hidden;
+}
+
+/* Target what your JS is rendering: <img class="social-ready-thumb"> */
+#socialCarousel > img.social-ready-thumb{
+  width: 100% !important;
+  height: 92px !important;
+  max-height: 92px !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(148,163,184,.28) !important;
+  background: rgba(2,6,23,.55) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* In case any img sneaks in without the class */
+#socialCarousel > img{
+  width: 100% !important;
+  height: 92px !important;
+  max-height: 92px !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Keep the PREVIEW image big */
+#socialCarouselPreviewImg{
+  height: 260px !important;
+  object-fit: contain !important;
+}
