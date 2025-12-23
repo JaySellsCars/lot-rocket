@@ -166,117 +166,154 @@ function loadPhotoTuner(url) {
     };
   }
 
-  // ===============================
-  // SEND TO SOCIAL-READY STRIP (ONE SOURCE)
-  // ===============================
-  // ===============================
-// SOCIAL-READY STRIP — RENDER (SINGLE SOURCE)
-// ===============================
-function renderSocialStrip() {
-  const strip = $("socialReadyStrip");
-  if (!strip) return;
+// ==================================================
+// SOCIAL-READY STRIP (THUMBS + BIG PREVIEW) — SINGLE SOURCE
+// Targets HTML:
+//  - thumbs: #socialCarousel
+//  - preview: #socialCarouselPreviewImg
+//  - nav: #socialPrevBtn / #socialNextBtn
+//  - status: #socialCarouselStatus
+// STORE.socialReadyPhotos: [{ url, selected, locked? }]
+// ==================================================
 
-  strip.innerHTML = "";
+function normalizeSocialReady() {
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
 
-  (STORE.socialReadyPhotos || []).forEach((item, idx) => {
-    if (!item || !item.url) return;
+  // force object format + cleanup
+  STORE.socialReadyPhotos = STORE.socialReadyPhotos
+    .map((p) => {
+      if (!p) return null;
+      if (typeof p === "string") return { url: p, selected: false, locked: false };
+      return {
+        url: p.url || "",
+        selected: !!p.selected,
+        locked: !!p.locked,
+      };
+    })
+    .filter((p) => p && p.url);
 
-    const img = DOC.createElement("img");
-img.src = getProxiedImageUrl(item.url);
-    img.className = "social-ready-thumb";
-    img.style.opacity = item.selected ? "1" : "0.5";
+  // unique by url + cap to MAX_PHOTOS
+  const seen = new Set();
+  STORE.socialReadyPhotos = STORE.socialReadyPhotos.filter((p) => {
+    if (seen.has(p.url)) return false;
+    seen.add(p.url);
+    return true;
+  }).slice(0, MAX_PHOTOS);
 
-    img.onclick = () => {
-      STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
-        ...p,
-        selected: i === idx
-      }));
-      renderSocialStrip();
-    };
-
-    strip.appendChild(img);
-  });
+  // ensure one selected
+  if (STORE.socialReadyPhotos.length) {
+    const anySelected = STORE.socialReadyPhotos.some((p) => p.selected);
+    if (!anySelected) STORE.socialReadyPhotos[0].selected = true;
+  }
 }
 
-  
-sendToSocialStripBtn.onclick = () => {
-  setBtnLoading(sendToSocialStripBtn, true, "Sending…");
+function getSelectedIndex() {
+  normalizeSocialReady();
+  return Math.max(0, STORE.socialReadyPhotos.findIndex((p) => p.selected));
+}
 
-  const url = getActivePhotoUrl();
-  console.log("📤 SEND TO STRIP url =", url);
-  console.log("🎯 activeHolding =", STORE.activeHoldingPhoto);
+function setSelectedIndex(nextIdx) {
+  normalizeSocialReady();
+  if (!STORE.socialReadyPhotos.length) return;
 
-  const ok = pushToSocialReady(url);
-  console.log("📌 STRIP COUNT =", (STORE.socialReadyPhotos || []).length);
+  const clamped = Math.max(0, Math.min(STORE.socialReadyPhotos.length - 1, nextIdx));
+  STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({ ...p, selected: i === clamped }));
+}
 
-  // Confirm we can see the strip element
-  console.log("🧱 stripEl?", !!$("socialReadyStrip"));
+function addToSocialReady(url, makeSelected = true) {
+  if (!url) return false;
+  normalizeSocialReady();
 
-  if (!ok) alert("No active photo selected.");
-  setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
-};
-
-
-
-
-  function pushToSocialReady(url) {
-    if (!url) return false;
-
-    STORE.socialReadyPhotos = [
-      { url, selected: true, locked: false },
-      ...STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false })),
-    ].filter((v, i, a) => a.findIndex((x) => x.url === v.url) === i)
-     .slice(0, MAX_PHOTOS);
-
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
+  // If already exists, just select it
+  const idx = STORE.socialReadyPhotos.findIndex((p) => p.url === url);
+  if (idx >= 0) {
+    if (makeSelected) setSelectedIndex(idx);
     return true;
   }
 
-  if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
- sendToSocialStripBtn.onclick = () => {
-  setBtnLoading(sendToSocialStripBtn, true, "Sending…");
+  // Add new
+  const next = [{ url, selected: !!makeSelected, locked: false }, ...STORE.socialReadyPhotos]
+    .filter((v, i, a) => a.findIndex((x) => x.url === v.url) === i)
+    .slice(0, MAX_PHOTOS);
 
-  const url = getActivePhotoUrl();
-  console.log("📤 SEND TO STRIP url =", url);
-  console.log("🎯 activeHolding =", STORE.activeHoldingPhoto);
-
-  const ok = pushToSocialReady(url);
-  console.log("📌 STRIP COUNT =", (STORE.socialReadyPhotos || []).length);
-  console.log("🧱 stripEl?", !!$("socialReadyStrip"));
-
-  if (!ok) alert("No active photo selected.");
-  setTimeout(() => setBtnLoading(sendToSocialStripBtn, false), 200);
-};
-
+  // enforce one selected
+  if (makeSelected) {
+    const selIdx = next.findIndex((p) => p.url === url);
+    next.forEach((p, i) => (p.selected = i === selIdx));
+  } else if (!next.some((p) => p.selected) && next.length) {
+    next[0].selected = true;
   }
 
-  function uniqCleanCap(arr, cap) {
-  const max = typeof cap === "number" && cap > 0 ? cap : MAX_PHOTOS;
-  if (!Array.isArray(arr)) return [];
+  STORE.socialReadyPhotos = next;
+  return true;
+}
 
-  const out = [];
-  const seen = new Set();
+function renderSocialStrip() {
+  // ✅ THESE MUST MATCH YOUR HTML
+  const thumbsEl = $("socialCarousel");
+  const previewImg = $("socialCarouselPreviewImg");
+  const statusEl = $("socialCarouselStatus");
+  if (!thumbsEl || !previewImg) return;
 
-  for (let i = 0; i < arr.length; i++) {
-    let raw = arr[i];
-    if (raw && typeof raw === "object" && raw.url) raw = raw.url;
+  normalizeSocialReady();
 
-    if (!raw) continue;
-    if (seen.has(raw)) continue;
+  thumbsEl.innerHTML = "";
 
-    seen.add(raw);
-    out.push(raw);
-
-    if (out.length >= max) break;
+  if (!STORE.socialReadyPhotos.length) {
+    previewImg.removeAttribute("src");
+    if (statusEl) statusEl.textContent = "No social-ready photos yet.";
+    return;
   }
 
-  return out;
+  const selIdx = getSelectedIndex();
+  const selected = STORE.socialReadyPhotos[selIdx] || STORE.socialReadyPhotos[0];
+
+  // big preview
+  previewImg.src = getProxiedImageUrl(selected.url);
+
+  // status
+  const selectedCount = STORE.socialReadyPhotos.filter((p) => p.selected).length;
+  if (statusEl) statusEl.textContent = `Social-ready: ${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`;
+
+  // thumbs (up to MAX_PHOTOS)
+  STORE.socialReadyPhotos.forEach((item, idx) => {
+    const img = DOC.createElement("img");
+    img.src = getProxiedImageUrl(item.url);
+    img.className = "social-ready-thumb" + (item.selected ? " selected" : "");
+    img.alt = "Social-ready thumb";
+
+    img.addEventListener("click", () => {
+      setSelectedIndex(idx);
+      renderSocialStrip();
+    });
+
+    thumbsEl.appendChild(img);
+  });
 }
 
-  function setStep1FromUrls(urls) {
-  const clean = uniqCleanCap(urls || [], MAX_PHOTOS);
-  STORE.step1Photos = clean.map((u) => ({ url: u, selected: false, dead: false }));
+function wireSocialStripNav() {
+  const prevBtn = $("socialPrevBtn");
+  const nextBtn = $("socialNextBtn");
+
+  if (prevBtn && prevBtn.dataset.wired !== "true") {
+    prevBtn.dataset.wired = "true";
+    prevBtn.addEventListener("click", () => {
+      const idx = getSelectedIndex();
+      setSelectedIndex(idx - 1);
+      renderSocialStrip();
+    });
+  }
+
+  if (nextBtn && nextBtn.dataset.wired !== "true") {
+    nextBtn.dataset.wired = "true";
+    nextBtn.addEventListener("click", () => {
+      const idx = getSelectedIndex();
+      setSelectedIndex(idx + 1);
+      renderSocialStrip();
+    });
+  }
 }
+
 
   // ===============================
   // STEP 1 — GRID
