@@ -138,13 +138,16 @@ function wireSideTools() {
   const autoEnhanceBtn = $("autoEnhanceBtn");
   const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
-  // Creative thumbs
-  const creativeThumbGrid = $("creativeThumbGrid");
+// Creative thumbs (RED BOX GRID)
+const creativeThumbGrid = $("creativeThumbGrid");
 
-  // Social strip
-  const socialReadyStrip = $("socialReadyStrip") || $("socialCarousel"); // supports either container id
-  const socialPreviewImg = $("socialCarouselPreviewImg"); // optional
-  const socialStatus = $("socialCarouselStatus"); // optional
+// Social strip (SINGLE SOURCE)
+const socialReadyStrip = $("socialCarousel");
+
+// Preview / status
+const socialPreviewImg = $("socialCarouselPreviewImg");
+const socialStatus = $("socialCarouselStatus");
+
 
   // ==================================================
   // UTILITIES (ONE SOURCE)
