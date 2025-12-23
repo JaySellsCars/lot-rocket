@@ -461,99 +461,87 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // ==================================================
-  // BOOST (SINGLE IMPLEMENTATION)
-  // ==================================================
-  if (boostBtn && boostBtn.dataset.wired !== "true") {
-    boostBtn.dataset.wired = "true";
+// ==================================================
+// BOOST (SINGLE IMPLEMENTATION)
+// ==================================================
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
 
-    boostBtn.onclick = async () => {
-      log("🚀 BOOST CLICK");
-      const url = dealerUrlInput?.value?.trim?.() || "";
-      if (!url) return alert("Enter vehicle URL");
-
-      setBtnLoading(boostBtn, true, "Boosting…");
-      if (statusText) statusText.textContent = "Boosting…";
-async function postBoost(payload) {
-  // PRIMARY (your old version)
-  let res = await fetch(apiBase + "/api/boost", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  // fallback for legacy backend
-  if (res.status === 404) {
-    res = await fetch(apiBase + "/boost", {
+  // 🔒 helper lives OUTSIDE click, defined once
+  async function postBoost(payload) {
+    // try modern backend
+    let res = await fetch(apiBase + "/api/boost", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
+    // fallback for legacy backend
+    if (res.status === 404) {
+      res = await fetch(apiBase + "/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    return res;
   }
 
-  return res;
+  boostBtn.onclick = async () => {
+    console.log("🚀 BOOST CLICK");
+
+    const url = dealerUrlInput?.value?.trim?.() || "";
+    if (!url) return alert("Enter vehicle URL");
+
+    setBtnLoading(boostBtn, true, "Boosting…");
+    if (statusText) statusText.textContent = "Boosting…";
+
+    try {
+      const res = await postBoost({
+        url,
+        labelOverride: vehicleLabelInput?.value?.trim?.() || "",
+        priceOverride: priceInfoInput?.value?.trim?.() || "",
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
+      }
+
+      // Update summary fields
+      const vLabel = data.vehicleLabel || data.title || "";
+      const vPrice = data.priceInfo || data.price || "";
+
+      if (summaryLabel) summaryLabel.textContent = vLabel || "—";
+      if (summaryPrice) summaryPrice.textContent = vPrice || "—";
+
+      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
+      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
+
+      // Photos
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+      STORE.lastBoostPhotos = capMax(uniqueUrls(rawPhotos), MAX_PHOTOS);
+
+      renderStep1Photos(STORE.lastBoostPhotos);
+
+      if (statusText) {
+        statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
+      }
+    } catch (e) {
+      console.error("✘ BOOST FAILED", e);
+      if (statusText) statusText.textContent = "Boost failed.";
+      alert(e?.message || "Boost failed.");
+    } finally {
+      setBtnLoading(boostBtn, false);
+    }
+  };
 }
 
+// ==================================================
+// FINAL INIT (SAFE)
+// ==================================================
 
-// ✅ Boost endpoint fallback: tries /api/boost, then /boost
-async function postBoost(payload) {
-  // try modern path first
-  let res = await fetch(apiBase + "/api/boost", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  // if that route doesn't exist on this backend, try legacy
-  if (res.status === 404) {
-    res = await fetch(apiBase + "/boost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  }
-
-  return res;
-}
-
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
-
-        log("✅ BOOST RESPONSE keys:", Object.keys(data || {}));
-        log("📥 BOOST photos:", Array.isArray(data?.photos) ? data.photos.length : "no photos array");
-
-        // Update summary fields
-        const vLabel = data.vehicleLabel || data.title || "";
-        const vPrice = data.priceInfo || data.price || "";
-
-        if (summaryLabel) summaryLabel.textContent = vLabel || "—";
-        if (summaryPrice) summaryPrice.textContent = vPrice || "—";
-
-        if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
-        if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
-
-        // Photos
-        const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-        STORE.lastBoostPhotos = capMax(uniqueUrls(rawPhotos), MAX_PHOTOS);
-
-        renderStep1Photos(STORE.lastBoostPhotos);
-
-        if (statusText) statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
-} catch (e) {
-  console.error("✘ BOOST FAILED", e);
-  if (statusText) statusText.textContent = "Boost failed.";
-  alert(e?.message || "Boost failed.");
-} finally {
-  setBtnLoading(boostBtn, false);
-}
-
-    };
-  }
-
-  // ==================================================
-  // FINAL INIT (SAFE)
-  // ==================================================
   try {
     // restore existing state if any
     if (STORE.lastBoostPhotos.length) renderStep1Photos(STORE.lastBoostPhotos);
