@@ -683,18 +683,35 @@
     </div>
   </section>
 
-  <section id="askModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Ask AI</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="askForm"></form>
-        <div id="askOutput"></div>
-      </div>
+<section id="askModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Ask AI</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+
+    <div class="side-modal-body">
+      <form id="askForm">
+        <textarea
+          id="askInput"
+          data-ai-input
+          placeholder="Ask anything…"
+        ></textarea>
+
+        <button
+          id="askAiBtn"
+          type="button"
+          data-ai-action="ask_ai"
+        >
+          Ask AI
+        </button>
+      </form>
+
+      <div id="askOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
+
 
   <section id="carModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
