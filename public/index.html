@@ -679,15 +679,31 @@
       <h3>Income Calculator</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
-      <form>
-        <textarea data-ai-input placeholder="Enter monthly goals or scenario…"></textarea>
-        <button type="button" data-ai-action="income_calc">Calculate Income</button>
+      <form id="incomeForm">
+        <input
+          id="incomeMtd"
+          type="number"
+          step="0.01"
+          placeholder="Gross to date (e.g. 32000)"
+        />
+
+        <input
+          id="incomeLastPayDate"
+          type="date"
+        />
+
+        <button id="incomeCalcBtn" type="button">
+          Estimate Income
+        </button>
       </form>
-      <div id="incomeOutput" data-ai-output></div>
+
+      <div id="incomeOutput"></div>
     </div>
   </div>
 </section>
+
 
 <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
   <div class="side-modal-content">
