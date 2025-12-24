@@ -931,3 +931,32 @@ main > section:nth-of-type(3) > div > div:first-child {
   display:block !important;
   background:#000 !important;
 }
+.calc-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:.7rem;
+  margin-bottom:.9rem;
+}
+.calc-field span{
+  display:block;
+  font-size:.85rem;
+  opacity:.85;
+  margin-bottom:.25rem;
+}
+.calc-field input{
+  width:100%;
+  padding:.65rem .75rem;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.25);
+  background: rgba(2,6,23,.55);
+  color:#fff;
+}
+.calc-result{
+  margin-top:.8rem;
+  padding:.8rem;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.18);
+  background: rgba(2,6,23,.35);
+  min-height: 44px;
+  white-space: pre-wrap;
+}
