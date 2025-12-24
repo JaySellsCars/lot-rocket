@@ -549,7 +549,9 @@ setSocialSelectedIndex(cur - 1);
         e.stopPropagation();
         const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
         if (!list.length) return;
-        setSocialSelectedIndex(curIdx + 1);
+const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+const cur = Math.max(0, list.findIndex((p) => p && p.selected));
+setSocialSelectedIndex(cur + 1);
         renderSocialStrip();
       });
     }
