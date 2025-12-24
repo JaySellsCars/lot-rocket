@@ -1012,6 +1012,42 @@ function wireAiModals() {
 
 // route map (matches your backend paths)
 const routeMap = {
+              const cfg = routeMap[action];
+
+            if (!cfg) {
+              if (output) {
+                output.textContent =
+                  `✅ Received (${action}). No route mapped yet.\n` +
+                  `Input: ${text}`;
+              } else {
+                alert(`Received (${action}). No route mapped yet.`);
+              }
+              throw new Error(`No backend route mapped for action: ${action}`);
+            }
+
+            const r = await fetch(cfg.url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cfg.body),
+            });
+
+            const data = await r.json().catch(() => ({}));
+
+            if (!r.ok) {
+              const msg = data?.message || data?.error || `HTTP ${r.status}`;
+              throw new Error(msg);
+            }
+
+            const reply =
+              data?.answer ||
+              data?.text ||
+              data?.result ||
+              data?.script ||
+              data?.reply ||
+              "";
+
+            if (output) output.textContent = reply || "✅ Done (empty response).";
+
   // ✅ Objection Coach — dedicated endpoint + prompt
   objection_coach: {
     url: "/api/objection-coach",
