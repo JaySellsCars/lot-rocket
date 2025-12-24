@@ -434,6 +434,14 @@ document.addEventListener("DOMContentLoaded", () => {
   tunerBrightness?.addEventListener("input", applyTunerFilters);
   tunerContrast?.addEventListener("input", applyTunerFilters);
   tunerSaturation?.addEventListener("input", applyTunerFilters);
+function setSocialSelectedIndex(nextIdx) {
+  normalizeSocialReady();
+  const list = STORE.socialReadyPhotos || [];
+  if (!list.length) return;
+
+  const idx = ((nextIdx % list.length) + list.length) % list.length; // wrap
+  STORE.socialReadyPhotos = list.map((p, i) => ({ ...p, selected: i === idx }));
+}
 
   // ==================================================
   // SOCIAL READY HELPERS ✅ KEEP ONE COPY ONLY
