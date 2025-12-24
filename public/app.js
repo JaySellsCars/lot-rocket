@@ -540,6 +540,50 @@ function renderSocialStrip() {
       }));
       renderSocialStrip();
     });
+// ==================================================
+// DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY)
+// ==================================================
+const downloadSocialReadyBtn = $("downloadSocialReadyBtn");
+
+if (downloadSocialReadyBtn && downloadSocialReadyBtn.dataset.wired !== "true") {
+  downloadSocialReadyBtn.dataset.wired = "true";
+
+  downloadSocialReadyBtn.addEventListener("click", async () => {
+    const locked = (STORE.socialReadyPhotos || []).filter(p => p.locked);
+
+    if (!locked.length) {
+      alert("Lock at least one photo to download.");
+      return;
+    }
+
+    if (typeof JSZip !== "function") {
+      alert("Download engine not ready (JSZip missing).");
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder("LotRocket_SocialReady");
+
+    for (let i = 0; i < locked.length; i++) {
+      const url = locked[i].url;
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        folder.file(`social_${i + 1}.jpg`, blob);
+      } catch (e) {
+        console.warn("❌ Failed to fetch:", url);
+      }
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = "LotRocket_SocialReady.zip";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+}
 
     // click lock = toggle lock
     lock.addEventListener("click", (e) => {
