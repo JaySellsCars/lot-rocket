@@ -13,6 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
+  // ===============================
+// SAFE LOGGING (prevents crashes)
+// ===============================
+const log = (...a) => console.log(...a);
+const warn = (...a) => console.warn(...a);
+
 // ==================================================
 // SIDE TOOLS (FLOATING BUTTONS) — SINGLE SOURCE (LOCKED)
 // ==================================================
