@@ -863,19 +863,76 @@ function wireAiModals() {
             }
             if (output) output.textContent = "Thinking…";
 
-            // route map (matches your backend paths)
-            const routeMap = {
-              objection_coach: { url: "/api/objection-coach", body: { objection: text } },
-              ask_ai:          { url: "/api/message-helper",  body: { mode: "ask", prompt: text } },
-              message_builder: { url: "/api/message-helper",  body: { mode: "message", prompt: text } },
-              workflow_builder:{ url: "/ai/workflow",         body: { goal: "Set the Appointment", tone: "Persuasive, Low-Pressure, High-Value", channel: "Multi-Channel", days: 10, touches: 6 } },
-              drill_master:    { url: "/api/message-helper",  body: { mode: "workflow", prompt: text } }, // if you later add /api/drill, change here
-              car_expert:      { url: "/api/message-helper",  body: { mode: "car", prompt: text } },
-              image_ai:        { url: "/api/message-helper",  body: { mode: "image-brief", prompt: text } },
-              video_ai:        { url: "/api/message-helper",  body: { mode: "video-brief", prompt: text } },
-              payment_calc:    { url: "/api/payment-helper",  body: { price: 0, down: 0, trade: 0, payoff: 0, rate: 0, term: 0, tax: 0 } },
-              income_calc:     { url: "/api/income-helper",   body: { mtd: 0, lastPayDate: "" } },
-            };
+// route map (matches your backend paths)
+const routeMap = {
+  // ✅ Objection Coach — dedicated endpoint + prompt
+  objection_coach: {
+    url: "/api/objection-coach",
+    body: { objection: text, history: "" },
+    pick: (data) => data?.answer
+  },
+
+  // ✅ Ask AI
+  ask_ai: {
+    url: "/api/message-helper",
+    body: { mode: "ask", prompt: text },
+    pick: (data) => data?.text
+  },
+
+  // ✅ Message Builder
+  message_builder: {
+    url: "/api/message-helper",
+    body: { mode: "message", prompt: text },
+    pick: (data) => data?.text
+  },
+
+  // ✅ Workflow Builder
+  workflow_builder: {
+    url: "/ai/workflow",
+    body: {
+      goal: "Set the Appointment",
+      tone: "Persuasive, Low-Pressure, High-Value",
+      channel: "Multi-Channel",
+      days: 10,
+      touches: 6
+    },
+    pick: (data) => data?.text
+  },
+
+  // ✅ Drill Master (temporary mapping)
+  drill_master: {
+    url: "/api/message-helper",
+    body: { mode: "workflow", prompt: text },
+    pick: (data) => data?.text
+  },
+
+  // ✅ Car Expert
+  car_expert: {
+    url: "/api/message-helper",
+    body: { mode: "car", prompt: text },
+    pick: (data) => data?.text
+  },
+
+  // ✅ Image AI
+  image_ai: {
+    url: "/api/message-helper",
+    body: { mode: "image-brief", prompt: text },
+    pick: (data) => data?.text
+  },
+
+  // ✅ Video AI
+  video_ai: {
+    url: "/api/message-helper",
+    body: { mode: "video-brief", prompt: text },
+    pick: (data) =>
+      data?.script || data?.text || ""
+  },
+
+  // ⛔ Leave disabled until UI inputs exist
+  payment_calc: null,
+  income_calc: null,
+};
+
 
             const cfg = routeMap[action];
 
