@@ -1,5 +1,6 @@
 // ==================================================
 // HARD KILL: prevent older cached app.js from running
+// (PUT THIS AT VERY TOP OF public/app.js)
 // ==================================================
 (function () {
   // Only allow the newest build to execute.
@@ -10,7 +11,6 @@
   window.__LOTROCKET_APPJS_VERSION__ = "999";
 })();
 
-
 // public/app.js — Lot Rocket (CLEAN SINGLE-PASS)
 // One boot. One store. One wiring pass. No duplicate blocks.
 
@@ -19,20 +19,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // BOOT GUARD + INSPECT
   // ==================================================
   if (window.__LOTROCKET_BOOTED__) {
-    console.warn("🚫 Lot Rocket boot blocked (double init)");
+    console.warn("🚫 Lot Rocket boot blocked (double init) — version:", window.__LOTROCKET_APPJS_VERSION__);
     return;
   }
   window.__LOTROCKET_BOOTED__ = true;
+  console.log("✅ APP BOOT — version:", window.__LOTROCKET_APPJS_VERSION__);
 
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
-  // ===============================
-// SAFE LOGGING (prevents crashes)
-// ===============================
-const log = (...a) => console.log(...a);
-const warn = (...a) => console.warn(...a);
 
-// ==================================================
+  // ===============================
+  // SAFE LOGGING (prevents crashes)
+  // ===============================
+  const log = (...a) => console.log(...a);
+  const warn = (...a) => console.warn(...a);
+
+  // ==================================================
+
 // SIDE TOOLS (FLOATING BUTTONS) — SINGLE SOURCE (LOCKED)
 // ==================================================
 function openSideModal(modalId) {
