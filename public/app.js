@@ -772,7 +772,7 @@ app.post("/api/payment-helper", (req, res) => {
     // negative equity increases amount financed
     const tradeEquity = trade - payoff;
 
-    // ✅ This single line handles BOTH cases correctly:
+    // ✅ Handles BOTH cases correctly
     // amountFinanced = taxedPrice - down - trade + payoff
     const amountFinanced = Math.max(taxedPrice - down - trade + payoff, 0);
 
@@ -789,7 +789,6 @@ app.post("/api/payment-helper", (req, res) => {
       2
     )} per month (rough estimate only, not a binding quote).`;
 
-    // optional debug (remove if you want)
     return res.json({ result, amountFinanced, tradeEquity });
   } catch (err) {
     console.error("payment-helper error", err);
@@ -799,9 +798,10 @@ app.post("/api/payment-helper", (req, res) => {
 
 
 
-  // ==================================================
-  // BOOST (SINGLE IMPLEMENTATION) — CLEAN
-  // ==================================================
+// ==================================================
+// BOOST (SINGLE IMPLEMENTATION) — CLEAN
+// ==================================================
+
 
   if (boostBtn && boostBtn.dataset.wired !== "true") {
     boostBtn.dataset.wired = "true";
