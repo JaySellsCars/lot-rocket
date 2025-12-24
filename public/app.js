@@ -488,132 +488,136 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
-  // ==================================================
-  // SOCIAL READY STRIP (SINGLE SOURCE) — LOCK + PREVIEW + STATUS
-  // MUST RENDER ONLY INTO: #socialCarousel
-  // PREVIEW IMG: #socialCarouselPreviewImg
-  // ==================================================
-  function renderSocialStrip() {
-    normalizeSocialReady();
+// ==================================================
+// SOCIAL READY STRIP (SINGLE SOURCE) — LOCK + PREVIEW + STATUS
+// MUST RENDER ONLY INTO: #socialCarousel
+// PREVIEW IMG: #socialCarouselPreviewImg
+// ==================================================
+function renderSocialStrip() {
+  normalizeSocialReady();
 
-    const stripEl = $("socialCarousel");
-    const previewEl = $("socialCarouselPreviewImg");
-    const statusEl = $("socialCarouselStatus");
+  const stripEl = $("socialCarousel");
+  const previewEl = $("socialCarouselPreviewImg");
+  const statusEl = $("socialCarouselStatus");
 
-    // ✅ NAV BUTTONS (prev/next) — update selected + rerender
-    // NOTE: change IDs here if yours differ
-    const prevBtn =
-      $("socialCarouselPrev") ||
-      $("socialPrevBtn") ||
-      DOC.querySelector("[data-social-prev]") ||
-      DOC.querySelector(".social-carousel-prev");
+  // ✅ NAV BUTTONS (prev/next) — update selected + rerender
+  // NOTE: change IDs here if yours differ
+  const prevBtn =
+    $("socialCarouselPrev") ||
+    $("socialPrevBtn") ||
+    DOC.querySelector("[data-social-prev]") ||
+    DOC.querySelector(".social-carousel-prev");
 
-    const nextBtn =
-      $("socialCarouselNext") ||
-      $("socialNextBtn") ||
-      DOC.querySelector("[data-social-next]") ||
-      DOC.querySelector(".social-carousel-next");
+  const nextBtn =
+    $("socialCarouselNext") ||
+    $("socialNextBtn") ||
+    DOC.querySelector("[data-social-next]") ||
+    DOC.querySelector(".social-carousel-next");
 
-    if (!stripEl) return;
+  if (!stripEl) return;
 
-    // current index (recomputed each render so it's never stale)
-    const listNow = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-    const curIdx = Math.max(0, listNow.findIndex((p) => p && p.selected));
+  // current index (recomputed each render so it's never stale)
+  const listNow = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+  const curIdx = Math.max(0, listNow.findIndex((p) => p && p.selected));
 
-    if (prevBtn && prevBtn.dataset.wired !== "true") {
-      prevBtn.dataset.wired = "true";
-      prevBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-        if (!list.length) return;
+  if (prevBtn && prevBtn.dataset.wired !== "true") {
+    prevBtn.dataset.wired = "true";
+    prevBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
       const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-const cur = Math.max(0, list.findIndex((p) => p && p.selected));
-setSocialSelectedIndex(cur - 1);
+      if (!list.length) return;
 
-        renderSocialStrip();
-      });
-    }
+      const cur = Math.max(0, list.findIndex((p) => p && p.selected));
+      setSocialSelectedIndex(cur - 1);
 
-    if (nextBtn && nextBtn.dataset.wired !== "true") {
-      nextBtn.dataset.wired = "true";
-      nextBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-        if (!list.length) return;
-const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-const cur = Math.max(0, list.findIndex((p) => p && p.selected));
-setSocialSelectedIndex(cur + 1);
-        renderSocialStrip();
-      });
-    }
-
-    stripEl.innerHTML = "";
-
-    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-
-    list.forEach((item, idx) => {
-      if (!item?.url) return;
-
-      const btn = DOC.createElement("button");
-      btn.type = "button";
-      btn.className = "social-thumb-btn";
-
-      const img = DOC.createElement("img");
-      img.src = getProxiedImageUrl(item.originalUrl || item.url);
-      img.className = "social-ready-thumb";
-      img.loading = "lazy";
-      img.style.opacity = item.selected ? "1" : "0.55";
-
-      const lock = DOC.createElement("div");
-      lock.className = "social-lock";
-      lock.textContent = item.locked ? "🔒" : "🔓";
-      lock.title = item.locked ? "Locked (will download)" : "Unlocked (won’t download)";
-
-      // select preview
-      btn.addEventListener("click", () => {
-        STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
-          ...p,
-          selected: i === idx,
-        }));
-        renderSocialStrip();
-      });
-
-      // toggle lock
-      lock.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        normalizeSocialReady();
-        const it = STORE.socialReadyPhotos[idx];
-        if (!it) return;
-        it.locked = !it.locked;
-        renderSocialStrip();
-      });
-
-      btn.appendChild(img);
-      btn.appendChild(lock);
-      stripEl.appendChild(btn);
+      renderSocialStrip();
     });
-
-    // preview
-    const active = list.find((p) => p && p.selected) || list[0];
-    if (previewEl) {
-      previewEl.src = active?.url ? getProxiedImageUrl(active.originalUrl || active.url) : "";
-    }
-
-    // status
-    if (statusEl) {
-      const lockedCount = list.filter((p) => p && p.locked).length;
-      statusEl.textContent = list.length
-        ? `Social-ready: ${list.length} • Locked: ${lockedCount}`
-        : "No social-ready photos yet.";
-    }
   }
 
-  // ==================================================
-  // DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY) ✅ CLEAN + SAFE
-  // ==================================================
+  if (nextBtn && nextBtn.dataset.wired !== "true") {
+    nextBtn.dataset.wired = "true";
+    nextBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+      if (!list.length) return;
+
+      const cur = Math.max(0, list.findIndex((p) => p && p.selected));
+      setSocialSelectedIndex(cur + 1);
+
+      renderSocialStrip();
+    });
+  }
+
+  stripEl.innerHTML = "";
+
+  const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+
+  list.forEach((item, idx) => {
+    if (!item?.url) return;
+
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "social-thumb-btn";
+
+    const img = DOC.createElement("img");
+    img.src = getProxiedImageUrl(item.originalUrl || item.url);
+    img.className = "social-ready-thumb";
+    img.loading = "lazy";
+    img.style.opacity = item.selected ? "1" : "0.55";
+
+    const lock = DOC.createElement("div");
+    lock.className = "social-lock";
+    lock.textContent = item.locked ? "🔒" : "🔓";
+    lock.title = item.locked ? "Locked (will download)" : "Unlocked (won’t download)";
+
+    // select preview
+    btn.addEventListener("click", () => {
+      STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
+        ...p,
+        selected: i === idx,
+      }));
+      renderSocialStrip();
+    });
+
+    // toggle lock
+    lock.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      normalizeSocialReady();
+      const it = STORE.socialReadyPhotos[idx];
+      if (!it) return;
+      it.locked = !it.locked;
+      renderSocialStrip();
+    });
+
+    btn.appendChild(img);
+    btn.appendChild(lock);
+    stripEl.appendChild(btn);
+  });
+
+  // preview
+  const active = list.find((p) => p && p.selected) || list[0];
+  if (previewEl) {
+    previewEl.src = active?.url ? getProxiedImageUrl(active.originalUrl || active.url) : "";
+  }
+
+  // status
+  if (statusEl) {
+    const lockedCount = list.filter((p) => p && p.locked).length;
+    statusEl.textContent = list.length
+      ? `Social-ready: ${list.length} • Locked: ${lockedCount}`
+      : "No social-ready photos yet.";
+  }
+}
+
+// ==================================================
+// DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY) ✅ CLEAN + SAFE
+// ==================================================
+
   if (downloadSocialReadyBtn && downloadSocialReadyBtn.dataset.wired !== "true") {
     downloadSocialReadyBtn.dataset.wired = "true";
 
