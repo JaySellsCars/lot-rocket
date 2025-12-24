@@ -24,16 +24,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#111827" />
 
-<!-- ✅ ONE stylesheet (LOCKED) -->
-<link rel="stylesheet" href="/style.css?v=999" />
+  <!-- ✅ ONE stylesheet (LOCKED) -->
+  <link rel="stylesheet" href="/style.css?v=999" />
 
-<!-- ✅ MAIN APP JS (MUST LOAD AFTER JSZip) -->
-<script src="/app.js?v=999" defer></script>
+  <!-- ✅ MAIN APP JS (MUST LOAD AFTER JSZip) -->
+  <script src="/app.js?v=999" defer></script>
 </head>
 
+<body class="dark-theme">
 
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="branding">
+      <h1>🚀 Lot Rocket</h1>
+      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+    </div>
+
+    <div class="header-controls">
+      <label class="theme-switch">
+        <span>Dark</span>
+        <input type="checkbox" id="themeToggle" checked />
+        <span class="slider"></span>
+        <span>Light</span>
+      </label>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="layout">
 
     <!-- ========================================= -->
+
     <!-- STEP 1 – Dealer URL Scraper (LEFT) -->
     <!-- ========================================= -->
     <section class="column-left column">
