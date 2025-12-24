@@ -745,6 +745,50 @@ function renderSocialStrip() {
       log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
     };
   }
+// ==================================================
+// PAYMENT CALC HANDLER (REAL FORM -> /api/payment-helper)
+// ==================================================
+window.handlePaymentCalc = async function (_text, { modal, output, btn } = {}) {
+  const root = modal || document;
+
+  const getNum = (sel) => Number(root.querySelector(sel)?.value || 0);
+
+  const payload = {
+    price: getNum("#payPrice"),
+    down: getNum("#payDown"),
+    trade: getNum("#payTrade"),
+    payoff: getNum("#payPayoff"),
+    rate: getNum("#payRate"),
+    term: getNum("#payTerm"),
+    tax: getNum("#payTax"),
+  };
+
+  if (!payload.price || !payload.term) {
+    const msg = "Enter at least Price and Term (months).";
+    if (output) output.textContent = "❌ " + msg;
+    return msg;
+  }
+
+  if (output) output.textContent = "Thinking…";
+
+  const res = await fetch("/api/payment-helper", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg = data?.message || data?.error || `Payment failed (HTTP ${res.status})`;
+    if (output) output.textContent = "❌ " + msg;
+    return msg;
+  }
+
+  const reply = (data?.result || "").trim();
+  if (output) output.textContent = reply || "✅ Done (empty).";
+  return reply;
+};
 
   // ==================================================
   // BOOST (SINGLE IMPLEMENTATION) — CLEAN
