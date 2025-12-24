@@ -497,47 +497,81 @@ tunerSaturation?.addEventListener("input", applyTunerFilters);
 function renderSocialStrip() {
   normalizeSocialReady();
 
-  // ✅ HARD BIND TO MAIN HTML (kills legacy #socialReadyStrip drift)
-  const stripEl = $("socialCarousel"); // <div id="socialCarousel" class="social-carousel"></div>
-  const previewEl = $("socialCarouselPreviewImg"); // <img id="socialCarouselPreviewImg" ... />
-  const statusEl = $("socialCarouselStatus"); // optional
+  const stripEl = $("socialCarousel");
+  const previewEl = $("socialCarouselPreviewImg");
+  const statusEl = $("socialCarouselStatus");
 
   if (!stripEl) return;
 
-  // hard clear (prevents overlap)
   stripEl.innerHTML = "";
 
-  const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-  const capped = list.slice(0, MAX_PHOTOS); // MAX_PHOTOS should be 24
+  const list = Array.isArray(STORE.socialReadyPhotos)
+    ? STORE.socialReadyPhotos
+    : [];
 
-  capped.forEach((item, idx) => {
+  list.forEach((item, idx) => {
     if (!item?.url) return;
 
-    // ✅ render as BUTTON + IMG so CSS can lock sizing
+    // wrapper button
     const btn = DOC.createElement("button");
     btn.type = "button";
-    btn.className = "social-thumb-btn" + (item.selected ? " is-selected" : "");
-    btn.dataset.idx = String(idx);
+    btn.className = "social-thumb-btn";
 
+    // image
     const img = DOC.createElement("img");
-    img.src = item.url;
-    img.alt = `social-${idx}`;
+    img.src = getProxiedImageUrl(item.url);
+    img.className = "social-ready-thumb";
     img.loading = "lazy";
-    img.className = "social-thumb-img";
+    img.style.opacity = item.selected ? "1" : "0.55";
 
-    btn.appendChild(img);
+    // lock badge
+    const lock = DOC.createElement("div");
+    lock.className = "social-lock";
+    lock.textContent = item.locked ? "🔒" : "🔓";
+    lock.title = item.locked
+      ? "Locked (will download)"
+      : "Unlocked (won’t download)";
 
-    btn.onclick = () => {
-      // toggle selection (single source)
+    // click thumb = select preview
+    btn.addEventListener("click", () => {
       STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
         ...p,
-        selected: i === idx ? !p.selected : p.selected,
+        selected: i === idx,
       }));
       renderSocialStrip();
-    };
+    });
 
+    // click lock = toggle lock
+    lock.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      STORE.socialReadyPhotos[idx].locked =
+        !STORE.socialReadyPhotos[idx].locked;
+
+      renderSocialStrip();
+    });
+
+    btn.appendChild(img);
+    btn.appendChild(lock);
     stripEl.appendChild(btn);
   });
+
+  // preview image
+  const active = list.find((p) => p.selected) || list[0];
+  if (previewEl && active?.url) {
+    previewEl.src = getProxiedImageUrl(active.url);
+  }
+
+  // status text
+  if (statusEl) {
+    const locked = list.filter((p) => p.locked).length;
+    statusEl.textContent = list.length
+      ? `Social-ready: ${list.length} • Locked: ${locked}`
+      : "No social-ready photos yet.";
+  }
+}
+
 
   // preview logic (safe)
   if (previewEl) {
