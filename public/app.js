@@ -541,7 +541,9 @@ function renderSocialStrip() {
       renderSocialStrip();
     });
 // ==================================================
-// DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY)
+// DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY) ✅ CLEAN + SAFE
+// (Put this in public/app.js AFTER: const DOC / const $ / STORE exists
+// and BEFORE your FINAL INIT block.)
 // ==================================================
 const downloadSocialReadyBtn = $("downloadSocialReadyBtn");
 
@@ -549,100 +551,132 @@ if (downloadSocialReadyBtn && downloadSocialReadyBtn.dataset.wired !== "true") {
   downloadSocialReadyBtn.dataset.wired = "true";
 
   downloadSocialReadyBtn.addEventListener("click", async () => {
-    const locked = (STORE.socialReadyPhotos || []).filter(p => p.locked);
+    normalizeSocialReady();
+
+    const locked = (STORE.socialReadyPhotos || []).filter((p) => p && p.locked);
 
     if (!locked.length) {
       alert("Lock at least one photo to download.");
       return;
     }
 
-    if (typeof JSZip !== "function") {
+    if (typeof window.JSZip !== "function") {
       alert("Download engine not ready (JSZip missing).");
       return;
     }
 
-    const zip = new JSZip();
+    const zip = new window.JSZip();
     const folder = zip.folder("LotRocket_SocialReady");
 
     for (let i = 0; i < locked.length; i++) {
-      const url = locked[i].url;
+      const url = locked[i].originalUrl || locked[i].url;
+      if (!url) continue;
+
       try {
-        const res = await fetch(url);
+        // ✅ always fetch the proxied URL so CORS won't kill the zip
+        const fetchUrl = getProxiedImageUrl(url);
+        const res = await fetch(fetchUrl);
         const blob = await res.blob();
-        folder.file(`social_${i + 1}.jpg`, blob);
+
+        // ✅ preserve file type if possible
+        const ext = (blob.type && blob.type.includes("png")) ? "png" : "jpg";
+        folder.file(`social_${String(i + 1).padStart(2, "0")}.${ext}`, blob);
       } catch (e) {
-        console.warn("❌ Failed to fetch:", url);
+        console.warn("❌ Failed to fetch:", url, e);
       }
     }
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
+
     const a = document.createElement("a");
     a.href = URL.createObjectURL(zipBlob);
     a.download = "LotRocket_SocialReady.zip";
     document.body.appendChild(a);
     a.click();
     a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   });
 }
-
-    // click lock = toggle lock
-    lock.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      STORE.socialReadyPhotos[idx].locked =
-        !STORE.socialReadyPhotos[idx].locked;
-
-      renderSocialStrip();
-    });
-
-    btn.appendChild(img);
-    btn.appendChild(lock);
-    stripEl.appendChild(btn);
-  });
-
-  // preview image
-  const active = list.find((p) => p.selected) || list[0];
-  if (previewEl && active?.url) {
-    previewEl.src = getProxiedImageUrl(active.url);
-  }
-
-  // status text
-  if (statusEl) {
-    const locked = list.filter((p) => p.locked).length;
-    statusEl.textContent = list.length
-      ? `Social-ready: ${list.length} • Locked: ${locked}`
-      : "No social-ready photos yet.";
-  }
-}
+// ==================================================
 
 
-// preview logic (safe)
+
+// ==================================================
+// SOCIAL READY STRIP (SINGLE SOURCE) — LOCK + PREVIEW + STATUS ✅ CLEAN
+// NOTE: This block belongs INSIDE renderSocialStrip() where you build thumbs.
+// ==================================================
+
+// click lock = toggle lock
+lock.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  normalizeSocialReady();
+
+  const item = STORE.socialReadyPhotos[idx];
+  if (!item) return;
+
+  item.locked = !item.locked;
+
+  renderSocialStrip();
+});
+
+btn.appendChild(img);
+btn.appendChild(lock);
+stripEl.appendChild(btn);
+
+// ==================================================
+// PREVIEW IMAGE + STATUS ✅ KEEP ONLY ONE SET (NO DUPLICATES)
+// Put these INSIDE renderSocialStrip() AFTER the thumbs loop.
+// ==================================================
+
+// preview image (use selected or first)
+const active = list.find((p) => p && p.selected) || list[0];
 if (previewEl) {
-  const active = STORE.socialReadyPhotos.find((p) => p && p.selected);
-  previewEl.src = active?.url || "";
+  previewEl.src = active?.url ? getProxiedImageUrl(active.originalUrl || active.url) : "";
 }
 
-
-// status (optional)
+// status text
 if (statusEl) {
-  const total = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos.length : 0;
-  const selectedCount = Array.isArray(STORE.socialReadyPhotos)
-    ? STORE.socialReadyPhotos.filter((p) => p && p.selected).length
-    : 0;
-
-  statusEl.textContent = total
-    ? `Social-ready: ${total} • Selected: ${selectedCount}`
+  const lockedCount = list.filter((p) => p && p.locked).length;
+  statusEl.textContent = list.length
+    ? `Social-ready: ${list.length} • Locked: ${lockedCount}`
     : "No social-ready photos yet.";
 }
 
+// ==================================================
+// ❌ DELETE THESE DUPLICATE BLOCKS IF THEY EXIST OUTSIDE renderSocialStrip()
+// (They cause confusion + can overwrite correct preview/status)
+// ==================================================
+
+// preview logic (safe)  ❌ DELETE
+// if (previewEl) {
+//   const active = STORE.socialReadyPhotos.find((p) => p && p.selected);
+//   previewEl.src = active?.url || "";
+// }
+
+// status (optional) ❌ DELETE
+// if (statusEl) {
+//   const total = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos.length : 0;
+//   const selectedCount = Array.isArray(STORE.socialReadyPhotos)
+//     ? STORE.socialReadyPhotos.filter((p) => p && p.selected).length
+//     : 0;
+//   statusEl.textContent = total
+//     ? `Social-ready: ${total} • Selected: ${selectedCount}`
+//     : "No social-ready photos yet.";
+// }
 
 
+
+// ==================================================
+// SOCIAL READY HELPERS ✅ CLEAN (KEEP ONE COPY ONLY)
+// ==================================================
 function addToSocialReady(url, selected = true) {
   if (!url) return false;
   normalizeSocialReady();
 
-  const existing = STORE.socialReadyPhotos.findIndex((p) => p.url === url);
+  const existing = STORE.socialReadyPhotos.findIndex((p) => p && p.url === url);
   if (existing !== -1) {
     STORE.socialReadyPhotos[existing].selected = true;
     renderSocialStrip();
@@ -656,7 +690,6 @@ function addToSocialReady(url, selected = true) {
     locked: false,
   });
 
-  // cap hard
   STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, MAX_PHOTOS);
 
   renderSocialStrip();
@@ -665,12 +698,10 @@ function addToSocialReady(url, selected = true) {
 
 function pushToSocialReady(url) {
   if (!url) return false;
-
   normalizeSocialReady();
 
-  // newest first, dedupe, cap
   const next = [{ url, originalUrl: url, selected: true, locked: false }]
-    .concat(STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false })))
+    .concat((STORE.socialReadyPhotos || []).map((p) => ({ ...p, selected: false })))
     .filter((v, i, a) => a.findIndex((x) => x.url === v.url) === i)
     .slice(0, MAX_PHOTOS);
 
@@ -679,7 +710,7 @@ function pushToSocialReady(url) {
   return true;
 }
 
-// Button: Send to Social-ready Strip
+// Button: Send to Social-ready Strip ✅ CLEAN
 if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   sendToSocialStripBtn.dataset.wired = "true";
   sendToSocialStripBtn.onclick = () => {
@@ -691,6 +722,7 @@ if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
   };
 }
 // ==================================================
+
 // CREATIVE THUMBS (MINIMAL, STABLE)
 // ==================================================
 function renderCreativeThumbs() {
