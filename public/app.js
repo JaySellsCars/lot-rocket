@@ -623,14 +623,18 @@ if (downloadSocialReadyBtn && downloadSocialReadyBtn.dataset.wired !== "true") {
     previewEl.src = active?.url || "";
   }
 
-  // status (optional)
-  if (statusEl) {
-    const selectedCount = STORE.socialReadyPhotos.filter((p) => p.selected).length;
-    statusEl.textContent = STORE.socialReadyPhotos.length
-      ? `Social-ready: ${STORE.socialReadyPhotos.length} • Selected: ${selectedCount}`
-      : "No social-ready photos yet.";
-  }
+// status (optional)
+if (statusEl) {
+  const total = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos.length : 0;
+  const selectedCount = Array.isArray(STORE.socialReadyPhotos)
+    ? STORE.socialReadyPhotos.filter((p) => p && p.selected).length
+    : 0;
+
+  statusEl.textContent = total
+    ? `Social-ready: ${total} • Selected: ${selectedCount}`
+    : "No social-ready photos yet.";
 }
+
 
 function addToSocialReady(url, selected = true) {
   if (!url) return false;
