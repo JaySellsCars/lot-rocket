@@ -617,11 +617,12 @@ if (downloadSocialReadyBtn && downloadSocialReadyBtn.dataset.wired !== "true") {
 }
 
 
-  // preview logic (safe)
-  if (previewEl) {
-    const active = STORE.socialReadyPhotos.find((p) => p.selected) || STORE.socialReadyPhotos[0];
-    previewEl.src = active?.url || "";
-  }
+// preview logic (safe)
+if (previewEl) {
+  const active = STORE.socialReadyPhotos.find((p) => p && p.selected);
+  previewEl.src = active?.url || "";
+}
+
 
 // status (optional)
 if (statusEl) {
