@@ -91,6 +91,31 @@ function wireSideTools() {
 
   console.log("🧰 Side tools wired");
 }
+// ==================================================
+// OBJECTION COACH — REAL HANDLER (frontend)
+// ==================================================
+window.handleObjectionCoach = async function (text) {
+  const out = document.querySelector("#objectionOutput");
+  if (out) out.textContent = "Thinking…";
+
+  const res = await fetch("/api/objection-coach", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ objection: text }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg = data?.message || `Objection coach failed (HTTP ${res.status})`;
+    if (out) out.textContent = "❌ " + msg;
+    return;
+  }
+
+  const reply = data?.reply || data?.response || data?.text || "";
+  if (out) out.textContent = reply || "✅ Coach response received (empty).";
+  return reply;
+};
 
 
 
