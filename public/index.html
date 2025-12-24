@@ -676,52 +676,59 @@
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
 
-    <div class="side-modal-body payment-body">
-      <div class="pay-grid">
-        <label class="pay-field">
+    <div class="side-modal-body">
+
+      <div class="calc-grid">
+        <label class="calc-field">
           <span>Price</span>
           <input id="payPrice" type="number" inputmode="decimal" placeholder="47995" />
         </label>
 
-        <label class="pay-field">
+        <label class="calc-field">
           <span>Down</span>
           <input id="payDown" type="number" inputmode="decimal" placeholder="2000" />
         </label>
 
-        <label class="pay-field">
-          <span>Trade Value</span>
-          <input id="payTrade" type="number" inputmode="decimal" placeholder="5000" />
+        <label class="calc-field">
+          <span>Trade</span>
+          <input id="payTrade" type="number" inputmode="decimal" placeholder="0" />
         </label>
 
-        <label class="pay-field">
+        <label class="calc-field">
           <span>Payoff</span>
-          <input id="payPayoff" type="number" inputmode="decimal" placeholder="8000" />
+          <input id="payPayoff" type="number" inputmode="decimal" placeholder="0" />
         </label>
 
-        <label class="pay-field">
+        <label class="calc-field">
           <span>APR %</span>
-          <input id="payRate" type="number" inputmode="decimal" placeholder="9.99" step="0.01" />
+          <input id="payRate" type="number" inputmode="decimal" step="0.1" placeholder="7.9" />
         </label>
 
-        <label class="pay-field">
+        <label class="calc-field">
           <span>Term (months)</span>
           <input id="payTerm" type="number" inputmode="numeric" placeholder="72" />
         </label>
 
-        <label class="pay-field">
+        <label class="calc-field">
           <span>Tax %</span>
-          <input id="payTax" type="number" inputmode="decimal" placeholder="6" step="0.01" />
+          <input id="payTax" type="number" inputmode="decimal" step="0.01" placeholder="6.0" />
         </label>
       </div>
 
-      <button type="button" class="primary-btn full" data-ai-action="payment_calc">
+      <button
+        id="payCalcBtn"
+        type="button"
+        class="primary-btn full"
+        data-ai-action="payment_calc"
+      >
         Estimate Payment
       </button>
 
-      <div id="paymentOutput" class="pay-output" data-ai-output></div>
+      <div id="paymentOutput" data-ai-output class="calc-result"></div>
     </div>
   </div>
 </section>
+
 
 
 
