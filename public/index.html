@@ -651,15 +651,27 @@
       <h3>Payment Calculator</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
-      <form>
-        <textarea data-ai-input placeholder="Describe the deal structure…"></textarea>
-        <button type="button" data-ai-action="payment_calc">Calculate</button>
+      <form id="paymentForm">
+        <input id="payPrice" type="number" step="0.01" placeholder="Vehicle price" />
+        <input id="payDown" type="number" step="0.01" placeholder="Down payment" />
+        <input id="payTrade" type="number" step="0.01" placeholder="Trade value" />
+        <input id="payPayoff" type="number" step="0.01" placeholder="Trade payoff" />
+        <input id="payRate" type="number" step="0.01" placeholder="APR %" />
+        <input id="payTerm" type="number" step="1" placeholder="Term (months)" />
+        <input id="payTax" type="number" step="0.01" placeholder="Tax %" />
+
+        <button id="payCalcBtn" type="button">
+          Estimate Payment
+        </button>
       </form>
-      <div id="paymentOutput" data-ai-output></div>
+
+      <div id="paymentOutput"></div>
     </div>
   </div>
 </section>
+
 
 <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
   <div class="side-modal-content">
