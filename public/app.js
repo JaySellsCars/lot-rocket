@@ -1023,19 +1023,27 @@ const routeMap = {
 // ==================================================
 try {
   // restore existing state if any
-  if (STORE.lastBoostPhotos?.length) renderStep1Photos(STORE.lastBoostPhotos);
+  if (STORE.lastBoostPhotos?.length) {
+    renderStep1Photos(STORE.lastBoostPhotos);
+  }
 
   if (STORE.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0] || "";
     renderHoldingZone();
-    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+    if (STORE.activeHoldingPhoto) {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
   }
 
   renderCreativeThumbs();
   renderSocialStrip();
 
-  // ✅ AI tools wiring (must run before side tools)
-  wireAiModals();
+  // ✅ AI tools wiring (MUST run before side tools)
+  if (typeof wireAiModals === "function") {
+    wireAiModals();
+  } else {
+    console.warn("🟣 wireAiModals() not found");
+  }
 
   // 🔒 MUST BE LAST — after DOM + modals exist
   wireSideTools();
