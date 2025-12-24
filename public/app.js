@@ -130,7 +130,8 @@ function wireSideTools() {
   const sendTopBtn = $("sendTopPhotosToCreative") || $("sendTopPhotosBtn");
 
   // Step 3 holding zone / tuner
-  const holdingZoneEl = $("holdingZone");
+const holdingZoneEl = $("holdingZone");
+
   const tunerPreviewImg = $("tunerPreviewImg");
   const tunerBrightness = $("tunerBrightness");
   const tunerContrast = $("tunerContrast");
