@@ -582,106 +582,107 @@
       <h3>Objection Coach</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-
     <div class="side-modal-body">
       <form id="objectionForm">
-        <textarea
-          id="objectionInput"
-          data-ai-input
-          placeholder="Type the customer objection…"
-        ></textarea>
-
-        <button
-          id="coachMeBtn"
-          type="button"
-          data-ai-action="objection_coach"
-        >
-          Coach Me
-        </button>
+        <textarea id="objectionInput" data-ai-input placeholder="Type the customer objection…"></textarea>
+        <button type="button" data-ai-action="objection_coach">Coach Me</button>
       </form>
-
       <div id="objectionOutput" data-ai-output></div>
     </div>
   </div>
 </section>
 
-
-
-  <section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Drill Mode</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <div id="drillOutput"></div>
-      </div>
+<section id="drillModeModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Drill Mode</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
-
-  <section id="calcModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <div id="calcOutput">Calculator UI goes here</div>
-      </div>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Enter scenario or objection to drill…"></textarea>
+        <button type="button" data-ai-action="drill_master">Start Drill</button>
+      </form>
+      <div id="drillOutput" data-ai-output></div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Payment Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="paymentForm"></form>
-        <div id="paymentOutput"></div>
-      </div>
+<section id="calcModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Calculator</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <div id="calcOutput">Calculator UI goes here</div>
+    </div>
+  </div>
+</section>
 
-  <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Income Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="incomeForm"></form>
-        <div id="incomeOutput"></div>
-      </div>
+<section id="paymentModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Payment Calculator</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Describe the deal structure…"></textarea>
+        <button type="button" data-ai-action="payment_calc">Calculate</button>
+      </form>
+      <div id="paymentOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
 
-  <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Workflow Builder</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="workflowForm"></form>
-        <div id="workflowOutput"></div>
-      </div>
+<section id="incomeModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Income Calculator</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Enter monthly goals or scenario…"></textarea>
+        <button type="button" data-ai-action="income_calc">Calculate Income</button>
+      </form>
+      <div id="incomeOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
 
-  <section id="messageModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Message Builder</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="messageForm"></form>
-        <div id="messageOutput"></div>
-      </div>
+<section id="workflowModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Workflow Builder</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Describe the sales situation…"></textarea>
+        <button type="button" data-ai-action="workflow_builder">Build Workflow</button>
+      </form>
+      <div id="workflowOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
+
+<section id="messageModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Message Builder</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Describe the message you want to send…"></textarea>
+        <button type="button" data-ai-action="message_builder">Build Message</button>
+      </form>
+      <div id="messageOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
 
 <section id="askModal" class="side-modal hidden" aria-hidden="true">
   <div class="side-modal-content">
@@ -689,68 +690,64 @@
       <h3>Ask AI</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-
     <div class="side-modal-body">
-      <form id="askForm">
-        <textarea
-          id="askInput"
-          data-ai-input
-          placeholder="Ask anything…"
-        ></textarea>
-
-        <button
-          id="askAiBtn"
-          type="button"
-          data-ai-action="ask_ai"
-        >
-          Ask AI
-        </button>
+      <form>
+        <textarea data-ai-input placeholder="Ask anything…"></textarea>
+        <button type="button" data-ai-action="ask_ai">Ask AI</button>
       </form>
-
       <div id="askOutput" data-ai-output></div>
     </div>
   </div>
 </section>
 
-
-  <section id="carModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Car Expert</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="carForm"></form>
-        <div id="carOutput"></div>
-      </div>
+<section id="carModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Car Expert</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
-
-  <section id="imageModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Image Generation</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="imageForm"></form>
-        <div id="imageOutput"></div>
-      </div>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Ask about a vehicle…"></textarea>
+        <button type="button" data-ai-action="car_expert">Ask Car Expert</button>
+      </form>
+      <div id="carOutput" data-ai-output></div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="videoModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Video Generation</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="videoForm"></form>
-        <div id="videoOutput"></div>
-      </div>
+<section id="imageModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Image Generation</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Describe the image you want…"></textarea>
+        <button type="button" data-ai-action="image_ai">Generate Image</button>
+      </form>
+      <div id="imageOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
+
+<section id="videoModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Video Generation</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <form>
+        <textarea data-ai-input placeholder="Describe the video you want…"></textarea>
+        <button type="button" data-ai-action="video_ai">Generate Video</button>
+      </form>
+      <div id="videoOutput" data-ai-output></div>
+    </div>
+  </div>
+</section>
+
 
   <!-- ✅ ONE script include (LOCKED) -->
   <script src="/app.js?v=261" defer></script>
