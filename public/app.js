@@ -129,21 +129,23 @@ window.handleObjectionCoach = async function (text) {
   const res = await fetch("/api/objection-coach", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ objection: text }),
+    body: JSON.stringify({ objection: text, history: "" }),
   });
 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const msg = data?.message || `Objection coach failed (HTTP ${res.status})`;
+    const msg = data?.message || data?.error || `Objection coach failed (HTTP ${res.status})`;
     if (out) out.textContent = "❌ " + msg;
     return;
   }
 
-  const reply = data?.reply || data?.response || data?.text || "";
+  // ✅ BACKEND RETURNS: { answer }
+  const reply = (data?.answer || "").trim();
   if (out) out.textContent = reply || "✅ Coach response received (empty).";
   return reply;
 };
+
 
 
 
