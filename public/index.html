@@ -12,8 +12,12 @@
 <head>
   <!-- KONVA (Design Studio 3.x) -->
   <script src="https://unpkg.com/konva/konva.min.js"></script>
+
   <!-- FABRIC (Canvas Studio) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
+  <!-- ✅ JSZip (REQUIRED for Download Social-Ready) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <meta charset="UTF-8" />
   <title>Lot Rocket</title>
@@ -22,29 +26,11 @@
 
   <!-- ✅ ONE stylesheet (LOCKED) -->
   <link rel="stylesheet" href="/style.css?v=261" />
+
+  <!-- ✅ MAIN APP JS (MUST LOAD AFTER JSZip) -->
+  <script src="/app.js?v=261" defer></script>
 </head>
 
-<body class="dark-theme">
-
-  <!-- HEADER -->
-  <header class="app-header">
-    <div class="branding">
-      <h1>🚀 Lot Rocket</h1>
-      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
-    </div>
-
-    <div class="header-controls">
-      <label class="theme-switch">
-        <span>Dark</span>
-        <input type="checkbox" id="themeToggle" checked />
-        <span class="slider"></span>
-        <span>Light</span>
-      </label>
-    </div>
-  </header>
-
-  <!-- MAIN -->
-  <main class="layout">
 
     <!-- ========================================= -->
     <!-- STEP 1 – Dealer URL Scraper (LEFT) -->
