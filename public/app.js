@@ -745,50 +745,58 @@ function renderSocialStrip() {
       log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
     };
   }
-// ==================================================
-// PAYMENT CALC HANDLER (REAL FORM -> /api/payment-helper)
-// ==================================================
-window.handlePaymentCalc = async function (_text, { modal, output, btn } = {}) {
-  const root = modal || document;
+// --------------------------------------------------
+// /api/payment-helper
+// --------------------------------------------------
+app.post("/api/payment-helper", (req, res) => {
+  try {
+    const price = Number(req.body.price || 0);
+    const down = Number(req.body.down || 0);
+    const trade = Number(req.body.trade || 0);
+    const payoff = Number(req.body.payoff || 0);
+    const rate = Number(req.body.rate || 0) / 100 / 12;
+    const term = Number(req.body.term || 0);
+    const taxRate = Number(req.body.tax || 0) / 100;
 
-  const getNum = (sel) => Number(root.querySelector(sel)?.value || 0);
+    if (!price || !term) {
+      return res.status(400).json({
+        error: "missing_inputs",
+        message: "Price and term (in months) are required for payment.",
+      });
+    }
 
-  const payload = {
-    price: getNum("#payPrice"),
-    down: getNum("#payDown"),
-    trade: getNum("#payTrade"),
-    payoff: getNum("#payPayoff"),
-    rate: getNum("#payRate"),
-    term: getNum("#payTerm"),
-    tax: getNum("#payTax"),
-  };
+    const taxedPrice = taxRate ? price * (1 + taxRate) : price;
 
-  if (!payload.price || !payload.term) {
-    const msg = "Enter at least Price and Term (months).";
-    if (output) output.textContent = "❌ " + msg;
-    return msg;
+    // ✅ NET TRADE EQUITY:
+    // positive equity reduces amount financed
+    // negative equity increases amount financed
+    const tradeEquity = trade - payoff;
+
+    // ✅ This single line handles BOTH cases correctly:
+    // amountFinanced = taxedPrice - down - trade + payoff
+    const amountFinanced = Math.max(taxedPrice - down - trade + payoff, 0);
+
+    let payment;
+    if (!rate) {
+      payment = amountFinanced / term;
+    } else {
+      payment =
+        (amountFinanced * rate * Math.pow(1 + rate, term)) /
+        (Math.pow(1 + rate, term) - 1);
+    }
+
+    const result = `~$${payment.toFixed(
+      2
+    )} per month (rough estimate only, not a binding quote).`;
+
+    // optional debug (remove if you want)
+    return res.json({ result, amountFinanced, tradeEquity });
+  } catch (err) {
+    console.error("payment-helper error", err);
+    return res.status(500).json({ error: "Failed to estimate payment" });
   }
+});
 
-  if (output) output.textContent = "Thinking…";
-
-  const res = await fetch("/api/payment-helper", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    const msg = data?.message || data?.error || `Payment failed (HTTP ${res.status})`;
-    if (output) output.textContent = "❌ " + msg;
-    return msg;
-  }
-
-  const reply = (data?.result || "").trim();
-  if (output) output.textContent = reply || "✅ Done (empty).";
-  return reply;
-};
 
   // ==================================================
   // BOOST (SINGLE IMPLEMENTATION) — CLEAN
