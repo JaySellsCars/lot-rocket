@@ -616,31 +616,36 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 }
 
 // ==================================================
-// BOOST (SINGLE IMPLEMENTATION)
+// BOOST (SINGLE IMPLEMENTATION) — CLEAN (NO CONSOLE 404 NOISE)
 // ==================================================
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
 
-
   // 🔒 helper lives OUTSIDE click, defined once
   async function postBoost(payload) {
-    // try modern backend
-    let res = await fetch(apiBase + "/api/boost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    let res;
 
-    // fallback for legacy backend
-    if (res.status === 404) {
+    // try modern backend FIRST
+    try {
+      res = await fetch(apiBase + "/api/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return res;
+    } catch (e) {}
+
+    // fallback to legacy backend
+    try {
       res = await fetch(apiBase + "/boost", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-    }
+      if (res.ok) return res;
+    } catch (e) {}
 
-    return res;
+    throw new Error("Boost failed: backend route not found or unreachable.");
   }
 
   boostBtn.onclick = async () => {
@@ -674,27 +679,26 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
       if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
       if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
 
-      // Photos
-const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+      // Photos (dedupe + cap)
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
 
-const seen = new Set();
-const cleaned = [];
+      const seen = new Set();
+      const cleaned = [];
 
-for (const u of rawPhotos) {
-  if (!u) continue;
+      for (const u of rawPhotos) {
+        if (!u) continue;
 
-  // normalize to kill CDN duplicates
-  const base = u.split("?")[0].replace(/\/+$/, "");
-  if (seen.has(base)) continue;
+        // normalize to kill CDN duplicates
+        const base = u.split("?")[0].replace(/\/+$/, "");
+        if (seen.has(base)) continue;
 
-  seen.add(base);
-  cleaned.push(u);
+        seen.add(base);
+        cleaned.push(u);
 
-  if (cleaned.length >= MAX_PHOTOS) break;
-}
+        if (cleaned.length >= MAX_PHOTOS) break;
+      }
 
-STORE.lastBoostPhotos = cleaned;
-
+      STORE.lastBoostPhotos = cleaned;
 
       renderStep1Photos(STORE.lastBoostPhotos);
 
@@ -711,6 +715,7 @@ STORE.lastBoostPhotos = cleaned;
   };
 }
 // ==================================================
+
 // ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
 // - Stops form submit from closing modal
 // - Stops inside clicks from bubbling to close handlers
