@@ -626,11 +626,24 @@
       <h3>Calculator</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
-      <div id="calcOutput">Calculator UI goes here</div>
+      <form id="calcForm">
+        <input
+          id="calcExpr"
+          type="text"
+          placeholder="Example: (27995 - 2000) / 72"
+        />
+        <button id="calcRunBtn" type="button">
+          Calculate
+        </button>
+      </form>
+
+      <div id="calcOutput"></div>
     </div>
   </div>
 </section>
+
 
 <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
   <div class="side-modal-content">
