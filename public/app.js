@@ -59,6 +59,11 @@ function openSideModal(modalId) {
 function closeSideModal(modalEl) {
   if (!modalEl) return;
 
+  // ✅ MOVE FOCUS OUT BEFORE HIDING (fixes aria-hidden warning)
+  if (modalEl.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
+
   // hide modal
   modalEl.classList.add("hidden");
   modalEl.setAttribute("aria-hidden", "true");
@@ -90,6 +95,8 @@ function wireSideTools() {
         openSideModal(targetId);
       });
     });
+}
+
 
   // close buttons inside modals
   document
