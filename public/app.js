@@ -36,8 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ==================================================
 
-// SIDE TOOLS (FLOATING BUTTONS) — SINGLE SOURCE (LOCKED)
 // ==================================================
+// SIDE TOOLS (FLOATING MODALS)
+// ==================================================
+
 function openSideModal(modalId) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
@@ -79,7 +81,9 @@ function closeSideModal(modalEl) {
 }
 
 function wireSideTools() {
-  // launchers
+  // ===============================
+  // OPEN buttons (floating tools)
+  // ===============================
   document
     .querySelectorAll(".floating-tools [data-modal-target]")
     .forEach((btn) => {
@@ -95,10 +99,10 @@ function wireSideTools() {
         openSideModal(targetId);
       });
     });
-}
 
-
-  // close buttons inside modals
+  // ===============================
+  // CLOSE buttons (inside modals)
+  // ===============================
   document
     .querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close")
     .forEach((btn) => {
@@ -115,6 +119,7 @@ function wireSideTools() {
   console.log("🧰 Side tools wired");
 }
 // ==================================================
+
 // OBJECTION COACH — REAL HANDLER (frontend)
 // ==================================================
 window.handleObjectionCoach = async function (text) {
