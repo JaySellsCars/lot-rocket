@@ -446,6 +446,15 @@ function setSocialSelectedIndex(nextIdx) {
   // ==================================================
   // SOCIAL READY HELPERS ✅ KEEP ONE COPY ONLY
   // ==================================================
+  function setSocialSelectedIndex(nextIdx) {
+    normalizeSocialReady();
+    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+    if (!list.length) return;
+
+    const idx = ((nextIdx % list.length) + list.length) % list.length; // wrap
+    STORE.socialReadyPhotos = list.map((p, i) => ({ ...p, selected: i === idx }));
+  }
+
   function addToSocialReady(url, selected = true) {
     if (!url) return false;
     normalizeSocialReady();
@@ -498,7 +507,49 @@ function setSocialSelectedIndex(nextIdx) {
     const previewEl = $("socialCarouselPreviewImg");
     const statusEl = $("socialCarouselStatus");
 
+    // ✅ NAV BUTTONS (prev/next) — update selected + rerender
+    // NOTE: change IDs here if yours differ
+    const prevBtn =
+      $("socialCarouselPrev") ||
+      $("socialPrevBtn") ||
+      DOC.querySelector("[data-social-prev]") ||
+      DOC.querySelector(".social-carousel-prev");
+
+    const nextBtn =
+      $("socialCarouselNext") ||
+      $("socialNextBtn") ||
+      DOC.querySelector("[data-social-next]") ||
+      DOC.querySelector(".social-carousel-next");
+
     if (!stripEl) return;
+
+    // current index (recomputed each render so it's never stale)
+    const listNow = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+    const curIdx = Math.max(0, listNow.findIndex((p) => p && p.selected));
+
+    if (prevBtn && prevBtn.dataset.wired !== "true") {
+      prevBtn.dataset.wired = "true";
+      prevBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+        if (!list.length) return;
+        setSocialSelectedIndex(curIdx - 1);
+        renderSocialStrip();
+      });
+    }
+
+    if (nextBtn && nextBtn.dataset.wired !== "true") {
+      nextBtn.dataset.wired = "true";
+      nextBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+        if (!list.length) return;
+        setSocialSelectedIndex(curIdx + 1);
+        renderSocialStrip();
+      });
+    }
 
     stripEl.innerHTML = "";
 
@@ -696,6 +747,7 @@ function setSocialSelectedIndex(nextIdx) {
   // ==================================================
   // BOOST (SINGLE IMPLEMENTATION) — CLEAN
   // ==================================================
+
   if (boostBtn && boostBtn.dataset.wired !== "true") {
     boostBtn.dataset.wired = "true";
 
