@@ -397,6 +397,8 @@ function renderHoldingZone() {
     // DOUBLE CLICK = send to Social-ready
     img.ondblclick = () => {
       addToSocialReady(url, true);
+      // (renderSocialStrip is already called inside addToSocialReady in your current build,
+      // but calling it again is safe)
       renderSocialStrip();
     };
 
@@ -404,6 +406,7 @@ function renderHoldingZone() {
   });
 }
 // ==================================================
+
 
 // PHOTO TUNER
 // ==================================================
