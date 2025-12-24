@@ -828,6 +828,7 @@ function wireAiModals() {
         btn.dataset.originalText ||= btn.textContent;
         btn.textContent = "Working…";
         btn.disabled = true;
+        if (output) output.textContent = "Thinking…";
 
         try {
           // ROUTER: call existing handlers if present (no refactor)
@@ -848,19 +849,70 @@ function wireAiModals() {
             return;
           }
 
+          // ✅ If local handler exists, use it
           if (typeof fn === "function") {
             // If your handler returns text, we render it. If it handles UI itself, fine.
             const res = await fn(text, { modal, input, output, btn });
             if (typeof res === "string" && output) output.textContent = res;
           } else {
-            // Fallback so it never feels dead
-            if (output) {
-              output.textContent =
-                `✅ Received (${action}). Handler not connected yet.\n` +
-                `Input: ${text}`;
-            } else {
-              alert(`Received (${action}). Handler not connected yet.`);
+            // ✅ CONNECTED FALLBACK (CALL BACKEND)
+            if (btn) {
+              btn.dataset.originalText ||= btn.textContent;
+              btn.textContent = "Thinking…";
+              btn.disabled = true;
             }
+            if (output) output.textContent = "Thinking…";
+
+            // route map (matches your backend paths)
+            const routeMap = {
+              objection_coach: { url: "/api/objection-coach", body: { objection: text } },
+              ask_ai:          { url: "/api/message-helper",  body: { mode: "ask", prompt: text } },
+              message_builder: { url: "/api/message-helper",  body: { mode: "message", prompt: text } },
+              workflow_builder:{ url: "/ai/workflow",         body: { goal: "Set the Appointment", tone: "Persuasive, Low-Pressure, High-Value", channel: "Multi-Channel", days: 10, touches: 6 } },
+              drill_master:    { url: "/api/message-helper",  body: { mode: "workflow", prompt: text } }, // if you later add /api/drill, change here
+              car_expert:      { url: "/api/message-helper",  body: { mode: "car", prompt: text } },
+              image_ai:        { url: "/api/message-helper",  body: { mode: "image-brief", prompt: text } },
+              video_ai:        { url: "/api/message-helper",  body: { mode: "video-brief", prompt: text } },
+              payment_calc:    { url: "/api/payment-helper",  body: { price: 0, down: 0, trade: 0, payoff: 0, rate: 0, term: 0, tax: 0 } },
+              income_calc:     { url: "/api/income-helper",   body: { mtd: 0, lastPayDate: "" } },
+            };
+
+            const cfg = routeMap[action];
+
+            if (!cfg) {
+              if (output) {
+                output.textContent =
+                  `✅ Received (${action}). No route mapped yet.\n` +
+                  `Input: ${text}`;
+              } else {
+                alert(`Received (${action}). No route mapped yet.`);
+              }
+              throw new Error(`No backend route mapped for action: ${action}`);
+            }
+
+            const r = await fetch(cfg.url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cfg.body),
+            });
+
+            const data = await r.json().catch(() => ({}));
+
+            if (!r.ok) {
+              const msg = data?.message || data?.error || `HTTP ${r.status}`;
+              throw new Error(msg);
+            }
+
+            // normalize response -> text
+            const reply =
+              data?.answer ||
+              data?.text ||
+              data?.result ||
+              data?.script ||
+              data?.reply ||
+              "";
+
+            if (output) output.textContent = reply || "✅ Done (empty response).";
           }
         } catch (err) {
           console.error("🟣 AI-WIRE: action failed", err);
@@ -876,6 +928,7 @@ function wireAiModals() {
 
   console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
 }
+
 
 // ==================================================
 // FINAL INIT (SAFE)  ✅ MUST BE LAST
