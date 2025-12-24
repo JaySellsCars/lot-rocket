@@ -147,6 +147,34 @@ window.handleObjectionCoach = async function (text) {
 };
 
 
+function wireCalculatorPad() {
+  const display = $("calcDisplay");
+  const buttons = DOC.querySelectorAll("[data-calc]");
+  if (!display || !buttons.length) return;
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = btn.dataset.calc;
+
+      if (v === "C") {
+        display.value = "";
+        return;
+      }
+
+      if (v === "=") {
+        try {
+          if (!/^[0-9+\-*/.() ]+$/.test(display.value)) throw new Error();
+          display.value = Function(`"use strict";return (${display.value})`)();
+        } catch {
+          display.value = "Error";
+        }
+        return;
+      }
+
+      display.value += v;
+    });
+  });
+}
 
 
 
