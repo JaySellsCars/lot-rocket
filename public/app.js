@@ -1,3 +1,16 @@
+// ==================================================
+// HARD KILL: prevent older cached app.js from running
+// ==================================================
+(function () {
+  // Only allow the newest build to execute.
+  // If an older cached file loads, it will see the flag and exit instantly.
+  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== "999") {
+    return;
+  }
+  window.__LOTROCKET_APPJS_VERSION__ = "999";
+})();
+
+
 // public/app.js — Lot Rocket (CLEAN SINGLE-PASS)
 // One boot. One store. One wiring pass. No duplicate blocks.
 
