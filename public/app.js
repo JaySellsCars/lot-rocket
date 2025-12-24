@@ -946,6 +946,8 @@ window.handlePaymentCalc = async function (_text, { modal, output, btn } = {}) {
 
           try {
             const handlers = {
+              payment_calc: window.handlePaymentCalc,
+
               objection_coach: window.coachMe || window.handleObjectionCoach,
               ask_ai: window.askAi || window.handleAskAi,
               drill_master: window.runDrillMaster || window.handleDrillMaster,
