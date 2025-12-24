@@ -169,7 +169,7 @@ const sendTopBtn =
 
 
   // Step 3 holding zone / tuner
-const holdingZoneEl = $("holdingZone");
+const holdingZoneEl = $("creativeThumbGrid"); // ✅ HOLDING RENDERS IN LOWER BOX
 
   const tunerPreviewImg = $("tunerPreviewImg");
   const tunerBrightness = $("tunerBrightness");
