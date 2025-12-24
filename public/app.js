@@ -958,10 +958,14 @@ window.handlePaymentCalc = async function (_text, { modal, output, btn } = {}) {
 
             const fn = handlers[action];
 
-            if (!text) {
-              alert("Type your question/objection first.");
-              return;
-            }
+// Some tools don't use textarea text (they use form inputs)
+const noTextRequired = new Set(["payment_calc", "income_calc", "calc_basic"]);
+
+if (!text && !noTextRequired.has(action)) {
+  alert("Type your question/objection first.");
+  return;
+}
+
 
             if (typeof fn === "function") {
               const res = await fn(text, { modal, input, output, btn });
