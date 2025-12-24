@@ -1135,33 +1135,33 @@ const routeMap = {
 
 
 // ==================================================
-// FINAL INIT (SAFE)  ✅ MUST BE LAST
+// FINAL INIT (SAFE) ✅ MUST BE LAST
 // ==================================================
 try {
-  // restore existing state if any
+  // restore Step 1 photos if present
   if (STORE.lastBoostPhotos?.length) {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
+  // restore Step 3 holding zone if present
   if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0] || "";
+    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
     renderHoldingZone();
-    if (STORE.activeHoldingPhoto) {
-      loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
+    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
 
+  // render Step 3 thumbs + social strip
   renderCreativeThumbs();
   renderSocialStrip();
 
-  // ✅ AI tools wiring (MUST run before side tools)
+  // AI tools wiring (must run before side tools)
   if (typeof wireAiModals === "function") {
     wireAiModals();
   } else {
     console.warn("🟣 wireAiModals() not found");
   }
 
-  // 🔒 MUST BE LAST — after DOM + modals exist
+  // side tools wiring must be last
   if (typeof wireSideTools === "function") {
     wireSideTools();
   } else {
@@ -1173,8 +1173,7 @@ try {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-// ✅ closes DOMContentLoaded (MUST be last line in file)
-}); 
-
+// ✅ CLOSES document.addEventListener("DOMContentLoaded", ... )
+});
 
 
