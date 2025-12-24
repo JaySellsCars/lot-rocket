@@ -627,22 +627,46 @@
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
 
-    <div class="side-modal-body">
-      <form id="calcForm">
-        <input
-          id="calcExpr"
-          type="text"
-          placeholder="Example: (27995 - 2000) / 72"
-        />
-        <button id="calcRunBtn" type="button">
-          Calculate
+    <div class="side-modal-body calculator-body">
+      <input
+        id="calcDisplay"
+        type="text"
+        readonly
+        placeholder="0"
+        style="font-size:22px;text-align:right;padding:10px;"
+      />
+
+      <div class="calc-grid">
+        <button data-calc="7">7</button>
+        <button data-calc="8">8</button>
+        <button data-calc="9">9</button>
+        <button data-calc="/">÷</button>
+
+        <button data-calc="4">4</button>
+        <button data-calc="5">5</button>
+        <button data-calc="6">6</button>
+        <button data-calc="*">×</button>
+
+        <button data-calc="1">1</button>
+        <button data-calc="2">2</button>
+        <button data-calc="3">3</button>
+        <button data-calc="-">−</button>
+
+        <button data-calc="0">0</button>
+        <button data-calc=".">.</button>
+        <button data-calc="C">C</button>
+        <button data-calc="+">+</button>
+
+        <button data-calc="=" style="grid-column: span 4;">
+          =
         </button>
-      </form>
+      </div>
 
       <div id="calcOutput"></div>
     </div>
   </div>
 </section>
+
 
 
 <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
