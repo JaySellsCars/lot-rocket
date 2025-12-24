@@ -529,6 +529,28 @@ textarea{
   flex-wrap: wrap;
   margin-top: 1rem;
 }
+/* Social-ready thumb button + lock badge */
+#socialCarousel .social-thumb-btn{
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+#socialCarousel .social-lock{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.55);
+  font-size: 12px;
+  line-height: 1;
+}
 
 /* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
 /* IMPORTANT: wireToolDrawer uses:
