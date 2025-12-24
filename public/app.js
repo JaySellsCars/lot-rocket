@@ -1162,14 +1162,18 @@ try {
   }
 
   // 🔒 MUST BE LAST — after DOM + modals exist
-  wireSideTools();
+  if (typeof wireSideTools === "function") {
+    wireSideTools();
+  } else {
+    console.warn("🧰 wireSideTools() not found");
+  }
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-// ✅ make sure you still close DOMContentLoaded at the very bottom:
-});
+// ✅ closes DOMContentLoaded (MUST be last line in file)
+}); 
 
 
