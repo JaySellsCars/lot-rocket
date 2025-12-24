@@ -344,7 +344,7 @@ const socialStatus = $("socialCarouselStatus");
   }
 
 // ==================================================
-// HOLDING ZONE (STEP 3 — TUNER SOURCE ONLY)
+// HOLDING ZONE (STEP 3 — TUNER SOURCE + SOCIAL SEND)
 // ==================================================
 function renderHoldingZone() {
   if (!holdingZoneEl) return;
@@ -358,17 +358,25 @@ function renderHoldingZone() {
     img.src = getProxiedImageUrl(url);
     img.className = "holding-thumb";
     img.loading = "lazy";
+    img.title = "Click = preview • Double-click = send to Social-ready";
 
+    // SINGLE CLICK = preview in tuner
     img.onclick = () => {
       STORE.activeHoldingPhoto = url;
       loadPhotoTuner(url);
     };
 
+    // DOUBLE CLICK = send to Social-ready
+    img.ondblclick = () => {
+      addToSocialReady(url, true);
+      renderSocialStrip();
+    };
+
     holdingZoneEl.appendChild(img);
   });
 }
-
 // ==================================================
+
 // PHOTO TUNER
 // ==================================================
 function loadPhotoTuner(url) {
