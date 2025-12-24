@@ -125,15 +125,23 @@ function wireSideTools() {
   const summaryLabel = $("summaryLabel") || $("vehicleTitle") || $("vehicleName");
   const summaryPrice = $("summaryPrice") || $("vehiclePrice");
 
-  // Step 1 buttons/grid
-  const boostBtn =
-    $("boostListingBtn") ||
-    $("boostThisListingBtn") ||
-    $("boostThisListing") ||
-    $("boostButton");
-  const statusText = $("statusText");
-  const photosGridEl = $("photosGrid");
-  const sendTopBtn = $("sendTopPhotosToCreative") || $("sendTopPhotosBtn");
+// ===============================
+// STEP 1 — BUTTONS / GRID (CLEAN)
+// ===============================
+const boostBtn =
+  $("boostListingBtn") ||
+  $("boostThisListingBtn") ||
+  $("boostThisListing") ||
+  $("boostButton");
+
+const statusText = $("statusText");
+const photosGridEl = $("photosGrid");
+
+// Step 1 → Send Top Photos → Step 3
+const sendTopBtn =
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosBtn");
+
 
   // Step 3 holding zone / tuner
 const holdingZoneEl = $("holdingZone");
