@@ -71,27 +71,27 @@ function extractVehicleDescriptionFromHtml($, html) {
 }
 
 
-  // 3) common dealer page containers (best-effort)
-  const selectors = [
-    "#description",
-    ".description",
-    ".vehicle-description",
-    ".vdp-description",
-    "[data-testid='vehicle-description']",
-    "[class*='description']",
-    "[id*='description']",
-    ".comments",
-    ".remarks",
-    ".dealer-comments",
-  ];
+// 3) common dealer page containers (best-effort)
+const selectors = [
+  "#description",
+  ".description",
+  ".vehicle-description",
+  ".vdp-description",
+  "[data-testid='vehicle-description']",
+  "[class*='description']",
+  "[id*='description']",
+  ".comments",
+  ".remarks",
+  ".dealer-comments",
+];
 
-  for (const sel of selectors) {
-    const t = cleanText($(sel).first().text());
-    if (t && t.length > 80) return t;
-  }
+for (const sel of selectors) {
+  const t = cleanText($(sel).first().text());
+  if (t && t.length > 80) return t;
+}
 
-  // 4) fallback: nothing found
-  return "";
+// 4) fallback: nothing found
+return "";
 }
 
 function buildFallbackPosts({ label, price, url, description }) {
