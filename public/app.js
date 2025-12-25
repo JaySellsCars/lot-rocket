@@ -435,7 +435,6 @@ document.addEventListener("DOMContentLoaded", () => {
   tunerContrast?.addEventListener("input", applyTunerFilters);
   tunerSaturation?.addEventListener("input", applyTunerFilters);
 
-
   // ==================================================
   // SOCIAL READY HELPERS ✅ KEEP ONE COPY ONLY
   // ==================================================
@@ -488,136 +487,128 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
-// ==================================================
-// SOCIAL READY STRIP (SINGLE SOURCE) — LOCK + PREVIEW + STATUS
-// MUST RENDER ONLY INTO: #socialCarousel
-// PREVIEW IMG: #socialCarouselPreviewImg
-// ==================================================
-function renderSocialStrip() {
-  normalizeSocialReady();
+  // ==================================================
+  // SOCIAL READY STRIP (SINGLE SOURCE) — LOCK + PREVIEW + STATUS
+  // MUST RENDER ONLY INTO: #socialCarousel
+  // PREVIEW IMG: #socialCarouselPreviewImg
+  // ==================================================
+  function renderSocialStrip() {
+    normalizeSocialReady();
 
-  const stripEl = $("socialCarousel");
-  const previewEl = $("socialCarouselPreviewImg");
-  const statusEl = $("socialCarouselStatus");
+    const stripEl = $("socialCarousel");
+    const previewEl = $("socialCarouselPreviewImg");
+    const statusEl = $("socialCarouselStatus");
 
-  // ✅ NAV BUTTONS (prev/next) — update selected + rerender
-  // NOTE: change IDs here if yours differ
-  const prevBtn =
-    $("socialCarouselPrev") ||
-    $("socialPrevBtn") ||
-    DOC.querySelector("[data-social-prev]") ||
-    DOC.querySelector(".social-carousel-prev");
+    const prevBtn =
+      $("socialCarouselPrev") ||
+      $("socialPrevBtn") ||
+      DOC.querySelector("[data-social-prev]") ||
+      DOC.querySelector(".social-carousel-prev");
 
-  const nextBtn =
-    $("socialCarouselNext") ||
-    $("socialNextBtn") ||
-    DOC.querySelector("[data-social-next]") ||
-    DOC.querySelector(".social-carousel-next");
+    const nextBtn =
+      $("socialCarouselNext") ||
+      $("socialNextBtn") ||
+      DOC.querySelector("[data-social-next]") ||
+      DOC.querySelector(".social-carousel-next");
 
-  if (!stripEl) return;
+    if (!stripEl) return;
 
-  // current index (recomputed each render so it's never stale)
-  const listNow = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-  const curIdx = Math.max(0, listNow.findIndex((p) => p && p.selected));
+    const listNow = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+    const curIdx = Math.max(0, listNow.findIndex((p) => p && p.selected));
 
-  if (prevBtn && prevBtn.dataset.wired !== "true") {
-    prevBtn.dataset.wired = "true";
-    prevBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    if (prevBtn && prevBtn.dataset.wired !== "true") {
+      prevBtn.dataset.wired = "true";
+      prevBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-      const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-      if (!list.length) return;
+        const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+        if (!list.length) return;
 
-      const cur = Math.max(0, list.findIndex((p) => p && p.selected));
-      setSocialSelectedIndex(cur - 1);
+        const cur = Math.max(0, list.findIndex((p) => p && p.selected));
+        setSocialSelectedIndex(cur - 1);
 
-      renderSocialStrip();
+        renderSocialStrip();
+      });
+    }
+
+    if (nextBtn && nextBtn.dataset.wired !== "true") {
+      nextBtn.dataset.wired = "true";
+      nextBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+        if (!list.length) return;
+
+        const cur = Math.max(0, list.findIndex((p) => p && p.selected));
+        setSocialSelectedIndex(cur + 1);
+
+        renderSocialStrip();
+      });
+    }
+
+    stripEl.innerHTML = "";
+
+    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+
+    list.forEach((item, idx) => {
+      if (!item?.url) return;
+
+      const btn = DOC.createElement("button");
+      btn.type = "button";
+      btn.className = "social-thumb-btn";
+
+      const img = DOC.createElement("img");
+      img.src = getProxiedImageUrl(item.originalUrl || item.url);
+      img.className = "social-ready-thumb";
+      img.loading = "lazy";
+      img.style.opacity = item.selected ? "1" : "0.55";
+
+      const lock = DOC.createElement("div");
+      lock.className = "social-lock";
+      lock.textContent = item.locked ? "🔒" : "🔓";
+      lock.title = item.locked ? "Locked (will download)" : "Unlocked (won’t download)";
+
+      btn.addEventListener("click", () => {
+        STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
+          ...p,
+          selected: i === idx,
+        }));
+        renderSocialStrip();
+      });
+
+      lock.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        normalizeSocialReady();
+        const it = STORE.socialReadyPhotos[idx];
+        if (!it) return;
+        it.locked = !it.locked;
+        renderSocialStrip();
+      });
+
+      btn.appendChild(img);
+      btn.appendChild(lock);
+      stripEl.appendChild(btn);
     });
+
+    const active = list.find((p) => p && p.selected) || list[0];
+    if (previewEl) {
+      previewEl.src = active?.url ? getProxiedImageUrl(active.originalUrl || active.url) : "";
+    }
+
+    if (statusEl) {
+      const lockedCount = list.filter((p) => p && p.locked).length;
+      statusEl.textContent = list.length
+        ? `Social-ready: ${list.length} • Locked: ${lockedCount}`
+        : "No social-ready photos yet.";
+    }
   }
 
-  if (nextBtn && nextBtn.dataset.wired !== "true") {
-    nextBtn.dataset.wired = "true";
-    nextBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-      if (!list.length) return;
-
-      const cur = Math.max(0, list.findIndex((p) => p && p.selected));
-      setSocialSelectedIndex(cur + 1);
-
-      renderSocialStrip();
-    });
-  }
-
-  stripEl.innerHTML = "";
-
-  const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-
-  list.forEach((item, idx) => {
-    if (!item?.url) return;
-
-    const btn = DOC.createElement("button");
-    btn.type = "button";
-    btn.className = "social-thumb-btn";
-
-    const img = DOC.createElement("img");
-    img.src = getProxiedImageUrl(item.originalUrl || item.url);
-    img.className = "social-ready-thumb";
-    img.loading = "lazy";
-    img.style.opacity = item.selected ? "1" : "0.55";
-
-    const lock = DOC.createElement("div");
-    lock.className = "social-lock";
-    lock.textContent = item.locked ? "🔒" : "🔓";
-    lock.title = item.locked ? "Locked (will download)" : "Unlocked (won’t download)";
-
-    // select preview
-    btn.addEventListener("click", () => {
-      STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({
-        ...p,
-        selected: i === idx,
-      }));
-      renderSocialStrip();
-    });
-
-    // toggle lock
-    lock.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      normalizeSocialReady();
-      const it = STORE.socialReadyPhotos[idx];
-      if (!it) return;
-      it.locked = !it.locked;
-      renderSocialStrip();
-    });
-
-    btn.appendChild(img);
-    btn.appendChild(lock);
-    stripEl.appendChild(btn);
-  });
-
-  // preview
-  const active = list.find((p) => p && p.selected) || list[0];
-  if (previewEl) {
-    previewEl.src = active?.url ? getProxiedImageUrl(active.originalUrl || active.url) : "";
-  }
-
-  // status
-  if (statusEl) {
-    const lockedCount = list.filter((p) => p && p.locked).length;
-    statusEl.textContent = list.length
-      ? `Social-ready: ${list.length} • Locked: ${lockedCount}`
-      : "No social-ready photos yet.";
-  }
-}
-
-// ==================================================
-// DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY) ✅ CLEAN + SAFE
-// ==================================================
-
+  // ==================================================
+  // DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY) ✅ CLEAN + SAFE
+  // ==================================================
   if (downloadSocialReadyBtn && downloadSocialReadyBtn.dataset.wired !== "true") {
     downloadSocialReadyBtn.dataset.wired = "true";
 
@@ -668,7 +659,6 @@ function renderSocialStrip() {
     });
   }
 
-  // Button: Send to Social-ready Strip ✅ CLEAN
   if (sendToSocialStripBtn && sendToSocialStripBtn.dataset.wired !== "true") {
     sendToSocialStripBtn.dataset.wired = "true";
     sendToSocialStripBtn.onclick = () => {
@@ -745,73 +735,16 @@ function renderSocialStrip() {
       log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
     };
   }
-// --------------------------------------------------
-// /api/payment-helper
-// --------------------------------------------------
-app.post("/api/payment-helper", (req, res) => {
-  try {
-    const price = Number(req.body.price || 0);
-    const down = Number(req.body.down || 0);
-    const trade = Number(req.body.trade || 0);
-    const payoff = Number(req.body.payoff || 0);
-    const rate = Number(req.body.rate || 0) / 100 / 12;
-    const term = Number(req.body.term || 0);
-    const taxRate = Number(req.body.tax || 0) / 100;
 
-    if (!price || !term) {
-      return res.status(400).json({
-        error: "missing_inputs",
-        message: "Price and term (in months) are required for payment.",
-      });
-    }
+  // ==================================================
+  // IMPORTANT:
+  // /api/payment-helper is BACKEND ONLY (Express route).
+  // Do NOT paste app.post(...) into public/app.js
+  // ==================================================
 
-    // price + tax
-    const taxedPrice = taxRate ? price * (1 + taxRate) : price;
-
-    // NET TRADE EQUITY
-    // positive equity lowers amount financed
-    // negative equity increases amount financed
-    const tradeEquity = trade - payoff;
-
-    // FINAL AMOUNT FINANCED
-    // taxedPrice - down - trade + payoff
-    const amountFinanced = Math.max(
-      taxedPrice - down - trade + payoff,
-      0
-    );
-
-    let payment;
-    if (!rate) {
-      payment = amountFinanced / term;
-    } else {
-      payment =
-        (amountFinanced * rate * Math.pow(1 + rate, term)) /
-        (Math.pow(1 + rate, term) - 1);
-    }
-
-    const result = `~$${payment.toFixed(
-      2
-    )} per month (rough estimate only, not a binding quote).`;
-
-    return res.json({
-      result,
-      amountFinanced,
-      tradeEquity,
-    });
-  } catch (err) {
-    console.error("payment-helper error", err);
-    return res.status(500).json({ error: "Failed to estimate payment" });
-  }
-});
-
-
-
-// ==================================================
-// BOOST (SINGLE IMPLEMENTATION) — CLEAN
-// ==================================================
-
-
-
+  // ==================================================
+  // BOOST (SINGLE IMPLEMENTATION) — CLEAN
+  // ==================================================
   if (boostBtn && boostBtn.dataset.wired !== "true") {
     boostBtn.dataset.wired = "true";
 
@@ -894,282 +827,269 @@ app.post("/api/payment-helper", (req, res) => {
     };
   }
 
-// ==================================================
-// ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
-// ==================================================
-function wireAiModals() {
-  const modals = Array.from(DOC.querySelectorAll(".side-modal"));
-  if (!modals.length) {
-    console.warn("🟣 AI-WIRE: no .side-modal found");
-    return;
-  }
-
-  // helpers (scoped inside wire)
-  const num = (v) => {
-    if (v == null) return 0;
-    const s = String(v).replace(/[^\d.-]/g, "");
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  const pick = (root, selectors) => {
-    for (const sel of selectors) {
-      const el = root.querySelector(sel);
-      if (el) return el;
+  // ==================================================
+  // ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
+  // ==================================================
+  function wireAiModals() {
+    const modals = Array.from(DOC.querySelectorAll(".side-modal"));
+    if (!modals.length) {
+      console.warn("🟣 AI-WIRE: no .side-modal found");
+      return;
     }
-    return null;
-  };
 
-  const collectPaymentBody = (modal) => {
-    const priceEl = pick(modal, ["#payPrice", "#paymentPrice", "input[name='price']", "#price"]);
-    const downEl = pick(modal, ["#payDown", "#paymentDown", "input[name='down']", "#down"]);
-    const tradeEl = pick(modal, ["#payTrade", "#paymentTrade", "input[name='trade']", "#trade"]);
-    const payoffEl = pick(modal, ["#payPayoff", "#paymentPayoff", "input[name='payoff']", "#payoff"]);
-    const aprEl = pick(modal, ["#payApr", "#paymentApr", "input[name='apr']", "#apr", "input[name='rate']", "#rate"]);
-    const termEl = pick(modal, ["#payTerm", "#paymentTerm", "input[name='term']", "#term"]);
-    const taxEl = pick(modal, ["#payTax", "#paymentTax", "input[name='tax']", "#tax"]);
-
-    return {
-      price: num(priceEl?.value),
-      down: num(downEl?.value),
-      trade: num(tradeEl?.value),
-      payoff: num(payoffEl?.value),
-      rate: num(aprEl?.value),   // APR %
-      term: num(termEl?.value),  // months
-      tax: num(taxEl?.value),    // %
+    const num = (v) => {
+      if (v == null) return 0;
+      const s = String(v).replace(/[^\d.-]/g, "");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
     };
-  };
 
-  const collectIncomeBody = (modal) => {
-    // You can rename these later — this just makes it work now.
-    const mtdEl = pick(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"]);
-    const dateEl = pick(modal, ["#incomeLastPayDate", "input[name='lastPayDate']", "#lastPayDate", "input[type='date']"]);
-
-    return {
-      mtd: num(mtdEl?.value),
-      lastPayDate: (dateEl?.value || "").trim(),
+    const pick = (root, selectors) => {
+      for (const sel of selectors) {
+        const el = root.querySelector(sel);
+        if (el) return el;
+      }
+      return null;
     };
-  };
 
-  modals.forEach((modal) => {
-    if (modal.dataset.aiWired === "true") return;
-    modal.dataset.aiWired = "true";
+    const collectPaymentBody = (modal) => {
+      const priceEl = pick(modal, ["#payPrice", "#paymentPrice", "input[name='price']", "#price"]);
+      const downEl = pick(modal, ["#payDown", "#paymentDown", "input[name='down']", "#down"]);
+      const tradeEl = pick(modal, ["#payTrade", "#paymentTrade", "input[name='trade']", "#trade"]);
+      const payoffEl = pick(modal, ["#payPayoff", "#paymentPayoff", "input[name='payoff']", "#payoff"]);
+      const aprEl = pick(modal, ["#payApr", "#paymentApr", "input[name='apr']", "#apr", "input[name='rate']", "#rate"]);
+      const termEl = pick(modal, ["#payTerm", "#paymentTerm", "input[name='term']", "#term"]);
+      const taxEl = pick(modal, ["#payTax", "#paymentTax", "input[name='tax']", "#tax"]);
 
-    const inner =
-      modal.querySelector(".side-modal-content") ||
-      modal.querySelector(".modal-content") ||
-      modal.firstElementChild;
+      return {
+        price: num(priceEl?.value),
+        down: num(downEl?.value),
+        trade: num(tradeEl?.value),
+        payoff: num(payoffEl?.value),
+        rate: num(aprEl?.value),
+        term: num(termEl?.value),
+        tax: num(taxEl?.value),
+      };
+    };
 
-    if (inner && inner.dataset.aiInnerWired !== "true") {
-      inner.dataset.aiInnerWired = "true";
-      inner.addEventListener("click", (e) => e.stopPropagation());
-      inner.addEventListener("pointerdown", (e) => e.stopPropagation());
-    }
+    const collectIncomeBody = (modal) => {
+      const mtdEl = pick(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"]);
+      const dateEl = pick(modal, ["#incomeLastPayDate", "input[name='lastPayDate']", "#lastPayDate", "input[type='date']"]);
 
-    const form = modal.querySelector("form");
-    if (form && form.dataset.aiFormWired !== "true") {
-      form.dataset.aiFormWired = "true";
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log("🟣 AI-WIRE: submit blocked", modal.id || "(no id)");
-      });
-    }
+      return {
+        mtd: num(mtdEl?.value),
+        lastPayDate: (dateEl?.value || "").trim(),
+      };
+    };
 
-    const actionBtns = Array.from(modal.querySelectorAll("[data-ai-action]"));
-    actionBtns.forEach((btn) => {
-      if (btn.dataset.aiBtnWired === "true") return;
-      btn.dataset.aiBtnWired = "true";
-      btn.type = "button";
+    modals.forEach((modal) => {
+      if (modal.dataset.aiWired === "true") return;
+      modal.dataset.aiWired = "true";
 
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      const inner =
+        modal.querySelector(".side-modal-content") ||
+        modal.querySelector(".modal-content") ||
+        modal.firstElementChild;
 
-        const action = (btn.getAttribute("data-ai-action") || "").trim();
-        const modalName = modal.id || modal.getAttribute("data-modal") || "side-modal";
+      if (inner && inner.dataset.aiInnerWired !== "true") {
+        inner.dataset.aiInnerWired = "true";
+        inner.addEventListener("click", (e) => e.stopPropagation());
+        inner.addEventListener("pointerdown", (e) => e.stopPropagation());
+      }
 
-        console.log("🟣 AI-WIRE: action click", { modal: modalName, action });
+      const form = modal.querySelector("form");
+      if (form && form.dataset.aiFormWired !== "true") {
+        form.dataset.aiFormWired = "true";
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("🟣 AI-WIRE: submit blocked", modal.id || "(no id)");
+        });
+      }
 
-        const input =
-          modal.querySelector("[data-ai-input]") ||
-          modal.querySelector("textarea") ||
-          modal.querySelector("input[type='text']");
+      const actionBtns = Array.from(modal.querySelectorAll("[data-ai-action]"));
+      actionBtns.forEach((btn) => {
+        if (btn.dataset.aiBtnWired === "true") return;
+        btn.dataset.aiBtnWired = "true";
+        btn.type = "button";
 
-        const output =
-          modal.querySelector("[data-ai-output]") ||
-          modal.querySelector(".ai-output") ||
-          modal.querySelector(".tool-output") ||
-          modal.querySelector("pre") ||
-          modal.querySelector("div[id$='Output']");
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
 
-        const text = (input?.value || "").trim();
+          const action = (btn.getAttribute("data-ai-action") || "").trim();
+          const modalName = modal.id || modal.getAttribute("data-modal") || "side-modal";
 
-        btn.dataset.originalText ||= btn.textContent;
-        btn.textContent = "Working…";
-        btn.disabled = true;
-        if (output) output.textContent = "Thinking…";
+          console.log("🟣 AI-WIRE: action click", { modal: modalName, action });
 
-        try {
-          const handlers = {
-            objection_coach: window.coachMe || window.handleObjectionCoach,
-            ask_ai: window.askAi || window.handleAskAi,
-            drill_master: window.runDrillMaster || window.handleDrillMaster,
-            message_builder: window.buildMessage || window.handleMessageBuilder,
-            workflow_builder: window.buildWorkflow || window.handleWorkflowBuilder,
-            car_expert: window.askCarExpert || window.handleCarExpert,
-          };
+          const input =
+            modal.querySelector("[data-ai-input]") ||
+            modal.querySelector("textarea") ||
+            modal.querySelector("input[type='text']");
 
-          const fn = handlers[action];
+          const output =
+            modal.querySelector("[data-ai-output]") ||
+            modal.querySelector(".ai-output") ||
+            modal.querySelector(".tool-output") ||
+            modal.querySelector("pre") ||
+            modal.querySelector("div[id$='Output']");
 
-          // Only require text for NON-calculator actions
-          const noTextRequired = new Set(["payment_calc", "income_calc"]);
-          if (!noTextRequired.has(action) && !text) {
-            alert("Type your question/objection first.");
-            return;
-          }
+          const text = (input?.value || "").trim();
 
-          if (typeof fn === "function") {
-            const res = await fn(text, { modal, input, output, btn });
-            if (typeof res === "string" && output) output.textContent = res;
-          } else {
-            // ✅ CONNECTED FALLBACK (CALL BACKEND)
-            const routeMap = {
-              objection_coach: {
-                url: "/api/objection-coach",
-                body: { objection: text, history: "" },
-                pick: (data) => data?.answer || data?.text || "",
-              },
-              ask_ai: {
-                url: "/api/message-helper",
-                body: { mode: "ask", prompt: text },
-                pick: (data) => data?.text || data?.answer || "",
-              },
-              message_builder: {
-                url: "/api/message-helper",
-                body: { mode: "message", prompt: text },
-                pick: (data) => data?.text || data?.answer || "",
-              },
-              workflow_builder: {
-                url: "/ai/workflow",
-                body: {
-                  goal: "Set the Appointment",
-                  tone: "Persuasive, Low-Pressure, High-Value",
-                  channel: "Multi-Channel",
-                  days: 10,
-                  touches: 6,
-                },
-                pick: (data) => data?.text || "",
-              },
-              drill_master: {
-                url: "/api/message-helper",
-                body: { mode: "workflow", prompt: text },
-                pick: (data) => data?.text || "",
-              },
-              car_expert: {
-                url: "/api/message-helper",
-                body: { mode: "car", prompt: text },
-                pick: (data) => data?.text || "",
-              },
-              image_ai: {
-                url: "/api/message-helper",
-                body: { mode: "image-brief", prompt: text },
-                pick: (data) => data?.text || "",
-              },
-              video_ai: {
-                url: "/api/message-helper",
-                body: { mode: "video-brief", prompt: text },
-                pick: (data) => data?.text || "",
-              },
+          btn.dataset.originalText ||= btn.textContent;
+          btn.textContent = "Working…";
+          btn.disabled = true;
+          if (output) output.textContent = "Thinking…";
 
-              // ✅ CALCULATORS (REAL INPUTS)
-              payment_calc: {
-                url: "/api/payment-helper",
-                body: collectPaymentBody(modal),
-                pick: (data) => data?.result || data?.text || data?.answer || "",
-              },
-              income_calc: {
-                url: "/api/income-helper",
-                body: collectIncomeBody(modal),
-                pick: (data) => data?.result || data?.text || data?.answer || "",
-              },
+          try {
+            const handlers = {
+              objection_coach: window.coachMe || window.handleObjectionCoach,
+              ask_ai: window.askAi || window.handleAskAi,
+              drill_master: window.runDrillMaster || window.handleDrillMaster,
+              message_builder: window.buildMessage || window.handleMessageBuilder,
+              workflow_builder: window.buildWorkflow || window.handleWorkflowBuilder,
+              car_expert: window.askCarExpert || window.handleCarExpert,
             };
 
-            const cfg = routeMap[action];
+            const fn = handlers[action];
 
-            if (!cfg) {
-              if (output) {
-                output.textContent =
-                  `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
-              } else {
-                alert(`Received (${action}). No route mapped yet.`);
+            const noTextRequired = new Set(["payment_calc", "income_calc"]);
+            if (!noTextRequired.has(action) && !text) {
+              alert("Type your question/objection first.");
+              return;
+            }
+
+            if (typeof fn === "function") {
+              const res = await fn(text, { modal, input, output, btn });
+              if (typeof res === "string" && output) output.textContent = res;
+            } else {
+              const routeMap = {
+                objection_coach: {
+                  url: "/api/objection-coach",
+                  body: { objection: text, history: "" },
+                  pick: (data) => data?.answer || data?.text || "",
+                },
+                ask_ai: {
+                  url: "/api/message-helper",
+                  body: { mode: "ask", prompt: text },
+                  pick: (data) => data?.text || data?.answer || "",
+                },
+                message_builder: {
+                  url: "/api/message-helper",
+                  body: { mode: "message", prompt: text },
+                  pick: (data) => data?.text || data?.answer || "",
+                },
+                workflow_builder: {
+                  url: "/ai/workflow",
+                  body: {
+                    goal: "Set the Appointment",
+                    tone: "Persuasive, Low-Pressure, High-Value",
+                    channel: "Multi-Channel",
+                    days: 10,
+                    touches: 6,
+                  },
+                  pick: (data) => data?.text || "",
+                },
+                drill_master: {
+                  url: "/api/message-helper",
+                  body: { mode: "workflow", prompt: text },
+                  pick: (data) => data?.text || "",
+                },
+                car_expert: {
+                  url: "/api/message-helper",
+                  body: { mode: "car", prompt: text },
+                  pick: (data) => data?.text || "",
+                },
+                image_ai: {
+                  url: "/api/message-helper",
+                  body: { mode: "image-brief", prompt: text },
+                  pick: (data) => data?.text || "",
+                },
+                video_ai: {
+                  url: "/api/message-helper",
+                  body: { mode: "video-brief", prompt: text },
+                  pick: (data) => data?.text || "",
+                },
+
+                payment_calc: {
+                  url: "/api/payment-helper",
+                  body: collectPaymentBody(modal),
+                  pick: (data) => data?.result || data?.text || data?.answer || "",
+                },
+                income_calc: {
+                  url: "/api/income-helper",
+                  body: collectIncomeBody(modal),
+                  pick: (data) => data?.result || data?.text || data?.answer || "",
+                },
+              };
+
+              const cfg = routeMap[action];
+
+              if (!cfg) {
+                if (output) {
+                  output.textContent =
+                    `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
+                } else {
+                  alert(`Received (${action}). No route mapped yet.`);
+                }
+                throw new Error(`No backend route mapped for action: ${action}`);
               }
-              throw new Error(`No backend route mapped for action: ${action}`);
+
+              const r = await fetch(cfg.url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cfg.body),
+              });
+
+              const data = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                const msg = data?.message || data?.error || `HTTP ${r.status}`;
+                throw new Error(msg);
+              }
+
+              const reply = (cfg.pick ? cfg.pick(data) : "") || "";
+              if (output) output.textContent = reply || "✅ Done (empty response).";
             }
-
-            const r = await fetch(cfg.url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(cfg.body),
-            });
-
-            const data = await r.json().catch(() => ({}));
-            if (!r.ok) {
-              const msg = data?.message || data?.error || `HTTP ${r.status}`;
-              throw new Error(msg);
-            }
-
-            const reply = (cfg.pick ? cfg.pick(data) : "") || "";
-            if (output) output.textContent = reply || "✅ Done (empty response).";
+          } catch (err) {
+            console.error("🟣 AI-WIRE: action failed", err);
+            if (output) output.textContent = `❌ Error: ${err?.message || err}`;
+            else alert(err?.message || "Action failed");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || "Run";
           }
-        } catch (err) {
-          console.error("🟣 AI-WIRE: action failed", err);
-          if (output) output.textContent = `❌ Error: ${err?.message || err}`;
-          else alert(err?.message || "Action failed");
-        } finally {
-          btn.disabled = false;
-          btn.textContent = btn.dataset.originalText || "Run";
-        }
+        });
       });
     });
-  });
 
-  console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
-}
-// ==================================================
-
+    console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
+  }
 
   // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
   // ==================================================
   try {
-    // restore Step 1 photos if present
     if (STORE.lastBoostPhotos?.length) {
       renderStep1Photos(STORE.lastBoostPhotos);
     }
 
-    // restore Step 3 holding zone if present
     if (STORE.holdingZonePhotos?.length) {
       STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
       renderHoldingZone();
       if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
     }
 
-    // render Step 3 thumbs + social strip
     renderCreativeThumbs();
     renderSocialStrip();
 
-    // ✅ wire calculator (safe)
     wireCalculatorPad();
 
-    // AI tools wiring (must run before side tools)
     if (typeof wireAiModals === "function") {
       wireAiModals();
     } else {
       console.warn("🟣 wireAiModals() not found");
     }
 
-    // side tools wiring must be last
     if (typeof wireSideTools === "function") {
       wireSideTools();
     } else {
