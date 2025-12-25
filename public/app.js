@@ -848,32 +848,60 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 const collectPaymentBody = (modal) => {
-  const priceEl = pick(modal, ["#payPrice", "#paymentPrice", "input[name='price']", "#price"]);
-  const downEl = pick(modal, ["#payDown", "#paymentDown", "input[name='down']", "#down"]);
-  const tradeEl = pick(modal, ["#payTrade", "#paymentTrade", "input[name='trade']", "#trade"]);
-  const payoffEl = pick(modal, ["#payPayoff", "#paymentPayoff", "input[name='payoff']", "#payoff"]);
+  // helper selectors (robust)
+  const pick = (selectors) => {
+    for (const sel of selectors) {
+      const el = modal.querySelector(sel);
+      if (el) return el;
+    }
+    return null;
+  };
 
-  // ✅ NEW FEES FIELD
-  const feesEl = pick(modal, ["#payFees", "#paymentFees", "input[name='dealerFees']", "input[name='fees']"]);
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[^\d.-]/g, "");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
 
-  const aprEl = pick(modal, ["#payApr", "#paymentApr", "input[name='apr']", "#apr", "input[name='rate']", "#rate"]);
-  const termEl = pick(modal, ["#payTerm", "#paymentTerm", "input[name='term']", "#term"]);
-  const taxEl = pick(modal, ["#payTax", "#paymentTax", "input[name='tax']", "#tax"]);
+  const priceEl  = pick(["#payPrice",  "input[name='price']",  "#price"]);
+  const downEl   = pick(["#payDown",   "input[name='down']",   "#down"]);
+  const tradeEl  = pick(["#payTrade",  "input[name='trade']",  "#trade"]);
+  const payoffEl = pick(["#payPayoff", "input[name='payoff']", "#payoff"]);
+
+  // APR is usually the one failing — support lots of possibilities
+  const aprEl = pick([
+    "#payApr",
+    "input[name='apr']",
+    "input[name='rate']",
+    "#apr",
+    "#rate",
+  ]);
+
+  const termEl = pick(["#payTerm", "input[name='term']", "#term"]);
+  const taxEl  = pick(["#payTax",  "input[name='tax']",  "#tax"]);
+
+  // Dealer fees / add-ons (NEW)
+  const feesEl = pick([
+    "#payFees",
+    "#dealerFees",
+    "input[name='fees']",
+    "input[name='dealerFees']",
+    "#fees",
+  ]);
 
   return {
-    price: num(priceEl?.value),
-    down: num(downEl?.value),
-    trade: num(tradeEl?.value),
+    price:  num(priceEl?.value),
+    down:   num(downEl?.value),
+    trade:  num(tradeEl?.value),
     payoff: num(payoffEl?.value),
-
-    // ✅ send to backend
-    dealerFees: num(feesEl?.value),
-
-    rate: num(aprEl?.value),   // APR %
-    term: num(termEl?.value),  // months
-    tax: num(taxEl?.value),    // %
+    rate:   num(aprEl?.value),   // APR %
+    term:   num(termEl?.value),  // months
+    tax:    num(taxEl?.value),   // %
+    fees:   num(feesEl?.value),  // dollars
   };
 };
+
 
 
     const collectIncomeBody = (modal) => {
