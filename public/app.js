@@ -1004,7 +1004,7 @@ return {
               const res = await fn(text, { modal, input, output, btn });
               if (typeof res === "string" && output) output.textContent = res;
             } else {
-              const routeMap = {
+ const routeMap = {
                 objection_coach: {
                   url: "/api/objection-coach",
                   body: { objection: text, history: "" },
@@ -1052,109 +1052,117 @@ return {
                   pick: (data) => data?.text || "",
                 },
 
-payment_calc: {
-  url: "/api/payment-helper",
-  // ✅ collectPaymentBody(modal) MUST return:
-  // { price, down, trade, payoff, rate, term, tax, fees }
-  body: collectPaymentBody(modal),
-  pick: (data) => {
-    // ✅ NEW BACKEND: preferred
-    if (data?.breakdownText) return data.breakdownText;
+                // ✅ CALCULATORS (no text required)
+                payment_calc: {
+                  url: "/api/payment-helper",
+                  // collectPaymentBody(modal) MUST return: { price, down, trade, payoff, rate, term, tax, fees }
+                  body: collectPaymentBody(modal),
+                  pick: (data) => {
+                    // ✅ NEW BACKEND: preferred
+                    if (data?.breakdownText) return data.breakdownText;
 
-    // ✅ If backend returns { breakdown: {...} } (alternate shape)
-    const b = data?.breakdown;
+                    // ✅ If backend returns { breakdown: {...} }
+                    const b = data?.breakdown;
 
-    // fallback (older backend)
-    if (!b) return data?.result || data?.text || data?.answer || "";
+                    // fallback (older backend)
+                    if (!b) return data?.result || data?.text || data?.answer || "";
 
-    const money = (n) =>
-      Number.isFinite(Number(n))
-        ? `$${Number(n).toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`
-        : "$0.00";
+                    const money = (n) =>
+                      Number.isFinite(Number(n))
+                        ? `$${Number(n).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : "$0.00";
 
-    const pct = (n) =>
-      Number.isFinite(Number(n)) ? `${Number(n).toFixed(2)}%` : "0.00%";
+                    const pct = (n) =>
+                      Number.isFinite(Number(n)) ? `${Number(n).toFixed(2)}%` : "0.00%";
 
-    // b.taxRate might be "0.06" (ratio) or "6" (percent). Normalize to percent.
-    const taxPct =
-      Number.isFinite(Number(b.taxRate))
-        ? Number(b.taxRate) <= 1
-          ? Number(b.taxRate) * 100
-          : Number(b.taxRate)
-        : 0;
+                    // b.taxRate might be 0.06 (ratio) or 6 (percent). Normalize to percent.
+                    const taxPct =
+                      Number.isFinite(Number(b.taxRate))
+                        ? Number(b.taxRate) <= 1
+                          ? Number(b.taxRate) * 100
+                          : Number(b.taxRate)
+                        : 0;
 
-    const equityLine =
-      Number(b.tradeEquity) >= 0
-        ? `+${money(b.tradeEquity)} (positive equity)`
-        : `${money(b.tradeEquity)} (negative equity)`;
+                    const equityLine =
+                      Number(b.tradeEquity) >= 0
+                        ? `+${money(b.tradeEquity)} (positive equity)`
+                        : `${money(b.tradeEquity)} (negative equity)`;
 
-    return [
-      (data?.result || "").trim(),
-      "",
-      "Breakdown:",
-      `• Price: ${money(b.price)}`,
-      `• Dealer Fees/Add-ons: ${money(b.fees)}`,
-      `• Taxable Base: ${money(b.taxableBase)}`,
-      `• Tax (${pct(taxPct)}): ${money(b.taxAmount)}`,
-      `• Down: ${money(b.down)}`,
-      `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
-      `• Trade Equity: ${equityLine}`,
-      `• Amount Financed: ${money(b.amountFinanced)}`,
-      `• APR: ${pct(b.aprPct)} | Term: ${Number(b.term) || 0} months`,
-    ].join("\n");
-  },
-},
-income_calc: {
-  url: "/api/income-helper",
-  body: collectIncomeBody(modal),
-  pick: (data) => data?.result || data?.text || data?.answer || "",
-},
-};
+                    const aprPct =
+                      Number.isFinite(Number(b.aprPct))
+                        ? Number(b.aprPct) <= 1
+                          ? Number(b.aprPct) * 100
+                          : Number(b.aprPct)
+                        : 0;
 
-const cfg = routeMap[action];
+                    return [
+                      (data?.result || "").trim(),
+                      "",
+                      "Breakdown:",
+                      `• Price: ${money(b.price)}`,
+                      `• Dealer Fees/Add-ons: ${money(b.fees)}`,
+                      `• Taxable Base: ${money(b.taxableBase)}`,
+                      `• Tax (${pct(taxPct)}): ${money(b.taxAmount)}`,
+                      `• Down: ${money(b.down)}`,
+                      `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
+                      `• Trade Equity: ${equityLine}`,
+                      `• Amount Financed: ${money(b.amountFinanced)}`,
+                      `• APR: ${pct(aprPct)} | Term: ${Number(b.term) || 0} months`,
+                    ].join("\n");
+                  },
+                },
 
-if (!cfg) {
-  if (output) {
-    output.textContent =
-      `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
-  } else {
-    alert(`Received (${action}). No route mapped yet.`);
-  }
-  throw new Error(`No backend route mapped for action: ${action}`);
-}
+                income_calc: {
+                  url: "/api/income-helper",
+                  body: collectIncomeBody(modal),
+                  pick: (data) => data?.result || data?.text || data?.answer || "",
+                },
+              };
 
-const r = await fetch(cfg.url, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(cfg.body),
-});
+              const cfg = routeMap[action];
 
-const data = await r.json().catch(() => ({}));
-if (!r.ok) {
-  const msg = data?.message || data?.error || `HTTP ${r.status}`;
-  throw new Error(msg);
-}
+              if (!cfg) {
+                if (output) {
+                  output.textContent =
+                    `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
+                } else {
+                  alert(`Received (${action}). No route mapped yet.`);
+                }
+                throw new Error(`No backend route mapped for action: ${action}`);
+              }
 
-const reply = (cfg.pick ? cfg.pick(data) : "") || "";
-if (output) output.textContent = reply || "✅ Done (empty response).";
-}
-} catch (err) {
-console.error("🟣 AI-WIRE: action failed", err);
-if (output) output.textContent = `❌ Error: ${err?.message || err}`;
-else alert(err?.message || "Action failed");
-} finally {
-btn.disabled = false;
-btn.textContent = btn.dataset.originalText || "Run";
-}
-});
-});
-});
+              const r = await fetch(cfg.url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cfg.body),
+              });
 
-console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
-}
+              const data = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                const msg = data?.message || data?.error || `HTTP ${r.status}`;
+                throw new Error(msg);
+              }
+
+              const reply = (cfg.pick ? cfg.pick(data) : "") || "";
+              if (output) output.textContent = reply || "✅ Done (empty response).";
+            } // ✅ closes: else { ... routeMap ... }
+          } catch (err) {
+            console.error("🟣 AI-WIRE: action failed", err);
+            if (output) output.textContent = `❌ Error: ${err?.message || err}`;
+            else alert(err?.message || "Action failed");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || "Run";
+          }
+        });
+      });
+    });
+
+    console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
+  } // ✅ closes wireAiModals()
 
 
 
