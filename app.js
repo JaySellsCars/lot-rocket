@@ -11,15 +11,18 @@ function cleanText(s) {
     .trim();
 }
 
+// --------------------------------------------------
+// Extract description from HTML (safe + robust)
+// --------------------------------------------------
 function extractVehicleDescriptionFromHtml($, html) {
-  // 1) Meta tags (fast + reliable)
+  // 1) Meta description
   const meta =
     cleanText($('meta[name="description"]').attr("content")) ||
     cleanText($('meta[property="og:description"]').attr("content"));
 
   if (meta && meta.length > 40) return meta;
 
-  // 2) JSON-LD (structured data)
+  // 2) JSON-LD structured data
   try {
     const ldNodes = $('script[type="application/ld+json"]');
 
@@ -45,11 +48,11 @@ function extractVehicleDescriptionFromHtml($, html) {
         if (desc && desc.length > 40) return desc;
       }
     }
-  } catch (e) {
-    // ignore parsing errors
+  } catch {
+    // ignore
   }
 
-  // 3) Common dealer DOM fallbacks
+  // 3) DOM fallback selectors
   const selectors = [
     ".vehicle-description",
     ".vdp-description",
@@ -66,36 +69,15 @@ function extractVehicleDescriptionFromHtml($, html) {
     if (text && text.length > 40) return text;
   }
 
-  // 4) Nothing found
   return "";
 }
 
-
-// 3) common dealer page containers (best-effort)
-const selectors = [
-  "#description",
-  ".description",
-  ".vehicle-description",
-  ".vdp-description",
-  "[data-testid='vehicle-description']",
-  "[class*='description']",
-  "[id*='description']",
-  ".comments",
-  ".remarks",
-  ".dealer-comments",
-];
-
-for (const sel of selectors) {
-  const t = cleanText($(sel).first().text());
-  if (t && t.length > 80) return t;
-}
-
-// 4) fallback: nothing found
-return "";
-}
-
+// --------------------------------------------------
+// Fallback post generator
+// --------------------------------------------------
 function buildFallbackPosts({ label, price, url, description }) {
   const baseTags = ["#CarForSale", "#NewCar", "#UsedCars", "#AutoDeals", "#CarShopping", "#TestDrive"];
+
   const labelTags = cleanText(label)
     .split(" ")
     .filter(Boolean)
@@ -116,26 +98,6 @@ function buildFallbackPosts({ label, price, url, description }) {
   ];
 }
 
-const express = require("express");
-const path = require("path");
-const cors = require("cors");
-const cheerio = require("cheerio");
-const OpenAI = require("openai");
-const archiver = require("archiver");
-
-// Node 18+ has global fetch; keep safe fallback if needed
-let fetchFn = global.fetch;
-if (typeof fetchFn !== "function") {
-  try {
-    // only if your project still uses node-fetch v2
-    // eslint-disable-next-line global-require
-    fetchFn = require("node-fetch");
-  } catch {
-    throw new Error("Fetch is not available. Use Node 18+ or install node-fetch v2.");
-  }
-}
-
-// -------------------- App --------------------
 const app = express();
 
 // -------------------- OpenAI Client --------------------
