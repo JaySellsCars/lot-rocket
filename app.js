@@ -527,7 +527,10 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
-// IMAGE PROXY
+// IMAGE PROXY (Fixes CORS tainted canvas)
+// Supports both:
+//   /api/proxy-image?url=...
+//   /api/image-proxy?url=... (back-compat)
 // --------------------------------------------------
 async function proxyImageHandler(req, res) {
   try {
@@ -549,20 +552,7 @@ async function proxyImageHandler(req, res) {
       return res.status(400).json({ error: "Blocked proxy target" });
     }
 
-    // ✅ Some dealer CDNs are picky — send a real UA + accept headers
-    const upstream = await fetchWithTimeout(
-      target,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36",
-          Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-          Referer: parsed.origin,
-        },
-      },
-      20000
-    );
-
+    const upstream = await fetchWithTimeout(target, {}, 20000);
     if (!upstream.ok) {
       console.error("proxy-image upstream error:", upstream.status, target);
       return res.status(502).json({ error: `Upstream error ${upstream.status}` });
@@ -573,30 +563,18 @@ async function proxyImageHandler(req, res) {
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    if (!upstream.body) {
-      return res.status(502).json({ error: "Upstream has no body" });
-    }
-
-    // ✅ Node-fetch gives Node streams (pipe works)
-    if (typeof upstream.body.pipe === "function") {
-      upstream.body.pipe(res);
-      return;
-    }
-
-    // ✅ Native fetch gives Web ReadableStream (pipe does NOT exist)
-    const { Readable } = require("stream");
-    const nodeStream = Readable.fromWeb(upstream.body);
-    nodeStream.on("error", (e) => {
-      console.error("proxy-image stream error:", e);
-      if (!res.headersSent) res.status(500).end();
-      else res.destroy(e);
-    });
-    nodeStream.pipe(res);
+    // ✅ Works reliably across Node fetch implementations:
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    return res.status(200).send(buf);
   } catch (err) {
     console.error("proxy-image error:", err);
-    if (!res.headersSent) res.status(500).json({ error: "Image proxy error" });
+    if (!res.headersSent) return res.status(500).json({ error: "Image proxy error" });
   }
 }
+
+app.get("/api/proxy-image", proxyImageHandler);
+app.get("/api/image-proxy", proxyImageHandler);
+
 
 // --------------------------------------------------
 // /api/process-photos
