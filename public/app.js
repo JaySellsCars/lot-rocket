@@ -847,9 +847,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     };
 
+
 const collectPaymentBody = (modal) => {
-  // helper selectors (robust)
-  const pick = (selectors) => {
+  const pickLocal = (selectors) => {
     for (const sel of selectors) {
       const el = modal.querySelector(sel);
       if (el) return el;
@@ -857,20 +857,19 @@ const collectPaymentBody = (modal) => {
     return null;
   };
 
-  const num = (v) => {
+  const numLocal = (v) => {
     if (v == null) return 0;
     const s = String(v).replace(/[^\d.-]/g, "");
     const n = Number(s);
     return Number.isFinite(n) ? n : 0;
   };
 
-  const priceEl  = pick(["#payPrice",  "input[name='price']",  "#price"]);
-  const downEl   = pick(["#payDown",   "input[name='down']",   "#down"]);
-  const tradeEl  = pick(["#payTrade",  "input[name='trade']",  "#trade"]);
-  const payoffEl = pick(["#payPayoff", "input[name='payoff']", "#payoff"]);
+  const priceEl  = pickLocal(["#payPrice",  "input[name='price']",  "#price"]);
+  const downEl   = pickLocal(["#payDown",   "input[name='down']",   "#down"]);
+  const tradeEl  = pickLocal(["#payTrade",  "input[name='trade']",  "#trade"]);
+  const payoffEl = pickLocal(["#payPayoff", "input[name='payoff']", "#payoff"]);
 
-  // APR is usually the one failing — support lots of possibilities
-  const aprEl = pick([
+  const aprEl = pickLocal([
     "#payApr",
     "input[name='apr']",
     "input[name='rate']",
@@ -878,11 +877,10 @@ const collectPaymentBody = (modal) => {
     "#rate",
   ]);
 
-  const termEl = pick(["#payTerm", "input[name='term']", "#term"]);
-  const taxEl  = pick(["#payTax",  "input[name='tax']",  "#tax"]);
+  const termEl = pickLocal(["#payTerm", "input[name='term']", "#term"]);
+  const taxEl  = pickLocal(["#payTax",  "input[name='tax']",  "#tax"]);
 
-  // Dealer fees / add-ons (NEW)
-  const feesEl = pick([
+  const feesEl = pickLocal([
     "#payFees",
     "#dealerFees",
     "input[name='fees']",
@@ -890,24 +888,16 @@ const collectPaymentBody = (modal) => {
     "#fees",
   ]);
 
-return {
-  price: num(priceEl?.value),
-  down: num(downEl?.value),
-  trade: num(tradeEl?.value),
-  payoff: num(payoffEl?.value),
-
-  rate: num(aprEl?.value),      // APR %
-  term: num(termEl?.value),     // months
-  tax: num(taxEl?.value),       // %
-
-  fees: num(feesEl?.value),     // Dealer Fees/Add-ons
-
-  // ✅ RouteOne-style knobs (defaults)
-  state: (stateEl?.value || "").trim(),                 // optional if you add a state dropdown later
-  taxTradeCredit: true,                                 // MOST states that allow trade credit
-  taxFees: true,                                        // MOST dealers treat doc/fees taxable depending on state
-  rebate: num(rebateEl?.value),                          // optional input if you add later
-  rebateReducesTaxable: false,                          // many states: rebate does NOT reduce taxable base
+  return {
+    price:  numLocal(priceEl?.value),
+    down:   numLocal(downEl?.value),
+    trade:  numLocal(tradeEl?.value),
+    payoff: numLocal(payoffEl?.value),
+    rate:   numLocal(aprEl?.value),     // APR %
+    term:   numLocal(termEl?.value),    // months
+    tax:    numLocal(taxEl?.value),     // %
+    fees:   numLocal(feesEl?.value),    // Dealer Fees/Add-ons
+  };
 };
 
 
