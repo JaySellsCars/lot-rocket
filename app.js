@@ -979,7 +979,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper  ✅ FIXED EQUITY MATH
+// /api/payment-helper
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
@@ -987,9 +987,9 @@ app.post("/api/payment-helper", (req, res) => {
     const down = Number(req.body.down || 0);
     const trade = Number(req.body.trade || 0);
     const payoff = Number(req.body.payoff || 0);
-    const rate = Number(req.body.rate || 0) / 100 / 12;
-    const term = Number(req.body.term || 0);
-    const taxRate = Number(req.body.tax || 0) / 100;
+    const rateMonthly = Number(req.body.rate || 0) / 100 / 12; // APR% -> monthly
+    const term = Number(req.body.term || 0);                  // months
+    const taxRate = Number(req.body.tax || 0) / 100;          // % -> decimal
 
     if (!price || !term) {
       return res.status(400).json({
@@ -998,22 +998,24 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
+    // price + tax
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
 
-    // ✅ tradeEquity: positive reduces financed, negative increases financed
+    // ✅ NET TRADE EQUITY (positive reduces amount financed; negative increases)
     const tradeEquity = trade - payoff;
 
-    // ✅ correct in all cases:
-    // financed = taxedPrice - down - trade + payoff
-    const amountFinanced = Math.max(taxedPrice - down - trade + payoff, 0);
+    // ✅ Handles BOTH cases correctly:
+    // amountFinanced = taxedPrice - down - trade + payoff
+    //             OR = taxedPrice - down - tradeEquity
+    const amountFinanced = Math.max(taxedPrice - down - tradeEquity, 0);
 
     let payment;
-    if (!rate) {
+    if (!rateMonthly) {
       payment = amountFinanced / term;
     } else {
-      payment =
-        (amountFinanced * rate * Math.pow(1 + rate, term)) /
-        (Math.pow(1 + rate, term) - 1);
+      const r = rateMonthly;
+      const pow = Math.pow(1 + r, term);
+      payment = (amountFinanced * r * pow) / (pow - 1);
     }
 
     const result = `~$${payment.toFixed(2)} per month (rough estimate only, not a binding quote).`;
@@ -1024,6 +1026,7 @@ app.post("/api/payment-helper", (req, res) => {
     return res.status(500).json({ error: "Failed to estimate payment" });
   }
 });
+
 
 // --------------------------------------------------
 // /api/income-helper
