@@ -1095,20 +1095,28 @@ const collectPaymentBody = (modal) => {
                           : Number(b.aprPct)
                         : 0;
 
-                    return [
-                      (data?.result || "").trim(),
-                      "",
-                      "Breakdown:",
-                      `• Price: ${money(b.price)}`,
-                      `• Dealer Fees/Add-ons: ${money(b.fees)}`,
-                      `• Taxable Base: ${money(b.taxableBase)}`,
-                      `• Tax (${pct(taxPct)}): ${money(b.taxAmount)}`,
-                      `• Down: ${money(b.down)}`,
-                      `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
-                      `• Trade Equity: ${equityLine}`,
-                      `• Amount Financed: ${money(b.amountFinanced)}`,
-                      `• APR: ${pct(aprPct)} | Term: ${Number(b.term) || 0} months`,
-                    ].join("\n");
+return [
+  (data?.result || "").trim(),
+  "",
+  "Breakdown:",
+  `• Price: ${money(b.price)}`,
+  `• Dealer Fees/Add-ons: ${money(b.fees)}`,
+  `• Taxable Base: ${money(b.taxableBase)}`,
+  `• Tax (${pct(taxPct)}): ${money(b.taxAmount)}`,
+  `• Down: ${money(b.down)}`,
+  `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
+  `• Trade Equity: ${equityLine}`,
+  `• Amount Financed: ${money(b.amountFinanced)}`,
+  `• APR: ${pct(b.aprPct)} | Term: ${Number(b.term) || 0} months`,
+  "",
+  "Assumptions:",
+  "• Trade-in credit reduces taxable amount",
+  "• Dealer fees/add-ons are taxable",
+  "• Rebates do not reduce taxable base",
+  "• Sales tax calculated before down payment",
+  "• Estimate only — dealer & state rules may vary",
+].join("\n");
+
                   },
                 },
 
