@@ -979,7 +979,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper
+// /api/payment-helper  ✅ (includes dealerFees + breakdown)
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
@@ -987,9 +987,17 @@ app.post("/api/payment-helper", (req, res) => {
     const down = Number(req.body.down || 0);
     const trade = Number(req.body.trade || 0);
     const payoff = Number(req.body.payoff || 0);
-    const rateMonthly = Number(req.body.rate || 0) / 100 / 12; // APR% -> monthly
-    const term = Number(req.body.term || 0);                  // months
-    const taxRate = Number(req.body.tax || 0) / 100;          // % -> decimal
+
+    // ✅ NEW: dealer fees / add-ons (misc fees + service contracts)
+    const dealerFees = Number(
+      req.body.dealerFees ?? req.body.fees ?? req.body.addons ?? 0
+    );
+
+    const apr = Number(req.body.rate || 0);            // APR %
+    const rate = apr / 100 / 12;                       // monthly
+    const term = Number(req.body.term || 0);           // months
+    const taxRatePct = Number(req.body.tax || 0);      // %
+    const taxRate = taxRatePct / 100;
 
     if (!price || !term) {
       return res.status(400).json({
@@ -998,34 +1006,48 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
-    // price + tax
-    const taxedPrice = taxRate ? price * (1 + taxRate) : price;
+    // ✅ Assumption: dealerFees are taxable (simple + consistent).
+    // taxableBase = price + dealerFees
+    const taxableBase = Math.max(price + dealerFees, 0);
 
-    // ✅ NET TRADE EQUITY (positive reduces amount financed; negative increases)
+    // price + fees + tax
+    const taxAmount = taxRate ? taxableBase * taxRate : 0;
+    const taxedTotal = taxableBase + taxAmount;
+
+    // ✅ NET TRADE EQUITY:
+    // positive equity reduces amount financed
+    // negative equity increases amount financed
     const tradeEquity = trade - payoff;
 
-    // ✅ Handles BOTH cases correctly:
-    // amountFinanced = taxedPrice - down - trade + payoff
-    //             OR = taxedPrice - down - tradeEquity
-    const amountFinanced = Math.max(taxedPrice - down - tradeEquity, 0);
+    // ✅ FINAL AMOUNT FINANCED (single line handles both equity cases)
+    // amountFinanced = taxedTotal - down - trade + payoff
+    const amountFinanced = Math.max(taxedTotal - down - trade + payoff, 0);
 
     let payment;
-    if (!rateMonthly) {
+    if (!rate) {
       payment = amountFinanced / term;
     } else {
-      const r = rateMonthly;
-      const pow = Math.pow(1 + r, term);
-      payment = (amountFinanced * r * pow) / (pow - 1);
+      payment =
+        (amountFinanced * rate * Math.pow(1 + rate, term)) /
+        (Math.pow(1 + rate, term) - 1);
     }
 
     const result = `~$${payment.toFixed(2)} per month (rough estimate only, not a binding quote).`;
 
-    return res.json({ result, amountFinanced, tradeEquity });
+    return res.json({
+      result,
+      amountFinanced,
+      tradeEquity,
+      dealerFees,
+      taxAmount,
+      taxedTotal,
+    });
   } catch (err) {
     console.error("payment-helper error", err);
     return res.status(500).json({ error: "Failed to estimate payment" });
   }
 });
+
 
 
 // --------------------------------------------------
