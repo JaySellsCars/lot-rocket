@@ -890,17 +890,26 @@ const collectPaymentBody = (modal) => {
     "#fees",
   ]);
 
-  return {
-    price:  num(priceEl?.value),
-    down:   num(downEl?.value),
-    trade:  num(tradeEl?.value),
-    payoff: num(payoffEl?.value),
-    rate:   num(aprEl?.value),   // APR %
-    term:   num(termEl?.value),  // months
-    tax:    num(taxEl?.value),   // %
-    fees:   num(feesEl?.value),  // dollars
-  };
+return {
+  price: num(priceEl?.value),
+  down: num(downEl?.value),
+  trade: num(tradeEl?.value),
+  payoff: num(payoffEl?.value),
+
+  rate: num(aprEl?.value),      // APR %
+  term: num(termEl?.value),     // months
+  tax: num(taxEl?.value),       // %
+
+  fees: num(feesEl?.value),     // Dealer Fees/Add-ons
+
+  // ✅ RouteOne-style knobs (defaults)
+  state: (stateEl?.value || "").trim(),                 // optional if you add a state dropdown later
+  taxTradeCredit: true,                                 // MOST states that allow trade credit
+  taxFees: true,                                        // MOST dealers treat doc/fees taxable depending on state
+  rebate: num(rebateEl?.value),                          // optional input if you add later
+  rebateReducesTaxable: false,                          // many states: rebate does NOT reduce taxable base
 };
+
 
 
 
