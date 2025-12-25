@@ -885,191 +885,250 @@ app.post("/api/payment-helper", (req, res) => {
     };
   }
 
-  // ==================================================
-  // ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
-  // ==================================================
-  function wireAiModals() {
-    const modals = Array.from(DOC.querySelectorAll(".side-modal"));
-    if (!modals.length) {
-      console.warn("🟣 AI-WIRE: no .side-modal found");
-      return;
+// ==================================================
+// ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
+// ==================================================
+function wireAiModals() {
+  const modals = Array.from(DOC.querySelectorAll(".side-modal"));
+  if (!modals.length) {
+    console.warn("🟣 AI-WIRE: no .side-modal found");
+    return;
+  }
+
+  // helpers (scoped inside wire)
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[^\d.-]/g, "");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const pick = (root, selectors) => {
+    for (const sel of selectors) {
+      const el = root.querySelector(sel);
+      if (el) return el;
+    }
+    return null;
+  };
+
+  const collectPaymentBody = (modal) => {
+    const priceEl = pick(modal, ["#payPrice", "#paymentPrice", "input[name='price']", "#price"]);
+    const downEl = pick(modal, ["#payDown", "#paymentDown", "input[name='down']", "#down"]);
+    const tradeEl = pick(modal, ["#payTrade", "#paymentTrade", "input[name='trade']", "#trade"]);
+    const payoffEl = pick(modal, ["#payPayoff", "#paymentPayoff", "input[name='payoff']", "#payoff"]);
+    const aprEl = pick(modal, ["#payApr", "#paymentApr", "input[name='apr']", "#apr", "input[name='rate']", "#rate"]);
+    const termEl = pick(modal, ["#payTerm", "#paymentTerm", "input[name='term']", "#term"]);
+    const taxEl = pick(modal, ["#payTax", "#paymentTax", "input[name='tax']", "#tax"]);
+
+    return {
+      price: num(priceEl?.value),
+      down: num(downEl?.value),
+      trade: num(tradeEl?.value),
+      payoff: num(payoffEl?.value),
+      rate: num(aprEl?.value),   // APR %
+      term: num(termEl?.value),  // months
+      tax: num(taxEl?.value),    // %
+    };
+  };
+
+  const collectIncomeBody = (modal) => {
+    // You can rename these later — this just makes it work now.
+    const mtdEl = pick(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"]);
+    const dateEl = pick(modal, ["#incomeLastPayDate", "input[name='lastPayDate']", "#lastPayDate", "input[type='date']"]);
+
+    return {
+      mtd: num(mtdEl?.value),
+      lastPayDate: (dateEl?.value || "").trim(),
+    };
+  };
+
+  modals.forEach((modal) => {
+    if (modal.dataset.aiWired === "true") return;
+    modal.dataset.aiWired = "true";
+
+    const inner =
+      modal.querySelector(".side-modal-content") ||
+      modal.querySelector(".modal-content") ||
+      modal.firstElementChild;
+
+    if (inner && inner.dataset.aiInnerWired !== "true") {
+      inner.dataset.aiInnerWired = "true";
+      inner.addEventListener("click", (e) => e.stopPropagation());
+      inner.addEventListener("pointerdown", (e) => e.stopPropagation());
     }
 
-    modals.forEach((modal) => {
-      if (modal.dataset.aiWired === "true") return;
-      modal.dataset.aiWired = "true";
+    const form = modal.querySelector("form");
+    if (form && form.dataset.aiFormWired !== "true") {
+      form.dataset.aiFormWired = "true";
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("🟣 AI-WIRE: submit blocked", modal.id || "(no id)");
+      });
+    }
 
-      const inner =
-        modal.querySelector(".side-modal-content") ||
-        modal.querySelector(".modal-content") ||
-        modal.firstElementChild;
+    const actionBtns = Array.from(modal.querySelectorAll("[data-ai-action]"));
+    actionBtns.forEach((btn) => {
+      if (btn.dataset.aiBtnWired === "true") return;
+      btn.dataset.aiBtnWired = "true";
+      btn.type = "button";
 
-      if (inner && inner.dataset.aiInnerWired !== "true") {
-        inner.dataset.aiInnerWired = "true";
-        inner.addEventListener("click", (e) => e.stopPropagation());
-        inner.addEventListener("pointerdown", (e) => e.stopPropagation());
-      }
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-      const form = modal.querySelector("form");
-      if (form && form.dataset.aiFormWired !== "true") {
-        form.dataset.aiFormWired = "true";
-        form.addEventListener("submit", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log("🟣 AI-WIRE: submit blocked", modal.id || "(no id)");
-        });
-      }
+        const action = (btn.getAttribute("data-ai-action") || "").trim();
+        const modalName = modal.id || modal.getAttribute("data-modal") || "side-modal";
 
-      const actionBtns = Array.from(modal.querySelectorAll("[data-ai-action]"));
-      actionBtns.forEach((btn) => {
-        if (btn.dataset.aiBtnWired === "true") return;
-        btn.dataset.aiBtnWired = "true";
-        btn.type = "button";
+        console.log("🟣 AI-WIRE: action click", { modal: modalName, action });
 
-        btn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        const input =
+          modal.querySelector("[data-ai-input]") ||
+          modal.querySelector("textarea") ||
+          modal.querySelector("input[type='text']");
 
-          const action = (btn.getAttribute("data-ai-action") || "").trim();
-          const modalName = modal.id || modal.getAttribute("data-modal") || "side-modal";
+        const output =
+          modal.querySelector("[data-ai-output]") ||
+          modal.querySelector(".ai-output") ||
+          modal.querySelector(".tool-output") ||
+          modal.querySelector("pre") ||
+          modal.querySelector("div[id$='Output']");
 
-          console.log("🟣 AI-WIRE: action click", { modal: modalName, action });
+        const text = (input?.value || "").trim();
 
-          const input =
-            modal.querySelector("[data-ai-input]") ||
-            modal.querySelector("textarea") ||
-            modal.querySelector("input[type='text']");
+        btn.dataset.originalText ||= btn.textContent;
+        btn.textContent = "Working…";
+        btn.disabled = true;
+        if (output) output.textContent = "Thinking…";
 
-          const output =
-            modal.querySelector("[data-ai-output]") ||
-            modal.querySelector(".ai-output") ||
-            modal.querySelector(".tool-output") ||
-            modal.querySelector("pre");
+        try {
+          const handlers = {
+            objection_coach: window.coachMe || window.handleObjectionCoach,
+            ask_ai: window.askAi || window.handleAskAi,
+            drill_master: window.runDrillMaster || window.handleDrillMaster,
+            message_builder: window.buildMessage || window.handleMessageBuilder,
+            workflow_builder: window.buildWorkflow || window.handleWorkflowBuilder,
+            car_expert: window.askCarExpert || window.handleCarExpert,
+          };
 
-          const text = (input?.value || "").trim();
+          const fn = handlers[action];
 
-          btn.dataset.originalText ||= btn.textContent;
-          btn.textContent = "Working…";
-          btn.disabled = true;
-          if (output) output.textContent = "Thinking…";
+          // Only require text for NON-calculator actions
+          const noTextRequired = new Set(["payment_calc", "income_calc"]);
+          if (!noTextRequired.has(action) && !text) {
+            alert("Type your question/objection first.");
+            return;
+          }
 
-          try {
-            const handlers = {
-              payment_calc: window.handlePaymentCalc,
+          if (typeof fn === "function") {
+            const res = await fn(text, { modal, input, output, btn });
+            if (typeof res === "string" && output) output.textContent = res;
+          } else {
+            // ✅ CONNECTED FALLBACK (CALL BACKEND)
+            const routeMap = {
+              objection_coach: {
+                url: "/api/objection-coach",
+                body: { objection: text, history: "" },
+                pick: (data) => data?.answer || data?.text || "",
+              },
+              ask_ai: {
+                url: "/api/message-helper",
+                body: { mode: "ask", prompt: text },
+                pick: (data) => data?.text || data?.answer || "",
+              },
+              message_builder: {
+                url: "/api/message-helper",
+                body: { mode: "message", prompt: text },
+                pick: (data) => data?.text || data?.answer || "",
+              },
+              workflow_builder: {
+                url: "/ai/workflow",
+                body: {
+                  goal: "Set the Appointment",
+                  tone: "Persuasive, Low-Pressure, High-Value",
+                  channel: "Multi-Channel",
+                  days: 10,
+                  touches: 6,
+                },
+                pick: (data) => data?.text || "",
+              },
+              drill_master: {
+                url: "/api/message-helper",
+                body: { mode: "workflow", prompt: text },
+                pick: (data) => data?.text || "",
+              },
+              car_expert: {
+                url: "/api/message-helper",
+                body: { mode: "car", prompt: text },
+                pick: (data) => data?.text || "",
+              },
+              image_ai: {
+                url: "/api/message-helper",
+                body: { mode: "image-brief", prompt: text },
+                pick: (data) => data?.text || "",
+              },
+              video_ai: {
+                url: "/api/message-helper",
+                body: { mode: "video-brief", prompt: text },
+                pick: (data) => data?.text || "",
+              },
 
-              objection_coach: window.coachMe || window.handleObjectionCoach,
-              ask_ai: window.askAi || window.handleAskAi,
-              drill_master: window.runDrillMaster || window.handleDrillMaster,
-              message_builder: window.buildMessage || window.handleMessageBuilder,
-              workflow_builder: window.buildWorkflow || window.handleWorkflowBuilder,
-              car_expert: window.askCarExpert || window.handleCarExpert,
+              // ✅ CALCULATORS (REAL INPUTS)
+              payment_calc: {
+                url: "/api/payment-helper",
+                body: collectPaymentBody(modal),
+                pick: (data) => data?.result || data?.text || data?.answer || "",
+              },
+              income_calc: {
+                url: "/api/income-helper",
+                body: collectIncomeBody(modal),
+                pick: (data) => data?.result || data?.text || data?.answer || "",
+              },
             };
 
-            const fn = handlers[action];
+            const cfg = routeMap[action];
 
-// Some tools don't use textarea text (they use form inputs)
-const noTextRequired = new Set(["payment_calc", "income_calc", "calc_basic"]);
-
-if (!text && !noTextRequired.has(action)) {
-  alert("Type your question/objection first.");
-  return;
-}
-
-
-            if (typeof fn === "function") {
-              const res = await fn(text, { modal, input, output, btn });
-              if (typeof res === "string" && output) output.textContent = res;
-            } else {
-              // ✅ CONNECTED FALLBACK (CALL BACKEND)
-              const routeMap = {
-                objection_coach: {
-                  url: "/api/objection-coach",
-                  body: { objection: text, history: "" },
-                },
-                ask_ai: {
-                  url: "/api/message-helper",
-                  body: { mode: "ask", prompt: text },
-                },
-                message_builder: {
-                  url: "/api/message-helper",
-                  body: { mode: "message", prompt: text },
-                },
-                workflow_builder: {
-                  url: "/ai/workflow",
-                  body: {
-                    goal: "Set the Appointment",
-                    tone: "Persuasive, Low-Pressure, High-Value",
-                    channel: "Multi-Channel",
-                    days: 10,
-                    touches: 6,
-                  },
-                },
-                drill_master: {
-                  url: "/api/message-helper",
-                  body: { mode: "workflow", prompt: text },
-                },
-                car_expert: {
-                  url: "/api/message-helper",
-                  body: { mode: "car", prompt: text },
-                },
-                image_ai: {
-                  url: "/api/message-helper",
-                  body: { mode: "image-brief", prompt: text },
-                },
-                video_ai: {
-                  url: "/api/message-helper",
-                  body: { mode: "video-brief", prompt: text },
-                },
-              };
-
-              const cfg = routeMap[action];
-
-              if (!cfg) {
-                if (output) {
-                  output.textContent =
-                    `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
-                } else {
-                  alert(`Received (${action}). No route mapped yet.`);
-                }
-                throw new Error(`No backend route mapped for action: ${action}`);
+            if (!cfg) {
+              if (output) {
+                output.textContent =
+                  `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
+              } else {
+                alert(`Received (${action}). No route mapped yet.`);
               }
-
-              const r = await fetch(cfg.url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cfg.body),
-              });
-
-              const data = await r.json().catch(() => ({}));
-              if (!r.ok) {
-                const msg = data?.message || data?.error || `HTTP ${r.status}`;
-                throw new Error(msg);
-              }
-
-              const reply =
-                data?.answer ||
-                data?.text ||
-                data?.result ||
-                data?.script ||
-                data?.reply ||
-                "";
-
-              if (output) output.textContent = reply || "✅ Done (empty response).";
+              throw new Error(`No backend route mapped for action: ${action}`);
             }
-          } catch (err) {
-            console.error("🟣 AI-WIRE: action failed", err);
-            if (output) output.textContent = `❌ Error: ${err?.message || err}`;
-            else alert(err?.message || "Action failed");
-          } finally {
-            btn.disabled = false;
-            btn.textContent = btn.dataset.originalText || "Run";
+
+            const r = await fetch(cfg.url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cfg.body),
+            });
+
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) {
+              const msg = data?.message || data?.error || `HTTP ${r.status}`;
+              throw new Error(msg);
+            }
+
+            const reply = (cfg.pick ? cfg.pick(data) : "") || "";
+            if (output) output.textContent = reply || "✅ Done (empty response).";
           }
-        });
+        } catch (err) {
+          console.error("🟣 AI-WIRE: action failed", err);
+          if (output) output.textContent = `❌ Error: ${err?.message || err}`;
+          else alert(err?.message || "Action failed");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = btn.dataset.originalText || "Run";
+        }
       });
     });
+  });
 
-    console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
-  }
+  console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
+}
+// ==================================================
+
 
   // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
