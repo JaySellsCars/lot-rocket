@@ -895,6 +895,80 @@ const collectPaymentBody = (modal) => {
     rebate: num(rebateEl?.value),  // optional
   };
 };
+// ==================================================
+// INCOME CALC — HARD WIRE (GUARANTEED CLICK)
+// Put inside DOMContentLoaded (public/app.js)
+// ==================================================
+(function wireIncomeCalcDirect() {
+  const modal = document.getElementById("incomeModal");
+  if (!modal) return;
+
+  const btn =
+    modal.querySelector("#incomeCalcBtn") ||
+    modal.querySelector("[data-ai-action='income_calc']");
+
+  const out =
+    modal.querySelector("#incomeOutput") ||
+    modal.querySelector("[data-ai-output]");
+
+  if (!btn) {
+    console.warn("🟠 income calc: button not found");
+    return;
+  }
+
+  if (btn.dataset.wiredDirect === "true") return;
+  btn.dataset.wiredDirect = "true";
+
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[^\d.-]/g, "");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log("🟢 INCOME DIRECT CLICK");
+
+    const mtdEl = modal.querySelector("#incomeMtd");
+    const dateEl = modal.querySelector("#incomeLastPayDate");
+
+    const body = {
+      mtd: num(mtdEl?.value),
+      lastPayDate: (dateEl?.value || "").trim(),
+    };
+
+    if (out) out.textContent = "Thinking…";
+
+    try {
+      const r = await fetch("/api/income-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        const msg = data?.message || data?.error || `HTTP ${r.status}`;
+        throw new Error(msg);
+      }
+
+      const reply = data?.result || data?.text || data?.answer || "✅ Done (empty response).";
+      if (out) out.textContent = reply;
+
+      console.log("🟢 INCOME DIRECT OK", data);
+    } catch (err) {
+      console.error("🔴 INCOME DIRECT FAIL", err);
+      if (out) out.textContent = `❌ Error: ${err?.message || err}`;
+      else alert(err?.message || "Income calc failed");
+    }
+  });
+
+  console.log("✅ income calc: direct wire complete");
+})();
 
 
 
