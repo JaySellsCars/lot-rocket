@@ -742,44 +742,32 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 }
 
 // ==================================================
-// BOOST (SINGLE IMPLEMENTATION) — CLEAN
+// Boost request (single clean implementation)
 // ==================================================
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
-console.log("🧪 postBoost apiBase:", apiBase);
-console.log("🧪 trying:", apiBase + "/api/boost");
 
-async function postBoost(payload) {
-  let res;
+  async function postBoost(payload) {
+    try {
+      console.log("🧪 POST /boost");
 
-  console.log("🧪 postBoost apiBase:", apiBase);
+      const res = await fetch("/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-  try {
-    console.log("🧪 POST", apiBase + "/api/boost");
-res = await fetch("/api/boost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return res;
-  } catch (e) {
-    console.warn("🧪 /api/boost failed:", e?.message || e);
+      return res;
+    } catch (e) {
+      console.warn("🧪 /boost failed:", e?.message || e);
+      throw e;
+    }
   }
 
-  try {
-    console.log("🧪 POST", apiBase + "/boost");
-res = await fetch("/boost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return res;
-  } catch (e) {
-    console.warn("🧪 /boost failed:", e?.message || e);
-  }
-
-  throw new Error("Boost failed: backend route not found or unreachable.");
+  // expose handler
+  window.__postBoost = postBoost;
 }
+
 
 
   boostBtn.onclick = async () => {
