@@ -751,27 +751,41 @@
 
     <div class="side-modal-body">
       <form id="incomeForm">
-        <input
-          id="incomeMtd"
-          type="number"
-          step="0.01"
-          placeholder="Gross to date (e.g. 32000)"
-        />
+        <label class="calc-field">
+          <span>Gross Income to Date</span>
+          <input
+            id="incomeMtd"
+            type="number"
+            step="0.01"
+            placeholder="32000"
+          />
+        </label>
 
-        <input
-          id="incomeLastPayDate"
-          type="date"
-        />
+        <label class="calc-field">
+          <span>Last Pay Stub Date</span>
+          <input
+            id="incomeLastPayDate"
+            type="date"
+          />
+        </label>
 
-        <button id="incomeCalcBtn" type="button">
+        <!-- ✅ THIS WAS MISSING -->
+        <button
+          id="incomeCalcBtn"
+          type="button"
+          class="primary-btn full"
+          data-ai-action="income_calc"
+        >
           Estimate Income
         </button>
       </form>
 
-      <div id="incomeOutput"></div>
+      <!-- ✅ THIS WAS MISSING -->
+      <div id="incomeOutput" data-ai-output class="calc-result"></div>
     </div>
   </div>
 </section>
+
 
 
 <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
