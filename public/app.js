@@ -756,7 +756,7 @@ async function postBoost(payload) {
 
   try {
     console.log("🧪 POST", apiBase + "/api/boost");
-    res = await fetch(apiBase + "/api/boost", {
+res = await fetch("/api/boost", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
