@@ -979,20 +979,22 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper  ✅ BACKEND ONLY (app.js)
+// /api/payment-helper
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
-    const price = Number(req.body.price || 0);
-    const fees = Number(req.body.fees || 0); // ✅ dealer fees / add-ons
-    const down = Number(req.body.down || 0);
-    const trade = Number(req.body.trade || 0);
+    const price  = Number(req.body.price || 0);
+    const fees   = Number(req.body.fees || 0);
+    const down   = Number(req.body.down || 0);
+    const trade  = Number(req.body.trade || 0);
     const payoff = Number(req.body.payoff || 0);
 
-    const aprPct = Number(req.body.rate || 0);     // APR %
-    const rate = aprPct / 100 / 12;                // monthly rate
-    const term = Number(req.body.term || 0);       // months
-    const taxRate = Number(req.body.tax || 0) / 100;
+    const aprPct = Number(req.body.rate || 0);        // APR %
+    const rate   = aprPct / 100 / 12;                 // monthly rate
+
+    const term   = Number(req.body.term || 0);        // months
+    const taxPct = Number(req.body.tax || 0);
+    const taxRate = taxPct / 100;
 
     if (!price || !term) {
       return res.status(400).json({
@@ -1001,21 +1003,15 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
-    // ✅ Choose your tax rule:
-    // Most consistent/simple: tax applies to (price + fees)
-    const taxableBase = price + fees;
-    const taxAmount = taxableBase * taxRate;
+    // Taxable base (you told me dealer fees/add-ons should be included)
+    const taxableBase = Math.max(price + fees, 0);
+    const taxAmount = taxRate ? taxableBase * taxRate : 0;
 
-    // ✅ Net trade equity:
-    // +equity reduces amount financed; -equity increases it automatically
-    const tradeEquity = trade - payoff;
+    // Handles BOTH positive + negative equity:
+    // amountFinanced = (price + fees + tax) - down - trade + payoff
+    const amountFinanced = Math.max(taxableBase + taxAmount - down - trade + payoff, 0);
 
-    // ✅ Amount financed:
-    // (price + fees + tax) - down - tradeEquity
-    // because subtracting positive equity lowers, subtracting negative equity raises
-    const amountFinanced = Math.max(taxableBase + taxAmount - down - tradeEquity, 0);
-
-    let payment;
+    let payment = 0;
     if (!rate) {
       payment = amountFinanced / term;
     } else {
@@ -1024,32 +1020,39 @@ app.post("/api/payment-helper", (req, res) => {
         (Math.pow(1 + rate, term) - 1);
     }
 
-    const result = `~$${payment.toFixed(2)} /mo (estimate — not a binding quote).`;
+    const tradeEquity = trade - payoff; // positive = good, negative = neggity
+    const resultLine = `~$${payment.toFixed(2)}/mo (estimate — not a binding quote).`;
 
-    // ✅ Return breakdown so frontend can show it
+    const breakdownText =
+`${resultLine}
+
+Breakdown:
+• Price: $${price.toFixed(2)}
+• Dealer Fees/Add-ons: $${fees.toFixed(2)}
+• Taxable Base: $${taxableBase.toFixed(2)}
+• Tax (${taxPct.toFixed(2)}%): $${taxAmount.toFixed(2)}
+• Down: $${down.toFixed(2)}
+• Trade: $${trade.toFixed(2)} | Payoff: $${payoff.toFixed(2)}
+• Trade Equity: $${tradeEquity.toFixed(2)} (${tradeEquity >= 0 ? "positive" : "negative"} equity)
+• Amount Financed: $${amountFinanced.toFixed(2)}
+• APR: ${aprPct.toFixed(2)}% | Term: ${term} months`;
+
     return res.json({
-      result,
-      breakdown: {
-        price,
-        fees,
-        taxableBase,
-        taxRate: taxRate * 100,
-        taxAmount,
-        down,
-        trade,
-        payoff,
-        tradeEquity,       // + = positive equity, - = negative equity
-        amountFinanced,
-        aprPct,
-        term,
-        payment,
-      },
+      result: resultLine,
+      breakdownText,
+      amountFinanced,
+      taxableBase,
+      taxAmount,
+      tradeEquity,
+      aprPct,
+      term,
     });
   } catch (err) {
     console.error("payment-helper error", err);
     return res.status(500).json({ error: "Failed to estimate payment" });
   }
 });
+
 
 
 
