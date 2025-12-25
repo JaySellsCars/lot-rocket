@@ -765,16 +765,20 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
+    // price + tax
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
 
-    // ✅ NET TRADE EQUITY:
-    // positive equity reduces amount financed
+    // NET TRADE EQUITY
+    // positive equity lowers amount financed
     // negative equity increases amount financed
     const tradeEquity = trade - payoff;
 
-    // ✅ Handles BOTH cases correctly
-    // amountFinanced = taxedPrice - down - trade + payoff
-    const amountFinanced = Math.max(taxedPrice - down - trade + payoff, 0);
+    // FINAL AMOUNT FINANCED
+    // taxedPrice - down - trade + payoff
+    const amountFinanced = Math.max(
+      taxedPrice - down - trade + payoff,
+      0
+    );
 
     let payment;
     if (!rate) {
@@ -789,7 +793,11 @@ app.post("/api/payment-helper", (req, res) => {
       2
     )} per month (rough estimate only, not a binding quote).`;
 
-    return res.json({ result, amountFinanced, tradeEquity });
+    return res.json({
+      result,
+      amountFinanced,
+      tradeEquity,
+    });
   } catch (err) {
     console.error("payment-helper error", err);
     return res.status(500).json({ error: "Failed to estimate payment" });
@@ -801,6 +809,7 @@ app.post("/api/payment-helper", (req, res) => {
 // ==================================================
 // BOOST (SINGLE IMPLEMENTATION) — CLEAN
 // ==================================================
+
 
 
   if (boostBtn && boostBtn.dataset.wired !== "true") {
