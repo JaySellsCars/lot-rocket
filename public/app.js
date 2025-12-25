@@ -719,114 +719,126 @@ console.log("🧪 posts count:", (Array.isArray(data?.posts) ? data.posts.length
     }
   }
 
-  // ==================================================
-  // STEP 1 → SEND TOP PHOTOS → STEP 3
-  // ==================================================
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-    sendTopBtn.onclick = () => {
-      const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
-      if (!selected.length) return alert("Select photos first.");
-
-      STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-      STORE.creativePhotos = [];
-      renderCreativeThumbs();
-
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-
-      log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
-    };
-  }
-
- 
-  // ==================================================
-  // BOOST (SINGLE IMPLEMENTATION) — CLEAN
-  // ==================================================
-  if (boostBtn && boostBtn.dataset.wired !== "true") {
-    boostBtn.dataset.wired = "true";
-
-    async function postBoost(payload) {
-      let res;
-
-      try {
-        res = await fetch(apiBase + "/api/boost", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) return res;
-      } catch {}
-
-      try {
-        res = await fetch(apiBase + "/boost", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) return res;
-      } catch {}
-
-      throw new Error("Boost failed: backend route not found or unreachable.");
-    }
-
-    boostBtn.onclick = async () => {
-      console.log("🚀 BOOST CLICK");
-
-      const url = dealerUrlInput?.value?.trim?.() || "";
-      if (!url) return alert("Enter vehicle URL");
-
-      setBtnLoading(boostBtn, true, "Boosting…");
-      if (statusText) statusText.textContent = "Boosting…";
-
-      try {
-        const res = await postBoost({
-          url,
-          labelOverride: vehicleLabelInput?.value?.trim?.() || "",
-          priceOverride: priceInfoInput?.value?.trim?.() || "",
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
-
-        const vLabel = data.vehicleLabel || data.title || "";
-        const vPrice = data.priceInfo || data.price || "";
-
-        if (summaryLabel) summaryLabel.textContent = vLabel || "—";
-        if (summaryPrice) summaryPrice.textContent = vPrice || "—";
-
-        if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
-        if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
-
-        const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-        const seen = new Set();
-        const cleaned = [];
-
-        for (const u of rawPhotos) {
-          if (!u) continue;
-          const base = u.split("?")[0].replace(/\/+$/, "");
-          if (seen.has(base)) continue;
-          seen.add(base);
-          cleaned.push(u);
-          if (cleaned.length >= MAX_PHOTOS) break;
-        }
-
-        STORE.lastBoostPhotos = cleaned;
-        renderStep1Photos(STORE.lastBoostPhotos);
-
-        if (statusText) statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
-      } catch (e) {
-        console.error("✘ BOOST FAILED", e);
-        if (statusText) statusText.textContent = "Boost failed.";
-        alert(e?.message || "Boost failed.");
-      } finally {
-        setBtnLoading(boostBtn, false);
-      }
-    };
-  }
 // ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3
+// ==================================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+  sendTopBtn.onclick = () => {
+    const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
+    if (!selected.length) return alert("Select photos first.");
+
+    STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+    STORE.creativePhotos = [];
+    renderCreativeThumbs();
+
+    renderHoldingZone();
+    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+
+    log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+  };
+}
+
+// ==================================================
+// BOOST (SINGLE IMPLEMENTATION) — CLEAN
+// ==================================================
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+
+  async function postBoost(payload) {
+    let res;
+
+    try {
+      res = await fetch(apiBase + "/api/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return res;
+    } catch {}
+
+    try {
+      res = await fetch(apiBase + "/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return res;
+    } catch {}
+
+    throw new Error("Boost failed: backend route not found or unreachable.");
+  }
+
+  boostBtn.onclick = async () => {
+    console.log("🚀 BOOST CLICK");
+
+    const url = dealerUrlInput?.value?.trim?.() || "";
+    if (!url) return alert("Enter vehicle URL");
+
+    setBtnLoading(boostBtn, true, "Boosting…");
+    if (statusText) statusText.textContent = "Boosting…";
+
+    try {
+      const res = await postBoost({
+        url,
+        labelOverride: vehicleLabelInput?.value?.trim?.() || "",
+        priceOverride: priceInfoInput?.value?.trim?.() || "",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
+      console.log("🧪 desc length:", (data?.description || data?.vehicleDescription || "").length);
+      console.log("🧪 posts count:", Array.isArray(data?.posts) ? data.posts.length : 0);
+
+      if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
+
+      const vLabel = data.vehicleLabel || data.title || "";
+      const vPrice = data.priceInfo || data.price || "";
+
+      if (summaryLabel) summaryLabel.textContent = vLabel || "—";
+      if (summaryPrice) summaryPrice.textContent = vPrice || "—";
+
+      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
+      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
+
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+      const seen = new Set();
+      const cleaned = [];
+
+      for (const u of rawPhotos) {
+        if (!u) continue;
+        const base = u.split("?")[0].replace(/\/+$/, "");
+        if (seen.has(base)) continue;
+        seen.add(base);
+        cleaned.push(u);
+        if (cleaned.length >= MAX_PHOTOS) break;
+      }
+
+      STORE.lastBoostPhotos = cleaned;
+      renderStep1Photos(STORE.lastBoostPhotos);
+
+      const desc = data.description || data.vehicleDescription || data.desc || "";
+      const posts = data.posts || data.socialPosts || data.captions || [];
+
+      STORE.lastBoostDescription = String(desc || "");
+      STORE.lastBoostPosts = Array.isArray(posts) ? posts : [];
+
+      renderBoostTextAndPosts(STORE.lastBoostDescription, STORE.lastBoostPosts);
+
+      if (statusText) statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
+    } catch (e) {
+      console.error("✘ BOOST FAILED", e);
+      if (statusText) statusText.textContent = "Boost failed.";
+      alert(e?.message || "Boost failed.");
+    } finally {
+      setBtnLoading(boostBtn, false);
+    }
+  };
+}
+
 // BOOST OUTPUT RENDER (description + generated posts)
 // Safe: renders only if containers exist
 // ==================================================
