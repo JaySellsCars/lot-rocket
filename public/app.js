@@ -849,7 +849,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 const collectPaymentBody = (modal) => {
-  const pickLocal = (selectors) => {
+  // local pick helper (scoped)
+  const pick = (selectors) => {
     for (const sel of selectors) {
       const el = modal.querySelector(sel);
       if (el) return el;
@@ -857,55 +858,44 @@ const collectPaymentBody = (modal) => {
     return null;
   };
 
-  const numLocal = (v) => {
+  const num = (v) => {
     if (v == null) return 0;
     const s = String(v).replace(/[^\d.-]/g, "");
     const n = Number(s);
     return Number.isFinite(n) ? n : 0;
   };
 
-  const priceEl  = pickLocal(["#payPrice",  "input[name='price']",  "#price"]);
-  const downEl   = pickLocal(["#payDown",   "input[name='down']",   "#down"]);
-  const tradeEl  = pickLocal(["#payTrade",  "input[name='trade']",  "#trade"]);
-  const payoffEl = pickLocal(["#payPayoff", "input[name='payoff']", "#payoff"]);
+  const priceEl  = pick(["#payPrice",  "input[name='price']",  "#price"]);
+  const downEl   = pick(["#payDown",   "input[name='down']",   "#down"]);
+  const tradeEl  = pick(["#payTrade",  "input[name='trade']",  "#trade"]);
+  const payoffEl = pick(["#payPayoff", "input[name='payoff']", "#payoff"]);
 
-  const aprEl = pickLocal([
-    "#payApr",
-    "input[name='apr']",
-    "input[name='rate']",
-    "#apr",
-    "#rate",
+  const aprEl = pick(["#payApr", "input[name='apr']", "input[name='rate']", "#apr", "#rate"]);
+  const termEl = pick(["#payTerm", "input[name='term']", "#term"]);
+  const taxEl  = pick(["#payTax",  "input[name='tax']",  "#tax"]);
 
-    // ✅ extra robust fallbacks
-    "input[id*='apr' i]",
-    "input[id*='rate' i]",
-    "input[name*='apr' i]",
-    "input[name*='rate' i]",
-  ]);
+  const feesEl = pick(["#payFees", "#dealerFees", "input[name='fees']", "input[name='dealerFees']", "#fees"]);
 
-
-  const termEl = pickLocal(["#payTerm", "input[name='term']", "#term"]);
-  const taxEl  = pickLocal(["#payTax",  "input[name='tax']",  "#tax"]);
-
-  const feesEl = pickLocal([
-    "#payFees",
-    "#dealerFees",
-    "input[name='fees']",
-    "input[name='dealerFees']",
-    "#fees",
-  ]);
+  // ✅ NEW: State + Rebate
+  const stateEl = pick(["#payState", "select[name='state']", "input[name='state']"]);
+  const rebateEl = pick(["#payRebate", "input[name='rebate']", "#rebate"]);
 
   return {
-    price:  numLocal(priceEl?.value),
-    down:   numLocal(downEl?.value),
-    trade:  numLocal(tradeEl?.value),
-    payoff: numLocal(payoffEl?.value),
-    rate:   numLocal(aprEl?.value),     // APR %
-    term:   numLocal(termEl?.value),    // months
-    tax:    numLocal(taxEl?.value),     // %
-    fees:   numLocal(feesEl?.value),    // Dealer Fees/Add-ons
+    price: num(priceEl?.value),
+    down: num(downEl?.value),
+    trade: num(tradeEl?.value),
+    payoff: num(payoffEl?.value),
+
+    rate: num(aprEl?.value),   // APR %
+    term: num(termEl?.value),  // months
+    tax: num(taxEl?.value),    // tax %
+
+    fees: num(feesEl?.value),      // dealer fees / add-ons
+    state: (stateEl?.value || "").trim().toUpperCase(), // "MI", "OH", etc
+    rebate: num(rebateEl?.value),  // optional
   };
 };
+
 
 
 
