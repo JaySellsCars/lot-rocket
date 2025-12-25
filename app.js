@@ -718,23 +718,38 @@ async function boostHandler(req, res) {
     });
 
     // -----------------------------
-    // Extract description safely
+    // Description (guaranteed)
     // -----------------------------
     let description = "";
 
     try {
-      if (kit?.description) {
-        description = kit.description;
-      } else if (kit?.html) {
-        const $ = cheerio.load(kit.html);
+      const r = await fetchFn(pageUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+      });
+
+      const html = r && r.ok ? await r.text() : "";
+      if (html) {
+        const $ = cheerio.load(html);
+
         description =
           $('meta[name="description"]').attr("content") ||
           $('meta[property="og:description"]').attr("content") ||
-          $('.vehicle-description').first().text() ||
-          $('.description').first().text() ||
+          // common VDP containers
+          $(".vehicle-description").first().text() ||
+          $(".vdp-description").first().text() ||
+          $(".description").first().text() ||
+          $("#description").text() ||
+          // dealer comments / remarks
+          $(".dealer-comments").first().text() ||
+          $(".comments").first().text() ||
+          $(".remarks").first().text() ||
           "";
       }
-    } catch (e) {
+    } catch {
       description = "";
     }
 
@@ -745,14 +760,14 @@ async function boostHandler(req, res) {
       photos: kit.photos?.length || 0,
       edited: kit.editedPhotos?.length || 0,
       descriptionLength: description.length,
+      posts: Array.isArray(kit.posts) ? kit.posts.length : 0,
+      processPhotos,
     });
 
     return res.json({
-      vehicleLabel: kit.vehicleLabel || "",
-      priceInfo: kit.price || "",
-      photos: kit.photos || [],
-      description,
-      posts: kit.posts || [],
+      ...kit,
+      description,                 // ✅ ALWAYS PRESENT
+      posts: kit.posts || [],      // ✅ ALWAYS ARRAY
     });
   } catch (err) {
     return sendAIError(res, err, "Boost failed.");
@@ -761,6 +776,7 @@ async function boostHandler(req, res) {
 
 app.post("/boost", boostHandler);
 app.post("/api/boost", boostHandler);
+
 
 
 // --------------------------------------------------
