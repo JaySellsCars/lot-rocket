@@ -712,16 +712,50 @@ async function boostHandler(req, res) {
       return res.status(400).json({ error: "bad_url", message: "Invalid or missing URL." });
     }
 
-    const kit = await buildKitForUrl({ pageUrl, labelOverride, priceOverride, processPhotos });
-
-    console.log("✅ BOOST:", {
-      url: pageUrl,
-      final: kit.photos?.length || 0,
-      edited: kit.editedPhotos?.length || 0,
+    const kit = await buildKitForUrl({
+      pageUrl,
+      labelOverride,
+      priceOverride,
       processPhotos,
     });
 
-    return res.json(kit);
+    // -----------------------------
+    // Extract description safely
+    // -----------------------------
+    let description = "";
+
+    try {
+      if (kit?.description) {
+        description = kit.description;
+      } else if (kit?.html) {
+        const $ = cheerio.load(kit.html);
+        description =
+          $('meta[name="description"]').attr("content") ||
+          $('meta[property="og:description"]').attr("content") ||
+          $('.vehicle-description').first().text() ||
+          $('.description').first().text() ||
+          "";
+      }
+    } catch (e) {
+      description = "";
+    }
+
+    description = String(description || "").replace(/\s+/g, " ").trim();
+
+    console.log("✅ BOOST:", {
+      url: pageUrl,
+      photos: kit.photos?.length || 0,
+      edited: kit.editedPhotos?.length || 0,
+      descriptionLength: description.length,
+    });
+
+    return res.json({
+      vehicleLabel: kit.vehicleLabel || "",
+      priceInfo: kit.price || "",
+      photos: kit.photos || [],
+      description,
+      posts: kit.posts || [],
+    });
   } catch (err) {
     return sendAIError(res, err, "Boost failed.");
   }
@@ -729,6 +763,7 @@ async function boostHandler(req, res) {
 
 app.post("/boost", boostHandler);
 app.post("/api/boost", boostHandler);
+
 
 // --------------------------------------------------
 // /api/social-kit
