@@ -746,6 +746,8 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 // ==================================================
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
+console.log("🧪 postBoost apiBase:", apiBase);
+console.log("🧪 trying:", apiBase + "/api/boost");
 
   async function postBoost(payload) {
     let res;
