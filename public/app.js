@@ -736,12 +736,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // ==================================================
-  // IMPORTANT:
-  // /api/payment-helper is BACKEND ONLY (Express route).
-  // Do NOT paste app.post(...) into public/app.js
-  // ==================================================
-
+ 
   // ==================================================
   // BOOST (SINGLE IMPLEMENTATION) — CLEAN
   // ==================================================
