@@ -984,28 +984,16 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
-    const n = (v) => {
-      const x = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-      return Number.isFinite(x) ? x : 0;
-    };
-
-    const price = n(req.body.price);
-    const down = n(req.body.down);
-    const trade = n(req.body.trade);
-    const payoff = n(req.body.payoff);
-    const fees = n(req.body.fees);
-
-    // ✅ accept APR from rate OR apr
-    const aprPct = n(req.body.rate || req.body.apr);
-
-    const term = Math.max(0, Math.floor(n(req.body.term)));
-    const taxPct = n(req.body.tax);
-
-    // RouteOne-style knobs (safe defaults)
-    const taxTradeCredit = req.body.taxTradeCredit !== false; // default true
-    const taxFees = req.body.taxFees !== false;               // default true
-    const rebate = n(req.body.rebate);
-    const rebateReducesTaxable = !!req.body.rebateReducesTaxable;
+    const price = Number(req.body.price || 0);
+    const down = Number(req.body.down || 0);
+    const trade = Number(req.body.trade || 0);
+    const payoff = Number(req.body.payoff || 0);
+    const aprPct = Number(req.body.rate || 0);
+    const term = Number(req.body.term || 0);
+    const taxPct = Number(req.body.tax || 0);
+    const fees = Number(req.body.fees || 0);
+    const rebate = Number(req.body.rebate || 0);
+    const state = String(req.body.state || "MI").trim().toUpperCase();
 
     if (!price || !term) {
       return res.status(400).json({
@@ -1014,78 +1002,100 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
+    // --------------------------------------------------
+    // ✅ STATE RULE DEFAULTS (editable list)
+    // - taxTradeCredit: trade reduces taxable base?
+    // - taxFees: fees/add-ons taxable?
+    // - rebateReducesTaxable: rebate reduces taxable base?
+    // --------------------------------------------------
+    const STATE_RULES = {
+      MI: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      OH: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      IN: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      IL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      PA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      NY: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      NJ: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      FL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      TX: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      CA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+    };
+
+    const rules = STATE_RULES[state] || STATE_RULES.MI;
+
+    // Allow future overrides (optional)
+    const taxTradeCredit =
+      typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
+
+    const taxFees =
+      typeof req.body.taxFees === "boolean" ? req.body.taxFees : rules.taxFees;
+
+    const rebateReducesTaxable =
+      typeof req.body.rebateReducesTaxable === "boolean"
+        ? req.body.rebateReducesTaxable
+        : rules.rebateReducesTaxable;
+
+    // --------------------------------------------------
+    // ✅ Core math
+    // --------------------------------------------------
+    const tradeEquity = trade - payoff;              // + = positive equity, - = negative
+    const negativeEquity = Math.max(payoff - trade, 0);
+
+    const feesTaxable = taxFees ? fees : 0;
+    const tradeTaxCredit = taxTradeCredit ? trade : 0;
+    const rebateTaxableReduction = rebateReducesTaxable ? rebate : 0;
+
+    const taxableBase = Math.max(price + feesTaxable - tradeTaxCredit - rebateTaxableReduction, 0);
     const taxRate = taxPct / 100;
-
-    // equity: + = positive, - = negative (negative equity gets rolled in)
-    const tradeEquity = trade - payoff;
-
-    // ✅ taxable base (RouteOne-ish)
-    let taxableBase = price;
-
-    if (taxFees) taxableBase += fees;
-    if (taxTradeCredit) taxableBase -= trade;
-    if (rebateReducesTaxable) taxableBase -= rebate;
-
-    taxableBase = Math.max(0, taxableBase);
-
     const taxAmount = taxableBase * taxRate;
 
-    // ✅ total deal amount (before down/trade/payoff mechanics)
-    // (Rebate always reduces total; taxable behavior handled above)
-    const totalWithTax =
-      price +
-      fees +
-      taxAmount -
-      rebate;
+    // Amount financed (typical): price + fees + tax - down - trade + payoff - rebate
+    const amountFinanced = Math.max(price + fees + taxAmount - down - trade + payoff - rebate, 0);
 
-    // ✅ amount financed (this correctly rolls negative equity)
-    // total - down - trade + payoff  == total - down - (trade - payoff)
-    const amountFinanced = Math.max(0, totalWithTax - down - tradeEquity);
+    const monthlyRate = (aprPct / 100) / 12;
 
-    // ✅ payment
-    const r = (aprPct / 100) / 12; // monthly rate
-    let payment = 0;
-
-    if (!r) {
+    let payment;
+    if (!monthlyRate) {
       payment = amountFinanced / term;
     } else {
       payment =
-        (amountFinanced * r * Math.pow(1 + r, term)) /
-        (Math.pow(1 + r, term) - 1);
+        (amountFinanced * monthlyRate * Math.pow(1 + monthlyRate, term)) /
+        (Math.pow(1 + monthlyRate, term) - 1);
     }
 
-    const money = (x) =>
-      `$${Number(x || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const money = (n) =>
+      `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const equityLine = tradeEquity >= 0 ? `+${money(tradeEquity)}` : `${money(tradeEquity)}`;
 
     const breakdown = {
+      state,
       price,
       fees,
-      rebate,
       taxableBase,
-      taxRate: taxRate,   // ratio (0.06)
+      taxRate: taxPct,
       taxAmount,
       down,
       trade,
       payoff,
-      tradeEquity,        // + positive, - negative
+      tradeEquity,
+      negativeEquity,
+      rebate,
       amountFinanced,
-      aprPct,             // percent (12.24)
+      aprPct,
       term,
-      payment,
-      taxTradeCredit,
-      taxFees,
-      rebateReducesTaxable,
+      assumptions: {
+        taxTradeCredit,
+        taxFees,
+        rebateReducesTaxable,
+      },
     };
-
-    const equityLine =
-      tradeEquity >= 0
-        ? `+${money(tradeEquity)} (positive equity)`
-        : `${money(tradeEquity)} (negative equity)`;
 
     const breakdownText = [
       `~${money(payment)}/mo (estimate — not a binding quote).`,
-      ``,
-      `Breakdown:`,
+      "",
+      "Breakdown:",
+      `• State: ${state}`,
       `• Price: ${money(price)}`,
       `• Dealer Fees/Add-ons: ${money(fees)}`,
       `• Taxable Base: ${money(taxableBase)}`,
@@ -1093,13 +1103,20 @@ app.post("/api/payment-helper", (req, res) => {
       `• Rebate: ${money(rebate)}`,
       `• Down: ${money(down)}`,
       `• Trade: ${money(trade)} | Payoff: ${money(payoff)}`,
-      `• Trade Equity: ${equityLine}`,
+      `• Trade Equity: ${equityLine} (${tradeEquity >= 0 ? "positive equity" : "negative equity"})`,
       `• Amount Financed: ${money(amountFinanced)}`,
       `• APR: ${aprPct.toFixed(2)}% | Term: ${term} months`,
+      "",
+      "Assumptions:",
+      `• Trade-in credit ${taxTradeCredit ? "DOES" : "does NOT"} reduce taxable base`,
+      `• Dealer fees/add-ons ${taxFees ? "ARE" : "are NOT"} taxable`,
+      `• Rebates ${rebateReducesTaxable ? "DO" : "do NOT"} reduce taxable base`,
+      `• Sales tax calculated before down payment`,
+      `• Estimate only — dealer & state rules may vary`,
     ].join("\n");
 
     return res.json({
-      result: `~${money(payment)}/mo (estimate — not a binding quote).`,
+      result: `~${money(payment)} per month (rough estimate only, not a binding quote).`,
       breakdown,
       breakdownText,
     });
@@ -1108,6 +1125,7 @@ app.post("/api/payment-helper", (req, res) => {
     return res.status(500).json({ error: "Failed to estimate payment" });
   }
 });
+
 
 
 
