@@ -744,31 +744,27 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 // ==================================================
 // Boost request (single clean implementation)
 // ==================================================
-if (boostBtn && boostBtn.dataset.wired !== "true") {
-  boostBtn.dataset.wired = "true";
 
-  async function postBoost(payload) {
-    try {
-      console.log("🧪 POST /boost");
+// ✅ MUST be top-scope so boostBtn.onclick can call it (no "postBoost is not defined")
+async function postBoost(payload) {
+  try {
+    console.log("🧪 POST /boost");
 
-      const res = await fetch("/boost", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch("/boost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      return res;
-    } catch (e) {
-      console.warn("🧪 /boost failed:", e?.message || e);
-      throw e;
-    }
+    return res; // ✅ return even if not ok; caller handles status + message
+  } catch (e) {
+    console.warn("🧪 /boost failed:", e?.message || e);
+    throw e;
   }
-
-  // expose handler
-  window.__postBoost = postBoost;
 }
 
-
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
 
   boostBtn.onclick = async () => {
     console.log("🚀 BOOST CLICK");
@@ -789,8 +785,11 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
       const data = await res.json().catch(() => ({}));
 
       console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
-      console.log("🧪 desc length:", (data?.description || data?.vehicleDescription || "").length);
-      console.log("🧪 posts count:", Array.isArray(data?.posts) ? data.posts.length : 0);
+      console.log("🧪 desc length:", (data?.description || data?.vehicleDescription || data?.desc || "").length);
+      console.log(
+        "🧪 posts count:",
+        Array.isArray(data?.posts) ? data.posts.length : Array.isArray(data?.socialPosts) ? data.socialPosts.length : 0
+      );
 
       if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
 
@@ -835,7 +834,8 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
     } finally {
       setBtnLoading(boostBtn, false);
     }
-  }
+  };
+}
 
 
 
