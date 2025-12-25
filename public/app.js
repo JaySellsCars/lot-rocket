@@ -1021,6 +1021,10 @@ payment_calc: {
   // { price, down, trade, payoff, rate, term, tax, fees }
   body: collectPaymentBody(modal),
   pick: (data) => {
+    // ✅ NEW BACKEND: preferred
+    if (data?.breakdownText) return data.breakdownText;
+
+    // ✅ If backend returns { breakdown: {...} } (alternate shape)
     const b = data?.breakdown;
 
     // fallback (older backend)
@@ -1028,10 +1032,22 @@ payment_calc: {
 
     const money = (n) =>
       Number.isFinite(Number(n))
-        ? `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        ? `$${Number(n).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`
         : "$0.00";
 
-    const pct = (n) => (Number.isFinite(Number(n)) ? `${Number(n).toFixed(2)}%` : "0.00%");
+    const pct = (n) =>
+      Number.isFinite(Number(n)) ? `${Number(n).toFixed(2)}%` : "0.00%";
+
+    // b.taxRate might be "0.06" (ratio) or "6" (percent). Normalize to percent.
+    const taxPct =
+      Number.isFinite(Number(b.taxRate))
+        ? Number(b.taxRate) <= 1
+          ? Number(b.taxRate) * 100
+          : Number(b.taxRate)
+        : 0;
 
     const equityLine =
       Number(b.tradeEquity) >= 0
@@ -1045,7 +1061,7 @@ payment_calc: {
       `• Price: ${money(b.price)}`,
       `• Dealer Fees/Add-ons: ${money(b.fees)}`,
       `• Taxable Base: ${money(b.taxableBase)}`,
-      `• Tax (${pct(b.taxRate)}): ${money(b.taxAmount)}`,
+      `• Tax (${pct(taxPct)}): ${money(b.taxAmount)}`,
       `• Down: ${money(b.down)}`,
       `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
       `• Trade Equity: ${equityLine}`,
@@ -1102,6 +1118,7 @@ btn.textContent = btn.dataset.originalText || "Run";
 
 console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
 }
+
 
 
 
