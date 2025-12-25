@@ -601,10 +601,8 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
 // ======================================================
 // Routes
 // ======================================================
-console.log("🧠 BOOST RESPONSE PAYLOAD:", {
-  description,
-  posts,
-});
+console.log("🧠 BOOST RESPONSE PAYLOAD: (moved into boostHandler — remove top-level log)");
+
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
