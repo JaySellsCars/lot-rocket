@@ -4,6 +4,84 @@
  */
 
 require("dotenv").config();
+function cleanText(s) {
+  return String(s || "")
+    .replace(/\s+/g, " ")
+    .replace(/\u00a0/g, " ")
+    .trim();
+}
+
+function extractVehicleDescriptionFromHtml($, html) {
+  // 1) meta description
+  const meta =
+    cleanText($('meta[name="description"]').attr("content")) ||
+    cleanText($('meta[property="og:description"]').attr("content"));
+
+  if (meta && meta.length > 40) return meta;
+
+  // 2) JSON-LD (common on dealer sites)
+  try {
+    const ldNodes = $('script[type="application/ld+json"]');
+    for (let i = 0; i < ldNodes.length; i++) {
+      const raw = $(ldNodes[i]).text();
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      for (const obj of items) {
+        const desc =
+          cleanText(obj?.description) ||
+          cleanText(obj?.offers?.description) ||
+          cleanText(obj?.itemOffered?.description);
+        if (desc && desc.length > 40) return desc;
+      }
+    }
+  } catch {}
+
+  // 3) common dealer page containers (best-effort)
+  const selectors = [
+    "#description",
+    ".description",
+    ".vehicle-description",
+    ".vdp-description",
+    "[data-testid='vehicle-description']",
+    "[class*='description']",
+    "[id*='description']",
+    ".comments",
+    ".remarks",
+    ".dealer-comments",
+  ];
+
+  for (const sel of selectors) {
+    const t = cleanText($(sel).first().text());
+    if (t && t.length > 80) return t;
+  }
+
+  // 4) fallback: nothing found
+  return "";
+}
+
+function buildFallbackPosts({ label, price, url, description }) {
+  const baseTags = ["#CarForSale", "#NewCar", "#UsedCars", "#AutoDeals", "#CarShopping", "#TestDrive"];
+  const labelTags = cleanText(label)
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 4)
+    .map((w) => "#" + w.replace(/[^\w]/g, ""))
+    .filter((t) => t.length > 2);
+
+  const tags = [...new Set([...labelTags, ...baseTags])].slice(0, 10).join(" ");
+
+  const line = description ? `\n\n${cleanText(description).slice(0, 220)}…` : "";
+
+  return [
+    `🔥 JUST IN: ${label || "Fresh Inventory"}${price ? ` • ${price}` : ""}\n✅ Ready for a quick approval + easy test drive?\n📲 Message me “INFO” and I’ll send details.${line}\n\n${tags}\n${url || ""}`.trim(),
+
+    `🚗 ${label || "Available now"}${price ? ` • ${price}` : ""}\n💥 Clean, sharp, and ready to roll.\n📩 Comment “YES” and I’ll DM the full rundown + next steps.${line}\n\n${tags}\n${url || ""}`.trim(),
+
+    `⚡️ Hot pick: ${label || "This one won’t last"}${price ? ` • ${price}` : ""}\n🕒 Want to see it today?\n📲 Send “APPT” and I’ll lock in a time.${line}\n\n${tags}\n${url || ""}`.trim(),
+  ];
+}
 
 const express = require("express");
 const path = require("path");
