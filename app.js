@@ -1,22 +1,6 @@
 /**
  * app.js — Lot Rocket Backend (CLEAN / DEDUPED / CONSISTENT)
  * Version: 2.6-clean (ROCKET-6)
- *
- * What this file does:
- * - Scrapes dealer page (title/meta/text) + pulls images
- * - Generates social kit copy (multi-platform JSON)
- * - Generates/edits photos via gpt-image-1 (returns data URLs)
- * - Provides regen endpoints (single platform post, scripts, shot plans, design ideas)
- * - Provides tool endpoints (objection coach, payment calc, income calc, workflow, message helper)
- * - Provides CORS-safe image proxy for canvas/konva/fabric loading
- * - Provides ZIP download for photos
- *
- * Cleanup goals:
- * - One app init
- * - No duplicate helpers
- * - Single normalizeUrl behavior (strict)
- * - Photo scraping returns ALL candidates; cleaner removes junk; frontend selects
- * - Shared error handling
  */
 
 require("dotenv").config();
@@ -26,49 +10,18 @@ const path = require("path");
 const cors = require("cors");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
-const fetch = require("node-fetch");
 const archiver = require("archiver");
-function normalizePhotoUrl(u) {
-  if (!u) return "";
+
+// Node 18+ has global fetch; keep safe fallback if needed
+let fetchFn = global.fetch;
+if (typeof fetchFn !== "function") {
   try {
-    const url = new URL(u);
-    // remove junk query params that cause duplicates (size/crop/cache)
-    url.searchParams.delete("width");
-    url.searchParams.delete("height");
-    url.searchParams.delete("w");
-    url.searchParams.delete("h");
-    url.searchParams.delete("fit");
-    url.searchParams.delete("crop");
-    url.searchParams.delete("quality");
-    url.searchParams.delete("q");
-    url.searchParams.delete("auto");
-    url.searchParams.delete("fm");
-    url.searchParams.delete("fmt");
-    url.searchParams.delete("dpr");
-    url.searchParams.delete("cache");
-    url.searchParams.delete("cb");
-photos = uniqPhotos(photos, 24);
-
-    // normalize common CDN patterns by stripping trailing slashes
-    url.pathname = url.pathname.replace(/\/+$/, "");
-    return url.toString();
+    // only if your project still uses node-fetch v2
+    // eslint-disable-next-line global-require
+    fetchFn = require("node-fetch");
   } catch {
-    return String(u).trim();
+    throw new Error("Fetch is not available. Use Node 18+ or install node-fetch v2.");
   }
-}
-
-function uniqPhotos(urls, cap = 24) {
-  const seen = new Set();
-  const out = [];
-  for (const raw of urls || []) {
-    const n = normalizePhotoUrl(raw);
-    if (!n) continue;
-    if (seen.has(n)) continue;
-    seen.add(n);
-    out.push(n);
-    if (out.length >= cap) break;
-  }
-  return out;
 }
 
 // -------------------- App --------------------
@@ -84,10 +37,47 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 // ======================================================
+// Photo URL normalizer (DEDUP / CLEAN)
+// ======================================================
+
+function normalizePhotoUrl(u) {
+  if (!u) return "";
+  try {
+    const url = new URL(u);
+
+    // remove junk query params that cause duplicates (size/crop/cache)
+    [
+      "width", "height", "w", "h", "fit", "crop",
+      "quality", "q", "auto", "fm", "fmt", "dpr",
+      "cache", "cb",
+    ].forEach((k) => url.searchParams.delete(k));
+
+    // strip trailing slashes
+    url.pathname = url.pathname.replace(/\/+$/, "");
+    return url.toString();
+  } catch {
+    return String(u).trim();
+  }
+}
+
+function uniqPhotos(urls, cap = 300) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of urls || []) {
+    const n = normalizePhotoUrl(raw);
+    if (!n) continue;
+    if (seen.has(n)) continue;
+    seen.add(n);
+    out.push(n);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+// ======================================================
 // Helpers (single source of truth)
 // ======================================================
 
-/** Normalize user input into an absolute http(s) URL; return null if invalid. */
 function normalizeUrl(raw) {
   if (!raw) return null;
   let url = String(raw).trim();
@@ -104,20 +94,18 @@ function normalizeUrl(raw) {
   }
 }
 
-/** Fetch with timeout (prevents hanging requests) */
 async function fetchWithTimeout(url, opts = {}, timeoutMs = 15000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(url, { ...opts, signal: controller.signal });
+    const res = await fetchFn(url, { ...opts, signal: controller.signal });
     return res;
   } finally {
     clearTimeout(id);
   }
 }
 
-/** Best-effort JSON parse */
 function safeJsonParse(str, fallback = null) {
   try {
     return JSON.parse(str);
@@ -126,33 +114,26 @@ function safeJsonParse(str, fallback = null) {
   }
 }
 
-/** Extract text from OpenAI Responses API result */
 function getResponseText(response) {
   return response?.output?.[0]?.content?.[0]?.text || "";
 }
 
-/** Rate-limit / quota detection for nicer error responses */
 function isRateLimitError(err) {
-  const msg =
-    (err && (err.message || err.error?.message || ""))?.toLowerCase() || "";
-
+  const msg = ((err && (err.message || err.error?.message || "")) || "").toLowerCase();
   if (msg.includes("rate limit")) return true;
   if (msg.includes("quota") || msg.includes("billing")) return true;
   if (msg.includes("insufficient") && msg.includes("quota")) return true;
-
-  if (err && err.code === "rate_limit_exceeded") return true;
-  if (err && err.error && err.error.type === "rate_limit_exceeded") return true;
-  if (err && err.status === 429) return true;
-  if (err && err.response && err.response.status === 429) return true;
-
+  if (err?.code === "rate_limit_exceeded") return true;
+  if (err?.error?.type === "rate_limit_exceeded") return true;
+  if (err?.status === 429) return true;
+  if (err?.response?.status === 429) return true;
   return false;
 }
 
 function sendAIError(res, err, friendlyMessage) {
   console.error("🔴 AI error:", friendlyMessage, err);
 
-  const rawMsg =
-    (err && (err.message || err.error?.message || "")) || "Unknown error";
+  const rawMsg = (err && (err.message || err.error?.message || "")) || "Unknown error";
 
   if (isRateLimitError(err)) {
     const lower = rawMsg.toLowerCase();
@@ -177,7 +158,6 @@ function sendAIError(res, err, friendlyMessage) {
   });
 }
 
-/** Basic SSRF guard for proxying images (blocks local/private ranges) */
 function isBlockedProxyTarget(urlStr) {
   try {
     const u = new URL(urlStr);
@@ -210,19 +190,11 @@ function normalizeImgUrl(u) {
   return String(u).trim().replace(/&amp;/g, "&");
 }
 
-/**
- * IMPORTANT:
- * We do NOT "perfectly detect vehicle photos" on every dealer site.
- * We DO aggressively remove obvious junk: logos/icons/svg/buttons/social headers/etc.
- */
 function isLikelyJunkImage(url) {
   const u = (url || "").toLowerCase();
   if (!u.startsWith("http")) return true;
-
-  // must look like an image
   if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
 
-  // kill obvious non-vehicle/promotional tiles
   const bad = [
     "logo","brand","dealer","dealership",
     "icon","favicon","sprite","badge",
@@ -232,16 +204,13 @@ function isLikelyJunkImage(url) {
     "facebook","instagram","tiktok","youtube",
     "carfax","autocheck","kbb","edmunds",
     "special","offer","sale","finance","payment",
-    "play","video","youtube",
-    "overlay","watermark",
+    "play","video","overlay","watermark",
     ".svg"
   ];
 
   if (bad.some((w) => u.includes(w))) return true;
-
   return false;
 }
-
 
 function cleanPhotoList(urls, max = 300) {
   const seen = new Set();
@@ -262,11 +231,6 @@ function cleanPhotoList(urls, max = 300) {
   return out;
 }
 
-/**
- * Hard preference filter (optional):
- * If we have matches that look like vehicle gallery / CDN inventory images,
- * return those; otherwise return the cleaned list.
- */
 function preferVehicleGalleryPhotos(cleanedUrls) {
   const re =
     /inventory|vehicle|vdp|media|photos|images|cdn|cloudfront|dealerinspire|vauto|cargurus|dealer\.com|spincar|imagerelay|gubagoo/i;
@@ -315,15 +279,12 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     const s = String(raw).trim();
     if (!s) return;
 
-    // strip css url("...") wrappers
     const cleaned = s.replace(/^url\(["']?/, "").replace(/["']?\)$/, "").trim();
 
     try {
       const abs = new URL(cleaned, base).href;
       urls.add(abs);
-    } catch {
-      // ignore
-    }
+    } catch {}
   };
 
   const pickBestFromSrcset = (srcset) => {
@@ -333,7 +294,6 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
       .map((p) => p.trim())
       .filter(Boolean);
 
-    // choose the largest "w" candidate if available, else last
     let best = null;
     let bestW = -1;
 
@@ -347,13 +307,12 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
           best = u;
         }
       } else {
-        best = u; // fallback
+        best = u;
       }
     }
     return best;
   };
 
-  // 1) <img> and common lazy attrs + srcset
   $("img").each((_, el) => {
     const $el = $(el);
 
@@ -372,7 +331,6 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     addUrl(src);
   });
 
-  // 2) <picture><source srcset=...>
   $("source").each((_, el) => {
     const $el = $(el);
     const srcset = $el.attr("srcset") || $el.attr("data-srcset");
@@ -380,7 +338,6 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     addUrl(best);
   });
 
-  // 3) background-image urls in inline style
   $("[style]").each((_, el) => {
     const style = String($(el).attr("style") || "");
     const matches = style.match(/background-image\s*:\s*url\(([^)]+)\)/gi);
@@ -392,22 +349,17 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     }
   });
 
-  // 4) URLs inside script tags (VDPs often store photo arrays here)
   $("script").each((_, el) => {
     const txt = $(el).html();
     if (!txt) return;
 
-    // pull ANY jpg/png/webp urls from scripts
     const re = /https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\\s]*)?/gi;
     const found = txt.match(re);
-    if (found && found.length) {
-      found.forEach(addUrl);
-    }
+    if (found && found.length) found.forEach(addUrl);
   });
 
   return Array.from(urls);
 }
-
 
 // ======================================================
 // AI: Photo Processing (gpt-image-1)
@@ -533,16 +485,49 @@ Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
 }
 
 // ======================================================
+// Build Kit (shared by /boost + /api/boost + /api/social-kit)
+// ======================================================
+
+async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "", processPhotos = true }) {
+  const pageInfo = await scrapePage(pageUrl);
+
+  const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
+  const cleaned = cleanPhotoList(rawPhotos, 300);
+  const preferred = preferVehicleGalleryPhotos(cleaned);
+
+  // final: normalize + dedupe + keep a large candidate pool for frontend selection
+  const finalPhotos = uniqPhotos(preferred, 300);
+
+  const kit = await buildSocialKit({
+    pageInfo,
+    labelOverride,
+    priceOverride,
+    photos: finalPhotos,
+  });
+
+  kit.editedPhotos = processPhotos
+    ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
+    : [];
+
+  kit._debugPhotos = {
+    rawCount: rawPhotos.length,
+    cleanedCount: cleaned.length,
+    finalCount: finalPhotos.length,
+    rawSample: rawPhotos.slice(0, 30),
+    finalSample: finalPhotos.slice(0, 30),
+  };
+
+  return kit;
+}
+
+// ======================================================
 // Routes
 // ======================================================
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
-// IMAGE PROXY (Fixes CORS tainted canvas)
-// Supports both:
-//   /api/proxy-image?url=...
-//   /api/image-proxy?url=... (back-compat)
+// IMAGE PROXY
 // --------------------------------------------------
 async function proxyImageHandler(req, res) {
   try {
@@ -588,7 +573,7 @@ app.get("/api/proxy-image", proxyImageHandler);
 app.get("/api/image-proxy", proxyImageHandler);
 
 // --------------------------------------------------
-// /api/process-photos (batch enhance)
+// /api/process-photos
 // --------------------------------------------------
 app.post("/api/process-photos", async (req, res) => {
   try {
@@ -606,7 +591,7 @@ app.post("/api/process-photos", async (req, res) => {
 });
 
 // --------------------------------------------------
-// /api/ai-cinematic-photo (single enhance)
+// /api/ai-cinematic-photo
 // --------------------------------------------------
 app.post("/api/ai-cinematic-photo", async (req, res) => {
   try {
@@ -628,9 +613,9 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
 });
 
 // --------------------------------------------------
-// BACK-COMPAT: frontend still calls /boost
+// /boost (back-compat) + /api/boost (primary)
 // --------------------------------------------------
-app.post("/boost", async (req, res) => {
+async function boostHandler(req, res) {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
@@ -641,47 +626,26 @@ app.post("/boost", async (req, res) => {
       return res.status(400).json({ error: "bad_url", message: "Invalid or missing URL." });
     }
 
-    const pageInfo = await scrapePage(pageUrl);
+    const kit = await buildKitForUrl({ pageUrl, labelOverride, priceOverride, processPhotos });
 
-    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
-    const cleaned = cleanPhotoList(rawPhotos, 300);
-    const finalPhotos = preferVehicleGalleryPhotos(cleaned);
-
-    const kit = await buildSocialKit({
-      pageInfo,
-      labelOverride,
-      priceOverride,
-      photos: finalPhotos,
+    console.log("✅ BOOST:", {
+      url: pageUrl,
+      final: kit.photos?.length || 0,
+      edited: kit.editedPhotos?.length || 0,
+      processPhotos,
     });
-
-    kit.editedPhotos = processPhotos
-      ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
-      : [];
-
-    console.log("✅ /boost:", {
-      raw: rawPhotos.length,
-      cleaned: cleaned.length,
-      final: finalPhotos.length,
-      edited: kit.editedPhotos.length,
-    });
-kit._debugPhotos = {
-  rawCount: rawPhotos.length,
-  cleanedCount: cleaned.length,
-  finalCount: finalPhotos.length,
-  rawSample: rawPhotos.slice(0, 30),
-  finalSample: finalPhotos.slice(0, 30),
-};
-
-return res.json(kit);
 
     return res.json(kit);
   } catch (err) {
     return sendAIError(res, err, "Boost failed.");
   }
-});
+}
+
+app.post("/boost", boostHandler);
+app.post("/api/boost", boostHandler);
 
 // --------------------------------------------------
-// /api/social-kit (scrape + kit + optional photo pipeline)
+// /api/social-kit
 // --------------------------------------------------
 app.post("/api/social-kit", async (req, res) => {
   try {
@@ -697,38 +661,12 @@ app.post("/api/social-kit", async (req, res) => {
       });
     }
 
-    const pageInfo = await scrapePage(pageUrl);
-
-    const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
-    const cleaned = cleanPhotoList(rawPhotos, 300);
-    const finalPhotos = preferVehicleGalleryPhotos(cleaned);
-
-    const kit = await buildSocialKit({
-      pageInfo,
-      labelOverride,
-      priceOverride,
-      photos: finalPhotos,
-    });
-
-    kit.editedPhotos = processPhotos
-      ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
-      : [];
-kit._debugPhotos = {
-  rawCount: rawPhotos.length,
-  cleanedCount: cleaned.length,
-  finalCount: finalPhotos.length,
-  rawSample: rawPhotos.slice(0, 30),
-  finalSample: finalPhotos.slice(0, 30),
-};
-
-return res.json(kit);
+    const kit = await buildKitForUrl({ pageUrl, labelOverride, priceOverride, processPhotos });
 
     console.log("✅ /api/social-kit:", {
       url: pageUrl,
-      raw: rawPhotos.length,
-      cleaned: cleaned.length,
-      final: finalPhotos.length,
-      edited: kit.editedPhotos.length,
+      final: kit.photos?.length || 0,
+      edited: kit.editedPhotos?.length || 0,
       processPhotos,
     });
 
@@ -739,7 +677,7 @@ return res.json(kit);
 });
 
 // --------------------------------------------------
-// /api/social-photos-zip (download URLs as zip)
+// /api/social-photos-zip
 // --------------------------------------------------
 app.post("/api/social-photos-zip", async (req, res) => {
   try {
@@ -761,6 +699,8 @@ app.post("/api/social-photos-zip", async (req, res) => {
 
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i];
+      if (isBlockedProxyTarget(url)) continue;
+
       try {
         const resp = await fetchWithTimeout(url, {}, 20000);
         if (!resp.ok || !resp.body) {
@@ -781,7 +721,7 @@ app.post("/api/social-photos-zip", async (req, res) => {
 });
 
 // --------------------------------------------------
-// /api/new-post (regen single platform copy)
+// /api/new-post
 // --------------------------------------------------
 app.post("/api/new-post", async (req, res) => {
   try {
@@ -833,7 +773,7 @@ Include a call-to-action to DM or message the salesperson.
 });
 
 // --------------------------------------------------
-// /api/new-script (selfie or generic)
+// /api/new-script
 // --------------------------------------------------
 app.post("/api/new-script", async (req, res) => {
   try {
@@ -903,8 +843,7 @@ Write:
 });
 
 // --------------------------------------------------
-// /api/video-from-photos (shot plan)
-// NOTE: uses FINAL photos (cleaned + preferred)
+// /api/video-from-photos
 // --------------------------------------------------
 app.post("/api/video-from-photos", async (req, res) => {
   try {
@@ -1036,7 +975,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper
+// /api/payment-helper  ✅ FIXED EQUITY MATH
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
@@ -1056,8 +995,13 @@ app.post("/api/payment-helper", (req, res) => {
     }
 
     const taxedPrice = taxRate ? price * (1 + taxRate) : price;
-    const negativeEquity = Math.max(payoff - trade, 0);
-    const amountFinanced = Math.max(taxedPrice - down + negativeEquity, 0);
+
+    // ✅ tradeEquity: positive reduces financed, negative increases financed
+    const tradeEquity = trade - payoff;
+
+    // ✅ correct in all cases:
+    // financed = taxedPrice - down - trade + payoff
+    const amountFinanced = Math.max(taxedPrice - down - trade + payoff, 0);
 
     let payment;
     if (!rate) {
@@ -1069,7 +1013,8 @@ app.post("/api/payment-helper", (req, res) => {
     }
 
     const result = `~$${payment.toFixed(2)} per month (rough estimate only, not a binding quote).`;
-    return res.json({ result });
+
+    return res.json({ result, amountFinanced, tradeEquity });
   } catch (err) {
     console.error("payment-helper error", err);
     return res.status(500).json({ error: "Failed to estimate payment" });
@@ -1136,7 +1081,7 @@ app.post("/api/income-helper", (req, res) => {
 });
 
 // --------------------------------------------------
-// /ai/workflow (KEEP PATH)
+// /ai/workflow
 // --------------------------------------------------
 app.post("/ai/workflow", async (req, res) => {
   try {
