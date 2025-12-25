@@ -97,6 +97,12 @@ function buildFallbackPosts({ label, price, url, description }) {
     `⚡️ Hot pick: ${label || "This one won’t last"}${price ? ` • ${price}` : ""}\n🕒 Want to see it today?\n📲 Send “APPT” and I’ll lock in a time.${line}\n\n${tags}\n${url || ""}`.trim(),
   ];
 }
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const cheerio = require("cheerio");
+const OpenAI = require("openai");
+const archiver = require("archiver");
 
 const app = express();
 
