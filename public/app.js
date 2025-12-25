@@ -183,6 +183,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const summaryPrice = $("summaryPrice") || $("vehiclePrice");
 
   const boostBtn = $("boostListingBtn") || $("boostThisListingBtn") || $("boostThisListing") || $("boostButton");
+  console.log("🧪 boostBtn found:", !!boostBtn, boostBtn?.id || boostBtn);
+
   const statusText = $("statusText");
   const photosGridEl = $("photosGrid");
 
