@@ -823,6 +823,83 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
   }
+// ==================================================
+// BOOST OUTPUT RENDER (description + generated posts)
+// Safe: renders only if containers exist
+// ==================================================
+function escapeHtml(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function normalizePosts(posts) {
+  if (!Array.isArray(posts)) return [];
+  return posts
+    .map((p) => (typeof p === "string" ? p : (p && typeof p.text === "string" ? p.text : "")))
+    .map((t) => String(t || "").trim())
+    .filter(Boolean);
+}
+
+function renderBoostTextAndPosts(description, posts) {
+  const desc =
+    DOC.getElementById("boostDescription") ||
+    DOC.getElementById("vehicleDescription") ||
+    DOC.getElementById("descriptionOutput") ||
+    DOC.querySelector("[data-boost-description]");
+
+  const postsWrap =
+    DOC.getElementById("boostPosts") ||
+    DOC.getElementById("boostOutput") ||
+    DOC.getElementById("socialPostsOutput") ||
+    DOC.querySelector("[data-boost-posts]");
+
+  // Description (optional)
+  if (desc) {
+    const d = String(description || "").trim();
+    desc.innerHTML = d ? `<pre class="boost-desc">${escapeHtml(d)}</pre>` : `<div class="muted">No description found.</div>`;
+  }
+
+  // Posts (optional)
+  if (postsWrap) {
+    const list = normalizePosts(posts);
+
+    if (!list.length) {
+      postsWrap.innerHTML = `<div class="muted">No social posts generated.</div>`;
+      return;
+    }
+
+    postsWrap.innerHTML = list
+      .map((text, i) => {
+        const encoded = encodeURIComponent(text);
+        return `
+          <div class="boost-post-card">
+            <div class="boost-post-header">Post ${i + 1}</div>
+            <pre class="boost-post-text">${escapeHtml(text)}</pre>
+            <button type="button" class="secondary-btn copy-post-btn" data-copy="${encoded}">Copy</button>
+          </div>
+        `;
+      })
+      .join("");
+
+    postsWrap.querySelectorAll(".copy-post-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const txt = decodeURIComponent(btn.dataset.copy || "");
+        try {
+          await navigator.clipboard.writeText(txt);
+          const old = btn.textContent;
+          btn.textContent = "Copied";
+          setTimeout(() => (btn.textContent = old), 900);
+        } catch {
+          alert("Copy failed");
+        }
+      });
+    });
+  }
+}
 
   // ==================================================
   // ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
