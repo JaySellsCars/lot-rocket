@@ -828,15 +828,15 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
       renderBoostTextAndPosts(STORE.lastBoostDescription, STORE.lastBoostPosts);
 
       if (statusText) statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
-      } catch (e) {
-        console.error("✘ BOOST FAILED", e);
-        if (statusText) statusText.textContent = "Boost failed.";
-        alert(e?.message || "Boost failed.");
-      } finally {
-        setBtnLoading(boostBtn, false);
-      }
-    };
+    } catch (e) {
+      console.error("✘ BOOST FAILED", e);
+      if (statusText) statusText.textContent = "Boost failed.";
+      alert(e?.message || "Boost failed.");
+    } finally {
+      setBtnLoading(boostBtn, false);
+    }
   }
+
 
 
 // BOOST OUTPUT RENDER (description + generated posts)
