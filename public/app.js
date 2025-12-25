@@ -1040,75 +1040,53 @@ const collectPaymentBody = (modal) => {
                 },
 
                 // ✅ CALCULATORS (no text required)
-                payment_calc: {
-                  url: "/api/payment-helper",
-                  // collectPaymentBody(modal) MUST return: { price, down, trade, payoff, rate, term, tax, fees }
-                  body: collectPaymentBody(modal),
-                  pick: (data) => {
-                    // ✅ NEW BACKEND: preferred
-                    if (data?.breakdownText) return data.breakdownText;
+payment_calc: {
+  url: "/api/payment-helper",
 
-                    // ✅ If backend returns { breakdown: {...} }
-                    const b = data?.breakdown;
+  // collectPaymentBody(modal) MUST return:
+  // { price, down, trade, payoff, rate, term, tax, fees, state, rebate }
+  body: collectPaymentBody(modal),
 
-                    // fallback (older backend)
-                    if (!b) return data?.result || data?.text || data?.answer || "";
+  pick: (data) => {
+    // ✅ Preferred: backend already formatted everything
+    if (data?.breakdownText) return data.breakdownText;
 
-                    const money = (n) =>
-                      Number.isFinite(Number(n))
-                        ? `$${Number(n).toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}`
-                        : "$0.00";
+    // ✅ Fallback: structured breakdown
+    const b = data?.breakdown;
+    if (!b) return data?.result || data?.text || data?.answer || "";
 
-                    const pct = (n) =>
-                      Number.isFinite(Number(n)) ? `${Number(n).toFixed(2)}%` : "0.00%";
+    const money = (n) =>
+      `$${Number(n || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
 
-                    // b.taxRate might be 0.06 (ratio) or 6 (percent). Normalize to percent.
-                    const taxPct =
-                      Number.isFinite(Number(b.taxRate))
-                        ? Number(b.taxRate) <= 1
-                          ? Number(b.taxRate) * 100
-                          : Number(b.taxRate)
-                        : 0;
+    const pct = (n) => `${Number(n || 0).toFixed(2)}%`;
 
-                    const equityLine =
-                      Number(b.tradeEquity) >= 0
-                        ? `+${money(b.tradeEquity)} (positive equity)`
-                        : `${money(b.tradeEquity)} (negative equity)`;
+    const equityLine =
+      b.tradeEquity >= 0
+        ? `+${money(b.tradeEquity)} (positive equity)`
+        : `${money(b.tradeEquity)} (negative equity)`;
 
-                    const aprPct =
-                      Number.isFinite(Number(b.aprPct))
-                        ? Number(b.aprPct) <= 1
-                          ? Number(b.aprPct) * 100
-                          : Number(b.aprPct)
-                        : 0;
+    return [
+      `~${money(b.amountFinanced * 0 + 0)}`, // payment already in breakdownText normally
+      "",
+      "Breakdown:",
+      `• State: ${b.state || "N/A"}`,
+      `• Price: ${money(b.price)}`,
+      `• Dealer Fees/Add-ons: ${money(b.fees)}`,
+      `• Taxable Base: ${money(b.taxableBase)}`,
+      `• Tax (${pct(b.taxRate)}): ${money(b.taxAmount)}`,
+      `• Rebate: ${money(b.rebate)}`,
+      `• Down: ${money(b.down)}`,
+      `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
+      `• Trade Equity: ${equityLine}`,
+      `• Amount Financed: ${money(b.amountFinanced)}`,
+      `• APR: ${pct(b.aprPct)} | Term: ${b.term} months`,
+    ].join("\n");
+  },
+},
 
-return [
-  (data?.result || "").trim(),
-  "",
-  "Breakdown:",
-  `• Price: ${money(b.price)}`,
-  `• Dealer Fees/Add-ons: ${money(b.fees)}`,
-  `• Taxable Base: ${money(b.taxableBase)}`,
-  `• Tax (${pct(taxPct)}): ${money(b.taxAmount)}`,
-  `• Down: ${money(b.down)}`,
-  `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
-  `• Trade Equity: ${equityLine}`,
-  `• Amount Financed: ${money(b.amountFinanced)}`,
-  `• APR: ${pct(b.aprPct)} | Term: ${Number(b.term) || 0} months`,
-  "",
-  "Assumptions:",
-  "• Trade-in credit reduces taxable amount",
-  "• Dealer fees/add-ons are taxable",
-  "• Rebates do not reduce taxable base",
-  "• Sales tax calculated before down payment",
-  "• Estimate only — dealer & state rules may vary",
-].join("\n");
-
-                  },
-                },
 
                 income_calc: {
                   url: "/api/income-helper",
