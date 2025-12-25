@@ -875,7 +875,14 @@ const collectPaymentBody = (modal) => {
     "input[name='rate']",
     "#apr",
     "#rate",
+
+    // ✅ extra robust fallbacks
+    "input[id*='apr' i]",
+    "input[id*='rate' i]",
+    "input[name*='apr' i]",
+    "input[name*='rate' i]",
   ]);
+
 
   const termEl = pickLocal(["#payTerm", "input[name='term']", "#term"]);
   const taxEl  = pickLocal(["#payTax",  "input[name='tax']",  "#tax"]);
