@@ -847,25 +847,34 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     };
 
-    const collectPaymentBody = (modal) => {
-      const priceEl = pick(modal, ["#payPrice", "#paymentPrice", "input[name='price']", "#price"]);
-      const downEl = pick(modal, ["#payDown", "#paymentDown", "input[name='down']", "#down"]);
-      const tradeEl = pick(modal, ["#payTrade", "#paymentTrade", "input[name='trade']", "#trade"]);
-      const payoffEl = pick(modal, ["#payPayoff", "#paymentPayoff", "input[name='payoff']", "#payoff"]);
-      const aprEl = pick(modal, ["#payApr", "#paymentApr", "input[name='apr']", "#apr", "input[name='rate']", "#rate"]);
-      const termEl = pick(modal, ["#payTerm", "#paymentTerm", "input[name='term']", "#term"]);
-      const taxEl = pick(modal, ["#payTax", "#paymentTax", "input[name='tax']", "#tax"]);
+const collectPaymentBody = (modal) => {
+  const priceEl = pick(modal, ["#payPrice", "#paymentPrice", "input[name='price']", "#price"]);
+  const downEl = pick(modal, ["#payDown", "#paymentDown", "input[name='down']", "#down"]);
+  const tradeEl = pick(modal, ["#payTrade", "#paymentTrade", "input[name='trade']", "#trade"]);
+  const payoffEl = pick(modal, ["#payPayoff", "#paymentPayoff", "input[name='payoff']", "#payoff"]);
 
-      return {
-        price: num(priceEl?.value),
-        down: num(downEl?.value),
-        trade: num(tradeEl?.value),
-        payoff: num(payoffEl?.value),
-        rate: num(aprEl?.value),
-        term: num(termEl?.value),
-        tax: num(taxEl?.value),
-      };
-    };
+  // ✅ NEW FEES FIELD
+  const feesEl = pick(modal, ["#payFees", "#paymentFees", "input[name='dealerFees']", "input[name='fees']"]);
+
+  const aprEl = pick(modal, ["#payApr", "#paymentApr", "input[name='apr']", "#apr", "input[name='rate']", "#rate"]);
+  const termEl = pick(modal, ["#payTerm", "#paymentTerm", "input[name='term']", "#term"]);
+  const taxEl = pick(modal, ["#payTax", "#paymentTax", "input[name='tax']", "#tax"]);
+
+  return {
+    price: num(priceEl?.value),
+    down: num(downEl?.value),
+    trade: num(tradeEl?.value),
+    payoff: num(payoffEl?.value),
+
+    // ✅ send to backend
+    dealerFees: num(feesEl?.value),
+
+    rate: num(aprEl?.value),   // APR %
+    term: num(termEl?.value),  // months
+    tax: num(taxEl?.value),    // %
+  };
+};
+
 
     const collectIncomeBody = (modal) => {
       const mtdEl = pick(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"]);
