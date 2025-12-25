@@ -1017,10 +1017,42 @@ const collectPaymentBody = (modal) => {
 
 payment_calc: {
   url: "/api/payment-helper",
-  // ✅ include dealer fees if present in the modal (input id/name supported)
-  // collectPaymentBody(modal) should now return { price, down, trade, payoff, rate, term, tax, fees }
+  // ✅ collectPaymentBody(modal) MUST return:
+  // { price, down, trade, payoff, rate, term, tax, fees }
   body: collectPaymentBody(modal),
-  pick: (data) => data?.result || data?.text || data?.answer || "",
+  pick: (data) => {
+    const b = data?.breakdown;
+
+    // fallback (older backend)
+    if (!b) return data?.result || data?.text || data?.answer || "";
+
+    const money = (n) =>
+      Number.isFinite(Number(n))
+        ? `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : "$0.00";
+
+    const pct = (n) => (Number.isFinite(Number(n)) ? `${Number(n).toFixed(2)}%` : "0.00%");
+
+    const equityLine =
+      Number(b.tradeEquity) >= 0
+        ? `+${money(b.tradeEquity)} (positive equity)`
+        : `${money(b.tradeEquity)} (negative equity)`;
+
+    return [
+      (data?.result || "").trim(),
+      "",
+      "Breakdown:",
+      `• Price: ${money(b.price)}`,
+      `• Dealer Fees/Add-ons: ${money(b.fees)}`,
+      `• Taxable Base: ${money(b.taxableBase)}`,
+      `• Tax (${pct(b.taxRate)}): ${money(b.taxAmount)}`,
+      `• Down: ${money(b.down)}`,
+      `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
+      `• Trade Equity: ${equityLine}`,
+      `• Amount Financed: ${money(b.amountFinanced)}`,
+      `• APR: ${pct(b.aprPct)} | Term: ${Number(b.term) || 0} months`,
+    ].join("\n");
+  },
 },
 income_calc: {
   url: "/api/income-helper",
@@ -1070,6 +1102,7 @@ btn.textContent = btn.dataset.originalText || "Run";
 
 console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
 }
+
 
 
   // ==================================================
