@@ -113,6 +113,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const data = await res.json().catch(() => ({}));
+console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
+console.log("🧪 desc length:", (data?.description || data?.vehicleDescription || "").length);
+console.log("🧪 posts count:", (Array.isArray(data?.posts) ? data.posts.length : 0));
 
     if (!res.ok) {
       const msg = data?.message || data?.error || `Objection coach failed (HTTP ${res.status})`;
