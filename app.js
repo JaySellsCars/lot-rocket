@@ -12,31 +12,64 @@ function cleanText(s) {
 }
 
 function extractVehicleDescriptionFromHtml($, html) {
-  // 1) meta description
+  // 1) Meta tags (fast + reliable)
   const meta =
     cleanText($('meta[name="description"]').attr("content")) ||
     cleanText($('meta[property="og:description"]').attr("content"));
 
   if (meta && meta.length > 40) return meta;
 
-  // 2) JSON-LD (common on dealer sites)
+  // 2) JSON-LD (structured data)
   try {
     const ldNodes = $('script[type="application/ld+json"]');
+
     for (let i = 0; i < ldNodes.length; i++) {
       const raw = $(ldNodes[i]).text();
       if (!raw) continue;
-      const parsed = JSON.parse(raw);
+
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        continue;
+      }
 
       const items = Array.isArray(parsed) ? parsed : [parsed];
+
       for (const obj of items) {
         const desc =
           cleanText(obj?.description) ||
           cleanText(obj?.offers?.description) ||
           cleanText(obj?.itemOffered?.description);
+
         if (desc && desc.length > 40) return desc;
       }
     }
-  } catch {}
+  } catch (e) {
+    // ignore parsing errors
+  }
+
+  // 3) Common dealer DOM fallbacks
+  const selectors = [
+    ".vehicle-description",
+    ".vdp-description",
+    ".description",
+    "#description",
+    ".dealer-comments",
+    ".comments",
+    ".remarks",
+    "[data-testid='vehicle-description']",
+  ];
+
+  for (const sel of selectors) {
+    const text = cleanText($(sel).first().text());
+    if (text && text.length > 40) return text;
+  }
+
+  // 4) Nothing found
+  return "";
+}
+
 
   // 3) common dealer page containers (best-effort)
   const selectors = [
