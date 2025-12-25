@@ -1088,59 +1088,57 @@ payment_calc: {
 },
 
 
-                income_calc: {
-                  url: "/api/income-helper",
-                  body: collectIncomeBody(modal),
-                  pick: (data) => data?.result || data?.text || data?.answer || "",
-                },
-              };
+income_calc: {
+  url: "/api/income-helper",
+  body: collectIncomeBody(modal),
+  pick: (data) => data?.result || data?.text || data?.answer || "",
+},
+};
 
-              const cfg = routeMap[action];
+const cfg = routeMap[action];
 
-              if (!cfg) {
-                if (output) {
-                  output.textContent =
-                    `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
-                } else {
-                  alert(`Received (${action}). No route mapped yet.`);
-                }
-                throw new Error(`No backend route mapped for action: ${action}`);
-              }
+if (!cfg) {
+  if (output) {
+    output.textContent =
+      `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
+  } else {
+    alert(`Received (${action}). No route mapped yet.`);
+  }
+  throw new Error(`No backend route mapped for action: ${action}`);
+}
 
-              const r = await fetch(cfg.url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cfg.body),
-              });
+const r = await fetch(cfg.url, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(cfg.body),
+});
 
-              const data = await r.json().catch(() => ({}));
-              if (!r.ok) {
-                const msg = data?.message || data?.error || `HTTP ${r.status}`;
-                throw new Error(msg);
-              }
+const data = await r.json().catch(() => ({}));
+if (!r.ok) {
+  const msg = data?.message || data?.error || `HTTP ${r.status}`;
+  throw new Error(msg);
+}
 
-              const reply = (cfg.pick ? cfg.pick(data) : "") || "";
-              if (output) output.textContent = reply || "✅ Done (empty response).";
-            } // ✅ closes: else { ... routeMap ... }
-          } catch (err) {
-            console.error("🟣 AI-WIRE: action failed", err);
-            if (output) output.textContent = `❌ Error: ${err?.message || err}`;
-            else alert(err?.message || "Action failed");
-          } finally {
-            btn.disabled = false;
-            btn.textContent = btn.dataset.originalText || "Run";
-          }
-        });
-      });
-    });
+const reply = (cfg.pick ? cfg.pick(data) : "") || "";
+if (output) output.textContent = reply || "✅ Done (empty response).";
+} // ✅ closes: else { ... routeMap ... }
+} catch (err) {
+console.error("🟣 AI-WIRE: action failed", err);
+if (output) output.textContent = `❌ Error: ${err?.message || err}`;
+else alert(err?.message || "Action failed");
+} finally {
+btn.disabled = false;
+btn.textContent = btn.dataset.originalText || "Run";
+}
+});
+});
+});
 
-    console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
-  } // ✅ closes wireAiModals()
+console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
+} // ✅ closes wireAiModals()
 
+// ==================================================
 
-
-
-  // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
   // ==================================================
   try {
