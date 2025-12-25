@@ -979,22 +979,41 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper
+// /api/payment-helper  ✅ RouteOne-style (configurable rules + full breakdown)
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
-    const price  = Number(req.body.price || 0);
-    const fees   = Number(req.body.fees || 0);
-    const down   = Number(req.body.down || 0);
-    const trade  = Number(req.body.trade || 0);
-    const payoff = Number(req.body.payoff || 0);
+    // ---- helpers
+    const num = (v) => {
+      if (v == null) return 0;
+      const s = String(v).replace(/[^\d.-]/g, "");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const bool = (v) => {
+      if (typeof v === "boolean") return v;
+      const s = String(v || "").toLowerCase().trim();
+      return s === "true" || s === "1" || s === "yes" || s === "y";
+    };
 
-    const aprPct = Number(req.body.rate || 0);        // APR %
-    const rate   = aprPct / 100 / 12;                 // monthly rate
+    // ---- inputs (RouteOne-style naming)
+    const price = num(req.body.price);                 // selling price
+    const fees = num(req.body.fees);                   // dealer fees / add-ons / products (bundle field)
+    const down = num(req.body.down);                   // cash down
+    const trade = num(req.body.trade);                 // trade allowance
+    const payoff = num(req.body.payoff);               // payoff on trade (if any)
+    const aprPct = num(req.body.rate || req.body.apr); // APR %
+    const term = Math.max(0, Math.floor(num(req.body.term))); // months
+    const taxPct = num(req.body.tax);                  // sales tax %
 
-    const term   = Number(req.body.term || 0);        // months
-    const taxPct = Number(req.body.tax || 0);
-    const taxRate = taxPct / 100;
+    // OPTIONAL inputs (for “RouteOne feel”)
+    const rebate = num(req.body.rebate);               // rebates / incentives (optional)
+    const state = String(req.body.state || "").toUpperCase().trim(); // optional
+
+    // RULE TOGGLES (these are the knobs that make it match YOUR desk settings)
+    const taxTradeCredit = bool(req.body.taxTradeCredit);     // trade reduces taxable base?
+    const taxFees = bool(req.body.taxFees ?? true);           // are dealer fees/add-ons taxable?
+    const rebateReducesTaxable = bool(req.body.rebateReducesTaxable); // rebates reduce taxable base?
 
     if (!price || !term) {
       return res.status(400).json({
@@ -1003,55 +1022,107 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
-    // Taxable base (you told me dealer fees/add-ons should be included)
-    const taxableBase = Math.max(price + fees, 0);
+    const taxRate = taxPct > 0 ? taxPct / 100 : 0;
+    const rate = aprPct > 0 ? aprPct / 100 / 12 : 0;
+
+    // --------------------------------------------------
+    // ROUTEONE-STYLE TAXABLE BASE
+    // --------------------------------------------------
+    // Pre-tax taxable base (what the state taxes)
+    // Common pattern: tax on (price + taxable fees/products) - trade credit (if state allows) - rebates (sometimes)
+    const taxableFees = taxFees ? fees : 0;
+
+    let taxableBasePreCredits = price + taxableFees;
+
+    // Rebates: some states reduce taxable base, some don’t
+    const rebateAppliedToTax = rebateReducesTaxable ? Math.min(rebate, taxableBasePreCredits) : 0;
+    taxableBasePreCredits = Math.max(taxableBasePreCredits - rebateAppliedToTax, 0);
+
+    // Trade tax credit: if enabled, reduce taxable base by trade allowance (capped)
+    const tradeTaxCredit = taxTradeCredit ? Math.min(trade, taxableBasePreCredits) : 0;
+
+    const taxableBase = Math.max(taxableBasePreCredits - tradeTaxCredit, 0);
     const taxAmount = taxRate ? taxableBase * taxRate : 0;
 
-    // Handles BOTH positive + negative equity:
-    // amountFinanced = (price + fees + tax) - down - trade + payoff
-    const amountFinanced = Math.max(taxableBase + taxAmount - down - trade + payoff, 0);
+    // --------------------------------------------------
+    // ROUTEONE-STYLE AMOUNT FINANCED
+    // --------------------------------------------------
+    // RouteOne structure (typical):
+    // Amount Financed = (price + fees + tax) + negativeEquity - down - trade - rebates
+    // where negativeEquity = max(payoff - trade, 0)
+    const tradeEquity = trade - payoff;                // + = positive equity, - = negative
+    const negativeEquity = Math.max(payoff - trade, 0);
 
+    // Total “cash price” components (note: fees always affect amount financed whether taxed or not)
+    const totalBeforeCredits = price + fees + taxAmount;
+
+    // Credits applied to financed amount
+    const credits = down + trade + rebate;
+
+    // Final amount financed
+    const amountFinanced = Math.max(totalBeforeCredits + negativeEquity - credits, 0);
+
+    // --------------------------------------------------
+    // PAYMENT (standard amortization)
+    // --------------------------------------------------
     let payment = 0;
     if (!rate) {
-      payment = amountFinanced / term;
+      payment = term ? amountFinanced / term : 0;
     } else {
-      payment =
-        (amountFinanced * rate * Math.pow(1 + rate, term)) /
-        (Math.pow(1 + rate, term) - 1);
+      const p = Math.pow(1 + rate, term);
+      payment = term ? (amountFinanced * rate * p) / (p - 1) : 0;
     }
 
-    const tradeEquity = trade - payoff; // positive = good, negative = neggity
-    const resultLine = `~$${payment.toFixed(2)}/mo (estimate — not a binding quote).`;
+    const result = `~$${payment.toFixed(2)}/mo (estimate — not a binding quote).`;
 
-    const breakdownText =
-`${resultLine}
-
-Breakdown:
-• Price: $${price.toFixed(2)}
-• Dealer Fees/Add-ons: $${fees.toFixed(2)}
-• Taxable Base: $${taxableBase.toFixed(2)}
-• Tax (${taxPct.toFixed(2)}%): $${taxAmount.toFixed(2)}
-• Down: $${down.toFixed(2)}
-• Trade: $${trade.toFixed(2)} | Payoff: $${payoff.toFixed(2)}
-• Trade Equity: $${tradeEquity.toFixed(2)} (${tradeEquity >= 0 ? "positive" : "negative"} equity)
-• Amount Financed: $${amountFinanced.toFixed(2)}
-• APR: ${aprPct.toFixed(2)}% | Term: ${term} months`;
-
-    return res.json({
-      result: resultLine,
-      breakdownText,
-      amountFinanced,
-      taxableBase,
-      taxAmount,
-      tradeEquity,
+    // FULL BREAKDOWN (what you wanted)
+    const breakdown = {
+      // inputs
+      price,
+      fees,
+      down,
+      trade,
+      payoff,
+      rebate,
       aprPct,
       term,
-    });
+      taxRate: taxPct,
+
+      // rules
+      rules: {
+        state: state || "(not set)",
+        taxTradeCredit,
+        taxFees,
+        rebateReducesTaxable,
+      },
+
+      // tax math
+      taxableFees,
+      rebateAppliedToTax,
+      tradeTaxCredit,
+      taxableBase,
+      taxAmount,
+
+      // equity
+      tradeEquity,
+      negativeEquity,
+
+      // finance math
+      totalBeforeCredits,
+      credits,
+      amountFinanced,
+
+      // payment
+      monthlyPayment: Number.isFinite(payment) ? payment : 0,
+    };
+
+    return res.json({ result, breakdown });
   } catch (err) {
     console.error("payment-helper error", err);
     return res.status(500).json({ error: "Failed to estimate payment" });
   }
 });
+
 
 
 
