@@ -838,7 +838,7 @@ if (!res.ok) {
     } catch (e) {
       console.error("✘ BOOST FAILED", e);
       if (statusText) statusText.textContent = "Boost failed.";
-      alert(e?.message || "Boost failed.");
+alert(`Boost failed: ${e?.message || "unknown error"}`);
     } finally {
       setBtnLoading(boostBtn, false);
     }
