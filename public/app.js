@@ -122,6 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = await res.json().catch(() => ({}));
 
+window.lastBoostResponse = data;
+STORE.lastBoostResponse = data;
+
+
     if (!res.ok) {
       const msg = data?.message || data?.error || `Objection coach failed (HTTP ${res.status})`;
       if (out) out.textContent = "❌ " + msg;
