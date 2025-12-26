@@ -1,14 +1,22 @@
 /**
  * app.js — Lot Rocket Backend (CLEAN / DEDUPED / CONSISTENT)
- * Version: 2.6-clean (ROCKET-6)
+ * Version: 2.6-clean (ROCKET-6) — SINGLE BOOST SOURCE OF TRUTH
+ *
+ * KEY FIXES:
+ * 1) /boost returns a Step 2 compatible payload every time:
+ *    - description: string
+ *    - posts: string[]  (used by frontend renderBoostTextAndPosts)
+ *    - plus named fields: facebook/instagram/tiktok/linkedin/twitter/text/marketplace/hashtags/selfieScript/shotPlan/designIdea
+ * 2) No double-fetch for description — reuse scrapePage() html
+ * 3) Safe fallback if OpenAI key missing or AI fails (Step 2 still populates)
  */
 
 require("dotenv").config();
+
 // Node 18+ has global fetch (Render uses Node 22) — safe fallback
 let fetchFn = global.fetch;
 if (typeof fetchFn !== "function") {
   try {
-    // Only if you ever deploy to older Node
     // eslint-disable-next-line global-require
     fetchFn = require("node-fetch");
   } catch {
@@ -16,6 +24,26 @@ if (typeof fetchFn !== "function") {
   }
 }
 
+const express = require("express");
+const cors = require("cors");
+const cheerio = require("cheerio");
+const OpenAI = require("openai");
+const archiver = require("archiver");
+
+const app = express();
+
+// -------------------- OpenAI Client --------------------
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// -------------------- Middleware --------------------
+app.use(cors());
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
+
+// ======================================================
+// Text helpers
+// ======================================================
 function cleanText(s) {
   return String(s || "")
     .replace(/\s+/g, " ")
@@ -81,14 +109,25 @@ function extractVehicleDescriptionFromHtml($, html) {
     if (text && text.length > 40) return text;
   }
 
+  // last-resort: small sample from body (kept short)
+  const bodyText = cleanText(($("body").text() || "").slice(0, 600));
+  if (bodyText.length > 80) return bodyText;
+
   return "";
 }
 
 // --------------------------------------------------
-// Fallback post generator
+// Fallback post generator (NO AI REQUIRED)
 // --------------------------------------------------
 function buildFallbackPosts({ label, price, url, description }) {
-  const baseTags = ["#CarForSale", "#NewCar", "#UsedCars", "#AutoDeals", "#CarShopping", "#TestDrive"];
+  const baseTags = [
+    "#CarForSale",
+    "#NewCar",
+    "#UsedCars",
+    "#AutoDeals",
+    "#CarShopping",
+    "#TestDrive",
+  ];
 
   const labelTags = cleanText(label)
     .split(" ")
@@ -103,34 +142,14 @@ function buildFallbackPosts({ label, price, url, description }) {
 
   return [
     `🔥 JUST IN: ${label || "Fresh Inventory"}${price ? ` • ${price}` : ""}\n✅ Ready for a quick approval + easy test drive?\n📲 Message me “INFO” and I’ll send details.${line}\n\n${tags}\n${url || ""}`.trim(),
-
     `🚗 ${label || "Available now"}${price ? ` • ${price}` : ""}\n💥 Clean, sharp, and ready to roll.\n📩 Comment “YES” and I’ll DM the full rundown + next steps.${line}\n\n${tags}\n${url || ""}`.trim(),
-
     `⚡️ Hot pick: ${label || "This one won’t last"}${price ? ` • ${price}` : ""}\n🕒 Want to see it today?\n📲 Send “APPT” and I’ll lock in a time.${line}\n\n${tags}\n${url || ""}`.trim(),
   ];
 }
-const express = require("express");
-const path = require("path");
-const cors = require("cors");
-const cheerio = require("cheerio");
-const OpenAI = require("openai");
-const archiver = require("archiver");
-
-const app = express();
-
-// -------------------- OpenAI Client --------------------
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// -------------------- Middleware --------------------
-app.use(cors());
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
 
 // ======================================================
 // Photo URL normalizer (DEDUP / CLEAN)
 // ======================================================
-
 function normalizePhotoUrl(u) {
   if (!u) return "";
   try {
@@ -138,9 +157,20 @@ function normalizePhotoUrl(u) {
 
     // remove junk query params that cause duplicates (size/crop/cache)
     [
-      "width", "height", "w", "h", "fit", "crop",
-      "quality", "q", "auto", "fm", "fmt", "dpr",
-      "cache", "cb",
+      "width",
+      "height",
+      "w",
+      "h",
+      "fit",
+      "crop",
+      "quality",
+      "q",
+      "auto",
+      "fm",
+      "fmt",
+      "dpr",
+      "cache",
+      "cb",
     ].forEach((k) => url.searchParams.delete(k));
 
     // strip trailing slashes
@@ -168,7 +198,6 @@ function uniqPhotos(urls, cap = 300) {
 // ======================================================
 // Helpers (single source of truth)
 // ======================================================
-
 function normalizeUrl(raw) {
   if (!raw) return null;
   let url = String(raw).trim();
@@ -190,8 +219,7 @@ async function fetchWithTimeout(url, opts = {}, timeoutMs = 15000) {
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetchFn(url, { ...opts, signal: controller.signal });
-    return res;
+    return await fetchFn(url, { ...opts, signal: controller.signal });
   } finally {
     clearTimeout(id);
   }
@@ -275,7 +303,6 @@ function isBlockedProxyTarget(urlStr) {
 // ======================================================
 // Photo cleaning (DEDUPED + CONSISTENT)
 // ======================================================
-
 function normalizeImgUrl(u) {
   if (!u) return "";
   return String(u).trim().replace(/&amp;/g, "&");
@@ -287,16 +314,43 @@ function isLikelyJunkImage(url) {
   if (!/\.(jpg|jpeg|png|webp)(\?|$)/i.test(u)) return true;
 
   const bad = [
-    "logo","brand","dealer","dealership",
-    "icon","favicon","sprite","badge",
-    "placeholder","blank","spacer",
-    "loading","loader","spinner",
-    "button","cta","banner","header","footer",
-    "facebook","instagram","tiktok","youtube",
-    "carfax","autocheck","kbb","edmunds",
-    "special","offer","sale","finance","payment",
-    "play","video","overlay","watermark",
-    ".svg"
+    "logo",
+    "brand",
+    "dealer",
+    "dealership",
+    "icon",
+    "favicon",
+    "sprite",
+    "badge",
+    "placeholder",
+    "blank",
+    "spacer",
+    "loading",
+    "loader",
+    "spinner",
+    "button",
+    "cta",
+    "banner",
+    "header",
+    "footer",
+    "facebook",
+    "instagram",
+    "tiktok",
+    "youtube",
+    "carfax",
+    "autocheck",
+    "kbb",
+    "edmunds",
+    "special",
+    "offer",
+    "sale",
+    "finance",
+    "payment",
+    "play",
+    "video",
+    "overlay",
+    "watermark",
+    ".svg",
   ];
 
   if (bad.some((w) => u.includes(w))) return true;
@@ -333,9 +387,18 @@ function preferVehicleGalleryPhotos(cleanedUrls) {
 // ======================================================
 // Scraping (single path)
 // ======================================================
-
 async function scrapePage(url) {
-  const res = await fetchWithTimeout(url, {}, 20000);
+  const res = await fetchWithTimeout(
+    url,
+    {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    },
+    20000
+  );
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
 
   const html = await res.text();
@@ -352,7 +415,6 @@ async function scrapePage(url) {
       if (text.length > 40 && text.length < 500) visibleText += text + "\n";
     });
 
-  // ✅ RETURN html too (needed for description extraction + debugging)
   return { title, metaDesc, visibleText, html, $ };
 }
 
@@ -454,10 +516,8 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 }
 
 // ======================================================
-
 // AI: Photo Processing (gpt-image-1)
 // ======================================================
-
 async function processSinglePhoto(_photoUrl, vehicleLabel = "") {
   const prompt = `
 Ultra-realistic, cinematic dealership marketing photo of THIS car,
@@ -498,8 +558,46 @@ async function processPhotoBatch(photoUrls, vehicleLabel = "") {
 // ======================================================
 // AI: Social Kit Builder
 // ======================================================
+async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, pageUrl, description }) {
+  // ✅ Hard fallback if no key
+  const hasKey = !!process.env.OPENAI_API_KEY;
 
-async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos }) {
+  // crude label guess from title if override missing
+  const titleGuess = cleanText(pageInfo?.title || "");
+  const labelGuess = titleGuess.split("|")[0]?.trim?.() || titleGuess || "";
+
+  const baseLabel = cleanText(labelOverride || labelGuess);
+  const basePrice = cleanText(priceOverride || "");
+
+  if (!hasKey) {
+    const fallbackPosts = buildFallbackPosts({
+      label: baseLabel,
+      price: basePrice,
+      url: pageUrl,
+      description,
+    });
+
+    // Build named fields so UI can still populate
+    return {
+      vehicleLabel: baseLabel,
+      priceInfo: basePrice,
+      facebook: fallbackPosts[0] || "",
+      instagram: fallbackPosts[1] || "",
+      tiktok: fallbackPosts[2] || "",
+      linkedin: fallbackPosts[0] || "",
+      twitter: fallbackPosts[1] || "",
+      text: fallbackPosts[2] || "",
+      marketplace: fallbackPosts[0] || "",
+      hashtags: "",
+      selfieScript: "",
+      shotPlan: "",
+      designIdea: "",
+      photos: photos || [],
+      // ✅ Step 2 compatibility
+      posts: fallbackPosts,
+    };
+  }
+
   const { title, metaDesc, visibleText } = pageInfo;
 
   const system = `
@@ -537,6 +635,9 @@ META: ${metaDesc}
 TEXT SNIPPET:
 ${visibleText.slice(0, 3000)}
 
+Description extracted:
+${cleanText(description).slice(0, 1500)}
+
 Optional custom label: ${labelOverride || "none"}
 Optional custom price: ${priceOverride || "none"}
 
@@ -544,51 +645,110 @@ If label/price overrides are provided, prefer those in the copy.
 Remember: OUTPUT ONLY raw JSON with the required keys. No explanations.
 `.trim();
 
-  const response = await client.responses.create({
-    model: "gpt-4o-mini",
-    input: [
-      { role: "system", content: system },
-      { role: "user", content: user },
-    ],
-  });
+  try {
+    const response = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
 
-  const raw = getResponseText(response) || "{}";
-  const parsed = safeJsonParse(raw, {}) || {};
+    const raw = getResponseText(response) || "{}";
+    const parsed = safeJsonParse(raw, {}) || {};
 
-  return {
-    vehicleLabel: labelOverride || parsed.label || "",
-    priceInfo: priceOverride || parsed.price || "",
+    const vehicleLabel = cleanText(labelOverride || parsed.label || baseLabel);
+    const priceInfo = cleanText(priceOverride || parsed.price || basePrice);
 
-    facebook: parsed.facebook || "",
-    instagram: parsed.instagram || "",
-    tiktok: parsed.tiktok || "",
-    linkedin: parsed.linkedin || "",
-    twitter: parsed.twitter || "",
-    text: parsed.text || "",
-    marketplace: parsed.marketplace || "",
+    const kit = {
+      vehicleLabel,
+      priceInfo,
 
-    hashtags: parsed.hashtags || "",
+      facebook: parsed.facebook || "",
+      instagram: parsed.instagram || "",
+      tiktok: parsed.tiktok || "",
+      linkedin: parsed.linkedin || "",
+      twitter: parsed.twitter || "",
+      text: parsed.text || "",
+      marketplace: parsed.marketplace || "",
 
-    selfieScript: parsed.selfieScript || "",
-    shotPlan: parsed.videoPlan || "",
-    designIdea: parsed.canvaIdea || "",
+      hashtags: parsed.hashtags || "",
 
-    photos: photos || [],
-  };
+      selfieScript: parsed.selfieScript || "",
+      shotPlan: parsed.videoPlan || "",
+      designIdea: parsed.canvaIdea || "",
+
+      photos: photos || [],
+    };
+
+    // ✅ Step 2 compatibility: posts[] always filled
+    kit.posts = [
+      kit.facebook,
+      kit.instagram,
+      kit.tiktok,
+      kit.linkedin,
+      kit.twitter,
+      kit.text,
+      kit.marketplace,
+      kit.hashtags ? `Hashtags:\n${kit.hashtags}` : "",
+      kit.selfieScript ? `Selfie Script:\n${kit.selfieScript}` : "",
+      kit.shotPlan ? `Video Plan:\n${kit.shotPlan}` : "",
+      kit.designIdea ? `Design Idea:\n${kit.designIdea}` : "",
+    ].filter((s) => cleanText(s).length > 0);
+
+    // If AI returns blanks (rare), force fallback
+    if (!kit.posts.length) {
+      kit.posts = buildFallbackPosts({ label: vehicleLabel, price: priceInfo, url: pageUrl, description });
+      kit.facebook = kit.posts[0] || "";
+      kit.instagram = kit.posts[1] || "";
+      kit.tiktok = kit.posts[2] || "";
+      kit.marketplace = kit.posts[0] || "";
+    }
+
+    return kit;
+  } catch (err) {
+    // ✅ AI failed — fallback but DO NOT crash Boost
+    console.error("buildSocialKit AI failure:", err);
+
+    const fallbackPosts = buildFallbackPosts({
+      label: baseLabel,
+      price: basePrice,
+      url: pageUrl,
+      description,
+    });
+
+    return {
+      vehicleLabel: baseLabel,
+      priceInfo: basePrice,
+      facebook: fallbackPosts[0] || "",
+      instagram: fallbackPosts[1] || "",
+      tiktok: fallbackPosts[2] || "",
+      linkedin: fallbackPosts[0] || "",
+      twitter: fallbackPosts[1] || "",
+      text: fallbackPosts[2] || "",
+      marketplace: fallbackPosts[0] || "",
+      hashtags: "",
+      selfieScript: "",
+      shotPlan: "",
+      designIdea: "",
+      photos: photos || [],
+      posts: fallbackPosts,
+    };
+  }
 }
 
 // ======================================================
-// Build Kit (shared by /boost + /api/boost + /api/social-kit)
+// Build Kit (shared)
 // ======================================================
-
 async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "", processPhotos = true }) {
   const pageInfo = await scrapePage(pageUrl);
+
+  // ✅ single-pass description (NO re-fetch)
+  const description = extractVehicleDescriptionFromHtml(pageInfo.$, pageInfo.html);
 
   const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
   const cleaned = cleanPhotoList(rawPhotos, 300);
   const preferred = preferVehicleGalleryPhotos(cleaned);
-
-  // final: normalize + dedupe + keep a large candidate pool for frontend selection
   const finalPhotos = uniqPhotos(preferred, 300);
 
   const kit = await buildSocialKit({
@@ -596,7 +756,12 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
     labelOverride,
     priceOverride,
     photos: finalPhotos,
+    pageUrl,
+    description,
   });
+
+  kit.description = cleanText(description || "");
+  kit.posts = Array.isArray(kit.posts) ? kit.posts : [];
 
   kit.editedPhotos = processPhotos
     ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
@@ -616,9 +781,6 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
 // ======================================================
 // Routes
 // ======================================================
-console.log("🧠 BOOST RESPONSE PAYLOAD: (moved into boostHandler — remove top-level log)");
-
-
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
@@ -658,7 +820,6 @@ async function proxyImageHandler(req, res) {
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("Access-Control-Allow-Origin", "*");
 
-    // ✅ Works reliably across Node fetch implementations:
     const buf = Buffer.from(await upstream.arrayBuffer());
     return res.status(200).send(buf);
   } catch (err) {
@@ -669,7 +830,6 @@ async function proxyImageHandler(req, res) {
 
 app.get("/api/proxy-image", proxyImageHandler);
 app.get("/api/image-proxy", proxyImageHandler);
-
 
 // --------------------------------------------------
 // /api/process-photos
@@ -712,7 +872,7 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
 });
 
 // --------------------------------------------------
-// /boost (back-compat) + /api/boost (primary)
+// /boost (PRIMARY) + /api/boost (back-compat)
 // --------------------------------------------------
 async function boostHandler(req, res) {
   try {
@@ -732,57 +892,24 @@ async function boostHandler(req, res) {
       processPhotos,
     });
 
-    // -----------------------------
-    // Description (guaranteed)
-    // -----------------------------
-    let description = "";
-
-    try {
-      const r = await fetchFn(pageUrl, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml",
-        },
-      });
-
-      const html = r && r.ok ? await r.text() : "";
-      if (html) {
-        const $ = cheerio.load(html);
-
-        description =
-          $('meta[name="description"]').attr("content") ||
-          $('meta[property="og:description"]').attr("content") ||
-          // common VDP containers
-          $(".vehicle-description").first().text() ||
-          $(".vdp-description").first().text() ||
-          $(".description").first().text() ||
-          $("#description").text() ||
-          // dealer comments / remarks
-          $(".dealer-comments").first().text() ||
-          $(".comments").first().text() ||
-          $(".remarks").first().text() ||
-          "";
-      }
-    } catch {
-      description = "";
-    }
-
-    description = String(description || "").replace(/\s+/g, " ").trim();
-
     console.log("✅ BOOST:", {
       url: pageUrl,
       photos: kit.photos?.length || 0,
       edited: kit.editedPhotos?.length || 0,
-      descriptionLength: description.length,
+      descriptionLength: (kit.description || "").length,
       posts: Array.isArray(kit.posts) ? kit.posts.length : 0,
       processPhotos,
     });
 
+    // ✅ ALWAYS send Step2-compatible fields
     return res.json({
       ...kit,
-      description,                 // ✅ ALWAYS PRESENT
-      posts: kit.posts || [],      // ✅ ALWAYS ARRAY
+      description: kit.description || "",
+      posts: Array.isArray(kit.posts) ? kit.posts : [],
+      // extra compatibility aliases (harmless)
+      socialPosts: Array.isArray(kit.posts) ? kit.posts : [],
+      captions: Array.isArray(kit.posts) ? kit.posts : [],
+      success: true,
     });
   } catch (err) {
     return sendAIError(res, err, "Boost failed.");
@@ -791,8 +918,6 @@ async function boostHandler(req, res) {
 
 app.post("/boost", boostHandler);
 app.post("/api/boost", boostHandler);
-
-
 
 // --------------------------------------------------
 // /api/social-kit
@@ -1125,8 +1250,7 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
 });
 
 // --------------------------------------------------
-// /api/payment-helper  ✅ ROUTEONE-STYLE + BREAKDOWN
-// Includes: fees, negative equity, optional trade tax credit
+// /api/payment-helper
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
   try {
@@ -1148,43 +1272,32 @@ app.post("/api/payment-helper", (req, res) => {
       });
     }
 
-    // --------------------------------------------------
-    // ✅ STATE RULE DEFAULTS (editable list)
-    // - taxTradeCredit: trade reduces taxable base?
-    // - taxFees: fees/add-ons taxable?
-    // - rebateReducesTaxable: rebate reduces taxable base?
-    // --------------------------------------------------
     const STATE_RULES = {
-      MI: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      OH: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      IN: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      IL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      PA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      NY: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      NJ: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      FL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      TX: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-      CA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+      MI: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      OH: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      IN: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      IL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      PA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      NY: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      NJ: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      FL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      TX: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      CA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
     };
 
     const rules = STATE_RULES[state] || STATE_RULES.MI;
 
-    // Allow future overrides (optional)
     const taxTradeCredit =
       typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
 
-    const taxFees =
-      typeof req.body.taxFees === "boolean" ? req.body.taxFees : rules.taxFees;
+    const taxFees = typeof req.body.taxFees === "boolean" ? req.body.taxFees : rules.taxFees;
 
     const rebateReducesTaxable =
       typeof req.body.rebateReducesTaxable === "boolean"
         ? req.body.rebateReducesTaxable
         : rules.rebateReducesTaxable;
 
-    // --------------------------------------------------
-    // ✅ Core math
-    // --------------------------------------------------
-    const tradeEquity = trade - payoff;              // + = positive equity, - = negative
+    const tradeEquity = trade - payoff;
     const negativeEquity = Math.max(payoff - trade, 0);
 
     const feesTaxable = taxFees ? fees : 0;
@@ -1195,22 +1308,23 @@ app.post("/api/payment-helper", (req, res) => {
     const taxRate = taxPct / 100;
     const taxAmount = taxableBase * taxRate;
 
-    // Amount financed (typical): price + fees + tax - down - trade + payoff - rebate
     const amountFinanced = Math.max(price + fees + taxAmount - down - trade + payoff - rebate, 0);
 
-    const monthlyRate = (aprPct / 100) / 12;
+    const monthlyRate = aprPct / 100 / 12;
 
     let payment;
-    if (!monthlyRate) {
-      payment = amountFinanced / term;
-    } else {
+    if (!monthlyRate) payment = amountFinanced / term;
+    else {
       payment =
         (amountFinanced * monthlyRate * Math.pow(1 + monthlyRate, term)) /
         (Math.pow(1 + monthlyRate, term) - 1);
     }
 
     const money = (n) =>
-      `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      `$${Number(n || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
 
     const equityLine = tradeEquity >= 0 ? `+${money(tradeEquity)}` : `${money(tradeEquity)}`;
 
@@ -1230,11 +1344,7 @@ app.post("/api/payment-helper", (req, res) => {
       amountFinanced,
       aprPct,
       term,
-      assumptions: {
-        taxTradeCredit,
-        taxFees,
-        rebateReducesTaxable,
-      },
+      assumptions: { taxTradeCredit, taxFees, rebateReducesTaxable },
     };
 
     const breakdownText = [
@@ -1272,26 +1382,15 @@ app.post("/api/payment-helper", (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
 // --------------------------------------------------
 // /api/income-helper
 // --------------------------------------------------
 app.post("/api/income-helper", (req, res) => {
   try {
-    const grossToDate =
-      Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
+    const grossToDate = Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
 
     const lastPayDateStr =
-      req.body.lastPayDate ||
-      req.body.lastCheck ||
-      req.body.lastPaycheckDate ||
-      req.body.date;
+      req.body.lastPayDate || req.body.lastCheck || req.body.lastPaycheckDate || req.body.date;
 
     if (!grossToDate || !lastPayDateStr) {
       return res.status(400).json({
@@ -1324,10 +1423,11 @@ app.post("/api/income-helper", (req, res) => {
     const estimatedYearly = (grossToDate / weeksIntoYear) * 52;
     const estimatedMonthly = estimatedYearly / 12;
 
-    const formatMoney = (n) =>
-      `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    const formatMoney = (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
-    const result = `Estimated Yearly Gross: ${formatMoney(estimatedYearly)} | Weeks into Year: ${weeksIntoYear.toFixed(
+    const result = `Estimated Yearly Gross: ${formatMoney(
+      estimatedYearly
+    )} | Weeks into Year: ${weeksIntoYear.toFixed(
       1
     )} | Estimated Average Monthly Income: ${formatMoney(estimatedMonthly)}`;
 
@@ -1440,17 +1540,20 @@ Write:
       }
 
       case "workflow":
-        systemPrompt = `You are Lot Rocket's AI Workflow Expert. Be concise, direct, action-focused for car sales pros.`.trim();
+        systemPrompt =
+          `You are Lot Rocket's AI Workflow Expert. Be concise, direct, action-focused for car sales pros.`.trim();
         userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
 
       case "message":
-        systemPrompt = `You are Lot Rocket's AI Message Builder. Write high-converting, friendly, conversational messages for car shoppers.`.trim();
+        systemPrompt =
+          `You are Lot Rocket's AI Message Builder. Write high-converting, friendly, conversational messages for car shoppers.`.trim();
         userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
-        systemPrompt = `You are Lot Rocket's general AI assistant for car salespeople. Answer clearly and practically with a focus on selling more cars.`.trim();
+        systemPrompt =
+          `You are Lot Rocket's general AI assistant for car salespeople. Answer clearly and practically with a focus on selling more cars.`.trim();
         userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
