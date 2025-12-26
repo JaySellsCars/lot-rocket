@@ -172,7 +172,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // CONSTANTS + SINGLE STORE
   // ==================================================
   const MAX_PHOTOS = 24;
-  const apiBase = "";
 
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
@@ -186,159 +185,178 @@ document.addEventListener("DOMContentLoaded", () => {
   STORE.lastTitle = typeof STORE.lastTitle === "string" ? STORE.lastTitle : "";
   STORE.lastPrice = typeof STORE.lastPrice === "string" ? STORE.lastPrice : "";
 
-// ==================================================
-// STEP 2 POPULATE (from Boost response) ✅ SINGLE SOURCE
-// ==================================================
-function setTextSmart(el, text) {
-  if (!el) return false;
-  const val = String(text ?? "").trim();
-  if ("value" in el) el.value = val;
-  else el.textContent = val;
-  return true;
-}
-
-function pickEl(selectors) {
-  for (const sel of selectors) {
-    const el = DOC.querySelector(sel);
-    if (el) return el;
+  // ==================================================
+  // STEP 2 POPULATE (from Boost response) ✅ SINGLE SOURCE
+  // ==================================================
+  function setTextSmart(el, text) {
+    if (!el) return false;
+    const val = String(text ?? "").trim();
+    if ("value" in el) el.value = val;
+    else el.textContent = val;
+    return true;
   }
-  return null;
-}
 
-// maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
-// 🔧 Launch-safe: if Step2 fields aren’t found, it will create a fallback output box and render posts there.
-function applyBoostToStep2(data) {
-  // 🔥 TRUTH HOOK (proves this exact function is running)
-  console.log("🧪 applyBoostToStep2() RUNNING — keys:", Object.keys(data || {}));
-
-  if (!data || typeof data !== "object") return;
-
-  const clean = (s) => String(s ?? "").trim();
-  const isUrlOnly = (s) => /^https?:\/\/\S+$/i.test(clean(s));
-
-  // posts array fallback
-  const posts =
-    Array.isArray(data.posts) ? data.posts :
-    Array.isArray(data.socialPosts) ? data.socialPosts :
-    Array.isArray(data.captions) ? data.captions :
-    [];
-
-  const p = (i) => clean(posts[i] || "");
-
-  // Pull platform fields
-  let fb = data.facebook || "";
-  let ig = data.instagram || "";
-  let tt = data.tiktok || "";
-  let li = data.linkedin || "";
-  let tw = data.twitter || "";
-  let mp = data.marketplace || "";
-  let tags = data.hashtags || "";
-  const selfie = data.selfieScript || "";
-  const plan = data.shotPlan || data.videoPlan || "";
-  const design = data.designIdea || data.canvaIdea || "";
-  const desc = data.description || data.vehicleDescription || data.desc || "";
-
-  // ✅ Text/DM field (avoid "data.text" issues + accept alt keys)
-  let text =
-    data.text ||
-    data.textDm ||
-    data.textDM ||
-    data.textBlurb ||
-    data.sms ||
-    data.dm ||
-    "";
-
-  // ✅ If any platform field is URL-only, wipe it reminding it's NOT post copy
-  if (isUrlOnly(fb)) fb = "";
-  if (isUrlOnly(ig)) ig = "";
-  if (isUrlOnly(tt)) tt = "";
-  if (isUrlOnly(li)) li = "";
-  if (isUrlOnly(tw)) tw = "";
-  if (isUrlOnly(mp)) mp = "";
-  if (isUrlOnly(text)) text = "";
-
-  // ✅ Backfill from posts[] by the backend’s Step2 compatibility order
-  if (!clean(fb) && p(0) && !isUrlOnly(p(0))) fb = p(0);
-  if (!clean(ig) && p(1) && !isUrlOnly(p(1))) ig = p(1);
-  if (!clean(tt) && p(2) && !isUrlOnly(p(2))) tt = p(2);
-  if (!clean(li) && p(3) && !isUrlOnly(p(3))) li = p(3);
-  if (!clean(tw) && p(4) && !isUrlOnly(p(4))) tw = p(4);
-  if (!clean(text) && p(5) && !isUrlOnly(p(5))) text = p(5);
-  if (!clean(mp) && p(6) && !isUrlOnly(p(6))) mp = p(6);
-
-  // hashtags often comes as "Hashtags:\n..."
-  if (!clean(tags) && p(7)) tags = p(7).replace(/^Hashtags:\s*/i, "").trim();
-
-  // ---- STEP 2 FIELD MATCHING (HARD WIRED TO YOUR HTML) ----
-  const fbEl = pickEl(["#facebookPost"]);
-  const igEl = pickEl(["#instagramPost"]);
-  const ttEl = pickEl(["#tiktokPost"]);
-  const liEl = pickEl(["#linkedinPost"]);
-  const twEl = pickEl(["#twitterPost"]);
-  const mpEl = pickEl(["#marketplacePost"]);
-  const tagsEl = pickEl(["#hashtags"]);
-  const textEl = pickEl(["#textBlurb"]); // ✅ your HTML uses #textBlurb
-
-  // (Optional future boxes if you add them later)
-  const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription"]);
-  const selfieEl = pickEl(["#selfieScript", "#selfieOutput"]);
-  const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput"]);
-  const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput"]);
-
-  // --- Populate Step 2 boxes ---
-  const hits = {
-    facebook: setTextSmart(fbEl, fb),
-    instagram: setTextSmart(igEl, ig),
-    tiktok: setTextSmart(ttEl, tt),
-    linkedin: setTextSmart(liEl, li),
-    twitter: setTextSmart(twEl, tw),
-    marketplace: setTextSmart(mpEl, mp),
-    hashtags: setTextSmart(tagsEl, tags),
-    text: setTextSmart(textEl, text),
-    description: setTextSmart(descEl, desc),
-    selfieScript: setTextSmart(selfieEl, selfie),
-    videoPlan: setTextSmart(planEl, plan),
-    designIdea: setTextSmart(designEl, design),
-  };
-
-  // ✅ FINAL SAFETY: if anything still equals a URL, blank it (kills the “web address only” issue)
-  const wipeIfUrl = (el) => {
-    if (!el) return;
-    const v = "value" in el ? el.value : el.textContent;
-    if (isUrlOnly(v)) {
-      if ("value" in el) el.value = "";
-      else el.textContent = "";
+  function pickEl(selectors) {
+    for (const sel of selectors) {
+      const el = DOC.querySelector(sel);
+      if (el) return el;
     }
-  };
+    return null;
+  }
 
-  wipeIfUrl(fbEl);
-  wipeIfUrl(igEl);
-  wipeIfUrl(ttEl);
-  wipeIfUrl(liEl);
-  wipeIfUrl(twEl);
-  wipeIfUrl(mpEl);
-  wipeIfUrl(textEl);
+  // maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
+  // 🔧 Launch-safe: if Step2 fields aren’t found, it will create a fallback output box and render posts there.
+  function applyBoostToStep2(data) {
+    // 🔥 TRUTH HOOK (proves this exact function is running)
+    console.log("🧪 applyBoostToStep2() RUNNING — keys:", Object.keys(data || {}));
 
-  const anyFieldHit = Object.values(hits).some(Boolean);
+    if (!data || typeof data !== "object") return;
 
-  console.log("✅ Step 2 populated from boost:", {
-    anyFieldHit,
-    hits,
-    postsCount: Array.isArray(posts) ? posts.length : 0,
-    fbLen: clean(fb).length,
-    igLen: clean(ig).length,
-    ttLen: clean(tt).length,
-    textLen: clean(text).length,
-  });
-}
+    const clean = (s) => String(s ?? "").trim();
+    const isUrlOnly = (s) => /^https?:\/\/\S+$/i.test(clean(s));
 
-// ==================================================
-// ELEMENTS (READ ONCE)
-// ==================================================
+    // posts array fallback
+    const posts =
+      Array.isArray(data.posts) ? data.posts :
+      Array.isArray(data.socialPosts) ? data.socialPosts :
+      Array.isArray(data.captions) ? data.captions :
+      [];
 
+    const p = (i) => clean(posts[i] || "");
 
+    // Pull platform fields
+    let fb = data.facebook || "";
+    let ig = data.instagram || "";
+    let tt = data.tiktok || "";
+    let li = data.linkedin || "";
+    let tw = data.twitter || "";
+    let mp = data.marketplace || "";
+    let tags = data.hashtags || "";
+    const selfie = data.selfieScript || "";
+    const plan = data.shotPlan || data.videoPlan || "";
+    const design = data.designIdea || data.canvaIdea || "";
+    const desc = data.description || data.vehicleDescription || data.desc || "";
 
-  const dealerUrlInput = $("dealerUrl") || $("vehicleUrl");
+    // ✅ Text/DM field (avoid "data.text" issues + accept alt keys)
+    let text =
+      data.text ||
+      data.textDm ||
+      data.textDM ||
+      data.textBlurb ||
+      data.sms ||
+      data.dm ||
+      "";
+
+    // ✅ If any platform field is URL-only, wipe it (it is NOT post copy)
+    if (isUrlOnly(fb)) fb = "";
+    if (isUrlOnly(ig)) ig = "";
+    if (isUrlOnly(tt)) tt = "";
+    if (isUrlOnly(li)) li = "";
+    if (isUrlOnly(tw)) tw = "";
+    if (isUrlOnly(mp)) mp = "";
+    if (isUrlOnly(text)) text = "";
+
+    // ✅ Backfill from posts[] (your backend is clearly returning postsCount > 0)
+    if (!clean(fb) && p(0) && !isUrlOnly(p(0))) fb = p(0);
+    if (!clean(ig) && p(1) && !isUrlOnly(p(1))) ig = p(1);
+    if (!clean(tt) && p(2) && !isUrlOnly(p(2))) tt = p(2);
+    if (!clean(li) && p(3) && !isUrlOnly(p(3))) li = p(3);
+    if (!clean(tw) && p(4) && !isUrlOnly(p(4))) tw = p(4);
+    if (!clean(text) && p(5) && !isUrlOnly(p(5))) text = p(5);
+    if (!clean(mp) && p(6) && !isUrlOnly(p(6))) mp = p(6);
+
+    // hashtags often comes as "Hashtags:\n..."
+    if (!clean(tags) && p(7)) tags = p(7).replace(/^Hashtags:\s*/i, "").trim();
+
+    // ---- STEP 2 FIELD MATCHING (HARD WIRED TO YOUR HTML) ----
+    const fbEl = pickEl(["#facebookPost"]);
+    const igEl = pickEl(["#instagramPost"]);
+    const ttEl = pickEl(["#tiktokPost"]);
+    const liEl = pickEl(["#linkedinPost"]);
+    const twEl = pickEl(["#twitterPost"]);
+    const mpEl = pickEl(["#marketplacePost"]);
+    const tagsEl = pickEl(["#hashtags"]);
+    const textEl = pickEl(["#textBlurb"]); // ✅ your HTML uses #textBlurb
+
+    // (Optional future boxes if you add them later)
+    const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription"]);
+    const selfieEl = pickEl(["#selfieScript", "#selfieOutput"]);
+    const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput"]);
+    const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput"]);
+
+    // --- Populate Step 2 boxes ---
+    const hits = {
+      facebook: setTextSmart(fbEl, fb),
+      instagram: setTextSmart(igEl, ig),
+      tiktok: setTextSmart(ttEl, tt),
+      linkedin: setTextSmart(liEl, li),
+      twitter: setTextSmart(twEl, tw),
+      marketplace: setTextSmart(mpEl, mp),
+      hashtags: setTextSmart(tagsEl, tags),
+      text: setTextSmart(textEl, text),
+      description: setTextSmart(descEl, desc),
+      selfieScript: setTextSmart(selfieEl, selfie),
+      videoPlan: setTextSmart(planEl, plan),
+      designIdea: setTextSmart(designEl, design),
+    };
+
+    // ✅ FINAL SAFETY: if anything still equals a URL, blank it
+    const wipeIfUrl = (el) => {
+      if (!el) return;
+      const v = "value" in el ? el.value : el.textContent;
+      if (isUrlOnly(v)) {
+        if ("value" in el) el.value = "";
+        else el.textContent = "";
+      }
+    };
+
+    wipeIfUrl(fbEl);
+    wipeIfUrl(igEl);
+    wipeIfUrl(ttEl);
+    wipeIfUrl(liEl);
+    wipeIfUrl(twEl);
+    wipeIfUrl(mpEl);
+    wipeIfUrl(textEl);
+
+    // ✅ RACE-WIN: if something overwrites Step2 after we populate, re-stamp once
+    setTimeout(() => {
+      setTextSmart(fbEl, fb);
+      setTextSmart(igEl, ig);
+      setTextSmart(ttEl, tt);
+      setTextSmart(liEl, li);
+      setTextSmart(twEl, tw);
+      setTextSmart(mpEl, mp);
+      setTextSmart(tagsEl, tags);
+      setTextSmart(textEl, text);
+
+      wipeIfUrl(fbEl);
+      wipeIfUrl(igEl);
+      wipeIfUrl(ttEl);
+      wipeIfUrl(liEl);
+      wipeIfUrl(twEl);
+      wipeIfUrl(mpEl);
+      wipeIfUrl(textEl);
+
+      console.log("🧱 STEP2 LOCK RE-APPLIED");
+    }, 120);
+
+    const anyFieldHit = Object.values(hits).some(Boolean);
+
+    console.log("✅ Step 2 populated from boost:", {
+      anyFieldHit,
+      hits,
+      postsCount: Array.isArray(posts) ? posts.length : 0,
+      fbLen: clean(fb).length,
+      igLen: clean(ig).length,
+      ttLen: clean(tt).length,
+      textLen: clean(text).length,
+    });
+  }
+
+  // ==================================================
+  // ELEMENTS (READ ONCE)
+  // ==================================================
+  const dealerUrlInput = $("vehicleUrl") || $("dealerUrl"); // ✅ your HTML uses #vehicleUrl
   const vehicleLabelInput = $("vehicleLabel");
   const priceInfoInput = $("priceInfo");
 
@@ -351,7 +369,7 @@ function applyBoostToStep2(data) {
   const statusText = $("statusText");
   const photosGridEl = $("photosGrid");
 
-  const sendTopBtn = $("sendTopPhotosToCreative") || $("sendTopPhotosBtn");
+  const sendTopBtn = $("sendTopPhotosBtn") || $("sendTopPhotosToCreative"); // ✅ your HTML uses #sendTopPhotosBtn
 
   // Step 3 holding zone / tuner
   const holdingZoneEl = $("holdingZone") || $("holdingZonePhotos") || $("holdingZoneGrid");
