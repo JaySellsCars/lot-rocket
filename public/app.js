@@ -210,26 +210,20 @@ function pickEl(selectors) {
 function applyBoostToStep2(data) {
   if (!data || typeof data !== "object") return;
 
-  const fb = data.facebook || "";
-  const ig = data.instagram || "";
-  const tt = data.tiktok || "";
-  const li = data.linkedin || "";
-  const tw = data.twitter || "";
-  const mp = data.marketplace || "";
-  const tags = data.hashtags || "";
+  const clean = (s) => String(s ?? "").trim();
+  const isUrlOnly = (s) => /^https?:\/\/\S+$/i.test(clean(s));
+
+  let fb = data.facebook || "";
+  let ig = data.instagram || "";
+  let tt = data.tiktok || "";
+  let li = data.linkedin || "";
+  let tw = data.twitter || "";
+  let mp = data.marketplace || "";
+  let tags = data.hashtags || "";
   const selfie = data.selfieScript || "";
   const plan = data.shotPlan || data.videoPlan || "";
   const design = data.designIdea || data.canvaIdea || "";
   const desc = data.description || data.vehicleDescription || data.desc || "";
-
-  // ✅ Text/DM field (avoid "data.text" issues + accept alt keys)
-  const text =
-    data.text ||
-    data.textDm ||
-    data.sms ||
-    data.dm ||
-    (Array.isArray(data.posts) && data.posts.find((p) => String(p || "").trim())) ||
-    "";
 
   // posts array fallback
   const posts =
@@ -237,6 +231,36 @@ function applyBoostToStep2(data) {
     Array.isArray(data.socialPosts) ? data.socialPosts :
     Array.isArray(data.captions) ? data.captions :
     [];
+
+  // ✅ Text/DM field (avoid "data.text" issues + accept alt keys)
+  let text =
+    data.text ||
+    data.textDm ||
+    data.textDM ||
+    data.textBlurb ||
+    data.sms ||
+    data.dm ||
+    "";
+
+  // ✅ Kill URL-only junk (your screenshot showed platform links)
+  if (isUrlOnly(fb)) fb = "";
+  if (isUrlOnly(ig)) ig = "";
+  if (isUrlOnly(tt)) tt = "";
+  if (isUrlOnly(li)) li = "";
+  if (isUrlOnly(tw)) tw = "";
+  if (isUrlOnly(mp)) mp = "";
+  if (isUrlOnly(text)) text = "";
+
+  // ✅ If posts[] exists, use it to fill empties (Step 2 compatibility)
+  const p = (i) => clean(posts[i] || "");
+  if (!clean(fb) && p(0)) fb = p(0);
+  if (!clean(ig) && p(1)) ig = p(1);
+  if (!clean(tt) && p(2)) tt = p(2);
+  if (!clean(li) && p(3)) li = p(3);
+  if (!clean(tw) && p(4)) tw = p(4);
+  if (!clean(text) && p(5)) text = p(5);
+  if (!clean(mp) && p(6)) mp = p(6);
+  if (!clean(tags) && p(7)) tags = p(7).replace(/^Hashtags:\s*/i, "");
 
   // ---- STEP 2 FIELD MATCHING (HARD WIRED TO YOUR HTML) ----
   const fbEl = pickEl(["#facebookPost"]);
@@ -269,8 +293,6 @@ function applyBoostToStep2(data) {
     videoPlan: setTextSmart(planEl, plan),
     designIdea: setTextSmart(designEl, design),
   };
-
-
 
   const anyFieldHit = Object.values(hits).some(Boolean);
 
@@ -333,14 +355,17 @@ function applyBoostToStep2(data) {
     keys: Object.keys(data || {}),
     postsCount: Array.isArray(posts) ? posts.length : 0,
     descriptionLen: String(desc).length,
+    fbLen: clean(fb).length,
+    igLen: clean(ig).length,
+    ttLen: clean(tt).length,
+    textLen: clean(text).length,
   });
 }
 
+// ==================================================
+// ELEMENTS (READ ONCE)
+// ==================================================
 
-
-  // ==================================================
-  // ELEMENTS (READ ONCE)
-  // ==================================================
   const dealerUrlInput = $("dealerUrl") || $("vehicleUrl");
   const vehicleLabelInput = $("vehicleLabel");
   const priceInfoInput = $("priceInfo");
