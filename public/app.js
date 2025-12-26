@@ -365,9 +365,7 @@ function applyBoostToStep2(data) {
     ttLen: clean(tt).length,
     textLen: clean(text).length,
   });
-}
-
-  }
+} // ✅ closes applyBoostToStep2(data)
 
   // ==================================================
   // ELEMENTS (READ ONCE)
@@ -408,6 +406,7 @@ function applyBoostToStep2(data) {
   const downloadSocialReadyBtn = $("downloadSocialReadyBtn");
 
   // ==================================================
+
   // UTILITIES (ONE SOURCE)
   // ==================================================
   function setBtnLoading(btn, on, label) {
