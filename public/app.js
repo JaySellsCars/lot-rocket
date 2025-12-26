@@ -791,7 +791,15 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
         Array.isArray(data?.posts) ? data.posts.length : Array.isArray(data?.socialPosts) ? data.socialPosts.length : 0
       );
 
-      if (!res.ok) throw new Error(data?.message || `Boost failed (HTTP ${res.status})`);
+if (!res.ok) {
+  const msg =
+    data?.message ||
+    data?.error ||
+    data?.details ||
+    (typeof data === "string" ? data : "") ||
+    `Boost failed (HTTP ${res.status})`;
+  throw new Error(msg);
+}
 
       const vLabel = data.vehicleLabel || data.title || "";
       const vPrice = data.priceInfo || data.price || "";
