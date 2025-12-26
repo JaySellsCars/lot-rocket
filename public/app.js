@@ -174,6 +174,81 @@ console.log("🧪 posts count:", (Array.isArray(data?.posts) ? data.posts.length
   STORE.activeHoldingPhoto = typeof STORE.activeHoldingPhoto === "string" ? STORE.activeHoldingPhoto : "";
   STORE.lastTitle = typeof STORE.lastTitle === "string" ? STORE.lastTitle : "";
   STORE.lastPrice = typeof STORE.lastPrice === "string" ? STORE.lastPrice : "";
+// ==================================================
+// STEP 2 POPULATE (from Boost response)
+// ==================================================
+function setTextSmart(el, text) {
+  if (!el) return;
+  const val = String(text ?? "").trim();
+  if ("value" in el) el.value = val;
+  else el.textContent = val;
+}
+
+function pickEl(selectors) {
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el) return el;
+  }
+  return null;
+}
+
+// maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
+function applyBoostToStep2(data) {
+  if (!data || typeof data !== "object") return;
+
+  // backend keys (what your server returns)
+  const fb = data.facebook || "";
+  const ig = data.instagram || "";
+  const tt = data.tiktok || "";
+  const li = data.linkedin || "";
+  const tw = data.twitter || "";
+  const mp = data.marketplace || "";
+  const tags = data.hashtags || "";
+  const selfie = data.selfieScript || "";
+  const plan = data.shotPlan || data.videoPlan || "";
+  const design = data.designIdea || data.canvaIdea || "";
+  const desc = data.description || data.vehicleDescription || data.desc || "";
+
+  // Step 2 containers (try a bunch so we don't care what you named them)
+  const fbEl = pickEl(["#facebookPost", "#facebookOutput", "#fbPost", "[data-step2='facebook'] textarea", "[data-platform='facebook'] textarea"]);
+  const igEl = pickEl(["#instagramCaption", "#instagramOutput", "#igCaption", "[data-step2='instagram'] textarea", "[data-platform='instagram'] textarea"]);
+  const ttEl = pickEl(["#tiktokScript", "#tiktokOutput", "#ttScript", "[data-step2='tiktok'] textarea", "[data-platform='tiktok'] textarea"]);
+  const liEl = pickEl(["#linkedinPost", "#linkedinOutput", "#liPost", "[data-step2='linkedin'] textarea", "[data-platform='linkedin'] textarea"]);
+  const twEl = pickEl(["#twitterPost", "#twitterOutput", "#xPost", "[data-step2='twitter'] textarea", "[data-platform='twitter'] textarea"]);
+  const mpEl = pickEl(["#marketplacePost", "#marketplaceOutput", "#fbMarketplace", "[data-step2='marketplace'] textarea", "[data-platform='marketplace'] textarea"]);
+  const tagsEl = pickEl(["#hashtagsOutput", "#hashtags", "#trendingHashtags", "[data-step2='hashtags'] textarea"]);
+  const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription", "[data-step2='description'] textarea"]);
+  const selfieEl = pickEl(["#selfieScript", "#selfieOutput", "[data-step2='selfie'] textarea"]);
+  const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput", "[data-step2='plan'] textarea"]);
+  const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput", "[data-step2='design'] textarea"]);
+
+  // write to UI
+  setTextSmart(fbEl, fb);
+  setTextSmart(igEl, ig);
+  setTextSmart(ttEl, tt);
+  setTextSmart(liEl, li);
+  setTextSmart(twEl, tw);
+  setTextSmart(mpEl, mp);
+  setTextSmart(tagsEl, tags);
+  setTextSmart(descEl, desc);
+  setTextSmart(selfieEl, selfie);
+  setTextSmart(planEl, plan);
+  setTextSmart(designEl, design);
+
+  // store (optional)
+  STORE.lastBoostKit = data;
+
+  console.log("✅ Step 2 populated from boost:", {
+    facebook: !!fb,
+    instagram: !!ig,
+    tiktok: !!tt,
+    linkedin: !!li,
+    twitter: !!tw,
+    marketplace: !!mp,
+    hashtags: !!tags,
+    descriptionLen: String(desc).length,
+  });
+}
 
   // ==================================================
   // ELEMENTS (READ ONCE)
