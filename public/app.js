@@ -204,95 +204,183 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   }
 
-  // maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
-  function applyBoostToStep2(data) {
-    if (!data || typeof data !== "object") return;
+// maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
+// 🔧 Launch-safe: if Step2 fields aren’t found, it will create a fallback output box and render posts there.
+function applyBoostToStep2(data) {
+  if (!data || typeof data !== "object") return;
 
-    const fb = data.facebook || "";
-    const ig = data.instagram || "";
-    const tt = data.tiktok || "";
-    const li = data.linkedin || "";
-    const tw = data.twitter || "";
-    const mp = data.marketplace || "";
-    const tags = data.hashtags || "";
-    const selfie = data.selfieScript || "";
-    const plan = data.shotPlan || data.videoPlan || "";
-    const design = data.designIdea || data.canvaIdea || "";
-    const desc = data.description || data.vehicleDescription || data.desc || "";
+  const fb = data.facebook || "";
+  const ig = data.instagram || "";
+  const tt = data.tiktok || "";
+  const li = data.linkedin || "";
+  const tw = data.twitter || "";
+  const mp = data.marketplace || "";
+  const tags = data.hashtags || "";
+  const selfie = data.selfieScript || "";
+  const plan = data.shotPlan || data.videoPlan || "";
+  const design = data.designIdea || data.canvaIdea || "";
+  const desc = data.description || data.vehicleDescription || data.desc || "";
 
-    const fbEl = pickEl([
-      "#facebookPost",
-      "#facebookOutput",
-      "#fbPost",
-      "[data-step2='facebook'] textarea",
-      "[data-platform='facebook'] textarea",
-    ]);
-    const igEl = pickEl([
-      "#instagramCaption",
-      "#instagramOutput",
-      "#igCaption",
-      "[data-step2='instagram'] textarea",
-      "[data-platform='instagram'] textarea",
-    ]);
-    const ttEl = pickEl([
-      "#tiktokScript",
-      "#tiktokOutput",
-      "#ttScript",
-      "[data-step2='tiktok'] textarea",
-      "[data-platform='tiktok'] textarea",
-    ]);
-    const liEl = pickEl([
-      "#linkedinPost",
-      "#linkedinOutput",
-      "#liPost",
-      "[data-step2='linkedin'] textarea",
-      "[data-platform='linkedin'] textarea",
-    ]);
-    const twEl = pickEl([
-      "#twitterPost",
-      "#twitterOutput",
-      "#xPost",
-      "[data-step2='twitter'] textarea",
-      "[data-platform='twitter'] textarea",
-    ]);
-    const mpEl = pickEl([
-      "#marketplacePost",
-      "#marketplaceOutput",
-      "#fbMarketplace",
-      "[data-step2='marketplace'] textarea",
-      "[data-platform='marketplace'] textarea",
-    ]);
-    const tagsEl = pickEl(["#hashtagsOutput", "#hashtags", "#trendingHashtags", "[data-step2='hashtags'] textarea"]);
-    const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription", "[data-step2='description'] textarea"]);
-    const selfieEl = pickEl(["#selfieScript", "#selfieOutput", "[data-step2='selfie'] textarea"]);
-    const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput", "[data-step2='plan'] textarea"]);
-    const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput", "[data-step2='design'] textarea"]);
+  // posts array fallback
+  const posts =
+    Array.isArray(data.posts) ? data.posts :
+    Array.isArray(data.socialPosts) ? data.socialPosts :
+    Array.isArray(data.captions) ? data.captions :
+    [];
 
-    setTextSmart(fbEl, fb);
-    setTextSmart(igEl, ig);
-    setTextSmart(ttEl, tt);
-    setTextSmart(liEl, li);
-    setTextSmart(twEl, tw);
-    setTextSmart(mpEl, mp);
-    setTextSmart(tagsEl, tags);
-    setTextSmart(descEl, desc);
-    setTextSmart(selfieEl, selfie);
-    setTextSmart(planEl, plan);
-    setTextSmart(designEl, design);
+  const pickEl = (selectors) => {
+    for (const sel of selectors) {
+      const el = DOC.querySelector(sel);
+      if (el) return el;
+    }
+    return null;
+  };
 
-    STORE.lastBoostKit = data;
+  const setTextSmart = (el, text) => {
+    if (!el) return false;
+    const val = String(text ?? "").trim();
+    if ("value" in el) el.value = val;
+    else el.textContent = val;
+    return true;
+  };
 
-    console.log("✅ Step 2 populated from boost:", {
-      facebook: !!fb,
-      instagram: !!ig,
-      tiktok: !!tt,
-      linkedin: !!li,
-      twitter: !!tw,
-      marketplace: !!mp,
-      hashtags: !!tags,
-      descriptionLen: String(desc).length,
-    });
+  // --- Step 2 containers (try hard to find yours) ---
+  const step2Root =
+    $("step2") ||
+    DOC.querySelector("#step2") ||
+    DOC.querySelector("#socialKit") ||
+    DOC.querySelector("#socialMedia") ||
+    DOC.querySelector("[data-step='2']") ||
+    DOC.querySelector(".step2") ||
+    null;
+
+  // widen selectors aggressively (harmless)
+  const fbEl = pickEl([
+    "#facebookPost", "#facebookOutput", "#fbPost", "#fbCaption", "#facebookCaption",
+    "textarea[name='facebook']", "textarea[data-platform='facebook']",
+    "[data-step2='facebook'] textarea", "[data-platform='facebook'] textarea"
+  ]);
+
+  const igEl = pickEl([
+    "#instagramCaption", "#instagramOutput", "#igCaption", "#igPost", "#instagramPost",
+    "textarea[name='instagram']", "textarea[data-platform='instagram']",
+    "[data-step2='instagram'] textarea", "[data-platform='instagram'] textarea"
+  ]);
+
+  const ttEl = pickEl([
+    "#tiktokScript", "#tiktokOutput", "#ttScript", "#tiktokPost",
+    "textarea[name='tiktok']", "textarea[data-platform='tiktok']",
+    "[data-step2='tiktok'] textarea", "[data-platform='tiktok'] textarea"
+  ]);
+
+  const liEl = pickEl([
+    "#linkedinPost", "#linkedinOutput", "#liPost",
+    "textarea[name='linkedin']", "textarea[data-platform='linkedin']",
+    "[data-step2='linkedin'] textarea", "[data-platform='linkedin'] textarea"
+  ]);
+
+  const twEl = pickEl([
+    "#twitterPost", "#twitterOutput", "#xPost", "#xOutput",
+    "textarea[name='twitter']", "textarea[name='x']", "textarea[data-platform='twitter']",
+    "[data-step2='twitter'] textarea", "[data-platform='twitter'] textarea"
+  ]);
+
+  const mpEl = pickEl([
+    "#marketplacePost", "#marketplaceOutput", "#fbMarketplace", "#marketplaceCaption",
+    "textarea[name='marketplace']", "textarea[data-platform='marketplace']",
+    "[data-step2='marketplace'] textarea", "[data-platform='marketplace'] textarea"
+  ]);
+
+  const tagsEl = pickEl([
+    "#hashtagsOutput", "#hashtags", "#trendingHashtags", "#hashTags",
+    "textarea[name='hashtags']", "textarea[data-platform='hashtags']",
+    "[data-step2='hashtags'] textarea"
+  ]);
+
+  const descEl = pickEl([
+    "#vehicleDescription", "#descriptionOutput", "#boostDescription", "#vdpDescription",
+    "textarea[name='description']", "[data-step2='description'] textarea", "[data-boost-description]"
+  ]);
+
+  const selfieEl = pickEl([
+    "#selfieScript", "#selfieOutput",
+    "textarea[name='selfieScript']", "[data-step2='selfie'] textarea"
+  ]);
+
+  const planEl = pickEl([
+    "#videoPlan", "#shotPlan", "#videoOutput",
+    "textarea[name='videoPlan']", "textarea[name='shotPlan']", "[data-step2='plan'] textarea"
+  ]);
+
+  const designEl = pickEl([
+    "#designIdea", "#canvaIdea", "#designOutput",
+    "textarea[name='designIdea']", "textarea[name='canvaIdea']", "[data-step2='design'] textarea"
+  ]);
+
+  // --- Try direct populate ---
+  const hits = {
+    facebook: setTextSmart(fbEl, fb),
+    instagram: setTextSmart(igEl, ig),
+    tiktok: setTextSmart(ttEl, tt),
+    linkedin: setTextSmart(liEl, li),
+    twitter: setTextSmart(twEl, tw),
+    marketplace: setTextSmart(mpEl, mp),
+    hashtags: setTextSmart(tagsEl, tags),
+    description: setTextSmart(descEl, desc),
+    selfieScript: setTextSmart(selfieEl, selfie),
+    videoPlan: setTextSmart(planEl, plan),
+    designIdea: setTextSmart(designEl, design),
+  };
+
+  const anyFieldHit = Object.values(hits).some(Boolean);
+
+  // --- Launch-safe fallback: create a posts box and render there ---
+  if (!anyFieldHit) {
+    let postsWrap =
+      $("boostPosts") ||
+      $("boostOutput") ||
+      $("socialPostsOutput") ||
+      DOC.querySelector("[data-boost-posts]");
+
+    // create if missing
+    if (!postsWrap) {
+      postsWrap = DOC.createElement("div");
+      postsWrap.id = "boostPosts";
+      postsWrap.style.marginTop = "12px";
+      postsWrap.style.padding = "12px";
+      postsWrap.style.border = "1px solid rgba(148,163,184,.35)";
+      postsWrap.style.borderRadius = "12px";
+      postsWrap.style.background = "rgba(2,6,23,.45)";
+
+      // attach to Step2 if possible, otherwise attach near top
+      (step2Root || DOC.body).appendChild(postsWrap);
+    }
+
+    // render via your existing renderer (best), else minimal render
+    try {
+      renderBoostTextAndPosts(desc, posts);
+    } catch {
+      const list = (Array.isArray(posts) ? posts : [])
+        .map((p) => String(p || "").trim())
+        .filter(Boolean);
+
+      postsWrap.innerHTML = list.length
+        ? list.map((t, i) => `<div style="margin-bottom:10px;"><strong>Post ${i + 1}</strong><pre style="white-space:pre-wrap;margin:6px 0 0;">${escapeHtml(t)}</pre></div>`).join("")
+        : `<div class="muted">No social posts generated.</div>`;
+    }
   }
+
+  STORE.lastBoostKit = data;
+
+  console.log("✅ Step 2 populated from boost:", {
+    anyFieldHit,
+    hits,
+    keys: Object.keys(data || {}),
+    postsCount: Array.isArray(posts) ? posts.length : 0,
+    descriptionLen: String(desc).length,
+  });
+}
+
 
   // ==================================================
   // ELEMENTS (READ ONCE)
