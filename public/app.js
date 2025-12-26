@@ -179,6 +179,7 @@ STORE.lastBoostResponse = data;
 
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
+window.lastBoostResponse = null;
 
   STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
   STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
