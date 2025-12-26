@@ -366,6 +366,7 @@ function applyBoostToStep2(data) {
 // ELEMENTS (READ ONCE)
 // ==================================================
 
+
   const dealerUrlInput = $("dealerUrl") || $("vehicleUrl");
   const vehicleLabelInput = $("vehicleLabel");
   const priceInfoInput = $("priceInfo");
