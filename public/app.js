@@ -222,6 +222,15 @@ function applyBoostToStep2(data) {
   const design = data.designIdea || data.canvaIdea || "";
   const desc = data.description || data.vehicleDescription || data.desc || "";
 
+  // ✅ Text/DM field (avoid "data.text" issues + accept alt keys)
+  const text =
+    data.text ||
+    data.textDm ||
+    data.sms ||
+    data.dm ||
+    (Array.isArray(data.posts) && data.posts.find((p) => String(p || "").trim())) ||
+    "";
+
   // posts array fallback
   const posts =
     Array.isArray(data.posts) ? data.posts :
@@ -254,12 +263,13 @@ function applyBoostToStep2(data) {
     twitter: setTextSmart(twEl, tw),
     marketplace: setTextSmart(mpEl, mp),
     hashtags: setTextSmart(tagsEl, tags),
-    text: setTextSmart(textEl, data.text || ""),
+    text: setTextSmart(textEl, text),
     description: setTextSmart(descEl, desc),
     selfieScript: setTextSmart(selfieEl, selfie),
     videoPlan: setTextSmart(planEl, plan),
     designIdea: setTextSmart(designEl, design),
   };
+
 
 
   const anyFieldHit = Object.values(hits).some(Boolean);
