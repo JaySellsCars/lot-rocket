@@ -384,6 +384,28 @@ function applyBoostToStep2(data) {
     textLen: clean(text).length,
   });
 } // ✅ closes applyBoostToStep2(data)
+        // ✅ DEBUG: prove whether anything overwrites Step2 AFTER populate
+        setTimeout(() => {
+          const fbEl = DOC.querySelector("#facebookPost");
+          const igEl = DOC.querySelector("#instagramPost");
+          const ttEl = DOC.querySelector("#tiktokPost");
+          const liEl = DOC.querySelector("#linkedinPost");
+          const twEl = DOC.querySelector("#twitterPost");
+          const mpEl = DOC.querySelector("#marketplacePost");
+          const txEl = DOC.querySelector("#textBlurb");
+          const tagsEl = DOC.querySelector("#hashtags");
+
+          console.log("🧪 STEP2 VALUES AFTER 250ms:", {
+            facebook: fbEl?.value,
+            instagram: igEl?.value,
+            tiktok: ttEl?.value,
+            linkedin: liEl?.value,
+            twitter: twEl?.value,
+            marketplace: mpEl?.value,
+            text: txEl?.value,
+            hashtags: tagsEl?.value,
+          });
+        }, 250);
 
   // ==================================================
   // ELEMENTS (READ ONCE)
