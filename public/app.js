@@ -205,7 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 // maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
-// 🔧 Launch-safe: if Step2 fields aren’t found, it will create a fallback output box and render posts there.
 function applyBoostToStep2(data) {
   if (!data || typeof data !== "object") return;
 
@@ -227,6 +226,61 @@ function applyBoostToStep2(data) {
     Array.isArray(data.socialPosts) ? data.socialPosts :
     Array.isArray(data.captions) ? data.captions :
     [];
+
+  // ---- STEP 2 FIELD MATCHING (HARD WIRED TO YOUR HTML) ----
+  const fbEl = pickEl([
+    "#facebookPost",
+    "#facebookOutput",
+    "#fbPost",
+    "[data-step2='facebook'] textarea"
+  ]);
+
+  const igEl = pickEl([
+    "#instagramPost",
+    "#instagramCaption",
+    "#instagramOutput",
+    "#igCaption",
+    "[data-step2='instagram'] textarea"
+  ]);
+
+  const ttEl = pickEl([
+    "#tiktokPost",
+    "#tiktokScript",
+    "#tiktokOutput",
+    "#ttScript",
+    "[data-step2='tiktok'] textarea"
+  ]);
+
+  const liEl = pickEl([
+    "#linkedinPost",
+    "#linkedinOutput",
+    "#liPost",
+    "[data-step2='linkedin'] textarea"
+  ]);
+
+  const twEl = pickEl([
+    "#twitterPost",
+    "#twitterOutput",
+    "#xPost",
+    "[data-step2='twitter'] textarea"
+  ]);
+
+  const mpEl = pickEl([
+    "#marketplacePost",
+    "#marketplaceOutput",
+    "#fbMarketplace",
+    "[data-step2='marketplace'] textarea"
+  ]);
+
+  const tagsEl = pickEl([
+    "#hashtags",
+    "#hashtagsOutput",
+    "[data-step2='hashtags'] textarea"
+  ]);
+
+  const textEl = pickEl([
+    "#t
+
 
   const pickEl = (selectors) => {
     for (const sel of selectors) {
