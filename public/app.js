@@ -17,7 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // BOOT GUARD + INSPECT
   // ==================================================
   if (window.__LOTROCKET_BOOTED__) {
-    console.warn("🚫 Lot Rocket boot blocked (double init) — version:", window.__LOTROCKET_APPJS_VERSION__);
+    console.warn(
+      "🚫 Lot Rocket boot blocked (double init) — version:",
+      window.__LOTROCKET_APPJS_VERSION__
+    );
     return;
   }
   window.__LOTROCKET_BOOTED__ = true;
@@ -35,16 +38,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==================================================
   // SIDE TOOLS (FLOATING MODALS)
   // ==================================================
-
   function openSideModal(modalId) {
-    const modal = document.getElementById(modalId);
+    const modal = DOC.getElementById(modalId);
     if (!modal) return;
 
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
     modal.classList.add("open");
 
-    const launcher = document.querySelector(`.floating-tools [data-modal-target="${modalId}"]`);
+    const launcher = DOC.querySelector(
+      `.floating-tools [data-modal-target="${modalId}"]`
+    );
     launcher?.classList.add("active");
 
     console.log("✅ OPEN MODAL:", modalId);
@@ -54,15 +58,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modalEl) return;
 
     // ✅ MOVE FOCUS OUT BEFORE HIDING (fixes aria-hidden warning)
-    if (modalEl.contains(document.activeElement)) {
-      document.activeElement.blur();
+    if (modalEl.contains(DOC.activeElement)) {
+      DOC.activeElement.blur();
     }
 
     modalEl.classList.add("hidden");
     modalEl.setAttribute("aria-hidden", "true");
     modalEl.classList.remove("open");
 
-    const launcher = document.querySelector(`.floating-tools [data-modal-target="${modalEl.id}"]`);
+    const launcher = DOC.querySelector(
+      `.floating-tools [data-modal-target="${modalEl.id}"]`
+    );
     launcher?.classList.remove("active");
 
     console.log("✅ CLOSE MODAL:", modalEl.id);
@@ -70,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function wireSideTools() {
     // OPEN buttons (floating tools)
-    document.querySelectorAll(".floating-tools [data-modal-target]").forEach((btn) => {
+    DOC.querySelectorAll(".floating-tools [data-modal-target]").forEach((btn) => {
       if (btn.dataset.wired === "true") return;
       btn.dataset.wired = "true";
 
@@ -85,16 +91,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // CLOSE buttons (inside modals)
-    document.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close").forEach((btn) => {
-      if (btn.dataset.wired === "true") return;
-      btn.dataset.wired = "true";
+    DOC.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close").forEach(
+      (btn) => {
+        if (btn.dataset.wired === "true") return;
+        btn.dataset.wired = "true";
 
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        const modal = btn.closest(".side-modal");
-        closeSideModal(modal);
-      });
-    });
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const modal = btn.closest(".side-modal");
+          closeSideModal(modal);
+        });
+      }
+    );
 
     console.log("🧰 Side tools wired");
   }
@@ -103,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // OBJECTION COACH — REAL HANDLER (frontend)
   // ==================================================
   window.handleObjectionCoach = async function (text) {
-    const out = document.querySelector("#objectionOutput");
+    const out = DOC.querySelector("#objectionOutput");
     if (out) out.textContent = "Thinking…";
 
     const res = await fetch("/api/objection-coach", {
@@ -113,9 +121,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const data = await res.json().catch(() => ({}));
-console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
-console.log("🧪 desc length:", (data?.description || data?.vehicleDescription || "").length);
-console.log("🧪 posts count:", (Array.isArray(data?.posts) ? data.posts.length : 0));
 
     if (!res.ok) {
       const msg = data?.message || data?.error || `Objection coach failed (HTTP ${res.status})`;
@@ -128,12 +133,18 @@ console.log("🧪 posts count:", (Array.isArray(data?.posts) ? data.posts.length
     return reply;
   };
 
+  // ==================================================
+  // CALCULATOR PAD (simple)
+  // ==================================================
   function wireCalculatorPad() {
     const display = $("calcDisplay");
     const buttons = DOC.querySelectorAll("[data-calc]");
     if (!display || !buttons.length) return;
 
     buttons.forEach((btn) => {
+      if (btn.dataset.wiredCalc === "true") return;
+      btn.dataset.wiredCalc = "true";
+
       btn.addEventListener("click", () => {
         const v = btn.dataset.calc;
 
@@ -174,81 +185,114 @@ console.log("🧪 posts count:", (Array.isArray(data?.posts) ? data.posts.length
   STORE.activeHoldingPhoto = typeof STORE.activeHoldingPhoto === "string" ? STORE.activeHoldingPhoto : "";
   STORE.lastTitle = typeof STORE.lastTitle === "string" ? STORE.lastTitle : "";
   STORE.lastPrice = typeof STORE.lastPrice === "string" ? STORE.lastPrice : "";
-// ==================================================
-// STEP 2 POPULATE (from Boost response)
-// ==================================================
-function setTextSmart(el, text) {
-  if (!el) return;
-  const val = String(text ?? "").trim();
-  if ("value" in el) el.value = val;
-  else el.textContent = val;
-}
 
-function pickEl(selectors) {
-  for (const sel of selectors) {
-    const el = document.querySelector(sel);
-    if (el) return el;
+  // ==================================================
+  // STEP 2 POPULATE (from Boost response)
+  // ==================================================
+  function setTextSmart(el, text) {
+    if (!el) return;
+    const val = String(text ?? "").trim();
+    if ("value" in el) el.value = val;
+    else el.textContent = val;
   }
-  return null;
-}
 
-// maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
-function applyBoostToStep2(data) {
-  if (!data || typeof data !== "object") return;
+  function pickEl(selectors) {
+    for (const sel of selectors) {
+      const el = DOC.querySelector(sel);
+      if (el) return el;
+    }
+    return null;
+  }
 
-  // backend keys (what your server returns)
-  const fb = data.facebook || "";
-  const ig = data.instagram || "";
-  const tt = data.tiktok || "";
-  const li = data.linkedin || "";
-  const tw = data.twitter || "";
-  const mp = data.marketplace || "";
-  const tags = data.hashtags || "";
-  const selfie = data.selfieScript || "";
-  const plan = data.shotPlan || data.videoPlan || "";
-  const design = data.designIdea || data.canvaIdea || "";
-  const desc = data.description || data.vehicleDescription || data.desc || "";
+  // maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
+  function applyBoostToStep2(data) {
+    if (!data || typeof data !== "object") return;
 
-  // Step 2 containers (try a bunch so we don't care what you named them)
-  const fbEl = pickEl(["#facebookPost", "#facebookOutput", "#fbPost", "[data-step2='facebook'] textarea", "[data-platform='facebook'] textarea"]);
-  const igEl = pickEl(["#instagramCaption", "#instagramOutput", "#igCaption", "[data-step2='instagram'] textarea", "[data-platform='instagram'] textarea"]);
-  const ttEl = pickEl(["#tiktokScript", "#tiktokOutput", "#ttScript", "[data-step2='tiktok'] textarea", "[data-platform='tiktok'] textarea"]);
-  const liEl = pickEl(["#linkedinPost", "#linkedinOutput", "#liPost", "[data-step2='linkedin'] textarea", "[data-platform='linkedin'] textarea"]);
-  const twEl = pickEl(["#twitterPost", "#twitterOutput", "#xPost", "[data-step2='twitter'] textarea", "[data-platform='twitter'] textarea"]);
-  const mpEl = pickEl(["#marketplacePost", "#marketplaceOutput", "#fbMarketplace", "[data-step2='marketplace'] textarea", "[data-platform='marketplace'] textarea"]);
-  const tagsEl = pickEl(["#hashtagsOutput", "#hashtags", "#trendingHashtags", "[data-step2='hashtags'] textarea"]);
-  const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription", "[data-step2='description'] textarea"]);
-  const selfieEl = pickEl(["#selfieScript", "#selfieOutput", "[data-step2='selfie'] textarea"]);
-  const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput", "[data-step2='plan'] textarea"]);
-  const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput", "[data-step2='design'] textarea"]);
+    const fb = data.facebook || "";
+    const ig = data.instagram || "";
+    const tt = data.tiktok || "";
+    const li = data.linkedin || "";
+    const tw = data.twitter || "";
+    const mp = data.marketplace || "";
+    const tags = data.hashtags || "";
+    const selfie = data.selfieScript || "";
+    const plan = data.shotPlan || data.videoPlan || "";
+    const design = data.designIdea || data.canvaIdea || "";
+    const desc = data.description || data.vehicleDescription || data.desc || "";
 
-  // write to UI
-  setTextSmart(fbEl, fb);
-  setTextSmart(igEl, ig);
-  setTextSmart(ttEl, tt);
-  setTextSmart(liEl, li);
-  setTextSmart(twEl, tw);
-  setTextSmart(mpEl, mp);
-  setTextSmart(tagsEl, tags);
-  setTextSmart(descEl, desc);
-  setTextSmart(selfieEl, selfie);
-  setTextSmart(planEl, plan);
-  setTextSmart(designEl, design);
+    const fbEl = pickEl([
+      "#facebookPost",
+      "#facebookOutput",
+      "#fbPost",
+      "[data-step2='facebook'] textarea",
+      "[data-platform='facebook'] textarea",
+    ]);
+    const igEl = pickEl([
+      "#instagramCaption",
+      "#instagramOutput",
+      "#igCaption",
+      "[data-step2='instagram'] textarea",
+      "[data-platform='instagram'] textarea",
+    ]);
+    const ttEl = pickEl([
+      "#tiktokScript",
+      "#tiktokOutput",
+      "#ttScript",
+      "[data-step2='tiktok'] textarea",
+      "[data-platform='tiktok'] textarea",
+    ]);
+    const liEl = pickEl([
+      "#linkedinPost",
+      "#linkedinOutput",
+      "#liPost",
+      "[data-step2='linkedin'] textarea",
+      "[data-platform='linkedin'] textarea",
+    ]);
+    const twEl = pickEl([
+      "#twitterPost",
+      "#twitterOutput",
+      "#xPost",
+      "[data-step2='twitter'] textarea",
+      "[data-platform='twitter'] textarea",
+    ]);
+    const mpEl = pickEl([
+      "#marketplacePost",
+      "#marketplaceOutput",
+      "#fbMarketplace",
+      "[data-step2='marketplace'] textarea",
+      "[data-platform='marketplace'] textarea",
+    ]);
+    const tagsEl = pickEl(["#hashtagsOutput", "#hashtags", "#trendingHashtags", "[data-step2='hashtags'] textarea"]);
+    const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription", "[data-step2='description'] textarea"]);
+    const selfieEl = pickEl(["#selfieScript", "#selfieOutput", "[data-step2='selfie'] textarea"]);
+    const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput", "[data-step2='plan'] textarea"]);
+    const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput", "[data-step2='design'] textarea"]);
 
-  // store (optional)
-  STORE.lastBoostKit = data;
+    setTextSmart(fbEl, fb);
+    setTextSmart(igEl, ig);
+    setTextSmart(ttEl, tt);
+    setTextSmart(liEl, li);
+    setTextSmart(twEl, tw);
+    setTextSmart(mpEl, mp);
+    setTextSmart(tagsEl, tags);
+    setTextSmart(descEl, desc);
+    setTextSmart(selfieEl, selfie);
+    setTextSmart(planEl, plan);
+    setTextSmart(designEl, design);
 
-  console.log("✅ Step 2 populated from boost:", {
-    facebook: !!fb,
-    instagram: !!ig,
-    tiktok: !!tt,
-    linkedin: !!li,
-    twitter: !!tw,
-    marketplace: !!mp,
-    hashtags: !!tags,
-    descriptionLen: String(desc).length,
-  });
-}
+    STORE.lastBoostKit = data;
+
+    console.log("✅ Step 2 populated from boost:", {
+      facebook: !!fb,
+      instagram: !!ig,
+      tiktok: !!tt,
+      linkedin: !!li,
+      twitter: !!tw,
+      marketplace: !!mp,
+      hashtags: !!tags,
+      descriptionLen: String(desc).length,
+    });
+  }
 
   // ==================================================
   // ELEMENTS (READ ONCE)
@@ -269,7 +313,7 @@ function applyBoostToStep2(data) {
   const sendTopBtn = $("sendTopPhotosToCreative") || $("sendTopPhotosBtn");
 
   // Step 3 holding zone / tuner
-  const holdingZoneEl = $("creativeThumbGrid"); // holding renders here in your current layout
+  const holdingZoneEl = $("holdingZone") || $("holdingZonePhotos") || $("holdingZoneGrid");
   const tunerPreviewImg = $("tunerPreviewImg");
   const tunerBrightness = $("tunerBrightness");
   const tunerContrast = $("tunerContrast");
@@ -277,7 +321,7 @@ function applyBoostToStep2(data) {
   const autoEnhanceBtn = $("autoEnhanceBtn");
   const sendToSocialStripBtn = $("sendToSocialStripBtn");
 
-  // Creative thumbs (same grid id used in your layout)
+  // Creative thumbs
   const creativeThumbGrid = $("creativeThumbGrid");
 
   // Social strip
@@ -334,7 +378,6 @@ function applyBoostToStep2(data) {
       STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(-MAX_PHOTOS);
     }
 
-    // ensure selected exists
     if (STORE.socialReadyPhotos.length && !STORE.socialReadyPhotos.some((p) => p.selected)) {
       STORE.socialReadyPhotos[0].selected = true;
     }
@@ -420,6 +463,7 @@ function applyBoostToStep2(data) {
       photosGridEl.appendChild(btn);
     });
 
+    // one click handler (replace each render)
     photosGridEl.onclick = (e) => {
       const btnEl = e.target?.closest?.("[data-i]");
       if (!btnEl) return;
@@ -492,7 +536,6 @@ function applyBoostToStep2(data) {
     if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
       return STORE.activeHoldingPhoto;
     }
-    if (tunerPreviewImg?.src) return tunerPreviewImg.src;
     return "";
   }
 
@@ -532,7 +575,10 @@ function applyBoostToStep2(data) {
     normalizeSocialReady();
 
     // deselect all
-    STORE.socialReadyPhotos = (STORE.socialReadyPhotos || []).map((p) => ({ ...p, selected: false }));
+    STORE.socialReadyPhotos = (STORE.socialReadyPhotos || []).map((p) => ({
+      ...p,
+      selected: false,
+    }));
 
     const existing = STORE.socialReadyPhotos.findIndex((p) => p && p.url === url);
     if (existing !== -1) {
@@ -593,9 +639,6 @@ function applyBoostToStep2(data) {
 
     if (!stripEl) return;
 
-    const listNow = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-    const curIdx = Math.max(0, listNow.findIndex((p) => p && p.selected));
-
     if (prevBtn && prevBtn.dataset.wired !== "true") {
       prevBtn.dataset.wired = "true";
       prevBtn.addEventListener("click", (e) => {
@@ -607,7 +650,6 @@ function applyBoostToStep2(data) {
 
         const cur = Math.max(0, list.findIndex((p) => p && p.selected));
         setSocialSelectedIndex(cur - 1);
-
         renderSocialStrip();
       });
     }
@@ -623,7 +665,6 @@ function applyBoostToStep2(data) {
 
         const cur = Math.max(0, list.findIndex((p) => p && p.selected));
         setSocialSelectedIndex(cur + 1);
-
         renderSocialStrip();
       });
     }
@@ -695,7 +736,9 @@ function applyBoostToStep2(data) {
     downloadSocialReadyBtn.addEventListener("click", async () => {
       normalizeSocialReady();
 
-      const locked = (STORE.socialReadyPhotos || []).filter((p) => p && p.locked && (p.originalUrl || p.url));
+      const locked = (STORE.socialReadyPhotos || []).filter(
+        (p) => p && p.locked && (p.originalUrl || p.url)
+      );
 
       if (!locked.length) {
         alert("Lock at least one photo to download.");
@@ -728,10 +771,10 @@ function applyBoostToStep2(data) {
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
 
-      const a = document.createElement("a");
+      const a = DOC.createElement("a");
       a.href = URL.createObjectURL(zipBlob);
       a.download = "LotRocket_SocialReady.zip";
-      document.body.appendChild(a);
+      DOC.body.appendChild(a);
       a.click();
       a.remove();
 
@@ -771,14 +814,12 @@ function applyBoostToStep2(data) {
       img.alt = "Creative photo";
       img.loading = "lazy";
       img.className = "creative-thumb";
-      img.title = "Click = select • Double-click = send to Social Strip";
+      img.title = "Click = preview • Double-click = send to Social Strip";
 
       img.addEventListener("click", () => {
         img.classList.toggle("selected");
-        if (tunerPreviewImg) {
-          loadPhotoTuner(url);
-          applyTunerFilters();
-        }
+        loadPhotoTuner(url);
+        applyTunerFilters();
       });
 
       img.addEventListener("dblclick", () => {
@@ -794,210 +835,299 @@ function applyBoostToStep2(data) {
     }
   }
 
-// ==================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3
-// ==================================================
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-  sendTopBtn.onclick = () => {
-    const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
-    if (!selected.length) return alert("Select photos first.");
+  // ==================================================
+  // STEP 1 → SEND TOP PHOTOS → STEP 3
+  // ==================================================
+  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+    sendTopBtn.dataset.wired = "true";
+    sendTopBtn.onclick = () => {
+      const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
+      if (!selected.length) return alert("Select photos first.");
 
-    STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+      STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-    STORE.creativePhotos = [];
-    renderCreativeThumbs();
+      // keep creative separate
+      STORE.creativePhotos = [];
+      renderCreativeThumbs();
 
-    renderHoldingZone();
-    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+      renderHoldingZone();
+      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
 
-    log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
-  };
-}
-
-// ==================================================
-// Boost request (single clean implementation)
-// ==================================================
-
-// ✅ MUST be top-scope so boostBtn.onclick can call it (no "postBoost is not defined")
-async function postBoost(payload) {
-  try {
-    console.log("🧪 POST /boost");
-
-    const res = await fetch("/boost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    return res; // ✅ return even if not ok; caller handles status + message
-  } catch (e) {
-    console.warn("🧪 /boost failed:", e?.message || e);
-    throw e;
+      log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+    };
   }
-}
 
-if (boostBtn && boostBtn.dataset.wired !== "true") {
-  boostBtn.dataset.wired = "true";
-
-  boostBtn.onclick = async () => {
-    console.log("🚀 BOOST CLICK");
-
-    const url = dealerUrlInput?.value?.trim?.() || "";
-    if (!url) return alert("Enter vehicle URL");
-
-    setBtnLoading(boostBtn, true, "Boosting…");
-    if (statusText) statusText.textContent = "Boosting…";
-
+  // ==================================================
+  // Boost request (single clean implementation)
+  // ==================================================
+  async function postBoost(payload) {
     try {
-      const res = await postBoost({
-        url,
-        labelOverride: vehicleLabelInput?.value?.trim?.() || "",
-        priceOverride: priceInfoInput?.value?.trim?.() || "",
+      console.log("🧪 POST /boost");
+
+      const res = await fetch("/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json().catch(() => ({}));
-
-      console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
-      console.log("🧪 desc length:", (data?.description || data?.vehicleDescription || data?.desc || "").length);
-      console.log(
-        "🧪 posts count:",
-        Array.isArray(data?.posts) ? data.posts.length : Array.isArray(data?.socialPosts) ? data.socialPosts.length : 0
-      );
-
-if (!res.ok) {
-  const msg =
-    data?.message ||
-    data?.error ||
-    data?.details ||
-    (typeof data === "string" ? data : "") ||
-    `Boost failed (HTTP ${res.status})`;
-  throw new Error(msg);
-}
-
-      const vLabel = data.vehicleLabel || data.title || "";
-      const vPrice = data.priceInfo || data.price || "";
-
-      if (summaryLabel) summaryLabel.textContent = vLabel || "—";
-      if (summaryPrice) summaryPrice.textContent = vPrice || "—";
-
-      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
-      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
-
-      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-      const seen = new Set();
-      const cleaned = [];
-
-      for (const u of rawPhotos) {
-        if (!u) continue;
-        const base = u.split("?")[0].replace(/\/+$/, "");
-        if (seen.has(base)) continue;
-        seen.add(base);
-        cleaned.push(u);
-        if (cleaned.length >= MAX_PHOTOS) break;
-      }
-
-      STORE.lastBoostPhotos = cleaned;
-      renderStep1Photos(STORE.lastBoostPhotos);
-
-      const desc = data.description || data.vehicleDescription || data.desc || "";
-      const posts = data.posts || data.socialPosts || data.captions || [];
-
-      STORE.lastBoostDescription = String(desc || "");
-      STORE.lastBoostPosts = Array.isArray(posts) ? posts : [];
-
-      renderBoostTextAndPosts(STORE.lastBoostDescription, STORE.lastBoostPosts);
-
-      if (statusText) statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
+      return res;
     } catch (e) {
-      console.error("✘ BOOST FAILED", e);
-      if (statusText) statusText.textContent = "Boost failed.";
-alert(`Boost failed: ${e?.message || "unknown error"}`);
-    } finally {
-      setBtnLoading(boostBtn, false);
+      console.warn("🧪 /boost failed:", e?.message || e);
+      throw e;
     }
-  };
-}
-
-
-
-// BOOST OUTPUT RENDER (description + generated posts)
-// Safe: renders only if containers exist
-// ==================================================
-function escapeHtml(s) {
-  return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function normalizePosts(posts) {
-  if (!Array.isArray(posts)) return [];
-  return posts
-    .map((p) => (typeof p === "string" ? p : (p && typeof p.text === "string" ? p.text : "")))
-    .map((t) => String(t || "").trim())
-    .filter(Boolean);
-}
-
-function renderBoostTextAndPosts(description, posts) {
-  const desc =
-    DOC.getElementById("boostDescription") ||
-    DOC.getElementById("vehicleDescription") ||
-    DOC.getElementById("descriptionOutput") ||
-    DOC.querySelector("[data-boost-description]");
-
-  const postsWrap =
-    DOC.getElementById("boostPosts") ||
-    DOC.getElementById("boostOutput") ||
-    DOC.getElementById("socialPostsOutput") ||
-    DOC.querySelector("[data-boost-posts]");
-
-  // Description (optional)
-  if (desc) {
-    const d = String(description || "").trim();
-    desc.innerHTML = d ? `<pre class="boost-desc">${escapeHtml(d)}</pre>` : `<div class="muted">No description found.</div>`;
   }
 
-  // Posts (optional)
-  if (postsWrap) {
-    const list = normalizePosts(posts);
+  if (boostBtn && boostBtn.dataset.wired !== "true") {
+    boostBtn.dataset.wired = "true";
 
-    if (!list.length) {
-      postsWrap.innerHTML = `<div class="muted">No social posts generated.</div>`;
+    boostBtn.onclick = async () => {
+      console.log("🚀 BOOST CLICK");
+
+      const url = dealerUrlInput?.value?.trim?.() || "";
+      if (!url) return alert("Enter vehicle URL");
+
+      setBtnLoading(boostBtn, true, "Boosting…");
+      if (statusText) statusText.textContent = "Boosting…";
+
+      try {
+        const res = await postBoost({
+          url,
+          labelOverride: vehicleLabelInput?.value?.trim?.() || "",
+          priceOverride: priceInfoInput?.value?.trim?.() || "",
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
+        console.log(
+          "🧪 desc length:",
+          (data?.description || data?.vehicleDescription || data?.desc || "").length
+        );
+        console.log(
+          "🧪 posts count:",
+          Array.isArray(data?.posts)
+            ? data.posts.length
+            : Array.isArray(data?.socialPosts)
+            ? data.socialPosts.length
+            : 0
+        );
+
+        if (!res.ok) {
+          const msg =
+            data?.message ||
+            data?.error ||
+            data?.details ||
+            (typeof data === "string" ? data : "") ||
+            `Boost failed (HTTP ${res.status})`;
+          throw new Error(msg);
+        }
+
+        // ✅ Step 2 fill (MOST IMPORTANT)
+        applyBoostToStep2(data);
+
+        const vLabel = data.vehicleLabel || data.title || "";
+        const vPrice = data.priceInfo || data.price || "";
+
+        if (summaryLabel) summaryLabel.textContent = vLabel || "—";
+        if (summaryPrice) summaryPrice.textContent = vPrice || "—";
+
+        if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
+        if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
+
+        const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+        const seen = new Set();
+        const cleaned = [];
+
+        for (const u of rawPhotos) {
+          if (!u) continue;
+          const base = String(u).split("?")[0].replace(/\/+$/, "");
+          if (seen.has(base)) continue;
+          seen.add(base);
+          cleaned.push(u);
+          if (cleaned.length >= MAX_PHOTOS) break;
+        }
+
+        STORE.lastBoostPhotos = cleaned;
+        renderStep1Photos(STORE.lastBoostPhotos);
+
+        const desc = data.description || data.vehicleDescription || data.desc || "";
+        const posts = data.posts || data.socialPosts || data.captions || [];
+
+        STORE.lastBoostDescription = String(desc || "");
+        STORE.lastBoostPosts = Array.isArray(posts) ? posts : [];
+
+        renderBoostTextAndPosts(STORE.lastBoostDescription, STORE.lastBoostPosts);
+
+        if (statusText)
+          statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
+      } catch (e) {
+        console.error("✘ BOOST FAILED", e);
+        if (statusText) statusText.textContent = "Boost failed.";
+        alert(`Boost failed: ${e?.message || "unknown error"}`);
+      } finally {
+        setBtnLoading(boostBtn, false);
+      }
+    };
+  }
+
+  // ==================================================
+  // BOOST OUTPUT RENDER (description + generated posts)
+  // Safe: renders only if containers exist
+  // ==================================================
+  function escapeHtml(s) {
+    return String(s || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function normalizePosts(posts) {
+    if (!Array.isArray(posts)) return [];
+    return posts
+      .map((p) => (typeof p === "string" ? p : p && typeof p.text === "string" ? p.text : ""))
+      .map((t) => String(t || "").trim())
+      .filter(Boolean);
+  }
+
+  function renderBoostTextAndPosts(description, posts) {
+    const desc =
+      DOC.getElementById("boostDescription") ||
+      DOC.getElementById("vehicleDescription") ||
+      DOC.getElementById("descriptionOutput") ||
+      DOC.querySelector("[data-boost-description]");
+
+    const postsWrap =
+      DOC.getElementById("boostPosts") ||
+      DOC.getElementById("boostOutput") ||
+      DOC.getElementById("socialPostsOutput") ||
+      DOC.querySelector("[data-boost-posts]");
+
+    // Description (optional)
+    if (desc) {
+      const d = String(description || "").trim();
+      desc.innerHTML = d
+        ? `<pre class="boost-desc">${escapeHtml(d)}</pre>`
+        : `<div class="muted">No description found.</div>`;
+    }
+
+    // Posts (optional)
+    if (postsWrap) {
+      const list = normalizePosts(posts);
+
+      if (!list.length) {
+        postsWrap.innerHTML = `<div class="muted">No social posts generated.</div>`;
+        return;
+      }
+
+      postsWrap.innerHTML = list
+        .map((text, i) => {
+          const encoded = encodeURIComponent(text);
+          return `
+            <div class="boost-post-card">
+              <div class="boost-post-header">Post ${i + 1}</div>
+              <pre class="boost-post-text">${escapeHtml(text)}</pre>
+              <button type="button" class="secondary-btn copy-post-btn" data-copy="${encoded}">Copy</button>
+            </div>
+          `;
+        })
+        .join("");
+
+      postsWrap.querySelectorAll(".copy-post-btn").forEach((btn) => {
+        if (btn.dataset.wiredCopy === "true") return;
+        btn.dataset.wiredCopy = "true";
+
+        btn.addEventListener("click", async () => {
+          const txt = decodeURIComponent(btn.dataset.copy || "");
+          try {
+            await navigator.clipboard.writeText(txt);
+            const old = btn.textContent;
+            btn.textContent = "Copied";
+            setTimeout(() => (btn.textContent = old), 900);
+          } catch {
+            alert("Copy failed");
+          }
+        });
+      });
+    }
+  }
+
+  // ==================================================
+  // INCOME CALC — HARD WIRE (GUARANTEED CLICK)
+  // Put inside DOMContentLoaded (public/app.js)
+  // ==================================================
+  function wireIncomeCalcDirect() {
+    const modal = document.getElementById("incomeModal");
+    if (!modal) return;
+
+    const btn =
+      modal.querySelector("#incomeCalcBtn") ||
+      modal.querySelector("[data-ai-action='income_calc']");
+
+    const out =
+      modal.querySelector("#incomeOutput") ||
+      modal.querySelector("[data-ai-output]");
+
+    if (!btn) {
+      console.warn("🟠 income calc: button not found");
       return;
     }
 
-    postsWrap.innerHTML = list
-      .map((text, i) => {
-        const encoded = encodeURIComponent(text);
-        return `
-          <div class="boost-post-card">
-            <div class="boost-post-header">Post ${i + 1}</div>
-            <pre class="boost-post-text">${escapeHtml(text)}</pre>
-            <button type="button" class="secondary-btn copy-post-btn" data-copy="${encoded}">Copy</button>
-          </div>
-        `;
-      })
-      .join("");
+    if (btn.dataset.wiredDirect === "true") return;
+    btn.dataset.wiredDirect = "true";
 
-    postsWrap.querySelectorAll(".copy-post-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const txt = decodeURIComponent(btn.dataset.copy || "");
-        try {
-          await navigator.clipboard.writeText(txt);
-          const old = btn.textContent;
-          btn.textContent = "Copied";
-          setTimeout(() => (btn.textContent = old), 900);
-        } catch {
-          alert("Copy failed");
+    const num = (v) => {
+      if (v == null) return 0;
+      const s = String(v).replace(/[^\d.-]/g, "");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log("🟢 INCOME DIRECT CLICK");
+
+      const mtdEl = modal.querySelector("#incomeMtd");
+      const dateEl = modal.querySelector("#incomeLastPayDate");
+
+      const body = {
+        mtd: num(mtdEl?.value),
+        lastPayDate: (dateEl?.value || "").trim(),
+      };
+
+      if (out) out.textContent = "Thinking…";
+
+      try {
+        const r = await fetch("/api/income-helper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        const data = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+          const msg = data?.message || data?.error || `HTTP ${r.status}`;
+          throw new Error(msg);
         }
-      });
+
+        const reply = data?.result || data?.text || data?.answer || "✅ Done (empty response).";
+        if (out) out.textContent = reply;
+
+        console.log("🟢 INCOME DIRECT OK", data);
+      } catch (err) {
+        console.error("🔴 INCOME DIRECT FAIL", err);
+        if (out) out.textContent = `❌ Error: ${err?.message || err}`;
+        else alert(err?.message || "Income calc failed");
+      }
     });
+
+    console.log("✅ income calc: direct wire complete");
   }
-}
 
   // ==================================================
   // ROCKET-FB — AI MODALS UNIVERSAL WIRE (SAFE)
@@ -1016,7 +1146,7 @@ function renderBoostTextAndPosts(description, posts) {
       return Number.isFinite(n) ? n : 0;
     };
 
-    const pick = (root, selectors) => {
+    const pickInside = (root, selectors) => {
       for (const sel of selectors) {
         const el = root.querySelector(sel);
         if (el) return el;
@@ -1024,136 +1154,45 @@ function renderBoostTextAndPosts(description, posts) {
       return null;
     };
 
+    const collectPaymentBody = (modal) => {
+      const priceEl = pickInside(modal, ["#payPrice", "input[name='price']", "#price"]);
+      const downEl = pickInside(modal, ["#payDown", "input[name='down']", "#down"]);
+      const tradeEl = pickInside(modal, ["#payTrade", "input[name='trade']", "#trade"]);
+      const payoffEl = pickInside(modal, ["#payPayoff", "input[name='payoff']", "#payoff"]);
 
-const collectPaymentBody = (modal) => {
-  // local pick helper (scoped)
-  const pick = (selectors) => {
-    for (const sel of selectors) {
-      const el = modal.querySelector(sel);
-      if (el) return el;
-    }
-    return null;
-  };
+      const aprEl = pickInside(modal, ["#payApr", "input[name='apr']", "input[name='rate']", "#apr", "#rate"]);
+      const termEl = pickInside(modal, ["#payTerm", "input[name='term']", "#term"]);
+      const taxEl = pickInside(modal, ["#payTax", "input[name='tax']", "#tax"]);
 
-  const num = (v) => {
-    if (v == null) return 0;
-    const s = String(v).replace(/[^\d.-]/g, "");
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
-  };
+      const feesEl = pickInside(modal, ["#payFees", "#dealerFees", "input[name='fees']", "input[name='dealerFees']", "#fees"]);
 
-  const priceEl  = pick(["#payPrice",  "input[name='price']",  "#price"]);
-  const downEl   = pick(["#payDown",   "input[name='down']",   "#down"]);
-  const tradeEl  = pick(["#payTrade",  "input[name='trade']",  "#trade"]);
-  const payoffEl = pick(["#payPayoff", "input[name='payoff']", "#payoff"]);
+      const stateEl = pickInside(modal, ["#payState", "select[name='state']", "input[name='state']"]);
+      const rebateEl = pickInside(modal, ["#payRebate", "input[name='rebate']", "#rebate"]);
 
-  const aprEl = pick(["#payApr", "input[name='apr']", "input[name='rate']", "#apr", "#rate"]);
-  const termEl = pick(["#payTerm", "input[name='term']", "#term"]);
-  const taxEl  = pick(["#payTax",  "input[name='tax']",  "#tax"]);
+      return {
+        price: num(priceEl?.value),
+        down: num(downEl?.value),
+        trade: num(tradeEl?.value),
+        payoff: num(payoffEl?.value),
 
-  const feesEl = pick(["#payFees", "#dealerFees", "input[name='fees']", "input[name='dealerFees']", "#fees"]);
+        rate: num(aprEl?.value),
+        term: num(termEl?.value),
+        tax: num(taxEl?.value),
 
-  // ✅ NEW: State + Rebate
-  const stateEl = pick(["#payState", "select[name='state']", "input[name='state']"]);
-  const rebateEl = pick(["#payRebate", "input[name='rebate']", "#rebate"]);
-
-  return {
-    price: num(priceEl?.value),
-    down: num(downEl?.value),
-    trade: num(tradeEl?.value),
-    payoff: num(payoffEl?.value),
-
-    rate: num(aprEl?.value),   // APR %
-    term: num(termEl?.value),  // months
-    tax: num(taxEl?.value),    // tax %
-
-    fees: num(feesEl?.value),      // dealer fees / add-ons
-    state: (stateEl?.value || "").trim().toUpperCase(), // "MI", "OH", etc
-    rebate: num(rebateEl?.value),  // optional
-  };
-};
-// ==================================================
-// INCOME CALC — HARD WIRE (GUARANTEED CLICK)
-// Put inside DOMContentLoaded (public/app.js)
-// ==================================================
-(function wireIncomeCalcDirect() {
-  const modal = document.getElementById("incomeModal");
-  if (!modal) return;
-
-  const btn =
-    modal.querySelector("#incomeCalcBtn") ||
-    modal.querySelector("[data-ai-action='income_calc']");
-
-  const out =
-    modal.querySelector("#incomeOutput") ||
-    modal.querySelector("[data-ai-output]");
-
-  if (!btn) {
-    console.warn("🟠 income calc: button not found");
-    return;
-  }
-
-  if (btn.dataset.wiredDirect === "true") return;
-  btn.dataset.wiredDirect = "true";
-
-  const num = (v) => {
-    if (v == null) return 0;
-    const s = String(v).replace(/[^\d.-]/g, "");
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    console.log("🟢 INCOME DIRECT CLICK");
-
-    const mtdEl = modal.querySelector("#incomeMtd");
-    const dateEl = modal.querySelector("#incomeLastPayDate");
-
-    const body = {
-      mtd: num(mtdEl?.value),
-      lastPayDate: (dateEl?.value || "").trim(),
+        fees: num(feesEl?.value),
+        state: (stateEl?.value || "").trim().toUpperCase(),
+        rebate: num(rebateEl?.value),
+      };
     };
 
-    if (out) out.textContent = "Thinking…";
-
-    try {
-      const r = await fetch("/api/income-helper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = await r.json().catch(() => ({}));
-
-      if (!r.ok) {
-        const msg = data?.message || data?.error || `HTTP ${r.status}`;
-        throw new Error(msg);
-      }
-
-      const reply = data?.result || data?.text || data?.answer || "✅ Done (empty response).";
-      if (out) out.textContent = reply;
-
-      console.log("🟢 INCOME DIRECT OK", data);
-    } catch (err) {
-      console.error("🔴 INCOME DIRECT FAIL", err);
-      if (out) out.textContent = `❌ Error: ${err?.message || err}`;
-      else alert(err?.message || "Income calc failed");
-    }
-  });
-
-  console.log("✅ income calc: direct wire complete");
-})();
-
-
-
-
-
     const collectIncomeBody = (modal) => {
-      const mtdEl = pick(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"]);
-      const dateEl = pick(modal, ["#incomeLastPayDate", "input[name='lastPayDate']", "#lastPayDate", "input[type='date']"]);
+      const mtdEl = pickInside(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"]);
+      const dateEl = pickInside(modal, [
+        "#incomeLastPayDate",
+        "input[name='lastPayDate']",
+        "#lastPayDate",
+        "input[type='date']",
+      ]);
 
       return {
         mtd: num(mtdEl?.value),
@@ -1242,7 +1281,7 @@ const collectPaymentBody = (modal) => {
               const res = await fn(text, { modal, input, output, btn });
               if (typeof res === "string" && output) output.textContent = res;
             } else {
- const routeMap = {
+              const routeMap = {
                 objection_coach: {
                   url: "/api/objection-coach",
                   body: { objection: text, history: "" },
@@ -1291,105 +1330,62 @@ const collectPaymentBody = (modal) => {
                 },
 
                 // ✅ CALCULATORS (no text required)
-payment_calc: {
-  url: "/api/payment-helper",
+                payment_calc: {
+                  url: "/api/payment-helper",
+                  body: collectPaymentBody(modal),
+                  pick: (data) => data?.breakdownText || data?.result || data?.text || data?.answer || "",
+                },
 
-  // collectPaymentBody(modal) MUST return:
-  // { price, down, trade, payoff, rate, term, tax, fees, state, rebate }
-  body: collectPaymentBody(modal),
+                income_calc: {
+                  url: "/api/income-helper",
+                  body: collectIncomeBody(modal),
+                  pick: (data) => data?.result || data?.text || data?.answer || "",
+                },
+              };
 
-  pick: (data) => {
-    // ✅ Preferred: backend already formatted everything
-    if (data?.breakdownText) return data.breakdownText;
+              const cfg = routeMap[action];
 
-    // ✅ Fallback: structured breakdown
-    const b = data?.breakdown;
-    if (!b) return data?.result || data?.text || data?.answer || "";
+              if (!cfg) {
+                if (output) {
+                  output.textContent =
+                    `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
+                } else {
+                  alert(`Received (${action}). No route mapped yet.`);
+                }
+                throw new Error(`No backend route mapped for action: ${action}`);
+              }
 
-    const money = (n) =>
-      `$${Number(n || 0).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
+              const r = await fetch(cfg.url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cfg.body),
+              });
 
-    const pct = (n) => `${Number(n || 0).toFixed(2)}%`;
+              const data = await r.json().catch(() => ({}));
+              if (!r.ok) {
+                const msg = data?.message || data?.error || `HTTP ${r.status}`;
+                throw new Error(msg);
+              }
 
-    const equityLine =
-      b.tradeEquity >= 0
-        ? `+${money(b.tradeEquity)} (positive equity)`
-        : `${money(b.tradeEquity)} (negative equity)`;
+              const reply = (cfg.pick ? cfg.pick(data) : "") || "";
+              if (output) output.textContent = reply || "✅ Done (empty response).";
+            }
+          } catch (err) {
+            console.error("🟣 AI-WIRE: action failed", err);
+            if (output) output.textContent = `❌ Error: ${err?.message || err}`;
+            else alert(err?.message || "Action failed");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || "Run";
+          }
+        });
+      });
+    });
 
-    return [
-      `~${money(b.amountFinanced * 0 + 0)}`, // payment already in breakdownText normally
-      "",
-      "Breakdown:",
-      `• State: ${b.state || "N/A"}`,
-      `• Price: ${money(b.price)}`,
-      `• Dealer Fees/Add-ons: ${money(b.fees)}`,
-      `• Taxable Base: ${money(b.taxableBase)}`,
-      `• Tax (${pct(b.taxRate)}): ${money(b.taxAmount)}`,
-      `• Rebate: ${money(b.rebate)}`,
-      `• Down: ${money(b.down)}`,
-      `• Trade: ${money(b.trade)} | Payoff: ${money(b.payoff)}`,
-      `• Trade Equity: ${equityLine}`,
-      `• Amount Financed: ${money(b.amountFinanced)}`,
-      `• APR: ${pct(b.aprPct)} | Term: ${b.term} months`,
-    ].join("\n");
-  },
-},
+    console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
+  } // ✅ closes wireAiModals()
 
-
-income_calc: {
-  url: "/api/income-helper",
-  body: collectIncomeBody(modal),
-  pick: (data) => data?.result || data?.text || data?.answer || "",
-},
-};
-
-const cfg = routeMap[action];
-
-if (!cfg) {
-  if (output) {
-    output.textContent =
-      `✅ Received (${action}). No route mapped yet.\n` + `Input: ${text}`;
-  } else {
-    alert(`Received (${action}). No route mapped yet.`);
-  }
-  throw new Error(`No backend route mapped for action: ${action}`);
-}
-
-const r = await fetch(cfg.url, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(cfg.body),
-});
-
-const data = await r.json().catch(() => ({}));
-if (!r.ok) {
-  const msg = data?.message || data?.error || `HTTP ${r.status}`;
-  throw new Error(msg);
-}
-
-const reply = (cfg.pick ? cfg.pick(data) : "") || "";
-if (output) output.textContent = reply || "✅ Done (empty response).";
-} // ✅ closes: else { ... routeMap ... }
-} catch (err) {
-console.error("🟣 AI-WIRE: action failed", err);
-if (output) output.textContent = `❌ Error: ${err?.message || err}`;
-else alert(err?.message || "Action failed");
-} finally {
-btn.disabled = false;
-btn.textContent = btn.dataset.originalText || "Run";
-}
-});
-});
-});
-
-console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
-} // ✅ closes wireAiModals()
-
-// ==================================================
-
+  // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
   // ==================================================
   try {
@@ -1407,6 +1403,7 @@ console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
     renderSocialStrip();
 
     wireCalculatorPad();
+    wireIncomeCalcDirect(); // ✅ guaranteed income button
 
     if (typeof wireAiModals === "function") {
       wireAiModals();
