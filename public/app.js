@@ -186,25 +186,27 @@ document.addEventListener("DOMContentLoaded", () => {
   STORE.lastTitle = typeof STORE.lastTitle === "string" ? STORE.lastTitle : "";
   STORE.lastPrice = typeof STORE.lastPrice === "string" ? STORE.lastPrice : "";
 
-  // ==================================================
-  // STEP 2 POPULATE (from Boost response)
-  // ==================================================
-  function setTextSmart(el, text) {
-    if (!el) return;
-    const val = String(text ?? "").trim();
-    if ("value" in el) el.value = val;
-    else el.textContent = val;
-  }
+// ==================================================
+// STEP 2 POPULATE (from Boost response) ✅ SINGLE SOURCE
+// ==================================================
+function setTextSmart(el, text) {
+  if (!el) return false;
+  const val = String(text ?? "").trim();
+  if ("value" in el) el.value = val;
+  else el.textContent = val;
+  return true;
+}
 
-  function pickEl(selectors) {
-    for (const sel of selectors) {
-      const el = DOC.querySelector(sel);
-      if (el) return el;
-    }
-    return null;
+function pickEl(selectors) {
+  for (const sel of selectors) {
+    const el = DOC.querySelector(sel);
+    if (el) return el;
   }
+  return null;
+}
 
 // maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
+// 🔧 Launch-safe: if Step2 fields aren’t found, it will create a fallback output box and render posts there.
 function applyBoostToStep2(data) {
   if (!data || typeof data !== "object") return;
 
@@ -228,150 +230,22 @@ function applyBoostToStep2(data) {
     [];
 
   // ---- STEP 2 FIELD MATCHING (HARD WIRED TO YOUR HTML) ----
-  const fbEl = pickEl([
-    "#facebookPost",
-    "#facebookOutput",
-    "#fbPost",
-    "[data-step2='facebook'] textarea"
-  ]);
+  const fbEl = pickEl(["#facebookPost"]);
+  const igEl = pickEl(["#instagramPost"]);
+  const ttEl = pickEl(["#tiktokPost"]);
+  const liEl = pickEl(["#linkedinPost"]);
+  const twEl = pickEl(["#twitterPost"]);
+  const mpEl = pickEl(["#marketplacePost"]);
+  const tagsEl = pickEl(["#hashtags"]);
+  const textEl = pickEl(["#textBlurb"]); // ✅ your HTML uses #textBlurb
 
-  const igEl = pickEl([
-    "#instagramPost",
-    "#instagramCaption",
-    "#instagramOutput",
-    "#igCaption",
-    "[data-step2='instagram'] textarea"
-  ]);
+  // (Optional future boxes if you add them later)
+  const descEl = pickEl(["#vehicleDescription", "#descriptionOutput", "#boostDescription"]);
+  const selfieEl = pickEl(["#selfieScript", "#selfieOutput"]);
+  const planEl = pickEl(["#videoPlan", "#shotPlan", "#videoOutput"]);
+  const designEl = pickEl(["#designIdea", "#canvaIdea", "#designOutput"]);
 
-  const ttEl = pickEl([
-    "#tiktokPost",
-    "#tiktokScript",
-    "#tiktokOutput",
-    "#ttScript",
-    "[data-step2='tiktok'] textarea"
-  ]);
-
-  const liEl = pickEl([
-    "#linkedinPost",
-    "#linkedinOutput",
-    "#liPost",
-    "[data-step2='linkedin'] textarea"
-  ]);
-
-  const twEl = pickEl([
-    "#twitterPost",
-    "#twitterOutput",
-    "#xPost",
-    "[data-step2='twitter'] textarea"
-  ]);
-
-  const mpEl = pickEl([
-    "#marketplacePost",
-    "#marketplaceOutput",
-    "#fbMarketplace",
-    "[data-step2='marketplace'] textarea"
-  ]);
-
-  const tagsEl = pickEl([
-    "#hashtags",
-    "#hashtagsOutput",
-    "[data-step2='hashtags'] textarea"
-  ]);
-
-  const textEl = pickEl([
-    "#t
-
-
-  const pickEl = (selectors) => {
-    for (const sel of selectors) {
-      const el = DOC.querySelector(sel);
-      if (el) return el;
-    }
-    return null;
-  };
-
-  const setTextSmart = (el, text) => {
-    if (!el) return false;
-    const val = String(text ?? "").trim();
-    if ("value" in el) el.value = val;
-    else el.textContent = val;
-    return true;
-  };
-
-  // --- Step 2 containers (try hard to find yours) ---
-  const step2Root =
-    $("step2") ||
-    DOC.querySelector("#step2") ||
-    DOC.querySelector("#socialKit") ||
-    DOC.querySelector("#socialMedia") ||
-    DOC.querySelector("[data-step='2']") ||
-    DOC.querySelector(".step2") ||
-    null;
-
-  // widen selectors aggressively (harmless)
-  const fbEl = pickEl([
-    "#facebookPost", "#facebookOutput", "#fbPost", "#fbCaption", "#facebookCaption",
-    "textarea[name='facebook']", "textarea[data-platform='facebook']",
-    "[data-step2='facebook'] textarea", "[data-platform='facebook'] textarea"
-  ]);
-
-  const igEl = pickEl([
-    "#instagramCaption", "#instagramOutput", "#igCaption", "#igPost", "#instagramPost",
-    "textarea[name='instagram']", "textarea[data-platform='instagram']",
-    "[data-step2='instagram'] textarea", "[data-platform='instagram'] textarea"
-  ]);
-
-  const ttEl = pickEl([
-    "#tiktokScript", "#tiktokOutput", "#ttScript", "#tiktokPost",
-    "textarea[name='tiktok']", "textarea[data-platform='tiktok']",
-    "[data-step2='tiktok'] textarea", "[data-platform='tiktok'] textarea"
-  ]);
-
-  const liEl = pickEl([
-    "#linkedinPost", "#linkedinOutput", "#liPost",
-    "textarea[name='linkedin']", "textarea[data-platform='linkedin']",
-    "[data-step2='linkedin'] textarea", "[data-platform='linkedin'] textarea"
-  ]);
-
-  const twEl = pickEl([
-    "#twitterPost", "#twitterOutput", "#xPost", "#xOutput",
-    "textarea[name='twitter']", "textarea[name='x']", "textarea[data-platform='twitter']",
-    "[data-step2='twitter'] textarea", "[data-platform='twitter'] textarea"
-  ]);
-
-  const mpEl = pickEl([
-    "#marketplacePost", "#marketplaceOutput", "#fbMarketplace", "#marketplaceCaption",
-    "textarea[name='marketplace']", "textarea[data-platform='marketplace']",
-    "[data-step2='marketplace'] textarea", "[data-platform='marketplace'] textarea"
-  ]);
-
-  const tagsEl = pickEl([
-    "#hashtagsOutput", "#hashtags", "#trendingHashtags", "#hashTags",
-    "textarea[name='hashtags']", "textarea[data-platform='hashtags']",
-    "[data-step2='hashtags'] textarea"
-  ]);
-
-  const descEl = pickEl([
-    "#vehicleDescription", "#descriptionOutput", "#boostDescription", "#vdpDescription",
-    "textarea[name='description']", "[data-step2='description'] textarea", "[data-boost-description]"
-  ]);
-
-  const selfieEl = pickEl([
-    "#selfieScript", "#selfieOutput",
-    "textarea[name='selfieScript']", "[data-step2='selfie'] textarea"
-  ]);
-
-  const planEl = pickEl([
-    "#videoPlan", "#shotPlan", "#videoOutput",
-    "textarea[name='videoPlan']", "textarea[name='shotPlan']", "[data-step2='plan'] textarea"
-  ]);
-
-  const designEl = pickEl([
-    "#designIdea", "#canvaIdea", "#designOutput",
-    "textarea[name='designIdea']", "textarea[name='canvaIdea']", "[data-step2='design'] textarea"
-  ]);
-
-  // --- Try direct populate ---
+  // --- Populate Step 2 boxes ---
   const hits = {
     facebook: setTextSmart(fbEl, fb),
     instagram: setTextSmart(igEl, ig),
@@ -380,6 +254,7 @@ function applyBoostToStep2(data) {
     twitter: setTextSmart(twEl, tw),
     marketplace: setTextSmart(mpEl, mp),
     hashtags: setTextSmart(tagsEl, tags),
+    text: setTextSmart(textEl, data.text || ""), // ✅ backend sends data.text
     description: setTextSmart(descEl, desc),
     selfieScript: setTextSmart(selfieEl, selfie),
     videoPlan: setTextSmart(planEl, plan),
@@ -390,13 +265,19 @@ function applyBoostToStep2(data) {
 
   // --- Launch-safe fallback: create a posts box and render there ---
   if (!anyFieldHit) {
+    const step2Root =
+      DOC.querySelector(".column-middle") ||
+      DOC.querySelector("#step2") ||
+      DOC.querySelector("#socialKit") ||
+      DOC.querySelector("[data-step='2']") ||
+      null;
+
     let postsWrap =
       $("boostPosts") ||
       $("boostOutput") ||
       $("socialPostsOutput") ||
       DOC.querySelector("[data-boost-posts]");
 
-    // create if missing
     if (!postsWrap) {
       postsWrap = DOC.createElement("div");
       postsWrap.id = "boostPosts";
@@ -405,21 +286,30 @@ function applyBoostToStep2(data) {
       postsWrap.style.border = "1px solid rgba(148,163,184,.35)";
       postsWrap.style.borderRadius = "12px";
       postsWrap.style.background = "rgba(2,6,23,.45)";
-
-      // attach to Step2 if possible, otherwise attach near top
       (step2Root || DOC.body).appendChild(postsWrap);
     }
 
-    // render via your existing renderer (best), else minimal render
     try {
-      renderBoostTextAndPosts(desc, posts);
+      if (typeof renderBoostTextAndPosts === "function") {
+        renderBoostTextAndPosts(desc, posts);
+      } else {
+        throw new Error("renderBoostTextAndPosts missing");
+      }
     } catch {
       const list = (Array.isArray(posts) ? posts : [])
         .map((p) => String(p || "").trim())
         .filter(Boolean);
 
       postsWrap.innerHTML = list.length
-        ? list.map((t, i) => `<div style="margin-bottom:10px;"><strong>Post ${i + 1}</strong><pre style="white-space:pre-wrap;margin:6px 0 0;">${escapeHtml(t)}</pre></div>`).join("")
+        ? list
+            .map(
+              (t, i) =>
+                `<div style="margin-bottom:10px;">
+                   <strong>Post ${i + 1}</strong>
+                   <pre style="white-space:pre-wrap;margin:6px 0 0;">${escapeHtml(t)}</pre>
+                 </div>`
+            )
+            .join("")
         : `<div class="muted">No social posts generated.</div>`;
     }
   }
@@ -434,6 +324,7 @@ function applyBoostToStep2(data) {
     descriptionLen: String(desc).length,
   });
 }
+
 
 
   // ==================================================
