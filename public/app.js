@@ -254,12 +254,13 @@ function applyBoostToStep2(data) {
     twitter: setTextSmart(twEl, tw),
     marketplace: setTextSmart(mpEl, mp),
     hashtags: setTextSmart(tagsEl, tags),
-    text: setTextSmart(textEl, data.text || ""), // ✅ backend sends data.text
+    text: setTextSmart(textEl, data.text || ""),
     description: setTextSmart(descEl, desc),
     selfieScript: setTextSmart(selfieEl, selfie),
     videoPlan: setTextSmart(planEl, plan),
     designIdea: setTextSmart(designEl, design),
   };
+
 
   const anyFieldHit = Object.values(hits).some(Boolean);
 
