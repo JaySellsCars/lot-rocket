@@ -121,6 +121,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const data = await res.json().catch(() => ({}));
+        // ✅ DEBUG: expose last boost payload globally (inspect in DevTools)
+        window.lastBoostResponse = data;
+
+        // ✅ DEBUG: log the exact strings backend sent for platforms
+        console.log("🧪 BOOST RAW FIELDS:", {
+          facebook: data?.facebook,
+          instagram: data?.instagram,
+          tiktok: data?.tiktok,
+          linkedin: data?.linkedin,
+          twitter: data?.twitter,
+          marketplace: data?.marketplace,
+          text: data?.text,
+        });
 
 window.lastBoostResponse = data;
 STORE.lastBoostResponse = data;
