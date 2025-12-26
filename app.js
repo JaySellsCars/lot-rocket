@@ -4,6 +4,18 @@
  */
 
 require("dotenv").config();
+// Node 18+ has global fetch (Render uses Node 22) — safe fallback
+let fetchFn = global.fetch;
+if (typeof fetchFn !== "function") {
+  try {
+    // Only if you ever deploy to older Node
+    // eslint-disable-next-line global-require
+    fetchFn = require("node-fetch");
+  } catch {
+    throw new Error("Fetch is not available. Use Node 18+ or install node-fetch.");
+  }
+}
+
 function cleanText(s) {
   return String(s || "")
     .replace(/\s+/g, " ")
