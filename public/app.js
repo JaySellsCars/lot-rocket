@@ -208,11 +208,24 @@ function pickEl(selectors) {
 // maps backend keys -> Step2 UI boxes (supports multiple possible IDs/classes)
 // 🔧 Launch-safe: if Step2 fields aren’t found, it will create a fallback output box and render posts there.
 function applyBoostToStep2(data) {
+  // 🔥 TRUTH HOOK (proves this exact function is running)
+  console.log("🧪 applyBoostToStep2() RUNNING — keys:", Object.keys(data || {}));
+
   if (!data || typeof data !== "object") return;
 
   const clean = (s) => String(s ?? "").trim();
   const isUrlOnly = (s) => /^https?:\/\/\S+$/i.test(clean(s));
 
+  // posts array fallback
+  const posts =
+    Array.isArray(data.posts) ? data.posts :
+    Array.isArray(data.socialPosts) ? data.socialPosts :
+    Array.isArray(data.captions) ? data.captions :
+    [];
+
+  const p = (i) => clean(posts[i] || "");
+
+  // Pull platform fields
   let fb = data.facebook || "";
   let ig = data.instagram || "";
   let tt = data.tiktok || "";
@@ -225,13 +238,6 @@ function applyBoostToStep2(data) {
   const design = data.designIdea || data.canvaIdea || "";
   const desc = data.description || data.vehicleDescription || data.desc || "";
 
-  // posts array fallback
-  const posts =
-    Array.isArray(data.posts) ? data.posts :
-    Array.isArray(data.socialPosts) ? data.socialPosts :
-    Array.isArray(data.captions) ? data.captions :
-    [];
-
   // ✅ Text/DM field (avoid "data.text" issues + accept alt keys)
   let text =
     data.text ||
@@ -242,7 +248,7 @@ function applyBoostToStep2(data) {
     data.dm ||
     "";
 
-  // ✅ Kill URL-only junk (your screenshot showed platform links)
+  // ✅ If any platform field is URL-only, wipe it reminding it's NOT post copy
   if (isUrlOnly(fb)) fb = "";
   if (isUrlOnly(ig)) ig = "";
   if (isUrlOnly(tt)) tt = "";
@@ -251,16 +257,17 @@ function applyBoostToStep2(data) {
   if (isUrlOnly(mp)) mp = "";
   if (isUrlOnly(text)) text = "";
 
-  // ✅ If posts[] exists, use it to fill empties (Step 2 compatibility)
-  const p = (i) => clean(posts[i] || "");
-  if (!clean(fb) && p(0)) fb = p(0);
-  if (!clean(ig) && p(1)) ig = p(1);
-  if (!clean(tt) && p(2)) tt = p(2);
-  if (!clean(li) && p(3)) li = p(3);
-  if (!clean(tw) && p(4)) tw = p(4);
-  if (!clean(text) && p(5)) text = p(5);
-  if (!clean(mp) && p(6)) mp = p(6);
-  if (!clean(tags) && p(7)) tags = p(7).replace(/^Hashtags:\s*/i, "");
+  // ✅ Backfill from posts[] by the backend’s Step2 compatibility order
+  if (!clean(fb) && p(0) && !isUrlOnly(p(0))) fb = p(0);
+  if (!clean(ig) && p(1) && !isUrlOnly(p(1))) ig = p(1);
+  if (!clean(tt) && p(2) && !isUrlOnly(p(2))) tt = p(2);
+  if (!clean(li) && p(3) && !isUrlOnly(p(3))) li = p(3);
+  if (!clean(tw) && p(4) && !isUrlOnly(p(4))) tw = p(4);
+  if (!clean(text) && p(5) && !isUrlOnly(p(5))) text = p(5);
+  if (!clean(mp) && p(6) && !isUrlOnly(p(6))) mp = p(6);
+
+  // hashtags often comes as "Hashtags:\n..."
+  if (!clean(tags) && p(7)) tags = p(7).replace(/^Hashtags:\s*/i, "").trim();
 
   // ---- STEP 2 FIELD MATCHING (HARD WIRED TO YOUR HTML) ----
   const fbEl = pickEl(["#facebookPost"]);
@@ -294,67 +301,30 @@ function applyBoostToStep2(data) {
     designIdea: setTextSmart(designEl, design),
   };
 
+  // ✅ FINAL SAFETY: if anything still equals a URL, blank it (kills the “web address only” issue)
+  const wipeIfUrl = (el) => {
+    if (!el) return;
+    const v = "value" in el ? el.value : el.textContent;
+    if (isUrlOnly(v)) {
+      if ("value" in el) el.value = "";
+      else el.textContent = "";
+    }
+  };
+
+  wipeIfUrl(fbEl);
+  wipeIfUrl(igEl);
+  wipeIfUrl(ttEl);
+  wipeIfUrl(liEl);
+  wipeIfUrl(twEl);
+  wipeIfUrl(mpEl);
+  wipeIfUrl(textEl);
+
   const anyFieldHit = Object.values(hits).some(Boolean);
-
-  // --- Launch-safe fallback: create a posts box and render there ---
-  if (!anyFieldHit) {
-    const step2Root =
-      DOC.querySelector(".column-middle") ||
-      DOC.querySelector("#step2") ||
-      DOC.querySelector("#socialKit") ||
-      DOC.querySelector("[data-step='2']") ||
-      null;
-
-    let postsWrap =
-      $("boostPosts") ||
-      $("boostOutput") ||
-      $("socialPostsOutput") ||
-      DOC.querySelector("[data-boost-posts]");
-
-    if (!postsWrap) {
-      postsWrap = DOC.createElement("div");
-      postsWrap.id = "boostPosts";
-      postsWrap.style.marginTop = "12px";
-      postsWrap.style.padding = "12px";
-      postsWrap.style.border = "1px solid rgba(148,163,184,.35)";
-      postsWrap.style.borderRadius = "12px";
-      postsWrap.style.background = "rgba(2,6,23,.45)";
-      (step2Root || DOC.body).appendChild(postsWrap);
-    }
-
-    try {
-      if (typeof renderBoostTextAndPosts === "function") {
-        renderBoostTextAndPosts(desc, posts);
-      } else {
-        throw new Error("renderBoostTextAndPosts missing");
-      }
-    } catch {
-      const list = (Array.isArray(posts) ? posts : [])
-        .map((p) => String(p || "").trim())
-        .filter(Boolean);
-
-      postsWrap.innerHTML = list.length
-        ? list
-            .map(
-              (t, i) =>
-                `<div style="margin-bottom:10px;">
-                   <strong>Post ${i + 1}</strong>
-                   <pre style="white-space:pre-wrap;margin:6px 0 0;">${escapeHtml(t)}</pre>
-                 </div>`
-            )
-            .join("")
-        : `<div class="muted">No social posts generated.</div>`;
-    }
-  }
-
-  STORE.lastBoostKit = data;
 
   console.log("✅ Step 2 populated from boost:", {
     anyFieldHit,
     hits,
-    keys: Object.keys(data || {}),
     postsCount: Array.isArray(posts) ? posts.length : 0,
-    descriptionLen: String(desc).length,
     fbLen: clean(fb).length,
     igLen: clean(ig).length,
     ttLen: clean(tt).length,
@@ -365,6 +335,7 @@ function applyBoostToStep2(data) {
 // ==================================================
 // ELEMENTS (READ ONCE)
 // ==================================================
+
 
 
   const dealerUrlInput = $("dealerUrl") || $("vehicleUrl");
