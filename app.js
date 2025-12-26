@@ -334,7 +334,27 @@ function preferVehicleGalleryPhotos(cleanedUrls) {
 // Scraping (single path)
 // ======================================================
 
-async function scrapePage
+async function scrapePage(url) {
+  const res = await fetchWithTimeout(url, {}, 20000);
+  if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  const title = $("title").first().text().trim();
+  const metaDesc = $('meta[name="description"]').attr("content") || "";
+
+  let visibleText = "";
+  $("body *")
+    .not("script, style, noscript")
+    .each((_, el) => {
+      const text = $(el).text().replace(/\s+/g, " ").trim();
+      if (text.length > 40 && text.length < 500) visibleText += text + "\n";
+    });
+
+  // ✅ RETURN html too (needed for description extraction + debugging)
+  return { title, metaDesc, visibleText, html, $ };
+}
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
@@ -434,6 +454,7 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
 }
 
 // ======================================================
+
 // AI: Photo Processing (gpt-image-1)
 // ======================================================
 
