@@ -817,6 +817,9 @@ const processPhotosRequested = req.body?.processPhotos !== false;
 // ❌ DELETE THIS LINE IF IT EXISTS ABOVE ROUTES (it’s a duplicate + wrong scope)
 // const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
 
+// ❌ DELETE THIS LINE IF IT EXISTS ABOVE ROUTES (it’s a duplicate + wrong scope)
+// const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
+
   kit._debugPhotos = {
     rawCount: rawPhotos.length,
     cleanedCount: cleaned.length,
@@ -982,6 +985,7 @@ app.post("/api/social-kit", async (req, res) => {
     // ✅ KEEP THESE TWO LINES (ONLY HERE, ONCE)
     const processPhotosRequested = req.body?.processPhotos !== false;
     const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
+
 
 
 
