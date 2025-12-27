@@ -418,15 +418,12 @@ async function scrapePage(url) {
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-  let visibleText = "";
-  $("body *")
-    .not("script, style, noscript")
-    .each((_, el) => {
-      const text = $(el).text().replace(/\s+/g, " ").trim();
-      if (text.length > 40 && text.length < 500) visibleText += text + "\n";
-    });
+// FAST TEXT EXTRACTION (no full DOM walk)
+const bodyText = cleanText($("body").text() || "");
+const visibleText = bodyText.slice(0, 3500);
 
-  return { title, metaDesc, visibleText, html, $ };
+return { title, metaDesc, visibleText, html, $ };
+
 }
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
