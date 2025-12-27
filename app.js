@@ -13,6 +13,7 @@
 //  */
 
 require("dotenv").config();
+const HAS_OPENAI_KEY = !!process.env.OPENAI_API_KEY;
 
 // Node 18+ has global fetch (Render uses Node 22) — safe fallback
 let fetchFn = global.fetch;
