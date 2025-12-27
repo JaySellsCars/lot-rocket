@@ -1,16 +1,13 @@
-//   /**
-//  * app.js — Lot Rocket Backend (CLEAN / DEDUPED / CONSISTENT)
-//  * Version: 2.6-clean (ROCKET-6) — SINGLE BOOST SOURCE OF TRUTH
-//  *
-//  * KEY FIXES (THIS PASS):
-//  * ✅ FIXED: backend was sometimes returning URL-only “posts” (dealer social links).
-//  *         We now HARD-BAN URLs in AI output + SANITIZE any URL-only strings.
-//  * ✅ FIXED: fallback posts no longer append URLs (so Step 2 never fills with links).
-//  * ✅ FIXED: Step 2 payload always includes:
-//  *    - description: string
-//  *    - posts: string[] (real copy only)
-//  *    - plus named fields facebook/instagram/tiktok/linkedin/twitter/text/marketplace/hashtags/selfieScript/shotPlan/designIdea
-//  */
+/**
+ * app.js — Lot Rocket Backend (CLEAN / DEDUPED / CONSISTENT)
+ * Version: 2.6-clean (ROCKET-6) — SINGLE BOOST SOURCE OF TRUTH
+ *
+ * KEY FIXES (THIS PASS):
+ * ✅ NO req.body inside helper functions (buildKitForUrl has NO req scope)
+ * ✅ processPhotosRequested/processPhotos exist ONLY inside routes (no redeclare crash)
+ * ✅ Step 2 payload always includes: description (string) + posts (string[]) + named fields
+ * ✅ HARD-BAN URL-only “posts” (sanitizeCopy kills URL-only + strips URLs)
+ */
 
 require("dotenv").config();
 const HAS_OPENAI_KEY = !!process.env.OPENAI_API_KEY;
@@ -59,7 +56,6 @@ function isUrlOnly(s) {
   return /^https?:\/\/\S+$/i.test(t);
 }
 function stripUrlsFromText(s) {
-  // remove naked urls anywhere (safety)
   return String(s || "")
     .replace(/https?:\/\/\S+/gi, "")
     .replace(/\s+\n/g, "\n")
@@ -71,10 +67,8 @@ function sanitizeCopy(s) {
   const t = cleanText(s);
   if (!t) return "";
   if (isUrlOnly(t)) return "";
-  // if it contains mostly urls / link junk, strip them
   const noUrls = stripUrlsFromText(t);
   if (!noUrls) return "";
-  // if stripping urls leaves nothing meaningful, kill it
   if (noUrls.length < 10) return "";
   return noUrls;
 }
@@ -83,14 +77,13 @@ function sanitizeCopy(s) {
 // Extract description from HTML (safe + robust)
 // --------------------------------------------------
 function extractVehicleDescriptionFromHtml($, html) {
-  // 1) Meta description
   const meta =
     cleanText($('meta[name="description"]').attr("content")) ||
     cleanText($('meta[property="og:description"]').attr("content"));
 
   if (meta && meta.length > 40) return meta;
 
-  // 2) JSON-LD structured data
+  // JSON-LD structured data
   try {
     const ldNodes = $('script[type="application/ld+json"]');
 
@@ -120,7 +113,7 @@ function extractVehicleDescriptionFromHtml($, html) {
     // ignore
   }
 
-  // 3) DOM fallback selectors
+  // DOM fallbacks
   const selectors = [
     ".vehicle-description",
     ".vdp-description",
@@ -137,7 +130,6 @@ function extractVehicleDescriptionFromHtml($, html) {
     if (text && text.length > 40) return text;
   }
 
-  // last-resort: small sample from body (kept short)
   const bodyText = cleanText(($("body").text() || "").slice(0, 600));
   if (bodyText.length > 80) return bodyText;
 
@@ -146,17 +138,10 @@ function extractVehicleDescriptionFromHtml($, html) {
 
 // --------------------------------------------------
 // Fallback post generator (NO AI REQUIRED)
-// ✅ UPDATED: NO URL APPEND (prevents URL-only posts)
+// ✅ NO URL APPEND
 // --------------------------------------------------
 function buildFallbackPosts({ label, price, description }) {
-  const baseTags = [
-    "#CarForSale",
-    "#NewCar",
-    "#UsedCars",
-    "#AutoDeals",
-    "#CarShopping",
-    "#TestDrive",
-  ];
+  const baseTags = ["#CarForSale", "#NewCar", "#UsedCars", "#AutoDeals", "#CarShopping", "#TestDrive"];
 
   const labelTags = cleanText(label)
     .split(" ")
@@ -166,7 +151,6 @@ function buildFallbackPosts({ label, price, description }) {
     .filter((t) => t.length > 2);
 
   const tags = [...new Set([...labelTags, ...baseTags])].slice(0, 10).join(" ");
-
   const line = description ? `\n\n${cleanText(description).slice(0, 220)}…` : "";
 
   return [
@@ -184,7 +168,6 @@ function normalizePhotoUrl(u) {
   try {
     const url = new URL(u);
 
-    // remove junk query params that cause duplicates (size/crop/cache)
     [
       "width",
       "height",
@@ -202,7 +185,6 @@ function normalizePhotoUrl(u) {
       "cb",
     ].forEach((k) => url.searchParams.delete(k));
 
-    // strip trailing slashes
     url.pathname = url.pathname.replace(/\/+$/, "");
     return url.toString();
   } catch {
@@ -588,10 +570,8 @@ async function processPhotoBatch(photoUrls, vehicleLabel = "") {
 // AI: Social Kit Builder
 // ======================================================
 async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, pageUrl, description }) {
-  // ✅ Hard fallback if no key
   const hasKey = !!process.env.OPENAI_API_KEY;
 
-  // crude label guess from title if override missing
   const titleGuess = cleanText(pageInfo?.title || "");
   const labelGuess = titleGuess.split("|")[0]?.trim?.() || titleGuess || "";
 
@@ -599,13 +579,8 @@ async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, 
   const basePrice = cleanText(priceOverride || "");
 
   if (!hasKey) {
-    const fallbackPosts = buildFallbackPosts({
-      label: baseLabel,
-      price: basePrice,
-      description,
-    });
+    const fallbackPosts = buildFallbackPosts({ label: baseLabel, price: basePrice, description });
 
-    // Build named fields so UI can still populate
     return {
       vehicleLabel: baseLabel,
       priceInfo: basePrice,
@@ -622,7 +597,6 @@ async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, 
       designIdea: "",
       photos: photos || [],
       sourceUrl: pageUrl || "",
-      // ✅ Step 2 compatibility
       posts: fallbackPosts,
     };
   }
@@ -694,7 +668,6 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
     const vehicleLabel = cleanText(labelOverride || parsed.label || baseLabel);
     const priceInfo = cleanText(priceOverride || parsed.price || basePrice);
 
-    // ✅ sanitize all copy fields (kills any leaked links)
     const kit = {
       vehicleLabel,
       priceInfo,
@@ -717,7 +690,6 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
       sourceUrl: pageUrl || "",
     };
 
-    // ✅ Step 2 compatibility: posts[] always filled with COPY ONLY
     kit.posts = [
       kit.facebook,
       kit.instagram,
@@ -734,13 +706,8 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
       .map(sanitizeCopy)
       .filter((s) => cleanText(s).length > 0);
 
-    // ✅ If AI returns blanks OR link-junk, force fallback (COPY ONLY)
     if (!kit.posts.length) {
-      const fallbackPosts = buildFallbackPosts({
-        label: vehicleLabel,
-        price: priceInfo,
-        description,
-      });
+      const fallbackPosts = buildFallbackPosts({ label: vehicleLabel, price: priceInfo, description });
 
       kit.posts = fallbackPosts;
       kit.facebook = fallbackPosts[0] || "";
@@ -754,14 +721,9 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
 
     return kit;
   } catch (err) {
-    // ✅ AI failed — fallback but DO NOT crash Boost
     console.error("buildSocialKit AI failure:", err);
 
-    const fallbackPosts = buildFallbackPosts({
-      label: baseLabel,
-      price: basePrice,
-      description,
-    });
+    const fallbackPosts = buildFallbackPosts({ label: baseLabel, price: basePrice, description });
 
     return {
       vehicleLabel: baseLabel,
@@ -785,12 +747,11 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
 }
 
 // ======================================================
-// Build Kit (shared)
+// Build Kit (shared)  ✅ NO req.body in here (no scope)
 // ======================================================
 async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "", processPhotos = true }) {
   const pageInfo = await scrapePage(pageUrl);
 
-  // ✅ single-pass description (NO re-fetch)
   const description = extractVehicleDescriptionFromHtml(pageInfo.$, pageInfo.html);
 
   const rawPhotos = scrapeVehiclePhotosFromCheerio(pageInfo.$, pageUrl);
@@ -810,15 +771,11 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
   kit.description = cleanText(description || "");
   kit.posts = Array.isArray(kit.posts) ? kit.posts : [];
 
-  // ✅ HARD SAFETY: ensure posts never become URL-only
   kit.posts = kit.posts.map(sanitizeCopy).filter(Boolean);
 
-const processPhotosRequested = req.body?.processPhotos !== false;
-// ❌ DELETE THIS LINE IF IT EXISTS ABOVE ROUTES (it’s a duplicate + wrong scope)
-// const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
-
-// ❌ DELETE THIS LINE IF IT EXISTS ABOVE ROUTES (it’s a duplicate + wrong scope)
-// const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
+  kit.editedPhotos = processPhotos
+    ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel || labelOverride || "")
+    : [];
 
   kit._debugPhotos = {
     rawCount: rawPhotos.length,
@@ -933,7 +890,7 @@ async function boostHandler(req, res) {
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
 
-    // ✅ KEEP THESE TWO LINES (ONLY HERE, ONCE)
+    // ✅ ONLY HERE (NO DUPES ANYWHERE ELSE)
     const processPhotosRequested = req.body?.processPhotos !== false;
     const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
 
@@ -982,12 +939,9 @@ app.post("/api/social-kit", async (req, res) => {
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
 
-    // ✅ KEEP THESE TWO LINES (ONLY HERE, ONCE)
+    // ✅ ONLY HERE (NO DUPES ANYWHERE ELSE)
     const processPhotosRequested = req.body?.processPhotos !== false;
     const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
-
-
-
 
     if (!pageUrl) {
       return res.status(400).json({
@@ -1245,7 +1199,7 @@ NO LINKS.
 
     const user = `
 Creative type: ${creativeType || type || "story / feed post"}
-Vehicle / headline context: ${label || headline || "(you decide a strong one)"}
+Vehicle / headline context: ${label || headline || "(you decide it's strong)"}
 CTA: ${cta || "(you decide a strong one)"}
 Brand vibe: ${vibe || "bold, trustworthy, premium"}
 
@@ -1359,9 +1313,7 @@ app.post("/api/payment-helper", (req, res) => {
 
     const taxTradeCredit =
       typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
-
     const taxFees = typeof req.body.taxFees === "boolean" ? req.body.taxFees : rules.taxFees;
-
     const rebateReducesTaxable =
       typeof req.body.rebateReducesTaxable === "boolean"
         ? req.body.rebateReducesTaxable
@@ -1458,7 +1410,6 @@ app.post("/api/payment-helper", (req, res) => {
 app.post("/api/income-helper", (req, res) => {
   try {
     const grossToDate = Number(req.body.mtd || req.body.monthToDate || req.body.grossToDate || 0);
-
     const lastPayDateStr =
       req.body.lastPayDate || req.body.lastCheck || req.body.lastPaycheckDate || req.body.date;
 
@@ -1497,9 +1448,9 @@ app.post("/api/income-helper", (req, res) => {
 
     const result = `Estimated Yearly Gross: ${formatMoney(
       estimatedYearly
-    )} | Weeks into Year: ${weeksIntoYear.toFixed(
-      1
-    )} | Estimated Average Monthly Income: ${formatMoney(estimatedMonthly)}`;
+    )} | Weeks into Year: ${weeksIntoYear.toFixed(1)} | Estimated Average Monthly Income: ${formatMoney(
+      estimatedMonthly
+    )}`;
 
     return res.json({ result });
   } catch (err) {
@@ -1612,20 +1563,17 @@ No links.
       }
 
       case "workflow":
-        systemPrompt =
-          `You are Lot Rocket's AI Workflow Expert. Be concise, direct, action-focused for car sales pros.`.trim();
+        systemPrompt = `You are Lot Rocket's AI Workflow Expert. Be concise, direct, action-focused for car sales pros.`.trim();
         userPrompt = fields.prompt || rawContext || "Help me with my sales workflow.";
         break;
 
       case "message":
-        systemPrompt =
-          `You are Lot Rocket's AI Message Builder. Write high-converting, friendly, conversational messages for car shoppers.`.trim();
+        systemPrompt = `You are Lot Rocket's AI Message Builder. Write high-converting, friendly, conversational messages for car shoppers.`.trim();
         userPrompt = fields.prompt || rawContext || "Write a follow-up message to a car lead.";
         break;
 
       case "ask":
-        systemPrompt =
-          `You are Lot Rocket's general AI assistant for car salespeople. Answer clearly and practically with a focus on selling more cars.`.trim();
+        systemPrompt = `You are Lot Rocket's general AI assistant for car salespeople. Answer clearly and practically with a focus on selling more cars.`.trim();
         userPrompt = fields.prompt || rawContext || "Answer this question for a car salesperson.";
         break;
 
