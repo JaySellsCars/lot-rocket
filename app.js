@@ -394,6 +394,31 @@ function preferVehicleGalleryPhotos(cleanedUrls) {
   const preferred = (cleanedUrls || []).filter((u) => re.test(String(u)));
   return preferred.length ? preferred : (cleanedUrls || []);
 }
+// ======================================================
+// FAST CACHE (Boost speed-up)
+// ======================================================
+const PAGE_CACHE = new Map(); // url -> { ts, value }
+const PAGE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const PAGE_CACHE_MAX = 50;
+
+function cacheGet(key) {
+  const hit = PAGE_CACHE.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.ts > PAGE_CACHE_TTL_MS) {
+    PAGE_CACHE.delete(key);
+    return null;
+  }
+  return hit.value;
+}
+
+function cacheSet(key, value) {
+  // basic size control
+  if (PAGE_CACHE.size >= PAGE_CACHE_MAX) {
+    const oldestKey = PAGE_CACHE.keys().next().value;
+    if (oldestKey) PAGE_CACHE.delete(oldestKey);
+  }
+  PAGE_CACHE.set(key, { ts: Date.now(), value });
+}
 
 // ======================================================
 // Scraping (single path)
