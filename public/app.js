@@ -425,7 +425,21 @@ function applyBoostToStep2(data) {
   const statusText = $("statusText");
   const photosGridEl = $("photosGrid");
 
-  const sendTopBtn = $("sendTopPhotosBtn") || $("sendTopPhotosToCreative"); // ✅ your HTML uses #sendTopPhotosBtn
+const sendTopPhotosBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendToCreativeLabBtn") ||
+  $("sendToCreativeLab") ||
+  DOC.querySelector("[data-send-top-photos]");
+
+if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
+  sendTopPhotosBtn.dataset.wired = "true";
+  sendTopPhotosBtn.onclick = () => {
+    console.log("🚀 SEND TOP PHOTOS CLICK");
+    sendSelectedToHoldingZone();
+  };
+}
 
   // Step 3 holding zone / tuner
   const holdingZoneEl = $("holdingZone") || $("holdingZonePhotos") || $("holdingZoneGrid");
