@@ -185,23 +185,20 @@ STORE.lastBoostResponse = data;
     });
   }
 
-  // ==================================================
-  // CONSTANTS + SINGLE STORE
-  // ==================================================
-  const MAX_PHOTOS = 24;
+// ================================
+// CONSTANTS + SINGLE STORE
+// ================================
+const MAX_PHOTOS = 24;
 
-  window.LOTROCKET = window.LOTROCKET || {};
-  const STORE = window.LOTROCKET;
+window.LOTROCKET = window.LOTROCKET || {};
+const STORE = window.LOTROCKET;
+
 window.lastBoostResponse = null;
 
-  STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-  STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
-  STORE.activeHoldingPhoto = typeof STORE.activeHoldingPhoto === "string" ? STORE.activeHoldingPhoto : "";
-  STORE.lastTitle = typeof STORE.lastTitle === "string" ? STORE.lastTitle : "";
-  STORE.lastPrice = typeof STORE.lastPrice === "string" ? STORE.lastPrice : "";
+STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
+STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
+STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+
 
   // ==================================================
   // STEP 2 POPULATE (from Boost response) ✅ SINGLE SOURCE
