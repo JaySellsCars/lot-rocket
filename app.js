@@ -1053,8 +1053,8 @@ app.post("/api/new-script", async (req, res) => {
   try {
     const { kind, url, vehicle, hook, style, length } = req.body || {};
 
-    let system;
-    let user;
+    let system = "";
+    let user = "";
 
     if (kind === "selfie") {
       const pageUrl = normalizeUrl(url);
@@ -1066,10 +1066,9 @@ app.post("/api/new-script", async (req, res) => {
       const { title, metaDesc, visibleText } = pageInfo;
 
       system = `
-You are Lot Rocket, an expert vertical video script writer for car salespeople.
-Write natural sounding, selfie-style walkaround scripts.
-Return plain text only.
-NO LINKS.
+You are Lot Rocket, an expert vertical video script writer.
+Write natural, spoken, short-form video scripts.
+NO links. No markdown. Plain text only.
 `.trim();
 
       user = `
@@ -1079,29 +1078,24 @@ META: ${metaDesc}
 TEXT:
 ${visibleText.slice(0, 2500)}
 
-Write a 30–60 second selfie video script the salesperson can record.
-Use short, spoken lines and a clear CTA to DM or message.
-No links.
+Write a 30–60 second selfie-style video script.
+Friendly, confident, sales-focused.
+End with a soft call to action.
 `.trim();
     } else {
       system = `
-You are Lot Rocket, an expert short-form car video script writer.
-Write scripts that feel natural for Reels / TikTok / Shorts.
-Return plain text only.
-NO LINKS.
+You are Lot Rocket, an expert short-form video copywriter.
+Return ONLY clean spoken dialogue.
+No links. No markdown.
 `.trim();
 
       user = `
-Vehicle / Offer: ${vehicle || "(not specified)"}
-Hook (optional): ${hook || "none"}
-Style: ${style || "hype"}
-Length: about ${length || 30} seconds
+Vehicle: ${vehicle || "Not specified"}
+Hook: ${hook || "Catch attention fast"}
+Style: ${style || "confident, friendly"}
+Length: ~${length || 30} seconds
 
-Write:
-- A grabber hook
-- 3–6 short bullet points (spoken lines)
-- A closing CTA inviting viewers to DM or message the salesperson
-No links.
+Write a natural spoken script suitable for Reels/TikTok.
 `.trim();
     }
 
@@ -1113,12 +1107,17 @@ No links.
       ],
     });
 
-    const script = sanitizeCopy((getResponseText(completion) || "").trim());
-    return res.json({ script: script || "No script returned. Try again." });
+    const script =
+      (getResponseText(completion) || "").trim() ||
+      "No script returned. Please try again.";
+
+    return res.json({ script });
   } catch (err) {
-    return sendAIError(res, err, "Failed to create script.");
+    console.error("❌ Script generation error:", err);
+    return res.status(500).json({ error: "Failed to generate script." });
   }
 });
+
 
 // --------------------------------------------------
 // /api/video-from-photos
