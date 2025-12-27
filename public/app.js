@@ -965,26 +965,35 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
     }
   }
 
-  // ==================================================
-  // STEP 1 → SEND TOP PHOTOS → STEP 3
-  // ==================================================
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-    sendTopBtn.onclick = () => {
-      const selected = (STORE.step1Photos || []).filter((p) => p.selected).map((p) => p.url);
-      if (!selected.length) return alert("Select photos first.");
+// ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3
+// ==================================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
 
-      STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
-      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+  sendTopBtn.onclick = () => {
+    const selected = (STORE.step1Photos || [])
+      .filter((p) => p.selected)
+      .map((p) => p.url);
 
-      // keep creative separate
-      STORE.creativePhotos = [];
-      renderCreativeThumbs();
+    if (!selected.length) return alert("Select photos first.");
 
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+    STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+    // keep creative separate
+    STORE.creativePhotos = [];
+    renderCreativeThumbs();
+
+    renderHoldingZone();
+    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+  };
+}
+
+// ==================================================
+// STEP 1 HELPERS
+// ==================================================
 function getSelectedStep1Urls() {
-  // Supports multiple store formats safely
   const list =
     Array.isArray(STORE.step1Photos) && STORE.step1Photos.length
       ? STORE.step1Photos
@@ -1005,12 +1014,8 @@ function getSelectedStep1Urls() {
 
     // string format
     if (typeof item === "string") {
-      // if you also track selection via STORE.step1Selected (Set)
       if (STORE.step1Selected && STORE.step1Selected instanceof Set) {
         if (STORE.step1Selected.has(item)) selected.push(item);
-      } else {
-        // fallback: if no selection tracking exists, treat as not selected
-        // (DO NOT auto-select everything)
       }
     }
   }
@@ -1026,64 +1031,29 @@ function sendSelectedToHoldingZone() {
     return;
   }
 
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-
-  // ✅ replace holding zone with selected (clean + predictable)
   STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
-
-  // ✅ set active holding photo
   STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-  // ✅ render Step 3 UI
   if (typeof renderHoldingZone === "function") renderHoldingZone();
-  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") loadPhotoTuner(STORE.activeHoldingPhoto);
+  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+    loadPhotoTuner(STORE.activeHoldingPhoto);
+  }
 
   console.log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
   toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
 
-  // optional: scroll user to Step 3
-  const step3 = document.querySelector("#creativeHub") || document.querySelector("#step3") || document.querySelector("#creativeLab");
+  const step3 =
+    document.querySelector("#creativeHub") ||
+    document.querySelector("#step3") ||
+    document.querySelector("#creativeLab");
+
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
-      log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
-    };
-  }
-
 // ==================================================
-// BOOST HANDLER — CLEAN + STABLE
-// ==================================================
-async function postBoost(payload) {
-  try {
-    console.log("🚀 POST /boost", payload);
-
-    const res = await fetch("/boost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      const msg =
-        data?.message ||
-        data?.error ||
-        data?.rawMessage ||
-        `Boost failed (${res.status})`;
-      throw new Error(msg);
-    }
-
-    return data;
-  } catch (err) {
-    console.error("❌ BOOST ERROR:", err);
-    throw err;
-  }
-}
-
-// ===============================
 // BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
-// ===============================
+// ==================================================
+
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
 
