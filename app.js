@@ -421,9 +421,13 @@ function cacheSet(key, value) {
 }
 
 // ======================================================
-// Scraping (single path)
+// Scraping (single path) — FAST + CACHED
 // ======================================================
 async function scrapePage(url) {
+  // ✅ cache hit = instant
+  const cached = cacheGet(url);
+  if (cached) return cached;
+
   const res = await fetchWithTimeout(
     url,
     {
@@ -433,8 +437,9 @@ async function scrapePage(url) {
         Accept: "text/html,application/xhtml+xml",
       },
     },
-    20000
+    12000 // ✅ faster timeout (was 20000)
   );
+
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
 
   const html = await res.text();
@@ -443,13 +448,18 @@ async function scrapePage(url) {
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-// FAST TEXT EXTRACTION (no full DOM walk)
-const bodyText = cleanText($("body").text() || "");
-const visibleText = bodyText.slice(0, 3500);
+  // FAST TEXT EXTRACTION (no full DOM walk)
+  const bodyText = cleanText($("body").text() || "");
+  const visibleText = bodyText.slice(0, 3500);
 
-return { title, metaDesc, visibleText, html, $ };
+  const out = { title, metaDesc, visibleText, html, $ };
 
+  // ✅ save cache
+  cacheSet(url, out);
+
+  return out;
 }
+
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
