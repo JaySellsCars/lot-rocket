@@ -972,73 +972,85 @@ function applyBoostToStep2(data) {
     };
   }
 
-  // ==================================================
-  // Boost request (single clean implementation)
-  // ==================================================
-  async function postBoost(payload) {
-    try {
-      console.log("🧪 POST /boost");
+// ==================================================
+// BOOST HANDLER — CLEAN + STABLE
+// ==================================================
+async function postBoost(payload) {
+  try {
+    console.log("🚀 POST /boost", payload);
 
-      const res = await fetch("/boost", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+    const res = await fetch("/boost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const msg =
+        data?.message ||
+        data?.error ||
+        data?.rawMessage ||
+        `Boost failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    return data;
+  } catch (err) {
+    console.error("❌ BOOST ERROR:", err);
+    throw err;
+  }
+}
+
+// ===============================
+// MAIN BOOST BUTTON HANDLER
+// ===============================
+if (boostBtn && boostBtn.dataset.wired !== "true") {
+  boostBtn.dataset.wired = "true";
+
+  boostBtn.onclick = async () => {
+    const url = dealerUrlInput?.value?.trim() || "";
+    if (!url) return alert("Enter a vehicle URL first.");
+
+    setBtnLoading(boostBtn, true, "Boosting…");
+
+    try {
+      const result = await postBoost({
+        url,
+        labelOverride: vehicleLabelInput?.value?.trim() || "",
+        priceOverride: priceInput?.value?.trim() || "",
       });
 
-      return res;
-    } catch (e) {
-      console.warn("🧪 /boost failed:", e?.message || e);
-      throw e;
+      console.log("✅ BOOST RESULT:", result);
+
+      // ---------- STEP 2 POPULATION ----------
+      if (Array.isArray(result?.posts)) {
+        renderSocialPosts(result.posts);
+      }
+
+      if (Array.isArray(result?.photos)) {
+        renderPhotoGrid(result.photos);
+      }
+
+      if (result?.description && summaryBox) {
+        summaryBox.textContent = result.description;
+      }
+
+      toast("Boost complete 🚀", "ok");
+
+      // Auto-scroll to Step 2
+      const step2 = document.querySelector("#step2");
+      if (step2) step2.scrollIntoView({ behavior: "smooth" });
+    } catch (err) {
+      console.error("❌ BOOST FAILED:", err);
+      toast(err.message || "Boost failed", "bad");
+    } finally {
+      setBtnLoading(boostBtn, false);
     }
-  }
-
-  if (boostBtn && boostBtn.dataset.wired !== "true") {
-    boostBtn.dataset.wired = "true";
-
-    boostBtn.onclick = async () => {
-      console.log("🚀 BOOST CLICK");
-
-      const url = dealerUrlInput?.value?.trim?.() || "";
-      if (!url) return alert("Enter vehicle URL");
-
-      setBtnLoading(boostBtn, true, "Boosting…");
-      if (statusText) statusText.textContent = "Boosting…";
-
-      try {
-        const res = await postBoost({
-          url,
-          labelOverride: vehicleLabelInput?.value?.trim?.() || "",
-          priceOverride: priceInfoInput?.value?.trim?.() || "",
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
-        console.log(
-          "🧪 desc length:",
-          (data?.description || data?.vehicleDescription || data?.desc || "").length
-        );
-        console.log(
-          "🧪 posts count:",
-          Array.isArray(data?.posts)
-            ? data.posts.length
-            : Array.isArray(data?.socialPosts)
-            ? data.socialPosts.length
-            : 0
-        );
-
-if (!res.ok) {
-  const msg =
-    data?.rawMessage ||
-    data?.details ||
-    data?.message ||
-    data?.error ||
-    (typeof data === "string" ? data : "") ||
-    `Boost failed (HTTP ${res.status})`;
-
-  console.error("🧨 BOOST 500 DETAIL:", { status: res.status, data });
-  throw new Error(msg);
+  };
 }
+
 
 
         // ✅ Step 2 fill (MOST IMPORTANT)
