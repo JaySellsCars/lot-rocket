@@ -969,13 +969,13 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
 // STEP 1 → SEND TOP PHOTOS → STEP 3
 // ==================================================
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-
   sendTopBtn.dataset.wired = "true";
 
   sendTopBtn.onclick = () => {
     const selected = (STORE.step1Photos || [])
-      .filter((p) => p.selected)
-      .map((p) => p.url);
+      .filter((p) => p && p.selected)
+      .map((p) => p.url)
+      .filter(Boolean);
 
     if (!selected.length) return alert("Select photos first.");
 
