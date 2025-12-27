@@ -814,9 +814,8 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
   kit.posts = kit.posts.map(sanitizeCopy).filter(Boolean);
 
 const processPhotosRequested = req.body?.processPhotos !== false;
-const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
-
-
+// ❌ DELETE THIS LINE IF IT EXISTS ABOVE ROUTES (it’s a duplicate + wrong scope)
+// const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
 
   kit._debugPhotos = {
     rawCount: rawPhotos.length,
@@ -930,9 +929,10 @@ async function boostHandler(req, res) {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
-   const processPhotosRequested = req.body?.processPhotos !== false;
-const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
 
+    // ✅ KEEP THESE TWO LINES (ONLY HERE, ONCE)
+    const processPhotosRequested = req.body?.processPhotos !== false;
+    const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
 
     if (!pageUrl) {
       return res.status(400).json({ error: "bad_url", message: "Invalid or missing URL." });
@@ -954,12 +954,10 @@ const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
       processPhotos,
     });
 
-    // ✅ ALWAYS send Step2-compatible fields
     return res.json({
       ...kit,
       description: kit.description || "",
       posts: Array.isArray(kit.posts) ? kit.posts : [],
-      // extra compatibility aliases (harmless)
       socialPosts: Array.isArray(kit.posts) ? kit.posts : [],
       captions: Array.isArray(kit.posts) ? kit.posts : [],
       success: true,
@@ -980,8 +978,11 @@ app.post("/api/social-kit", async (req, res) => {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
-   const processPhotosRequested = req.body?.processPhotos !== false;
-const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
+
+    // ✅ KEEP THESE TWO LINES (ONLY HERE, ONCE)
+    const processPhotosRequested = req.body?.processPhotos !== false;
+    const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
+
 
 
     if (!pageUrl) {
