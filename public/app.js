@@ -1004,7 +1004,7 @@ async function postBoost(payload) {
 }
 
 // ===============================
-// BOOST BUTTON HANDLER (CLEAN)
+// BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
 // ===============================
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
@@ -1012,13 +1012,14 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.onclick = async () => {
     console.log("🚀 BOOST CLICK");
 
-    const url = dealerUrlInput?.value?.trim();
+    const url = dealerUrlInput?.value?.trim?.() || "";
     if (!url) {
       alert("Enter a vehicle URL first.");
       return;
     }
 
     setBtnLoading(boostBtn, true, "Boosting…");
+    if (statusText) statusText.textContent = "Boosting…";
 
     try {
       const res = await fetch("/boost", {
@@ -1026,110 +1027,89 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url,
-          labelOverride: vehicleLabelInput?.value?.trim() || "",
-          priceOverride: priceInput?.value?.trim() || "",
+          labelOverride: vehicleLabelInput?.value?.trim?.() || "",
+          priceOverride: priceInfoInput?.value?.trim?.() || "", // ✅ use priceInfoInput consistently
         }),
       });
 
-      const data = await res.json();
-      console.log("🧪 BOOST RESPONSE:", data);
+      const data = await res.json().catch(() => ({}));
+      console.log("🧪 BOOST RESPONSE KEYS:", Object.keys(data || {}));
 
       if (!res.ok) {
-        throw new Error(data?.message || "Boost failed");
+        const msg =
+          data?.rawMessage ||
+          data?.details ||
+          data?.message ||
+          data?.error ||
+          `Boost failed (HTTP ${res.status})`;
+        throw new Error(msg);
       }
 
-      if (data?.posts?.length) {
-        renderBoostResults(data);
+      // ✅ Step 2 fill (MOST IMPORTANT)
+      if (typeof applyBoostToStep2 === "function") {
+        applyBoostToStep2(data);
       }
 
-      if (statusText) statusText.textContent = "Boost complete.";
-    } catch (err) {
-      console.error("❌ BOOST ERROR", err);
-      if (statusText) statusText.textContent = "Boost failed.";
-      alert(err.message || "Boost failed.");
-    } finally {
-      setBtnLoading(boostBtn, false);
-    }
-  };
-}
+      // ✅ Summary snapshot
+      const vLabel = data.vehicleLabel || data.title || "";
+      const vPrice = data.priceInfo || data.price || "";
 
+      if (summaryLabel) summaryLabel.textContent = vLabel || "—";
+      if (summaryPrice) summaryPrice.textContent = vPrice || "—";
 
-      // ---------- STEP 2 POPULATION ----------
-      if (Array.isArray(result?.posts)) {
-        renderSocialPosts(result.posts);
+      if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
+      if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
+
+      // ✅ Photos -> cap + dedupe -> Step 1 grid
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+      const seen = new Set();
+      const cleaned = [];
+
+      for (const u of rawPhotos) {
+        if (!u) continue;
+        const base = String(u).split("?")[0].replace(/\/+$/, "");
+        if (seen.has(base)) continue;
+        seen.add(base);
+        cleaned.push(u);
+        if (cleaned.length >= MAX_PHOTOS) break;
       }
 
-      if (Array.isArray(result?.photos)) {
-        renderPhotoGrid(result.photos);
+      STORE.lastBoostPhotos = cleaned;
+      if (typeof renderStep1Photos === "function") {
+        renderStep1Photos(STORE.lastBoostPhotos);
       }
 
-      if (result?.description && summaryBox) {
-        summaryBox.textContent = result.description;
+      // ✅ Description + posts -> Step 2 render helpers (if you use them)
+      const desc = data.description || data.vehicleDescription || data.desc || "";
+      const posts = data.posts || data.socialPosts || data.captions || [];
+
+      STORE.lastBoostDescription = String(desc || "");
+      STORE.lastBoostPosts = Array.isArray(posts) ? posts : [];
+
+      if (typeof renderBoostTextAndPosts === "function") {
+        renderBoostTextAndPosts(STORE.lastBoostDescription, STORE.lastBoostPosts);
       }
 
-      toast("Boost complete 🚀", "ok");
+      // ✅ Status + toast + scroll
+      if (statusText) {
+        statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
+      }
 
-      // Auto-scroll to Step 2
+      if (typeof toast === "function") toast("Boost complete 🚀", "ok");
+
       const step2 = document.querySelector("#step2");
       if (step2) step2.scrollIntoView({ behavior: "smooth" });
     } catch (err) {
       console.error("❌ BOOST FAILED:", err);
-      toast(err.message || "Boost failed", "bad");
+      if (statusText) statusText.textContent = "Boost failed.";
+      if (typeof toast === "function") toast(err?.message || "Boost failed", "bad");
+      alert(err?.message || "Boost failed.");
     } finally {
       setBtnLoading(boostBtn, false);
     }
   };
 }
 
-
-
-        // ✅ Step 2 fill (MOST IMPORTANT)
-        applyBoostToStep2(data);
-
-        const vLabel = data.vehicleLabel || data.title || "";
-        const vPrice = data.priceInfo || data.price || "";
-
-        if (summaryLabel) summaryLabel.textContent = vLabel || "—";
-        if (summaryPrice) summaryPrice.textContent = vPrice || "—";
-
-        if (vehicleLabelInput && !vehicleLabelInput.value) vehicleLabelInput.value = vLabel || "";
-        if (priceInfoInput && !priceInfoInput.value) priceInfoInput.value = vPrice || "";
-
-        const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-        const seen = new Set();
-        const cleaned = [];
-
-        for (const u of rawPhotos) {
-          if (!u) continue;
-          const base = String(u).split("?")[0].replace(/\/+$/, "");
-          if (seen.has(base)) continue;
-          seen.add(base);
-          cleaned.push(u);
-          if (cleaned.length >= MAX_PHOTOS) break;
-        }
-
-        STORE.lastBoostPhotos = cleaned;
-        renderStep1Photos(STORE.lastBoostPhotos);
-
-        const desc = data.description || data.vehicleDescription || data.desc || "";
-        const posts = data.posts || data.socialPosts || data.captions || [];
-
-        STORE.lastBoostDescription = String(desc || "");
-        STORE.lastBoostPosts = Array.isArray(posts) ? posts : [];
-
-        renderBoostTextAndPosts(STORE.lastBoostDescription, STORE.lastBoostPosts);
-
-        if (statusText)
-          statusText.textContent = `Boost complete • Photos: ${STORE.lastBoostPhotos.length}`;
-      } catch (e) {
-        console.error("✘ BOOST FAILED", e);
-        if (statusText) statusText.textContent = "Boost failed.";
-        alert(`Boost failed: ${e?.message || "unknown error"}`);
-      } finally {
-        setBtnLoading(boostBtn, false);
-      }
-    };
-  }
 
   // ==================================================
   // BOOST OUTPUT RENDER (description + generated posts)
