@@ -461,88 +461,39 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     return [];
   }
 
+  const MAX_URLS = 350; // hard safety cap
+
   const addUrl = (raw) => {
     if (!raw) return;
+    if (urls.size >= MAX_URLS) return;
+
     const s = String(raw).trim();
     if (!s) return;
 
-    const cleaned = s.replace(/^url\(["']?/, "").replace(/["']?\)$/, "").trim();
-
     try {
+      const cleaned = s.replace(/^url\(["']?/, "").replace(/["']?\)$/, "");
       const abs = new URL(cleaned, base).href;
       urls.add(abs);
-    } catch {}
-  };
-
-  const pickBestFromSrcset = (srcset) => {
-    if (!srcset) return null;
-    const parts = String(srcset)
-      .split(",")
-      .map((p) => p.trim())
-      .filter(Boolean);
-
-    let best = null;
-    let bestW = -1;
-
-    for (const p of parts) {
-      const [u, w] = p.split(/\s+/);
-      const m = (w || "").match(/^(\d+)w$/);
-      if (m) {
-        const ww = Number(m[1]);
-        if (ww > bestW) {
-          bestW = ww;
-          best = u;
-        }
-      } else {
-        best = u;
-      }
+    } catch {
+      // ignore invalid urls
     }
-    return best;
   };
 
   $("img").each((_, el) => {
-    const $el = $(el);
-
-    const src =
-      $el.attr("data-src") ||
-      $el.attr("data-original") ||
-      $el.attr("data-lazy") ||
-      $el.attr("data-lazy-src") ||
-      $el.attr("data-zoom") ||
-      $el.attr("src");
-
-    const srcset = $el.attr("srcset") || $el.attr("data-srcset");
-    const bestFromSrcset = pickBestFromSrcset(srcset);
-
-    addUrl(bestFromSrcset);
-    addUrl(src);
+    addUrl($(el).attr("src"));
+    addUrl($(el).attr("data-src"));
+    addUrl($(el).attr("data-lazy"));
+    addUrl($(el).attr("data-original"));
   });
 
   $("source").each((_, el) => {
-    const $el = $(el);
-    const srcset = $el.attr("srcset") || $el.attr("data-srcset");
-    const best = pickBestFromSrcset(srcset);
-    addUrl(best);
+    addUrl($(el).attr("srcset"));
   });
 
   $("[style]").each((_, el) => {
-    const style = String($(el).attr("style") || "");
-    const matches = style.match(/background-image\s*:\s*url\(([^)]+)\)/gi);
-    if (!matches) return;
-
-    for (const m of matches) {
-      const inner = m.match(/url\(([^)]+)\)/i);
-      if (inner && inner[1]) addUrl(inner[1]);
-    }
-  });
-
-  $("script").each((_, el) => {
-    const txt = $(el).html();
-    if (!txt) return;
-
-    const re = /https?:\/\/[^"'\\\s]+?\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\\s]*)?/gi;
-    const found = txt.match(re);
-    if (found && found.length) found.forEach(addUrl);
+    const style = $(el).attr("style") || "";
+    const match = style.match(/url\(([^)]+)\)/i);
+    if (match) addUrl(match[1]);
   });
 
   return Array.from(urls);
