@@ -193,7 +193,12 @@ const MAX_PHOTOS = 24;
 window.LOTROCKET = window.LOTROCKET || {};
 const STORE = window.LOTROCKET;
 
+// ✅ DEBUG/TOOLS ACCESS (so DevTools can see it)
+window.STORE = STORE;                 // now "STORE" works in console
+window.LOTROCKET_STORE = STORE;       // backup alias
+
 window.lastBoostResponse = null;
+
 
 STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
 STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
