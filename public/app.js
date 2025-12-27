@@ -1027,15 +1027,19 @@ function applyBoostToStep2(data) {
             : 0
         );
 
-        if (!res.ok) {
-          const msg =
-            data?.message ||
-            data?.error ||
-            data?.details ||
-            (typeof data === "string" ? data : "") ||
-            `Boost failed (HTTP ${res.status})`;
-          throw new Error(msg);
-        }
+if (!res.ok) {
+  const msg =
+    data?.rawMessage ||
+    data?.details ||
+    data?.message ||
+    data?.error ||
+    (typeof data === "string" ? data : "") ||
+    `Boost failed (HTTP ${res.status})`;
+
+  console.error("🧨 BOOST 500 DETAIL:", { status: res.status, data });
+  throw new Error(msg);
+}
+
 
         // ✅ Step 2 fill (MOST IMPORTANT)
         applyBoostToStep2(data);
