@@ -980,7 +980,9 @@ app.post("/api/social-kit", async (req, res) => {
     const pageUrl = normalizeUrl(req.body?.url);
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
-    const processPhotos = req.body?.processPhotos !== false;
+   const processPhotosRequested = req.body?.processPhotos !== false;
+const processPhotos = HAS_OPENAI_KEY && processPhotosRequested;
+
 
     if (!pageUrl) {
       return res.status(400).json({
