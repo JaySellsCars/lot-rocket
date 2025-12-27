@@ -969,6 +969,68 @@ function applyBoostToStep2(data) {
 
       renderHoldingZone();
       if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+function getSelectedStep1Urls() {
+  // Supports multiple store formats safely
+  const list =
+    Array.isArray(STORE.step1Photos) && STORE.step1Photos.length
+      ? STORE.step1Photos
+      : Array.isArray(STORE.lastBoostPhotos)
+      ? STORE.lastBoostPhotos
+      : [];
+
+  const selected = [];
+
+  for (const item of list) {
+    if (!item) continue;
+
+    // object format: { url, selected }
+    if (typeof item === "object" && item.url) {
+      if (item.selected) selected.push(item.url);
+      continue;
+    }
+
+    // string format
+    if (typeof item === "string") {
+      // if you also track selection via STORE.step1Selected (Set)
+      if (STORE.step1Selected && STORE.step1Selected instanceof Set) {
+        if (STORE.step1Selected.has(item)) selected.push(item);
+      } else {
+        // fallback: if no selection tracking exists, treat as not selected
+        // (DO NOT auto-select everything)
+      }
+    }
+  }
+
+  return selected.slice(0, MAX_PHOTOS);
+}
+
+function sendSelectedToHoldingZone() {
+  const urls = getSelectedStep1Urls();
+
+  if (!urls.length) {
+    toast("Select at least 1 photo first.", "bad");
+    return;
+  }
+
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+
+  // ✅ replace holding zone with selected (clean + predictable)
+  STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
+
+  // ✅ set active holding photo
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+  // ✅ render Step 3 UI
+  if (typeof renderHoldingZone === "function") renderHoldingZone();
+  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") loadPhotoTuner(STORE.activeHoldingPhoto);
+
+  console.log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+
+  // optional: scroll user to Step 3
+  const step3 = document.querySelector("#creativeHub") || document.querySelector("#step3") || document.querySelector("#creativeLab");
+  if (step3) step3.scrollIntoView({ behavior: "smooth" });
+}
 
       log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
     };
