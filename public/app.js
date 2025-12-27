@@ -1004,25 +1004,55 @@ async function postBoost(payload) {
 }
 
 // ===============================
-// MAIN BOOST BUTTON HANDLER
+// BOOST BUTTON HANDLER (CLEAN)
 // ===============================
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
 
   boostBtn.onclick = async () => {
-    const url = dealerUrlInput?.value?.trim() || "";
-    if (!url) return alert("Enter a vehicle URL first.");
+    console.log("🚀 BOOST CLICK");
+
+    const url = dealerUrlInput?.value?.trim();
+    if (!url) {
+      alert("Enter a vehicle URL first.");
+      return;
+    }
 
     setBtnLoading(boostBtn, true, "Boosting…");
 
     try {
-      const result = await postBoost({
-        url,
-        labelOverride: vehicleLabelInput?.value?.trim() || "",
-        priceOverride: priceInput?.value?.trim() || "",
+      const res = await fetch("/boost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          labelOverride: vehicleLabelInput?.value?.trim() || "",
+          priceOverride: priceInput?.value?.trim() || "",
+        }),
       });
 
-      console.log("✅ BOOST RESULT:", result);
+      const data = await res.json();
+      console.log("🧪 BOOST RESPONSE:", data);
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Boost failed");
+      }
+
+      if (data?.posts?.length) {
+        renderBoostResults(data);
+      }
+
+      if (statusText) statusText.textContent = "Boost complete.";
+    } catch (err) {
+      console.error("❌ BOOST ERROR", err);
+      if (statusText) statusText.textContent = "Boost failed.";
+      alert(err.message || "Boost failed.");
+    } finally {
+      setBtnLoading(boostBtn, false);
+    }
+  };
+}
+
 
       // ---------- STEP 2 POPULATION ----------
       if (Array.isArray(result?.posts)) {
