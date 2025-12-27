@@ -813,9 +813,17 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
   // ✅ HARD SAFETY: ensure posts never become URL-only
   kit.posts = kit.posts.map(sanitizeCopy).filter(Boolean);
 
-  kit.editedPhotos = processPhotos
-    ? await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel)
-    : [];
+kit.editedPhotos = [];
+
+if (processPhotos && HAS_OPENAI_KEY) {
+  try {
+    kit.editedPhotos = await processPhotoBatch(finalPhotos.slice(0, 24), kit.vehicleLabel);
+  } catch (e) {
+    console.warn("🟠 editedPhotos failed — continuing without AI photos:", e?.message || e);
+    kit.editedPhotos = [];
+  }
+}
+
 
   kit._debugPhotos = {
     rawCount: rawPhotos.length,
