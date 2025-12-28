@@ -983,6 +983,32 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 
   sendTopBtn.onclick = () => {
     const urls = getSelectedStep1Urls();
+function sendSelectedToHoldingZone() {
+  const urls = getSelectedStep1Urls();
+
+  if (!urls.length) {
+    toast("Select at least 1 photo first.", "bad");
+    return;
+  }
+
+  STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+  if (typeof renderHoldingZone === "function") renderHoldingZone();
+  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+    loadPhotoTuner(STORE.activeHoldingPhoto);
+  }
+
+  console.log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+
+  const step3 =
+    document.querySelector("#creativeHub") ||
+    document.querySelector("#step3") ||
+    document.querySelector("#creativeLab");
+
+  if (step3) step3.scrollIntoView({ behavior: "smooth" });
+}
 
     console.log("🧪 sendTopBtn: selected urls =", urls.length, urls);
 
