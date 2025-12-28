@@ -1035,6 +1035,44 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
 // STEP 1 HELPERS (SELECTED URLS)
 // ==================================================
 function getSelectedStep1Urls() {
+// ================================
+// STEP 1 HELPERS (existing)
+// ================================
+
+function getSelectedStep1Urls() {
+  ...
+}
+
+// ⬇️ PLACE IT RIGHT HERE ⬇️
+
+// ==================================================
+// SEND SELECTED PHOTOS → STEP 3 (REQUIRED FUNCTION)
+// ==================================================
+function sendSelectedToHoldingZone() {
+  const urls = getSelectedStep1Urls();
+
+  console.log("🟢 sendSelectedToHoldingZone urls:", urls);
+
+  if (!urls.length) {
+    toast("Select at least 1 photo first.", "bad");
+    return;
+  }
+
+  STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+  if (typeof renderHoldingZone === "function") {
+    renderHoldingZone();
+  }
+
+  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+    loadPhotoTuner(STORE.activeHoldingPhoto);
+  }
+
+  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+}
+
+  
   // 1) Prefer STORE.step1Photos object format if it exists
   if (Array.isArray(STORE.step1Photos) && STORE.step1Photos.length) {
     const picked = STORE.step1Photos
