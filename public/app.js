@@ -1031,7 +1031,7 @@ function sendSelectedToHoldingZone() {
   console.log("🧪 sendSelectedToHoldingZone urls =", urls.length, urls);
 
   if (!urls.length) {
-    toast("Select at least 1 photo first.", "bad");
+    if (typeof toast === "function") toast("Select at least 1 photo first.", "bad");
     return;
   }
 
@@ -1044,7 +1044,7 @@ function sendSelectedToHoldingZone() {
   }
 
   console.log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
-  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+  if (typeof toast === "function") toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
 
   const step3 =
     document.querySelector("#creativeHub") ||
@@ -1054,9 +1054,6 @@ function sendSelectedToHoldingZone() {
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
-// ================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
-// ================================================
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   sendTopBtn.dataset.wired = "true";
 
