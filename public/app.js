@@ -1653,30 +1653,9 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 
     console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
   } // ✅ closes wireAiModals()
-// ==================================================
-// TEMP: HIDE NEXT VERSION BUTTONS (SAFE)
-// ==================================================
-(function hideNextVersionButtons() {
-  const labelsToHide = new Set([
-    "AI Image Generation",
-    "AI Video Generation",
-    "Canvas Studio",
-    "Design Studio"
-  ]);
 
-  const buttons = Array.from(document.querySelectorAll("button"));
-  buttons.forEach(btn => {
-    const label = btn.textContent.trim();
-    if (labelsToHide.has(label)) {
-      btn.style.display = "none";
-    }
-  });
-
-  console.log("🧹 Hidden future-feature buttons");
-})();
 // ==================================================
-// UI: HIDE NEXT VERSION BUTTONS (SAFE, REVERSIBLE)
-// Hides ONLY: AI Image Generation, AI Video Generation, Canvas Studio, Design Studio
+// HIDE NEXT-VERSION BUTTONS (SAFE + FUTURE-PROOF)
 // ==================================================
 function hideNextVersionButtons() {
   const labelsToHide = new Set([
@@ -1686,23 +1665,22 @@ function hideNextVersionButtons() {
     "Design Studio",
   ]);
 
-  // try to scope to the side-tools rail first (faster + safer)
-  const rail =
+  const root =
     document.querySelector("#toolWire") ||
-    document.querySelector(".toolwire") ||
     document.querySelector(".side-tools") ||
     document;
 
-  const btns = Array.from(rail.querySelectorAll("button"));
+  const buttons = Array.from(
+    root.querySelectorAll("button, [role='button']")
+  );
 
   let hiddenCount = 0;
 
-  btns.forEach((btn) => {
+  buttons.forEach((btn) => {
     const label = (btn.textContent || "").replace(/\s+/g, " ").trim();
     if (!label) return;
 
     if (labelsToHide.has(label)) {
-      // IMPORTANT: force override
       btn.style.setProperty("display", "none", "important");
       btn.style.setProperty("visibility", "hidden", "important");
       btn.style.setProperty("pointer-events", "none", "important");
@@ -1713,16 +1691,17 @@ function hideNextVersionButtons() {
   console.log("🙈 hideNextVersionButtons hidden:", hiddenCount);
 }
 
-// ==================================================
-// FINAL INIT (SAFE) ✅ MUST BE LAST
-// ==================================================
+
+// ================================
+// FINAL INIT (SAFE)
+// ================================
 try {
   if (STORE.lastBoostPhotos?.length) {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
   if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+    STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0];
     renderHoldingZone();
     if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
@@ -1731,33 +1710,19 @@ try {
   renderSocialStrip();
 
   wireCalculatorPad();
-  wireIncomeCalcDirect(); // ✅ guaranteed income button
+  wireIncomeCalcDirect();
 
-  if (typeof wireAiModals === "function") {
-    wireAiModals();
-  } else {
-    console.warn("🟣 wireAiModals() not found");
-  }
+  if (typeof wireAiModals === "function") wireAiModals();
 
-  if (typeof wireSideTools === "function") {
-    wireSideTools();
-  } else {
-    console.warn("🧰 wireSideTools() not found");
-  }
-
-  // ✅ HIDE NEXT VERSION BUTTONS (run after tool rail renders)
-  if (typeof hideNextVersionButtons === "function") {
-    hideNextVersionButtons();
-    setTimeout(hideNextVersionButtons, 50);
-    setTimeout(hideNextVersionButtons, 250);
-  } else {
-    console.warn("🙈 hideNextVersionButtons() not found");
-  }
+  // 🔥 THIS IS THE ONLY CALL
+  hideNextVersionButtons();
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
+
 
 
 
