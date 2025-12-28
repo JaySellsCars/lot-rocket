@@ -1675,42 +1675,73 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   console.log("🧹 Hidden future-feature buttons");
 })();
 
-  // ==================================================
-  // FINAL INIT (SAFE) ✅ MUST BE LAST
-  // ==================================================
-  try {
-    if (STORE.lastBoostPhotos?.length) {
-      renderStep1Photos(STORE.lastBoostPhotos);
-    }
-
-    if (STORE.holdingZonePhotos?.length) {
-      STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
-
-    renderCreativeThumbs();
-    renderSocialStrip();
-
-    wireCalculatorPad();
-    wireIncomeCalcDirect(); // ✅ guaranteed income button
-
-    if (typeof wireAiModals === "function") {
-      wireAiModals();
-    } else {
-      console.warn("🟣 wireAiModals() not found");
-    }
-
-    if (typeof wireSideTools === "function") {
-      wireSideTools();
-    } else {
-      console.warn("🧰 wireSideTools() not found");
-    }
-
-    console.log("✅ FINAL INIT COMPLETE");
-  } catch (e) {
-    console.error("❌ FINAL INIT FAILED", e);
+// ==================================================
+// FINAL INIT (SAFE) ✅ MUST BE LAST
+// ==================================================
+try {
+  if (STORE.lastBoostPhotos?.length) {
+    renderStep1Photos(STORE.lastBoostPhotos);
   }
+
+  if (STORE.holdingZonePhotos?.length) {
+    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+    renderHoldingZone();
+    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+  }
+
+  renderCreativeThumbs();
+  renderSocialStrip();
+
+  wireCalculatorPad();
+  wireIncomeCalcDirect(); // ✅ guaranteed income button
+
+  if (typeof wireAiModals === "function") {
+    wireAiModals();
+  } else {
+    console.warn("🟣 wireAiModals() not found");
+  }
+
+  if (typeof wireSideTools === "function") {
+    wireSideTools();
+  } else {
+    console.warn("🧰 wireSideTools() not found");
+  }
+
+  // ==================================================
+  // HIDE FUTURE / LOCKED BUTTONS (SAFE + PERSISTENT)
+  // ==================================================
+  (function hideFutureButtons() {
+    const labelsToHide = new Set([
+      "AI Image Generation",
+      "AI Video Generation",
+      "Canvas Studio",
+      "Design Studio"
+    ]);
+
+    const hideButtons = () => {
+      document.querySelectorAll("button").forEach(btn => {
+        const label = btn.textContent?.trim();
+        if (labelsToHide.has(label)) {
+          btn.style.display = "none";
+        }
+      });
+    };
+
+    hideButtons();
+
+    // Watch for dynamically injected buttons
+    const observer = new MutationObserver(() => hideButtons());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    console.log("✅ Feature buttons hidden (observer active)");
+  })();
+
+  console.log("✅ FINAL INIT COMPLETE");
+
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
+}
+
 
   // ✅ CLOSES document.addEventListener("DOMContentLoaded", ... )
 });
