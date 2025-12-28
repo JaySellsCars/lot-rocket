@@ -1012,6 +1012,24 @@ const sendTopBtn =
   $("sendToCreativeLabBtn") ||
   $("sendToDesignStudio") ||
   DOC.querySelector("[data-send-top]");
+// ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
+// ==================================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+
+  sendTopBtn.onclick = () => {
+    console.log("🚀 SEND TOP PHOTOS CLICK");
+
+    if (typeof sendSelectedToHoldingZone !== "function") {
+      console.error("❌ sendSelectedToHoldingZone() missing");
+      alert("Internal error: sendSelectedToHoldingZone not found");
+      return;
+    }
+
+    sendSelectedToHoldingZone();
+  };
+}
 
 // ==================================================
 // STEP 1 HELPERS (SELECTED URLS)
