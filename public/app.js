@@ -1655,61 +1655,55 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   } // ✅ closes wireAiModals()
 
 // ==================================================
-// HIDE NEXT-VERSION BUTTONS (SAFE + PERSISTENT)
-// Hides ONLY: Image AI, Video AI, Canvas, Design
-// Survives ToolWire re-render via MutationObserver
+// HIDE NEXT-VERSION BUTTONS (BULLETPROOF + PERSISTENT)
+// Hides ONLY: AI Image/Video Generation, Canvas Studio, Design Studio
+// Works even if ToolWire renders later / rerenders
 // ==================================================
 function installHideNextVersionButtons() {
-  const labelsToHide = new Set(["Image AI", "Video AI", "Canvas", "Design"]);
+  const labelsToHide = new Set([
+    "AI Image Generation",
+    "AI Video Generation",
+    "Canvas Studio",
+    "Design Studio",
+  ]);
 
-  const pickRail = () =>
-    document.querySelector("#toolWire") ||
-    document.querySelector(".side-tools") ||
-    document.querySelector(".toolwire") ||
-    document.querySelector("[data-toolwire]") ||
-    null;
+  const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
 
-  const normalize = (s) => String(s || "").replace(/\s+/g, " ").trim();
-
-  const hideNow = () => {
-    const rail = pickRail();
-    if (!rail) {
-      console.warn("🙈 hideNextVersionButtons: rail not found yet");
-      return 0;
-    }
-
-    const btns = Array.from(rail.querySelectorAll("button, [role='button']"));
+  const hidePass = () => {
+    const nodes = Array.from(document.querySelectorAll("button,[role='button'],a"));
     let hidden = 0;
 
-    btns.forEach((btn) => {
-      const label = normalize(btn.textContent);
+    nodes.forEach((el) => {
+      const label = norm(el.textContent);
       if (!label) return;
 
       if (labelsToHide.has(label)) {
-        // force override
-        btn.style.setProperty("display", "none", "important");
-        btn.style.setProperty("visibility", "hidden", "important");
-        btn.style.setProperty("pointer-events", "none", "important");
+        el.style.setProperty("display", "none", "important");
+        el.style.setProperty("visibility", "hidden", "important");
+        el.style.setProperty("pointer-events", "none", "important");
         hidden++;
       }
     });
 
-    console.log("🙈 hideNextVersionButtons hidden:", hidden);
+    console.log("🙈 hide future-feature buttons hidden:", hidden);
     return hidden;
   };
 
-  // run once now
-  hideNow();
+  // run now + again shortly (ToolWire may render after init)
+  hidePass();
+  setTimeout(hidePass, 250);
+  setTimeout(hidePass, 800);
 
-  // install observer to survive re-renders
+  // install observer ONCE (survives rerenders)
   if (installHideNextVersionButtons.__installed) return;
   installHideNextVersionButtons.__installed = true;
 
-  const obs = new MutationObserver(() => hideNow());
+  const obs = new MutationObserver(() => hidePass());
   obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("✅ hideNextVersionButtons observer installed");
+  console.log("✅ hide observer installed");
 }
+
 
 
 
@@ -1727,14 +1721,16 @@ try {
   if (STORE.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-    renderHoldingZone();
+
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+
     if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
       loadPhotoTuner(STORE.activeHoldingPhoto);
     }
   }
 
-  renderCreativeThumbs();
-  renderSocialStrip();
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
 
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
@@ -1755,6 +1751,7 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
