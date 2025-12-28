@@ -1012,67 +1012,12 @@ const sendTopBtn =
   $("sendToCreativeLabBtn") ||
   $("sendToDesignStudio") ||
   DOC.querySelector("[data-send-top]");
-// ==================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
-// ==================================================
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
 
-  sendTopBtn.onclick = () => {
-    console.log("🚀 SEND TOP PHOTOS CLICK");
-
-    if (typeof sendSelectedToHoldingZone !== "function") {
-      console.error("❌ sendSelectedToHoldingZone() missing");
-      alert("Internal error: sendSelectedToHoldingZone not found");
-      return;
-    }
-
-    sendSelectedToHoldingZone();
-  };
-}
 
 // ==================================================
-// STEP 1 HELPERS (SELECTED URLS)
+// STEP 1 HELPERS (SELECTED URLS) — SINGLE SOURCE
 // ==================================================
 function getSelectedStep1Urls() {
-// ================================
-// STEP 1 HELPERS (existing)
-// ================================
-
-function getSelectedStep1Urls() {
-  ...
-}
-
-// ⬇️ PLACE IT RIGHT HERE ⬇️
-
-// ==================================================
-// SEND SELECTED PHOTOS → STEP 3 (REQUIRED FUNCTION)
-// ==================================================
-function sendSelectedToHoldingZone() {
-  const urls = getSelectedStep1Urls();
-
-  console.log("🟢 sendSelectedToHoldingZone urls:", urls);
-
-  if (!urls.length) {
-    toast("Select at least 1 photo first.", "bad");
-    return;
-  }
-
-  STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
-  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-  if (typeof renderHoldingZone === "function") {
-    renderHoldingZone();
-  }
-
-  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-    loadPhotoTuner(STORE.activeHoldingPhoto);
-  }
-
-  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
-}
-
-  
   // 1) Prefer STORE.step1Photos object format if it exists
   if (Array.isArray(STORE.step1Photos) && STORE.step1Photos.length) {
     const picked = STORE.step1Photos
@@ -1115,20 +1060,10 @@ function sendSelectedToHoldingZone() {
 
   return picked.slice(0, MAX_PHOTOS);
 }
-// ==================================================
-// STEP 1 → SEND TOP PHOTOS BUTTON
-// ==================================================
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
 
-  sendTopBtn.onclick = () => {
-    console.log("🚀 SEND TOP PHOTOS CLICK");
-    sendSelectedToHoldingZone();
-  };
-}
 
 // ==================================================
-// STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE
+// STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE (REQUIRED)
 // ==================================================
 function sendSelectedToHoldingZone() {
   const urls = getSelectedStep1Urls();
@@ -1167,14 +1102,29 @@ function sendSelectedToHoldingZone() {
 }
 
 
+// ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
+// ==================================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
 
+  sendTopBtn.onclick = () => {
+    console.log("🚀 SEND TOP PHOTOS CLICK");
 
+    if (typeof sendSelectedToHoldingZone !== "function") {
+      console.error("❌ sendSelectedToHoldingZone() missing");
+      alert("Internal error: sendSelectedToHoldingZone not found");
+      return;
+    }
+
+    sendSelectedToHoldingZone();
+  };
+}
 
 
 // ==================================================
 // BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
 // ==================================================
-
 if (boostBtn && boostBtn.dataset.wired !== "true") {
   boostBtn.dataset.wired = "true";
 
@@ -1280,10 +1230,11 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 }
 
 
-  // ==================================================
-  // BOOST OUTPUT RENDER (description + generated posts)
-  // Safe: renders only if containers exist
-  // ==================================================
+// ==================================================
+// BOOST OUTPUT RENDER (description + generated posts)
+// Safe: renders only if containers exist
+// ==================================================
+
   function escapeHtml(s) {
     return String(s || "")
       .replaceAll("&", "&amp;")
