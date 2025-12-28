@@ -1907,6 +1907,11 @@ try {
 
   // ✅ Build ToolWire first
   if (typeof wireSideTools === "function") wireSideTools();
+// ✅ ToolWire builds here
+if (typeof wireSideTools === "function") wireSideTools();
+
+// ✅ hide future buttons AFTER ToolWire exists
+installHideFutureFeatureButtons();
 
   // ✅ THEN install persistent hide
   if (typeof installHideNextVersionButtons === "function") {
