@@ -1799,80 +1799,110 @@ function installHideFutureFeatureButtons() {
 
 
 // ==================================================
-// HIDE NEXT-VERSION UI (SAFE + PERSISTENT)
-// Hides ONLY: Image AI, Video AI, Canvas, Design
-// Also hides any Canvas/Design Studio sections/modals if present
+// HIDE NEXT-VERSION UI (SAFE + PERSISTENT) — SINGLE SOURCE
+// Hides ONLY:
+// - Tool rail buttons: Image AI, Video AI, Canvas, Design (and long label variants)
+// - Step 3 button: #sendToDesignStudio (Send Selected to Design Studio 3.5)
+// Survives re-renders via MutationObserver + retry
 // ==================================================
-function installHideNextVersionButtons() {
-  // Match both old + new labels (future-proof)
-  const labelsToHide = new Set([
-    // new short labels
-    "Image AI",
-    "Video AI",
-    "Canvas",
-    "Design",
-
-    // older long labels
-    "AI Image Generation",
-    "AI Video Generation",
-    "Canvas Studio",
-    "Design Studio",
+function installHideNextVersionUI() {
+  // 1) BEST: hide by data-ai-action (most stable)
+  const actionsToHide = new Set([
+    "image_ai",
+    "video_ai",
+    "canvas_studio",
+    "design_studio",
+    "canvas",
+    "design",
+    "image",
+    "video",
   ]);
 
-  const normalize = (s) => String(s || "").replace(/\s+/g, " ").trim();
+  // 2) FALLBACK: hide by label (future-proof)
+  const labelMatchers = [
+    /^ai image generation$/i,
+    /^ai video generation$/i,
+    /^canvas studio$/i,
+    /^design studio$/i,
+    /^image ai$/i,
+    /^video ai$/i,
+    /^canvas$/i,
+    /^design$/i,
+    /^image$/i,
+    /^video$/i,
+  ];
+
+  const normalize = (s) =>
+    String(s || "")
+      .replace(/\s+/g, " ")
+      .replace(/[^\w\s]/g, "") // strips emoji/icons that leak into text
+      .trim();
+
+  const shouldHideLabel = (label) => labelMatchers.some((rx) => rx.test(label));
+
+  const hideEl = (el) => {
+    if (!el || el.dataset.lrHidden === "true") return false;
+    el.dataset.lrHidden = "true";
+    el.setAttribute("aria-hidden", "true");
+    el.hidden = true;
+    el.style.setProperty("display", "none", "important");
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+    return true;
+  };
 
   const hideNow = () => {
     let hidden = 0;
 
-    // 1) Hide buttons by label (ANYWHERE, not just rail)
-    const btns = Array.from(document.querySelectorAll("button, [role='button']"));
+    // A) Hide Step 3 “Send Selected to Design Studio 3.5”
+    const step3Btn = document.getElementById("sendToDesignStudio");
+    if (step3Btn) hidden += hideEl(step3Btn) ? 1 : 0;
 
-    btns.forEach((el) => {
+    // B) Hide toolwire buttons by data-ai-action (preferred)
+    const actionNodes = Array.from(document.querySelectorAll("[data-ai-action]"));
+    actionNodes.forEach((el) => {
+      const action = (el.getAttribute("data-ai-action") || "").trim();
+      if (action && actionsToHide.has(action)) {
+        if (hideEl(el)) hidden++;
+      }
+    });
+
+    // C) Fallback: hide by label anywhere (button/a/role=button)
+    const nodes = Array.from(document.querySelectorAll("button, a, [role='button']"));
+    nodes.forEach((el) => {
       const label = normalize(el.textContent);
       if (!label) return;
-
-      if (labelsToHide.has(label)) {
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("visibility", "hidden", "important");
-        el.style.setProperty("pointer-events", "none", "important");
-        hidden++;
+      if (shouldHideLabel(label)) {
+        if (hideEl(el)) hidden++;
       }
     });
 
-    // 2) Hide known studio containers if they exist (optional safety)
-    const maybeHideSelectors = [
-      "#designStudio",
-      "#designStudioModal",
-      "#designStudioPanel",
-      "#canvasStudio",
-      "#canvasStudioModal",
-      "#canvasStudioPanel",
-    ];
-
-    maybeHideSelectors.forEach((sel) => {
-      const node = document.querySelector(sel);
-      if (node) {
-        node.style.setProperty("display", "none", "important");
-        hidden++;
-      }
-    });
-
-    console.log("🙈 hideNextVersionButtons hidden:", hidden);
+    console.log("🙈 installHideNextVersionUI hidden:", hidden);
     return hidden;
   };
 
-  // Run now
+  // run once immediately
   hideNow();
 
-  // Install observer once (survive re-renders)
-  if (installHideNextVersionButtons.__installed) return;
-  installHideNextVersionButtons.__installed = true;
+  // install observer ONCE
+  if (!installHideNextVersionUI.__installed) {
+    installHideNextVersionUI.__installed = true;
 
-  const obs = new MutationObserver(() => hideNow());
-  obs.observe(document.body, { childList: true, subtree: true });
+    const obs = new MutationObserver(() => hideNow());
+    obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("✅ hideNextVersionButtons observer installed");
+    console.log("✅ installHideNextVersionUI observer installed");
+  }
+
+  // short retry loop for late renders / animations
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    hideNow();
+    if (tries >= 25) clearInterval(timer); // ~5s max
+  }, 200);
 }
+
 
 
 
@@ -1905,19 +1935,14 @@ try {
 
   if (typeof wireAiModals === "function") wireAiModals();
 
-  // ✅ Build ToolWire first
+  // ✅ Build ToolWire first (buttons appear here)
   if (typeof wireSideTools === "function") wireSideTools();
-// ✅ ToolWire builds here
-if (typeof wireSideTools === "function") wireSideTools();
 
-// ✅ hide future buttons AFTER ToolWire exists
-installHideFutureFeatureButtons();
-
-  // ✅ THEN install persistent hide
-  if (typeof installHideNextVersionButtons === "function") {
-    installHideNextVersionButtons();
+  // ✅ ONE hide call (persistent)
+  if (typeof installHideNextVersionUI === "function") {
+    installHideNextVersionUI();
   } else {
-    console.warn("🙈 installHideNextVersionButtons() not found");
+    console.warn("🙈 installHideNextVersionUI() not found");
   }
 
   console.log("✅ FINAL INIT COMPLETE");
@@ -1925,19 +1950,3 @@ installHideFutureFeatureButtons();
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // ✅ CLOSES document.addEventListener("DOMContentLoaded", ... )
-});
