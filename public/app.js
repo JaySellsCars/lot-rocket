@@ -1655,41 +1655,87 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   } // ✅ closes wireAiModals()
 
 // ==================================================
-// HIDE NEXT-VERSION BUTTONS (SAFE + FUTURE-PROOF)
+// HIDE NEXT-VERSION BUTTONS (BULLETPROOF + RE-RUNS)
+// Hides ONLY: AI Image Generation, AI Video Generation, Canvas Studio, Design Studio
 // ==================================================
-function hideNextVersionButtons() {
-  const labelsToHide = new Set([
-    "AI Image Generation",
-    "AI Video Generation",
-    "Canvas Studio",
-    "Design Studio",
-  ]);
+function installHideNextVersionButtons() {
+  const HIDE_MATCH = [
+    "ai image generation",
+    "ai video generation",
+    "canvas studio",
+    "design studio",
+  ];
 
-  const root =
-    document.querySelector("#toolWire") ||
-    document.querySelector(".side-tools") ||
-    document;
+  const KEEP_MATCH = [
+    "ai work flow expert",
+    "ai message builder",
+    "ai car expert",
+  ];
 
-  const buttons = Array.from(
-    root.querySelectorAll("button, [role='button']")
-  );
+  const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
 
-  let hiddenCount = 0;
+  // Try to find the rail by locating a known visible tool and walking up
+  function findRailRoot() {
+    // 1) Prefer known containers if they exist
+    const direct =
+      document.querySelector("#toolWire") ||
+      document.querySelector(".toolwire") ||
+      document.querySelector(".side-tools") ||
+      document.querySelector("[data-tool-rail]");
+    if (direct) return direct;
 
-  buttons.forEach((btn) => {
-    const label = (btn.textContent || "").replace(/\s+/g, " ").trim();
-    if (!label) return;
+    // 2) Otherwise, find a node containing a known label and use its parent stack
+    const all = Array.from(document.querySelectorAll("button, a, [role='button'], div"));
+    const hit = all.find((el) => norm(el.textContent).includes("objection coach") || norm(el.textContent).includes("drill mode"));
+    if (!hit) return document;
 
-    if (labelsToHide.has(label)) {
-      btn.style.setProperty("display", "none", "important");
-      btn.style.setProperty("visibility", "hidden", "important");
-      btn.style.setProperty("pointer-events", "none", "important");
-      hiddenCount++;
-    }
-  });
+    // Walk up to a reasonable container
+    return hit.closest("aside, nav, section, div") || document;
+  }
 
-  console.log("🙈 hideNextVersionButtons hidden:", hiddenCount);
+  function hideNow() {
+    const root = findRailRoot();
+
+    // include: button, a, role=button, and typical clickable divs
+    const nodes = Array.from(root.querySelectorAll("button, a, [role='button'], .tool-btn, .tool-button, .tool-item, div"));
+
+    let hidden = 0;
+    let scanned = 0;
+
+    nodes.forEach((el) => {
+      const label = norm(el.textContent);
+      if (!label) return;
+
+      // Only touch things that look like tool labels (avoid hiding "Copy", "New Post", etc.)
+      if (!(label.includes("ai") || label.includes("studio") || label.includes("coach") || label.includes("drill"))) return;
+
+      scanned++;
+
+      // Never hide the 3 you said must stay
+      if (KEEP_MATCH.some((k) => label.includes(k))) return;
+
+      // Hide the 4 future tools by partial match (bulletproof)
+      if (HIDE_MATCH.some((h) => label.includes(h))) {
+        el.style.setProperty("display", "none", "important");
+        el.style.setProperty("visibility", "hidden", "important");
+        el.style.setProperty("pointer-events", "none", "important");
+        hidden++;
+      }
+    });
+
+    console.log("🙈 hideNextVersionButtons:", { hidden, scanned, root: root === document ? "document" : root.className || root.id || root.tagName });
+  }
+
+  // Run once now…
+  hideNow();
+
+  // …and keep running if the rail re-renders later
+  const obs = new MutationObserver(() => hideNow());
+  obs.observe(document.body, { childList: true, subtree: true });
+
+  console.log("🧹 hideNextVersionButtons observer installed");
 }
+
 
 
 // ================================
@@ -1701,7 +1747,7 @@ try {
   }
 
   if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto ||= STORE.holdingZonePhotos[0];
+    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
     renderHoldingZone();
     if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
@@ -1712,15 +1758,26 @@ try {
   wireCalculatorPad();
   wireIncomeCalcDirect();
 
-  if (typeof wireAiModals === "function") wireAiModals();
+  if (typeof wireAiModals === "function") {
+    wireAiModals();
+  } else {
+    console.warn("🟣 wireAiModals() not found");
+  }
 
-  // 🔥 THIS IS THE ONLY CALL
-  hideNextVersionButtons();
+  // 🔥 HIDE FUTURE BUTTONS (CALL ONCE HERE)
+  if (typeof installHideNextVersionButtons === "function") {
+    installHideNextVersionButtons(); // ✅ preferred (bulletproof + observer)
+  } else if (typeof hideNextVersionButtons === "function") {
+    hideNextVersionButtons(); // ✅ fallback (if you kept the older name)
+  } else {
+    console.warn("🙈 hide buttons function not found");
+  }
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
