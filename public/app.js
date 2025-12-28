@@ -1734,6 +1734,65 @@ function installHideNextVersionButtons() {
 }
 
 
+// ==================================================
+// HIDE FUTURE FEATURES (PERSISTENT) — by data-ai-action
+// Hides: Image AI, Video AI, Canvas, Design Studio buttons
+// Survives re-renders via MutationObserver
+// ==================================================
+function installHideFutureFeatureButtons() {
+  const actionsToHide = new Set([
+    "image_ai",
+    "video_ai",
+    "canvas_studio",
+    "design_studio",
+    "canvas",
+    "design",
+    "image",
+    "video",
+  ]);
+
+  const pickRail = () =>
+    document.querySelector("#toolWire") ||
+    document.querySelector(".side-tools") ||
+    document.querySelector(".toolwire") ||
+    document.querySelector("[data-toolwire]") ||
+    document;
+
+  const hideNow = () => {
+    const root = pickRail();
+    const btns = Array.from(root.querySelectorAll("[data-ai-action]"));
+
+    let hidden = 0;
+    btns.forEach((btn) => {
+      const action = (btn.getAttribute("data-ai-action") || "").trim();
+      if (!action) return;
+
+      if (actionsToHide.has(action)) {
+        btn.style.setProperty("display", "none", "important");
+        btn.style.setProperty("visibility", "hidden", "important");
+        btn.style.setProperty("pointer-events", "none", "important");
+        hidden++;
+      }
+    });
+
+    console.log("🙈 hideFutureFeatureButtons hidden:", hidden);
+    return hidden;
+  };
+
+  // prevent double-install
+  if (installHideFutureFeatureButtons.__installed) {
+    hideNow();
+    return;
+  }
+  installHideFutureFeatureButtons.__installed = true;
+
+  hideNow();
+
+  const obs = new MutationObserver(() => hideNow());
+  obs.observe(document.body, { childList: true, subtree: true });
+
+  console.log("✅ hideFutureFeatureButtons observer installed");
+}
 
 
 
