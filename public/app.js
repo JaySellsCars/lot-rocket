@@ -1063,17 +1063,25 @@ function getSelectedStep1Urls() {
 }
 
 
-// ================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3
-// ================================
+// ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
+// ==================================================
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   sendTopBtn.dataset.wired = "true";
 
   sendTopBtn.onclick = () => {
     console.log("🚀 SEND TOP PHOTOS CLICK");
+
+    if (typeof sendSelectedToHoldingZone !== "function") {
+      console.error("❌ sendSelectedToHoldingZone() missing");
+      alert("Internal error: sendSelectedToHoldingZone not found");
+      return;
+    }
+
     sendSelectedToHoldingZone();
   };
 }
+
 
 // ==================================================
 // STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE
