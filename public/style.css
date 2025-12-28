@@ -987,3 +987,35 @@ main > section:nth-of-type(3) > div > div:first-child {
   object-fit: cover;
   display: block;
 }
+/* ============================================
+   FORCE Step 3 HOLDING ZONE VISIBLE (override)
+   ============================================ */
+#holdingZone {
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 10px !important;
+  padding: 10px !important;
+
+  /* makes it visibly “exist” */
+  min-height: 90px !important;
+  margin-bottom: 12px !important;
+  border: 1px dashed rgba(148,163,184,.35) !important;
+  border-radius: 14px !important;
+  background: rgba(2,6,23,.25) !important;
+}
+
+#holdingZone .holding-thumb-btn {
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 12px;
+  background: rgba(2,6,23,.45);
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+}
+
+#holdingZone .holding-thumb-img {
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  display: block;
+}
