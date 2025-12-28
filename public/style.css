@@ -1019,18 +1019,4 @@ main > section:nth-of-type(3) > div > div:first-child {
   object-fit: cover;
   display: block;
 }
-/* ===============================
-   TEMP: HIDE ADVANCED TOOL BUTTONS
-   (Enable later when ready)
-   =============================== */
 
-button[data-action="design-studio"],
-button[data-action="ai-image"],
-button[data-action="ai-video"],
-button[data-action="ai-workflow"],
-button[data-action="ai-message"],
-button[data-action="ai-expert"],
-button[data-action="ai-image-generator"],
-button[data-action="ai-video-generator"] {
-  display: none !important;
-}
