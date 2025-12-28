@@ -1020,3 +1020,9 @@ main > section:nth-of-type(3) > div > div:first-child {
   display: block;
 }
 
+/* ==================================================
+   TEMP: HIDE DESIGN STUDIO BUTTON (NEXT VERSION)
+   ================================================== */
+#sendToDesignStudio {
+  display: none !important;
+}
