@@ -1949,4 +1949,3 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-
