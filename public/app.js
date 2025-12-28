@@ -965,11 +965,10 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
     }
   }
 
-// ==================================================
+// ================================================
 // STEP 1 → SEND TOP PHOTOS → STEP 3
-// ==================================================
+// ================================================
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-
   sendTopBtn.dataset.wired = "true";
 
   sendTopBtn.onclick = () => {
@@ -991,6 +990,7 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   };
 }
+
 
 // ==================================================
 // STEP 1 HELPERS
