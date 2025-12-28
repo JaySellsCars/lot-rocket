@@ -1655,92 +1655,43 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   } // ✅ closes wireAiModals()
 
 // ==================================================
-// UI: HIDE NEXT-VERSION BUTTONS (SINGLE SOURCE, BULLETPROOF)
-// Keeps: Workflow / Message / Expert
-// Hides: AI Image, AI Video, Canvas Studio, Design Studio
+// UI: HIDE NEXT VERSION BUTTONS (SAFE, REVERSIBLE)
+// Hides ONLY: Image AI, Video AI, Canvas, Design
 // ==================================================
-function installHideNextVersionButtons() {
-  // words/phrases to HIDE (match by "contains")
-  const hideContains = [
-    "ai image",
-    "ai video",
-    "canvas studio",
-    "design studio",
-  ];
-
-  // actions to HIDE (if your buttons use data-ai-action)
-  const hideActions = new Set([
-    "image_ai",
-    "video_ai",
-    "canvas_studio",
-    "design_studio",
+function hideNextVersionButtons() {
+  const labelsToHide = new Set([
+    "Image AI",
+    "Video AI",
+    "Canvas",
+    "Design",
   ]);
 
-  // words/phrases to KEEP no matter what
-  const keepContains = [
-    "workflow",
-    "message",
-    "expert",
-  ];
+  // scope to side tools rail when possible
+  const root =
+    document.querySelector("#toolWire") ||
+    document.querySelector(".side-tools") ||
+    document.querySelector(".toolwire") ||
+    document;
 
-  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const btns = Array.from(root.querySelectorAll("button, [role='button']"));
 
-  const shouldHide = (btn) => {
-    const label = norm(btn.textContent);
-    const action = norm(btn.getAttribute("data-ai-action") || btn.dataset?.aiAction || "");
+  let hiddenCount = 0;
 
-    // keep always wins
-    if (keepContains.some((k) => label.includes(k))) return false;
+  btns.forEach((btn) => {
+    const label = (btn.textContent || "").replace(/\s+/g, " ").trim();
+    if (!label) return;
 
-    // hide by action
-    if (action && hideActions.has(action)) return true;
+    if (labelsToHide.has(label)) {
+      btn.style.setProperty("display", "none", "important");
+      btn.style.setProperty("visibility", "hidden", "important");
+      btn.style.setProperty("pointer-events", "none", "important");
+      hiddenCount++;
+    }
+  });
 
-    // hide by label contains
-    if (hideContains.some((h) => label.includes(h))) return true;
-
-    return false;
-  };
-
-  const hideNow = () => {
-    // scope first (tool rail), fallback to whole doc
-    const root =
-      document.querySelector("#toolWire") ||
-      document.querySelector(".toolwire") ||
-      document.querySelector(".side-tools") ||
-      document;
-
-    const btns = Array.from(root.querySelectorAll("button, [role='button']"));
-
-    let hidden = 0;
-    btns.forEach((btn) => {
-      if (!btn || btn.dataset?.lrHidden === "true") return;
-
-      if (shouldHide(btn)) {
-        btn.dataset.lrHidden = "true";
-        btn.style.setProperty("display", "none", "important");
-        btn.style.setProperty("visibility", "hidden", "important");
-        btn.style.setProperty("pointer-events", "none", "important");
-        hidden++;
-      }
-    });
-
-    console.log("🙈 hideNextVersionButtons: hidden =", hidden);
-  };
-
-  // run immediately + after paint + after a short delay (covers late renders)
-  hideNow();
-  requestAnimationFrame(hideNow);
-  setTimeout(hideNow, 250);
-  setTimeout(hideNow, 900);
-
-  // keep watching for UI being re-rendered
-  if (window.__LR_HIDE_OBSERVER__) return; // prevent duplicates
-
-  window.__LR_HIDE_OBSERVER__ = new MutationObserver(() => hideNow());
-  window.__LR_HIDE_OBSERVER__.observe(document.body, { childList: true, subtree: true });
-
-  console.log("✅ hideNextVersionButtons installed");
+  console.log("🙈 hideNextVersionButtons hidden:", hiddenCount);
 }
+
 
 
 
@@ -1754,7 +1705,8 @@ try {
   }
 
   if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
+    STORE.activeHoldingPhoto =
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
     renderHoldingZone();
     if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
@@ -1768,12 +1720,17 @@ try {
   if (typeof wireAiModals === "function") wireAiModals();
 
   // ✅ ONLY THIS — replaces all previous hide logic
-  installHideNextVersionButtons();
+  if (typeof hideNextVersionButtons === "function") {
+    hideNextVersionButtons();
+  } else {
+    console.warn("🙈 hideNextVersionButtons() not found");
+  }
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
