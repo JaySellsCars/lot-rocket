@@ -1745,40 +1745,20 @@ try {
     console.warn("🧰 wireSideTools() not found");
   }
 
-  // ==================================================
-  // HIDE FUTURE / LOCKED BUTTONS (SAFE + PERSISTENT)
-  // ==================================================
-  (function hideFutureButtons() {
-    const labelsToHide = new Set([
-      "AI Image Generation",
-      "AI Video Generation",
-      "Canvas Studio",
-      "Design Studio"
-    ]);
-
-    const hideButtons = () => {
-      document.querySelectorAll("button").forEach(btn => {
-        const label = btn.textContent?.trim();
-        if (labelsToHide.has(label)) {
-          btn.style.display = "none";
-        }
-      });
-    };
-
-    hideButtons();
-
-    // Watch for dynamically injected buttons
-    const observer = new MutationObserver(() => hideButtons());
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    console.log("✅ Feature buttons hidden (observer active)");
-  })();
+  // ✅ HIDE NEXT VERSION BUTTONS (run after tool rail renders)
+  if (typeof hideNextVersionButtons === "function") {
+    hideNextVersionButtons();
+    setTimeout(hideNextVersionButtons, 50);
+    setTimeout(hideNextVersionButtons, 250);
+  } else {
+    console.warn("🙈 hideNextVersionButtons() not found");
+  }
 
   console.log("✅ FINAL INIT COMPLETE");
-
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
