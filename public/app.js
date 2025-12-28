@@ -1655,33 +1655,41 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   } // ✅ closes wireAiModals()
 
 // ==================================================
-// UI: HIDE NEXT VERSION BUTTONS (ROBUST + RE-RENDER SAFE)
+// HIDE NEXT-VERSION BUTTONS (SAFE + PERSISTENT)
 // Hides ONLY: Image AI, Video AI, Canvas, Design
+// Survives ToolWire re-render via MutationObserver
 // ==================================================
 function installHideNextVersionButtons() {
   const labelsToHide = new Set(["Image AI", "Video AI", "Canvas", "Design"]);
 
   const pickRail = () =>
-    DOC.querySelector(".side-tools") ||
-    DOC.querySelector("#toolWire") ||
-    DOC.querySelector(".toolwire") ||
-    DOC.querySelector("[data-toolwire]") ||
-    DOC;
+    document.querySelector("#toolWire") ||
+    document.querySelector(".side-tools") ||
+    document.querySelector(".toolwire") ||
+    document.querySelector("[data-toolwire]") ||
+    null;
+
+  const normalize = (s) => String(s || "").replace(/\s+/g, " ").trim();
 
   const hideNow = () => {
-    const root = pickRail();
-    const nodes = Array.from(root.querySelectorAll("button, [role='button'], a"));
+    const rail = pickRail();
+    if (!rail) {
+      console.warn("🙈 hideNextVersionButtons: rail not found yet");
+      return 0;
+    }
 
+    const btns = Array.from(rail.querySelectorAll("button, [role='button']"));
     let hidden = 0;
 
-    nodes.forEach((el) => {
-      const label = (el.textContent || "").replace(/\s+/g, " ").trim();
+    btns.forEach((btn) => {
+      const label = normalize(btn.textContent);
       if (!label) return;
 
       if (labelsToHide.has(label)) {
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("visibility", "hidden", "important");
-        el.style.setProperty("pointer-events", "none", "important");
+        // force override
+        btn.style.setProperty("display", "none", "important");
+        btn.style.setProperty("visibility", "hidden", "important");
+        btn.style.setProperty("pointer-events", "none", "important");
         hidden++;
       }
     });
@@ -1690,22 +1698,17 @@ function installHideNextVersionButtons() {
     return hidden;
   };
 
-  // Run immediately + after a short delay (covers late renders)
+  // run once now
   hideNow();
-  setTimeout(hideNow, 50);
-  setTimeout(hideNow, 250);
-  setTimeout(hideNow, 800);
 
-  // Watch for ToolWire re-rendering the rail
-  const root = pickRail();
-  if (root && !root.__hideObserverInstalled) {
-    root.__hideObserverInstalled = true;
+  // install observer to survive re-renders
+  if (installHideNextVersionButtons.__installed) return;
+  installHideNextVersionButtons.__installed = true;
 
-    const obs = new MutationObserver(() => hideNow());
-    obs.observe(root, { childList: true, subtree: true });
+  const obs = new MutationObserver(() => hideNow());
+  obs.observe(document.body, { childList: true, subtree: true });
 
-    console.log("🧹 hideNextVersionButtons observer installed");
-  }
+  console.log("✅ hideNextVersionButtons observer installed");
 }
 
 
@@ -1738,14 +1741,10 @@ try {
 
   if (typeof wireAiModals === "function") wireAiModals();
 
-  // ✅ SIDE TOOLS MUST EXIST BEFORE HIDING (ToolWire often re-renders)
-  if (typeof wireSideTools === "function") {
-    wireSideTools();
-  } else {
-    console.warn("🧰 wireSideTools() not found");
-  }
+  // ✅ ToolWire often builds HERE — do this BEFORE hiding
+  if (typeof wireSideTools === "function") wireSideTools();
 
-  // ✅ ONLY THIS — replaces all previous hide logic
+  // ✅ ONLY THIS hide logic (persistent)
   if (typeof installHideNextVersionButtons === "function") {
     installHideNextVersionButtons();
   } else {
@@ -1756,6 +1755,7 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
