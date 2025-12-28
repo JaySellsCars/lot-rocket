@@ -964,6 +964,16 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
       applyTunerFilters();
     }
   }
+  // ==================================================
+  // STEP 1 — BUTTON REFS (MUST EXIST BEFORE WIRING)
+  // ==================================================
+  const sendTopBtn =
+    $("sendTopBtn") ||
+    $("sendTopPhotosBtn") ||
+    $("sendToCreativeLab") ||
+    $("sendToCreativeLabBtn") ||
+    $("sendToDesignStudio") ||
+    DOC.querySelector("[data-send-top]");
 
 // ================================================
 // STEP 1 → SEND TOP PHOTOS → STEP 3
