@@ -1062,6 +1062,7 @@ function sendSelectedToHoldingZone() {
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
+
 // ==================================================
 // BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
 // ==================================================
