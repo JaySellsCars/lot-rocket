@@ -1725,28 +1725,38 @@ try {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
     renderHoldingZone();
-    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
   }
 
   renderCreativeThumbs();
   renderSocialStrip();
 
-  wireCalculatorPad();
-  wireIncomeCalcDirect();
+  if (typeof wireCalculatorPad === "function") wireCalculatorPad();
+  if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
 
   if (typeof wireAiModals === "function") wireAiModals();
 
-  // ✅ ONLY THIS — replaces all previous hide logic
-  if (typeof hideNextVersionButtons === "function") {
-    hideNextVersionButtons();
+  // ✅ SIDE TOOLS MUST EXIST BEFORE HIDING (ToolWire often re-renders)
+  if (typeof wireSideTools === "function") {
+    wireSideTools();
   } else {
-    console.warn("🙈 hideNextVersionButtons() not found");
+    console.warn("🧰 wireSideTools() not found");
+  }
+
+  // ✅ ONLY THIS — replaces all previous hide logic
+  if (typeof installHideNextVersionButtons === "function") {
+    installHideNextVersionButtons();
+  } else {
+    console.warn("🙈 installHideNextVersionButtons() not found");
   }
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
