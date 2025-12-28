@@ -976,30 +976,33 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
     DOC.querySelector("[data-send-top]");
 
 // ================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3
+// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
 // ================================================
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   sendTopBtn.dataset.wired = "true";
 
   sendTopBtn.onclick = () => {
-    const selected = (STORE.step1Photos || [])
-      .filter((p) => p && p.selected)
-      .map((p) => p.url)
-      .filter(Boolean);
+    const urls = getSelectedStep1Urls();
 
-    if (!selected.length) return alert("Select photos first.");
+    console.log("🧪 sendTopBtn: selected urls =", urls.length, urls);
 
-    STORE.holdingZonePhotos = selected.slice(0, MAX_PHOTOS);
+    if (!urls.length) {
+      toast("Select at least 1 photo first.", "bad");
+      return;
+    }
+
+    STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
     STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-    // keep creative separate
-    STORE.creativePhotos = [];
-    renderCreativeThumbs();
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
 
-    renderHoldingZone();
-    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+    toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
   };
 }
+
 
 
 // ==================================================
