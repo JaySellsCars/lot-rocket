@@ -1653,6 +1653,27 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 
     console.log("🟣 AI-WIRE: complete (buttons require data-ai-action)");
   } // ✅ closes wireAiModals()
+// ==================================================
+// TEMP: HIDE NEXT VERSION BUTTONS (SAFE)
+// ==================================================
+(function hideNextVersionButtons() {
+  const labelsToHide = new Set([
+    "AI Image Generation",
+    "AI Video Generation",
+    "Canvas Studio",
+    "Design Studio"
+  ]);
+
+  const buttons = Array.from(document.querySelectorAll("button"));
+  buttons.forEach(btn => {
+    const label = btn.textContent.trim();
+    if (labelsToHide.has(label)) {
+      btn.style.display = "none";
+    }
+  });
+
+  console.log("🧹 Hidden future-feature buttons");
+})();
 
   // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
