@@ -1754,7 +1754,7 @@ try {
   }
 
   if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+    STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
     renderHoldingZone();
     if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
   }
@@ -1767,13 +1767,14 @@ try {
 
   if (typeof wireAiModals === "function") wireAiModals();
 
-  // 🔥 THIS IS THE ONLY CALL (must run after UI exists)
+  // ✅ ONLY THIS — replaces all previous hide logic
   installHideNextVersionButtons();
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
