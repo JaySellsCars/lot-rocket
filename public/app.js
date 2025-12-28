@@ -1743,14 +1743,16 @@ function installHideNextVersionButtons() {
 
 
 // ================================
-// FINAL INIT (SAFE)
+// FINAL INIT (SAFE) ✅ MUST BE LAST (inside DOMContentLoaded)
 // ================================
 try {
+  // Restore Step 1 photos (safe)
   if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
-  if (STORE.holdingZonePhotos?.length) {
+  // Restore Step 3 holding zone + tuner (safe)
+  if (Array.isArray(STORE.holdingZonePhotos) && STORE.holdingZonePhotos.length) {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
 
@@ -1763,16 +1765,27 @@ try {
     }
   }
 
+  // Step 3 thumbs + Social strip (safe)
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
 
+  // Side tools / calculators (safe)
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
 
-  if (typeof wireAiModals === "function") wireAiModals();
+  // AI modals (safe)
+  if (typeof wireAiModals === "function") {
+    wireAiModals();
+  } else {
+    console.warn("🟣 wireAiModals() not found");
+  }
 
   // ✅ ToolWire often builds HERE — do this BEFORE hiding
-  if (typeof wireSideTools === "function") wireSideTools();
+  if (typeof wireSideTools === "function") {
+    wireSideTools();
+  } else {
+    console.warn("🧰 wireSideTools() not found");
+  }
 
   // ✅ ONLY THIS hide logic (persistent)
   if (typeof installHideNextVersionButtons === "function") {
@@ -1785,7 +1798,6 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-
 
 
 
