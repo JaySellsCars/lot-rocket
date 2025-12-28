@@ -620,6 +620,33 @@ function renderHoldingZone() {
     $("holdingZone") ||
     DOC.getElementById("holdingZone") ||
     DOC.querySelector("#holdingZone");
+// ✅ single click = set active + load into tuner (keep if you already do this)
+btn.addEventListener("click", () => {
+  STORE.activeHoldingPhoto = url;
+  if (typeof renderHoldingZone === "function") renderHoldingZone();
+  if (typeof loadPhotoTuner === "function") loadPhotoTuner(url);
+});
+
+// ✅ double click = send to Social-ready strip
+btn.addEventListener("dblclick", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // prefer existing helper if present
+  if (typeof addToSocialReady === "function") {
+    addToSocialReady(url, true);
+  } else if (typeof pushToSocialReady === "function") {
+    pushToSocialReady(url);
+  } else {
+    console.error("❌ No social-ready function found (addToSocialReady/pushToSocialReady missing)");
+    alert("Social-ready function missing");
+    return;
+  }
+
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+  if (typeof toast === "function") toast("Sent to Social-ready ✅", "ok");
+  console.log("✅ Sent to social-ready:", url);
+});
 
   if (!hz) {
     console.warn("❌ renderHoldingZone: #holdingZone not found");
