@@ -1115,9 +1115,9 @@ function sendSelectedToHoldingZone() {
 
   return picked.slice(0, MAX_PHOTOS);
 }
-// ================================
+// ==================================================
 // STEP 1 → SEND TOP PHOTOS BUTTON
-// ================================
+// ==================================================
 if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   sendTopBtn.dataset.wired = "true";
 
@@ -1144,14 +1144,19 @@ function sendSelectedToHoldingZone() {
   STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
   STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-  if (typeof renderHoldingZone === "function") renderHoldingZone();
+  if (typeof renderHoldingZone === "function") {
+    renderHoldingZone();
+  }
+
   if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
     loadPhotoTuner(STORE.activeHoldingPhoto);
   }
 
   console.log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
 
-  if (typeof toast === "function") toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+  if (typeof toast === "function") {
+    toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+  }
 
   const step3 =
     document.querySelector("#creativeHub") ||
@@ -1160,6 +1165,7 @@ function sendSelectedToHoldingZone() {
 
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
+
 
 
 
