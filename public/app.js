@@ -1715,11 +1715,12 @@ function installHideNextVersionButtons() {
 
 
 
+
 // ================================
 // FINAL INIT (SAFE)
 // ================================
 try {
-  if (STORE.lastBoostPhotos?.length) {
+  if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
@@ -1727,7 +1728,9 @@ try {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
 
-    if (typeof renderHoldingZone === "function") renderHoldingZone();
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
+    }
 
     if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
       loadPhotoTuner(STORE.activeHoldingPhoto);
@@ -1756,6 +1759,7 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
