@@ -1115,6 +1115,17 @@ function sendSelectedToHoldingZone() {
 
   return picked.slice(0, MAX_PHOTOS);
 }
+// ================================
+// STEP 1 → SEND TOP PHOTOS BUTTON
+// ================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+
+  sendTopBtn.onclick = () => {
+    console.log("🚀 SEND TOP PHOTOS CLICK");
+    sendSelectedToHoldingZone();
+  };
+}
 
 // ==================================================
 // STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE
