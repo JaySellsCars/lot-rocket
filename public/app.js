@@ -1655,86 +1655,93 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   } // ✅ closes wireAiModals()
 
 // ==================================================
-// HIDE NEXT-VERSION BUTTONS (BULLETPROOF + RE-RUNS)
-// Hides ONLY: AI Image Generation, AI Video Generation, Canvas Studio, Design Studio
+// UI: HIDE NEXT-VERSION BUTTONS (SINGLE SOURCE, BULLETPROOF)
+// Keeps: Workflow / Message / Expert
+// Hides: AI Image, AI Video, Canvas Studio, Design Studio
 // ==================================================
 function installHideNextVersionButtons() {
-  const HIDE_MATCH = [
-    "ai image generation",
-    "ai video generation",
+  // words/phrases to HIDE (match by "contains")
+  const hideContains = [
+    "ai image",
+    "ai video",
     "canvas studio",
     "design studio",
   ];
 
-  const KEEP_MATCH = [
-    "ai work flow expert",
-    "ai message builder",
-    "ai car expert",
+  // actions to HIDE (if your buttons use data-ai-action)
+  const hideActions = new Set([
+    "image_ai",
+    "video_ai",
+    "canvas_studio",
+    "design_studio",
+  ]);
+
+  // words/phrases to KEEP no matter what
+  const keepContains = [
+    "workflow",
+    "message",
+    "expert",
   ];
 
-  const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
+  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
-  // Try to find the rail by locating a known visible tool and walking up
-  function findRailRoot() {
-    // 1) Prefer known containers if they exist
-    const direct =
+  const shouldHide = (btn) => {
+    const label = norm(btn.textContent);
+    const action = norm(btn.getAttribute("data-ai-action") || btn.dataset?.aiAction || "");
+
+    // keep always wins
+    if (keepContains.some((k) => label.includes(k))) return false;
+
+    // hide by action
+    if (action && hideActions.has(action)) return true;
+
+    // hide by label contains
+    if (hideContains.some((h) => label.includes(h))) return true;
+
+    return false;
+  };
+
+  const hideNow = () => {
+    // scope first (tool rail), fallback to whole doc
+    const root =
       document.querySelector("#toolWire") ||
       document.querySelector(".toolwire") ||
       document.querySelector(".side-tools") ||
-      document.querySelector("[data-tool-rail]");
-    if (direct) return direct;
+      document;
 
-    // 2) Otherwise, find a node containing a known label and use its parent stack
-    const all = Array.from(document.querySelectorAll("button, a, [role='button'], div"));
-    const hit = all.find((el) => norm(el.textContent).includes("objection coach") || norm(el.textContent).includes("drill mode"));
-    if (!hit) return document;
-
-    // Walk up to a reasonable container
-    return hit.closest("aside, nav, section, div") || document;
-  }
-
-  function hideNow() {
-    const root = findRailRoot();
-
-    // include: button, a, role=button, and typical clickable divs
-    const nodes = Array.from(root.querySelectorAll("button, a, [role='button'], .tool-btn, .tool-button, .tool-item, div"));
+    const btns = Array.from(root.querySelectorAll("button, [role='button']"));
 
     let hidden = 0;
-    let scanned = 0;
+    btns.forEach((btn) => {
+      if (!btn || btn.dataset?.lrHidden === "true") return;
 
-    nodes.forEach((el) => {
-      const label = norm(el.textContent);
-      if (!label) return;
-
-      // Only touch things that look like tool labels (avoid hiding "Copy", "New Post", etc.)
-      if (!(label.includes("ai") || label.includes("studio") || label.includes("coach") || label.includes("drill"))) return;
-
-      scanned++;
-
-      // Never hide the 3 you said must stay
-      if (KEEP_MATCH.some((k) => label.includes(k))) return;
-
-      // Hide the 4 future tools by partial match (bulletproof)
-      if (HIDE_MATCH.some((h) => label.includes(h))) {
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("visibility", "hidden", "important");
-        el.style.setProperty("pointer-events", "none", "important");
+      if (shouldHide(btn)) {
+        btn.dataset.lrHidden = "true";
+        btn.style.setProperty("display", "none", "important");
+        btn.style.setProperty("visibility", "hidden", "important");
+        btn.style.setProperty("pointer-events", "none", "important");
         hidden++;
       }
     });
 
-    console.log("🙈 hideNextVersionButtons:", { hidden, scanned, root: root === document ? "document" : root.className || root.id || root.tagName });
-  }
+    console.log("🙈 hideNextVersionButtons: hidden =", hidden);
+  };
 
-  // Run once now…
+  // run immediately + after paint + after a short delay (covers late renders)
   hideNow();
+  requestAnimationFrame(hideNow);
+  setTimeout(hideNow, 250);
+  setTimeout(hideNow, 900);
 
-  // …and keep running if the rail re-renders later
-  const obs = new MutationObserver(() => hideNow());
-  obs.observe(document.body, { childList: true, subtree: true });
+  // keep watching for UI being re-rendered
+  if (window.__LR_HIDE_OBSERVER__) return; // prevent duplicates
 
-  console.log("🧹 hideNextVersionButtons observer installed");
+  window.__LR_HIDE_OBSERVER__ = new MutationObserver(() => hideNow());
+  window.__LR_HIDE_OBSERVER__.observe(document.body, { childList: true, subtree: true });
+
+  console.log("✅ hideNextVersionButtons installed");
 }
+
 
 
 
@@ -1758,25 +1765,16 @@ try {
   wireCalculatorPad();
   wireIncomeCalcDirect();
 
-  if (typeof wireAiModals === "function") {
-    wireAiModals();
-  } else {
-    console.warn("🟣 wireAiModals() not found");
-  }
+  if (typeof wireAiModals === "function") wireAiModals();
 
-  // 🔥 HIDE FUTURE BUTTONS (CALL ONCE HERE)
-  if (typeof installHideNextVersionButtons === "function") {
-    installHideNextVersionButtons(); // ✅ preferred (bulletproof + observer)
-  } else if (typeof hideNextVersionButtons === "function") {
-    hideNextVersionButtons(); // ✅ fallback (if you kept the older name)
-  } else {
-    console.warn("🙈 hide buttons function not found");
-  }
+  // 🔥 THIS IS THE ONLY CALL (must run after UI exists)
+  installHideNextVersionButtons();
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 
 
 
