@@ -1030,3 +1030,20 @@ main > section:nth-of-type(3) > div > div:first-child {
 #sendToDesignStudio {
   display: none !important;
 }
+/* ==================================================
+   TEMP: HIDE BOTTOM DEBUG / EXTRA UI (NEXT VERSION)
+   ================================================== */
+#bottomPanel,
+#bottomTools,
+#debugPanel,
+#devPanel,
+#rawOutput,
+#toolOutput,
+#aiOutputPanel,
+.footer-tools,
+.bottom-tools,
+.bottom-panel,
+.dev-tools,
+.debug-tools {
+  display: none !important;
+}
