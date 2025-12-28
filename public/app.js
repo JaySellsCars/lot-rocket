@@ -1070,6 +1070,7 @@ function sendSelectedToHoldingZone() {
 
   if (!urls.length) {
     if (typeof toast === "function") toast("Select at least 1 photo first.", "bad");
+    else alert("Select at least 1 photo first.");
     return;
   }
 
@@ -1082,6 +1083,7 @@ function sendSelectedToHoldingZone() {
   }
 
   console.log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
+
   if (typeof toast === "function") toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
 
   const step3 =
@@ -1092,14 +1094,6 @@ function sendSelectedToHoldingZone() {
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-
-  sendTopBtn.onclick = () => {
-    console.log("🚀 SEND TOP PHOTOS CLICK");
-    sendSelectedToHoldingZone();
-  };
-}
 
 
 
