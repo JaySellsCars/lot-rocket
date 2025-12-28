@@ -1655,29 +1655,33 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
   } // ✅ closes wireAiModals()
 
 // ==================================================
-// HIDE NEXT-VERSION BUTTONS (BULLETPROOF + PERSISTENT)
-// Hides ONLY: AI Image/Video Generation, Canvas Studio, Design Studio
-// Works even if ToolWire renders later / rerenders
+// HIDE NEXT-VERSION BUTTONS (SAFE + PERSISTENT)
+// Hides ONLY: Image AI, Video AI, Canvas, Design
+// Works even if buttons are not <button> + survives rerenders
 // ==================================================
 function installHideNextVersionButtons() {
-  const labelsToHide = new Set([
-    "AI Image Generation",
-    "AI Video Generation",
-    "Canvas Studio",
-    "Design Studio",
-  ]);
+  const targets = new Set(["IMAGE AI", "VIDEO AI", "CANVAS", "DESIGN"]);
 
-  const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
+  const normalize = (s) =>
+    String(s || "")
+      // remove emoji + symbols
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toUpperCase();
 
-  const hidePass = () => {
-    const nodes = Array.from(document.querySelectorAll("button,[role='button'],a"));
+  const hideNow = () => {
+    const nodes = Array.from(
+      document.querySelectorAll("button, a, [role='button'], .tool-btn, .tool-button")
+    );
+
     let hidden = 0;
 
     nodes.forEach((el) => {
-      const label = norm(el.textContent);
+      const label = normalize(el.textContent);
       if (!label) return;
 
-      if (labelsToHide.has(label)) {
+      if (targets.has(label)) {
         el.style.setProperty("display", "none", "important");
         el.style.setProperty("visibility", "hidden", "important");
         el.style.setProperty("pointer-events", "none", "important");
@@ -1685,24 +1689,25 @@ function installHideNextVersionButtons() {
       }
     });
 
-    console.log("🙈 hide future-feature buttons hidden:", hidden);
+    console.log("🙈 installHideNextVersionButtons hidden:", hidden);
     return hidden;
   };
 
-  // run now + again shortly (ToolWire may render after init)
-  hidePass();
-  setTimeout(hidePass, 250);
-  setTimeout(hidePass, 800);
+  // run now + after short delays (covers late renders)
+  hideNow();
+  setTimeout(hideNow, 50);
+  setTimeout(hideNow, 250);
 
-  // install observer ONCE (survives rerenders)
+  // install observer once
   if (installHideNextVersionButtons.__installed) return;
   installHideNextVersionButtons.__installed = true;
 
-  const obs = new MutationObserver(() => hidePass());
+  const obs = new MutationObserver(() => hideNow());
   obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("✅ hide observer installed");
+  console.log("✅ installHideNextVersionButtons observer installed");
 }
+
 
 
 
