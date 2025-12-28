@@ -611,33 +611,71 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
     };
   }
 
-  // ==================================================
-  // HOLDING ZONE (STEP 3 — TUNER SOURCE + SOCIAL SEND)
-  // ==================================================
-  function renderHoldingZone() {
-    if (!holdingZoneEl) return;
+// ==================================================
+// STEP 3 — HOLDING ZONE RENDER (SINGLE SOURCE OF TRUTH)
+// Renders ONLY into: #holdingZone
+// ==================================================
+function renderHoldingZone() {
+  const holdingEl = $("holdingZone");
+  if (!holdingEl) return;
 
-    holdingZoneEl.innerHTML = "";
+  const list = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
 
-    (STORE.holdingZonePhotos || []).forEach((url) => {
-      const img = DOC.createElement("img");
-      img.src = getProxiedImageUrl(url);
-      img.className = "holding-thumb";
-      img.loading = "lazy";
-      img.title = "Click = preview • Double-click = send to Social-ready";
-
-      img.onclick = () => {
-        STORE.activeHoldingPhoto = url;
-        loadPhotoTuner(url);
-      };
-
-      img.ondblclick = () => {
-        addToSocialReady(url, true);
-      };
-
-      holdingZoneEl.appendChild(img);
-    });
+  // If empty: show dropzone UI (if present) and clear holding zone
+  if (!list.length) {
+    holdingEl.innerHTML = "";
+    return;
   }
+
+  // Clear + render thumbs
+  holdingEl.innerHTML = "";
+
+  // normalize to url strings
+  const urls = list
+    .map((p) => (typeof p === "string" ? p : p && p.url ? p.url : ""))
+    .map((u) => String(u || "").trim())
+    .filter(Boolean)
+    .slice(0, MAX_PHOTOS);
+
+  urls.forEach((url) => {
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "holding-thumb-btn";
+
+    const img = DOC.createElement("img");
+    img.className = "holding-thumb-img";
+    img.loading = "lazy";
+    img.alt = "Holding photo";
+    img.src = typeof getProxiedImageUrl === "function" ? getProxiedImageUrl(url) : url;
+
+    // active highlight
+    if (STORE.activeHoldingPhoto === url) btn.classList.add("active");
+
+    // click = set active + load tuner
+    btn.addEventListener("click", () => {
+      STORE.activeHoldingPhoto = url;
+
+      // re-highlight
+      const all = holdingEl.querySelectorAll(".holding-thumb-btn");
+      all.forEach((n) => n.classList.remove("active"));
+      btn.classList.add("active");
+
+      if (typeof loadPhotoTuner === "function") loadPhotoTuner(url);
+      if (typeof applyTunerFilters === "function") applyTunerFilters();
+    });
+
+    // double click = send to social-ready
+    btn.addEventListener("dblclick", () => {
+      if (typeof addToSocialReady === "function") addToSocialReady(url, true);
+      if (typeof renderSocialStrip === "function") renderSocialStrip();
+      if (typeof toast === "function") toast("Sent to Social-ready ✅", "ok");
+    });
+
+    btn.appendChild(img);
+    holdingEl.appendChild(btn);
+  });
+}
+
 
   // ==================================================
   // PHOTO TUNER
