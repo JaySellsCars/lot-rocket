@@ -1657,56 +1657,82 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 // ==================================================
 // HIDE NEXT-VERSION BUTTONS (SAFE + PERSISTENT)
 // Hides ONLY: Image AI, Video AI, Canvas, Design
-// Works even if buttons are not <button> + survives rerenders
+// Works even if elements are <a> or [role=button]
+// Survives ToolWire re-render via MutationObserver + retry
 // ==================================================
 function installHideNextVersionButtons() {
-  const targets = new Set(["IMAGE AI", "VIDEO AI", "CANVAS", "DESIGN"]);
+  const matchers = [
+    /^ai image generation$/i,
+    /^ai video generation$/i,
+    /^canvas studio$/i,
+    /^design studio$/i,
+    /^image ai$/i,
+    /^video ai$/i,
+    /^canvas$/i,
+    /^design$/i,
+  ];
 
   const normalize = (s) =>
     String(s || "")
-      // remove emoji + symbols
-      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
       .replace(/\s+/g, " ")
-      .trim()
-      .toUpperCase();
+      .replace(/[^\w\s]/g, "") // strips emoji/icons characters that land in text
+      .trim();
+
+  const shouldHide = (label) => matchers.some((rx) => rx.test(label));
+
+  const hideOne = (el) => {
+    if (!el || el.dataset.lrHidden === "true") return false;
+    el.dataset.lrHidden = "true";
+    el.setAttribute("aria-hidden", "true");
+    el.hidden = true; // strongest, beats most CSS
+    el.style.setProperty("display", "none", "important");
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+    return true;
+  };
 
   const hideNow = () => {
     const nodes = Array.from(
-      document.querySelectorAll("button, a, [role='button'], .tool-btn, .tool-button")
+      document.querySelectorAll("button, a, [role='button']")
     );
 
-    let hidden = 0;
+    let hiddenCount = 0;
 
     nodes.forEach((el) => {
       const label = normalize(el.textContent);
       if (!label) return;
 
-      if (targets.has(label)) {
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("visibility", "hidden", "important");
-        el.style.setProperty("pointer-events", "none", "important");
-        hidden++;
+      if (shouldHide(label)) {
+        if (hideOne(el)) hiddenCount++;
       }
     });
 
-    console.log("🙈 installHideNextVersionButtons hidden:", hidden);
-    return hidden;
+    console.log("🙈 installHideNextVersionButtons hidden:", hiddenCount);
+    return hiddenCount;
   };
 
-  // run now + after short delays (covers late renders)
+  // run once immediately
   hideNow();
-  setTimeout(hideNow, 50);
-  setTimeout(hideNow, 250);
 
-  // install observer once
-  if (installHideNextVersionButtons.__installed) return;
-  installHideNextVersionButtons.__installed = true;
+  // install observer (once)
+  if (!installHideNextVersionButtons.__installed) {
+    installHideNextVersionButtons.__installed = true;
 
-  const obs = new MutationObserver(() => hideNow());
-  obs.observe(document.body, { childList: true, subtree: true });
+    const obs = new MutationObserver(() => hideNow());
+    obs.observe(document.body, { childList: true, subtree: true });
 
-  console.log("✅ installHideNextVersionButtons observer installed");
+    console.log("✅ hide buttons observer installed");
+  }
+
+  // short retry loop (handles late-render + animations)
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    const n = hideNow();
+    if (n > 0 || tries >= 25) clearInterval(timer); // ~5s max
+  }, 200);
 }
+
 
 
 
