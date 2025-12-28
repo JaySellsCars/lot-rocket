@@ -964,27 +964,71 @@ if (sendTopPhotosBtn && sendTopPhotosBtn.dataset.wired !== "true") {
       applyTunerFilters();
     }
   }
-  // ==================================================
-  // STEP 1 — BUTTON REFS (MUST EXIST BEFORE WIRING)
-  // ==================================================
-  const sendTopBtn =
-    $("sendTopBtn") ||
-    $("sendTopPhotosBtn") ||
-    $("sendToCreativeLab") ||
-    $("sendToCreativeLabBtn") ||
-    $("sendToDesignStudio") ||
-    DOC.querySelector("[data-send-top]");
+// ==================================================
+// STEP 1 — BUTTON REFS (MUST EXIST BEFORE WIRING)
+// ==================================================
+const sendTopBtn =
+  $("sendTopBtn") ||
+  $("sendTopPhotosBtn") ||
+  $("sendToCreativeLab") ||
+  $("sendToCreativeLabBtn") ||
+  $("sendToDesignStudio") ||
+  DOC.querySelector("[data-send-top]");
 
-// ================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
-// ================================================
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
+// ==================================================
+// STEP 1 HELPERS (SELECTED URLS)
+// ==================================================
+function getSelectedStep1Urls() {
+  // 1) Prefer STORE.step1Photos object format if it exists
+  if (Array.isArray(STORE.step1Photos) && STORE.step1Photos.length) {
+    const picked = STORE.step1Photos
+      .filter((p) => p && typeof p === "object" && p.url && p.selected)
+      .map((p) => p.url)
+      .filter(Boolean);
 
-  sendTopBtn.onclick = () => {
-    const urls = getSelectedStep1Urls();
+    if (picked.length) return picked.slice(0, MAX_PHOTOS);
+  }
+
+  // 2) If selection is tracked by Set
+  if (STORE.step1Selected && STORE.step1Selected instanceof Set) {
+    const picked = Array.from(STORE.step1Selected).filter(Boolean);
+    if (picked.length) return picked.slice(0, MAX_PHOTOS);
+  }
+
+  // 3) HARD FALLBACK: read the DOM selected state from Step 1 grid
+  const grid =
+    document.querySelector("#photoGrid") ||
+    document.querySelector("#step1PhotoGrid") ||
+    document.querySelector(".photo-grid") ||
+    document.querySelector("#boostPhotoGrid");
+
+  if (!grid) return [];
+
+  const picked = [];
+  const nodes = grid.querySelectorAll(
+    "button.photo-thumb-btn.selected, button.photo-thumb-btn.photo-thumb-selected"
+  );
+
+  nodes.forEach((btn) => {
+    const img = btn.querySelector("img");
+    const src =
+      img?.getAttribute("data-original") ||
+      img?.getAttribute("data-src") ||
+      img?.src ||
+      "";
+    if (src) picked.push(src);
+  });
+
+  return picked.slice(0, MAX_PHOTOS);
+}
+
+// ==================================================
+// STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE
+// ==================================================
 function sendSelectedToHoldingZone() {
   const urls = getSelectedStep1Urls();
+
+  console.log("🧪 sendSelectedToHoldingZone urls =", urls.length, urls);
 
   if (!urls.length) {
     toast("Select at least 1 photo first.", "bad");
@@ -1010,68 +1054,18 @@ function sendSelectedToHoldingZone() {
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
-    console.log("🧪 sendTopBtn: selected urls =", urls.length, urls);
+// ================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
+// ================================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
 
-    if (!urls.length) {
-      toast("Select at least 1 photo first.", "bad");
-      return;
-    }
-
-    STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-    if (typeof renderHoldingZone === "function") renderHoldingZone();
-    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-      loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
-
-    toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
+  sendTopBtn.onclick = () => {
+    console.log("🚀 SEND TOP PHOTOS CLICK");
+    sendSelectedToHoldingZone();
   };
 }
 
-
-
-// ==================================================
-// STEP 1 HELPERS (SELECTED URLS)
-// ==================================================
-function getSelectedStep1Urls() {
-  // 1) Prefer STORE.step1Photos object format if it exists
-  if (Array.isArray(STORE.step1Photos) && STORE.step1Photos.length) {
-    const picked = STORE.step1Photos
-      .filter((p) => p && typeof p === "object" && p.url && p.selected)
-      .map((p) => p.url)
-      .filter(Boolean);
-
-    if (picked.length) return picked.slice(0, MAX_PHOTOS);
-  }
-
-  // 2) If selection is tracked by Set
-  if (STORE.step1Selected && STORE.step1Selected instanceof Set) {
-    const picked = Array.from(STORE.step1Selected).filter(Boolean);
-    if (picked.length) return picked.slice(0, MAX_PHOTOS);
-  }
-
-  // 3) HARD FALLBACK: read the DOM "selected" state from Step 1 grid
-  // (This fixes cases where checkmarks toggle but STORE doesn't update)
-  const grid =
-    document.querySelector("#photoGrid") ||
-    document.querySelector("#step1PhotoGrid") ||
-    document.querySelector(".photo-grid") ||
-    document.querySelector("#boostPhotoGrid");
-
-  if (!grid) return [];
-
-  const picked = [];
-  const nodes = grid.querySelectorAll("button.photo-thumb-btn.selected, button.photo-thumb-btn.photo-thumb-selected");
-
-  nodes.forEach((btn) => {
-    const img = btn.querySelector("img");
-    const src = img?.getAttribute("data-original") || img?.getAttribute("data-src") || img?.src || "";
-    if (src) picked.push(src);
-  });
-
-  return picked.slice(0, MAX_PHOTOS);
-}
 
 
 
