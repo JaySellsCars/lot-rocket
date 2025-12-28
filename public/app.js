@@ -1674,6 +1674,44 @@ if (boostBtn && boostBtn.dataset.wired !== "true") {
 
   console.log("🧹 Hidden future-feature buttons");
 })();
+// ==================================================
+// UI: HIDE NEXT VERSION BUTTONS (SAFE, REVERSIBLE)
+// Hides ONLY: AI Image Generation, AI Video Generation, Canvas Studio, Design Studio
+// ==================================================
+function hideNextVersionButtons() {
+  const labelsToHide = new Set([
+    "AI Image Generation",
+    "AI Video Generation",
+    "Canvas Studio",
+    "Design Studio",
+  ]);
+
+  // try to scope to the side-tools rail first (faster + safer)
+  const rail =
+    document.querySelector("#toolWire") ||
+    document.querySelector(".toolwire") ||
+    document.querySelector(".side-tools") ||
+    document;
+
+  const btns = Array.from(rail.querySelectorAll("button"));
+
+  let hiddenCount = 0;
+
+  btns.forEach((btn) => {
+    const label = (btn.textContent || "").replace(/\s+/g, " ").trim();
+    if (!label) return;
+
+    if (labelsToHide.has(label)) {
+      // IMPORTANT: force override
+      btn.style.setProperty("display", "none", "important");
+      btn.style.setProperty("visibility", "hidden", "important");
+      btn.style.setProperty("pointer-events", "none", "important");
+      hiddenCount++;
+    }
+  });
+
+  console.log("🙈 hideNextVersionButtons hidden:", hiddenCount);
+}
 
 // ==================================================
 // FINAL INIT (SAFE) ✅ MUST BE LAST
