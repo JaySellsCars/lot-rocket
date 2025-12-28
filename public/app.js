@@ -1739,6 +1739,81 @@ function installHideNextVersionButtons() {
 
 
 
+// ==================================================
+// HIDE NEXT-VERSION UI (SAFE + PERSISTENT)
+// Hides ONLY: Image AI, Video AI, Canvas, Design
+// Also hides any Canvas/Design Studio sections/modals if present
+// ==================================================
+function installHideNextVersionButtons() {
+  // Match both old + new labels (future-proof)
+  const labelsToHide = new Set([
+    // new short labels
+    "Image AI",
+    "Video AI",
+    "Canvas",
+    "Design",
+
+    // older long labels
+    "AI Image Generation",
+    "AI Video Generation",
+    "Canvas Studio",
+    "Design Studio",
+  ]);
+
+  const normalize = (s) => String(s || "").replace(/\s+/g, " ").trim();
+
+  const hideNow = () => {
+    let hidden = 0;
+
+    // 1) Hide buttons by label (ANYWHERE, not just rail)
+    const btns = Array.from(document.querySelectorAll("button, [role='button']"));
+
+    btns.forEach((el) => {
+      const label = normalize(el.textContent);
+      if (!label) return;
+
+      if (labelsToHide.has(label)) {
+        el.style.setProperty("display", "none", "important");
+        el.style.setProperty("visibility", "hidden", "important");
+        el.style.setProperty("pointer-events", "none", "important");
+        hidden++;
+      }
+    });
+
+    // 2) Hide known studio containers if they exist (optional safety)
+    const maybeHideSelectors = [
+      "#designStudio",
+      "#designStudioModal",
+      "#designStudioPanel",
+      "#canvasStudio",
+      "#canvasStudioModal",
+      "#canvasStudioPanel",
+    ];
+
+    maybeHideSelectors.forEach((sel) => {
+      const node = document.querySelector(sel);
+      if (node) {
+        node.style.setProperty("display", "none", "important");
+        hidden++;
+      }
+    });
+
+    console.log("🙈 hideNextVersionButtons hidden:", hidden);
+    return hidden;
+  };
+
+  // Run now
+  hideNow();
+
+  // Install observer once (survive re-renders)
+  if (installHideNextVersionButtons.__installed) return;
+  installHideNextVersionButtons.__installed = true;
+
+  const obs = new MutationObserver(() => hideNow());
+  obs.observe(document.body, { childList: true, subtree: true });
+
+  console.log("✅ hideNextVersionButtons observer installed");
+}
 
 
 
