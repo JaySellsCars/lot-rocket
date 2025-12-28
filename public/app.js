@@ -1062,8 +1062,20 @@ function getSelectedStep1Urls() {
 }
 
 
+// ================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3
+// ================================
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+
+  sendTopBtn.onclick = () => {
+    console.log("🚀 SEND TOP PHOTOS CLICK");
+    sendSelectedToHoldingZone();
+  };
+}
+
 // ==================================================
-// STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE (REQUIRED)
+// STEP 1 → SEND SELECTED → STEP 3 HOLDING ZONE
 // ==================================================
 function sendSelectedToHoldingZone() {
   const urls = getSelectedStep1Urls();
@@ -1079,10 +1091,7 @@ function sendSelectedToHoldingZone() {
   STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
   STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-  if (typeof renderHoldingZone === "function") {
-    renderHoldingZone();
-  }
-
+  if (typeof renderHoldingZone === "function") renderHoldingZone();
   if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
     loadPhotoTuner(STORE.activeHoldingPhoto);
   }
@@ -1092,34 +1101,8 @@ function sendSelectedToHoldingZone() {
   if (typeof toast === "function") {
     toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
   }
-
-  const step3 =
-    document.querySelector("#creativeHub") ||
-    document.querySelector("#step3") ||
-    document.querySelector("#creativeLab");
-
-  if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
-
-// ==================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
-// ==================================================
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-
-  sendTopBtn.onclick = () => {
-    console.log("🚀 SEND TOP PHOTOS CLICK");
-
-    if (typeof sendSelectedToHoldingZone !== "function") {
-      console.error("❌ sendSelectedToHoldingZone() missing");
-      alert("Internal error: sendSelectedToHoldingZone not found");
-      return;
-    }
-
-    sendSelectedToHoldingZone();
-  };
-}
 
 
 // ==================================================
