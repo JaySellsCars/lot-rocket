@@ -1256,42 +1256,7 @@ const isKeep = (el) => {
   return false;
 };
 
-function installHideNextVersionUI() {
-  if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
-  window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
 
-  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-
-  const HIDE_TEXT = [
-    "video script",
-    "shot list",
-    "ai video generator",
-    "video generator",
-    "thumbnail prompt",
-    "thumbnail",
-    "canvas studio",
-    "canvas",
-    "design studio",
-    "design studio 3.0",
-    "konva",
-    "fabric",
-  ];
-
-  const HIDE_ACTIONS = new Set([
-    "video_ai",
-    "image_ai",
-    "video_generator",
-    "image_generator",
-    "video_script",
-    "shot_list",
-    "thumbnail_prompt",
-    "canvas",
-    "canvas_studio",
-    "design",
-    "design_studio",
-    "design_studio_3",
-    "design_studio_3_0",
-  ]);
 
   const HIDE_ID_CLASS_RX =
     /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|canvasstudio)/i;
