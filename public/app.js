@@ -26,6 +26,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const log = (...a) => console.log(...a);
   const warn = (...a) => console.warn(...a);
+  // ==================================================
+  // UI HIDER: SINGLE AUTHORITY GUARD
+  // ==================================================
+  if (window.__LOTROCKET_UI_HIDER_INSTALLED__) {
+    console.warn("🧯 UI hider already installed — skipping duplicate");
+  }
+  window.__LOTROCKET_UI_HIDER_INSTALLED__ = true;
 
   // ================================
   // CONSTANTS + SINGLE STORE
