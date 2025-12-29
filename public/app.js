@@ -150,38 +150,57 @@ document.addEventListener("DOMContentLoaded", () => {
     log("✅ CLOSE MODAL:", modalEl.id);
   }
 
-  function wireSideTools() {
-    // OPEN buttons
-    DOC.querySelectorAll(".floating-tools [data-modal-target]").forEach((btn) => {
+function wireSideTools() {
+  // ==================================================
+  // OPEN buttons (support multiple rails)
+  // ==================================================
+  const rail =
+    DOC.querySelector(".floating-tools") ||
+    DOC.querySelector("#toolWire") ||
+    DOC.querySelector(".toolwire") ||
+    DOC.querySelector(".side-tools") ||
+    DOC.querySelector("[data-toolwire]") ||
+    DOC;
+
+  const openBtns = Array.from(rail.querySelectorAll("[data-modal-target]"));
+
+  openBtns.forEach((btn) => {
+    if (btn.dataset.wired === "true") return;
+    btn.dataset.wired = "true";
+
+    const targetId = (btn.getAttribute("data-modal-target") || "").trim();
+    if (!targetId) return;
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openSideModal(targetId);
+    });
+  });
+
+  // ==================================================
+  // CLOSE buttons (inside modals)
+  // ==================================================
+  DOC.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close").forEach(
+    (btn) => {
       if (btn.dataset.wired === "true") return;
       btn.dataset.wired = "true";
-
-      const targetId = btn.getAttribute("data-modal-target");
-      if (!targetId) return;
 
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        openSideModal(targetId);
+        const modal = btn.closest(".side-modal");
+        closeSideModal(modal);
       });
-    });
+    }
+  );
 
-    // CLOSE buttons
-    DOC.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close").forEach(
-      (btn) => {
-        if (btn.dataset.wired === "true") return;
-        btn.dataset.wired = "true";
+  log("🧰 Side tools wired:", {
+    openBtns: openBtns.length,
+    rail: rail === DOC ? "document" : (rail.id || rail.className || rail.tagName),
+  });
+}
 
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          const modal = btn.closest(".side-modal");
-          closeSideModal(modal);
-        });
-      }
-    );
-
-    log("🧰 Side tools wired");
-  }
 
   // ==================================================
   // CALCULATOR PAD (simple)
