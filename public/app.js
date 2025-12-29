@@ -1273,13 +1273,23 @@ const isKeep = (el) =>
   const HIDE_ID_CLASS_RX =
     /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|design-studio|canvasstudio|canvas-studio)/i;
 
-  const hideEl = (el, reason) => {
-    if (!el) return false;
-    if (el.dataset && el.dataset.lrHidden === "1") return false;
+const hideEl = (el, reason) => {
+  if (!el) return false;
 
-    if (el.dataset) el.dataset.lrHidden = "1";
-    el.setAttribute?.("aria-hidden", "true");
-    el.hidden = true;
+  // Never hide protected elements (Step 3, etc.)
+  if (isKeep(el)) return false;
+
+  // Prevent double-processing
+  if (el.dataset && el.dataset.lrHidden === "1") return false;
+
+  el.dataset.lrHidden = "1";
+  el.setAttribute("aria-hidden", "true");
+  el.style.setProperty("display", "none", "important");
+  el.style.setProperty("visibility", "hidden", "important");
+  el.style.setProperty("pointer-events", "none", "important");
+
+  return true;
+};
 
     // important: override any layout CSS
     el.style.setProperty("display", "none", "important");
