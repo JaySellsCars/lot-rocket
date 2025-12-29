@@ -1331,6 +1331,18 @@ function installHideNextVersionUI() {
       .forEach((el) => hideEl(el));
 
     // Kill by data-ai-action
+  // ✅ DO NOT HIDE these launch-critical floating tools (adjust if needed)
+const KEEP_ACTIONS = new Set([
+  "objection_coach",
+  "ask_ai",
+  "message_builder",
+  "workflow_builder",
+  "drill_master",
+  "car_expert",
+  "payment_calc",
+  "income_calc",
+]);
+  
 document.querySelectorAll("[data-ai-action]").forEach((btn) => {
   const a = norm(btn.getAttribute("data-ai-action"));
   if (!a) return;
