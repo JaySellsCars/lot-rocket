@@ -1239,13 +1239,11 @@ function wireSideTools() {
 
 // ==================================================
 // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
-// Kills: Video Script/Shot List + Canvas/Design Studio panels + any Konva/Fabric mounts
-// Survives DOM injections via MutationObserver.
+// Kills: Video Script / Shot List / Canvas / Design Studio
+// Preserves Step 3 + Core Workflow
 // ==================================================
 
-// ✅ NEVER HIDE these containers (launch-critical UI)
-// NOTE: we protect the KEEP element itself + any ancestor that contains it,
-// but we still allow hiding items *inside* it (so Canvas Studio can be killed).
+// ✅ NEVER HIDE these (launch-critical UI)
 const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
 const getKeepNodes = () => KEEP_SELECTORS.map((s) => document.querySelector(s)).filter(Boolean);
 
@@ -1253,25 +1251,17 @@ const isKeep = (el) => {
   if (!el) return false;
   const keeps = getKeepNodes();
   if (!keeps.length) return false;
-
-  // protect the keep node itself
   if (keeps.some((k) => el === k)) return true;
-
-  // protect any ancestor that contains the keep node (prevents nuking Step 3)
   if (keeps.some((k) => el.contains && el.contains(k))) return true;
-
-  return false; // allow hiding children inside Step 3
+  return false;
 };
 
-
 function installHideNextVersionUI() {
-  // hard guard: prevents duplicates even if called multiple times
   if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
   window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
 
   const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
-  // 1) keyword kills (text anywhere inside a panel)
   const HIDE_TEXT = [
     "video script",
     "shot list",
@@ -1287,7 +1277,6 @@ function installHideNextVersionUI() {
     "fabric",
   ];
 
-  // 2) strongest kills (your buttons)
   const HIDE_ACTIONS = new Set([
     "video_ai",
     "image_ai",
@@ -1304,38 +1293,26 @@ function installHideNextVersionUI() {
     "design_studio_3_0",
   ]);
 
-  // 3) ID/class kills
   const HIDE_ID_CLASS_RX =
-    /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|design-studio|canvasstudio|canvas-studio)/i;
+    /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|canvasstudio)/i;
 
   const hideEl = (el, reason) => {
     if (!el) return false;
-
-    // Never hide protected elements (Step 3, etc.)
     if (isKeep(el)) return false;
+    if (el.dataset?.lrHidden === "1") return false;
 
-    // Prevent double-processing
-    if (el.dataset && el.dataset.lrHidden === "1") return false;
-
-    if (el.dataset) el.dataset.lrHidden = "1";
+    el.dataset.lrHidden = "1";
     el.setAttribute("aria-hidden", "true");
-    el.hidden = true;
-
-    // important: override any layout CSS
     el.style.setProperty("display", "none", "important");
     el.style.setProperty("visibility", "hidden", "important");
     el.style.setProperty("pointer-events", "none", "important");
-
-    // uncomment if you want proof:
-    // console.log("🙈 HIDING:", reason, el);
 
     return true;
   };
 
   const matchesText = (el) => {
     const t = norm(el.textContent);
-    if (!t) return false;
-    return HIDE_TEXT.some((k) => t.includes(k));
+    return !!t && HIDE_TEXT.some((k) => t.includes(k));
   };
 
   const matchesIdClass = (el) => {
@@ -1345,64 +1322,45 @@ function installHideNextVersionUI() {
   };
 
   const pass = () => {
-    // Always hide Step 3 design button for launch
-    hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
+    // Always hide Step 3 launch button
+    hideEl(document.getElementById("sendToDesignStudio"));
 
-    // ✅ HARD KILL: floating tools bar (your 4 buttons)
-    document.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach((el) => {
-      hideEl(el, "floating-tools bar");
-    });
+    // Kill floating toolbars
+    document
+      .querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar")
+      .forEach((el) => hideEl(el));
 
-    // A) Kill by data-ai-action (and parent panels)
+    // Kill by data-ai-action
     document.querySelectorAll("[data-ai-action]").forEach((btn) => {
       const a = norm(btn.getAttribute("data-ai-action"));
       if (!a) return;
       if (HIDE_ACTIONS.has(a)) {
-        hideEl(btn, `data-ai-action=${a}`);
-
-        // IMPORTANT: do NOT use generic div here (it can nuke Step 3 wrappers)
-        const parent = btn.closest(
-          "section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool"
-        );
-        if (parent) hideEl(parent, `parent-of-action=${a}`);
+        hideEl(btn);
+        const parent = btn.closest("section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal");
+        if (parent) hideEl(parent);
       }
     });
 
-    // B) Kill panels by text OR id/class match
+    // Kill by content or class
     document
       .querySelectorAll("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal")
       .forEach((box) => {
-        if (matchesText(box) || matchesIdClass(box)) {
-          hideEl(box, "panel-match(text/id/class)");
-          return;
-        }
-
-        // also check headings inside
-        const h = box.querySelector("h1,h2,h3,h4,h5,strong,b");
-        if (h && (matchesText(h) || matchesIdClass(h))) {
-          hideEl(box, "heading-match(text/id/class)");
-        }
+        if (matchesText(box) || matchesIdClass(box)) hideEl(box);
       });
 
-    // C) Kill any remaining standalone buttons/links with matching labels
-    document.querySelectorAll("button,a,[role='button']").forEach((el) => {
-      if (matchesText(el) || matchesIdClass(el)) hideEl(el, "button/label match");
-    });
-
-    // D) Kill Konva/Fabric mounts directly (if they exist outside panels)
+    // Kill canvas / konva mounts
     document
       .querySelectorAll("canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']")
       .forEach((el) => {
         const mount =
           el.closest("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal") || el;
-        hideEl(mount, "konva/fabric mount");
+        hideEl(mount);
       });
   };
 
-  // initial pass
+  // initial + reactive pass
   pass();
 
-  // observe late injections (single observer)
   if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
     const obs = new MutationObserver(() => {
       if (window.__LOTROCKET_UI_HIDER_TICK__) return;
@@ -1417,7 +1375,6 @@ function installHideNextVersionUI() {
     window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
   }
 
-  // extra forced passes (covers slow render)
   let tries = 0;
   const t = setInterval(() => {
     tries++;
@@ -1425,8 +1382,9 @@ function installHideNextVersionUI() {
     if (tries >= 25) clearInterval(t);
   }, 200);
 
-  console.log("✅ UI hider installed (authoritative v2)");
+  console.log("✅ UI hider installed (authoritative)");
 }
+
 
 // ==================================================
 
