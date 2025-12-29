@@ -1243,9 +1243,26 @@ function wireSideTools() {
 // Survives DOM injections via MutationObserver.
 // ==================================================
 
-// ✅ NEVER HIDE these (launch-critical UI)
+// ✅ NEVER HIDE these containers (launch-critical UI)
+// NOTE: we protect the KEEP element itself + any ancestor that contains it,
+// but we still allow hiding items *inside* it (so Canvas Studio can be killed).
 const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
-const isKeep = (el) => !!el && KEEP_SELECTORS.some((sel) => el && el.closest && el.closest(sel));
+const getKeepNodes = () => KEEP_SELECTORS.map((s) => document.querySelector(s)).filter(Boolean);
+
+const isKeep = (el) => {
+  if (!el) return false;
+  const keeps = getKeepNodes();
+  if (!keeps.length) return false;
+
+  // protect the keep node itself
+  if (keeps.some((k) => el === k)) return true;
+
+  // protect any ancestor that contains the keep node (prevents nuking Step 3)
+  if (keeps.some((k) => el.contains && el.contains(k))) return true;
+
+  return false; // allow hiding children inside Step 3
+};
+
 
 function installHideNextVersionUI() {
   // hard guard: prevents duplicates even if called multiple times
