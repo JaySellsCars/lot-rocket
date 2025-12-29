@@ -1414,15 +1414,17 @@ document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
     // ✅ Build ToolWire / floating tools first
     if (typeof wireSideTools === "function") wireSideTools();
 
-// ✅ ONE hide system (persistent) — FIRE NOW + AFTER DOM PAINT + AFTER LATE INJECTS
+// ✅ ONE hide system (persistent) — FIRE ONCE + OBSERVER HANDLES LATE INJECTS
 if (typeof installHideNextVersionUI === "function") {
-  installHideNextVersionUI();
-  requestAnimationFrame(() => installHideNextVersionUI());
-  setTimeout(() => installHideNextVersionUI(), 350);
-  setTimeout(() => installHideNextVersionUI(), 1200);
+  // prevent repeated calls (your old rAF/timeouts cause flash/vanish)
+  if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+    window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+    installHideNextVersionUI();
+  }
 } else {
   console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
 }
+
 
 
     log("✅ FINAL INIT COMPLETE");
