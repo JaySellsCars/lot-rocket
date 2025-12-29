@@ -1332,15 +1332,7 @@ document.querySelectorAll("[data-ai-action]").forEach((btn) => {
         if (matchesText(box) || matchesIdClass(box)) hideEl(box);
       });
 
-    // Kill canvas / konva mounts
-// ✅ KEEP floating tools bar (launch tools) — never hide the bar
-document.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach((bar) => {
-  bar.hidden = false;
-  bar.removeAttribute("aria-hidden");
-  bar.style.setProperty("display", "flex", "important");
-  bar.style.setProperty("visibility", "visible", "important");
-  bar.style.setProperty("pointer-events", "auto", "important");
-});
+
 
 // ✅ HARD-KILL: only specific AI buttons INSIDE the floating bar
 document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
