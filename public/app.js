@@ -98,6 +98,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return rawUrl;
     }
   }
+try {
+  if (typeof installHideNextVersionUI === "function") {
+    installHideNextVersionUI();
+  }
+} catch (e) {
+  console.error("❌ UI hider failed", e);
+}
 
   // ==================================================
   // SIDE TOOLS (FLOATING MODALS)
