@@ -1368,26 +1368,23 @@ document.querySelectorAll("[data-ai-action]").forEach((btn) => {
       });
 
     // Kill canvas / konva mounts
-    document
-      .querySelectorAll("canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']")
-      .forEach((el) => {
-        const mount =
-          el.closest("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal") || el;
-        hideEl(mount);
-      });
-  };
+// ✅ KEEP floating tools bar (launch tools) — never hide the bar
+document.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach((bar) => {
+  bar.hidden = false;
+  bar.removeAttribute("aria-hidden");
+  bar.style.setProperty("display", "flex", "important");
+  bar.style.setProperty("visibility", "visible", "important");
+  bar.style.setProperty("pointer-events", "auto", "important");
+});
 
-  // initial + reactive pass
-  pass();
-// ✅ HARD-KILL: Canvas Studio / Design Studio containers (common IDs/classes)
-// ✅ KEEP floating tools bar (launch tools)
-// (Do NOT hide the container. Only hide specific AI buttons if they exist inside.)
+// ✅ HARD-KILL: only specific AI buttons INSIDE the floating bar
 document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
   const a = norm(btn.getAttribute("data-ai-action"));
-  if (HIDE_ACTIONS.has(a)) {
+  if (a && HIDE_ACTIONS.has(a)) {
     hideEl(btn, `floating ai button action=${a}`);
   }
 });
+
 
 
   if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
