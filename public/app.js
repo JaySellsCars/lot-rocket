@@ -1223,7 +1223,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // Kills: Video Script/Shot List + Canvas/Design Studio panels + any Konva/Fabric mounts
 // Survives DOM injections via MutationObserver.
 // ==================================================
-function installHideNextVersionUI() {
+// ✅ NEVER HIDE these (launch-critical UI)
+const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
+const isKeep = (el) =>
+  !!el && KEEP_SELECTORS.some((sel) => el === document.querySelector(sel) || el.closest(sel));
+
+  function installHideNextVersionUI() {
   // hard guard: prevents duplicates even if called multiple times
   if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
   window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
