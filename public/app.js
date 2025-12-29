@@ -1218,162 +1218,161 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // ==================================================
-  // HIDE NEXT-VERSION UI (SAFE + PERSISTENT) — SINGLE SOURCE
-  // Hides:
-  // - Tool buttons: Image AI / Video AI / Canvas / Design (by data-ai-action + label fallback)
-  // - Step 3 “Send Selected to Design Studio …” button
-  // - Bottom sections for Video Script / Canvas / Design (by ids + heading text)
-  // ==================================================
-  function installHideNextVersionUI() {
-    const actionsToHide = new Set([
-      "image_ai",
-      "video_ai",
-      "canvas_studio",
-      "design_studio",
-      "canvas",
-      "design",
-      "image",
-      "video",
-    ]);
+// ==================================================
+// UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
+// Kills: Video Script/Shot List + Canvas/Design Studio panels + any Konva/Fabric mounts
+// Survives DOM injections via MutationObserver.
+// ==================================================
+function installHideNextVersionUI() {
+  // hard guard: prevents duplicates even if called multiple times
+  if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
+  window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
 
-    const labelMatchers = [
-      /^ai image generation$/i,
-      /^ai video generation$/i,
-      /^canvas studio$/i,
-      /^design studio$/i,
-      /^image ai$/i,
-      /^video ai$/i,
-      /^canvas$/i,
-      /^design$/i,
-    ];
+  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
-    const normalize = (s) =>
-      String(s || "")
-        .replace(/\s+/g, " ")
-        .replace(/[^\w\s]/g, "")
-        .trim();
+  // 1) keyword kills (text anywhere inside a panel)
+  const HIDE_TEXT = [
+    "video script",
+    "shot list",
+    "ai video generator",
+    "video generator",
+    "thumbnail prompt",
+    "thumbnail",
+    "canvas studio",
+    "canvas",
+    "design studio",
+    "design studio 3.0",
+    "konva",
+    "fabric",
+  ];
 
-    const shouldHideLabel = (label) => labelMatchers.some((rx) => rx.test(label));
+  // 2) strongest kills (your buttons)
+  const HIDE_ACTIONS = new Set([
+    "video_ai",
+    "image_ai",
+    "video_generator",
+    "image_generator",
+    "video_script",
+    "shot_list",
+    "thumbnail_prompt",
+    "canvas",
+    "canvas_studio",
+    "design",
+    "design_studio",
+    "design_studio_3",
+    "design_studio_3_0",
+  ]);
 
-    const hideEl = (el) => {
-      if (!el || el.dataset.lrHidden === "true") return false;
-      el.dataset.lrHidden = "true";
-      el.setAttribute("aria-hidden", "true");
-      el.hidden = true;
-      el.style.setProperty("display", "none", "important");
-      el.style.setProperty("visibility", "hidden", "important");
-      el.style.setProperty("pointer-events", "none", "important");
-      return true;
-    };
+  // 3) ID/class kills (this is why yours are still showing)
+  //    (covers common names even if text doesn’t match)
+  const HIDE_ID_CLASS_RX =
+    /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|design-studio|canvasstudio|canvas-studio)/i;
 
-    const hideBottomPanelsById = () => {
-      const selectors = [
-        // common “studio/script” panel IDs people use
-        "#videoScript",
-        "#videoScriptPanel",
-        "#videoScriptSection",
-        "#videoSection",
-        "#canvasStudio",
-        "#canvasStudioPanel",
-        "#canvasStudioSection",
-        "#designStudio",
-        "#designStudioPanel",
-        "#designStudioSection",
-        "#canvasPanel",
-        "#designPanel",
+  const hideEl = (el, reason) => {
+    if (!el) return false;
+    if (el.dataset && el.dataset.lrHidden === "1") return false;
 
-        // your known Step 3 button
-        "#sendToDesignStudio",
-      ];
+    if (el.dataset) el.dataset.lrHidden = "1";
+    el.setAttribute?.("aria-hidden", "true");
+    el.hidden = true;
 
-      let n = 0;
-      selectors.forEach((sel) => {
-        const el = DOC.querySelector(sel);
-        if (el) n += hideEl(el) ? 1 : 0;
+    // important: override any layout CSS
+    el.style.setProperty("display", "none", "important");
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+
+    // uncomment if you want proof:
+    // console.log("🙈 HIDING:", reason, el);
+
+    return true;
+  };
+
+  const matchesText = (el) => {
+    const t = norm(el.textContent);
+    if (!t) return false;
+    return HIDE_TEXT.some((k) => t.includes(k));
+  };
+
+  const matchesIdClass = (el) => {
+    const id = el.id || "";
+    const cls = el.className || "";
+    return HIDE_ID_CLASS_RX.test(id) || HIDE_ID_CLASS_RX.test(String(cls));
+  };
+
+  const pass = () => {
+    // Always hide Step 3 design button for launch
+    hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
+
+    // A) Kill by data-ai-action (and parent panels)
+    document.querySelectorAll("[data-ai-action]").forEach((btn) => {
+      const a = norm(btn.getAttribute("data-ai-action"));
+      if (!a) return;
+      if (HIDE_ACTIONS.has(a)) {
+        hideEl(btn, `data-ai-action=${a}`);
+        hideEl(btn.closest("section, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool, article, div"), `parent-of-action=${a}`);
+      }
+    });
+
+    // B) Kill panels by text OR id/class match
+    document.querySelectorAll("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal, div").forEach((box) => {
+      // only hide “big” containers, not every tiny div:
+      const isBig = box.matches("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal");
+      const shouldHide = matchesText(box) || matchesIdClass(box);
+
+      if (shouldHide && (isBig || box.querySelector("canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']"))) {
+        hideEl(box, "panel-match(text/id/class)");
+      }
+
+      // also check headings inside
+      const h = box.querySelector("h1,h2,h3,h4,h5,strong,b");
+      if (h && (matchesText(h) || matchesIdClass(h))) {
+        hideEl(box, "heading-match(text/id/class)");
+      }
+    });
+
+    // C) Kill any remaining standalone buttons/links with matching labels
+    document.querySelectorAll("button,a,[role='button']").forEach((el) => {
+      if (matchesText(el) || matchesIdClass(el)) hideEl(el, "button/label match");
+    });
+
+    // D) Kill Konva/Fabric mounts directly (if they exist outside panels)
+    document.querySelectorAll(
+      "canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']"
+    ).forEach((el) => {
+      // hide the mount container if possible
+      hideEl(el.closest("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal, div") || el, "konva/fabric mount");
+    });
+  };
+
+  // initial pass
+  pass();
+
+  // observe late injections (single observer)
+  if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
+    const obs = new MutationObserver(() => {
+      if (window.__LOTROCKET_UI_HIDER_TICK__) return;
+      window.__LOTROCKET_UI_HIDER_TICK__ = true;
+      requestAnimationFrame(() => {
+        window.__LOTROCKET_UI_HIDER_TICK__ = false;
+        pass();
       });
-      return n;
-    };
+    });
 
-    const hideBottomPanelsByHeadingText = () => {
-      // This kills the “Video Script / Canvas / Design Studio” blocks even if IDs differ.
-      const needles = [
-        "video script",
-        "video ai",
-        "canvas studio",
-        "canvas",
-        "design studio",
-        "design",
-      ];
-
-      const blocks = Array.from(
-        DOC.querySelectorAll("section, .lab-card, .card, .panel, .tool-card, .tool-panel, .step-card")
-      );
-
-      let hidden = 0;
-
-      blocks.forEach((blk) => {
-        const heading = blk.querySelector("h1,h2,h3,h4,h5,[data-title]");
-        const txt = normalize(heading ? heading.textContent : blk.textContent);
-        if (!txt) return;
-
-        const hit = needles.some((k) => txt.includes(k.replace(/\s+/g, "")));
-        if (!hit) return;
-
-        // IMPORTANT: do NOT hide the whole app — only hide blocks that clearly match
-        // these future features.
-        hidden += hideEl(blk) ? 1 : 0;
-      });
-
-      return hidden;
-    };
-
-    const hideNow = () => {
-      let hidden = 0;
-
-      // 1) Hide by data-ai-action (best)
-      const actionNodes = Array.from(DOC.querySelectorAll("[data-ai-action]"));
-      actionNodes.forEach((el) => {
-        const action = (el.getAttribute("data-ai-action") || "").trim();
-        if (action && actionsToHide.has(action)) {
-          if (hideEl(el)) hidden++;
-        }
-      });
-
-      // 2) Hide by label fallback (buttons/links/role=button)
-      const nodes = Array.from(DOC.querySelectorAll("button, a, [role='button']"));
-      nodes.forEach((el) => {
-        const label = normalize(el.textContent);
-        if (!label) return;
-        if (shouldHideLabel(label)) {
-          if (hideEl(el)) hidden++;
-        }
-      });
-
-      // 3) Hide known bottom UI by ID + heading text match
-      hidden += hideBottomPanelsById();
-      hidden += hideBottomPanelsByHeadingText();
-
-      log("🙈 installHideNextVersionUI hidden:", hidden);
-      return hidden;
-    };
-
-    hideNow();
-
-    if (!installHideNextVersionUI.__installed) {
-      installHideNextVersionUI.__installed = true;
-      const obs = new MutationObserver(() => hideNow());
-      obs.observe(DOC.body, { childList: true, subtree: true });
-      log("✅ installHideNextVersionUI observer installed");
-    }
-
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries++;
-      hideNow();
-      if (tries >= 25) clearInterval(timer);
-    }, 200);
+    obs.observe(document.body, { childList: true, subtree: true });
+    window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
   }
+
+  // extra forced passes (covers slow render)
+  let tries = 0;
+  const t = setInterval(() => {
+    tries++;
+    pass();
+    if (tries >= 25) clearInterval(t);
+  }, 200);
+
+  console.log("✅ UI hider installed (authoritative v2)");
+}
+
 
   // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
