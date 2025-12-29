@@ -1361,12 +1361,15 @@ function installHideNextVersionUI() {
   // initial + reactive pass
   pass();
 // ✅ HARD-KILL: Canvas Studio / Design Studio containers (common IDs/classes)
-document.querySelectorAll(
-  "#canvasStudio, #canvasStudioPanel, .canvasStudio, .canvas-studio, [data-panel='canvas-studio'], [data-panel='canvas_studio'], " +
-  "#designStudio, #designStudioPanel, .designStudio, .design-studio, [data-panel='design-studio'], [data-panel='design_studio']"
-).forEach((el) => {
-  hideEl(el, "hard-kill canvas/design studio container");
+// ✅ KEEP floating tools bar (launch tools)
+// (Do NOT hide the container. Only hide specific AI buttons if they exist inside.)
+document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
+  const a = norm(btn.getAttribute("data-ai-action"));
+  if (HIDE_ACTIONS.has(a)) {
+    hideEl(btn, `floating ai button action=${a}`);
+  }
 });
+
 
   if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
     const obs = new MutationObserver(() => {
