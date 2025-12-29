@@ -1347,7 +1347,7 @@ function installHideNextVersionUI() {
         bar.style.setProperty("visibility", "visible", "important");
         bar.style.setProperty("pointer-events", "auto", "important");
       });
-// ✅ HARD KILL by exact IDs seen in your DOM
+// ✅ HARD KILL by exact IDs seen in DOM
 [
   "#videoOutputBottom",
   "#creativeStudioOverlay",
@@ -1361,8 +1361,11 @@ function installHideNextVersionUI() {
   "#fabricCanvasWrap",
 ].forEach((sel) => {
   const el = document.querySelector(sel);
-  if (el) hideEl(el);
+  if (el) {
+    hideEl(el);
+  }
 });
+
 
 // ✅ HARD KILL: hide only the future modal launchers (video/image) by target id
 document.querySelectorAll("[data-modal-target]").forEach((btn) => {
