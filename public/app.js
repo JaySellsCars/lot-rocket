@@ -86,18 +86,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return out;
   }
 
-  function getProxiedImageUrl(rawUrl) {
-    if (!rawUrl) return rawUrl;
-    try {
-      const u = new URL(rawUrl, window.location.origin);
-      if (u.origin === window.location.origin) return rawUrl;
-      if (u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
-      if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
-      return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
-    } catch {
-      return rawUrl;
-    }
+function getProxiedImageUrl(rawUrl) {
+  if (!rawUrl) return rawUrl;
+  try {
+    const u = new URL(rawUrl, window.location.origin);
+    if (u.origin === window.location.origin) return rawUrl;
+    if (u.protocol === "blob:" || u.protocol === "data:") return rawUrl;
+    if (u.pathname.startsWith("/api/proxy-image")) return rawUrl;
+    return `/api/proxy-image?url=${encodeURIComponent(u.toString())}`;
+  } catch {
+    return rawUrl;
   }
+}
+
 try {
   if (typeof installHideNextVersionUI === "function") {
     installHideNextVersionUI();
