@@ -1414,8 +1414,16 @@ document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
     // ✅ Build ToolWire / floating tools first
     if (typeof wireSideTools === "function") wireSideTools();
 
-    // ✅ ONE hide system (persistent)
-    installHideNextVersionUI();
+// ✅ ONE hide system (persistent) — FIRE NOW + AFTER DOM PAINT + AFTER LATE INJECTS
+if (typeof installHideNextVersionUI === "function") {
+  installHideNextVersionUI();
+  requestAnimationFrame(() => installHideNextVersionUI());
+  setTimeout(() => installHideNextVersionUI(), 350);
+  setTimeout(() => installHideNextVersionUI(), 1200);
+} else {
+  console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
+}
+
 
     log("✅ FINAL INIT COMPLETE");
   } catch (e) {
