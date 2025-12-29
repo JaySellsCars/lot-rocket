@@ -1360,6 +1360,13 @@ function installHideNextVersionUI() {
 
   // initial + reactive pass
   pass();
+// ✅ HARD-KILL: Canvas Studio / Design Studio containers (common IDs/classes)
+document.querySelectorAll(
+  "#canvasStudio, #canvasStudioPanel, .canvasStudio, .canvas-studio, [data-panel='canvas-studio'], [data-panel='canvas_studio'], " +
+  "#designStudio, #designStudioPanel, .designStudio, .design-studio, [data-panel='design-studio'], [data-panel='design_studio']"
+).forEach((el) => {
+  hideEl(el, "hard-kill canvas/design studio container");
+});
 
   if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
     const obs = new MutationObserver(() => {
