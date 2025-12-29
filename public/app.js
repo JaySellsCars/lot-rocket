@@ -1240,38 +1240,85 @@ function wireSideTools() {
 // ==================================================
 // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
 // Kills: Video Script / Shot List / Canvas / Design Studio
-// Preserves Step 3 + Core Workflow
+// Keeps: Floating tools + Step 3 container
 // ==================================================
+function installHideNextVersionUI() {
+  if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
+  window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
 
-// ✅ NEVER HIDE these (launch-critical UI)
-const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
-const getKeepNodes = () => KEEP_SELECTORS.map((s) => document.querySelector(s)).filter(Boolean);
+  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
-const isKeep = (el) => {
-  if (!el) return false;
-  const keeps = getKeepNodes();
-  if (!keeps.length) return false;
-  if (keeps.some((k) => el === k)) return true;
-  if (keeps.some((k) => el.contains && el.contains(k))) return true;
-  return false;
-};
+  // ✅ NEVER HIDE these containers (launch-critical UI)
+  const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
+  const getKeepNodes = () =>
+    KEEP_SELECTORS.map((s) => document.querySelector(s)).filter(Boolean);
 
+  const isKeep = (el) => {
+    if (!el) return false;
+    const keeps = getKeepNodes();
+    if (!keeps.length) return false;
+    if (keeps.some((k) => el === k)) return true;
+    if (keeps.some((k) => el.contains && el.contains(k))) return true; // protects Step 3 wrapper
+    return false;
+  };
 
+  const HIDE_TEXT = [
+    "video script",
+    "shot list",
+    "ai video generator",
+    "video generator",
+    "thumbnail prompt",
+    "thumbnail",
+    "canvas studio",
+    "design studio",
+    "design studio 3.0",
+    "konva",
+    "fabric",
+  ];
+
+  const HIDE_ACTIONS = new Set([
+    "video_ai",
+    "image_ai",
+    "video_generator",
+    "image_generator",
+    "video_script",
+    "shot_list",
+    "thumbnail_prompt",
+    "canvas",
+    "canvas_studio",
+    "design",
+    "design_studio",
+    "design_studio_3",
+    "design_studio_3_0",
+  ]);
+
+  // ✅ DO NOT HIDE these launch-critical floating tools
+  const KEEP_ACTIONS = new Set([
+    "objection_coach",
+    "ask_ai",
+    "message_builder",
+    "workflow_builder",
+    "drill_master",
+    "car_expert",
+    "payment_calc",
+    "income_calc",
+  ]);
 
   const HIDE_ID_CLASS_RX =
     /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|canvasstudio)/i;
 
-  const hideEl = (el, reason) => {
+  const hideEl = (el) => {
     if (!el) return false;
     if (isKeep(el)) return false;
     if (el.dataset?.lrHidden === "1") return false;
 
     el.dataset.lrHidden = "1";
     el.setAttribute("aria-hidden", "true");
+    el.hidden = true;
+
     el.style.setProperty("display", "none", "important");
     el.style.setProperty("visibility", "hidden", "important");
     el.style.setProperty("pointer-events", "none", "important");
-
     return true;
   };
 
@@ -1287,63 +1334,65 @@ const isKeep = (el) => {
   };
 
   const pass = () => {
-    // Always hide Step 3 launch button
+    // ✅ always hide this Step 3 future button (if it exists)
     hideEl(document.getElementById("sendToDesignStudio"));
 
-    // Kill floating toolbars
+    // ✅ NEVER HIDE floating bar (prevents flash->disappear)
     document
       .querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar")
-      .forEach((el) => hideEl(el));
+      .forEach((bar) => {
+        bar.hidden = false;
+        bar.removeAttribute("aria-hidden");
+        bar.style.setProperty("display", "flex", "important");
+        bar.style.setProperty("visibility", "visible", "important");
+        bar.style.setProperty("pointer-events", "auto", "important");
+      });
 
-    // Kill by data-ai-action
-  // ✅ DO NOT HIDE these launch-critical floating tools (adjust if needed)
-const KEEP_ACTIONS = new Set([
-  "objection_coach",
-  "ask_ai",
-  "message_builder",
-  "workflow_builder",
-  "drill_master",
-  "car_expert",
-  "payment_calc",
-  "income_calc",
-]);
-  
-document.querySelectorAll("[data-ai-action]").forEach((btn) => {
-  const a = norm(btn.getAttribute("data-ai-action"));
-  if (!a) return;
+    // ✅ hide ONLY specific AI actions (buttons), NOT the bar/container
+    document.querySelectorAll("[data-ai-action]").forEach((btn) => {
+      const a = norm(btn.getAttribute("data-ai-action"));
+      if (!a) return;
 
-  // ✅ keep our launch tools (prevents flash->disappear)
-  if (KEEP_ACTIONS.has(a)) return;
+      if (KEEP_ACTIONS.has(a)) return;
 
-  if (HIDE_ACTIONS.has(a)) {
-    hideEl(btn, `data-ai-action=${a}`);
+      if (HIDE_ACTIONS.has(a)) {
+        hideEl(btn);
 
-    // IMPORTANT: don't accidentally hide big wrappers that contain Step 3
-    const parent = btn.closest("section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool");
-    if (parent && !isKeep(parent)) hideEl(parent, `parent-of-action=${a}`);
-  }
-});
+        // parent panel hide (NO generic div; avoids nuking step 3)
+        const parent = btn.closest(
+          "section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool"
+        );
+        if (parent && !isKeep(parent)) hideEl(parent);
+      }
+    });
 
-
-    // Kill by content or class
+    // hide panels by text/class
     document
-      .querySelectorAll("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal")
+      .querySelectorAll(
+        "section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal"
+      )
       .forEach((box) => {
         if (matchesText(box) || matchesIdClass(box)) hideEl(box);
       });
 
+    // kill konva/fabric/canvas mounts (but not the Step 3 container)
+    document
+      .querySelectorAll(
+        "canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']"
+      )
+      .forEach((el) => {
+        const mount =
+          el.closest(
+            "section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal"
+          ) || el;
+        if (!isKeep(mount)) hideEl(mount);
+      });
+  };
 
+  // initial
+  pass();
 
-// ✅ HARD-KILL: only specific AI buttons INSIDE the floating bar
-document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
-  const a = norm(btn.getAttribute("data-ai-action"));
-  if (a && HIDE_ACTIONS.has(a)) {
-    hideEl(btn, `floating ai button action=${a}`);
-  }
-});
-
-
-
+  // observer
   if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
     const obs = new MutationObserver(() => {
       if (window.__LOTROCKET_UI_HIDER_TICK__) return;
@@ -1353,20 +1402,13 @@ document.querySelectorAll(".floating-tools [data-ai-action]").forEach((btn) => {
         pass();
       });
     });
-
     obs.observe(document.body, { childList: true, subtree: true });
     window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
   }
 
-  let tries = 0;
-  const t = setInterval(() => {
-    tries++;
-    pass();
-    if (tries >= 25) clearInterval(t);
-  }, 200);
-
   console.log("✅ UI hider installed (authoritative)");
 }
+
 
 
 // ==================================================
