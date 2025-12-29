@@ -1321,6 +1321,11 @@ try {
 // Thumbnail Prompt, Canvas/Design tools, and future AI panels not in launch.
 // Survives DOM injections via MutationObserver.
 // ==================================================
+
+  function installHideNextVersionUI() {
+  if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
+  window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
+
 function installHideNextVersionUI() {
   // hard guard (prevents duplicates even if function exists multiple times)
   if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
