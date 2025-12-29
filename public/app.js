@@ -1308,6 +1308,107 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
   }
+// ==================================================
+// UI HIDER (AUTHORITATIVE) — KEEP ONE COPY ONLY
+// Hides: Design Studio 3.0, AI Video Generator, Video Script / Shot List,
+// Thumbnail Prompt, Canvas/Design tools, and future AI panels not in launch.
+// Survives DOM injections via MutationObserver.
+// ==================================================
+function installHideNextVersionUI() {
+  // hard guard (prevents duplicates even if function exists multiple times)
+  if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
+  window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
+
+  const DOC = document;
+
+  const SHOULD_HIDE_TEXT = [
+    "design studio 3.0",
+    "ai video generator",
+    "video script",
+    "shot list",
+    "thumbnail prompt",
+    "canvas",
+    "ai image",
+    "ai video",
+    "ai prompt",
+  ];
+
+  // optional: kill by data-ai-action (strongest selector)
+  const SHOULD_HIDE_ACTION = [
+    "image_generator",
+    "video_generator",
+    "video_script",
+    "shot_list",
+    "thumbnail_prompt",
+    "design_studio_3",
+    "design_studio_3_0",
+    "canvas",
+  ];
+
+  function norm(s) {
+    return String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  function hideEl(el, reason) {
+    if (!el || el.dataset?.lrHidden === "1") return;
+    el.dataset.lrHidden = "1";
+    el.style.display = "none";
+    el.setAttribute("aria-hidden", "true");
+    // uncomment if you want proof in console while testing:
+    // console.log("🧹 HIDING:", reason, el);
+  }
+
+  function matchesText(el) {
+    const t = norm(el.textContent);
+    if (!t) return false;
+    return SHOULD_HIDE_TEXT.some((k) => t.includes(k));
+  }
+
+  function pass() {
+    // 1) Hide buttons by data-ai-action
+    DOC.querySelectorAll("[data-ai-action]").forEach((btn) => {
+      const a = norm(btn.getAttribute("data-ai-action"));
+      if (SHOULD_HIDE_ACTION.includes(a)) {
+        hideEl(btn, `data-ai-action=${a}`);
+        // if button lives inside a panel, hide the panel too
+        const panel = btn.closest("section, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal");
+        if (panel) hideEl(panel, `parent panel of action=${a}`);
+      }
+    });
+
+    // 2) Hide panels/sections by headings + text content
+    DOC.querySelectorAll("section, .panel, .tool-panel, .lab-card, .card").forEach((box) => {
+      if (matchesText(box)) hideEl(box, "panel text match");
+      const h = box.querySelector("h1,h2,h3,h4,h5");
+      if (h && matchesText(h)) hideEl(box, "panel heading match");
+    });
+
+    // 3) Hide any remaining standalone buttons/links with matching labels
+    DOC.querySelectorAll("button,a,[role='button']").forEach((el) => {
+      if (matchesText(el)) hideEl(el, "button/label text match");
+    });
+  }
+
+  // initial pass
+  pass();
+
+  // observe late injections (single observer)
+  if (window.__LOTROCKET_UI_HIDER_OBSERVER__) return;
+  const obs = new MutationObserver(() => {
+    // cheap throttle
+    if (window.__LOTROCKET_UI_HIDER_TICK__) return;
+    window.__LOTROCKET_UI_HIDER_TICK__ = true;
+    requestAnimationFrame(() => {
+      window.__LOTROCKET_UI_HIDER_TICK__ = false;
+      pass();
+    });
+  });
+
+  obs.observe(DOC.body, { childList: true, subtree: true });
+  window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
+
+  console.log("✅ UI hider installed (authoritative)");
+}
 
   // ================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
