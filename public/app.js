@@ -1427,6 +1427,8 @@ if (typeof installHideNextVersionUI === "function") {
 
 
 
+
+
     log("✅ FINAL INIT COMPLETE");
   } catch (e) {
     console.error("❌ FINAL INIT FAILED", e);
