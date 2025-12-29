@@ -1441,12 +1441,17 @@ function installHideNextVersionUI() {
     if (typeof wireAiModals === "function") wireAiModals();
     if (typeof wireSideTools === "function") wireSideTools();
 
-    // ✅ hide future UI (buttons + those big sections + Step3 design button)
-    if (typeof installHideNextVersionUI === "function") {
-      installHideNextVersionUI();
-    } else {
-      console.warn("🙈 installHideNextVersionUI() not found");
-    }
+// ✅ hide future UI (buttons + big sections + Step3 design button) — RUN ONCE
+if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+  window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+
+  if (typeof installHideNextVersionUI === "function") {
+    installHideNextVersionUI();
+  } else {
+    console.warn("🙈 installHideNextVersionUI() not found");
+  }
+}
+
 
     console.log("✅ FINAL INIT COMPLETE");
   } catch (e) {
