@@ -1223,12 +1223,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // Kills: Video Script/Shot List + Canvas/Design Studio panels + any Konva/Fabric mounts
 // Survives DOM injections via MutationObserver.
 // ==================================================
+
 // ✅ NEVER HIDE these (launch-critical UI)
 const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
-const isKeep = (el) =>
-  !!el && KEEP_SELECTORS.some((sel) => el === document.querySelector(sel) || el.closest(sel));
+const isKeep = (el) => !!el && KEEP_SELECTORS.some((sel) => el && el.closest && el.closest(sel));
 
-  function installHideNextVersionUI() {
+function installHideNextVersionUI() {
   // hard guard: prevents duplicates even if called multiple times
   if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
   window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
@@ -1268,28 +1268,22 @@ const isKeep = (el) =>
     "design_studio_3_0",
   ]);
 
-  // 3) ID/class kills (this is why yours are still showing)
-  //    (covers common names even if text doesn’t match)
+  // 3) ID/class kills
   const HIDE_ID_CLASS_RX =
     /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|design-studio|canvasstudio|canvas-studio)/i;
 
-const hideEl = (el, reason) => {
-  if (!el) return false;
+  const hideEl = (el, reason) => {
+    if (!el) return false;
 
-  // Never hide protected elements (Step 3, etc.)
-  if (isKeep(el)) return false;
+    // Never hide protected elements (Step 3, etc.)
+    if (isKeep(el)) return false;
 
-  // Prevent double-processing
-  if (el.dataset && el.dataset.lrHidden === "1") return false;
+    // Prevent double-processing
+    if (el.dataset && el.dataset.lrHidden === "1") return false;
 
-  el.dataset.lrHidden = "1";
-  el.setAttribute("aria-hidden", "true");
-  el.style.setProperty("display", "none", "important");
-  el.style.setProperty("visibility", "hidden", "important");
-  el.style.setProperty("pointer-events", "none", "important");
-
-  return true;
-};
+    if (el.dataset) el.dataset.lrHidden = "1";
+    el.setAttribute("aria-hidden", "true");
+    el.hidden = true;
 
     // important: override any layout CSS
     el.style.setProperty("display", "none", "important");
@@ -1318,32 +1312,41 @@ const hideEl = (el, reason) => {
     // Always hide Step 3 design button for launch
     hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
 
+    // ✅ HARD KILL: floating tools bar (your 4 buttons)
+    document.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach((el) => {
+      hideEl(el, "floating-tools bar");
+    });
+
     // A) Kill by data-ai-action (and parent panels)
     document.querySelectorAll("[data-ai-action]").forEach((btn) => {
       const a = norm(btn.getAttribute("data-ai-action"));
       if (!a) return;
       if (HIDE_ACTIONS.has(a)) {
         hideEl(btn, `data-ai-action=${a}`);
-        hideEl(btn.closest("section, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool, article, div"), `parent-of-action=${a}`);
+
+        // IMPORTANT: do NOT use generic div here (it can nuke Step 3 wrappers)
+        const parent = btn.closest(
+          "section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool"
+        );
+        if (parent) hideEl(parent, `parent-of-action=${a}`);
       }
     });
 
     // B) Kill panels by text OR id/class match
-    document.querySelectorAll("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal, div").forEach((box) => {
-      // only hide “big” containers, not every tiny div:
-      const isBig = box.matches("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal");
-      const shouldHide = matchesText(box) || matchesIdClass(box);
+    document
+      .querySelectorAll("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal")
+      .forEach((box) => {
+        if (matchesText(box) || matchesIdClass(box)) {
+          hideEl(box, "panel-match(text/id/class)");
+          return;
+        }
 
-      if (shouldHide && (isBig || box.querySelector("canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']"))) {
-        hideEl(box, "panel-match(text/id/class)");
-      }
-
-      // also check headings inside
-      const h = box.querySelector("h1,h2,h3,h4,h5,strong,b");
-      if (h && (matchesText(h) || matchesIdClass(h))) {
-        hideEl(box, "heading-match(text/id/class)");
-      }
-    });
+        // also check headings inside
+        const h = box.querySelector("h1,h2,h3,h4,h5,strong,b");
+        if (h && (matchesText(h) || matchesIdClass(h))) {
+          hideEl(box, "heading-match(text/id/class)");
+        }
+      });
 
     // C) Kill any remaining standalone buttons/links with matching labels
     document.querySelectorAll("button,a,[role='button']").forEach((el) => {
@@ -1351,12 +1354,13 @@ const hideEl = (el, reason) => {
     });
 
     // D) Kill Konva/Fabric mounts directly (if they exist outside panels)
-    document.querySelectorAll(
-      "canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']"
-    ).forEach((el) => {
-      // hide the mount container if possible
-      hideEl(el.closest("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal, div") || el, "konva/fabric mount");
-    });
+    document
+      .querySelectorAll("canvas, .konvajs-content, [class*='konva'], [id*='konva'], [class*='fabric'], [id*='fabric']")
+      .forEach((el) => {
+        const mount =
+          el.closest("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal") || el;
+        hideEl(mount, "konva/fabric mount");
+      });
   };
 
   // initial pass
@@ -1388,8 +1392,8 @@ const hideEl = (el, reason) => {
   console.log("✅ UI hider installed (authoritative v2)");
 }
 
+// ==================================================
 
-  // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
   // ORDER MATTERS:
   // - wireSideTools builds the tool UI
