@@ -1413,6 +1413,9 @@ function installHideNextVersionUI() {
 
 // ==================================================
 
+
+// ==================================================
+
   // FINAL INIT (SAFE) ✅ MUST BE LAST
   // ORDER MATTERS:
   // - wireSideTools builds the tool UI
