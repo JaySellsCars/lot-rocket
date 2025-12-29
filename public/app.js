@@ -1331,15 +1331,22 @@ function installHideNextVersionUI() {
       .forEach((el) => hideEl(el));
 
     // Kill by data-ai-action
-    document.querySelectorAll("[data-ai-action]").forEach((btn) => {
-      const a = norm(btn.getAttribute("data-ai-action"));
-      if (!a) return;
-      if (HIDE_ACTIONS.has(a)) {
-        hideEl(btn);
-        const parent = btn.closest("section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal");
-        if (parent) hideEl(parent);
-      }
-    });
+document.querySelectorAll("[data-ai-action]").forEach((btn) => {
+  const a = norm(btn.getAttribute("data-ai-action"));
+  if (!a) return;
+
+  // ✅ keep our launch tools (prevents flash->disappear)
+  if (KEEP_ACTIONS.has(a)) return;
+
+  if (HIDE_ACTIONS.has(a)) {
+    hideEl(btn, `data-ai-action=${a}`);
+
+    // IMPORTANT: don't accidentally hide big wrappers that contain Step 3
+    const parent = btn.closest("section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool");
+    if (parent && !isKeep(parent)) hideEl(parent, `parent-of-action=${a}`);
+  }
+});
+
 
     // Kill by content or class
     document
