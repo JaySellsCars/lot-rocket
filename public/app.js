@@ -1792,51 +1792,55 @@ console.log("🟦 STEP2 using direct selector mapping only");
     console.log("✅ UI hider installed (authoritative LAUNCH v4)");
   } // ✅ END installHideNextVersionUI()
 
-  // ==================================================
-  // FINAL INIT (SAFE) ✅ MUST BE LAST
-  // ==================================================
-  try {
-    if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
-      renderStep1Photos(STORE.lastBoostPhotos);
-    }
-
-    if (STORE.holdingZonePhotos?.length) {
-      STORE.activeHoldingPhoto =
-        STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-
-      if (typeof renderHoldingZone === "function") renderHoldingZone();
-
-      if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-        loadPhotoTuner(STORE.activeHoldingPhoto);
-      }
-    }
-
-    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-
-    if (typeof wireCalculatorPad === "function") wireCalculatorPad();
-    if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
-    if (typeof wireAiModals === "function") wireAiModals();
-
-// ✅ Build ToolWire / floating tools first
-if (typeof wireSideTools === "function") wireSideTools();
-
-// ✅ Delegated modal wiring (survives re-renders)
-if (typeof installSideToolsDelegation === "function") installSideToolsDelegation();
-
-
-    // ✅ ONE hide system (persistent)
-    if (typeof installHideNextVersionUI === "function") {
-      if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-        window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-        installHideNextVersionUI();
-      }
-    } else {
-      console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
-    }
-
-    log("✅ FINAL INIT COMPLETE");
-  } catch (e) {
-    console.error("❌ FINAL INIT FAILED", e);
+// ==================================================
+// FINAL INIT (SAFE) ✅ MUST BE LAST
+// ==================================================
+try {
+  if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
+    renderStep1Photos(STORE.lastBoostPhotos);
   }
-}); // ✅ END DOMContentLoaded — THIS MUST BE THE LAST LINE
+
+  if (STORE.holdingZonePhotos?.length) {
+    STORE.activeHoldingPhoto =
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
+  }
+
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+  if (typeof wireCalculatorPad === "function") wireCalculatorPad();
+  if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+
+  // ✅ AI modal actions wired
+  if (typeof wireAiModals === "function") wireAiModals();
+
+  // ✅ Floating tools wired (open/close)
+  if (typeof wireSideTools === "function") wireSideTools();
+
+  // ✅ Delegated modal wiring (survives re-renders)
+  if (typeof installSideToolsDelegation === "function") {
+    installSideToolsDelegation();
+  }
+
+  // ✅ ONE hide system (persistent)
+  if (typeof installHideNextVersionUI === "function") {
+    if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+      window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+      installHideNextVersionUI();
+    }
+  } else {
+    console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
+  }
+
+  // ✅ don’t rely on log() existing
+  console.log("✅ FINAL INIT COMPLETE");
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
+}
+
