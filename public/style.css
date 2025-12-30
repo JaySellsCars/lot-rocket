@@ -98,6 +98,27 @@ textarea{
   border: 1px solid var(--border-soft);
   color: var(--text-main);
 }
+/* Social post boxes should grow + show full content */
+.social-box textarea,
+.post-box textarea,
+.platform-box textarea {
+  height: auto;
+  min-height: 110px;
+  max-height: none;
+  overflow: hidden;          /* we’ll auto-resize via JS */
+  white-space: pre-wrap;
+  word-break: break-word;
+  resize: none;              /* optional */
+}
+.social-box .output,
+.post-box .output,
+.platform-box .output {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 /* ---------- HEADER ---------- */
 .app-header{
