@@ -1818,8 +1818,12 @@ console.log("🟦 STEP2 using direct selector mapping only");
     if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
     if (typeof wireAiModals === "function") wireAiModals();
 
-    // ✅ Build ToolWire / floating tools first
-    if (typeof wireSideTools === "function") wireSideTools();
+// ✅ Build ToolWire / floating tools first
+if (typeof wireSideTools === "function") wireSideTools();
+
+// ✅ Delegated modal wiring (survives re-renders)
+if (typeof installSideToolsDelegation === "function") installSideToolsDelegation();
+
 
     // ✅ ONE hide system (persistent)
     if (typeof installHideNextVersionUI === "function") {
