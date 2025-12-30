@@ -1343,6 +1343,33 @@ document.addEventListener("DOMContentLoaded", () => {
       { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']", "[data-step2='marketplace']", "[data-caption='marketplace']"] },
       { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "#hashtags", "[data-out='hashtags']", "[data-step2='hashtags']", "[data-caption='hashtags']"] },
     ];
+// ===== STEP2 DOM PROBE (TEMP) =====
+// prints what nodes exist so we stop guessing IDs
+const PROBE_SELS = [
+  "#tiktokOutput","#tiktokCaption","#tiktokText",
+  "#instagramOutput","#instagramCaption","#instagramText",
+  "#facebookOutput","#facebookCaption","#facebookText",
+  "#linkedinOutput","#linkedinCaption","#linkedinText",
+  "#marketplaceOutput","#marketplaceCaption","#marketplaceText",
+  "#hashtagsOutput","#hashtagOutput","#hashtagSet","#hashtags",
+  "[data-out='tiktok']","[data-out='instagram']","[data-out='facebook']","[data-out='linkedin']",
+  "[data-out='marketplace']","[data-out='hashtags']",
+  "[data-step2='tiktok']","[data-step2='instagram']","[data-step2='facebook']","[data-step2='linkedin']",
+  "[data-step2='marketplace']","[data-step2='hashtags']"
+];
+
+const probeHits = {};
+PROBE_SELS.forEach((sel) => {
+  try {
+    const el = DOC.querySelector(sel);
+    if (el) {
+      probeHits[sel] = el.tagName.toLowerCase() + (el.id ? `#${el.id}` : "") + (el.className ? `.${String(el.className).split(" ").filter(Boolean).slice(0,3).join(".")}` : "");
+    }
+  } catch {}
+});
+
+console.log("🧲 STEP2 PROBE hits:", probeHits);
+// ===== END PROBE =====
 
     const report = {};
     let filled = 0;
