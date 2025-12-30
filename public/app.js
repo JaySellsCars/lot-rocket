@@ -741,13 +741,26 @@ function wireSideTools() {
     if (step3) step3.scrollIntoView({ behavior: "smooth" });
   }
 
-  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-    sendTopBtn.dataset.wired = "true";
-    sendTopBtn.onclick = () => {
-      log("🚀 SEND TOP PHOTOS CLICK");
-      sendSelectedToHoldingZone();
-    };
-  }
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+
+  // ✅ set the visible label (so it stays consistent on reload too)
+  sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
+
+  sendTopBtn.onclick = () => {
+    log("🚀 SEND TOP PHOTOS CLICK");
+
+    // ✅ animated loading state
+    setBtnLoading(sendTopBtn, true, "Sending Selected Photos…");
+
+    // run the actual action
+    sendSelectedToHoldingZone();
+
+    // turn loading off (tiny delay so the animation is visible)
+    setTimeout(() => setBtnLoading(sendTopBtn, false), 350);
+  };
+}
+
 
   // ==================================================
   // STEP 3 — HOLDING ZONE RENDER (SINGLE SOURCE)
