@@ -1757,49 +1757,54 @@ mapping.forEach(({ key, sels }) => {
     console.log("✅ UI hider installed (authoritative LAUNCH v4)");
   }
 
-  // ==================================================
-  // FINAL INIT (SAFE) ✅ MUST BE LAST
-  // ==================================================
-  try {
-    if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
-      renderStep1Photos(STORE.lastBoostPhotos);
-    }
-
-    if (STORE.holdingZonePhotos?.length) {
-      STORE.activeHoldingPhoto =
-        STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-
-      if (typeof renderHoldingZone === "function") renderHoldingZone();
-
-      if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-        loadPhotoTuner(STORE.activeHoldingPhoto);
-      }
-    }
-
-    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
-
-    if (typeof wireCalculatorPad === "function") wireCalculatorPad();
-    if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
-
-    if (typeof wireAiModals === "function") wireAiModals();
-    if (typeof wireSideTools === "function") wireSideTools();
-
-    if (typeof installSideToolsDelegation === "function") {
-      installSideToolsDelegation();
-    }
-
-    if (typeof installHideNextVersionUI === "function") {
-      if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-        window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-        installHideNextVersionUI();
-      }
-    } else {
-      console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
-    }
-
-    console.log("✅ FINAL INIT COMPLETE");
-  } catch (e) {
-    console.error("❌ FINAL INIT FAILED", e);
+// ==================================================
+// FINAL INIT (SAFE) ✅ MUST BE LAST
+// ==================================================
+try {
+  if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
+    renderStep1Photos(STORE.lastBoostPhotos);
   }
-});
+
+  if (STORE.holdingZonePhotos?.length) {
+    STORE.activeHoldingPhoto =
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
+  }
+
+  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+  if (typeof wireCalculatorPad === "function") wireCalculatorPad();
+  if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+
+  if (typeof wireAiModals === "function") wireAiModals();
+  if (typeof wireSideTools === "function") wireSideTools();
+
+  // ✅ Step 2 UX + actions (autogrow, regen, remove emojis)
+  if (typeof installAutoGrowTextareas === "function") installAutoGrowTextareas();
+  if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
+  if (typeof installStep2RemoveEmojiButtons === "function") installStep2RemoveEmojiButtons();
+  if (typeof wireStep2RemoveEmojiClicks === "function") wireStep2RemoveEmojiClicks();
+
+  if (typeof installSideToolsDelegation === "function") {
+    installSideToolsDelegation();
+  }
+
+  if (typeof installHideNextVersionUI === "function") {
+    if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+      window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+      installHideNextVersionUI();
+    }
+  } else {
+    console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
+  }
+
+  console.log("✅ FINAL INIT COMPLETE");
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
+}
