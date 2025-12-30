@@ -810,24 +810,32 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
       });
 
       // ✅ double click = send to Social-ready strip
-      btn.addEventListener("dblclick", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+btn.addEventListener("dblclick", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-        addToSocialReady(url, true);
+  // 1) add to social-ready
+  const ok = addToSocialReady(url, true);
+  if (!ok) return;
 
-        renderSocialStrip();
-        toast("Sent to Social-ready ✅", "ok");
-        log("✅ Sent to social-ready:", url);
-      });
+  // 2) remove from Step 3 holding list
+  STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter((u) => u !== url);
 
-      hz.appendChild(btn);
-    });
-
-    if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-
-    log("✅ Holding zone rendered:", list.length);
+  // 3) keep active photo valid
+  if (STORE.activeHoldingPhoto === url) {
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
   }
+
+  // 4) re-render Step 3 + tuner + social strip
+  renderHoldingZone();
+  if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+
+  renderSocialStrip();
+
+  toast("Moved to Social-ready ✅", "ok");
+  log("✅ Moved to social-ready (removed from Step 3):", url);
+});
+
 
   // ==================================================
   // PHOTO TUNER
