@@ -1239,8 +1239,9 @@ function wireSideTools() {
 
 // ==================================================
 // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
-// Kills: Video Script / Shot List / Canvas / Design Studio
-// Keeps: Floating tools + Step 3 container
+// Kills: Video Script / Shot List / Canvas / Design Studio + the 4 “future” floating buttons
+// Keeps: Floating tools BAR + Step 3 container
+// Survives late DOM injection (MutationObserver + retry loop)
 // ==================================================
 function installHideNextVersionUI() {
   if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
@@ -1262,6 +1263,7 @@ function installHideNextVersionUI() {
     return false;
   };
 
+  // 1) keyword kills (text anywhere inside a panel)
   const HIDE_TEXT = [
     "video script",
     "shot list",
@@ -1276,6 +1278,7 @@ function installHideNextVersionUI() {
     "fabric",
   ];
 
+  // 2) strongest kills (actions)
   const HIDE_ACTIONS = new Set([
     "video_ai",
     "image_ai",
@@ -1304,16 +1307,25 @@ function installHideNextVersionUI() {
     "income_calc",
   ]);
 
+  // ✅ HARD KILL: the exact 4 “future” button labels in the floating bar
+  const KILL_FLOATING_LABELS = new Set([
+    "ai image generation",
+    "ai video generation",
+    "canvas studio",
+    "design studio",
+  ]);
+
+  // 3) ID/class kills
   const HIDE_ID_CLASS_RX =
     /(video|script|shot|thumbnail|canvas|konva|fabric|designstudio|canvasstudio)/i;
 
-  const hideEl = (el) => {
+  const hideEl = (el, reason) => {
     if (!el) return false;
     if (isKeep(el)) return false;
     if (el.dataset?.lrHidden === "1") return false;
 
-    el.dataset.lrHidden = "1";
-    el.setAttribute("aria-hidden", "true");
+    if (el.dataset) el.dataset.lrHidden = "1";
+    el.setAttribute?.("aria-hidden", "true");
     el.hidden = true;
 
     el.style.setProperty("display", "none", "important");
@@ -1335,9 +1347,9 @@ function installHideNextVersionUI() {
 
   const pass = () => {
     // ✅ always hide this Step 3 future button (if it exists)
-    hideEl(document.getElementById("sendToDesignStudio"));
+    hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
 
-    // ✅ NEVER HIDE floating bar (prevents flash->disappear)
+    // ✅ KEEP the floating bar visible (prevents flash->disappear of real tools)
     document
       .querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar")
       .forEach((bar) => {
@@ -1347,31 +1359,99 @@ function installHideNextVersionUI() {
         bar.style.setProperty("visibility", "visible", "important");
         bar.style.setProperty("pointer-events", "auto", "important");
       });
-// ✅ HARD KILL by exact IDs seen in DOM
-[
-  "#videoOutputBottom",
-  "#creativeStudioOverlay",
-  "#designStudioOverlay",
-  "#canvasStudio",
-  "#canvasStudioWrap",
-  "#canvasStudioRoot",
-  "#designStudio",
-  "#designStudioRoot",
-  "#konvaStage",
-  "#fabricCanvasWrap",
-].forEach((sel) => {
-  const el = document.querySelector(sel);
-  if (el) {
-    hideEl(el);
+
+    // ✅ HARD KILL: hide ONLY the 4 future floating buttons (by label)
+    document
+      .querySelectorAll(
+        ".floating-tools button, .floating-tools a, .floating-tools [role='button']"
+      )
+      .forEach((btn) => {
+        const label = norm(btn.textContent);
+        if (KILL_FLOATING_LABELS.has(label)) {
+          hideEl(btn, `floating-label=${label}`);
+        }
+      });
+
+    // ✅ HARD KILL by exact IDs seen in your DOM
+    [
+      "#videoOutputBottom",
+      "#creativeStudioOverlay",
+      "#designStudioOverlay",
+      "#canvasStudio",
+      "#canvasStudioWrap",
+      "#canvasStudioRoot",
+      "#designStudio",
+      "#designStudioRoot",
+      "#konvaStage",
+      "#fabricCanvasWrap",
+    ].forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) hideEl(el, `hard-id=${sel}`);
+    });
+
+    // ✅ HARD KILL: hide only the future modal launchers by target id
+    document.querySelectorAll("[data-modal-target]").forEach((btn) => {
+      const t = (btn.getAttribute("data-modal-target") || "").trim();
+      if (t === "videoModal" || t === "imageModal") hideEl(btn, `modal-target=${t}`);
+    });
+
+    // ✅ Kill by data-ai-action, but KEEP launch tools
+    document.querySelectorAll("[data-ai-action]").forEach((btn) => {
+      const a = norm(btn.getAttribute("data-ai-action"));
+      if (!a) return;
+
+      // keep our launch tools
+      if (KEEP_ACTIONS.has(a)) return;
+
+      if (HIDE_ACTIONS.has(a)) {
+        hideEl(btn, `data-ai-action=${a}`);
+
+        // only hide safe containers (do NOT use generic div)
+        const parent = btn.closest(
+          "section, article, .panel, .tool-panel, .lab-card, .card, .modal, .side-modal, .tool"
+        );
+        if (parent && !isKeep(parent)) hideEl(parent, `parent-of-action=${a}`);
+      }
+    });
+
+    // ✅ Kill panels by content or class match
+    document
+      .querySelectorAll(
+        "section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal"
+      )
+      .forEach((box) => {
+        if (matchesText(box) || matchesIdClass(box)) hideEl(box, "panel-match");
+      });
+  };
+
+  // initial pass
+  pass();
+
+  // observe late injections (single observer)
+  if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
+    const obs = new MutationObserver(() => {
+      if (window.__LOTROCKET_UI_HIDER_TICK__) return;
+      window.__LOTROCKET_UI_HIDER_TICK__ = true;
+      requestAnimationFrame(() => {
+        window.__LOTROCKET_UI_HIDER_TICK__ = false;
+        pass();
+      });
+    });
+
+    obs.observe(document.body, { childList: true, subtree: true });
+    window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
   }
-});
 
+  // extra forced passes (covers slow render)
+  let tries = 0;
+  const t = setInterval(() => {
+    tries++;
+    pass();
+    if (tries >= 25) clearInterval(t);
+  }, 200);
 
-// ✅ HARD KILL: hide only the future modal launchers (video/image) by target id
-document.querySelectorAll("[data-modal-target]").forEach((btn) => {
-  const t = (btn.getAttribute("data-modal-target") || "").trim();
-  if (t === "videoModal" || t === "imageModal") hideEl(btn);
-});
+  console.log("✅ UI hider installed (authoritative)");
+}
 
     // ✅ hide ONLY specific AI actions (buttons), NOT the bar/container
     document.querySelectorAll("[data-ai-action]").forEach((btn) => {
