@@ -696,72 +696,66 @@ function wireSideTools() {
     return picked.slice(0, MAX_PHOTOS);
   }
 
-  // ==================================================
-  // STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
-  // ==================================================
-  const sendTopBtn =
-    $("sendTopPhotosBtn") ||
-    $("sendTopPhotosToCreative") ||
-    $("sendTopPhotosToCreativeLab") ||
-    $("sendToCreativeLabBtn") ||
-    $("sendToCreativeLab") ||
-    $("sendToDesignStudio") ||
-    DOC.querySelector("[data-send-top-photos]") ||
-    DOC.querySelector("[data-send-top]");
+// ==================================================
+// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
+// ==================================================
+const sendTopBtn =
+  $("sendTopPhotosBtn") ||
+  $("sendTopPhotosToCreative") ||
+  $("sendTopPhotosToCreativeLab") ||
+  $("sendToCreativeLabBtn") ||
+  $("sendToCreativeLab") ||
+  DOC.querySelector("[data-send-top-photos]");
 
-  function sendSelectedToHoldingZone() {
-    const urls = getSelectedStep1Urls();
+function sendSelectedToHoldingZone() {
+  const urls = getSelectedStep1Urls();
 
-    log("🧪 sendSelectedToHoldingZone urls =", urls.length, urls);
+  log("🧪 sendSelectedToHoldingZone urls =", urls.length, urls);
 
-    if (!urls.length) {
-      toast("Select at least 1 photo first.", "bad");
-      return;
-    }
-
-    STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-    if (typeof renderHoldingZone === "function") renderHoldingZone();
-    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-      loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
-
-    log("✅ Sent to Step 3 HOLDING ONLY:", STORE.holdingZonePhotos.length);
-    toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Step 3`, "ok");
-
-    const step3 =
-      DOC.querySelector("#creativeHub") ||
-      DOC.querySelector("#step3") ||
-      DOC.querySelector("#creativeLab");
-
-    if (step3) step3.scrollIntoView({ behavior: "smooth" });
+  if (!urls.length) {
+    toast("Select at least 1 photo first.", "bad");
+    return;
   }
 
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+  if (typeof renderHoldingZone === "function") renderHoldingZone();
+  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+    loadPhotoTuner(STORE.activeHoldingPhoto);
+  }
+
+  log("✅ Sent to Step 3 HOLDING:", STORE.holdingZonePhotos.length);
+  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Creative Lab`, "ok");
+
+  const step3 =
+    DOC.querySelector("#creativeHub") ||
+    DOC.querySelector("#step3") ||
+    DOC.querySelector("#creativeLab");
+
+  if (step3) step3.scrollIntoView({ behavior: "smooth" });
+}
+
+// ----------------------------------------
+// Wire button safely (once)
+// ----------------------------------------
+if (sendTopBtn && !sendTopBtn.dataset.wired) {
   sendTopBtn.dataset.wired = "true";
 
-  // ✅ set the visible label (so it stays consistent on reload too)
+  // Rename button (safe + idempotent)
   sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
 
-sendTopBtn.onclick = () => {
-  log("🚀 SEND TOP PHOTOS CLICK");
+  sendTopBtn.addEventListener("click", () => {
+    // Small visual tap animation
+    sendTopBtn.classList.add("btn-loading");
+    setTimeout(() => sendTopBtn.classList.remove("btn-loading"), 180);
 
-  // tiny “animated” feedback (no CSS dependency)
-  sendTopBtn.classList.add("btn-loading");
-  sendTopBtn.style.transform = "scale(0.98)";
-  setTimeout(() => {
-    sendTopBtn.style.transform = "";
-    sendTopBtn.classList.remove("btn-loading");
-  }, 220);
-
-  sendSelectedToHoldingZone();
-};
-
+    sendSelectedToHoldingZone();
+  });
+}
 
 // ==================================================
-// STEP 3 — HOLDING ZONE RENDER (SINGLE SOURCE)
-// Renders STORE.holdingZonePhotos into #holdingZone
+// STEP 3 — HOLDING ZONE RENDER
 // ==================================================
 function renderHoldingZone() {
   const hz =
@@ -774,50 +768,54 @@ function renderHoldingZone() {
     return;
   }
 
-  const list = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-  hz.innerHTML = "";
+  const list = Array.isArray(STORE.holdingZonePhotos)
+    ? STORE.holdingZonePhotos
+    : [];
 
+  hz.innerHTML = "";
   if (!list.length) return;
 
-  // Ensure active exists
-  if (!STORE.activeHoldingPhoto || !list.includes(STORE.activeHoldingPhoto)) {
-    STORE.activeHoldingPhoto = list[0] || "";
+  if (!STORE.activeHoldingPhoto) {
+    STORE.activeHoldingPhoto = list[0];
   }
 
-  list.slice(0, MAX_PHOTOS).forEach((url) => {
+  list.forEach((url) => {
     if (!url) return;
 
-    const btn = DOC.createElement("button");
-    btn.type = "button";
+    const btn = document.createElement("button");
     btn.className = "holding-thumb-btn";
-    if (url === STORE.activeHoldingPhoto) btn.classList.add("active");
 
-    const img = DOC.createElement("img");
-    img.className = "holding-thumb-img";
-    img.loading = "lazy";
-    img.alt = "Holding photo";
+    if (url === STORE.activeHoldingPhoto) {
+      btn.classList.add("active");
+    }
+
+    const img = document.createElement("img");
     img.src = getProxiedImageUrl(url);
+    img.alt = "Holding Photo";
+    img.loading = "lazy";
 
     btn.appendChild(img);
 
-    // ✅ single click = set active + re-render + load into tuner
+    // Click = select
     btn.addEventListener("click", () => {
       STORE.activeHoldingPhoto = url;
       renderHoldingZone();
       loadPhotoTuner(url);
     });
 
-    // ✅ double click = send to Social-ready strip
-    // ✅ ALSO REMOVE from holding zone after sending (your request)
-    btn.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // add to social
+    // Double click = send to social + remove
+    btn.addEventListener("dblclick", () => {
       addToSocialReady(url, true);
+      STORE.holdingZonePhotos = STORE.holdingZonePhotos.filter(
+        (u) => u !== url
+      );
+      renderHoldingZone();
+    });
 
-      // remove from holding
-      STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter((u) => u !== url);
+    hz.appendChild(btn);
+  });
+}
+
 
       // fix active photo if we removed it
       if (STORE.activeHoldingPhoto === url) {
