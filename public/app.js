@@ -116,6 +116,23 @@ document.addEventListener("DOMContentLoaded", () => {
       return rawUrl;
     }
   }
+// 🔤 Rename existing Step 2 buttons (no DOM rebuild)
+function updateStep2ButtonLabels() {
+  document.querySelectorAll(".regen-btn").forEach((btn) => {
+    const text = btn.textContent.trim().toLowerCase();
+
+    if (text.includes("new") && text.includes("post")) {
+      btn.innerHTML = "<span>New</span><span>Post</span>";
+    }
+
+    if (text.includes("remove") && text.includes("emoji")) {
+      btn.innerHTML = "<span>No</span><span>Emoji</span>";
+    }
+  });
+}
+
+// run once after DOM + render
+setTimeout(updateStep2ButtonLabels, 50);
 
   // ==================================================
   // SIDE TOOLS (FLOATING MODALS)
