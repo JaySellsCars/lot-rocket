@@ -1296,6 +1296,102 @@ function renderHoldingZone() {
       }
     };
   }
+// ==================================================
+// STEP 1 — ALWAYS STORE CURRENT VEHICLE URL (SAFE)
+// Put inside Boost click handler AFTER you compute `url`
+// ==================================================
+STORE.dealerUrl = url;
+STORE.vehicleUrl = url;
+// ==================================================
+// STEP 2 — RENDER SOCIAL KIT OUTPUTS (BULLETPROOF)
+// Finds Step 2 cards by heading text and fills the nearest output box
+// ==================================================
+function renderStep2FromBoost(data) {
+  if (!data) return;
+
+  // normalize
+  const pick = (v) => (v == null ? "" : String(v));
+
+  // Try direct known IDs first (fast path)
+  const direct = [
+    { key: "tiktok", sels: ["#tiktokOutput", "#tiktokCaption", "#tiktokText", "[data-out='tiktok']"] },
+    { key: "instagram", sels: ["#instagramOutput", "#instagramCaption", "#instagramText", "[data-out='instagram']"] },
+    { key: "facebook", sels: ["#facebookOutput", "#facebookCaption", "#facebookText", "[data-out='facebook']"] },
+    { key: "linkedin", sels: ["#linkedinOutput", "#linkedinCaption", "#linkedinText", "[data-out='linkedin']"] },
+    { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']"] },
+    { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "[data-out='hashtags']"] },
+  ];
+
+  // source text from backend (supports multiple shapes)
+  const getPlatformText = (k) => {
+    // common shapes we’ve seen
+    if (data.posts && data.posts[k]) return pick(data.posts[k]);
+    if (data.captions && data.captions[k]) return pick(data.captions[k]);
+    if (data[k]) return pick(data[k]);
+    return "";
+  };
+
+  const setNodeText = (node, text) => {
+    if (!node) return false;
+    if ("value" in node) node.value = text;
+    else node.textContent = text;
+    return true;
+  };
+
+  // 1) Direct ID / selector fill
+  direct.forEach(({ key, sels }) => {
+    const text = getPlatformText(key);
+    if (!text) return;
+
+    for (const sel of sels) {
+      const el = document.querySelector(sel);
+      if (el) {
+        setNodeText(el, text);
+        return;
+      }
+    }
+  });
+
+  // 2) Fallback: find Step 2 cards by heading text, then fill nearest output element
+  const fillByHeading = (headingText, text) => {
+    if (!text) return false;
+
+    const all = Array.from(document.querySelectorAll("h1,h2,h3,h4,h5,strong,button,div,p,label"));
+    const hit = all.find((n) => (n.textContent || "").trim().toLowerCase() === headingText.toLowerCase());
+    if (!hit) return false;
+
+    // climb up to a reasonable “card” container
+    let card = hit;
+    for (let i = 0; i < 6; i++) {
+      if (!card || !card.parentElement) break;
+      card = card.parentElement;
+
+      // stop if it looks like a card section
+      const cls = (card.className || "").toString();
+      if (cls.includes("card") || cls.includes("panel") || cls.includes("kit") || cls.includes("box")) break;
+    }
+
+    // find first writable output inside that card
+    const target =
+      card.querySelector("textarea") ||
+      card.querySelector("input[type='text']") ||
+      card.querySelector("pre") ||
+      card.querySelector("[contenteditable='true']") ||
+      card.querySelector("div");
+
+    if (!target) return false;
+    return setNodeText(target, text);
+  };
+
+  // Use the actual headings you show in Step 2
+  fillByHeading("TikTok", getPlatformText("tiktok"));
+  fillByHeading("Instagram", getPlatformText("instagram"));
+  fillByHeading("Facebook", getPlatformText("facebook"));
+  fillByHeading("LinkedIn", getPlatformText("linkedin"));
+  fillByHeading("Marketplace", getPlatformText("marketplace"));
+  fillByHeading("Hashtag Set", getPlatformText("hashtags"));
+}
+
 
 // ==================================================
 // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
