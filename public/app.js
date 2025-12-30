@@ -736,7 +736,33 @@ function sendSelectedToHoldingZone() {
   if (step3) step3.scrollIntoView({ behavior: "smooth" });
 }
 
+// ✅ Wire button ONCE + rename + tiny animated feedback (safe)
+if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+  sendTopBtn.dataset.wired = "true";
+
+  // Rename button label (persist on reload)
+  sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
+
+  // Click handler
+  sendTopBtn.addEventListener("click", () => {
+    log("🚀 SEND SELECTED PHOTOS CLICK");
+
+    // Tiny “animated” feedback (no CSS dependency)
+    sendTopBtn.style.transform = "scale(0.98)";
+    sendTopBtn.style.opacity = "0.9";
+
+    // restore quickly so it feels snappy
+    setTimeout(() => {
+      sendTopBtn.style.transform = "";
+      sendTopBtn.style.opacity = "";
+    }, 180);
+
+    sendSelectedToHoldingZone();
+  });
+}
+
 // ----------------------------------------
+
 // Wire button safely (once)
 // ----------------------------------------
 if (sendTopBtn && !sendTopBtn.dataset.wired) {
