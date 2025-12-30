@@ -806,21 +806,32 @@ function renderHoldingZone() {
     STORE.activeHoldingPhoto = list[0] || "";
   }
 
-  list.forEach((url) => {
+  // ✅ hard clamp thumbs so they never stretch into tall strips
+  const THUMB = 110; // px (safe, tweak later)
+
+  list.slice(0, MAX_PHOTOS).forEach((url) => {
     if (!url) return;
 
-    const btn = document.createElement("button");
+    const btn = DOC.createElement("button");
     btn.type = "button";
     btn.className = "holding-thumb-btn";
+    btn.style.width = `${THUMB}px`;
+    btn.style.height = `${THUMB}px`;
+    btn.style.overflow = "hidden";
 
     if (url === STORE.activeHoldingPhoto) {
       btn.classList.add("active");
     }
 
-    const img = document.createElement("img");
+    const img = DOC.createElement("img");
+    img.className = "holding-thumb-img";
     img.src = getProxiedImageUrl(url);
     img.alt = "Holding Photo";
     img.loading = "lazy";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+    img.style.display = "block";
 
     btn.appendChild(img);
 
@@ -864,6 +875,7 @@ function renderHoldingZone() {
   }
 }
 // ==================================================
+
 
   // PHOTO TUNER
   // ==================================================
