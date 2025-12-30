@@ -1487,12 +1487,8 @@ document
 
 
 
-// ==================================================
-
+  // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
-  // ORDER MATTERS:
-  // - wireSideTools builds the tool UI
-  // - THEN we hide the future features
   // ==================================================
   try {
     if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
@@ -1515,29 +1511,23 @@ document
 
     if (typeof wireCalculatorPad === "function") wireCalculatorPad();
     if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
-
     if (typeof wireAiModals === "function") wireAiModals();
 
     // ✅ Build ToolWire / floating tools first
     if (typeof wireSideTools === "function") wireSideTools();
 
-// ✅ ONE hide system (persistent) — FIRE ONCE + OBSERVER HANDLES LATE INJECTS
-if (typeof installHideNextVersionUI === "function") {
-  // prevent repeated calls (your old rAF/timeouts cause flash/vanish)
-  if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-    window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-    installHideNextVersionUI();
-  }
-} else {
-  console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
-}
-
-
-
-
+    // ✅ ONE hide system (persistent)
+    if (typeof installHideNextVersionUI === "function") {
+      if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+        window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+        installHideNextVersionUI();
+      }
+    } else {
+      console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
+    }
 
     log("✅ FINAL INIT COMPLETE");
   } catch (e) {
     console.error("❌ FINAL INIT FAILED", e);
   }
-});
+}); // ✅ END DOMContentLoaded — THIS MUST BE THE LAST LINE
