@@ -1334,41 +1334,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     };
 
-// ✅ STEP2 REALITY: only #hashtags exists in DOM right now
-const hashtagsEl = DOC.querySelector("#hashtags");
+    // ✅ STEP2 TARGETS — MATCH index.html EXACTLY
+    const mapping = [
+      { key: "facebook", sels: ["#facebookPost"] },
+      { key: "instagram", sels: ["#instagramPost"] },
+      { key: "tiktok", sels: ["#tiktokPost"] },
+      { key: "linkedin", sels: ["#linkedinPost"] },
+      { key: "twitter", sels: ["#twitterPost"] },
+      { key: "text", sels: ["#textBlurb"] },
+      { key: "marketplace", sels: ["#marketplacePost"] },
+      { key: "hashtags", sels: ["#hashtags"] },
+    ];
 
-const tiktok = getPlatformText("tiktok");
-const instagram = getPlatformText("instagram");
-const facebook = getPlatformText("facebook");
-const linkedin = getPlatformText("linkedin");
-const marketplace = getPlatformText("marketplace");
-const hashtags = getPlatformText("hashtags");
-
-// If we have hashtags, write them to the one real field
-if (hashtagsEl) {
-  const bundle =
-    hashtags ||
-    [
-      tiktok ? `TikTok:\n${tiktok}` : "",
-      instagram ? `Instagram:\n${instagram}` : "",
-      facebook ? `Facebook:\n${facebook}` : "",
-      linkedin ? `LinkedIn:\n${linkedin}` : "",
-      marketplace ? `Marketplace:\n${marketplace}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-
-  // write
-  hashtagsEl.value = bundle || "";
-  hashtagsEl.classList.remove("hidden");
-  hashtagsEl.style.display = "";
-  hashtagsEl.setAttribute("data-filled", bundle ? "1" : "0");
-}
-
-console.log("🟦 STEP2 filled #hashtags only:", {
-  hasHashtagsEl: !!hashtagsEl,
-  chars: (hashtagsEl?.value || "").length,
-});
 
 // ===== STEP2 DOM PROBE (TEMP) =====
 // prints what nodes exist so we stop guessing IDs
