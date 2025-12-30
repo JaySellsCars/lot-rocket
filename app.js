@@ -7,6 +7,7 @@
  * ✅ processPhotosRequested/processPhotos exist ONLY inside routes (no redeclare crash)
  * ✅ Step 2 payload always includes: description (string) + posts (string[]) + named fields
  * ✅ HARD-BAN URL-only “posts” (sanitizeCopy kills URL-only + strips URLs)
+ * ✅ PROMPT LIBRARY DEDUPED (one source of truth, no duplicate const names)
  */
 
 require("dotenv").config();
@@ -43,117 +44,139 @@ app.use(express.static("public"));
 // ======================================================
 // PROMPT LIBRARY (GLOBAL - SINGLE SOURCE OF TRUTH)
 // ======================================================
-
-const PROMPT_SOCIAL_MASTER = `
-You are a master automotive marketer.
-
-Write high-performing social media posts for car dealerships.
-
-Rules:
-- Platform-optimized tone and length
-- No links, no URLs, no "http"
-- No emojis unless natural for the platform
-- Confident, persuasive, human tone
-- Never mention AI
-
-Platform expectations:
-• Facebook – conversational, trust-building
-• Instagram – punchy, lifestyle-driven
-• TikTok – short, hook-first, high energy
-• LinkedIn – professional, credibility-focused
-• Twitter/X – concise, opinionated
-• Marketplace – direct, benefit-focused
-
-Return ONLY valid JSON using these keys:
-facebook
-instagram
-tiktok
-linkedin
-twitter
-marketplace
-`;
-
-// ======================================================
-// PROMPT LIBRARY — GLOBAL AI BEHAVIOR
+// NOTE:
+// - We keep ONE prompt library object.
+// - No duplicate const PROMPT_SOCIAL_MASTER.
+// - Social kit uses BASE + SOCIAL_MASTER + JSON_CONTRACT.
+// - /api/new-post uses BASE + PLATFORM[platformKey].
 // ======================================================
 
 const PROMPTS = {
   BASE: `
 You are Lot Rocket — an elite automotive marketing AI.
-You write high-converting, ethical, human-sounding sales copy.
-Never use URLs. Never include emojis unless explicitly allowed.
-Tone is confident, helpful, and sales-focused.
-`,
+You write high-converting, ethical, human-sounding sales copy for car sales pros.
+Never use URLs/links. Never include "http", "https", or "www".
+Never mention you are AI. No markdown.
+Be confident, persuasive, and human — not cheesy.
+`.trim(),
 
+  // Master behavior for the “social kit” (multi-platform in one response)
+  SOCIAL_MASTER: `
+Role: Act as a Grand Master Marketer and Human Behavior Architect.
+You understand platform psychology and write content that people actually copy/paste and post.
+
+Rules:
+- Platform-optimized tone, formatting, and length.
+- NO URLs/links of any kind.
+- Emojis allowed ONLY where natural for that platform (Marketplace = NO emojis).
+- Clear CTA to message/DM.
+- Avoid robotic phrasing. Avoid “limited time” spam vibes.
+`.trim(),
+
+  // JSON contract for the multi-platform social kit route (buildSocialKit)
+  SOCIAL_JSON_CONTRACT: `
+CRITICAL OUTPUT RULES:
+- Output MUST be a single VALID JSON object.
+- NO intro, NO outro, NO markdown.
+- ABSOLUTELY NO URLS OR LINKS anywhere in any field.
+- Write complete, social-ready copy per platform.
+
+Use these keys EXACTLY:
+{
+  "label":       string,
+  "price":       string,
+
+  "facebook":    string,
+  "instagram":   string,
+  "tiktok":      string,
+  "linkedin":    string,
+  "twitter":     string,
+  "text":        string,
+  "marketplace": string,
+
+  "hashtags":    string,
+
+  "selfieScript": string,
+  "videoPlan":    string,
+  "canvaIdea":    string
+}
+`.trim(),
+
+  // Per-platform system snippets for single-post regen (/api/new-post)
   PLATFORM: {
     facebook: `
 PLATFORM: Facebook
-Tone: friendly, conversational, community-focused.
-Goal: comments and DMs.
-Rules:
-- 1 strong hook
-- 2–4 short lines
-- Soft CTA ("Message me", "Happy to help")
-`,
+Tone: friendly, conversational, trust-building, community.
+Format: 1 hook + 2–5 short lines.
+CTA: “Message me” / “DM me” / “Want the details?”
+Emojis: light, natural.
+`.trim(),
 
     instagram: `
 PLATFORM: Instagram
 Tone: modern, scroll-stopping, energetic.
-Rules:
-- Short punchy lines
-- Strong hook
-- Emojis allowed but limited
-- CTA: DM me
-`,
+Format: short punchy lines, spacing matters.
+CTA: DM me / Message me.
+Emojis: allowed but not clutter.
+`.trim(),
 
     tiktok: `
-PLATFORM: TikTok
-Tone: fast, casual, spoken.
-Rules:
-- Hook in first line
-- 3 short beats
-- End with a question
-`,
+PLATFORM: TikTok caption
+Tone: fast, casual, hook-first.
+Format: hook + 2–4 short beats.
+End with a question when possible.
+Emojis: light.
+`.trim(),
 
     linkedin: `
 PLATFORM: LinkedIn
-Tone: professional, confident, value-driven.
-Rules:
-- Business-focused
-- No slang
-- Clear credibility
-`,
+Tone: professional, credibility-focused, value-driven.
+No slang. No hype.
+Format: hook + brief value + soft CTA.
+Emojis: minimal.
+`.trim(),
 
     twitter: `
 PLATFORM: X (Twitter)
-Tone: short, punchy, bold.
-Rules:
-- 1–2 lines max
-- Strong opinion or curiosity hook
-`,
+Tone: concise, bold, curiosity.
+Format: 1–2 short lines max.
+No hashtags unless requested by the user.
+`.trim(),
 
     text: `
 PLATFORM: SMS / Text
 Tone: friendly, human.
-Rules:
-- Max 2 lines
-- No fluff
-- Ends with a question
-`,
+Format: max 2 short lines.
+Ends with a question.
+No emojis unless user asked.
+`.trim(),
 
     marketplace: `
-PLATFORM: Facebook Marketplace
-Tone: clear, factual, trustworthy.
-Rules:
-- NO emojis
-- NO hype
-- Clean bullet formatting
-- Include price if known
-- End with: "Message me for availability"
-`
-  }
+PLATFORM: Facebook Marketplace Listing
+Tone: direct, clear, benefit-focused, trustworthy.
+NO EMOJIS.
+Format:
+- 1-line headline
+- 4–7 short bullets
+- Clear CTA: “Message me for availability”
+No fluff, no hype, no slang.
+`.trim(),
+  },
 };
 
+// normalize a platform string into our keys
+function normalizePlatformKey(p) {
+  const raw = String(p || "").toLowerCase().trim();
+  if (!raw) return "";
+  if (raw.includes("market")) return "marketplace";
+  if (raw === "x" || raw.includes("twitter")) return "twitter";
+  if (raw.includes("insta")) return "instagram";
+  if (raw.includes("tik")) return "tiktok";
+  if (raw.includes("link")) return "linkedin";
+  if (raw.includes("sms") || raw.includes("text") || raw.includes("dm")) return "text";
+  if (raw.includes("face")) return "facebook";
+  return raw; // fallback
+}
 
 // ======================================================
 // Text helpers
@@ -187,43 +210,6 @@ function sanitizeCopy(s) {
   if (noUrls.length < 10) return "";
   return noUrls;
 }
-// ======================================================
-// MASTER PROMPT – SOCIAL CONTENT ENGINE
-// ======================================================
-const PROMPT_SOCIAL_MASTER = `
-You are a Master Digital Marketer and Behavioral Psychologist.
-
-Your job is to create HIGH-PERFORMING social media content for car sales professionals.
-
-You understand:
-• Platform psychology (Facebook, Instagram, TikTok, X)
-• Buyer intent and emotional triggers
-• Local market language and tone
-• Short-form attention economics
-
-RULES:
-- Write for humans, not algorithms.
-- No URLs. No emojis unless natural.
-- Never sound robotic or salesy.
-- Always optimize for engagement and curiosity.
-
-TASK:
-You will generate platform-specific content using the provided vehicle data.
-
-OUTPUT REQUIREMENTS:
-- Facebook: Conversational, trust-building, friendly CTA.
-- Instagram: Punchy, short lines, high emotion.
-- TikTok: Hook-driven, casual, scroll-stopping.
-- X (Twitter): Bold, short, clever.
-- Marketplace: Clear, benefit-driven, no fluff.
-
-DO NOT include:
-• Emojis unless they improve clarity
-• Hashtags unless explicitly requested
-• URLs or markdown
-
-Respond ONLY with clean text for each platform.
-`;
 
 // --------------------------------------------------
 // Extract description from HTML (safe + robust)
@@ -546,6 +532,7 @@ function preferVehicleGalleryPhotos(cleanedUrls) {
   const preferred = (cleanedUrls || []).filter((u) => re.test(String(u)));
   return preferred.length ? preferred : (cleanedUrls || []);
 }
+
 // ======================================================
 // FAST CACHE (Boost speed-up)
 // ======================================================
@@ -576,7 +563,6 @@ function cacheSet(key, value) {
 // Scraping (single path) — FAST + CACHED
 // ======================================================
 async function scrapePage(url) {
-  // ✅ cache hit = instant
   const cached = cacheGet(url);
   if (cached) return cached;
 
@@ -589,7 +575,7 @@ async function scrapePage(url) {
         Accept: "text/html,application/xhtml+xml",
       },
     },
-    12000 // ✅ faster timeout (was 20000)
+    12000
   );
 
   if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`);
@@ -600,18 +586,13 @@ async function scrapePage(url) {
   const title = $("title").first().text().trim();
   const metaDesc = $('meta[name="description"]').attr("content") || "";
 
-  // FAST TEXT EXTRACTION (no full DOM walk)
   const bodyText = cleanText($("body").text() || "");
   const visibleText = bodyText.slice(0, 3500);
 
   const out = { title, metaDesc, visibleText, html, $ };
-
-  // ✅ save cache
   cacheSet(url, out);
-
   return out;
 }
-
 
 function scrapeVehiclePhotosFromCheerio($, baseUrl) {
   const urls = new Set();
@@ -623,7 +604,7 @@ function scrapeVehiclePhotosFromCheerio($, baseUrl) {
     return [];
   }
 
-  const MAX_URLS = 350; // hard safety cap
+  const MAX_URLS = 350;
 
   const addUrl = (raw) => {
     if (!raw) return;
@@ -738,40 +719,13 @@ async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, 
 
   const { title, metaDesc, visibleText } = pageInfo;
 
-  // ✅ MASTER PROMPT (base rules) + JSON contract (must stay inside template string)
+  // ✅ MASTER PROMPT + JSON CONTRACT (MUST STAY INSIDE TEMPLATE STRING)
   const system = `
-${PROMPTS?.BASE || ""}
+${PROMPTS.BASE}
 
-${PROMPTS?.SOCIAL_MASTER || PROMPTS?.SOCIAL_POST || ""}
+${PROMPTS.SOCIAL_MASTER}
 
-CRITICAL OUTPUT RULES:
-- Output MUST be a single VALID JSON object.
-- NO intro, NO outro, NO markdown.
-- ABSOLUTELY NO URLS OR LINKS anywhere in any field.
-  - Do NOT include dealership website links, social profile links, or "http".
-  - Do NOT include "www.".
-  - Do NOT include platform handles as links.
-- Write original sales copy (captions) only.
-
-Use these keys EXACTLY:
-{
-  "label":       string,
-  "price":       string,
-
-  "facebook":    string,
-  "instagram":   string,
-  "tiktok":      string,
-  "linkedin":    string,
-  "twitter":     string,
-  "text":        string,
-  "marketplace": string,
-
-  "hashtags":    string,
-
-  "selfieScript": string,
-  "videoPlan":    string,
-  "canvaIdea":    string
-}
+${PROMPTS.SOCIAL_JSON_CONTRACT}
   `.trim();
 
   const user = `
@@ -885,8 +839,7 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
 }
 
 // ======================================================
-
-// Build Kit (shared)  ✅ NO req.body in here (no scope)
+// Build Kit (shared) ✅ NO req.body in here (no scope)
 // ======================================================
 async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "", processPhotos = true }) {
   const pageInfo = await scrapePage(pageUrl);
@@ -909,7 +862,6 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
 
   kit.description = cleanText(description || "");
   kit.posts = Array.isArray(kit.posts) ? kit.posts : [];
-
   kit.posts = kit.posts.map(sanitizeCopy).filter(Boolean);
 
   kit.editedPhotos = processPhotos
@@ -1153,7 +1105,8 @@ app.post("/api/social-photos-zip", async (req, res) => {
 // --------------------------------------------------
 app.post("/api/new-post", async (req, res) => {
   try {
-    const platform = req.body?.platform;
+    const platformRaw = req.body?.platform;
+    const platform = normalizePlatformKey(platformRaw);
     const pageUrl = normalizeUrl(req.body?.url);
     const label = req.body?.label || req.body?.labelOverride || "";
     const price = req.body?.price || req.body?.priceOverride || "";
@@ -1165,11 +1118,10 @@ app.post("/api/new-post", async (req, res) => {
     const pageInfo = await scrapePage(pageUrl);
     const { title, metaDesc, visibleText } = pageInfo;
 
-const system = `
+    const system = `
 ${PROMPTS.BASE}
 ${PROMPTS.PLATFORM[platform] || ""}
-`;
-
+`.trim();
 
     const user = `
 Dealer page:
@@ -1182,8 +1134,9 @@ Platform: ${platform}
 Optional custom label: ${label || "none"}
 Optional custom price: ${price || "none"}
 
-Write ONE high-performing piece of content for this platform.
-Include a call-to-action to DM or message the salesperson.
+Write ONE social-ready post for this platform.
+Must be copy/paste ready.
+Include a call-to-action to DM/message.
 No links.
 `.trim();
 
@@ -1263,18 +1216,13 @@ Write a natural spoken script suitable for Reels/TikTok.
       ],
     });
 
-    const script =
-      (getResponseText(completion) || "").trim() ||
-      "No script returned. Please try again.";
-
+    const script = (getResponseText(completion) || "").trim() || "No script returned. Please try again.";
     return res.json({ script });
   } catch (err) {
     console.error("❌ Script generation error:", err);
     return res.status(500).json({ error: "Failed to generate script." });
   }
 });
-
-
 
 // --------------------------------------------------
 // /api/video-from-photos
