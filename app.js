@@ -1127,11 +1127,11 @@ app.post("/api/new-post", async (req, res) => {
     const pageInfo = await scrapePage(pageUrl);
     const { title, metaDesc, visibleText } = pageInfo;
 
-    const system = `
-You are Lot Rocket, an elite automotive copywriter.
-Return ONLY the copy for the requested platform, no labels, no JSON, no explanation.
-ABSOLUTELY NO URLS OR LINKS. Do not include http, https, or www.
-`.trim();
+const system = `
+${PROMPTS.BASE}
+${PROMPTS.PLATFORM[platform] || ""}
+`;
+
 
     const user = `
 Dealer page:
