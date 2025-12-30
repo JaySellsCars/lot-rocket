@@ -1278,14 +1278,73 @@ document.addEventListener("DOMContentLoaded", () => {
     const pick = (v) => (v == null ? "" : String(v));
 
     // source text from backend (supports multiple shapes)
-    const getPlatformText = (k) => {
-      // common shapes we’ve seen
-      if (data.posts && data.posts[k]) return pick(data.posts[k]);
-      if (data.socialPosts && data.socialPosts[k]) return pick(data.socialPosts[k]);
-      if (data.captions && data.captions[k]) return pick(data.captions[k]);
-      if (data[k]) return pick(data[k]);
+    // --- UNWRAP + DEEP EXTRACT (handles real-world backend shapes) ---
+    const root =
+      (data && data.data) ||
+      (data && data.result) ||
+      (data && data.payload) ||
+      data ||
+      {};
+
+    const asText = (v) => {
+      if (v == null) return "";
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v);
+      // common: { text: "..." } or { caption: "..." }
+      if (typeof v === "object") {
+        if (typeof v.text === "string") return v.text;
+        if (typeof v.caption === "string") return v.caption;
+        if (typeof v.value === "string") return v.value;
+        // arrays of lines
+        if (Array.isArray(v)) return v.map(asText).filter(Boolean).join("\n");
+      }
+      try { return JSON.stringify(v); } catch { return ""; }
+    };
+
+    const findKeyCI = (obj, key) => {
+      if (!obj || typeof obj !== "object") return undefined;
+      if (key in obj) return obj[key];
+      const kLower = String(key).toLowerCase();
+      for (const k of Object.keys(obj)) {
+        if (k.toLowerCase() === kLower) return obj[k];
+      }
+      return undefined;
+    };
+
+    const deepFindPlatform = (obj, platform) => {
+      if (!obj || typeof obj !== "object") return "";
+      const p = String(platform).toLowerCase();
+
+      // Direct hit: obj[platform]
+      const direct = findKeyCI(obj, platform);
+      if (direct != null) return asText(direct);
+
+      // Common containers
+      const containers = ["posts", "socialPosts", "captions", "copy", "outputs", "output", "socialKit", "social"];
+      for (const c of containers) {
+        const bucket = findKeyCI(obj, c);
+        if (bucket && typeof bucket === "object") {
+          const hit = findKeyCI(bucket, platform);
+          if (hit != null) return asText(hit);
+
+          // also support keys like "tiktokCaption", "captionTikTok", etc inside the bucket
+          for (const k of Object.keys(bucket)) {
+            const kl = k.toLowerCase();
+            if (kl.includes(p)) return asText(bucket[k]);
+          }
+        }
+      }
+
+      // Scan top-level keys like tiktokCaption / instagram_caption / captionTikTok etc
+      for (const k of Object.keys(obj)) {
+        const kl = k.toLowerCase();
+        if (kl.includes(p)) return asText(obj[k]);
+      }
+
       return "";
     };
+
+    const getPlatformText = (k) => deepFindPlatform(root, k);
+
     // --- HARDENED DOM FIND + SAFE INJECT ---
     const findEl = (sels) => {
       for (const sel of sels) {
