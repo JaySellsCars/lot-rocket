@@ -1239,8 +1239,11 @@ function wireSideTools() {
 
 // ==================================================
 // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
-// Goal: HIDE 4 future buttons + hide video script/output + hide canvas/design
-// KEEP: floating tools BAR + Step 3 container
+// Goal for LAUNCH:
+// - KEEP floating tools bar + Step 3 container
+// - HIDE only 4 future buttons + their panels (Canvas/Design/Image/Video)
+// - HIDE bottom video/script output area
+// Survives DOM injections via MutationObserver.
 // ==================================================
 function installHideNextVersionUI() {
   if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
@@ -1252,58 +1255,42 @@ function installHideNextVersionUI() {
   const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
   const getKeepNodes = () => KEEP_SELECTORS.map((s) => document.querySelector(s)).filter(Boolean);
 
-  const isKeep = (el) => {
-    if (!el) return false;
-    const keeps = getKeepNodes();
-    if (!keeps.length) return false;
-    if (keeps.some((k) => el === k)) return true;
-    if (keeps.some((k) => el.contains && el.contains(k))) return true; // protects Step 3 wrapper
+  // Extra safety: never hide these, even if KEEP nodes aren't found yet
+  const isAlwaysKeep = (el) => {
+    if (!el) return true;
+    if (el === document.documentElement) return true;
+    if (el === document.body) return true;
+    if (el.tagName === "BODY") return true;
+    if (el.tagName === "HTML") return true;
+    if (el.tagName === "MAIN") return true;
     return false;
   };
 
-  // ✅ Only hide these 4 launchers (by text)
-  const HIDE_BUTTON_TEXT = [
+  const isKeep = (el) => {
+    if (!el) return false;
+    if (isAlwaysKeep(el)) return true;
+
+    const keeps = getKeepNodes();
+    if (!keeps.length) return false;
+
+    // protect the keep node itself
+    if (keeps.some((k) => el === k)) return true;
+
+    // protect any ancestor that contains Step 3 (prevents nuking Step 3 wrappers)
+    if (keeps.some((k) => el.contains && el.contains(k))) return true;
+
+    return false;
+  };
+
+  // ✅ We ONLY want to kill these 4 future buttons (text match)
+  const FUTURE_BUTTON_TEXT = [
     "ai image generation",
     "ai video generation",
     "canvas studio",
     "design studio",
   ];
 
-  // ✅ Also kill any known future modals/sections by ID
-  const HARD_ID_KILLS = [
-    "#videoOutputBottom",
-    "#creativeStudioOverlay",
-    "#designStudioOverlay",
-    "#canvasStudio",
-    "#canvasStudioWrap",
-    "#canvasStudioRoot",
-    "#designStudio",
-    "#designStudioRoot",
-    "#konvaStage",
-    "#fabricCanvasWrap",
-
-    // common modal IDs
-    "#videoModal",
-    "#imageModal",
-    "#canvasModal",
-    "#designModal",
-    "#canvasStudioModal",
-    "#designStudioModal",
-  ];
-
-  // ✅ Kill by modal targets (these are your 4 buttons most of the time)
-  const HIDE_MODAL_TARGETS = new Set([
-    "videoModal",
-    "imageModal",
-    "canvasModal",
-    "designModal",
-    "canvasStudioModal",
-    "designStudioModal",
-    "canvasStudio",
-    "designStudio",
-  ]);
-
-  // ✅ Kill by ai-action (if present)
+  // ✅ If they use data-ai-action, kill them here too
   const HIDE_ACTIONS = new Set([
     "image_ai",
     "video_ai",
@@ -1320,102 +1307,113 @@ function installHideNextVersionUI() {
     "design_studio_3_0",
   ]);
 
-  // ✅ DO NOT HIDE these launch-critical tools
-  const KEEP_ACTIONS = new Set([
-    "objection_coach",
-    "ask_ai",
-    "message_builder",
-    "workflow_builder",
-    "drill_master",
-    "car_expert",
-    "payment_calc",
-    "income_calc",
-  ]);
+  // ✅ If they use data-modal-target, kill them here too
+  const HIDE_MODAL_TARGETS = new Set([
+    "imageModal",
+    "videoModal",
+    "canvasModal",
+    "designModal",
+    "canvasStudioModal",
+    "designStudioModal",
+  ].map(norm));
+
+  // ✅ Hard-kill the actual DOM containers you showed in DevTools
+  const HARD_KILL_SELECTORS = [
+    "#videoOutputBottom",
+    "#creativeStudioOverlay",
+    "#designStudioOverlay",
+    "#canvasStudio",
+    "#canvasStudioWrap",
+    "#canvasStudioRoot",
+    "#designStudio",
+    "#designStudioRoot",
+    "#konvaStage",
+    "#fabricCanvasWrap",
+  ];
 
   const hideEl = (el, reason) => {
     if (!el) return false;
     if (isKeep(el)) return false;
-    if (el.dataset && el.dataset.lrHidden === "1") return false;
+    if (el.dataset?.lrHidden === "1") return false;
 
-    if (el.dataset) el.dataset.lrHidden = "1";
+    el.dataset.lrHidden = "1";
     el.setAttribute("aria-hidden", "true");
     el.hidden = true;
+
     el.style.setProperty("display", "none", "important");
     el.style.setProperty("visibility", "hidden", "important");
     el.style.setProperty("pointer-events", "none", "important");
 
-    // console.log("🙈 HIDING:", reason, el);
+    // console.log("🙈 HID:", reason, el);
     return true;
   };
 
-  const keepFloatingBarVisible = () => {
-    document.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach((bar) => {
-      bar.hidden = false;
-      bar.removeAttribute("aria-hidden");
-      bar.style.setProperty("display", "flex", "important");
-      bar.style.setProperty("visibility", "visible", "important");
-      bar.style.setProperty("pointer-events", "auto", "important");
-    });
+  const forceShowFloatingBar = () => {
+    document
+      .querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar")
+      .forEach((bar) => {
+        if (!bar) return;
+        bar.hidden = false;
+        bar.removeAttribute("aria-hidden");
+        bar.dataset.lrHidden = "0"; // undo any prior hide marks
+        bar.style.setProperty("display", "flex", "important");
+        bar.style.setProperty("visibility", "visible", "important");
+        bar.style.setProperty("pointer-events", "auto", "important");
+      });
   };
 
   const pass = () => {
-    try {
-      // ✅ keep bar visible ALWAYS
-      keepFloatingBarVisible();
+    // 0) Floating bar MUST stay visible
+    forceShowFloatingBar();
 
-      // ✅ hide Step 3 future design button (if you still have it)
-      hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
+    // 1) Always hide Step 3 "Send to Design Studio" future button if it exists
+    hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
 
-      // ✅ hard-kill known future containers by ID
-      HARD_ID_KILLS.forEach((sel) => hideEl(document.querySelector(sel), `hard-id:${sel}`));
+    // 2) Hard kill by exact IDs/containers
+    HARD_KILL_SELECTORS.forEach((sel) => {
+      const el = document.querySelector(sel);
+      if (el) hideEl(el, `hard-kill ${sel}`);
+    });
 
-      // ✅ hide the 4 buttons by data-modal-target
-      document.querySelectorAll(".floating-tools [data-modal-target], [data-modal-target]").forEach((btn) => {
-        const t = (btn.getAttribute("data-modal-target") || "").trim();
-        if (HIDE_MODAL_TARGETS.has(t)) hideEl(btn, `data-modal-target=${t}`);
+    // 3) Hide ONLY the 4 future buttons inside the floating tools bar
+    document
+      .querySelectorAll(".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button")
+      .forEach((btn) => {
+        const txt = norm(btn.textContent);
+        const action = norm(btn.getAttribute("data-ai-action"));
+        const target = norm(btn.getAttribute("data-modal-target"));
+
+        const textMatch = FUTURE_BUTTON_TEXT.some((t) => txt.includes(t));
+        const actionMatch = action && HIDE_ACTIONS.has(action);
+        const targetMatch = target && HIDE_MODAL_TARGETS.has(target);
+
+        if (textMatch || actionMatch || targetMatch) {
+          hideEl(btn, `floating future btn (${txt || action || target || "unknown"})`);
+        }
       });
 
-      // ✅ hide by data-ai-action (but keep launch tools)
-      document.querySelectorAll("[data-ai-action]").forEach((btn) => {
-        const a = norm(btn.getAttribute("data-ai-action"));
-        if (!a) return;
-        if (KEEP_ACTIONS.has(a)) return;
-        if (HIDE_ACTIONS.has(a)) hideEl(btn, `data-ai-action=${a}`);
-      });
+    // 4) If those buttons open modals by id, hide the modals too (safety)
+    document.querySelectorAll(".side-modal, .modal").forEach((m) => {
+      const mid = norm(m.id);
+      if (!mid) return;
 
-      // ✅ FINAL fallback: hide the 4 buttons by visible text (works even with no attributes)
-      document.querySelectorAll(".floating-tools button, .floating-tools a, button, a").forEach((el) => {
-        const t = norm(el.textContent);
-        if (!t) return;
-        if (HIDE_BUTTON_TEXT.some((k) => t.includes(k))) hideEl(el, `text=${t}`);
-      });
+      if (mid.includes("video") || mid.includes("image") || mid.includes("canvas") || mid.includes("design")) {
+        // Only hide if it clearly belongs to the future set
+        if (mid.includes("canvas") || mid.includes("design") || mid.includes("video") || mid.includes("image")) {
+          hideEl(m, `future modal ${m.id}`);
+        }
+      }
+    });
 
-      // ✅ also kill any panels that contain those labels (video script/canvas/design)
-      document.querySelectorAll("section, article, .panel, .tool-panel, .lab-card, .card, .tool, .side-modal, .modal")
-        .forEach((box) => {
-          const t = norm(box.textContent);
-          if (!t) return;
-          if (
-            t.includes("video script") ||
-            t.includes("shot list") ||
-            t.includes("canvas studio") ||
-            t.includes("design studio") ||
-            t.includes("ai image generation") ||
-            t.includes("ai video generation")
-          ) {
-            hideEl(box, "panel-text-match");
-          }
-        });
-
-    } catch (e) {
-      console.error("❌ UI HIDER pass() failed", e);
-    }
+    // 5) Kill any remaining “bottom output” section if present (your DOM shows it)
+    const bottom = document.querySelector("#videoOutputBottom");
+    if (bottom) hideEl(bottom, "#videoOutputBottom");
   };
 
-  // run now
+  // initial pass
   pass();
 
-  // watch late injects
+  // observer (single)
   if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
     const obs = new MutationObserver(() => {
       if (window.__LOTROCKET_UI_HIDER_TICK__) return;
@@ -1429,16 +1427,17 @@ function installHideNextVersionUI() {
     window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
   }
 
-  // extra forced passes (slow renders)
+  // retry loop (covers slow render / late injection)
   let tries = 0;
   const t = setInterval(() => {
     tries++;
     pass();
-    if (tries >= 25) clearInterval(t);
+    if (tries >= 30) clearInterval(t);
   }, 200);
 
-  console.log("✅ UI hider installed (authoritative v3)");
+  console.log("✅ UI hider installed (authoritative LAUNCH v4)");
 }
+
 
 
 
