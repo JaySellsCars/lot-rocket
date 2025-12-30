@@ -1071,6 +1071,11 @@ function wireStep2RemoveEmojiClicks() {
     STORE.socialReadyPhotos = next;
     return true;
   }
+function autoGrowTextarea(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
 
   // ==================================================
   // SOCIAL READY STRIP (SINGLE SOURCE)
@@ -1185,6 +1190,9 @@ function wireStep2RemoveEmojiClicks() {
         : "No social-ready photos yet.";
     }
   }
+setTimeout(() => {
+  document.querySelectorAll("textarea").forEach(autoGrowTextarea);
+}, 50);
 
   // ==================================================
   // DOWNLOAD SOCIAL-READY (LOCKED PHOTOS ONLY)
