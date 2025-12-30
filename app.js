@@ -39,6 +39,40 @@ app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+// ======================================================
+// PROMPT LIBRARY (GLOBAL – USED BY ALL AI ROUTES)
+// ======================================================
+
+const PROMPTS = {
+  SOCIAL_POST: `
+You are a master automotive marketer.
+Write high-conversion social media posts.
+Be punchy, modern, confident, and persuasive.
+No links. No emojis unless appropriate.
+`,
+
+  SOCIAL_REWRITE: `
+Rewrite the post with a fresh angle.
+Short, emotional, scroll-stopping.
+No emojis unless natural.
+`,
+
+  VIDEO_SCRIPT: `
+You are a short-form video script expert.
+Write natural spoken dialogue.
+No narration tags. No scene labels.
+`,
+
+  MESSAGE_REPLY: `
+Write a friendly, human response to a customer message.
+No pressure. No salesy tone.
+`,
+
+  GENERIC: `
+You are a helpful automotive assistant.
+Respond clearly and professionally.
+`
+};
 
 // ======================================================
 // Text helpers
