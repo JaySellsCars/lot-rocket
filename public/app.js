@@ -1282,13 +1282,16 @@ function installHideNextVersionUI() {
     return false;
   };
 
-  // ✅ We ONLY want to kill these 4 future buttons (text match)
-  const FUTURE_BUTTON_TEXT = [
-    "ai image generation",
-    "ai video generation",
-    "canvas studio",
-    "design studio",
-  ];
+// ✅ We ONLY want to kill these future buttons (text match)
+const FUTURE_BUTTON_TEXT = [
+  "ai image generation",
+  "ai video generation",
+  "canvas studio",
+  "design studio",
+  "canvas",          // ✅ NEW (your button has no target/action)
+  "design",          // ✅ NEW (your button has no target/action)
+];
+
 
   // ✅ If they use data-ai-action, kill them here too
   const HIDE_ACTIONS = new Set([
