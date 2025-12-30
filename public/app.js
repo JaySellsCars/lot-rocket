@@ -758,80 +758,86 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   };
 }
 
+// ==================================================
+// STEP 3 — HOLDING ZONE RENDER (SINGLE SOURCE)
+// Renders STORE.holdingZonePhotos into #holdingZone
+// ==================================================
+function renderHoldingZone() {
+  const hz =
+    $("holdingZone") ||
+    DOC.getElementById("holdingZone") ||
+    DOC.querySelector("#holdingZone");
 
-  // ==================================================
-  // STEP 3 — HOLDING ZONE RENDER (SINGLE SOURCE)
-  // Renders STORE.holdingZonePhotos into #holdingZone
-  // ==================================================
-  function renderHoldingZone() {
-    const hz =
-      $("holdingZone") ||
-      DOC.getElementById("holdingZone") ||
-      DOC.querySelector("#holdingZone");
-
-    if (!hz) {
-      warn("❌ renderHoldingZone: #holdingZone not found");
-      return;
-    }
-
-    const list = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-    hz.innerHTML = "";
-
-    if (!list.length) return;
-
-    if (!STORE.activeHoldingPhoto || !list.includes(STORE.activeHoldingPhoto)) {
-      STORE.activeHoldingPhoto = list[0] || "";
-    }
-
-    list.slice(0, MAX_PHOTOS).forEach((url) => {
-      if (!url) return;
-
-      const btn = DOC.createElement("button");
-      btn.type = "button";
-      btn.className = "holding-thumb-btn";
-      if (url === STORE.activeHoldingPhoto) btn.classList.add("active");
-
-      const img = DOC.createElement("img");
-      img.className = "holding-thumb-img";
-      img.loading = "lazy";
-      img.alt = "Holding photo";
-      img.src = getProxiedImageUrl(url);
-
-      btn.appendChild(img);
-
-      // ✅ single click = set active + re-render + load into tuner
-      btn.addEventListener("click", () => {
-        STORE.activeHoldingPhoto = url;
-        renderHoldingZone();
-        loadPhotoTuner(url);
-      });
-
-      // ✅ double click = send to Social-ready strip
-btn.addEventListener("dblclick", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  // 1) add to social-ready
-  const ok = addToSocialReady(url, true);
-  if (!ok) return;
-
-  // 2) remove from Step 3 holding list
-  STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter((u) => u !== url);
-
-  // 3) keep active photo valid
-  if (STORE.activeHoldingPhoto === url) {
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+  if (!hz) {
+    warn("❌ renderHoldingZone: #holdingZone not found");
+    return;
   }
 
-  // 4) re-render Step 3 + tuner + social strip
-  renderHoldingZone();
+  const list = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+  hz.innerHTML = "";
+
+  if (!list.length) return;
+
+  // Ensure active exists
+  if (!STORE.activeHoldingPhoto || !list.includes(STORE.activeHoldingPhoto)) {
+    STORE.activeHoldingPhoto = list[0] || "";
+  }
+
+  list.slice(0, MAX_PHOTOS).forEach((url) => {
+    if (!url) return;
+
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "holding-thumb-btn";
+    if (url === STORE.activeHoldingPhoto) btn.classList.add("active");
+
+    const img = DOC.createElement("img");
+    img.className = "holding-thumb-img";
+    img.loading = "lazy";
+    img.alt = "Holding photo";
+    img.src = getProxiedImageUrl(url);
+
+    btn.appendChild(img);
+
+    // ✅ single click = set active + re-render + load into tuner
+    btn.addEventListener("click", () => {
+      STORE.activeHoldingPhoto = url;
+      renderHoldingZone();
+      loadPhotoTuner(url);
+    });
+
+    // ✅ double click = send to Social-ready strip
+    // ✅ ALSO REMOVE from holding zone after sending (your request)
+    btn.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // add to social
+      addToSocialReady(url, true);
+
+      // remove from holding
+      STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter((u) => u !== url);
+
+      // fix active photo if we removed it
+      if (STORE.activeHoldingPhoto === url) {
+        STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+      }
+
+      renderHoldingZone();
+      renderSocialStrip();
+
+      toast("Sent to Social-ready ✅", "ok");
+      log("✅ Sent to social-ready (removed from holding):", url);
+    });
+
+    hz.appendChild(btn);
+  });
+
   if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
 
-  renderSocialStrip();
+  log("✅ Holding zone rendered:", (STORE.holdingZonePhotos || []).length);
+} // ✅ DO NOT DELETE THIS CLOSING BRACE
 
-  toast("Moved to Social-ready ✅", "ok");
-  log("✅ Moved to social-ready (removed from Step 3):", url);
-});
 
 
   // ==================================================
