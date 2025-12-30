@@ -1769,7 +1769,9 @@ try {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
 
-    if (typeof renderHoldingZone === "function") renderHoldingZone();
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
+    }
 
     if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
       loadPhotoTuner(STORE.activeHoldingPhoto);
@@ -1785,11 +1787,10 @@ try {
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
 
-  // ✅ Step 2 UX + actions (autogrow, regen, remove emojis)
+  // Step 2 helpers
   if (typeof installAutoGrowTextareas === "function") installAutoGrowTextareas();
   if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
   if (typeof installStep2RemoveEmojiButtons === "function") installStep2RemoveEmojiButtons();
-  if (typeof wireStep2RemoveEmojiClicks === "function") wireStep2RemoveEmojiClicks();
 
   if (typeof installSideToolsDelegation === "function") {
     installSideToolsDelegation();
@@ -1800,12 +1801,9 @@ try {
       window.__LOTROCKET_UI_HIDER_CALLED__ = true;
       installHideNextVersionUI();
     }
-  } else {
-    console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
   }
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-✅ FINAL INIT COMPLETE
