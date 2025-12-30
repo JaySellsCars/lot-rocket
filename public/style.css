@@ -214,6 +214,29 @@ textarea{
 .glow-send{
   box-shadow: 0 0 28px rgba(249,115,22,0.55);
 }
+/* Button loading animation (reused by setBtnLoading) */
+.btn-loading{
+  opacity: .85;
+  cursor: wait !important;
+  position: relative;
+}
+
+.btn-loading::after{
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.45);
+  border-top-color: rgba(255,255,255,1);
+  animation: lrSpin .75s linear infinite;
+  vertical-align: -2px;
+}
+
+@keyframes lrSpin{
+  to { transform: rotate(360deg); }
+}
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
 /* v2.6 JS renders buttons with:
