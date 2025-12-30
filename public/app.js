@@ -1344,6 +1344,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const getPlatformText = (k) => deepFindPlatform(root, k);
+    console.log("🟦 STEP2 root keys:", Object.keys(root));
 
     // --- HARDENED DOM FIND + SAFE INJECT ---
     const findEl = (sels) => {
