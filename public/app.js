@@ -1334,15 +1334,42 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     };
 
-    // ✅ ONE deterministic mapping list
-    const mapping = [
-      { key: "tiktok", sels: ["#tiktokOutput", "#tiktokCaption", "#tiktokText", "[data-out='tiktok']", "[data-step2='tiktok']", "[data-caption='tiktok']"] },
-      { key: "instagram", sels: ["#instagramOutput", "#instagramCaption", "#instagramText", "[data-out='instagram']", "[data-step2='instagram']", "[data-caption='instagram']"] },
-      { key: "facebook", sels: ["#facebookOutput", "#facebookCaption", "#facebookText", "[data-out='facebook']", "[data-step2='facebook']", "[data-caption='facebook']"] },
-      { key: "linkedin", sels: ["#linkedinOutput", "#linkedinCaption", "#linkedinText", "[data-out='linkedin']", "[data-step2='linkedin']", "[data-caption='linkedin']"] },
-      { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']", "[data-step2='marketplace']", "[data-caption='marketplace']"] },
-      { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "#hashtags", "[data-out='hashtags']", "[data-step2='hashtags']", "[data-caption='hashtags']"] },
-    ];
+// ✅ STEP2 REALITY: only #hashtags exists in DOM right now
+const hashtagsEl = DOC.querySelector("#hashtags");
+
+const tiktok = getPlatformText("tiktok");
+const instagram = getPlatformText("instagram");
+const facebook = getPlatformText("facebook");
+const linkedin = getPlatformText("linkedin");
+const marketplace = getPlatformText("marketplace");
+const hashtags = getPlatformText("hashtags");
+
+// If we have hashtags, write them to the one real field
+if (hashtagsEl) {
+  const bundle =
+    hashtags ||
+    [
+      tiktok ? `TikTok:\n${tiktok}` : "",
+      instagram ? `Instagram:\n${instagram}` : "",
+      facebook ? `Facebook:\n${facebook}` : "",
+      linkedin ? `LinkedIn:\n${linkedin}` : "",
+      marketplace ? `Marketplace:\n${marketplace}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+  // write
+  hashtagsEl.value = bundle || "";
+  hashtagsEl.classList.remove("hidden");
+  hashtagsEl.style.display = "";
+  hashtagsEl.setAttribute("data-filled", bundle ? "1" : "0");
+}
+
+console.log("🟦 STEP2 filled #hashtags only:", {
+  hasHashtagsEl: !!hashtagsEl,
+  chars: (hashtagsEl?.value || "").length,
+});
+
 // ===== STEP2 DOM PROBE (TEMP) =====
 // prints what nodes exist so we stop guessing IDs
 const PROBE_SELS = [
