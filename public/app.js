@@ -98,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function toast(msg, kind = "ok") {
-    // safe fallback if your toast system exists elsewhere
     try {
       if (typeof window.toast === "function") return window.toast(msg, kind);
     } catch {}
@@ -159,9 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function wireSideTools() {
-    // ==================================================
-    // OPEN buttons (support multiple rails)
-    // ==================================================
     const rail =
       DOC.querySelector(".floating-tools") ||
       DOC.querySelector("#toolWire") ||
@@ -186,9 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // ==================================================
-    // CLOSE buttons (inside modals)
-    // ==================================================
     DOC.querySelectorAll(
       ".side-modal [data-close], .side-modal .side-modal-close"
     ).forEach((btn) => {
@@ -324,7 +317,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ==================================================
   // AI MODALS UNIVERSAL WIRE (SAFE)
-  // NOTE: Buttons MUST have data-ai-action to route correctly
   // ==================================================
   function wireAiModals() {
     const modals = Array.from(DOC.querySelectorAll(".side-modal"));
@@ -540,7 +532,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 pick: (data) => data?.text || "",
               },
 
-              // ✅ CALCULATORS
               payment_calc: {
                 url: "/api/payment-helper",
                 body: collectPaymentBody(modal),
@@ -592,7 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     log("🟣 AI-WIRE: complete");
-  } // ✅ closes wireAiModals()
+  }
 
   // ==================================================
   // STEP 1 — ELEMENTS (READ ONCE)
@@ -691,7 +682,6 @@ document.addEventListener("DOMContentLoaded", () => {
       photosGridEl.appendChild(btn);
     });
 
-    // one click handler (replace each render)
     photosGridEl.onclick = (e) => {
       const btnEl = e.target?.closest?.("[data-i]");
       if (!btnEl) return;
@@ -794,22 +784,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (step3) step3.scrollIntoView({ behavior: "smooth" });
   }
 
-  // ✅ Wire button ONCE + rename + tiny animated feedback (safe)
   if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
     sendTopBtn.dataset.wired = "true";
-
-    // Rename button label (persist on reload)
     sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
 
-    // Click handler
     sendTopBtn.addEventListener("click", () => {
       log("🚀 SEND SELECTED PHOTOS CLICK");
-
-      // Tiny “animated” feedback (no CSS dependency)
       sendTopBtn.style.transform = "scale(0.98)";
       sendTopBtn.style.opacity = "0.9";
-
-      // restore quickly so it feels snappy
       setTimeout(() => {
         sendTopBtn.style.transform = "";
         sendTopBtn.style.opacity = "";
@@ -840,13 +822,11 @@ document.addEventListener("DOMContentLoaded", () => {
     hz.innerHTML = "";
     if (!list.length) return;
 
-    // Ensure active exists and is valid
     if (!STORE.activeHoldingPhoto || !list.includes(STORE.activeHoldingPhoto)) {
       STORE.activeHoldingPhoto = list[0] || "";
     }
 
-    // ✅ hard clamp thumbs so they never stretch into tall strips
-    const THUMB = 110; // px (safe, tweak later)
+    const THUMB = 110;
 
     list.slice(0, MAX_PHOTOS).forEach((url) => {
       if (!url) return;
@@ -874,32 +854,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       btn.appendChild(img);
 
-      // Click = select
       btn.addEventListener("click", () => {
         STORE.activeHoldingPhoto = url;
         renderHoldingZone();
         if (typeof loadPhotoTuner === "function") loadPhotoTuner(url);
       });
 
-      // Double click = send to social + remove (SAFE)
       btn.addEventListener("dblclick", (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        // 1) add to social-ready
         if (typeof addToSocialReady === "function") addToSocialReady(url, true);
 
-        // 2) remove from holding zone
         STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter(
           (u) => u !== url
         );
 
-        // 3) fix active photo if we removed it
         if (STORE.activeHoldingPhoto === url) {
           STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
         }
 
-        // 4) re-render both areas
         renderHoldingZone();
         if (typeof renderSocialStrip === "function") renderSocialStrip();
 
@@ -910,7 +884,6 @@ document.addEventListener("DOMContentLoaded", () => {
       hz.appendChild(btn);
     });
 
-    // Keep tuner aligned with active
     if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
       loadPhotoTuner(STORE.activeHoldingPhoto);
     }
@@ -1044,8 +1017,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ==================================================
   // SOCIAL READY STRIP (SINGLE SOURCE)
-  // MUST RENDER ONLY INTO: #socialCarousel
-  // PREVIEW IMG: #socialCarouselPreviewImg
   // ==================================================
   function renderSocialStrip() {
     normalizeSocialReady();
@@ -1270,22 +1241,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==================================================
-  // STEP 2 — RENDER SOCIAL KIT OUTPUTS (BULLETPROOF)
+  // STEP 2 — RENDER SOCIAL KIT OUTPUTS (SINGLE PATH)
   // ==================================================
- if (window.__STEP2_RENDER_LOCK__) return;
-window.__STEP2_RENDER_LOCK__ = true;
-setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
- 
-  
-  
-  
   function renderStep2FromBoost(data) {
     if (!data) return;
 
-    const pick = (v) => (v == null ? "" : String(v));
+    // ✅ lock INSIDE render (never outside boot)
+    if (window.__STEP2_RENDER_LOCK__) return;
+    window.__STEP2_RENDER_LOCK__ = true;
+    setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
 
-    // source text from backend (supports multiple shapes)
-    // --- UNWRAP + DEEP EXTRACT (handles real-world backend shapes) ---
     const root =
       (data && data.data) ||
       (data && data.result) ||
@@ -1296,13 +1261,11 @@ setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
     const asText = (v) => {
       if (v == null) return "";
       if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v);
-      // common: { text: "..." } or { caption: "..." }
+      if (Array.isArray(v)) return v.map(asText).filter(Boolean).join("\n");
       if (typeof v === "object") {
         if (typeof v.text === "string") return v.text;
         if (typeof v.caption === "string") return v.caption;
         if (typeof v.value === "string") return v.value;
-        // arrays of lines
-        if (Array.isArray(v)) return v.map(asText).filter(Boolean).join("\n");
       }
       try { return JSON.stringify(v); } catch { return ""; }
     };
@@ -1310,9 +1273,9 @@ setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
     const findKeyCI = (obj, key) => {
       if (!obj || typeof obj !== "object") return undefined;
       if (key in obj) return obj[key];
-      const kLower = String(key).toLowerCase();
+      const kl = String(key).toLowerCase();
       for (const k of Object.keys(obj)) {
-        if (k.toLowerCase() === kLower) return obj[k];
+        if (k.toLowerCase() === kl) return obj[k];
       }
       return undefined;
     };
@@ -1321,11 +1284,9 @@ setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
       if (!obj || typeof obj !== "object") return "";
       const p = String(platform).toLowerCase();
 
-      // Direct hit: obj[platform]
       const direct = findKeyCI(obj, platform);
       if (direct != null) return asText(direct);
 
-      // Common containers
       const containers = ["posts", "socialPosts", "captions", "copy", "outputs", "output", "socialKit", "social"];
       for (const c of containers) {
         const bucket = findKeyCI(obj, c);
@@ -1333,27 +1294,23 @@ setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
           const hit = findKeyCI(bucket, platform);
           if (hit != null) return asText(hit);
 
-          // also support keys like "tiktokCaption", "captionTikTok", etc inside the bucket
           for (const k of Object.keys(bucket)) {
-            const kl = k.toLowerCase();
-            if (kl.includes(p)) return asText(bucket[k]);
+            const kk = k.toLowerCase();
+            if (kk.includes(p)) return asText(bucket[k]);
           }
         }
       }
 
-      // Scan top-level keys like tiktokCaption / instagram_caption / captionTikTok etc
       for (const k of Object.keys(obj)) {
-        const kl = k.toLowerCase();
-        if (kl.includes(p)) return asText(obj[k]);
+        const kk = k.toLowerCase();
+        if (kk.includes(p)) return asText(obj[k]);
       }
 
       return "";
     };
 
     const getPlatformText = (k) => deepFindPlatform(root, k);
-    console.log("🟦 STEP2 root keys:", Object.keys(root));
 
-    // --- HARDENED DOM FIND + SAFE INJECT ---
     const findEl = (sels) => {
       for (const sel of sels) {
         try {
@@ -1377,107 +1334,30 @@ setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
       return true;
     };
 
-    // --- TARGETS (add/adjust IDs here ONCE and we lock it) ---
-    const targets = {
-      tiktok: findEl(["#tiktokCaption", "#tiktokOutput", "#tiktokText", "[data-step2='tiktok']", "[data-caption='tiktok']"]),
-      instagram: findEl(["#instagramCaption", "#instagramOutput", "#instagramText", "[data-step2='instagram']", "[data-caption='instagram']"]),
-      facebook: findEl(["#facebookCaption", "#facebookOutput", "#facebookText", "[data-step2='facebook']", "[data-caption='facebook']"]),
-      linkedin: findEl(["#linkedinCaption", "#linkedinOutput", "#linkedinText", "[data-step2='linkedin']", "[data-caption='linkedin']"]),
-      hashtags: findEl(["#hashtagsOutput", "#hashtags", "[data-step2='hashtags']", "[data-caption='hashtags']"]),
-      marketplace: findEl(["#marketplaceCaption", "#marketplaceOutput", "[data-step2='marketplace']", "[data-caption='marketplace']"]),
-    };
-
-    // --- WRITE PATH (SINGLE SOURCE OF TRUTH) ---
-    const out = {
-      tiktok: getPlatformText("tiktok"),
-      instagram: getPlatformText("instagram"),
-      facebook: getPlatformText("facebook"),
-      linkedin: getPlatformText("linkedin"),
-      hashtags: getPlatformText("hashtags"),
-      marketplace: getPlatformText("marketplace"),
-    };
+    // ✅ ONE deterministic mapping list
+    const mapping = [
+      { key: "tiktok", sels: ["#tiktokOutput", "#tiktokCaption", "#tiktokText", "[data-out='tiktok']", "[data-step2='tiktok']", "[data-caption='tiktok']"] },
+      { key: "instagram", sels: ["#instagramOutput", "#instagramCaption", "#instagramText", "[data-out='instagram']", "[data-step2='instagram']", "[data-caption='instagram']"] },
+      { key: "facebook", sels: ["#facebookOutput", "#facebookCaption", "#facebookText", "[data-out='facebook']", "[data-step2='facebook']", "[data-caption='facebook']"] },
+      { key: "linkedin", sels: ["#linkedinOutput", "#linkedinCaption", "#linkedinText", "[data-out='linkedin']", "[data-step2='linkedin']", "[data-caption='linkedin']"] },
+      { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']", "[data-step2='marketplace']", "[data-caption='marketplace']"] },
+      { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "#hashtags", "[data-out='hashtags']", "[data-step2='hashtags']", "[data-caption='hashtags']"] },
+    ];
 
     const report = {};
     let filled = 0;
-    Object.keys(out).forEach((k) => {
-      const ok = setText(targets[k], out[k]);
-      report[k] = { found: !!targets[k], chars: (out[k] || "").length, filled: ok && !!out[k] };
-      if (ok && out[k]) filled++;
+
+    mapping.forEach(({ key, sels }) => {
+      const txt = getPlatformText(key);
+      const el = findEl(sels);
+      const ok = setText(el, txt);
+      report[key] = { found: !!el, chars: (txt || "").length, filled: ok && !!txt };
+      if (ok && txt) filled++;
     });
 
     console.log("🟦 STEP2 render report:", report);
     if (!filled) console.warn("🟥 STEP2: nothing filled (selector/key mismatch)", report);
-
-    const setNodeText = (node, text) => {
-      if (!node) return false;
-      if ("value" in node) node.value = text;
-      else node.textContent = text;
-      return true;
-    };
-
-    // 1) Direct ID / selector fill (fast path)
-    const direct = [
-      { key: "tiktok", sels: ["#tiktokOutput", "#tiktokCaption", "#tiktokText", "[data-out='tiktok']"] },
-      { key: "instagram", sels: ["#instagramOutput", "#instagramCaption", "#instagramText", "[data-out='instagram']"] },
-      { key: "facebook", sels: ["#facebookOutput", "#facebookCaption", "#facebookText", "[data-out='facebook']"] },
-      { key: "linkedin", sels: ["#linkedinOutput", "#linkedinCaption", "#linkedinText", "[data-out='linkedin']"] },
-      { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']"] },
-      { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "[data-out='hashtags']"] },
-    ];
-
-    direct.forEach(({ key, sels }) => {
-      const text = getPlatformText(key);
-      if (!text) return;
-
-      for (const sel of sels) {
-        const el = DOC.querySelector(sel);
-        if (el) {
-          setNodeText(el, text);
-          return;
-        }
-      }
-    });
-
-    // 2) Fallback: find Step 2 “cards” by heading text, fill nearest textarea/pre/div
-    const fillByHeading = (headingText, text) => {
-      if (!text) return false;
-
-      const all = Array.from(DOC.querySelectorAll("h1,h2,h3,h4,h5,strong,label,div,p"));
-      const hit = all.find(
-        (n) => (n.textContent || "").trim().toLowerCase() === headingText.toLowerCase()
-      );
-      if (!hit) return false;
-
-      let card = hit;
-      for (let i = 0; i < 6; i++) {
-        if (!card || !card.parentElement) break;
-        card = card.parentElement;
-        const cls = (card.className || "").toString();
-        if (cls.includes("card") || cls.includes("panel") || cls.includes("kit") || cls.includes("box")) break;
-      }
-
-      const target =
-        card.querySelector("textarea") ||
-        card.querySelector("input[type='text']") ||
-        card.querySelector("pre") ||
-        card.querySelector("[contenteditable='true']") ||
-        card.querySelector("div");
-
-      if (!target) return false;
-      return setNodeText(target, text);
-    };
-
-// DISABLED: legacy heading-based Step 2 writer
-// (kept for reference, but NOT executed)
-// fillByHeading("TikTok", getPlatformText("tiktok"));
-// fillByHeading("Instagram", getPlatformText("instagram"));
-// fillByHeading("Facebook", getPlatformText("facebook"));
-// fillByHeading("LinkedIn", getPlatformText("linkedin"));
-// fillByHeading("Marketplace", getPlatformText("marketplace"));
-// fillByHeading("Hashtag Set", getPlatformText("hashtags"));
-
-console.log("🟦 STEP2 using direct selector mapping only");
-
+  }
 
   // ==================================================
   // BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
@@ -1494,7 +1374,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
         return;
       }
 
-      // ✅ ALWAYS store current vehicle URL (fixes Step 2 + invalid/missing url edge cases)
       STORE.dealerUrl = url;
       STORE.vehicleUrl = url;
 
@@ -1525,14 +1404,12 @@ console.log("🟦 STEP2 using direct selector mapping only");
           throw new Error(msg);
         }
 
-        // ✅ Step 2 render (this is what stopped working for you)
         try {
           renderStep2FromBoost(data);
         } catch (e) {
           console.warn("⚠️ Step 2 render failed:", e);
         }
 
-        // photos -> cap + dedupe -> Step 1 grid
         const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
         const seen = new Set();
         const cleaned = [];
@@ -1573,11 +1450,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
 
   // ==================================================
   // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
-  // Goal for LAUNCH:
-  // - KEEP floating tools bar + Step 3 container
-  // - HIDE only 4 future buttons + their panels (Canvas/Design/Image/Video)
-  // - HIDE bottom video/script output area
-  // Survives DOM injections via MutationObserver.
   // ==================================================
   function installHideNextVersionUI() {
     if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
@@ -1585,12 +1457,10 @@ console.log("🟦 STEP2 using direct selector mapping only");
 
     const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
-    // ✅ NEVER HIDE these containers (launch-critical UI)
     const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
     const getKeepNodes = () =>
       KEEP_SELECTORS.map((s) => DOC.querySelector(s)).filter(Boolean);
 
-    // Extra safety: never hide these, even if KEEP nodes aren't found yet
     const isAlwaysKeep = (el) => {
       if (!el) return true;
       if (el === DOC.documentElement) return true;
@@ -1614,7 +1484,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
       return false;
     };
 
-    // ✅ We ONLY want to kill these future buttons (text match)
     const FUTURE_BUTTON_TEXT = [
       "ai image generation",
       "ai video generation",
@@ -1624,7 +1493,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
       "design",
     ];
 
-    // ✅ If they use data-ai-action, kill them here too
     const HIDE_ACTIONS = new Set([
       "image_ai",
       "video_ai",
@@ -1642,7 +1510,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
       "design_studio_3_5",
     ]);
 
-    // ✅ If they use data-modal-target, kill them here too
     const HIDE_MODAL_TARGETS = new Set(
       [
         "imageModal",
@@ -1654,7 +1521,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
       ].map(norm)
     );
 
-    // ✅ Hard-kill the actual DOM containers you showed in DevTools
     const HARD_KILL_SELECTORS = [
       "#videoOutputBottom",
       "#creativeStudioOverlay",
@@ -1681,7 +1547,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
       el.style.setProperty("visibility", "hidden", "important");
       el.style.setProperty("pointer-events", "none", "important");
 
-      // console.log("🙈 HID:", reason, el);
       return true;
     };
 
@@ -1700,19 +1565,15 @@ console.log("🟦 STEP2 using direct selector mapping only");
     };
 
     const pass = () => {
-      // 0) Floating bar MUST stay visible
       forceShowFloatingBar();
 
-      // 1) Always hide Step 3 "Send to Design Studio" future button if it exists
       hideEl(DOC.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
 
-      // 2) Hard kill by exact IDs/containers
       HARD_KILL_SELECTORS.forEach((sel) => {
         const el = DOC.querySelector(sel);
         if (el) hideEl(el, `hard-kill ${sel}`);
       });
 
-      // 3) Hide ONLY the future buttons inside the floating tools bar
       DOC.querySelectorAll(
         ".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button"
       ).forEach((btn) => {
@@ -1745,7 +1606,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
         }
       });
 
-      // 4) Hide the future modals too (safety)
       DOC.querySelectorAll(".side-modal, .modal").forEach((m) => {
         const mid = norm(m.id);
         if (!mid) return;
@@ -1760,14 +1620,12 @@ console.log("🟦 STEP2 using direct selector mapping only");
         }
       });
 
-      // 5) Kill any remaining “bottom output” section if present
       const bottom = DOC.querySelector("#videoOutputBottom");
       if (bottom) hideEl(bottom, "#videoOutputBottom");
     };
 
     pass();
 
-    // observer (single)
     if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
       const obs = new MutationObserver(() => {
         if (window.__LOTROCKET_UI_HIDER_TICK__) return;
@@ -1781,7 +1639,6 @@ console.log("🟦 STEP2 using direct selector mapping only");
       window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
     }
 
-    // retry loop (covers slow render / late injection)
     let tries = 0;
     const t = setInterval(() => {
       tries++;
@@ -1790,57 +1647,51 @@ console.log("🟦 STEP2 using direct selector mapping only");
     }, 200);
 
     console.log("✅ UI hider installed (authoritative LAUNCH v4)");
-  } // ✅ END installHideNextVersionUI()
-
-// ==================================================
-// FINAL INIT (SAFE) ✅ MUST BE LAST
-// ==================================================
-try {
-  if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
-    renderStep1Photos(STORE.lastBoostPhotos);
   }
 
-  if (STORE.holdingZonePhotos?.length) {
-    STORE.activeHoldingPhoto =
-      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-
-    if (typeof renderHoldingZone === "function") renderHoldingZone();
-
-    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-      loadPhotoTuner(STORE.activeHoldingPhoto);
+  // ==================================================
+  // FINAL INIT (SAFE) ✅ MUST BE LAST
+  // ==================================================
+  try {
+    if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
+      renderStep1Photos(STORE.lastBoostPhotos);
     }
-  }
 
-  if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
-  if (typeof renderSocialStrip === "function") renderSocialStrip();
+    if (STORE.holdingZonePhotos?.length) {
+      STORE.activeHoldingPhoto =
+        STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
 
-  if (typeof wireCalculatorPad === "function") wireCalculatorPad();
-  if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+      if (typeof renderHoldingZone === "function") renderHoldingZone();
 
-  // ✅ AI modal actions wired
-  if (typeof wireAiModals === "function") wireAiModals();
-
-  // ✅ Floating tools wired (open/close)
-  if (typeof wireSideTools === "function") wireSideTools();
-
-  // ✅ Delegated modal wiring (survives re-renders)
-  if (typeof installSideToolsDelegation === "function") {
-    installSideToolsDelegation();
-  }
-
-  // ✅ ONE hide system (persistent)
-  if (typeof installHideNextVersionUI === "function") {
-    if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-      window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-      installHideNextVersionUI();
+      if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+        loadPhotoTuner(STORE.activeHoldingPhoto);
+      }
     }
-  } else {
-    console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
+
+    if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+    if (typeof wireCalculatorPad === "function") wireCalculatorPad();
+    if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+
+    if (typeof wireAiModals === "function") wireAiModals();
+    if (typeof wireSideTools === "function") wireSideTools();
+
+    if (typeof installSideToolsDelegation === "function") {
+      installSideToolsDelegation();
+    }
+
+    if (typeof installHideNextVersionUI === "function") {
+      if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+        window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+        installHideNextVersionUI();
+      }
+    } else {
+      console.warn("🙈 installHideNextVersionUI() not found at FINAL INIT");
+    }
+
+    console.log("✅ FINAL INIT COMPLETE");
+  } catch (e) {
+    console.error("❌ FINAL INIT FAILED", e);
   }
-
-  // ✅ don’t rely on log() existing
-  console.log("✅ FINAL INIT COMPLETE");
-} catch (e) {
-  console.error("❌ FINAL INIT FAILED", e);
-}
-
+});
