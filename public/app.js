@@ -3,7 +3,10 @@
 // (MUST BE AT VERY TOP OF public/app.js)
 // ==================================================
 (function () {
-  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== "999") {
+  if (
+    window.__LOTROCKET_APPJS_VERSION__ &&
+    window.__LOTROCKET_APPJS_VERSION__ !== "999"
+  ) {
     return;
   }
   window.__LOTROCKET_APPJS_VERSION__ = "999";
@@ -48,10 +51,18 @@ document.addEventListener("DOMContentLoaded", () => {
   window.LOTROCKET_STORE = STORE;
 
   STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-  STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
+  STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos)
+    ? STORE.lastBoostPhotos
+    : [];
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos)
+    ? STORE.holdingZonePhotos
+    : [];
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
+    ? STORE.socialReadyPhotos
+    : [];
+  STORE.creativePhotos = Array.isArray(STORE.creativePhotos)
+    ? STORE.creativePhotos
+    : [];
 
   // ==================================================
   // UTILITIES (ONE SOURCE)
@@ -147,39 +158,40 @@ document.addEventListener("DOMContentLoaded", () => {
     log("✅ CLOSE MODAL:", modalEl.id);
   }
 
-function wireSideTools() {
-  // ==================================================
-  // OPEN buttons (support multiple rails)
-  // ==================================================
-  const rail =
-    DOC.querySelector(".floating-tools") ||
-    DOC.querySelector("#toolWire") ||
-    DOC.querySelector(".toolwire") ||
-    DOC.querySelector(".side-tools") ||
-    DOC.querySelector("[data-toolwire]") ||
-    DOC;
+  function wireSideTools() {
+    // ==================================================
+    // OPEN buttons (support multiple rails)
+    // ==================================================
+    const rail =
+      DOC.querySelector(".floating-tools") ||
+      DOC.querySelector("#toolWire") ||
+      DOC.querySelector(".toolwire") ||
+      DOC.querySelector(".side-tools") ||
+      DOC.querySelector("[data-toolwire]") ||
+      DOC;
 
-  const openBtns = Array.from(rail.querySelectorAll("[data-modal-target]"));
+    const openBtns = Array.from(rail.querySelectorAll("[data-modal-target]"));
 
-  openBtns.forEach((btn) => {
-    if (btn.dataset.wired === "true") return;
-    btn.dataset.wired = "true";
+    openBtns.forEach((btn) => {
+      if (btn.dataset.wired === "true") return;
+      btn.dataset.wired = "true";
 
-    const targetId = (btn.getAttribute("data-modal-target") || "").trim();
-    if (!targetId) return;
+      const targetId = (btn.getAttribute("data-modal-target") || "").trim();
+      if (!targetId) return;
 
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openSideModal(targetId);
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openSideModal(targetId);
+      });
     });
-  });
 
-  // ==================================================
-  // CLOSE buttons (inside modals)
-  // ==================================================
-  DOC.querySelectorAll(".side-modal [data-close], .side-modal .side-modal-close").forEach(
-    (btn) => {
+    // ==================================================
+    // CLOSE buttons (inside modals)
+    // ==================================================
+    DOC.querySelectorAll(
+      ".side-modal [data-close], .side-modal .side-modal-close"
+    ).forEach((btn) => {
       if (btn.dataset.wired === "true") return;
       btn.dataset.wired = "true";
 
@@ -189,15 +201,14 @@ function wireSideTools() {
         const modal = btn.closest(".side-modal");
         closeSideModal(modal);
       });
-    }
-  );
+    });
 
-  log("🧰 Side tools wired:", {
-    openBtns: openBtns.length,
-    rail: rail === DOC ? "document" : (rail.id || rail.className || rail.tagName),
-  });
-}
-
+    log("🧰 Side tools wired:", {
+      openBtns: openBtns.length,
+      rail:
+        rail === DOC ? "document" : rail.id || rail.className || rail.tagName,
+    });
+  }
 
   // ==================================================
   // CALCULATOR PAD (simple)
@@ -222,7 +233,9 @@ function wireSideTools() {
         if (v === "=") {
           try {
             if (!/^[0-9+\-*/.() ]+$/.test(display.value)) throw new Error();
-            display.value = Function(`"use strict";return (${display.value})`)();
+            display.value = Function(
+              `"use strict";return (${display.value})`
+            )();
           } catch {
             display.value = "Error";
           }
@@ -294,7 +307,8 @@ function wireSideTools() {
           throw new Error(msg);
         }
 
-        const reply = data?.result || data?.text || data?.answer || "✅ Done (empty response).";
+        const reply =
+          data?.result || data?.text || data?.answer || "✅ Done (empty response).";
         if (out) out.textContent = reply;
 
         log("🟢 INCOME DIRECT OK", data);
@@ -335,19 +349,63 @@ function wireSideTools() {
     };
 
     const collectPaymentBody = (modal) => {
-      const priceEl = pickInside(modal, ["#payPrice", "input[name='price']", "#price"]);
-      const downEl = pickInside(modal, ["#payDown", "input[name='down']", "#down"]);
-      const tradeEl = pickInside(modal, ["#payTrade", "input[name='trade']", "#trade"]);
-      const payoffEl = pickInside(modal, ["#payPayoff", "input[name='payoff']", "#payoff"]);
+      const priceEl = pickInside(modal, [
+        "#payPrice",
+        "input[name='price']",
+        "#price",
+      ]);
+      const downEl = pickInside(modal, [
+        "#payDown",
+        "input[name='down']",
+        "#down",
+      ]);
+      const tradeEl = pickInside(modal, [
+        "#payTrade",
+        "input[name='trade']",
+        "#trade",
+      ]);
+      const payoffEl = pickInside(modal, [
+        "#payPayoff",
+        "input[name='payoff']",
+        "#payoff",
+      ]);
 
-      const aprEl = pickInside(modal, ["#payApr", "input[name='apr']", "input[name='rate']", "#apr", "#rate"]);
-      const termEl = pickInside(modal, ["#payTerm", "input[name='term']", "#term"]);
-      const taxEl = pickInside(modal, ["#payTax", "input[name='tax']", "#tax"]);
+      const aprEl = pickInside(modal, [
+        "#payApr",
+        "input[name='apr']",
+        "input[name='rate']",
+        "#apr",
+        "#rate",
+      ]);
+      const termEl = pickInside(modal, [
+        "#payTerm",
+        "input[name='term']",
+        "#term",
+      ]);
+      const taxEl = pickInside(modal, [
+        "#payTax",
+        "input[name='tax']",
+        "#tax",
+      ]);
 
-      const feesEl = pickInside(modal, ["#payFees", "#dealerFees", "input[name='fees']", "input[name='dealerFees']", "#fees"]);
+      const feesEl = pickInside(modal, [
+        "#payFees",
+        "#dealerFees",
+        "input[name='fees']",
+        "input[name='dealerFees']",
+        "#fees",
+      ]);
 
-      const stateEl = pickInside(modal, ["#payState", "select[name='state']", "input[name='state']"]);
-      const rebateEl = pickInside(modal, ["#payRebate", "input[name='rebate']", "#rebate"]);
+      const stateEl = pickInside(modal, [
+        "#payState",
+        "select[name='state']",
+        "input[name='state']",
+      ]);
+      const rebateEl = pickInside(modal, [
+        "#payRebate",
+        "input[name='rebate']",
+        "#rebate",
+      ]);
 
       return {
         price: num(priceEl?.value),
@@ -696,187 +754,169 @@ function wireSideTools() {
     return picked.slice(0, MAX_PHOTOS);
   }
 
-// ==================================================
-// STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
-// ==================================================
-const sendTopBtn =
-  $("sendTopPhotosBtn") ||
-  $("sendTopPhotosToCreative") ||
-  $("sendTopPhotosToCreativeLab") ||
-  $("sendToCreativeLabBtn") ||
-  $("sendToCreativeLab") ||
-  DOC.querySelector("[data-send-top-photos]");
+  // ==================================================
+  // STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
+  // ==================================================
+  const sendTopBtn =
+    $("sendTopPhotosBtn") ||
+    $("sendTopPhotosToCreative") ||
+    $("sendTopPhotosToCreativeLab") ||
+    $("sendToCreativeLabBtn") ||
+    $("sendToCreativeLab") ||
+    DOC.querySelector("[data-send-top-photos]");
 
-function sendSelectedToHoldingZone() {
-  const urls = getSelectedStep1Urls();
+  function sendSelectedToHoldingZone() {
+    const urls = getSelectedStep1Urls();
 
-  log("🧪 sendSelectedToHoldingZone urls =", urls.length, urls);
+    log("🧪 sendSelectedToHoldingZone urls =", urls.length, urls);
 
-  if (!urls.length) {
-    toast("Select at least 1 photo first.", "bad");
-    return;
-  }
-
-  STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
-  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-  if (typeof renderHoldingZone === "function") renderHoldingZone();
-  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-    loadPhotoTuner(STORE.activeHoldingPhoto);
-  }
-
-  log("✅ Sent to Step 3 HOLDING:", STORE.holdingZonePhotos.length);
-  toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Creative Lab`, "ok");
-
-  const step3 =
-    DOC.querySelector("#creativeHub") ||
-    DOC.querySelector("#step3") ||
-    DOC.querySelector("#creativeLab");
-
-  if (step3) step3.scrollIntoView({ behavior: "smooth" });
-}
-
-// ✅ Wire button ONCE + rename + tiny animated feedback (safe)
-if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
-  sendTopBtn.dataset.wired = "true";
-
-  // Rename button label (persist on reload)
-  sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
-
-  // Click handler
-  sendTopBtn.addEventListener("click", () => {
-    log("🚀 SEND SELECTED PHOTOS CLICK");
-
-    // Tiny “animated” feedback (no CSS dependency)
-    sendTopBtn.style.transform = "scale(0.98)";
-    sendTopBtn.style.opacity = "0.9";
-
-    // restore quickly so it feels snappy
-    setTimeout(() => {
-      sendTopBtn.style.transform = "";
-      sendTopBtn.style.opacity = "";
-    }, 180);
-
-    sendSelectedToHoldingZone();
-  });
-}
-
-// ----------------------------------------
-
-// Wire button safely (once)
-// ----------------------------------------
-if (sendTopBtn && !sendTopBtn.dataset.wired) {
-  sendTopBtn.dataset.wired = "true";
-
-  // Rename button (safe + idempotent)
-  sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
-
-  sendTopBtn.addEventListener("click", () => {
-    // Small visual tap animation
-    sendTopBtn.classList.add("btn-loading");
-    setTimeout(() => sendTopBtn.classList.remove("btn-loading"), 180);
-
-    sendSelectedToHoldingZone();
-  });
-}
-
-// ==================================================
-// STEP 3 — HOLDING ZONE RENDER
-// ==================================================
-function renderHoldingZone() {
-  const hz =
-    $("holdingZone") ||
-    DOC.getElementById("holdingZone") ||
-    DOC.querySelector("#holdingZone");
-
-  if (!hz) {
-    warn("❌ renderHoldingZone: #holdingZone not found");
-    return;
-  }
-
-  const list = Array.isArray(STORE.holdingZonePhotos)
-    ? STORE.holdingZonePhotos
-    : [];
-
-  hz.innerHTML = "";
-  if (!list.length) return;
-
-  // Ensure active exists and is valid
-  if (!STORE.activeHoldingPhoto || !list.includes(STORE.activeHoldingPhoto)) {
-    STORE.activeHoldingPhoto = list[0] || "";
-  }
-
-  // ✅ hard clamp thumbs so they never stretch into tall strips
-  const THUMB = 110; // px (safe, tweak later)
-
-  list.slice(0, MAX_PHOTOS).forEach((url) => {
-    if (!url) return;
-
-    const btn = DOC.createElement("button");
-    btn.type = "button";
-    btn.className = "holding-thumb-btn";
-    btn.style.width = `${THUMB}px`;
-    btn.style.height = `${THUMB}px`;
-    btn.style.overflow = "hidden";
-
-    if (url === STORE.activeHoldingPhoto) {
-      btn.classList.add("active");
+    if (!urls.length) {
+      toast("Select at least 1 photo first.", "bad");
+      return;
     }
 
-    const img = DOC.createElement("img");
-    img.className = "holding-thumb-img";
-    img.src = getProxiedImageUrl(url);
-    img.alt = "Holding Photo";
-    img.loading = "lazy";
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.objectFit = "cover";
-    img.style.display = "block";
+    STORE.holdingZonePhotos = urls.slice(0, MAX_PHOTOS);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-    btn.appendChild(img);
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
 
-    // Click = select
-    btn.addEventListener("click", () => {
-      STORE.activeHoldingPhoto = url;
-      renderHoldingZone();
-      if (typeof loadPhotoTuner === "function") loadPhotoTuner(url);
+    log("✅ Sent to Step 3 HOLDING:", STORE.holdingZonePhotos.length);
+    toast(`Sent ${STORE.holdingZonePhotos.length} photo(s) to Creative Lab`, "ok");
+
+    const step3 =
+      DOC.querySelector("#creativeHub") ||
+      DOC.querySelector("#step3") ||
+      DOC.querySelector("#creativeLab");
+
+    if (step3) step3.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // ✅ Wire button ONCE + rename + tiny animated feedback (safe)
+  if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
+    sendTopBtn.dataset.wired = "true";
+
+    // Rename button label (persist on reload)
+    sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
+
+    // Click handler
+    sendTopBtn.addEventListener("click", () => {
+      log("🚀 SEND SELECTED PHOTOS CLICK");
+
+      // Tiny “animated” feedback (no CSS dependency)
+      sendTopBtn.style.transform = "scale(0.98)";
+      sendTopBtn.style.opacity = "0.9";
+
+      // restore quickly so it feels snappy
+      setTimeout(() => {
+        sendTopBtn.style.transform = "";
+        sendTopBtn.style.opacity = "";
+      }, 180);
+
+      sendSelectedToHoldingZone();
     });
+  }
 
-    // Double click = send to social + remove (SAFE)
-    btn.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  // ==================================================
+  // STEP 3 — HOLDING ZONE RENDER
+  // ==================================================
+  function renderHoldingZone() {
+    const hz =
+      $("holdingZone") ||
+      DOC.getElementById("holdingZone") ||
+      DOC.querySelector("#holdingZone");
 
-      // 1) add to social-ready
-      if (typeof addToSocialReady === "function") addToSocialReady(url, true);
+    if (!hz) {
+      warn("❌ renderHoldingZone: #holdingZone not found");
+      return;
+    }
 
-      // 2) remove from holding zone
-      STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter((u) => u !== url);
+    const list = Array.isArray(STORE.holdingZonePhotos)
+      ? STORE.holdingZonePhotos
+      : [];
 
-      // 3) fix active photo if we removed it
-      if (STORE.activeHoldingPhoto === url) {
-        STORE.activeHoldingPhoto = (STORE.holdingZonePhotos[0] || "");
+    hz.innerHTML = "";
+    if (!list.length) return;
+
+    // Ensure active exists and is valid
+    if (!STORE.activeHoldingPhoto || !list.includes(STORE.activeHoldingPhoto)) {
+      STORE.activeHoldingPhoto = list[0] || "";
+    }
+
+    // ✅ hard clamp thumbs so they never stretch into tall strips
+    const THUMB = 110; // px (safe, tweak later)
+
+    list.slice(0, MAX_PHOTOS).forEach((url) => {
+      if (!url) return;
+
+      const btn = DOC.createElement("button");
+      btn.type = "button";
+      btn.className = "holding-thumb-btn";
+      btn.style.width = `${THUMB}px`;
+      btn.style.height = `${THUMB}px`;
+      btn.style.overflow = "hidden";
+
+      if (url === STORE.activeHoldingPhoto) {
+        btn.classList.add("active");
       }
 
-      // 4) re-render both areas
-      renderHoldingZone();
-      if (typeof renderSocialStrip === "function") renderSocialStrip();
+      const img = DOC.createElement("img");
+      img.className = "holding-thumb-img";
+      img.src = getProxiedImageUrl(url);
+      img.alt = "Holding Photo";
+      img.loading = "lazy";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.style.display = "block";
 
-      toast("Sent to Social-ready ✅", "ok");
-      log("✅ Sent to social-ready (removed from holding):", url);
+      btn.appendChild(img);
+
+      // Click = select
+      btn.addEventListener("click", () => {
+        STORE.activeHoldingPhoto = url;
+        renderHoldingZone();
+        if (typeof loadPhotoTuner === "function") loadPhotoTuner(url);
+      });
+
+      // Double click = send to social + remove (SAFE)
+      btn.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // 1) add to social-ready
+        if (typeof addToSocialReady === "function") addToSocialReady(url, true);
+
+        // 2) remove from holding zone
+        STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter(
+          (u) => u !== url
+        );
+
+        // 3) fix active photo if we removed it
+        if (STORE.activeHoldingPhoto === url) {
+          STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+        }
+
+        // 4) re-render both areas
+        renderHoldingZone();
+        if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+        toast("Sent to Social-ready ✅", "ok");
+        log("✅ Sent to social-ready (removed from holding):", url);
+      });
+
+      hz.appendChild(btn);
     });
 
-    hz.appendChild(btn);
-  });
-
-  // Keep tuner aligned with active
-  if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-    loadPhotoTuner(STORE.activeHoldingPhoto);
+    // Keep tuner aligned with active
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
   }
-}
-// ==================================================
 
-
+  // ==================================================
   // PHOTO TUNER
   // ==================================================
   function loadPhotoTuner(url) {
@@ -900,7 +940,10 @@ function renderHoldingZone() {
   }
 
   function getActivePhotoUrl() {
-    if (typeof STORE.activeHoldingPhoto === "string" && STORE.activeHoldingPhoto.trim()) {
+    if (
+      typeof STORE.activeHoldingPhoto === "string" &&
+      STORE.activeHoldingPhoto.trim()
+    ) {
       return STORE.activeHoldingPhoto;
     }
     return "";
@@ -941,7 +984,10 @@ function renderHoldingZone() {
       STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(-MAX_PHOTOS);
     }
 
-    if (STORE.socialReadyPhotos.length && !STORE.socialReadyPhotos.some((p) => p.selected)) {
+    if (
+      STORE.socialReadyPhotos.length &&
+      !STORE.socialReadyPhotos.some((p) => p.selected)
+    ) {
       STORE.socialReadyPhotos[0].selected = true;
     }
   }
@@ -986,7 +1032,9 @@ function renderHoldingZone() {
     normalizeSocialReady();
 
     const next = [{ url, originalUrl: url, selected: true, locked: false }]
-      .concat((STORE.socialReadyPhotos || []).map((p) => ({ ...p, selected: false })))
+      .concat(
+        (STORE.socialReadyPhotos || []).map((p) => ({ ...p, selected: false }))
+      )
       .filter((v, i, a) => a.findIndex((x) => x.url === v.url) === i)
       .slice(0, MAX_PHOTOS);
 
@@ -1097,7 +1145,9 @@ function renderHoldingZone() {
 
     const active = list.find((p) => p && p.selected) || list[0];
     if (previewEl) {
-      previewEl.src = active?.url ? getProxiedImageUrl(active.originalUrl || active.url) : "";
+      previewEl.src = active?.url
+        ? getProxiedImageUrl(active.originalUrl || active.url)
+        : "";
     }
 
     if (statusEl) {
@@ -1220,6 +1270,91 @@ function renderHoldingZone() {
   }
 
   // ==================================================
+  // STEP 2 — RENDER SOCIAL KIT OUTPUTS (BULLETPROOF)
+  // ==================================================
+  function renderStep2FromBoost(data) {
+    if (!data) return;
+
+    const pick = (v) => (v == null ? "" : String(v));
+
+    // source text from backend (supports multiple shapes)
+    const getPlatformText = (k) => {
+      // common shapes we’ve seen
+      if (data.posts && data.posts[k]) return pick(data.posts[k]);
+      if (data.socialPosts && data.socialPosts[k]) return pick(data.socialPosts[k]);
+      if (data.captions && data.captions[k]) return pick(data.captions[k]);
+      if (data[k]) return pick(data[k]);
+      return "";
+    };
+
+    const setNodeText = (node, text) => {
+      if (!node) return false;
+      if ("value" in node) node.value = text;
+      else node.textContent = text;
+      return true;
+    };
+
+    // 1) Direct ID / selector fill (fast path)
+    const direct = [
+      { key: "tiktok", sels: ["#tiktokOutput", "#tiktokCaption", "#tiktokText", "[data-out='tiktok']"] },
+      { key: "instagram", sels: ["#instagramOutput", "#instagramCaption", "#instagramText", "[data-out='instagram']"] },
+      { key: "facebook", sels: ["#facebookOutput", "#facebookCaption", "#facebookText", "[data-out='facebook']"] },
+      { key: "linkedin", sels: ["#linkedinOutput", "#linkedinCaption", "#linkedinText", "[data-out='linkedin']"] },
+      { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']"] },
+      { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "[data-out='hashtags']"] },
+    ];
+
+    direct.forEach(({ key, sels }) => {
+      const text = getPlatformText(key);
+      if (!text) return;
+
+      for (const sel of sels) {
+        const el = DOC.querySelector(sel);
+        if (el) {
+          setNodeText(el, text);
+          return;
+        }
+      }
+    });
+
+    // 2) Fallback: find Step 2 “cards” by heading text, fill nearest textarea/pre/div
+    const fillByHeading = (headingText, text) => {
+      if (!text) return false;
+
+      const all = Array.from(DOC.querySelectorAll("h1,h2,h3,h4,h5,strong,label,div,p"));
+      const hit = all.find(
+        (n) => (n.textContent || "").trim().toLowerCase() === headingText.toLowerCase()
+      );
+      if (!hit) return false;
+
+      let card = hit;
+      for (let i = 0; i < 6; i++) {
+        if (!card || !card.parentElement) break;
+        card = card.parentElement;
+        const cls = (card.className || "").toString();
+        if (cls.includes("card") || cls.includes("panel") || cls.includes("kit") || cls.includes("box")) break;
+      }
+
+      const target =
+        card.querySelector("textarea") ||
+        card.querySelector("input[type='text']") ||
+        card.querySelector("pre") ||
+        card.querySelector("[contenteditable='true']") ||
+        card.querySelector("div");
+
+      if (!target) return false;
+      return setNodeText(target, text);
+    };
+
+    fillByHeading("TikTok", getPlatformText("tiktok"));
+    fillByHeading("Instagram", getPlatformText("instagram"));
+    fillByHeading("Facebook", getPlatformText("facebook"));
+    fillByHeading("LinkedIn", getPlatformText("linkedin"));
+    fillByHeading("Marketplace", getPlatformText("marketplace"));
+    fillByHeading("Hashtag Set", getPlatformText("hashtags"));
+  }
+
+  // ==================================================
   // BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
   // ==================================================
   if (boostBtn && boostBtn.dataset.wired !== "true") {
@@ -1233,6 +1368,10 @@ function renderHoldingZone() {
         alert("Enter a vehicle URL first.");
         return;
       }
+
+      // ✅ ALWAYS store current vehicle URL (fixes Step 2 + invalid/missing url edge cases)
+      STORE.dealerUrl = url;
+      STORE.vehicleUrl = url;
 
       setBtnLoading(boostBtn, true, "Boosting…");
       if (statusText) statusText.textContent = "Boosting…";
@@ -1261,6 +1400,13 @@ function renderHoldingZone() {
           throw new Error(msg);
         }
 
+        // ✅ Step 2 render (this is what stopped working for you)
+        try {
+          renderStep2FromBoost(data);
+        } catch (e) {
+          console.warn("⚠️ Step 2 render failed:", e);
+        }
+
         // photos -> cap + dedupe -> Step 1 grid
         const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
         const seen = new Set();
@@ -1284,7 +1430,10 @@ function renderHoldingZone() {
 
         toast("Boost complete 🚀", "ok");
 
-        const step2 = DOC.querySelector("#step2");
+        const step2 =
+          DOC.querySelector("#step2") ||
+          DOC.querySelector("#socialKit") ||
+          DOC.querySelector("[data-step='2']");
         if (step2) step2.scrollIntoView({ behavior: "smooth" });
       } catch (err) {
         console.error("❌ BOOST FAILED:", err);
@@ -1296,329 +1445,227 @@ function renderHoldingZone() {
       }
     };
   }
-// ==================================================
-// STEP 1 — ALWAYS STORE CURRENT VEHICLE URL (SAFE)
-// Put inside Boost click handler AFTER you compute `url`
-// ==================================================
-STORE.dealerUrl = url;
-STORE.vehicleUrl = url;
-// ==================================================
-// STEP 2 — RENDER SOCIAL KIT OUTPUTS (BULLETPROOF)
-// Finds Step 2 cards by heading text and fills the nearest output box
-// ==================================================
-function renderStep2FromBoost(data) {
-  if (!data) return;
 
-  // normalize
-  const pick = (v) => (v == null ? "" : String(v));
+  // ==================================================
+  // UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
+  // Goal for LAUNCH:
+  // - KEEP floating tools bar + Step 3 container
+  // - HIDE only 4 future buttons + their panels (Canvas/Design/Image/Video)
+  // - HIDE bottom video/script output area
+  // Survives DOM injections via MutationObserver.
+  // ==================================================
+  function installHideNextVersionUI() {
+    if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
+    window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
 
-  // Try direct known IDs first (fast path)
-  const direct = [
-    { key: "tiktok", sels: ["#tiktokOutput", "#tiktokCaption", "#tiktokText", "[data-out='tiktok']"] },
-    { key: "instagram", sels: ["#instagramOutput", "#instagramCaption", "#instagramText", "[data-out='instagram']"] },
-    { key: "facebook", sels: ["#facebookOutput", "#facebookCaption", "#facebookText", "[data-out='facebook']"] },
-    { key: "linkedin", sels: ["#linkedinOutput", "#linkedinCaption", "#linkedinText", "[data-out='linkedin']"] },
-    { key: "marketplace", sels: ["#marketplaceOutput", "#marketplaceCaption", "#marketplaceText", "[data-out='marketplace']"] },
-    { key: "hashtags", sels: ["#hashtagsOutput", "#hashtagOutput", "#hashtagSet", "[data-out='hashtags']"] },
-  ];
+    const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
-  // source text from backend (supports multiple shapes)
-  const getPlatformText = (k) => {
-    // common shapes we’ve seen
-    if (data.posts && data.posts[k]) return pick(data.posts[k]);
-    if (data.captions && data.captions[k]) return pick(data.captions[k]);
-    if (data[k]) return pick(data[k]);
-    return "";
-  };
+    // ✅ NEVER HIDE these containers (launch-critical UI)
+    const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
+    const getKeepNodes = () =>
+      KEEP_SELECTORS.map((s) => DOC.querySelector(s)).filter(Boolean);
 
-  const setNodeText = (node, text) => {
-    if (!node) return false;
-    if ("value" in node) node.value = text;
-    else node.textContent = text;
-    return true;
-  };
+    // Extra safety: never hide these, even if KEEP nodes aren't found yet
+    const isAlwaysKeep = (el) => {
+      if (!el) return true;
+      if (el === DOC.documentElement) return true;
+      if (el === DOC.body) return true;
+      if (el.tagName === "BODY") return true;
+      if (el.tagName === "HTML") return true;
+      if (el.tagName === "MAIN") return true;
+      return false;
+    };
 
-  // 1) Direct ID / selector fill
-  direct.forEach(({ key, sels }) => {
-    const text = getPlatformText(key);
-    if (!text) return;
+    const isKeep = (el) => {
+      if (!el) return false;
+      if (isAlwaysKeep(el)) return true;
 
-    for (const sel of sels) {
-      const el = document.querySelector(sel);
-      if (el) {
-        setNodeText(el, text);
-        return;
-      }
-    }
-  });
+      const keeps = getKeepNodes();
+      if (!keeps.length) return false;
 
-  // 2) Fallback: find Step 2 cards by heading text, then fill nearest output element
-  const fillByHeading = (headingText, text) => {
-    if (!text) return false;
+      if (keeps.some((k) => el === k)) return true;
+      if (keeps.some((k) => el.contains && el.contains(k))) return true;
 
-    const all = Array.from(document.querySelectorAll("h1,h2,h3,h4,h5,strong,button,div,p,label"));
-    const hit = all.find((n) => (n.textContent || "").trim().toLowerCase() === headingText.toLowerCase());
-    if (!hit) return false;
+      return false;
+    };
 
-    // climb up to a reasonable “card” container
-    let card = hit;
-    for (let i = 0; i < 6; i++) {
-      if (!card || !card.parentElement) break;
-      card = card.parentElement;
+    // ✅ We ONLY want to kill these future buttons (text match)
+    const FUTURE_BUTTON_TEXT = [
+      "ai image generation",
+      "ai video generation",
+      "canvas studio",
+      "design studio",
+      "canvas",
+      "design",
+    ];
 
-      // stop if it looks like a card section
-      const cls = (card.className || "").toString();
-      if (cls.includes("card") || cls.includes("panel") || cls.includes("kit") || cls.includes("box")) break;
-    }
+    // ✅ If they use data-ai-action, kill them here too
+    const HIDE_ACTIONS = new Set([
+      "image_ai",
+      "video_ai",
+      "image_generator",
+      "video_generator",
+      "video_script",
+      "shot_list",
+      "thumbnail_prompt",
+      "canvas",
+      "canvas_studio",
+      "design",
+      "design_studio",
+      "design_studio_3",
+      "design_studio_3_0",
+      "design_studio_3_5",
+    ]);
 
-    // find first writable output inside that card
-    const target =
-      card.querySelector("textarea") ||
-      card.querySelector("input[type='text']") ||
-      card.querySelector("pre") ||
-      card.querySelector("[contenteditable='true']") ||
-      card.querySelector("div");
+    // ✅ If they use data-modal-target, kill them here too
+    const HIDE_MODAL_TARGETS = new Set(
+      [
+        "imageModal",
+        "videoModal",
+        "canvasModal",
+        "designModal",
+        "canvasStudioModal",
+        "designStudioModal",
+      ].map(norm)
+    );
 
-    if (!target) return false;
-    return setNodeText(target, text);
-  };
+    // ✅ Hard-kill the actual DOM containers you showed in DevTools
+    const HARD_KILL_SELECTORS = [
+      "#videoOutputBottom",
+      "#creativeStudioOverlay",
+      "#designStudioOverlay",
+      "#canvasStudio",
+      "#canvasStudioWrap",
+      "#canvasStudioRoot",
+      "#designStudio",
+      "#designStudioRoot",
+      "#konvaStage",
+      "#fabricCanvasWrap",
+    ];
 
-  // Use the actual headings you show in Step 2
-  fillByHeading("TikTok", getPlatformText("tiktok"));
-  fillByHeading("Instagram", getPlatformText("instagram"));
-  fillByHeading("Facebook", getPlatformText("facebook"));
-  fillByHeading("LinkedIn", getPlatformText("linkedin"));
-  fillByHeading("Marketplace", getPlatformText("marketplace"));
-  fillByHeading("Hashtag Set", getPlatformText("hashtags"));
-}
+    const hideEl = (el, reason) => {
+      if (!el) return false;
+      if (isKeep(el)) return false;
+      if (el.dataset?.lrHidden === "1") return false;
 
+      el.dataset.lrHidden = "1";
+      el.setAttribute("aria-hidden", "true");
+      el.hidden = true;
 
-// ==================================================
-// UI HIDER (AUTHORITATIVE) — SINGLE COPY ONLY
-// Goal for LAUNCH:
-// - KEEP floating tools bar + Step 3 container
-// - HIDE only 4 future buttons + their panels (Canvas/Design/Image/Video)
-// - HIDE bottom video/script output area
-// Survives DOM injections via MutationObserver.
-// ==================================================
-function installHideNextVersionUI() {
-  if (window.__LOTROCKET_UI_HIDER_RUNNING__) return;
-  window.__LOTROCKET_UI_HIDER_RUNNING__ = true;
+      el.style.setProperty("display", "none", "important");
+      el.style.setProperty("visibility", "hidden", "important");
+      el.style.setProperty("pointer-events", "none", "important");
 
-  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+      // console.log("🙈 HID:", reason, el);
+      return true;
+    };
 
-  // ✅ NEVER HIDE these containers (launch-critical UI)
-  const KEEP_SELECTORS = ["#creativeHub", "#step3", "#creativeLab"];
-  const getKeepNodes = () => KEEP_SELECTORS.map((s) => document.querySelector(s)).filter(Boolean);
+    const forceShowFloatingBar = () => {
+      DOC.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach(
+        (bar) => {
+          if (!bar) return;
+          bar.hidden = false;
+          bar.removeAttribute("aria-hidden");
+          bar.dataset.lrHidden = "0";
+          bar.style.setProperty("display", "flex", "important");
+          bar.style.setProperty("visibility", "visible", "important");
+          bar.style.setProperty("pointer-events", "auto", "important");
+        }
+      );
+    };
 
-  // Extra safety: never hide these, even if KEEP nodes aren't found yet
-  const isAlwaysKeep = (el) => {
-    if (!el) return true;
-    if (el === document.documentElement) return true;
-    if (el === document.body) return true;
-    if (el.tagName === "BODY") return true;
-    if (el.tagName === "HTML") return true;
-    if (el.tagName === "MAIN") return true;
-    return false;
-  };
+    const pass = () => {
+      // 0) Floating bar MUST stay visible
+      forceShowFloatingBar();
 
-  const isKeep = (el) => {
-    if (!el) return false;
-    if (isAlwaysKeep(el)) return true;
+      // 1) Always hide Step 3 "Send to Design Studio" future button if it exists
+      hideEl(DOC.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
 
-    const keeps = getKeepNodes();
-    if (!keeps.length) return false;
-
-    // protect the keep node itself
-    if (keeps.some((k) => el === k)) return true;
-
-    // protect any ancestor that contains Step 3 (prevents nuking Step 3 wrappers)
-    if (keeps.some((k) => el.contains && el.contains(k))) return true;
-
-    return false;
-  };
-
-// ✅ We ONLY want to kill these future buttons (text match)
-const FUTURE_BUTTON_TEXT = [
-  "ai image generation",
-  "ai video generation",
-  "canvas studio",
-  "design studio",
-  "canvas",          // ✅ NEW (your button has no target/action)
-  "design",          // ✅ NEW (your button has no target/action)
-];
-
-
-  // ✅ If they use data-ai-action, kill them here too
-  const HIDE_ACTIONS = new Set([
-    "image_ai",
-    "video_ai",
-    "image_generator",
-    "video_generator",
-    "video_script",
-    "shot_list",
-    "thumbnail_prompt",
-    "canvas",
-    "canvas_studio",
-    "design",
-    "design_studio",
-    "design_studio_3",
-    "design_studio_3_0",
-  ]);
-
-  // ✅ If they use data-modal-target, kill them here too
-  const HIDE_MODAL_TARGETS = new Set([
-    "imageModal",
-    "videoModal",
-    "canvasModal",
-    "designModal",
-    "canvasStudioModal",
-    "designStudioModal",
-  ].map(norm));
-
-  // ✅ Hard-kill the actual DOM containers you showed in DevTools
-  const HARD_KILL_SELECTORS = [
-    "#videoOutputBottom",
-    "#creativeStudioOverlay",
-    "#designStudioOverlay",
-    "#canvasStudio",
-    "#canvasStudioWrap",
-    "#canvasStudioRoot",
-    "#designStudio",
-    "#designStudioRoot",
-    "#konvaStage",
-    "#fabricCanvasWrap",
-  ];
-
-  const hideEl = (el, reason) => {
-    if (!el) return false;
-    if (isKeep(el)) return false;
-    if (el.dataset?.lrHidden === "1") return false;
-
-    el.dataset.lrHidden = "1";
-    el.setAttribute("aria-hidden", "true");
-    el.hidden = true;
-
-    el.style.setProperty("display", "none", "important");
-    el.style.setProperty("visibility", "hidden", "important");
-    el.style.setProperty("pointer-events", "none", "important");
-
-    // console.log("🙈 HID:", reason, el);
-    return true;
-  };
-
-  const forceShowFloatingBar = () => {
-    document
-      .querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar")
-      .forEach((bar) => {
-        if (!bar) return;
-        bar.hidden = false;
-        bar.removeAttribute("aria-hidden");
-        bar.dataset.lrHidden = "0"; // undo any prior hide marks
-        bar.style.setProperty("display", "flex", "important");
-        bar.style.setProperty("visibility", "visible", "important");
-        bar.style.setProperty("pointer-events", "auto", "important");
-      });
-  };
-
-  const pass = () => {
-    // 0) Floating bar MUST stay visible
-    forceShowFloatingBar();
-
-    // 1) Always hide Step 3 "Send to Design Studio" future button if it exists
-    hideEl(document.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
-
-    // 2) Hard kill by exact IDs/containers
-    HARD_KILL_SELECTORS.forEach((sel) => {
-      const el = document.querySelector(sel);
-      if (el) hideEl(el, `hard-kill ${sel}`);
-    });
-
-   // 3) Hide ONLY the future buttons inside the floating tools bar (keep launch tools visible)
-document
-  .querySelectorAll(
-    ".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button"
-  )
-  .forEach((btn) => {
-    // emoji-safe + whitespace-safe label
-    const cleanLabel = (s) =>
-      String(s || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9 ]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const txt = cleanLabel(btn.textContent);
-    const action = cleanLabel(btn.getAttribute("data-ai-action"));
-    const target = cleanLabel(btn.getAttribute("data-modal-target"));
-
-    // exact matches for short labels so we don’t accidentally match “design studio”
-    const shortExact = txt === "canvas" || txt === "design";
-
-    // longer labels (must exist in your scope)
-    const longContains =
-      Array.isArray(FUTURE_BUTTON_TEXT) &&
-      FUTURE_BUTTON_TEXT.some((t) => {
-        const tt = cleanLabel(t);
-        return tt.length > 6 && txt.includes(tt);
+      // 2) Hard kill by exact IDs/containers
+      HARD_KILL_SELECTORS.forEach((sel) => {
+        const el = DOC.querySelector(sel);
+        if (el) hideEl(el, `hard-kill ${sel}`);
       });
 
-    const actionMatch = !!action && HIDE_ACTIONS instanceof Set && HIDE_ACTIONS.has(action);
-    const targetMatch = !!target && HIDE_MODAL_TARGETS instanceof Set && HIDE_MODAL_TARGETS.has(target);
+      // 3) Hide ONLY the future buttons inside the floating tools bar
+      DOC.querySelectorAll(
+        ".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button"
+      ).forEach((btn) => {
+        const cleanLabel = (s) =>
+          String(s || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9 ]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
 
-    if (shortExact || longContains || actionMatch || targetMatch) {
-      hideEl(btn, `floating future btn (${txt || action || target || "unknown"})`);
-    }
-  });
+        const txt = cleanLabel(btn.textContent);
+        const action = cleanLabel(btn.getAttribute("data-ai-action"));
+        const target = cleanLabel(btn.getAttribute("data-modal-target"));
 
+        const shortExact = txt === "canvas" || txt === "design";
 
-    // 4) If those buttons open modals by id, hide the modals too (safety)
-    document.querySelectorAll(".side-modal, .modal").forEach((m) => {
-      const mid = norm(m.id);
-      if (!mid) return;
+        const longContains =
+          Array.isArray(FUTURE_BUTTON_TEXT) &&
+          FUTURE_BUTTON_TEXT.some((t) => {
+            const tt = cleanLabel(t);
+            return tt.length > 6 && txt.includes(tt);
+          });
 
-      if (mid.includes("video") || mid.includes("image") || mid.includes("canvas") || mid.includes("design")) {
-        // Only hide if it clearly belongs to the future set
-        if (mid.includes("canvas") || mid.includes("design") || mid.includes("video") || mid.includes("image")) {
+        const actionMatch = !!action && HIDE_ACTIONS instanceof Set && HIDE_ACTIONS.has(action);
+        const targetMatch =
+          !!target && HIDE_MODAL_TARGETS instanceof Set && HIDE_MODAL_TARGETS.has(target);
+
+        if (shortExact || longContains || actionMatch || targetMatch) {
+          hideEl(btn, `floating future btn (${txt || action || target || "unknown"})`);
+        }
+      });
+
+      // 4) Hide the future modals too (safety)
+      DOC.querySelectorAll(".side-modal, .modal").forEach((m) => {
+        const mid = norm(m.id);
+        if (!mid) return;
+
+        if (
+          mid.includes("video") ||
+          mid.includes("image") ||
+          mid.includes("canvas") ||
+          mid.includes("design")
+        ) {
           hideEl(m, `future modal ${m.id}`);
         }
-      }
-    });
-
-    // 5) Kill any remaining “bottom output” section if present (your DOM shows it)
-    const bottom = document.querySelector("#videoOutputBottom");
-    if (bottom) hideEl(bottom, "#videoOutputBottom");
-  };
-
-  // initial pass
-  pass();
-
-  // observer (single)
-  if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
-    const obs = new MutationObserver(() => {
-      if (window.__LOTROCKET_UI_HIDER_TICK__) return;
-      window.__LOTROCKET_UI_HIDER_TICK__ = true;
-      requestAnimationFrame(() => {
-        window.__LOTROCKET_UI_HIDER_TICK__ = false;
-        pass();
       });
-    });
-    obs.observe(document.body, { childList: true, subtree: true });
-    window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
-  }
 
-  // retry loop (covers slow render / late injection)
-  let tries = 0;
-  const t = setInterval(() => {
-    tries++;
+      // 5) Kill any remaining “bottom output” section if present
+      const bottom = DOC.querySelector("#videoOutputBottom");
+      if (bottom) hideEl(bottom, "#videoOutputBottom");
+    };
+
     pass();
-    if (tries >= 30) clearInterval(t);
-  }, 200);
 
-  console.log("✅ UI hider installed (authoritative LAUNCH v4)");
-} // ✅ END installHideNextVersionUI()
+    // observer (single)
+    if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
+      const obs = new MutationObserver(() => {
+        if (window.__LOTROCKET_UI_HIDER_TICK__) return;
+        window.__LOTROCKET_UI_HIDER_TICK__ = true;
+        requestAnimationFrame(() => {
+          window.__LOTROCKET_UI_HIDER_TICK__ = false;
+          pass();
+        });
+      });
+      obs.observe(DOC.body, { childList: true, subtree: true });
+      window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
+    }
 
+    // retry loop (covers slow render / late injection)
+    let tries = 0;
+    const t = setInterval(() => {
+      tries++;
+      pass();
+      if (tries >= 30) clearInterval(t);
+    }, 200);
 
+    console.log("✅ UI hider installed (authoritative LAUNCH v4)");
+  } // ✅ END installHideNextVersionUI()
 
   // ==================================================
   // FINAL INIT (SAFE) ✅ MUST BE LAST
