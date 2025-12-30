@@ -803,39 +803,30 @@ function renderHoldingZone() {
       loadPhotoTuner(url);
     });
 
-    // Double click = send to social + remove
-    btn.addEventListener("dblclick", () => {
-      addToSocialReady(url, true);
-      STORE.holdingZonePhotos = STORE.holdingZonePhotos.filter(
-        (u) => u !== url
-      );
-      renderHoldingZone();
-    });
+// Double click = send to social + remove (SAFE)
+btn.addEventListener("dblclick", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    hz.appendChild(btn);
-  });
-}
+  // 1) add to social-ready
+  addToSocialReady(url, true);
 
+  // 2) remove from holding zone
+  STORE.holdingZonePhotos = (STORE.holdingZonePhotos || []).filter((u) => u !== url);
 
-      // fix active photo if we removed it
-      if (STORE.activeHoldingPhoto === url) {
-        STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-      }
+  // 3) fix active photo if we removed it
+  if (STORE.activeHoldingPhoto === url) {
+    STORE.activeHoldingPhoto = (STORE.holdingZonePhotos[0] || "");
+  }
 
-      renderHoldingZone();
-      renderSocialStrip();
+  // 4) re-render both areas
+  renderHoldingZone();
+  renderSocialStrip();
 
-      toast("Sent to Social-ready ✅", "ok");
-      log("✅ Sent to social-ready (removed from holding):", url);
-    });
+  toast("Sent to Social-ready ✅", "ok");
+  log("✅ Sent to social-ready (removed from holding):", url);
+});
 
-    hz.appendChild(btn);
-  });
-
-  if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
-
-  log("✅ Holding zone rendered:", (STORE.holdingZonePhotos || []).length);
-} // ✅ DO NOT DELETE THIS CLOSING BRACE
 
 
 
