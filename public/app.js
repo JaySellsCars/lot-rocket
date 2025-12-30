@@ -1272,6 +1272,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==================================================
   // STEP 2 — RENDER SOCIAL KIT OUTPUTS (BULLETPROOF)
   // ==================================================
+ if (window.__STEP2_RENDER_LOCK__) return;
+window.__STEP2_RENDER_LOCK__ = true;
+setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
+ 
+  
+  
+  
   function renderStep2FromBoost(data) {
     if (!data) return;
 
