@@ -800,6 +800,61 @@ document.addEventListener("DOMContentLoaded", () => {
       sendSelectedToHoldingZone();
     });
   }
+// ==================================================
+// STEP 2 — REMOVE EMOJIS BUTTONS (INJECT + WIRE)
+// ==================================================
+function stripEmojis(str) {
+  const s = String(str || "");
+  // Broad emoji ranges (works well in modern Chromium)
+  return s
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, "")
+    .replace(/[\u{2600}-\u{26FF}]/gu, "")
+    .replace(/[\u{2700}-\u{27BF}]/gu, "")
+    .replace(/\u{FE0F}/gu, "") // variation selector
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function installStep2RemoveEmojiButtons() {
+  const rows = Array.from(DOC.querySelectorAll(".step2-card .btn-row"));
+  rows.forEach((row) => {
+    if (row.dataset.emojiBtn === "true") return;
+    row.dataset.emojiBtn = "true";
+
+    const btn = DOC.createElement("button");
+    btn.type = "button";
+    btn.className = "emoji-strip-btn";
+    btn.textContent = "Remove Emojis";
+    row.appendChild(btn);
+  });
+
+  console.log("✅ Step 2 emoji buttons installed:", rows.length);
+}
+
+function wireStep2RemoveEmojiClicks() {
+  if (window.__STEP2_EMOJI_WIRED__) return;
+  window.__STEP2_EMOJI_WIRED__ = true;
+
+  DOC.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.(".emoji-strip-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // find the textarea in the same card
+    const card = btn.closest(".step2-card");
+    const ta = card?.querySelector("textarea");
+    if (!ta) return;
+
+    ta.value = stripEmojis(ta.value);
+    autoResizeTextarea(ta);
+
+    try { toast("Emojis removed ✅", "ok"); } catch {}
+  });
+
+  console.log("✅ Step 2 emoji strip wired");
+}
 
   // ==================================================
   // STEP 3 — HOLDING ZONE RENDER
