@@ -657,8 +657,8 @@ async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, 
 
   const { title, metaDesc, visibleText } = pageInfo;
 
-  const system = `
-You are Lot Rocket's Social Media War Room — a viral automotive copywriter.
+const system = PROMPT_SOCIAL_MASTER;
+
 
 CRITICAL OUTPUT RULES:
 - Output MUST be a single VALID JSON object.
