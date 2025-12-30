@@ -128,10 +128,7 @@
     <!-- ============================== -->
     <!-- STEP 2 – Social Media Kit     -->
     <!-- ============================== -->
-   // 🔤 Rename existing Step 2 buttons (no DOM rebuild)
-function updateStep2ButtonLabels() {
-  document.querySelectorAll(".regen-btn").forEach((btn) => {
-    const text = btn.textContent.trim().toLowerCase();
+
 
     if (text.includes("new") && text.includes("post")) {
       btn.innerHTML = "<span>New</span><span>Post</span>";
