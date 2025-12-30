@@ -1286,6 +1286,60 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data[k]) return pick(data[k]);
       return "";
     };
+    // --- HARDENED DOM FIND + SAFE INJECT ---
+    const findEl = (sels) => {
+      for (const sel of sels) {
+        try {
+          const el = DOC.querySelector(sel);
+          if (el) return el;
+        } catch {}
+      }
+      return null;
+    };
+
+    const setText = (el, text) => {
+      if (!el) return false;
+      const val = text == null ? "" : String(text);
+      const tag = (el.tagName || "").toLowerCase();
+      if (tag === "textarea" || tag === "input") el.value = val;
+      else el.textContent = val;
+
+      el.classList.remove("hidden");
+      el.style.display = "";
+      el.setAttribute("data-filled", val ? "1" : "0");
+      return true;
+    };
+
+    // --- TARGETS (add/adjust IDs here ONCE and we lock it) ---
+    const targets = {
+      tiktok: findEl(["#tiktokCaption", "#tiktokOutput", "#tiktokText", "[data-step2='tiktok']", "[data-caption='tiktok']"]),
+      instagram: findEl(["#instagramCaption", "#instagramOutput", "#instagramText", "[data-step2='instagram']", "[data-caption='instagram']"]),
+      facebook: findEl(["#facebookCaption", "#facebookOutput", "#facebookText", "[data-step2='facebook']", "[data-caption='facebook']"]),
+      linkedin: findEl(["#linkedinCaption", "#linkedinOutput", "#linkedinText", "[data-step2='linkedin']", "[data-caption='linkedin']"]),
+      hashtags: findEl(["#hashtagsOutput", "#hashtags", "[data-step2='hashtags']", "[data-caption='hashtags']"]),
+      marketplace: findEl(["#marketplaceCaption", "#marketplaceOutput", "[data-step2='marketplace']", "[data-caption='marketplace']"]),
+    };
+
+    // --- WRITE PATH (SINGLE SOURCE OF TRUTH) ---
+    const out = {
+      tiktok: getPlatformText("tiktok"),
+      instagram: getPlatformText("instagram"),
+      facebook: getPlatformText("facebook"),
+      linkedin: getPlatformText("linkedin"),
+      hashtags: getPlatformText("hashtags"),
+      marketplace: getPlatformText("marketplace"),
+    };
+
+    const report = {};
+    let filled = 0;
+    Object.keys(out).forEach((k) => {
+      const ok = setText(targets[k], out[k]);
+      report[k] = { found: !!targets[k], chars: (out[k] || "").length, filled: ok && !!out[k] };
+      if (ok && out[k]) filled++;
+    });
+
+    console.log("🟦 STEP2 render report:", report);
+    if (!filled) console.warn("🟥 STEP2: nothing filled (selector/key mismatch)", report);
 
     const setNodeText = (node, text) => {
       if (!node) return false;
