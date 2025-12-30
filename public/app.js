@@ -1333,6 +1333,8 @@ document.addEventListener("DOMContentLoaded", () => {
       el.setAttribute("data-filled", val ? "1" : "0");
       return true;
     };
+console.log("🟦 STEP2 root keys:", Object.keys(root || {}));
+console.log("🟦 STEP2 root preview:", JSON.stringify(root).slice(0, 500));
 
     // ✅ STEP2 TARGETS — MATCH index.html EXACTLY
     const mapping = [
@@ -1378,13 +1380,33 @@ console.log("🧲 STEP2 PROBE hits:", probeHits);
     const report = {};
     let filled = 0;
 
-    mapping.forEach(({ key, sels }) => {
-      const txt = getPlatformText(key);
-      const el = findEl(sels);
-      const ok = setText(el, txt);
-      report[key] = { found: !!el, chars: (txt || "").length, filled: ok && !!txt };
-      if (ok && txt) filled++;
-    });
+mapping.forEach(({ key, sels }) => {
+  const el = findEl(sels);
+
+  // Pull text using multiple likely keys (covers real backend variants)
+  const txt =
+    getPlatformText(key) ||
+    getPlatformText(key + "Post") ||
+    getPlatformText(key + "Caption") ||
+    getPlatformText(key + "_post") ||
+    getPlatformText(key + "_caption") ||
+    (key === "instagram" ? (getPlatformText("ig") || getPlatformText("insta")) : "") ||
+    (key === "twitter" ? (getPlatformText("x") || getPlatformText("tweet")) : "") ||
+    (key === "text" ? (getPlatformText("dm") || getPlatformText("sms") || getPlatformText("blurb")) : "");
+
+  const ok = setText(el, txt);
+
+  report[key] = {
+    found: !!el,
+    sel: sels[0],
+    chars: (txt || "").length,
+    sample: (txt || "").slice(0, 80),
+    filled: ok && !!txt,
+  };
+
+  if (ok && txt) filled++;
+});
+
 
     console.log("🟦 STEP2 render report:", report);
     if (!filled) console.warn("🟥 STEP2: nothing filled (selector/key mismatch)", report);
