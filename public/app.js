@@ -744,19 +744,20 @@ if (sendTopBtn && sendTopBtn.dataset.wired !== "true") {
   // ✅ set the visible label (so it stays consistent on reload too)
   sendTopBtn.textContent = "Send Selected Photos to Creative Lab";
 
-  sendTopBtn.onclick = () => {
-    log("🚀 SEND TOP PHOTOS CLICK");
+sendTopBtn.onclick = () => {
+  log("🚀 SEND TOP PHOTOS CLICK");
 
-    // ✅ animated loading state
-    setBtnLoading(sendTopBtn, true, "Sending Selected Photos…");
+  // tiny “animated” feedback (no CSS dependency)
+  sendTopBtn.classList.add("btn-loading");
+  sendTopBtn.style.transform = "scale(0.98)";
+  setTimeout(() => {
+    sendTopBtn.style.transform = "";
+    sendTopBtn.classList.remove("btn-loading");
+  }, 220);
 
-    // run the actual action
-    sendSelectedToHoldingZone();
+  sendSelectedToHoldingZone();
+};
 
-    // turn loading off (tiny delay so the animation is visible)
-    setTimeout(() => setBtnLoading(sendTopBtn, false), 350);
-  };
-}
 
 // ==================================================
 // STEP 3 — HOLDING ZONE RENDER (SINGLE SOURCE)
