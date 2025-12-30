@@ -704,8 +704,11 @@ async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, 
 
   const { title, metaDesc, visibleText } = pageInfo;
 
-const system = PROMPT_SOCIAL_MASTER;
+  // ✅ MASTER PROMPT (base rules) + JSON contract (must stay inside template string)
+  const system = `
+${PROMPTS?.BASE || ""}
 
+${PROMPTS?.SOCIAL_MASTER || PROMPTS?.SOCIAL_POST || ""}
 
 CRITICAL OUTPUT RULES:
 - Output MUST be a single VALID JSON object.
@@ -735,7 +738,7 @@ Use these keys EXACTLY:
   "videoPlan":    string,
   "canvaIdea":    string
 }
-`.trim();
+  `.trim();
 
   const user = `
 Dealer page data:
@@ -752,7 +755,7 @@ Optional custom price: ${priceOverride || "none"}
 
 If overrides exist, prefer them in the copy.
 Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
-`.trim();
+  `.trim();
 
   try {
     const response = await client.responses.create({
@@ -848,6 +851,7 @@ Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
 }
 
 // ======================================================
+
 // Build Kit (shared)  ✅ NO req.body in here (no scope)
 // ======================================================
 async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "", processPhotos = true }) {
