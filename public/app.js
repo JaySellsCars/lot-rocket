@@ -824,7 +824,8 @@ function installStep2RemoveEmojiButtons() {
     const btn = DOC.createElement("button");
     btn.type = "button";
     btn.className = "emoji-strip-btn";
-    btn.textContent = "Remove Emojis";
+btn.textContent = "No Emojis";
+
     row.appendChild(btn);
   });
 
