@@ -308,6 +308,74 @@ textarea{
   border-radius: 16px;
   background: rgba(2,6,23,.85);
 }
+/* ==============================
+   STEP 2 — BUTTON ROW CLEANUP
+   ============================== */
+
+/* Keep the row aligned and inside the card */
+.step2-card .btn-row{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+/* Uniform button baseline */
+.step2-card .btn-row button{
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.55);
+  color: #e5e7eb;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+  padding: 0 10px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Hover / active */
+.step2-card .btn-row button:hover{
+  background: rgba(30,64,175,.18);
+  border-color: rgba(96,165,250,.55);
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
+  transform: translateY(-1px);
+}
+.step2-card .btn-row button:active{
+  transform: translateY(0);
+}
+
+/* Make Copy slightly “primary” */
+.step2-card .btn-row .copy-btn{
+  background: rgba(37,99,235,.18);
+  border-color: rgba(96,165,250,.6);
+}
+
+/* Make Remove Emojis look neutral but clear */
+.step2-card .btn-row .emoji-strip-btn{
+  background: rgba(15,23,42,.65);
+}
+
+/* Responsive: stack if card gets narrow */
+@media (max-width: 520px){
+  .step2-card .btn-row{
+    grid-template-columns: 1fr;
+  }
+  .step2-card .btn-row button{
+    height: 42px;
+    font-size: 13px;
+  }
+}
 
 /* ---------- FLOATING TOOLS ---------- */
 .floating-tools{
