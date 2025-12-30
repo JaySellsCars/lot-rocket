@@ -1378,29 +1378,43 @@ const FUTURE_BUTTON_TEXT = [
       if (el) hideEl(el, `hard-kill ${sel}`);
     });
 
-    // 3) Hide ONLY the 4 future buttons inside the floating tools bar
-    document
-      .querySelectorAll(".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button")
-      .forEach((btn) => {
-        const txt = norm(btn.textContent);
-        const action = norm(btn.getAttribute("data-ai-action"));
-        const target = norm(btn.getAttribute("data-modal-target"));
+   // 3) Hide ONLY the future buttons inside the floating tools bar (keep launch tools visible)
+document
+  .querySelectorAll(
+    ".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button"
+  )
+  .forEach((btn) => {
+    // emoji-safe + whitespace-safe label
+    const cleanLabel = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-        const textMatch =
-  // exact matches for the short labels so we don’t accidentally match “design studio”
-  (txt === "canvas" || txt === "design") ||
-  // normal contains for the longer labels
-  FUTURE_BUTTON_TEXT.some((t) => t.length > 6 && txt.includes(t));
+    const txt = cleanLabel(btn.textContent);
+    const action = cleanLabel(btn.getAttribute("data-ai-action"));
+    const target = cleanLabel(btn.getAttribute("data-modal-target"));
 
-        
-        
-        const actionMatch = action && HIDE_ACTIONS.has(action);
-        const targetMatch = target && HIDE_MODAL_TARGETS.has(target);
+    // exact matches for short labels so we don’t accidentally match “design studio”
+    const shortExact = txt === "canvas" || txt === "design";
 
-        if (textMatch || actionMatch || targetMatch) {
-          hideEl(btn, `floating future btn (${txt || action || target || "unknown"})`);
-        }
+    // longer labels (must exist in your scope)
+    const longContains =
+      Array.isArray(FUTURE_BUTTON_TEXT) &&
+      FUTURE_BUTTON_TEXT.some((t) => {
+        const tt = cleanLabel(t);
+        return tt.length > 6 && txt.includes(tt);
       });
+
+    const actionMatch = !!action && HIDE_ACTIONS instanceof Set && HIDE_ACTIONS.has(action);
+    const targetMatch = !!target && HIDE_MODAL_TARGETS instanceof Set && HIDE_MODAL_TARGETS.has(target);
+
+    if (shortExact || longContains || actionMatch || targetMatch) {
+      hideEl(btn, `floating future btn (${txt || action || target || "unknown"})`);
+    }
+  });
+
 
     // 4) If those buttons open modals by id, hide the modals too (safety)
     document.querySelectorAll(".side-modal, .modal").forEach((m) => {
