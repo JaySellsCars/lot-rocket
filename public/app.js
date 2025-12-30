@@ -1386,7 +1386,14 @@ const FUTURE_BUTTON_TEXT = [
         const action = norm(btn.getAttribute("data-ai-action"));
         const target = norm(btn.getAttribute("data-modal-target"));
 
-        const textMatch = FUTURE_BUTTON_TEXT.some((t) => txt.includes(t));
+        const textMatch =
+  // exact matches for the short labels so we don’t accidentally match “design studio”
+  (txt === "canvas" || txt === "design") ||
+  // normal contains for the longer labels
+  FUTURE_BUTTON_TEXT.some((t) => t.length > 6 && txt.includes(t));
+
+        
+        
         const actionMatch = action && HIDE_ACTIONS.has(action);
         const targetMatch = target && HIDE_MODAL_TARGETS.has(target);
 
