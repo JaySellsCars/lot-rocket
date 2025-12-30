@@ -1467,13 +1467,17 @@ setTimeout(() => (window.__STEP2_RENDER_LOCK__ = false), 0);
       return setNodeText(target, text);
     };
 
-    fillByHeading("TikTok", getPlatformText("tiktok"));
-    fillByHeading("Instagram", getPlatformText("instagram"));
-    fillByHeading("Facebook", getPlatformText("facebook"));
-    fillByHeading("LinkedIn", getPlatformText("linkedin"));
-    fillByHeading("Marketplace", getPlatformText("marketplace"));
-    fillByHeading("Hashtag Set", getPlatformText("hashtags"));
-  }
+// DISABLED: legacy heading-based Step 2 writer
+// (kept for reference, but NOT executed)
+// fillByHeading("TikTok", getPlatformText("tiktok"));
+// fillByHeading("Instagram", getPlatformText("instagram"));
+// fillByHeading("Facebook", getPlatformText("facebook"));
+// fillByHeading("LinkedIn", getPlatformText("linkedin"));
+// fillByHeading("Marketplace", getPlatformText("marketplace"));
+// fillByHeading("Hashtag Set", getPlatformText("hashtags"));
+
+console.log("🟦 STEP2 using direct selector mapping only");
+
 
   // ==================================================
   // BOOST BUTTON HANDLER (SINGLE SOURCE OF TRUTH)
