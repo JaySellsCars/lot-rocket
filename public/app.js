@@ -1807,6 +1807,13 @@ try {
   if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
   if (typeof installStep2RemoveEmojiButtons === "function") installStep2RemoveEmojiButtons();
 
+  // ✅ Step 2 button label stacker (New/Post, No/Emoji)
+  if (typeof updateStep2ButtonLabels === "function") {
+    updateStep2ButtonLabels();
+    // optional: run once more after Step 2 fill/renders
+    setTimeout(updateStep2ButtonLabels, 150);
+  }
+
   if (typeof installSideToolsDelegation === "function") {
     installSideToolsDelegation();
   }
@@ -1822,5 +1829,6 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 // 🔚 SAFETY CLOSE — prevents unexpected EOF
 })();
