@@ -1,12 +1,9 @@
 // ==================================================
 // HARD KILL: prevent older cached app.js from running
-// (PUT THIS AT VERY TOP OF public/app.js)
+// (MUST BE AT VERY TOP OF public/app.js)
 // ==================================================
 (function () {
-  if (
-    window.__LOTROCKET_APPJS_VERSION__ &&
-    window.__LOTROCKET_APPJS_VERSION__ !== "999"
-  ) {
+  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== "999") {
     return;
   }
   window.__LOTROCKET_APPJS_VERSION__ = "999";
