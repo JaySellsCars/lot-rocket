@@ -1500,9 +1500,7 @@ document
   }, 200);
 
   console.log("✅ UI hider installed (authoritative LAUNCH v4)");
-}
-
-
+} // ✅ END installHideNextVersionUI()
 
 
 
