@@ -2155,6 +2155,199 @@ function updateStep2ButtonLabels() {
     }
   });
 }
+// ==================================================
+// SUPPORT FUNCTIONS (defined once) ✅
+// ==================================================
+
+function updateStep2ButtonLabels() {
+  document.querySelectorAll(".regen-btn").forEach((btn) => {
+    const text = String(btn.textContent || "").toLowerCase().trim();
+
+    if (text.includes("new") && text.includes("post")) {
+      btn.innerHTML = "<span>New</span><span>Post</span>";
+    }
+
+    if (text.includes("remove") && text.includes("emoji")) {
+      btn.innerHTML = "<span>No</span><span>Emoji</span>";
+    }
+  });
+}
+
+function runUiHiderSafe() {
+  try {
+    const DOC = document;
+
+    // prevent double-install
+    if (window.__LOTROCKET_UI_HIDER_INSTALLED__) return;
+    window.__LOTROCKET_UI_HIDER_INSTALLED__ = true;
+
+    const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const isKeep = (el) => {
+      if (!el) return false;
+      // keep the floating tools container itself
+      return el.classList?.contains("floating-tools") || el.id === "floatingTools" || el.id === "floatingToolBar";
+    };
+
+    const HIDE_ACTIONS = new Set([
+      "image_ai",
+      "video_ai",
+      "image_generator",
+      "video_generator",
+      "video_script",
+      "shot_list",
+      "thumbnail_prompt",
+      "canvas",
+      "canvas_studio",
+      "design",
+      "design_studio",
+      "design_studio_3",
+      "design_studio_3_0",
+      "design_studio_3_5",
+    ]);
+
+    const HIDE_MODAL_TARGETS = new Set(
+      [
+        "imageModal",
+        "videoModal",
+        "canvasModal",
+        "designModal",
+        "canvasStudioModal",
+        "designStudioModal",
+      ].map(norm)
+    );
+
+    const HARD_KILL_SELECTORS = [
+      "#videoOutputBottom",
+      "#creativeStudioOverlay",
+      "#designStudioOverlay",
+      "#canvasStudio",
+      "#canvasStudioWrap",
+      "#canvasStudioRoot",
+      "#designStudio",
+      "#designStudioRoot",
+      "#konvaStage",
+      "#fabricCanvasWrap",
+    ];
+
+    const hideEl = (el, reason) => {
+      if (!el) return false;
+      if (isKeep(el)) return false;
+      if (el.dataset && el.dataset.lrHidden === "1") return false;
+
+      if (el.dataset) el.dataset.lrHidden = "1";
+      el.setAttribute("aria-hidden", "true");
+      el.hidden = true;
+
+      el.style.setProperty("display", "none", "important");
+      el.style.setProperty("visibility", "hidden", "important");
+      el.style.setProperty("pointer-events", "none", "important");
+      return true;
+    };
+
+    const forceShowFloatingBar = () => {
+      DOC.querySelectorAll(".floating-tools, #floatingTools, #floatingToolBar").forEach((bar) => {
+        if (!bar) return;
+        bar.hidden = false;
+        bar.removeAttribute("aria-hidden");
+        if (bar.dataset) bar.dataset.lrHidden = "0";
+        bar.style.setProperty("display", "flex", "important");
+        bar.style.setProperty("visibility", "visible", "important");
+        bar.style.setProperty("pointer-events", "auto", "important");
+      });
+    };
+
+    const FUTURE_BUTTON_TEXT = [
+      "canvas studio",
+      "design studio",
+      "video",
+      "image generator",
+      "thumbnail",
+      "shot list",
+    ];
+
+    const pass = () => {
+      forceShowFloatingBar();
+
+      // hide Step 3 design studio button for launch (optional)
+      hideEl(DOC.getElementById("sendToDesignStudio"), "#sendToDesignStudio");
+
+      HARD_KILL_SELECTORS.forEach((sel) => {
+        const el = DOC.querySelector(sel);
+        if (el) hideEl(el, `hard-kill ${sel}`);
+      });
+
+      DOC.querySelectorAll(
+        ".floating-tools button, .floating-tools a, .floating-tools [role='button'], .floating-tools .floating-tools-button"
+      ).forEach((btn) => {
+        const cleanLabel = (s) =>
+          String(s || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9 ]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const txt = cleanLabel(btn.textContent);
+        const action = cleanLabel(btn.getAttribute("data-ai-action"));
+        const target = cleanLabel(btn.getAttribute("data-modal-target"));
+
+        const shortExact = txt === "canvas" || txt === "design";
+
+        const longContains =
+          Array.isArray(FUTURE_BUTTON_TEXT) &&
+          FUTURE_BUTTON_TEXT.some((t) => {
+            const tt = cleanLabel(t);
+            return tt.length > 6 && txt.includes(tt);
+          });
+
+        const actionMatch = !!action && HIDE_ACTIONS.has(action);
+        const targetMatch = !!target && HIDE_MODAL_TARGETS.has(norm(target));
+
+        if (shortExact || longContains || actionMatch || targetMatch) {
+          hideEl(btn, `floating future btn (${txt || action || target || "unknown"})`);
+        }
+      });
+
+      DOC.querySelectorAll(".side-modal, .modal").forEach((m) => {
+        const mid = norm(m.id);
+        if (!mid) return;
+
+        if (mid.includes("video") || mid.includes("image") || mid.includes("canvas") || mid.includes("design")) {
+          hideEl(m, `future modal ${m.id}`);
+        }
+      });
+
+      const bottom = DOC.querySelector("#videoOutputBottom");
+      if (bottom) hideEl(bottom, "#videoOutputBottom");
+    };
+
+    pass();
+
+    if (!window.__LOTROCKET_UI_HIDER_OBSERVER__) {
+      const obs = new MutationObserver(() => {
+        if (window.__LOTROCKET_UI_HIDER_TICK__) return;
+        window.__LOTROCKET_UI_HIDER_TICK__ = true;
+        requestAnimationFrame(() => {
+          window.__LOTROCKET_UI_HIDER_TICK__ = false;
+          pass();
+        });
+      });
+      obs.observe(DOC.body, { childList: true, subtree: true });
+      window.__LOTROCKET_UI_HIDER_OBSERVER__ = obs;
+    }
+
+    let tries = 0;
+    const t = setInterval(() => {
+      tries++;
+      pass();
+      if (tries >= 30) clearInterval(t);
+    }, 200);
+
+    console.log("✅ UI hider installed (authoritative LAUNCH v4)");
+  } catch (e) {
+    console.error("❌ UI hider failed", e);
+  }
+}
 
 // ==================================================
 
