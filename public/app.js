@@ -1141,11 +1141,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // STEP 2 — BUTTON LABEL STACKER (ONE COPY)
   // ==================================================
   function updateStep2ButtonLabels() {
-    DOC.querySelectorAll(".regen-btn").forEach((btn) => {
-      const text = String(btn.textContent || "").toLowerCase().trim();
-      if (text.includes("new") && text.includes("post")) btn.innerHTML = "<span>New</span><span>Post</span>";
-      if (text.includes("remove") && text.includes("emoji")) btn.innerHTML = "<span>No</span><span>Emoji</span>";
-    });
+    try {
+      DOC.querySelectorAll(".regen-btn").forEach((btn) => {
+        const text = String(btn.textContent || "").toLowerCase().trim();
+
+        if (text.includes("new") && text.includes("post")) {
+          btn.innerHTML = "<span>New</span><span>Post</span>";
+          return;
+        }
+
+        if (text.includes("remove") && text.includes("emoji")) {
+          btn.innerHTML = "<span>No</span><span>Emoji</span>";
+        }
+      });
+    } catch (e) {
+      console.warn("⚠️ updateStep2ButtonLabels error (non-fatal)", e);
+    }
   }
 
   // ==================================================
@@ -1156,6 +1167,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof installHideNextVersionUI === "function") {
         installHideNextVersionUI();
         console.log("✅ UI HIDER RAN");
+      } else {
+        // optional: keep quiet, but this helps in dev
+        // console.warn("⚠️ installHideNextVersionUI not found");
       }
     } catch (e) {
       console.warn("⚠️ UI HIDER ERROR (non-fatal)", e);
@@ -1166,23 +1180,37 @@ document.addEventListener("DOMContentLoaded", () => {
   // FINAL INIT ✅ MUST BE LAST
   // ==================================================
   try {
-    if (STORE.lastBoostPhotos?.length) renderStep1Photos(STORE.lastBoostPhotos);
-
-    if (STORE.holdingZonePhotos?.length) {
-      STORE.activeHoldingPhoto = STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-      renderHoldingZone();
-      if (STORE.activeHoldingPhoto) loadPhotoTuner(STORE.activeHoldingPhoto);
+    // Step 1 restore
+    if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
+      renderStep1Photos(STORE.lastBoostPhotos);
     }
 
-    renderSocialStrip();
-    wireCalculatorPad();
-    wireIncomeCalcDirect();
-    wireAiModals();
-    wireSideTools();
+    // Holding zone restore
+    if (STORE.holdingZonePhotos?.length) {
+      STORE.activeHoldingPhoto =
+        STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
 
+      if (typeof renderHoldingZone === "function") renderHoldingZone();
+
+      if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+        loadPhotoTuner(STORE.activeHoldingPhoto);
+      }
+    }
+
+    // Core renders/wiring (guarded)
+    if (typeof renderSocialStrip === "function") renderSocialStrip();
+
+    if (typeof wireCalculatorPad === "function") wireCalculatorPad();
+    if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+
+    if (typeof wireAiModals === "function") wireAiModals();
+    if (typeof wireSideTools === "function") wireSideTools();
+
+    // Step 2 label stacker
     updateStep2ButtonLabels();
     setTimeout(updateStep2ButtonLabels, 150);
 
+    // UI hider (authoritative, one-time global guard)
     if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
       window.__LOTROCKET_UI_HIDER_CALLED__ = true;
       runUiHiderSafe();
@@ -1190,7 +1218,10 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(runUiHiderSafe, 1000);
     }
 
-    setTimeout(() => autoGrowAllTextareas(document), 50);
+    // textarea autogrow (guarded)
+    if (typeof autoGrowAllTextareas === "function") {
+      setTimeout(() => autoGrowAllTextareas(document), 50);
+    }
 
     console.log("✅ FINAL INIT COMPLETE");
   } catch (e) {
@@ -1201,4 +1232,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==================================================
 // 🧨 EOF MARKER — if you don't see this in Sources, you're not serving the file you edited
 // ==================================================
+console.log("🧨 EOF MARKER — app.js loaded:", window.__LOTROCKET_APPJS_VERSION__);
+
 
