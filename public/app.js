@@ -322,32 +322,16 @@ function wireSideTools() {
     if (window.__LOTROCKET_SIDETOOLS_WIRED__) return;
     window.__LOTROCKET_SIDETOOLS_WIRED__ = true;
 
-    const openModalById = (modalIdRaw) => {
-      const modalId = String(modalIdRaw || "").replace(/^#/, "").trim();
-      if (!modalId) return;
 
-      const modal =
-        DOC.getElementById(modalId) ||
-        DOC.querySelector(`#${CSS.escape(modalId)}`);
 
-      if (!modal) {
-        console.warn("❌ MODAL NOT FOUND:", modalId);
-        return;
-      }
+  console.warn("❌ No modal open function available for:", id);
+};
+ const openModalSafe = (id) => {
+  id = String(id || "").replace(/^#/, "").trim();
+  if (!id) return;
 
-      modal.classList.remove("hidden");
-      modal.setAttribute("aria-hidden", "false");
-
-      // optional: mark launcher active
-      DOC.querySelectorAll("[data-modal-target].active").forEach((el) =>
-        el.classList.remove("active")
-      );
-      DOC.querySelectorAll(`[data-modal-target="${modalId}"]`).forEach((el) =>
-        el.classList.add("active")
-      );
-
-      log("✅ OPEN MODAL:", modalId);
-    };
+  if (typeof openModalById === "function") return openModalById(id);
+  if (typeof openSideModal === "function") return openSideModal(id);  
 
     // OPEN: event delegation so it works even if buttons render later
     DOC.addEventListener(
