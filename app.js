@@ -1174,6 +1174,9 @@ app.post("/api/ai-cinematic-photo", async (req, res) => {
 async function boostHandler(req, res) {
   try {
     const pageUrl = normalizeUrl(req.body?.url);
+    console.log("🧪 BOOST incoming url:", req.body?.url);
+console.log("🧪 BOOST normalized url:", pageUrl);
+  
     const labelOverride = req.body?.labelOverride || "";
     const priceOverride = req.body?.priceOverride || "";
 
