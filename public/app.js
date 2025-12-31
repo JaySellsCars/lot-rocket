@@ -16,9 +16,6 @@
 // One boot. One store. One wiring pass. No duplicate blocks.
 
 document.addEventListener("DOMContentLoaded", () => {
-  // all your code
-});
-
   // ==================================================
   // BOOT GUARD + INSPECT
   // ==================================================
@@ -70,6 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==================================================
   // UTILITIES (ONE SOURCE)
   // ==================================================
+
+  // ... the rest of your code continues here ...
+
+}); // ✅ CLOSE DOMContentLoaded (ONLY ONE)
+
   function setBtnLoading(btn, on, label) {
     if (!btn) return;
     if (on) {
