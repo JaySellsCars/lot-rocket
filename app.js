@@ -115,9 +115,8 @@ Rules:
 };
 
 
-HASHTAG METHOD:
-- Use 2–3 big tags + 3–5 niche tags + 2–3 local/geo tags (when location is known).
-`.trim(),
+// HASHTAG METHOD:
+
 
 
   // JSON contract for the multi-platform social kit route (buildSocialKit)
