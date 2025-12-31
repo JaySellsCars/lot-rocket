@@ -1490,6 +1490,7 @@ mapping.forEach(({ key, sels }) => {
 
     boostBtn.onclick = async () => {
       log("🚀 BOOST CLICK");
+setTimeout(() => autoGrowAllTextareas(document), 50);
 
       const url = dealerUrlInput?.value?.trim?.() || "";
       if (!url) {
