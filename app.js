@@ -811,6 +811,17 @@ If a detail is not present, do NOT claim it as fact.
 If overrides exist, prefer them in the copy.
 Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
 `.trim();
+// ==================================================
+// STEP 2 PROMPT PROOF (SAFE) — shows what AI actually receives
+// ==================================================
+try {
+  const clip = (s, n) => String(s || "").replace(/\s+/g, " ").trim().slice(0, n);
+  console.log("🧪 STEP2 SYSTEM.head:", clip(system, 400));
+  console.log("🧪 STEP2 USER.head  :", clip(user, 800)); // should include FEATURES:
+  console.log("🧪 STEP2 USER.hasFEATURES:", /FEATURES:\s*/i.test(user));
+} catch (e) {
+  console.warn("🧪 STEP2 PROMPT PROOF failed (non-fatal)", e);
+}
 
 try {
   const response = await client.responses.create({
