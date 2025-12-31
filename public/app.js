@@ -890,6 +890,21 @@ function wireSideTools() {
 
     return picked.slice(0, MAX_PHOTOS);
   }
+// ==================================================
+// UI HIDER RUNNER (SAFE) — run now + after DOM settles
+// ==================================================
+function runUiHiderSafe() {
+  try {
+    if (typeof installHideNextVersionUI === "function") {
+      installHideNextVersionUI();
+      console.log("✅ UI HIDER RAN");
+    } else {
+      console.warn("⚠️ installHideNextVersionUI() not found");
+    }
+  } catch (e) {
+    console.warn("⚠️ UI HIDER ERROR (non-fatal)", e);
+  }
+}
 
   // ==================================================
   // STEP 1 → SEND TOP PHOTOS → STEP 3 (SINGLE SOURCE)
