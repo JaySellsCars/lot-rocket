@@ -2214,6 +2214,6 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-// ✅ CLOSE DOMContentLoaded (this is what "Unexpected end of input" is missing)
-});
+}); // ✅ CLOSE DOMContentLoaded (MUST be last line)
+
 
