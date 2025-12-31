@@ -277,10 +277,9 @@ function wireSideTools() {
   );
 }
 // ==================================================
-
-// TOOLWIRE / FLOATING TOOLS (HARDENED, SAFE)
-// Works with: [data-modal-target], [data-open], [data-tool], .toolwire-btn
-// Modals supported: #incomeModal, #paymentModal, any .side-modal with matching id
+// TOOLWIRE / FLOATING TOOLS (HARDENED, SAFE) ✅
+// Works with: [data-modal-target], [data-open], [data-tool]
+// Modals supported: any .side-modal with matching id
 // ==================================================
 DOC.addEventListener(
   "click",
@@ -288,18 +287,30 @@ DOC.addEventListener(
     const btn = e.target.closest("[data-modal-target], [data-open], [data-tool]");
     if (!btn) return;
 
-    const modalId =
+    let modalId =
       btn.getAttribute("data-modal-target") ||
       btn.getAttribute("data-open") ||
       btn.getAttribute("data-tool");
 
+    // ✅ normalize (handles "#incomeModal")
+    modalId = String(modalId || "").replace(/^#/, "").trim();
     if (!modalId) return;
 
     e.preventDefault();
-    openSideModal(modalId); // use YOUR actual open function name here
+
+    // ✅ MUST call the real function that exists in your file
+    // (fixes: "openSideModal is not defined")
+    if (typeof openSideModalById === "function") {
+      openSideModalById(modalId);
+    } else if (typeof openModalById === "function") {
+      openModalById(modalId);
+    } else {
+      console.warn("❌ No modal open function found for:", modalId);
+    }
   },
   true
 );
+
 
 
 function wireSideTools() {
