@@ -2214,6 +2214,6 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-}); // ✅ CLOSE DOMContentLoaded (MUST be last line)
 
-
+// ✅ MUST be the LAST line of the file (closes the DOMContentLoaded wrapper)
+});
