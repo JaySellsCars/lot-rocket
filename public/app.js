@@ -1200,4 +1200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 }); // CLOSE DOMContentLoaded
 }); // EXTRA CLOSE (kills stray open block)
 ;   // EOF GUARD
+// ==================================================
+// 🧨 EOF MARKER — if you don't see this in Sources, you're not serving the file you edited
+// ==================================================
 
