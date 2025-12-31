@@ -250,6 +250,26 @@ if (launcher) launcher.classList.add("active");
 // Works with: [data-modal-target], [data-open], [data-tool], .toolwire-btn
 // Modals supported: #incomeModal, #paymentModal, any .side-modal with matching id
 // ==================================================
+DOC.addEventListener(
+  "click",
+  (e) => {
+    const btn = e.target.closest("[data-modal-target], [data-open], [data-tool]");
+    if (!btn) return;
+
+    const modalId =
+      btn.getAttribute("data-modal-target") ||
+      btn.getAttribute("data-open") ||
+      btn.getAttribute("data-tool");
+
+    if (!modalId) return;
+
+    e.preventDefault();
+    openSideModal(modalId); // use YOUR actual open function name here
+  },
+  true
+);
+
+
 function wireSideTools() {
   try {
     const DOC = document;
