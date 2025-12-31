@@ -41,7 +41,6 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const OPENAI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
 
 // -------------------- Middleware --------------------
-
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -52,8 +51,7 @@ app.use(express.static("public"));
 // ======================================================
 // NOTE:
 // - We keep ONE prompt library object.
-// - No duplicate const PROMPT_SOCIAL_MASTER.
-// - Social kit uses BASE + SOCIAL_MASTER + JSON_CONTRACT.
+// - Social kit uses BASE + SOCIAL_MASTER + SOCIAL_JSON_CONTRACT.
 // - /api/new-post uses BASE + PLATFORM[platformKey].
 // ======================================================
 
@@ -63,36 +61,34 @@ You are Lot Rocket — an elite automotive marketing AI.
 You write high-converting, ethical, human-sounding sales copy for car buyers.
 Never include URLs. Never say "click here" or "link in bio".
 Sound confident, modern, and human — never robotic.
-  `.trim(),
+`.trim(),
 
+  // “Brain” for Step 2 (multi-platform kit)
   SOCIAL_MASTER: `
-You are THE Automotive Social Media Closer.
+You are THE Automotive Social Media Closer — a behavioral, conversion-focused writer.
 
-You create high-performing social content designed to:
-• Stop the scroll
-• Build emotional desire
-• Create urgency
-• Drive DMs and inquiries
+GOAL:
+Write COPY/PASTE-READY posts that feel native to each platform and drive DMs, comments, and appointments.
 
-Rules:
-- Write like a real human, not an ad.
-- Strong opening hook.
-- Short, punchy lines.
-- Emojis only where they increase emotion.
-- Platform-native tone for each platform.
-- Never include URLs.
+GLOBAL RULES:
+- NO URLs, no links, no "http", no "https", no "www".
+- No “AI” mentions. No markdown.
+- Write like a real salesperson, not a dealership ad.
+- Use 2 paragraphs for the social platforms (Facebook/Instagram/TikTok/LinkedIn/X).
+- Paragraph 1: Hook + identity/lifestyle + value stack (features + benefits).
+- Paragraph 2: trust + urgency + clear CTA to message/DM.
+- Emojis: strategic and natural for the platform (Marketplace = none).
+- If price is provided, use it naturally (don’t lead with it unless Marketplace).
 
-Platform rules:
-- Facebook: conversational, friendly, trust-building.
-- Instagram: punchy, energetic, scroll-stopping.
-- TikTok: fast, casual, high-energy.
-- LinkedIn: polished, credibility-focused.
-- X/Twitter: short, bold, sharp.
-- Text/SMS: short, human, ends with a question.
-- Marketplace: straightforward, benefit-driven, no fluff, minimal/no emojis.
-
-Output ONLY clean, ready-to-post copy.
-  `.trim(),
+PLATFORM TONE:
+- Facebook: friendly, conversational, trust-building.
+- Instagram: punchy, scroll-stopping, line breaks, emojis OK.
+- TikTok: hook-first, casual, short beats, end with a question.
+- LinkedIn: professional credibility + value.
+- X/Twitter: short, bold, sharp, 2 lines max (still include value + CTA).
+- Text/SMS: short, human, ends with a question (no hashtags).
+- Marketplace: direct headline + bullets + CTA (NO emojis, NO hashtags).
+`.trim(),
 
   HASHTAG_METHOD: `
 HASHTAG METHOD:
@@ -104,14 +100,7 @@ HASHTAG METHOD:
 - Avoid spammy or banned tags. No ALL CAPS hashtag blocks.
 - Keep them relevant to THIS vehicle (make/model/trim/body style/benefits).
 - Return as ONE line, space-separated, starting with #.
-  `.trim(),
-};
-
-
-
-// HASHTAG METHOD:
-
-
+`.trim(),
 
   // JSON contract for the multi-platform social kit route (buildSocialKit)
   SOCIAL_JSON_CONTRACT: `
@@ -120,70 +109,72 @@ CRITICAL OUTPUT RULES:
 - NO intro, NO outro, NO markdown.
 - ABSOLUTELY NO URLS OR LINKS anywhere in any field.
 - Each platform post must be complete and ready to paste.
-- Include hashtags INSIDE each platform post (facebook/instagram/tiktok/linkedin/twitter).
-- Do NOT include hashtags in "text" or "marketplace".
+
+HASHTAGS:
+- Include hashtags INSIDE: facebook, instagram, tiktok, linkedin, twitter.
+- Do NOT include hashtags in: text, marketplace.
 - Also return a clean combined hashtag set in "hashtags" (no emojis).
 
 Use these keys EXACTLY:
 {
-  "label":       string,
-  "price":       string,
-
-  "facebook":    string,
-  "instagram":   string,
-  "tiktok":      string,
-  "linkedin":    string,
-  "twitter":     string,
-  "text":        string,
+  "label": string,
+  "price": string,
+  "facebook": string,
+  "instagram": string,
+  "tiktok": string,
+  "linkedin": string,
+  "twitter": string,
+  "text": string,
   "marketplace": string,
-
-  "hashtags":    string,
-
+  "hashtags": string,
   "selfieScript": string,
-  "videoPlan":    string,
-  "canvaIdea":    string
+  "videoPlan": string,
+  "canvaIdea": string
 }
 `.trim(),
 
   // Per-platform system snippets for single-post regen (/api/new-post)
-
+  PLATFORM: {
     facebook: `
 PLATFORM: Facebook
 Tone: friendly, conversational, trust-building, community.
-Format: 1 hook + 2–5 short lines.
+Format: 2 paragraphs. Mobile-friendly spacing.
 CTA: “Message me” / “DM me” / “Want the details?”
 Emojis: light, natural.
+Hashtags: allowed (end).
 `.trim(),
 
     instagram: `
 PLATFORM: Instagram
 Tone: modern, scroll-stopping, energetic.
-Format: short punchy lines, spacing matters.
+Format: 2 paragraphs + line breaks.
 CTA: DM me / Message me.
 Emojis: allowed but not clutter.
+Hashtags: required (end).
 `.trim(),
 
     tiktok: `
 PLATFORM: TikTok caption
 Tone: fast, casual, hook-first.
-Format: hook + 2–4 short beats.
-End with a question when possible.
+Format: hook + 2–4 short beats, end with a question.
 Emojis: light.
+Hashtags: required (end).
 `.trim(),
 
     linkedin: `
 PLATFORM: LinkedIn
 Tone: professional, credibility-focused, value-driven.
 No slang. No hype.
-Format: hook + brief value + soft CTA.
+Format: 2 tight paragraphs + soft CTA.
 Emojis: minimal.
+Hashtags: allowed (end).
 `.trim(),
 
     twitter: `
 PLATFORM: X (Twitter)
 Tone: concise, bold, curiosity.
-Format: 1–2 short lines max.
-No hashtags unless requested by the user.
+Format: 1–2 lines max.
+Hashtags: allowed (1–3 max, end).
 `.trim(),
 
     text: `
@@ -191,13 +182,13 @@ PLATFORM: SMS / Text
 Tone: friendly, human.
 Format: max 2 short lines.
 Ends with a question.
-No emojis unless user asked.
+No hashtags.
 `.trim(),
 
     marketplace: `
 PLATFORM: Facebook Marketplace Listing
 Tone: direct, clear, benefit-focused, trustworthy.
-NO EMOJIS.
+NO EMOJIS. NO HASHTAGS.
 Format:
 - 1-line headline
 - 4–7 short bullets
@@ -426,6 +417,7 @@ function safeJsonParse(str, fallback = null) {
 }
 
 function getResponseText(response) {
+  // OpenAI Responses API text extraction (best-effort)
   return response?.output?.[0]?.content?.[0]?.text || "";
 }
 
@@ -493,6 +485,7 @@ function isBlockedProxyTarget(urlStr) {
 }
 
 // ======================================================
+
 // Photo cleaning (DEDUPED + CONSISTENT)
 // ======================================================
 function normalizeImgUrl(u) {
