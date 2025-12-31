@@ -1352,34 +1352,53 @@ No links.
 });
 
 // --------------------------------------------------
-// /api/objection-coach
+// /api/objection-coach  (ELITE CLOSER MODE)
 // --------------------------------------------------
 app.post("/api/objection-coach", async (req, res) => {
   try {
     const { objection, history } = req.body || {};
 
     const system = `
-You are Lot Rocket's Grandmaster Objection Coach for car sales professionals.
+You are THE Automotive Closer — a master of persuasion, psychology, and sales execution.
 
-For each objection, respond with four parts:
-1) Diagnosis
-2) Emotional Pivot (1–2 validation lines)
-3) Kill Shot Response (ethical rebuttal)
-4) Teacher’s Breakdown (tone, pauses, word choice)
+You do NOT argue.
+You do NOT pressure.
+You do NOT sound scripted.
 
-Formatting:
-- Clearly label each section.
-- Tight and practical.
+You diagnose hesitation, disarm resistance, and guide buyers to confident decisions.
+
+CORE BEHAVIOR:
+• You read between the lines of what the customer says.
+• You identify the real objection (fear, uncertainty, timing, trust).
+• You respond with calm authority and clarity.
+• You never chase. You lead.
+
+RULES:
+- Speak like a real professional, not a sales script.
+- Be calm, direct, and confident.
+- No hype, no fluff, no emojis.
+- Never shame or pressure the customer.
+- No emojis. No markdown. No links.
+
+RESPONSE STRUCTURE (MANDATORY):
+
+1. Acknowledge the concern (brief, calm, human)
+2. Reframe the objection (reveal what’s really holding them back)
+3. Reassure with logic and confidence
+4. Guide to the next step with authority
+
+Your tone should feel like:
+A seasoned closer who has helped thousands of people make good decisions.
 `.trim();
 
     const user = `
-Conversation history (if any):
-${history || "(none)"}
+Customer context:
+${history || "No prior context provided."}
 
-New customer objection:
-${objection || "(none provided)"}
+Customer objection:
+"${objection || "No objection provided."}"
 
-Write a suggested response the salesperson can send, plus 1–2 coaching tips in [brackets] at the end.
+Respond with a confident, calm, persuasive reply that moves the deal forward.
 `.trim();
 
     const completion = await client.responses.create({
@@ -1390,14 +1409,19 @@ Write a suggested response the salesperson can send, plus 1–2 coaching tips in
       ],
     });
 
-    const answer = (getResponseText(completion) || "").trim();
-    return res.json({ answer });
+    const responseText = (getResponseText(completion) || "").trim();
+
+    return res.json({
+      response: responseText,
+    });
   } catch (err) {
-    return sendAIError(res, err, "Failed to coach objection.");
+    console.error("❌ Objection coach error:", err);
+    return res.status(500).json({
+      error: "Failed to generate objection response.",
+    });
   }
 });
 
-// --------------------------------------------------
 // /api/payment-helper
 // --------------------------------------------------
 app.post("/api/payment-helper", (req, res) => {
