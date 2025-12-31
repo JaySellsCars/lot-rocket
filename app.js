@@ -35,7 +35,13 @@ const app = express();
 // -------------------- OpenAI Client --------------------
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// -------------------- Model Picker --------------------
+// ✅ lets you switch models in Render Env without code edits
+// Render → Environment → add: OPENAI_TEXT_MODEL=gpt-4o-mini (or whatever your org is allowed to use)
+const OPENAI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
+
 // -------------------- Middleware --------------------
+
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
