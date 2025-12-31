@@ -2350,7 +2350,6 @@ function runUiHiderSafe() {
 }
 
 // ==================================================
-
 // FINAL INIT (SAFE) ✅ MUST BE LAST
 // ==================================================
 try {
@@ -2381,16 +2380,14 @@ try {
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
 
-  // AI + Floating tools (order matters)
+  // AI + Side tools (order matters)
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
 
   // Step 2 helpers
   if (typeof installAutoGrowTextareas === "function") installAutoGrowTextareas();
   if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
-  if (typeof installStep2RemoveEmojiButtons === "function") {
-    installStep2RemoveEmojiButtons();
-  }
+  if (typeof installStep2RemoveEmojiButtons === "function") installStep2RemoveEmojiButtons();
 
   // Step 2 button label stacker
   if (typeof updateStep2ButtonLabels === "function") {
@@ -2398,7 +2395,7 @@ try {
     setTimeout(updateStep2ButtonLabels, 150);
   }
 
-  // UI Hider (authoritative)
+  // UI hider (authoritative)
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
     window.__LOTROCKET_UI_HIDER_CALLED__ = true;
     runUiHiderSafe();
@@ -2411,5 +2408,3 @@ try {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-// ✅ MUST be the LAST line of the file (closes the DOMContentLoaded wrapper)
-});
