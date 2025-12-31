@@ -391,12 +391,7 @@ function wireSideTools() {
 }
 
 
-    log("🧰 Side tools wired:", {
-      openBtns: openBtns.length,
-      rail:
-        rail === DOC ? "document" : rail.id || rail.className || rail.tagName,
-    });
-  }
+
 
   // ==================================================
   // CALCULATOR PAD (simple)
