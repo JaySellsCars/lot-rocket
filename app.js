@@ -922,6 +922,105 @@ try {
   };
 }
 }
+// ==================================================
+// FEATURE EXTRACT (SAFE) — builds anchor list for Step 2
+// ==================================================
+function extractJsonLdFeatures(html) {
+  try {
+    const out = [];
+    const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+    let m;
+    while ((m = re.exec(html || ""))) {
+      const raw = (m[1] || "").trim();
+      if (!raw) continue;
+
+      // json-ld can be object or array
+      const parsed = JSON.parse(raw);
+      const nodes = Array.isArray(parsed) ? parsed : [parsed];
+
+      for (const node of nodes) {
+        const n = node && typeof node === "object" ? node : null;
+        if (!n) continue;
+
+        // common fields that sometimes contain specs/trim info
+        const grab = (k) => (n[k] ? String(n[k]) : "");
+        const candidates = [
+          grab("name"),
+          grab("description"),
+          grab("model"),
+          grab("brand") && JSON.stringify(n.brand),
+          grab("vehicleModelDate"),
+          n.offers && JSON.stringify(n.offers),
+          n.additionalProperty && JSON.stringify(n.additionalProperty),
+        ]
+          .filter(Boolean)
+          .join(" | ");
+
+        if (candidates) out.push(candidates);
+      }
+    }
+    return out.join("\n");
+  } catch {
+    return "";
+  }
+}
+
+function extractFeatureLinesFromText(text) {
+  const t = String(text || "")
+    .replace(/\r/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n");
+
+  const lines = t
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const keep = [];
+  const bad = /(disclaimer|typographical|price excludes|see dealer|stock#|vin|all rights reserved|cookies|privacy|terms)/i;
+
+  for (const line of lines) {
+    if (line.length < 3) continue;
+    if (line.length > 120) continue;
+    if (bad.test(line)) continue;
+
+    // bullet-ish / feature-ish heuristics
+    const bullet = /^[-•*✓]/.test(line);
+    const hasColon = /:.+/.test(line);
+    const hasKeyword = /(awd|fwd|4wd|v6|v8|turbo|mpg|carplay|android|remote start|heated|leather|sunroof|moonroof|nav|navigation|bluetooth|backup camera|blind spot|lane|cruise|certified|one owner|clean carfax|miles?)/i.test(line);
+
+    if (bullet || hasColon || hasKeyword) keep.push(line.replace(/^[-•*✓]\s*/, ""));
+    if (keep.length >= 28) break;
+  }
+
+  // de-dupe
+  const uniq = [];
+  const seen = new Set();
+  for (const k of keep) {
+    const key = k.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniq.push(k);
+  }
+  return uniq;
+}
+
+function buildFeaturesBlock({ html, visibleText, description, title }) {
+  const jsonld = extractJsonLdFeatures(html || "");
+  const mergedText = [
+    title ? `Title: ${title}` : "",
+    description ? `Description: ${description}` : "",
+    jsonld ? `JSONLD:\n${jsonld}` : "",
+    visibleText || "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const lines = extractFeatureLinesFromText(mergedText);
+
+  if (!lines.length) return "FEATURES: none found (do not invent; keep copy benefit-driven, ask viewer to DM for full options)";
+  return `FEATURES:\n- ${lines.join("\n- ")}`;
+}
 
 // ======================================================
 // Build Kit (shared) ✅ NO req.body in here (no scope)
