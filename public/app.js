@@ -2152,7 +2152,7 @@ function updateStep2ButtonLabels() {
 }
 
 // ==================================================
-// FINAL INIT (SAFE)
+// FINAL INIT (SAFE) ✅ MUST BE LAST
 // ==================================================
 try {
   // Step 1 restore
@@ -2199,7 +2199,7 @@ try {
     setTimeout(updateStep2ButtonLabels, 150);
   }
 
-  // UI Hider (authoritative)
+  // UI Hider (authoritative) — run now + once more after DOM settles
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
     window.__LOTROCKET_UI_HIDER_CALLED__ = true;
     runUiHiderSafe();
@@ -2213,5 +2213,6 @@ try {
 }
 
 // ⚠️ IMPORTANT:
-// This file MUST end here.
-// Do NOT add another `})();` — this is NOT an IIFE.
+// The bottom of public/app.js MUST close the DOMContentLoaded wrapper with: "});"
+// ❌ DO NOT close with "})();" (this file is NOT an IIFE)
+});
