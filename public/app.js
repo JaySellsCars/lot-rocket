@@ -3,14 +3,16 @@
 // (MUST BE AT VERY TOP OF public/app.js)
 // ==================================================
 (function () {
-  if (
-    window.__LOTROCKET_APPJS_VERSION__ &&
-    window.__LOTROCKET_APPJS_VERSION__ !== "999"
-  ) {
+  const V = "9999";
+  // 🧨 TOP MARKER — if you don't see this in console, you're not loading this file
+  console.log("🧨 APPJS TOP MARKER LOADED — v", V, "—", Date.now());
+
+  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) {
     return;
   }
-  window.__LOTROCKET_APPJS_VERSION__ = "999";
+  window.__LOTROCKET_APPJS_VERSION__ = V;
 })();
+
 
 // public/app.js — Lot Rocket (CLEAN SINGLE-PASS)
 // One boot. One store. One wiring pass. No duplicate blocks.
