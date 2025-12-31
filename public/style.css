@@ -546,6 +546,15 @@ textarea{
 .slider-block input[type="range"]{
   width: 100%;
 }
+.floating-tools {
+  position: fixed;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+.floating-tools * {
+  pointer-events: auto !important;
+}
 
 /* ---------- Social-ready strip (v2.6 JS uses .social-carousel-item) ---------- */
 .social-ready-panel{ margin-top: 1.5rem; }
