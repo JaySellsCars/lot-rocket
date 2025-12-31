@@ -2216,3 +2216,4 @@ try {
 }
 // ✅ CLOSE DOMContentLoaded (this is what "Unexpected end of input" is missing)
 });
+
