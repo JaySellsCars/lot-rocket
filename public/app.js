@@ -401,11 +401,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const routeMap = {
-              objection_coach: {
-                url: "/api/objection-coach",
-                body: { objection: text, history: "" },
-                pick: (data) => data?.answer || data?.text || "",
-              },
+objection_coach: {
+  url: "/api/objection-coach",
+  body: { objection: text, history: "" },
+  pick: (data) => data?.response || data?.answer || data?.text || "",
+},
+
               ask_ai: {
                 url: "/api/message-helper",
                 body: { mode: "ask", prompt: text },
