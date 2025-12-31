@@ -2152,7 +2152,7 @@ function updateStep2ButtonLabels() {
 }
 
 // ==================================================
-// FINAL INIT (SAFE) ✅ MUST BE LAST
+// FINAL INIT (SAFE)
 // ==================================================
 try {
   // Step 1 restore
@@ -2182,8 +2182,7 @@ try {
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
 
-  // AI + Floating tools
-  // ✅ AI modals first, then floating tools (avoids missing DOM/modals)
+  // AI + Floating tools (order matters)
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
 
@@ -2193,30 +2192,26 @@ try {
   if (typeof installStep2RemoveEmojiButtons === "function") {
     installStep2RemoveEmojiButtons();
   }
-  if (typeof wireStep2RemoveEmojiClicks === "function") wireStep2RemoveEmojiClicks();
 
-  // Step 2 button label stacker (New/Post, No/Emoji)
+  // Step 2 button label stacker
   if (typeof updateStep2ButtonLabels === "function") {
     updateStep2ButtonLabels();
     setTimeout(updateStep2ButtonLabels, 150);
   }
 
-// UI hider (authoritative) — run now + once more after DOM settles
-if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-  window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-  runUiHiderSafe();
-  setTimeout(runUiHiderSafe, 250);
-  setTimeout(runUiHiderSafe, 1000);
-}
+  // UI Hider (authoritative)
+  if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+    window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+    runUiHiderSafe();
+    setTimeout(runUiHiderSafe, 250);
+    setTimeout(runUiHiderSafe, 1000);
+  }
 
-
-console.log("✅ FINAL INIT COMPLETE");
+  console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-// ✅ IMPORTANT:
-// The bottom of public/app.js MUST close the DOMContentLoaded wrapper with: "});"
-// ❌ DO NOT close with "})();" (that would be an IIFE close and will break parsing)
-});
-
+// ⚠️ IMPORTANT:
+// This file MUST end here.
+// Do NOT add another `})();` — this is NOT an IIFE.
