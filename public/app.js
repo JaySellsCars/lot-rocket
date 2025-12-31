@@ -241,43 +241,99 @@ function openSideModal(modalId) {
     log("✅ CLOSE MODAL:", modalEl.id);
   }
 
+// ==================================================
+// TOOLWIRE / FLOATING TOOLS (HARDENED, SAFE)
+// Works with: [data-modal-target], [data-open], [data-tool], .toolwire-btn
+// Modals supported: #incomeModal, #paymentModal, any .side-modal with matching id
+// ==================================================
 function wireSideTools() {
-  // prevent double-wiring
-  if (DOC.body.dataset.lrSideToolsWired === "true") return;
-  DOC.body.dataset.lrSideToolsWired = "true";
+  try {
+    const DOC = document;
+    const log = (...a) => console.log(...a);
 
-  DOC.addEventListener("click", (e) => {
+    // prevent double-wire
+    if (window.__LOTROCKET_SIDETOOLS_WIRED__) return;
+    window.__LOTROCKET_SIDETOOLS_WIRED__ = true;
 
+    const openModalById = (modalIdRaw) => {
+      const modalId = String(modalIdRaw || "").replace(/^#/, "").trim();
+      if (!modalId) return;
 
-    const openBtns = Array.from(rail.querySelectorAll("[data-modal-target]"));
+      const modal =
+        DOC.getElementById(modalId) ||
+        DOC.querySelector(`#${CSS.escape(modalId)}`);
 
-    openBtns.forEach((btn) => {
-      if (btn.dataset.wired === "true") return;
-      btn.dataset.wired = "true";
+      if (!modal) {
+        console.warn("❌ MODAL NOT FOUND:", modalId);
+        return;
+      }
 
-      const targetId = (btn.getAttribute("data-modal-target") || "").trim();
-      if (!targetId) return;
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
 
-      btn.addEventListener("click", (e) => {
+      // optional: mark launcher active
+      DOC.querySelectorAll("[data-modal-target].active").forEach((el) =>
+        el.classList.remove("active")
+      );
+      DOC.querySelectorAll(`[data-modal-target="${modalId}"]`).forEach((el) =>
+        el.classList.add("active")
+      );
+
+      log("✅ OPEN MODAL:", modalId);
+    };
+
+    // OPEN: event delegation so it works even if buttons render later
+    DOC.addEventListener(
+      "click",
+      (e) => {
+        const launcher =
+          e.target.closest("[data-modal-target]") ||
+          e.target.closest("[data-open]") ||
+          e.target.closest("[data-tool]") ||
+          e.target.closest(".toolwire-btn") ||
+          e.target.closest(".floating-tool-btn");
+
+        if (!launcher) return;
+
+        const modalId =
+          launcher.getAttribute("data-modal-target") ||
+          launcher.getAttribute("data-open") ||
+          launcher.getAttribute("data-tool");
+
+        if (!modalId) {
+          console.warn("⚠️ Tool click but no modal id on:", launcher);
+          return;
+        }
+
         e.preventDefault();
-        e.stopPropagation();
-        openSideModal(targetId);
-      });
-    });
+        openModalById(modalId);
+      },
+      true
+    );
 
-    DOC.querySelectorAll(
-      ".side-modal [data-close], .side-modal .side-modal-close"
-    ).forEach((btn) => {
-      if (btn.dataset.wired === "true") return;
-      btn.dataset.wired = "true";
+    // CLOSE (inside modals)
+    DOC.addEventListener(
+      "click",
+      (e) => {
+        const close = e.target.closest("[data-close], .side-modal-close");
+        if (!close) return;
 
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const modal = btn.closest(".side-modal");
-        closeSideModal(modal);
-      });
-    });
+        const modal = close.closest(".side-modal");
+        if (!modal) return;
+
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+        log("✅ CLOSE MODAL:", modal.id || "(no id)");
+      },
+      true
+    );
+
+    log("✅ wireSideTools() wired (delegated)");
+  } catch (e) {
+    console.error("❌ wireSideTools() failed", e);
+  }
+}
+
 
     log("🧰 Side tools wired:", {
       openBtns: openBtns.length,
