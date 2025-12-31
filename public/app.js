@@ -1091,7 +1091,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (statusText) statusText.textContent = "Boosting…";
 
       try {
-        const res = await fetch("/boost", {
+      const res = await fetch("/api/boost", {
+
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
