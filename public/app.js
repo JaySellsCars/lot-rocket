@@ -118,119 +118,58 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+// ==================================================
+// SIDE TOOLS (FLOATING MODALS) — SINGLE SOURCE ✅
+// One open, one close, one delegated click, no duplicates.
+// ==================================================
+function wireSideTools() {
+  const DOC = document;
+  const log = (...a) => console.log(...a);
+
+  // ✅ prevent double-wiring
+  if (DOC.body?.dataset?.lrSideToolsWired === "true") return;
+  if (DOC.body) DOC.body.dataset.lrSideToolsWired = "true";
+
   // ==================================================
-  // SIDE TOOLS (FLOATING MODALS)
+  // OPEN MODAL (single function)
   // ==================================================
-function openSideModal(modalId) {
-  // ✅ normalize (handles "#incomeModal")
-  modalId = String(modalId || "").replace(/^#/, "").trim();
-  if (!modalId) return;
-
-  const modal = DOC.getElementById(modalId);
-  if (!modal) {
-    console.warn("❌ MODAL NOT FOUND:", modalId);
-    return;
-  }
-
-  modal.classList.remove("hidden");
-  modal.removeAttribute("hidden");
-  modal.setAttribute("aria-hidden", "false");
-  modal.classList.add("open");
-
-  // ✅ DO NOT scope to ".floating-tools"
-  const launcher =
-    DOC.querySelector(`[data-modal-target="${modalId}"]`) ||
-    DOC.querySelector(`[data-open="${modalId}"]`) ||
-    DOC.querySelector(`[data-tool="${modalId}"]`);
-
-  if (launcher) launcher.classList.add("active");
-
-  log("✅ OPEN MODAL:", modalId);
-}
-
-
-
-  // prevent double-wiring
-  if (DOC.body.dataset.lrSideToolsWired === "true") return;
-  DOC.body.dataset.lrSideToolsWired = "true";
-
-  // ✅ ONE handler for all floating buttons (works even if buttons are re-rendered)
-  DOC.addEventListener("click", (e) => {
-    const btn = e.target.closest(".floating-tools button, .floating-tools [data-tool], .floating-tools [data-open]");
-    if (!btn) return;
-
-    // stop weird overlay/drag issues
-    e.preventDefault();
-    e.stopPropagation();
-
-    // what tool does this button want?
-    const tool =
-      btn.dataset.open ||
-      btn.dataset.tool ||
-      btn.getAttribute("data-open") ||
-      btn.getAttribute("data-tool") ||
-      btn.id ||
-      "";
-
-    // 🔥 map tool => modal id
-    const map = {
-      objection: "objectionModal",
-      drill: "drillModeModal",
-      calc: "calcModal",
-      payment: "paymentModal",
-      income: "incomeModal",
-      aiworkflow: "workflowModal",
-      aimessage: "messageModal",
-      askai: "askModal",
-      aicar: "carModal",
-    };
-
-    // normalize common labels
-    const key = String(tool).toLowerCase().replace(/[^a-z]/g, "");
-
-    const modalId = map[key] || btn.dataset.modal || btn.getAttribute("data-modal");
-    if (!modalId) {
-      console.warn("🟠 Floating tool click, but no modal mapping:", { tool, key, btn });
-      return;
-    }
+  function openSideModal(modalId) {
+    // ✅ normalize (handles "#incomeModal")
+    modalId = String(modalId || "").replace(/^#/, "").trim();
+    if (!modalId) return;
 
     const modal = DOC.getElementById(modalId);
     if (!modal) {
-      console.warn("🟠 Modal not found for floating tool:", { modalId, tool, key });
+      console.warn("❌ MODAL NOT FOUND:", modalId);
       return;
     }
 
-    // ✅ open modal
     modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden", "false");
     modal.removeAttribute("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    modal.classList.add("open");
+
+    // ✅ DO NOT scope to ".floating-tools"
+    const launcher =
+      DOC.querySelector(`[data-modal-target="${modalId}"]`) ||
+      DOC.querySelector(`[data-open="${modalId}"]`) ||
+      DOC.querySelector(`[data-tool="${modalId}"]`) ||
+      DOC.querySelector(`[data-modal="${modalId}"]`);
+
+    if (launcher) launcher.classList.add("active");
 
     // optional focus
     const focusEl = modal.querySelector("textarea, input, button");
-    if (focusEl) focusEl.focus();
-  }, true);
-
-  // ✅ close buttons inside modals
-  DOC.addEventListener("click", (e) => {
-    const close = e.target.closest("[data-close], .side-modal-close");
-    if (!close) return;
-
-    const modal = close.closest(".side-modal");
-    if (!modal) return;
-
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden", "true");
-  }, true);
-}
-
-    const launcher = DOC.querySelector(
-      `.floating-tools [data-modal-target="${modalId}"]`
-    );
-    launcher?.classList.add("active");
+    if (focusEl) {
+      try { focusEl.focus(); } catch {}
+    }
 
     log("✅ OPEN MODAL:", modalId);
   }
 
+  // ==================================================
+  // CLOSE MODAL (single function)
+  // ==================================================
   function closeSideModal(modalEl) {
     if (!modalEl) return;
 
@@ -244,15 +183,101 @@ function openSideModal(modalId) {
     modalEl.setAttribute("aria-hidden", "true");
     modalEl.classList.remove("open");
 
-    const launcher = DOC.querySelector(
-      `.floating-tools [data-modal-target="${modalEl.id}"]`
-    );
-    launcher?.classList.remove("active");
+    const id = String(modalEl.id || "").trim();
 
-    log("✅ CLOSE MODAL:", modalEl.id);
+    const launcher =
+      DOC.querySelector(`[data-modal-target="${id}"]`) ||
+      DOC.querySelector(`[data-open="${id}"]`) ||
+      DOC.querySelector(`[data-tool="${id}"]`) ||
+      DOC.querySelector(`[data-modal="${id}"]`);
+
+    if (launcher) launcher.classList.remove("active");
+
+    log("✅ CLOSE MODAL:", id);
   }
 
+  // ==================================================
+  // TOOL → MODAL MAP (normalized)
+  // ==================================================
+  const map = {
+    objection: "objectionModal",
+    drill: "drillModeModal",
+    calc: "calcModal",
+    payment: "paymentModal",
+    income: "incomeModal",
+    aiworkflow: "workflowModal",
+    aimessage: "messageModal",
+    askai: "askModal",
+    aicar: "carModal",
+  };
+
+  // ==================================================
+  // ONE delegated handler for all floating buttons
+  // Supports: data-modal-target, data-open, data-tool, data-modal
+  // ==================================================
+  DOC.addEventListener(
+    "click",
+    (e) => {
+      const btn = e.target.closest(
+        ".floating-tools button, .floating-tools [data-tool], .floating-tools [data-open], .floating-tools [data-modal-target], .floating-tools [data-modal]"
+      );
+      if (!btn) return;
+
+      // stop weird overlay/drag issues
+      e.preventDefault();
+      e.stopPropagation();
+
+      // read intent (prefer explicit modal target)
+      let modalId =
+        btn.getAttribute("data-modal-target") ||
+        btn.getAttribute("data-modal") ||
+        btn.getAttribute("data-open") ||
+        btn.getAttribute("data-tool") ||
+        btn.dataset.modalTarget ||
+        btn.dataset.modal ||
+        btn.dataset.open ||
+        btn.dataset.tool ||
+        "";
+
+      // normalize
+      modalId = String(modalId || "").trim();
+
+      // if they provided a tool name, map it
+      const key = modalId.toLowerCase().replace(/^#/, "").replace(/[^a-z]/g, "");
+      const mapped = map[key];
+
+      // final modalId
+      modalId = mapped || modalId;
+
+      // if still looks like "income" etc but not mapped, try map again
+      const key2 = String(modalId).toLowerCase().replace(/^#/, "").replace(/[^a-z]/g, "");
+      modalId = map[key2] || modalId;
+
+      // ✅ open
+      openSideModal(modalId);
+    },
+    true
+  );
+
+  // ==================================================
+  // CLOSE buttons inside modals
+  // ==================================================
+  DOC.addEventListener(
+    "click",
+    (e) => {
+      const close = e.target.closest("[data-close], .side-modal-close");
+      if (!close) return;
+
+      const modal = close.closest(".side-modal");
+      if (!modal) return;
+
+      closeSideModal(modal);
+    },
+    true
+  );
+}
 // ==================================================
+
 // TOOLWIRE / FLOATING TOOLS (HARDENED, SAFE)
 // Works with: [data-modal-target], [data-open], [data-tool], .toolwire-btn
 // Modals supported: #incomeModal, #paymentModal, any .side-modal with matching id
