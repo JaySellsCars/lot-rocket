@@ -128,6 +128,81 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
     modal.classList.add("open");
+function wireSideTools() {
+  const DOC = document;
+
+  // prevent double-wiring
+  if (DOC.body.dataset.lrSideToolsWired === "true") return;
+  DOC.body.dataset.lrSideToolsWired = "true";
+
+  // ✅ ONE handler for all floating buttons (works even if buttons are re-rendered)
+  DOC.addEventListener("click", (e) => {
+    const btn = e.target.closest(".floating-tools button, .floating-tools [data-tool], .floating-tools [data-open]");
+    if (!btn) return;
+
+    // stop weird overlay/drag issues
+    e.preventDefault();
+    e.stopPropagation();
+
+    // what tool does this button want?
+    const tool =
+      btn.dataset.open ||
+      btn.dataset.tool ||
+      btn.getAttribute("data-open") ||
+      btn.getAttribute("data-tool") ||
+      btn.id ||
+      "";
+
+    // 🔥 map tool => modal id
+    const map = {
+      objection: "objectionModal",
+      drill: "drillModeModal",
+      calc: "calcModal",
+      payment: "paymentModal",
+      income: "incomeModal",
+      aiworkflow: "workflowModal",
+      aimessage: "messageModal",
+      askai: "askModal",
+      aicar: "carModal",
+    };
+
+    // normalize common labels
+    const key = String(tool).toLowerCase().replace(/[^a-z]/g, "");
+
+    const modalId = map[key] || btn.dataset.modal || btn.getAttribute("data-modal");
+    if (!modalId) {
+      console.warn("🟠 Floating tool click, but no modal mapping:", { tool, key, btn });
+      return;
+    }
+
+    const modal = DOC.getElementById(modalId);
+    if (!modal) {
+      console.warn("🟠 Modal not found for floating tool:", { modalId, tool, key });
+      return;
+    }
+
+    // ✅ open modal
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    modal.removeAttribute("hidden");
+
+    // optional focus
+    const focusEl = modal.querySelector("textarea, input, button");
+    if (focusEl) focusEl.focus();
+  }, true);
+
+  // ✅ close buttons inside modals
+  DOC.addEventListener("click", (e) => {
+    const close = e.target.closest("[data-close], .side-modal-close");
+    if (!close) return;
+
+    const modal = close.closest(".side-modal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+  }, true);
+}
 
     const launcher = DOC.querySelector(
       `.floating-tools [data-modal-target="${modalId}"]`
