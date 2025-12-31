@@ -2175,7 +2175,7 @@ if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
 }
 
 
-  console.log("✅ FINAL INIT COMPLETE");
+console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
@@ -2183,3 +2183,5 @@ if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
 // ✅ IMPORTANT:
 // The bottom of public/app.js MUST close the DOMContentLoaded wrapper with: "});"
 // ❌ DO NOT close with "})();" (that would be an IIFE close and will break parsing)
+});
+
