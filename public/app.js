@@ -2136,7 +2136,9 @@ setTimeout(() => autoGrowAllTextareas(document), 50);
     }, 200);
 
     console.log("✅ UI hider installed (authoritative LAUNCH v4)");
-  }
+  } // ✅ end runUiHiderSafe()
+
+
 function updateStep2ButtonLabels() {
   document.querySelectorAll(".regen-btn").forEach(btn => {
     const text = btn.textContent.toLowerCase().trim();
@@ -2152,6 +2154,7 @@ function updateStep2ButtonLabels() {
 }
 
 // ==================================================
+
 // FINAL INIT (SAFE) ✅ MUST BE LAST
 // ==================================================
 try {
