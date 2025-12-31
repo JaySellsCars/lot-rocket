@@ -1,3 +1,5 @@
+window.__LOTROCKET_APPJS_VERSION__ = "10001";
+
 // ==================================================
 // HARD KILL: prevent older cached app.js from running
 // (MUST BE AT VERY TOP OF public/app.js)
