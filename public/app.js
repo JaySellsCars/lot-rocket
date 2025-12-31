@@ -322,19 +322,7 @@ function wireSideTools() {
       });
     });
   }
-function wireFloatingTools() {
-  const DOC = document;
-  const wrap = DOC.querySelector(".floating-tools");
-  if (!wrap) {
-    console.warn("🟠 wireFloatingTools: .floating-tools not found");
-    return;
-  }
 
-  if (wrap.dataset.wired === "true") {
-    console.log("ℹ️ wireFloatingTools already wired");
-    return;
-  }
-  wrap.dataset.wired = "true";
 
   const openModalById = (modalId) => {
     const modal = DOC.getElementById(modalId);
