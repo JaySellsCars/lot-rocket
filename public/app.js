@@ -298,18 +298,56 @@ DOC.addEventListener(
 
     e.preventDefault();
 
-    // ✅ MUST call the real function that exists in your file
-    // (fixes: "openSideModal is not defined")
-    if (typeof openSideModalById === "function") {
-      openSideModalById(modalId);
-    } else if (typeof openModalById === "function") {
-      openModalById(modalId);
-    } else {
-      console.warn("❌ No modal open function found for:", modalId);
+// ==================================================
+// OPEN MODAL HANDLER (SAFE + COMPATIBLE)
+// ==================================================
+if (typeof window.openModalById !== "function") {
+  window.openModalById = function (modalId) {
+    modalId = String(modalId || "").replace(/^#/, "").trim();
+    if (!modalId) return;
+
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+      console.warn("❌ Modal not found:", modalId);
+      return;
     }
+
+    modal.classList.remove("hidden");
+    modal.removeAttribute("hidden");
+    modal.setAttribute("aria-hidden", "false");
+
+    const focusEl = modal.querySelector("input, textarea, button");
+    if (focusEl) focusEl.focus();
+
+    console.log("✅ OPEN MODAL:", modalId);
+  };
+}
+
+// ==================================================
+// GLOBAL CLICK HANDLER (SAFE, SINGLE SOURCE)
+// ==================================================
+document.addEventListener(
+  "click",
+  (e) => {
+    const btn = e.target.closest(
+      "[data-modal-target], [data-open], [data-tool]"
+    );
+    if (!btn) return;
+
+    let modalId =
+      btn.getAttribute("data-modal-target") ||
+      btn.getAttribute("data-open") ||
+      btn.getAttribute("data-tool");
+
+    modalId = String(modalId || "").replace(/^#/, "").trim();
+    if (!modalId) return;
+
+    e.preventDefault();
+    openModalById(modalId);
   },
   true
 );
+
 
 
 
