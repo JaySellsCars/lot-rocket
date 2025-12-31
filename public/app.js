@@ -121,15 +121,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==================================================
   // SIDE TOOLS (FLOATING MODALS)
   // ==================================================
-  function openSideModal(modalId) {
-    const modal = DOC.getElementById(modalId);
-    if (!modal) return;
+function openSideModal(modalId) {
+  const modal = DOC.getElementById(modalId);
+  if (!modal) return;
 
-    modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden", "false");
-    modal.classList.add("open");
-function wireSideTools() {
-  const DOC = document;
+  modal.classList.remove("hidden");
+  modal.removeAttribute("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  modal.classList.add("open");
+
+  const launcher = DOC.querySelector(
+    `.floating-tools [data-modal-target="${modalId}"]`
+  );
+  launcher?.classList.add("active");
+
+  log("✅ OPEN MODAL:", modalId);
+}
+
 
   // prevent double-wiring
   if (DOC.body.dataset.lrSideToolsWired === "true") return;
