@@ -241,14 +241,13 @@ function openSideModal(modalId) {
     log("✅ CLOSE MODAL:", modalEl.id);
   }
 
-  function wireSideTools() {
-    const rail =
-      DOC.querySelector(".floating-tools") ||
-      DOC.querySelector("#toolWire") ||
-      DOC.querySelector(".toolwire") ||
-      DOC.querySelector(".side-tools") ||
-      DOC.querySelector("[data-toolwire]") ||
-      DOC;
+function wireSideTools() {
+  // prevent double-wiring
+  if (DOC.body.dataset.lrSideToolsWired === "true") return;
+  DOC.body.dataset.lrSideToolsWired = "true";
+
+  DOC.addEventListener("click", (e) => {
+
 
     const openBtns = Array.from(rail.querySelectorAll("[data-modal-target]"));
 
