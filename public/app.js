@@ -1074,8 +1074,13 @@ function wireStep2RemoveEmojiClicks() {
 function autoGrowTextarea(el) {
   if (!el) return;
   el.style.height = "auto";
-  el.style.height = el.scrollHeight + "px";
+  el.style.height = (el.scrollHeight || 0) + "px";
 }
+
+function autoGrowAllTextareas(root = document) {
+  root.querySelectorAll("textarea").forEach(autoGrowTextarea);
+}
+
 
   // ==================================================
   // SOCIAL READY STRIP (SINGLE SOURCE)
