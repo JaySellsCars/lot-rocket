@@ -755,16 +755,37 @@ async function buildSocialKit({ pageInfo, labelOverride, priceOverride, photos, 
 
   const { title, metaDesc, visibleText } = pageInfo;
 
-  // ✅ MASTER PROMPT + JSON CONTRACT (MUST STAY INSIDE TEMPLATE STRING)
-  const system = `
+// ✅ MASTER PROMPT + JSON CONTRACT (MUST STAY INSIDE TEMPLATE STRING)
+const system = `
 ${PROMPTS.BASE}
 
 ${PROMPTS.SOCIAL_MASTER}
 
-${PROMPTS.SOCIAL_JSON_CONTRACT}
-  `.trim();
+${PROMPTS.HASHTAG_METHOD}
 
-  const user = `
+${PROMPTS.SOCIAL_JSON_CONTRACT}
+
+ADDITIONAL HARD RULES (Step 2 “God Mode”):
+- You MUST extract and mention 6–10 SPECIFIC features (not vague “tech/safety”).
+- Pull features from: the description + page text. If not present, do NOT claim it as fact.
+- Facebook / Instagram / TikTok / LinkedIn MUST be 2 paragraphs:
+  Paragraph 1: Hook + value stack + real features in natural language (mobile scannable).
+  Paragraph 2: trust + urgency + clear CTA to DM/message.
+- Emojis:
+  - Facebook/Instagram/TikTok: use 6–14 emojis total, placed for emotion + scannability.
+  - LinkedIn: 0–3 emojis max.
+  - Twitter/X: 0–3 emojis max.
+  - Marketplace: NO emojis.
+- Hashtags:
+  - MUST follow HASHTAG_METHOD.
+  - Put hashtags at the END of each allowed platform post.
+  - "hashtags" field must be the combined clean hashtag line (no emojis).
+- BANNED:
+  - No generic fluff like “stunning”, “sleek design”, “next-gen tech” unless followed by real features.
+  - No “won’t last long” unless backed by a real reason (miles/certified/price/rarity).
+`.trim();
+
+const user = `
 Dealer page data:
 TITLE: ${title}
 META: ${metaDesc}
@@ -777,101 +798,111 @@ ${cleanText(description).slice(0, 1500)}
 Optional custom label: ${labelOverride || "none"}
 Optional custom price: ${priceOverride || "none"}
 
+FEATURE EXTRACTION REQUIREMENT:
+From the provided TEXT + DESCRIPTION, extract and use:
+- powertrain (engine/turbo/hybrid if present)
+- drivetrain (FWD/AWD/4WD if present)
+- safety tech (blind spot, lane keep, etc if present)
+- comfort (heated seats, remote start, etc if present)
+- connectivity (CarPlay/Android Auto, etc if present)
+- mileage / certified / warranty language if present
+If a detail is not present, do NOT claim it as fact.
+
 If overrides exist, prefer them in the copy.
 Remember: OUTPUT ONLY raw JSON with the required keys, and include ZERO URLS.
-  `.trim();
+`.trim();
 
-  try {
-    const response = await client.responses.create({
-      model: "gpt-4o-mini",
-      input: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    });
+try {
+  const response = await client.responses.create({
+    model: OPENAI_TEXT_MODEL,
+    input: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+  });
 
-    const raw = getResponseText(response) || "{}";
-    const parsed = safeJsonParse(raw, {}) || {};
+  const raw = getResponseText(response) || "{}";
+  const parsed = safeJsonParse(raw, {}) || {};
 
-    const vehicleLabel = cleanText(labelOverride || parsed.label || baseLabel);
-    const priceInfo = cleanText(priceOverride || parsed.price || basePrice);
+  const vehicleLabel = cleanText(labelOverride || parsed.label || baseLabel);
+  const priceInfo = cleanText(priceOverride || parsed.price || basePrice);
 
-    const kit = {
-      vehicleLabel,
-      priceInfo,
+  const kit = {
+    vehicleLabel,
+    priceInfo,
 
-      facebook: sanitizeCopy(parsed.facebook),
-      instagram: sanitizeCopy(parsed.instagram),
-      tiktok: sanitizeCopy(parsed.tiktok),
-      linkedin: sanitizeCopy(parsed.linkedin),
-      twitter: sanitizeCopy(parsed.twitter),
-      text: sanitizeCopy(parsed.text),
-      marketplace: sanitizeCopy(parsed.marketplace),
+    facebook: sanitizeCopy(parsed.facebook),
+    instagram: sanitizeCopy(parsed.instagram),
+    tiktok: sanitizeCopy(parsed.tiktok),
+    linkedin: sanitizeCopy(parsed.linkedin),
+    twitter: sanitizeCopy(parsed.twitter),
+    text: sanitizeCopy(parsed.text),
+    marketplace: sanitizeCopy(parsed.marketplace),
 
-      hashtags: sanitizeCopy(parsed.hashtags),
+    hashtags: sanitizeCopy(parsed.hashtags),
 
-      selfieScript: sanitizeCopy(parsed.selfieScript),
-      shotPlan: sanitizeCopy(parsed.videoPlan),
-      designIdea: sanitizeCopy(parsed.canvaIdea),
+    selfieScript: sanitizeCopy(parsed.selfieScript),
+    shotPlan: sanitizeCopy(parsed.videoPlan),
+    designIdea: sanitizeCopy(parsed.canvaIdea),
 
-      photos: photos || [],
-      sourceUrl: pageUrl || "",
-    };
+    photos: photos || [],
+    sourceUrl: pageUrl || "",
+  };
 
-    kit.posts = [
-      kit.facebook,
-      kit.instagram,
-      kit.tiktok,
-      kit.linkedin,
-      kit.twitter,
-      kit.text,
-      kit.marketplace,
-      kit.hashtags ? `Hashtags:\n${kit.hashtags}` : "",
-      kit.selfieScript ? `Selfie Script:\n${kit.selfieScript}` : "",
-      kit.shotPlan ? `Video Plan:\n${kit.shotPlan}` : "",
-      kit.designIdea ? `Design Idea:\n${kit.designIdea}` : "",
-    ]
-      .map(sanitizeCopy)
-      .filter((s) => cleanText(s).length > 0);
+  kit.posts = [
+    kit.facebook,
+    kit.instagram,
+    kit.tiktok,
+    kit.linkedin,
+    kit.twitter,
+    kit.text,
+    kit.marketplace,
+    kit.hashtags ? `Hashtags:\n${kit.hashtags}` : "",
+    kit.selfieScript ? `Selfie Script:\n${kit.selfieScript}` : "",
+    kit.shotPlan ? `Video Plan:\n${kit.shotPlan}` : "",
+    kit.designIdea ? `Design Idea:\n${kit.designIdea}` : "",
+  ]
+    .map(sanitizeCopy)
+    .filter((s) => cleanText(s).length > 0);
 
-    if (!kit.posts.length) {
-      const fallbackPosts = buildFallbackPosts({ label: vehicleLabel, price: priceInfo, description });
+  if (!kit.posts.length) {
+    const fallbackPosts = buildFallbackPosts({ label: vehicleLabel, price: priceInfo, description });
 
-      kit.posts = fallbackPosts;
-      kit.facebook = fallbackPosts[0] || "";
-      kit.instagram = fallbackPosts[1] || "";
-      kit.tiktok = fallbackPosts[2] || "";
-      kit.marketplace = fallbackPosts[0] || "";
-      kit.twitter = fallbackPosts[1] || "";
-      kit.text = fallbackPosts[2] || "";
-      kit.linkedin = fallbackPosts[0] || "";
-    }
-
-    return kit;
-  } catch (err) {
-    console.error("buildSocialKit AI failure:", err);
-
-    const fallbackPosts = buildFallbackPosts({ label: baseLabel, price: basePrice, description });
-
-    return {
-      vehicleLabel: baseLabel,
-      priceInfo: basePrice,
-      facebook: fallbackPosts[0] || "",
-      instagram: fallbackPosts[1] || "",
-      tiktok: fallbackPosts[2] || "",
-      linkedin: fallbackPosts[0] || "",
-      twitter: fallbackPosts[1] || "",
-      text: fallbackPosts[2] || "",
-      marketplace: fallbackPosts[0] || "",
-      hashtags: "",
-      selfieScript: "",
-      shotPlan: "",
-      designIdea: "",
-      photos: photos || [],
-      sourceUrl: pageUrl || "",
-      posts: fallbackPosts,
-    };
+    kit.posts = fallbackPosts;
+    kit.facebook = fallbackPosts[0] || "";
+    kit.instagram = fallbackPosts[1] || "";
+    kit.tiktok = fallbackPosts[2] || "";
+    kit.marketplace = fallbackPosts[0] || "";
+    kit.twitter = fallbackPosts[1] || "";
+    kit.text = fallbackPosts[2] || "";
+    kit.linkedin = fallbackPosts[0] || "";
   }
+
+  return kit;
+} catch (err) {
+  console.error("buildSocialKit AI failure:", err);
+
+  const fallbackPosts = buildFallbackPosts({ label: baseLabel, price: basePrice, description });
+
+  return {
+    vehicleLabel: baseLabel,
+    priceInfo: basePrice,
+    facebook: fallbackPosts[0] || "",
+    instagram: fallbackPosts[1] || "",
+    tiktok: fallbackPosts[2] || "",
+    linkedin: fallbackPosts[0] || "",
+    twitter: fallbackPosts[1] || "",
+    text: fallbackPosts[2] || "",
+    marketplace: fallbackPosts[0] || "",
+    hashtags: "",
+    selfieScript: "",
+    shotPlan: "",
+    designIdea: "",
+    photos: photos || [],
+    sourceUrl: pageUrl || "",
+    posts: fallbackPosts,
+  };
+}
 }
 
 // ======================================================
@@ -918,6 +949,7 @@ async function buildKitForUrl({ pageUrl, labelOverride = "", priceOverride = "",
 // ======================================================
 // Routes
 // ======================================================
+
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // --------------------------------------------------
