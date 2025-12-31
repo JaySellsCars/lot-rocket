@@ -322,16 +322,16 @@ function wireSideTools() {
     if (window.__LOTROCKET_SIDETOOLS_WIRED__) return;
     window.__LOTROCKET_SIDETOOLS_WIRED__ = true;
 
+    // ✅ safe opener (handles name mismatches + "#id")
+    const openModalSafe = (id) => {
+      id = String(id || "").replace(/^#/, "").trim();
+      if (!id) return;
 
+      if (typeof openModalById === "function") return openModalById(id);
+      if (typeof openSideModal === "function") return openSideModal(id);
 
-  console.warn("❌ No modal open function available for:", id);
-};
- const openModalSafe = (id) => {
-  id = String(id || "").replace(/^#/, "").trim();
-  if (!id) return;
-
-  if (typeof openModalById === "function") return openModalById(id);
-  if (typeof openSideModal === "function") return openSideModal(id);  
+      console.warn("❌ No modal open function available for:", id);
+    };
 
     // OPEN: event delegation so it works even if buttons render later
     DOC.addEventListener(
@@ -346,20 +346,21 @@ function wireSideTools() {
 
         if (!launcher) return;
 
-let modalId =
-  launcher.getAttribute("data-modal-target") ||
-  launcher.getAttribute("data-open") ||
-  launcher.getAttribute("data-tool");
+        let modalId =
+          launcher.getAttribute("data-modal-target") ||
+          launcher.getAttribute("data-open") ||
+          launcher.getAttribute("data-tool");
 
-modalId = String(modalId || "").replace(/^#/, "").trim();
-if (!modalId) {
-  console.warn("⚠️ Tool click but no modal id on:", launcher);
-  return;
-}
+        modalId = String(modalId || "").replace(/^#/, "").trim();
+        if (!modalId) {
+          console.warn("⚠️ Tool click but no modal id on:", launcher);
+          return;
+        }
 
-e.preventDefault();
-openModalSafe(modalId);
-
+        e.preventDefault();
+        openModalSafe(modalId);
+      },
+      true
     );
 
     // CLOSE (inside modals)
@@ -384,6 +385,7 @@ openModalSafe(modalId);
     console.error("❌ wireSideTools() failed", e);
   }
 }
+
 
 
 
