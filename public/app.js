@@ -2186,36 +2186,28 @@ try {
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
 
-// Step 2 helpers
-if (typeof installAutoGrowTextareas === "function") installAutoGrowTextareas();
-if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
-if (typeof installStep2RemoveEmojiButtons === "function") {
-  installStep2RemoveEmojiButtons();
-}
+  // Step 2 helpers
+  if (typeof installAutoGrowTextareas === "function") installAutoGrowTextareas();
+  if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
+  if (typeof installStep2RemoveEmojiButtons === "function") {
+    installStep2RemoveEmojiButtons();
+  }
 
-// Step 2 button label stacker
-if (typeof updateStep2ButtonLabels === "function") {
-  updateStep2ButtonLabels();
-  setTimeout(updateStep2ButtonLabels, 150);
-}
+  // Step 2 button label stacker
+  if (typeof updateStep2ButtonLabels === "function") {
+    updateStep2ButtonLabels();
+    setTimeout(updateStep2ButtonLabels, 150);
+  }
 
-// UI Hider (authoritative)
-if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-  window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-  runUiHiderSafe();
-  setTimeout(runUiHiderSafe, 250);
-  setTimeout(runUiHiderSafe, 1000);
-}
+  // UI Hider (authoritative)
+  if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+    window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+    runUiHiderSafe();
+    setTimeout(runUiHiderSafe, 250);
+    setTimeout(runUiHiderSafe, 1000);
+  }
 
-// -----------------------------
-// SUPPORT FUNCTIONS (defined once)
-// -----------------------------
-function runUiHiderSafe() {
-  console.log("✅ UI hider installed (authoritative LAUNCH v4)");
+  console.log("✅ FINAL INIT COMPLETE");
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
 }
-
-function updateStep2ButtonLabels() {
-  // intentionally blank placeholder
-  // real logic already wired elsewhere
-}
-
