@@ -130,10 +130,14 @@ function openSideModal(modalId) {
   modal.setAttribute("aria-hidden", "false");
   modal.classList.add("open");
 
-  const launcher = DOC.querySelector(
-    `.floating-tools [data-modal-target="${modalId}"]`
-  );
-  launcher?.classList.add("active");
+const launcher =
+  DOC.querySelector(`[data-modal-target="${modalId}"]`) ||
+  DOC.querySelector(`[data-open="${modalId}"]`) ||
+  DOC.querySelector(`[data-tool="${modalId}"]`);
+
+if (launcher) launcher.classList.add("active");
+
+
 
   log("✅ OPEN MODAL:", modalId);
 }
