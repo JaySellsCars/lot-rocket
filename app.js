@@ -402,11 +402,24 @@ async function fetchWithTimeout(url, opts = {}, timeoutMs = 15000) {
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    return await fetchFn(url, { ...opts, signal: controller.signal });
+    return await fetchFn(url, {
+      ...opts,
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        "Accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.google.com/",
+        ...(opts.headers || {}),
+      },
+    });
   } finally {
     clearTimeout(id);
   }
 }
+
 
 function safeJsonParse(str, fallback = null) {
   try {
