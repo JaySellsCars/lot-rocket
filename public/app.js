@@ -122,25 +122,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // SIDE TOOLS (FLOATING MODALS)
   // ==================================================
 function openSideModal(modalId) {
+  // ✅ normalize (handles "#incomeModal")
+  modalId = String(modalId || "").replace(/^#/, "").trim();
+  if (!modalId) return;
+
   const modal = DOC.getElementById(modalId);
-  if (!modal) return;
+  if (!modal) {
+    console.warn("❌ MODAL NOT FOUND:", modalId);
+    return;
+  }
 
   modal.classList.remove("hidden");
   modal.removeAttribute("hidden");
   modal.setAttribute("aria-hidden", "false");
   modal.classList.add("open");
 
-const launcher =
-  DOC.querySelector(`[data-modal-target="${modalId}"]`) ||
-  DOC.querySelector(`[data-open="${modalId}"]`) ||
-  DOC.querySelector(`[data-tool="${modalId}"]`);
+  // ✅ DO NOT scope to ".floating-tools"
+  const launcher =
+    DOC.querySelector(`[data-modal-target="${modalId}"]`) ||
+    DOC.querySelector(`[data-open="${modalId}"]`) ||
+    DOC.querySelector(`[data-tool="${modalId}"]`);
 
-if (launcher) launcher.classList.add("active");
-
-
+  if (launcher) launcher.classList.add("active");
 
   log("✅ OPEN MODAL:", modalId);
 }
+
 
 
   // prevent double-wiring
