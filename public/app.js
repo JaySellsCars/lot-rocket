@@ -1527,11 +1527,20 @@ mapping.forEach(({ key, sels }) => {
           throw new Error(msg);
         }
 
-        try {
-          renderStep2FromBoost(data);
-        } catch (e) {
-          console.warn("⚠️ Step 2 render failed:", e);
-        }
+       try {
+  renderStep2FromBoost(data);
+
+  // 🔽 ADD THIS RIGHT HERE
+  setTimeout(() => {
+    if (typeof autoGrowAllTextareas === "function") {
+      autoGrowAllTextareas(document);
+    }
+  }, 50);
+
+} catch (e) {
+  console.warn("⚠️ Step 2 render failed:", e);
+}
+
 
         const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
         const seen = new Set();
