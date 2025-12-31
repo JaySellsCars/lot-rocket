@@ -146,7 +146,7 @@ Use these keys EXACTLY:
 `.trim(),
 
   // Per-platform system snippets for single-post regen (/api/new-post)
-  PLATFORM: {
+
     facebook: `
 PLATFORM: Facebook
 Tone: friendly, conversational, trust-building, community.
