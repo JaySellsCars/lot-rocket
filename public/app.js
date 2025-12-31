@@ -2006,13 +2006,14 @@ try {
     setTimeout(updateStep2ButtonLabels, 150);
   }
 
-  // UI hider (authoritative)
-  if (typeof installHideNextVersionUI === "function") {
-    if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-      window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-      installHideNextVersionUI();
-    }
-  }
+// UI hider (authoritative) — run now + once more after DOM settles
+if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+  window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+  runUiHiderSafe();
+  setTimeout(runUiHiderSafe, 250);
+  setTimeout(runUiHiderSafe, 1000);
+}
+
 
   console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
