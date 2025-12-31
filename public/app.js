@@ -315,6 +315,82 @@ function wireSideTools() {
       });
     });
   }
+function wireFloatingTools() {
+  const DOC = document;
+  const wrap = DOC.querySelector(".floating-tools");
+  if (!wrap) {
+    console.warn("🟠 wireFloatingTools: .floating-tools not found");
+    return;
+  }
+
+  if (wrap.dataset.wired === "true") {
+    console.log("ℹ️ wireFloatingTools already wired");
+    return;
+  }
+  wrap.dataset.wired = "true";
+
+  const openModalById = (modalId) => {
+    const modal = DOC.getElementById(modalId);
+    if (!modal) {
+      console.warn("🟠 FloatingTools: modal not found:", modalId);
+      return;
+    }
+    modal.classList.remove("hidden");
+    modal.removeAttribute("hidden");
+    modal.setAttribute("aria-hidden", "false");
+  };
+
+  const handler = (e) => {
+    const btn = e.target.closest("button,[data-open],[data-tool],[data-modal]");
+    if (!btn || !wrap.contains(btn)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const raw =
+      btn.dataset.modal ||
+      btn.dataset.open ||
+      btn.dataset.tool ||
+      btn.getAttribute("data-modal") ||
+      btn.getAttribute("data-open") ||
+      btn.getAttribute("data-tool") ||
+      btn.id ||
+      "";
+
+    const key = String(raw).toLowerCase().replace(/[^a-z]/g, "");
+
+    // ✅ map tool => modal id (edit keys ONLY if your ids differ)
+    const map = {
+      objection: "objectionModal",
+      drill: "drillModeModal",
+      drillmode: "drillModeModal",
+      calc: "calcModal",
+      calculator: "calcModal",
+      payment: "paymentModal",
+      income: "incomeModal",
+      workflow: "workflowModal",
+      aiworkflow: "workflowModal",
+      message: "messageModal",
+      aimessage: "messageModal",
+      ask: "askModal",
+      askai: "askModal",
+      car: "carModal",
+      aicar: "carModal",
+    };
+
+    const modalId = map[key] || raw;
+
+    console.log("✅ FloatingTools click:", { raw, key, modalId });
+
+    openModalById(modalId);
+  };
+
+  // ✅ pointerup catches cases where click never fires
+  wrap.addEventListener("pointerup", handler, true);
+  wrap.addEventListener("click", handler, true);
+
+  console.log("✅ wireFloatingTools READY (attached to .floating-tools)");
+}
 
   // ==================================================
   // INCOME CALC — HARD WIRE (GUARANTEED CLICK)
