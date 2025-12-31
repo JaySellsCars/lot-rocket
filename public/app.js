@@ -431,25 +431,91 @@ function wireSideTools() {
   }
 
 
+ // ==================================================
+// FLOATING TOOLS (SINGLE SOURCE ✅) — attach to .floating-tools
+// No duplicates. No mixed naming. Normalizes "#modalId".
+// Supports: data-modal, data-open, data-tool, data-modal-target, button id.
+// ==================================================
+function wireFloatingTools() {
+  const DOC = document;
+  const log = (...a) => console.log(...a);
+  const warn = (...a) => console.warn(...a);
+
+  const wrap =
+    DOC.querySelector(".floating-tools") ||
+    DOC.getElementById("floatingTools") ||
+    DOC.querySelector("[data-floating-tools]");
+
+  if (!wrap) {
+    warn("🟠 wireFloatingTools: .floating-tools wrapper not found");
+    return;
+  }
+
+  // ✅ prevent double-wiring
+  if (wrap.dataset.lrFloatingWired === "true") return;
+  wrap.dataset.lrFloatingWired = "true";
+
+  // ==================================================
+  // OPEN MODAL BY ID (safe)
+  // ==================================================
   const openModalById = (modalId) => {
+    modalId = String(modalId || "").replace(/^#/, "").trim();
+    if (!modalId) return;
+
     const modal = DOC.getElementById(modalId);
     if (!modal) {
-      console.warn("🟠 FloatingTools: modal not found:", modalId);
+      warn("🟠 FloatingTools: modal not found:", modalId);
       return;
     }
+
     modal.classList.remove("hidden");
     modal.removeAttribute("hidden");
     modal.setAttribute("aria-hidden", "false");
+    modal.classList.add("open");
+
+    // optional focus
+    const focusEl = modal.querySelector("textarea, input, button");
+    if (focusEl) {
+      try { focusEl.focus(); } catch {}
+    }
   };
 
+  // ==================================================
+  // MAP tool => modal id (edit keys ONLY if your ids differ)
+  // ==================================================
+  const map = {
+    objection: "objectionModal",
+    drill: "drillModeModal",
+    drillmode: "drillModeModal",
+    calc: "calcModal",
+    calculator: "calcModal",
+    payment: "paymentModal",
+    income: "incomeModal",
+    workflow: "workflowModal",
+    aiworkflow: "workflowModal",
+    message: "messageModal",
+    aimessage: "messageModal",
+    ask: "askModal",
+    askai: "askModal",
+    car: "carModal",
+    aicar: "carModal",
+  };
+
+  // ==================================================
+  // ONE handler (works even if click never fires)
+  // ==================================================
   const handler = (e) => {
-    const btn = e.target.closest("button,[data-open],[data-tool],[data-modal]");
+    const btn = e.target.closest(
+      "button,[data-modal-target],[data-modal],[data-open],[data-tool]"
+    );
     if (!btn || !wrap.contains(btn)) return;
 
     e.preventDefault();
     e.stopPropagation();
 
     const raw =
+      btn.getAttribute("data-modal-target") ||
+      btn.dataset.modalTarget ||
       btn.dataset.modal ||
       btn.dataset.open ||
       btn.dataset.tool ||
@@ -459,30 +525,12 @@ function wireSideTools() {
       btn.id ||
       "";
 
-    const key = String(raw).toLowerCase().replace(/[^a-z]/g, "");
+    const key = String(raw).toLowerCase().replace(/^#/, "").replace(/[^a-z]/g, "");
 
-    // ✅ map tool => modal id (edit keys ONLY if your ids differ)
-    const map = {
-      objection: "objectionModal",
-      drill: "drillModeModal",
-      drillmode: "drillModeModal",
-      calc: "calcModal",
-      calculator: "calcModal",
-      payment: "paymentModal",
-      income: "incomeModal",
-      workflow: "workflowModal",
-      aiworkflow: "workflowModal",
-      message: "messageModal",
-      aimessage: "messageModal",
-      ask: "askModal",
-      askai: "askModal",
-      car: "carModal",
-      aicar: "carModal",
-    };
-
+    // if raw is a direct modal id, this still works
     const modalId = map[key] || raw;
 
-    console.log("✅ FloatingTools click:", { raw, key, modalId });
+    log("✅ FloatingTools click:", { raw, key, modalId });
 
     openModalById(modalId);
   };
@@ -491,87 +539,92 @@ function wireSideTools() {
   wrap.addEventListener("pointerup", handler, true);
   wrap.addEventListener("click", handler, true);
 
-  console.log("✅ wireFloatingTools READY (attached to .floating-tools)");
+  log("✅ wireFloatingTools READY (attached to .floating-tools)");
 }
 
-  // ==================================================
-  // INCOME CALC — HARD WIRE (GUARANTEED CLICK)
-  // ==================================================
-  function wireIncomeCalcDirect() {
-    const modal = DOC.getElementById("incomeModal");
-    if (!modal) return;
+// ==================================================
+// INCOME CALC — HARD WIRE (GUARANTEED CLICK)
+// ==================================================
+function wireIncomeCalcDirect() {
+  const DOC = document;
+  const log = (...a) => console.log(...a);
+  const warn = (...a) => console.warn(...a);
 
-    const btn =
-      modal.querySelector("#incomeCalcBtn") ||
-      modal.querySelector("[data-ai-action='income_calc']");
+  const modal = DOC.getElementById("incomeModal");
+  if (!modal) return;
 
-    const out =
-      modal.querySelector("#incomeOutput") ||
-      modal.querySelector("[data-ai-output]");
+  const btn =
+    modal.querySelector("#incomeCalcBtn") ||
+    modal.querySelector("[data-ai-action='income_calc']");
 
-    if (!btn) {
-      warn("🟠 income calc: button not found");
-      return;
-    }
+  const out =
+    modal.querySelector("#incomeOutput") ||
+    modal.querySelector("[data-ai-output]");
 
-    if (btn.dataset.wiredDirect === "true") return;
-    btn.dataset.wiredDirect = "true";
-
-    const num = (v) => {
-      if (v == null) return 0;
-      const s = String(v).replace(/[^\d.-]/g, "");
-      const n = Number(s);
-      return Number.isFinite(n) ? n : 0;
-    };
-
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      log("🟢 INCOME DIRECT CLICK");
-
-      const mtdEl = modal.querySelector("#incomeMtd");
-      const dateEl = modal.querySelector("#incomeLastPayDate");
-
-      const body = {
-        mtd: num(mtdEl?.value),
-        lastPayDate: (dateEl?.value || "").trim(),
-      };
-
-      if (out) out.textContent = "Thinking…";
-
-      try {
-        const r = await fetch("/api/income-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        const data = await r.json().catch(() => ({}));
-
-        if (!r.ok) {
-          const msg = data?.message || data?.error || `HTTP ${r.status}`;
-          throw new Error(msg);
-        }
-
-        const reply =
-          data?.result || data?.text || data?.answer || "✅ Done (empty response).";
-        if (out) out.textContent = reply;
-
-        log("🟢 INCOME DIRECT OK", data);
-      } catch (err) {
-        console.error("🔴 INCOME DIRECT FAIL", err);
-        if (out) out.textContent = `❌ Error: ${err?.message || err}`;
-        else alert(err?.message || "Income calc failed");
-      }
-    });
-
-    log("✅ income calc: direct wire complete");
+  if (!btn) {
+    warn("🟠 income calc: button not found");
+    return;
   }
 
-  // ==================================================
-  // AI MODALS UNIVERSAL WIRE (SAFE)
-  // ==================================================
+  if (btn.dataset.wiredDirect === "true") return;
+  btn.dataset.wiredDirect = "true";
+
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[^\d.-]/g, "");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    log("🟢 INCOME DIRECT CLICK");
+
+    const mtdEl = modal.querySelector("#incomeMtd");
+    const dateEl = modal.querySelector("#incomeLastPayDate");
+
+    const body = {
+      mtd: num(mtdEl?.value),
+      lastPayDate: (dateEl?.value || "").trim(),
+    };
+
+    if (out) out.textContent = "Thinking…";
+
+    try {
+      const r = await fetch("/api/income-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        const msg = data?.message || data?.error || `HTTP ${r.status}`;
+        throw new Error(msg);
+      }
+
+      const reply =
+        data?.result || data?.text || data?.answer || "✅ Done (empty response).";
+      if (out) out.textContent = reply;
+
+      log("🟢 INCOME DIRECT OK", data);
+    } catch (err) {
+      console.error("🔴 INCOME DIRECT FAIL", err);
+      if (out) out.textContent = `❌ Error: ${err?.message || err}`;
+      else alert(err?.message || "Income calc failed");
+    }
+  });
+
+  log("✅ income calc: direct wire complete");
+}
+
+// ==================================================
+// AI MODALS UNIVERSAL WIRE (SAFE)
+// ==================================================
+
   function wireAiModals() {
     const modals = Array.from(DOC.querySelectorAll(".side-modal"));
     if (!modals.length) {
