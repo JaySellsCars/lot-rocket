@@ -16,6 +16,9 @@
 // One boot. One store. One wiring pass. No duplicate blocks.
 
 document.addEventListener("DOMContentLoaded", () => {
+  // all your code
+});
+
   // ==================================================
   // BOOT GUARD + INSPECT
   // ==================================================
