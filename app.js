@@ -820,6 +820,24 @@ try {
       { role: "user", content: user },
     ],
   });
+// ==================================================
+// STEP 2 DEBUG (SAFE) — confirm what AI receives
+// (REMOVE AFTER LAUNCH)
+// ==================================================
+try {
+  const v = (s) => String(s || "");
+  const clip = (s, n) => v(s).replace(/\s+/g, " ").trim().slice(0, n);
+
+  console.log("🧪 STEP2 INPUT CHECK >>>");
+  console.log("TITLE:", clip(title, 160));
+  console.log("META :", clip(metaDesc, 200));
+  console.log("DESC :", clip(description, 300));
+  console.log("visibleText.len:", v(visibleText).length);
+  console.log("visibleText.head:", clip(visibleText, 500));
+  console.log("🧪 STEP2 INPUT CHECK <<<");
+} catch (e) {
+  console.warn("🧪 STEP2 INPUT CHECK failed (non-fatal)", e);
+}
 
   const raw = getResponseText(response) || "{}";
   const parsed = safeJsonParse(raw, {}) || {};
