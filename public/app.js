@@ -1179,57 +1179,62 @@ objection_coach: {
     }
   }
 
-  // ==================================================
-  // FINAL INIT ✅ MUST BE LAST
-  // ==================================================
-  try {
-    // Step 1 restore
-    if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
-      renderStep1Photos(STORE.lastBoostPhotos);
+ // ==================================================
+// FINAL INIT ✅ MUST BE LAST
+// ==================================================
+try {
+  // Step 1: Restore previously selected photos
+  if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
+    renderStep1Photos(STORE.lastBoostPhotos);
+  }
+
+  // Step 2: Restore holding zone + active photo
+  if (STORE.holdingZonePhotos?.length) {
+    STORE.activeHoldingPhoto =
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
     }
 
-    // Holding zone restore
-    if (STORE.holdingZonePhotos?.length) {
-      STORE.activeHoldingPhoto =
-        STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
-
-      if (typeof renderHoldingZone === "function") renderHoldingZone();
-
-      if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-        loadPhotoTuner(STORE.activeHoldingPhoto);
-      }
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
     }
+  }
 
-    // Core renders/wiring (guarded)
-    if (typeof renderSocialStrip === "function") renderSocialStrip();
+  // Step 3: Core render / wiring
+  if (typeof renderSocialStrip === "function") renderSocialStrip();
+  if (typeof wireCalculatorPad === "function") wireCalculatorPad();
+  if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+  if (typeof wireAiModals === "function") wireAiModals();
+  if (typeof wireSideTools === "function") wireSideTools();
 
-    if (typeof wireCalculatorPad === "function") wireCalculatorPad();
-    if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
-
-    if (typeof wireAiModals === "function") wireAiModals();
-    if (typeof wireSideTools === "function") wireSideTools();
-
-    // Step 2 label stacker
+  // Step 4: Button labels (safe re-run)
+  if (typeof updateStep2ButtonLabels === "function") {
     updateStep2ButtonLabels();
     setTimeout(updateStep2ButtonLabels, 150);
+  }
 
-    // UI hider (authoritative, one-time global guard)
-    if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
-      window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+  // Step 5: UI hider (run once globally)
+  if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
+    window.__LOTROCKET_UI_HIDER_CALLED__ = true;
+    if (typeof runUiHiderSafe === "function") {
       runUiHiderSafe();
       setTimeout(runUiHiderSafe, 250);
       setTimeout(runUiHiderSafe, 1000);
     }
-
-    // textarea autogrow (guarded)
-    if (typeof autoGrowAllTextareas === "function") {
-      setTimeout(() => autoGrowAllTextareas(document), 50);
-    }
-
-    console.log("✅ FINAL INIT COMPLETE");
-  } catch (e) {
-    console.error("❌ FINAL INIT FAILED", e);
   }
+
+  // Step 6: Auto-grow textareas
+  if (typeof autoGrowAllTextareas === "function") {
+    setTimeout(() => autoGrowAllTextareas(document), 50);
+  }
+
+  console.log("✅ FINAL INIT COMPLETE");
+} catch (e) {
+  console.error("❌ FINAL INIT FAILED", e);
+}
+
 }); // CLOSE DOMContentLoaded
 
 // ==================================================
