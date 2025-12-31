@@ -1973,6 +1973,7 @@ try {
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
 
   // AI + Floating tools
+  // ✅ AI modals first, then floating tools (avoids missing DOM/modals)
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
 
@@ -2003,4 +2004,6 @@ try {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-// ✅ DO NOT CLOSE WITH "})();"  (this file is not wrapped in an IIFE)
+// ✅ IMPORTANT:
+// The bottom of public/app.js MUST close the DOMContentLoaded wrapper with: "});"
+// ❌ DO NOT close with "})();" (that would be an IIFE close and will break parsing)
