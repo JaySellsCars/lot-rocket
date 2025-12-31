@@ -1945,10 +1945,12 @@ function updateStep2ButtonLabels() {
 // FINAL INIT (SAFE) ✅ MUST BE LAST
 // ==================================================
 try {
+  // Step 1 restore
   if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
+  // Step 3 restore
   if (STORE.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
@@ -1962,31 +1964,33 @@ try {
     }
   }
 
+  // Step 3 UI
   if (typeof renderCreativeThumbs === "function") renderCreativeThumbs();
   if (typeof renderSocialStrip === "function") renderSocialStrip();
 
+  // Tools
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
 
+  // AI + Floating tools
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
 
   // Step 2 helpers
   if (typeof installAutoGrowTextareas === "function") installAutoGrowTextareas();
   if (typeof wireStep2RegenButtons === "function") wireStep2RegenButtons();
-  if (typeof installStep2RemoveEmojiButtons === "function") installStep2RemoveEmojiButtons();
+  if (typeof installStep2RemoveEmojiButtons === "function") {
+    installStep2RemoveEmojiButtons();
+  }
+  if (typeof wireStep2RemoveEmojiClicks === "function") wireStep2RemoveEmojiClicks();
 
-  // ✅ Step 2 button label stacker (New/Post, No/Emoji)
+  // Step 2 button label stacker (New/Post, No/Emoji)
   if (typeof updateStep2ButtonLabels === "function") {
     updateStep2ButtonLabels();
-    // optional: run once more after Step 2 fill/renders
     setTimeout(updateStep2ButtonLabels, 150);
   }
 
-  if (typeof installSideToolsDelegation === "function") {
-    installSideToolsDelegation();
-  }
-
+  // UI hider (authoritative)
   if (typeof installHideNextVersionUI === "function") {
     if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
       window.__LOTROCKET_UI_HIDER_CALLED__ = true;
@@ -1999,5 +2003,4 @@ try {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-// 🔚 SAFETY CLOSE — prevents unexpected EOF
-})();
+// ✅ DO NOT CLOSE WITH "})();"  (this file is not wrapped in an IIFE)
