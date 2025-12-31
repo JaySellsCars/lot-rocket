@@ -346,20 +346,20 @@ function wireSideTools() {
 
         if (!launcher) return;
 
-        const modalId =
-          launcher.getAttribute("data-modal-target") ||
-          launcher.getAttribute("data-open") ||
-          launcher.getAttribute("data-tool");
+let modalId =
+  launcher.getAttribute("data-modal-target") ||
+  launcher.getAttribute("data-open") ||
+  launcher.getAttribute("data-tool");
 
-        if (!modalId) {
-          console.warn("⚠️ Tool click but no modal id on:", launcher);
-          return;
-        }
+modalId = String(modalId || "").replace(/^#/, "").trim();
+if (!modalId) {
+  console.warn("⚠️ Tool click but no modal id on:", launcher);
+  return;
+}
 
-        e.preventDefault();
-        openModalById(modalId);
-      },
-      true
+e.preventDefault();
+openModalSafe(modalId);
+
     );
 
     // CLOSE (inside modals)
