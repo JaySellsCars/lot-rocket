@@ -228,6 +228,96 @@ function wireSideTools() {
 
     log("✅ wireSideTools() wired");
   }
+// ==================================================
+// OBJECTION COACH (FRONT) — auto-grow + correct API parsing
+// ==================================================
+function wireObjectionCoach() {
+  const modal = $("objectionModal");
+  if (!modal) return;
+
+  // Prevent double-wiring
+  if (modal.dataset.lrWired === "true") return;
+  modal.dataset.lrWired = "true";
+
+  const input = $("objectionInput") || modal.querySelector("textarea");
+  const output = $("objectionOutput") || modal.querySelector('[data-objection-output]');
+  const btn = $("objectionSendBtn") || modal.querySelector("button[type='button'], button[type='submit']");
+
+  const autoGrow = (el) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight + 2, 420) + "px"; // cap so it doesn't go insane
+  };
+
+  // Auto-grow on type
+  if (input) {
+    autoGrow(input);
+    input.addEventListener("input", () => autoGrow(input));
+  }
+  if (output && output.tagName === "TEXTAREA") {
+    autoGrow(output);
+    output.addEventListener("input", () => autoGrow(output));
+  }
+
+  const setOutput = (txt) => {
+    if (!output) return;
+
+    // output can be div OR textarea
+    if (output.tagName === "TEXTAREA" || output.tagName === "INPUT") {
+      output.value = txt || "";
+      autoGrow(output);
+    } else {
+      output.textContent = txt || "";
+    }
+  };
+
+  async function runCoach() {
+    const objection = (input?.value || "").trim();
+    if (!objection) {
+      setOutput("Type the customer objection first.");
+      return;
+    }
+
+    setOutput("Thinking…");
+
+    try {
+      const res = await fetch("/api/objection-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          objection,
+          history: "", // optional — wire later if you add a history box
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      // ✅ THIS IS THE BIG ONE:
+      // backend returns { response: "..." }
+      const reply = (data && (data.response || data.text || data.message)) || "";
+
+      setOutput(reply || "Done — but empty response. (Check server logs for OpenAI errors.)");
+    } catch (e) {
+      console.error("❌ objection-coach failed", e);
+      setOutput("Error running Objection Coach. Check console + server logs.");
+    }
+  }
+
+  if (btn) {
+    btn.addEventListener("click", runCoach);
+  }
+
+  // Also submit-safe if the modal uses a form
+  const form = modal.querySelector("form");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      runCoach();
+    });
+  }
+
+  console.log("✅ Objection Coach wired");
+}
 
   // ==================================================
   // CALCULATOR PAD (simple)
