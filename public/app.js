@@ -1198,8 +1198,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("❌ FINAL INIT FAILED", e);
   }
 }); // CLOSE DOMContentLoaded
-}); // EXTRA CLOSE (kills stray open block)
-;   // EOF GUARD
+
 // ==================================================
 // 🧨 EOF MARKER — if you don't see this in Sources, you're not serving the file you edited
 // ==================================================
