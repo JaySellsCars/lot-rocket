@@ -1,20 +1,15 @@
-window.__LOTROCKET_APPJS_VERSION__ = "10001";
-
 // ==================================================
 // HARD KILL: prevent older cached app.js from running
-// (MUST BE AT VERY TOP OF public/app.js)
+// (MUST BE AT VERY TOP OF public/app.js — FIRST EXECUTABLE JS)
 // ==================================================
 (function () {
-  const V = "9999";
-  // 🧨 TOP MARKER — if you don't see this in console, you're not loading this file
+  const V = "10001"; // ✅ ONE VERSION (match your HTML: /app.js?v=10001)
   console.log("🧨 APPJS TOP MARKER LOADED — v", V, "—", Date.now());
 
-  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) {
-    return;
-  }
+  // If a different version already ran, stop this file immediately
+  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) return;
   window.__LOTROCKET_APPJS_VERSION__ = V;
 })();
-
 
 // public/app.js — Lot Rocket (CLEAN SINGLE-PASS)
 // One boot. One store. One wiring pass. No duplicate blocks.
@@ -45,22 +40,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.LOTROCKET = window.LOTROCKET || {};
   const STORE = window.LOTROCKET;
+
+  // expose for debugging (optional)
   window.STORE = STORE;
   window.LOTROCKET_STORE = STORE;
 
+  // normalize arrays (safe defaults)
   STORE.step1Photos = Array.isArray(STORE.step1Photos) ? STORE.step1Photos : [];
-  STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos)
-    ? STORE.lastBoostPhotos
-    : [];
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos)
-    ? STORE.holdingZonePhotos
-    : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
-    ? STORE.socialReadyPhotos
-    : [];
-  STORE.creativePhotos = Array.isArray(STORE.creativePhotos)
-    ? STORE.creativePhotos
-    : [];
+  STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+  STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
+
+  // ==================================================
+  // ...rest of your app.js continues here
+  // ==================================================
+});
+
 
   // ==================================================
   // UTILITIES (ONE SOURCE)
