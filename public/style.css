@@ -254,6 +254,15 @@ textarea{
   animation: lrSpin .75s linear infinite;
   vertical-align: -2px;
 }
+.floating-tools {
+  position: fixed;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+.floating-tools * {
+  pointer-events: auto !important;
+}
 
 @keyframes lrSpin{
   to { transform: rotate(360deg); }
