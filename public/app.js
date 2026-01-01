@@ -34,6 +34,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = (id) => DOC.getElementById(id);
   const log = (...a) => console.log(...a);
   const warn = (...a) => console.warn(...a);
+// ==================================================
+// AUTO-GROW (GLOBAL DELEGATE) — FIXES ALL MODALS
+// ==================================================
+DOC.addEventListener(
+  "input",
+  (e) => {
+    const ta = e.target;
+    if (!ta) return;
+    if ((ta.tagName || "").toUpperCase() !== "TEXTAREA") return;
+    // only grow textareas inside your side tools/modals
+    if (!ta.closest(".side-modal")) return;
+    autoGrowTextarea(ta);
+  },
+  true
+);
 
   // ================================
   // CONSTANTS + SINGLE STORE
