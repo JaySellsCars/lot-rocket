@@ -1486,6 +1486,5 @@ try {
 
 }); // ✅ CLOSE DOMContentLoaded (ONE COPY ONLY)
 
-// 🧨 EOF MARKER
-console.log("🧨 EOF MARKER — app.js loaded:", window.__LOTROCKET_APPJS_VERSION__);
+}); // END DOMContentLoaded
 
