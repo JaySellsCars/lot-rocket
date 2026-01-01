@@ -1245,14 +1245,15 @@ function runUiHiderSafe() {
 }
 
 // ==================================================
-// FINAL INIT — MUST BE LAST (FRONT: public/app.js)
-// PASTE THIS INSIDE DOMContentLoaded, RIGHT ABOVE THE EXISTING CLOSER
+// FINAL INIT (SAFE) ✅ MUST BE LAST
 // ==================================================
 try {
+  // Step 1 restore
   if (STORE?.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
+  // Holding zone restore
   if (STORE?.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
@@ -1264,6 +1265,7 @@ try {
     }
   }
 
+  // Core renders/wiring
   if (typeof renderSocialStrip === "function") renderSocialStrip();
 
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
@@ -1273,6 +1275,7 @@ try {
   if (typeof wireSideTools === "function") wireSideTools();
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 
+  // UI hider (one-time)
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
     window.__LOTROCKET_UI_HIDER_CALLED__ = true;
     if (typeof runUiHiderSafe === "function") {
@@ -1282,6 +1285,7 @@ try {
     }
   }
 
+  // textarea autogrow
   if (typeof autoGrowAllTextareas === "function") {
     setTimeout(() => autoGrowAllTextareas(document), 50);
   }
@@ -1290,4 +1294,8 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-}); // CLOSE DOMContentLoaded
+
+}); // ✅ CLOSE DOMContentLoaded (ONE COPY ONLY)
+
+// 🧨 EOF MARKER
+console.log("🧨 EOF MARKER — app.js loaded:", window.__LOTROCKET_APPJS_VERSION__);
