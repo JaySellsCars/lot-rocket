@@ -475,6 +475,16 @@ function wireObjectionCoach() {
             modal.querySelector(".ai-output") ||
             modal.querySelector("pre") ||
             modal.querySelector("div[id$='Output']");
+// 🔧 Auto-grow textarea support
+if (input && input.tagName === "TEXTAREA") {
+  const autoGrow = () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 420) + "px";
+  };
+
+  autoGrow();
+  input.addEventListener("input", autoGrow);
+}
 
           const text = String(input?.value || "").trim();
 
