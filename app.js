@@ -1605,9 +1605,9 @@ app.post("/api/payment-helper", (req, res) => {
     const down = Number(req.body.down || 0);
     const trade = Number(req.body.trade || 0);
     const payoff = Number(req.body.payoff || 0);
-   const aprPct = Number(req.body.rate ?? req.body.apr ?? req.body.aprPct ?? 0);
+const aprPct = Number(req.body.rate ?? req.body.apr ?? req.body.aprPct ?? 0);
+const term  = Number(req.body.term ?? req.body.months ?? 0);
 
-const term = Number(req.body.term ?? req.body.months ?? 0);
 
     const taxPct = Number(req.body.tax || 0);
     const fees = Number(req.body.fees || 0);
@@ -1621,18 +1621,19 @@ const term = Number(req.body.term ?? req.body.months ?? 0);
       });
     }
 
-    const STATE_RULES = {
-      MI: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      OH: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      IN: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      IL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      PA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      NY: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      NJ: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      FL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      TX: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      CA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-    };
+const STATE_RULES = {
+  MI: { taxTradeCredit: true,  taxFees: false, rebateReducesTaxable: false },
+  OH: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  IN: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  IL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  PA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  NY: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  NJ: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  FL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  TX: { taxTradeCredit: false, taxFees: true,  rebateReducesTaxable: false },
+  CA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+};
+
 
     const rules = STATE_RULES[state] || STATE_RULES.MI;
 
