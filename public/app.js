@@ -466,10 +466,34 @@ function wireObjectionCoach() {
           e.stopPropagation();
 
           const action = String(btn.getAttribute("data-ai-action") || "").trim();
-          const input =
-            modal.querySelector("[data-ai-input]") ||
-            modal.querySelector("textarea") ||
-            modal.querySelector("input[type='text']");
+// ✅ INPUT (force textarea when available)
+let input =
+  modal.querySelector("[data-ai-input]") ||
+  modal.querySelector("textarea") ||
+  modal.querySelector("input[type='text']");
+// ✅ Auto-grow ONLY works on textarea (inputs can't grow height)
+if (input && input.tagName === "TEXTAREA") {
+  input.style.overflow = "hidden";
+  input.style.resize = "none";
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight || 0, 420) + "px";
+
+  // prevent double-binding
+  if (input.dataset.lrGrowWired !== "true") {
+    input.dataset.lrGrowWired = "true";
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight || 0, 420) + "px";
+    });
+  }
+}
+
+// ✅ If [data-ai-input] accidentally points to an <input>, prefer any textarea in the modal
+if (input && input.tagName !== "TEXTAREA") {
+  const ta = modal.querySelector("textarea");
+  if (ta) input = ta;
+}
+
           const output =
             modal.querySelector("[data-ai-output]") ||
             modal.querySelector(".ai-output") ||
