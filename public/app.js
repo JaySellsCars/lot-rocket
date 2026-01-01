@@ -466,27 +466,38 @@ function wireObjectionCoach() {
           e.stopPropagation();
 
           const action = String(btn.getAttribute("data-ai-action") || "").trim();
-// ✅ INPUT (force textarea when available)
+// ✅ INPUT (force textarea when available) — CLEAN + SINGLE SOURCE
 let input =
   modal.querySelector("[data-ai-input]") ||
   modal.querySelector("textarea") ||
   modal.querySelector("input[type='text']");
+
+// ✅ If [data-ai-input] accidentally points to an <input>, prefer any textarea in the modal
+if (input && input.tagName !== "TEXTAREA") {
+  const ta = modal.querySelector("textarea");
+  if (ta) input = ta;
+}
+
 // ✅ Auto-grow ONLY works on textarea (inputs can't grow height)
+const autoGrow = (el) => {
+  if (!el) return;
+  el.style.overflow = "hidden";
+  el.style.resize = "none";
+  el.style.height = "auto";
+  el.style.height = Math.min((el.scrollHeight || 0) + 2, 420) + "px";
+};
+
 if (input && input.tagName === "TEXTAREA") {
-  input.style.overflow = "hidden";
-  input.style.resize = "none";
-  input.style.height = "auto";
-  input.style.height = Math.min(input.scrollHeight || 0, 420) + "px";
+  // initial grow (immediate, like Objection Coach)
+  autoGrow(input);
 
   // prevent double-binding
   if (input.dataset.lrGrowWired !== "true") {
     input.dataset.lrGrowWired = "true";
-    input.addEventListener("input", () => {
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight || 0, 420) + "px";
-    });
+    input.addEventListener("input", () => autoGrow(input));
   }
 }
+
 
 // ✅ If [data-ai-input] accidentally points to an <input>, prefer any textarea in the modal
 if (input && input.tagName !== "TEXTAREA") {
