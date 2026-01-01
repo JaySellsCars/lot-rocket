@@ -34,21 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = (id) => DOC.getElementById(id);
   const log = (...a) => console.log(...a);
   const warn = (...a) => console.warn(...a);
-// ==================================================
-// AUTO-GROW (GLOBAL DELEGATE) — FIXES ALL MODALS
-// ==================================================
-DOC.addEventListener(
-  "input",
-  (e) => {
-    const ta = e.target;
-    if (!ta) return;
-    if ((ta.tagName || "").toUpperCase() !== "TEXTAREA") return;
-    // only grow textareas inside your side tools/modals
-    if (!ta.closest(".side-modal")) return;
-    autoGrowTextarea(ta);
-  },
-  true
-);
 
   // ================================
   // CONSTANTS + SINGLE STORE
@@ -126,19 +111,11 @@ DOC.addEventListener(
     }
   }
 
-function autoGrowTextarea(el, cap = 520) {
-  if (!el) return;
-  if ((el.tagName || "").toUpperCase() !== "TEXTAREA") return;
-
-  el.style.setProperty("overflow", "hidden", "important");
-  el.style.setProperty("resize", "none", "important");
-
-  // reset then grow
-  el.style.setProperty("height", "auto", "important");
-  const next = Math.min((el.scrollHeight || 0) + 2, cap);
-  el.style.setProperty("height", next + "px", "important");
-}
-
+  function autoGrowTextarea(el) {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = (el.scrollHeight || 0) + "px";
+  }
   function autoGrowAllTextareas(root = document) {
     root.querySelectorAll("textarea").forEach(autoGrowTextarea);
   }
@@ -196,36 +173,28 @@ function wireAutoGrowInModal(modal) {
       aicar: "carModal",
     };
 
-function openSideModal(modalId) {
-  modalId = String(modalId || "").replace(/^#/, "").trim();
-  if (!modalId) return;
+    function openSideModal(modalId) {
+      modalId = String(modalId || "").replace(/^#/, "").trim();
+      if (!modalId) return;
 
-  const modal = document.getElementById(modalId);
-  if (!modal) return;
-
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-  modal.classList.add("open");
-
-  // ✅ AUTO-GROW ALL TEXTAREAS WHEN MODAL OPENS
-  setTimeout(() => {
-    modal.querySelectorAll("textarea").forEach((ta) => {
-      ta.style.overflow = "hidden";
-      ta.style.resize = "none";
-      ta.style.height = "auto";
-      ta.style.height = Math.min(ta.scrollHeight + 2, 420) + "px";
-
-      // live resize while typing
-      if (!ta.dataset.autogrow) {
-        ta.dataset.autogrow = "true";
-        ta.addEventListener("input", () => {
-          ta.style.height = "auto";
-          ta.style.height = Math.min(ta.scrollHeight + 2, 420) + "px";
-        });
+      const modal = DOC.getElementById(modalId);
+      if (!modal) {
+        warn("❌ MODAL NOT FOUND:", modalId);
+        return;
       }
-    });
-  }, 0);
-}
+
+      modal.classList.remove("hidden");
+      modal.removeAttribute("hidden");
+      modal.setAttribute("aria-hidden", "false");
+      modal.classList.add("open");
+
+      const focusEl = modal.querySelector("textarea, input, button");
+      if (focusEl) {
+        try {
+          focusEl.focus();
+        } catch {}
+      }
+    }
 
     function closeSideModal(modalEl) {
       if (!modalEl) return;
@@ -512,8 +481,6 @@ function wireObjectionCoach() {
     });
 
     modals.forEach((modal) => {
-      wireAutoGrowInModal(modal);
-
       if (modal.dataset.aiWired === "true") return;
       modal.dataset.aiWired = "true";
 
