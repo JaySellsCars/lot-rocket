@@ -1288,9 +1288,7 @@ try {
   if (typeof wireSideTools === "function") wireSideTools();
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 
-  // Button text refresh
-  updateStep2ButtonLabels();
-  setTimeout(updateStep2ButtonLabels, 150);
+
 
   // UI hider (once)
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
