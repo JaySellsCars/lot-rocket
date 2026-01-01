@@ -1246,15 +1246,13 @@ function runUiHiderSafe() {
 
 // ==================================================
 // FINAL INIT — MUST BE LAST (FRONT: public/app.js)
-// PUT THIS INSIDE: document.addEventListener("DOMContentLoaded", () => { ... HERE ... });
+// PASTE THIS INSIDE DOMContentLoaded, RIGHT ABOVE THE EXISTING CLOSER
 // ==================================================
 try {
-  // Restore Step 1 photos (if any)
   if (STORE?.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
-  // Restore holding zone + tuner (if any)
   if (STORE?.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto =
       STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
@@ -1266,7 +1264,6 @@ try {
     }
   }
 
-  // Core render / wiring (guarded)
   if (typeof renderSocialStrip === "function") renderSocialStrip();
 
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
@@ -1276,10 +1273,8 @@ try {
   if (typeof wireSideTools === "function") wireSideTools();
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 
-  // UI hider (once)
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
     window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-
     if (typeof runUiHiderSafe === "function") {
       runUiHiderSafe();
       setTimeout(runUiHiderSafe, 250);
@@ -1287,7 +1282,6 @@ try {
     }
   }
 
-  // Auto-grow textareas
   if (typeof autoGrowAllTextareas === "function") {
     setTimeout(() => autoGrowAllTextareas(document), 50);
   }
@@ -1296,6 +1290,4 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-
-// ✅ THE ONLY DOMContentLoaded CLOSER (KEEP EXACTLY ONE OF THESE IN THE FILE)
-}); // END DOMContentLoaded
+}); // CLOSE DOMContentLoaded
