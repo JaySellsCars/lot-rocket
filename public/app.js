@@ -481,6 +481,8 @@ function wireObjectionCoach() {
     });
 
     modals.forEach((modal) => {
+      wireAutoGrowInModal(modal);
+
       if (modal.dataset.aiWired === "true") return;
       modal.dataset.aiWired = "true";
 
