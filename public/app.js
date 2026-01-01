@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     root.querySelectorAll("textarea").forEach(autoGrowTextarea);
   }
 function wireSideTools() {
-  document.addEventListener("click", (e) => {
+
 
   // ==================================================
   // SIDE TOOLS (FLOATING MODALS) — SINGLE SOURCE ✅
