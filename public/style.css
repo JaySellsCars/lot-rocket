@@ -1177,3 +1177,11 @@ main > section:nth-of-type(3) > div > div:first-child {
 .debug-tools {
   display: none !important;
 }
+/* === FORCE TEXTAREA AUTO-GROW (AI INPUTS) === */
+.side-modal textarea {
+  height: auto !important;
+  min-height: 60px;
+  max-height: 420px;
+  overflow: hidden !important;
+  resize: none !important;
+}
