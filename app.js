@@ -8,7 +8,6 @@
  * ✅ Step 2 payload always includes: description (string) + posts (string[]) + named fields
  * ✅ HARD-BAN URL-only “posts” (sanitizeCopy kills URL-only + strips URLs)
  * ✅ PROMPT LIBRARY DEDUPED (one source of truth, no duplicate const names)
- * ✅ AUTH SCOPED: static + public helpers do NOT require Authorization
  */
 
 require("dotenv").config();
@@ -45,47 +44,7 @@ const OPENAI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public")); // ✅ PUBLIC ASSETS — NEVER AUTH-GATED
-
-// -------------------- Auth (SCOPED) --------------------
-// ✅ Only protect paid/AI routes. DO NOT block static files or public helpers.
-function requireAuth(req, res, next) {
-  const auth = req.headers.authorization || "";
-  if (!auth) {
-    // 401 is correct. 402 causes confusing browser behavior.
-    return res.status(401).send("bad request: missing required Authorization header");
-  }
-  return next();
-}
-
-// ✅ PUBLIC API (NO AUTH) — keep these open
-const PUBLIC_API_PREFIXES = new Set([
-  "/api/payment-helper",
-  "/api/income-helper",
-  "/api/proxy-image",
-  "/api/scrape",
-  "/api/zip",
-]);
-
-// ✅ AUTH GATE (scoped) — only applies to /api/* EXCEPT the public ones above
-app.use("/api", (req, res, next) => {
-  // allow listed public endpoints
-  for (const p of PUBLIC_API_PREFIXES) {
-    if (req.path === p || req.path.startsWith(p + "/")) return next();
-  }
-  // everything else under /api requires auth
-  return requireAuth(req, res, next);
-});
-
-// ======================================================
-// PROMPT LIBRARY (GLOBAL - SINGLE SOURCE OF TRUTH)
-// ======================================================
-// NOTE:
-// - We keep ONE prompt library object.
-// - Social kit uses BASE + SOCIAL_MASTER + SOCIAL_JSON_CONTRACT.
-// - /api/new-post uses BASE + PLATFORM[platformKey].
-// ======================================================
-
+app.use(express.static("public"));
 
 // ======================================================
 // PROMPT LIBRARY (GLOBAL - SINGLE SOURCE OF TRUTH)
@@ -1646,15 +1605,9 @@ app.post("/api/payment-helper", (req, res) => {
     const down = Number(req.body.down || 0);
     const trade = Number(req.body.trade || 0);
     const payoff = Number(req.body.payoff || 0);
-const aprPct = Number(req.body.rate ?? req.body.apr ?? req.body.aprPct ?? 0);
-const term  = Number(req.body.term ?? req.body.months ?? 0);
-
-
-const taxPct = Number(
-  req.body.tax !== undefined && req.body.tax !== ""
-    ? req.body.tax
-    : (STATE_RULES[state]?.taxRate ?? 0)
-);
+    const aprPct = Number(req.body.rate || 0);
+    const term = Number(req.body.term || 0);
+    const taxPct = Number(req.body.tax || 0);
     const fees = Number(req.body.fees || 0);
     const rebate = Number(req.body.rebate || 0);
     const state = String(req.body.state || "MI").trim().toUpperCase();
@@ -1666,27 +1619,20 @@ const taxPct = Number(
       });
     }
 
-    if (req.body.tax === undefined || req.body.tax === "" || isNaN(Number(req.body.tax))) {
-  return res.status(400).json({
-    error: "Tax rate is required",
-    message: "Please enter a valid sales tax percentage."
-  });
-}
+    const STATE_RULES = {
+      MI: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      OH: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      IN: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      IL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      PA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      NY: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      NJ: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      FL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      TX: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      CA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+    };
 
-// ===== STATE RULES (GLOBAL TO PAYMENT ROUTE) =====
-const STATE_RULES = {
-  MI: { taxTradeCredit: true,  taxFees: false, rebateReducesTaxable: false },
-  OH: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  IN: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  IL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  PA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  NY: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  NJ: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  FL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-};
-const rules = STATE_RULES[state] || STATE_RULES.MI;
-
-
+    const rules = STATE_RULES[state] || STATE_RULES.MI;
 
     const taxTradeCredit =
       typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
@@ -2008,5 +1954,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
-// ...all your existing code above...
-
