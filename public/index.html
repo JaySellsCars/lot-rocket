@@ -30,8 +30,34 @@
   <link rel="stylesheet" href="/style.css?v=10001" />
 
   <!-- ✅ ONE app.js include ONLY (MUST BE INSIDE <head>, LAST) -->
-  <script src="/app.js?v=10001" defer></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- App Meta -->
+  <title>Lot Rocket</title>
+
+  <!-- External libs -->
+  <script src="https://unpkg.com/konva/konva.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/style.css?v=999" />
 </head>
+
+<body>
+
+  <!-- ALL HTML CONTENT HERE -->
+
+  <!-- ✅ APP JS — MUST BE LAST -->
+  <script src="/app.js?v=10001" defer></script>
+
+</body>
+</html>
+
 
 
  
