@@ -681,11 +681,24 @@ objection_coach: {
                 body: { mode: "car", prompt: text },
                 pick: (data) => data?.text || "",
               },
-              payment_calc: {
-                url: "/api/payment-helper",
-                body: collectPaymentBody(modal),
-                pick: (data) =>
-                  data?.breakdownText || data?.result || data?.text || data?.answer || "",
+payment_calc: {
+  url: "/api/payment-helper",
+  body: (() => {
+    try {
+      return collectPaymentBody(modal);
+    } catch (e) {
+      // stop request if validation fails
+      return null;
+    }
+  })(),
+  pick: (data) =>
+    data?.breakdownText ||
+    data?.result ||
+    data?.text ||
+    data?.answer ||
+    "",
+},
+
               },
               income_calc: {
                 url: "/api/income-helper",
