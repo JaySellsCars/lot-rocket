@@ -1343,7 +1343,16 @@ const r = await fetch(cfg.url, {
       if (statusText) statusText.textContent = "Boosting…";
 
       try {
-      const res = await fetch("/api/boost", {
+        const res = await fetch("/api/boost", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url,
+            labelOverride: vehicleLabelInput?.value?.trim?.() || "",
+            priceOverride: priceInfoInput?.value?.trim?.() || "",
+          }),
+        });
+
 
           method: "POST",
           headers: { "Content-Type": "application/json" },
