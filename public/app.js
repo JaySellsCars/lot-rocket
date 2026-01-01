@@ -1,3 +1,5 @@
+console.log("TOP OF FILE");
+
 console.log("START FILE");
 
 // ==================================================
@@ -1294,4 +1296,5 @@ try {
 }
 console.log("END FILE");
 }); // ✅ CLOSE DOMContentLoaded
+console.log("BOTTOM OF FILE");
 
