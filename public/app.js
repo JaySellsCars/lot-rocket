@@ -1230,24 +1230,7 @@ objection_coach: {
     };
   }
 
- // ==================================================
-// STEP 2 — BUTTON LABEL STACKER (ONE COPY)
-// ==================================================
-function updateStep2ButtonLabels() {
-  try {
-    document.querySelectorAll(".regen-btn").forEach((btn) => {
-      const text = String(btn.textContent || "").toLowerCase().trim();
 
-      if (text.includes("new") && text.includes("post")) {
-        btn.innerHTML = "<span>New</span><span>Post</span>";
-      } else if (text.includes("remove") && text.includes("emoji")) {
-        btn.innerHTML = "<span>No</span><span>Emoji</span>";
-      }
-    });
-  } catch (e) {
-    console.warn("⚠️ updateStep2ButtonLabels error", e);
-  }
-}
 
 // ==================================================
 // UI HIDER (SAFE)
