@@ -1637,21 +1637,7 @@ const STATE_RULES = {
 };
 const rules = STATE_RULES[state] || STATE_RULES.MI;
 
-const STATE_RULES = {
-  MI: { taxTradeCredit: true,  taxFees: false, rebateReducesTaxable: false },
-  OH: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  IN: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  IL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  PA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  NY: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  NJ: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  FL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-  TX: { taxTradeCredit: false, taxFees: true,  rebateReducesTaxable: false },
-  CA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
-};
 
-
-    const rules = STATE_RULES[state] || STATE_RULES.MI;
 
     const taxTradeCredit =
       typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
