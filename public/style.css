@@ -1231,22 +1231,31 @@ main > section:nth-of-type(3) > div > div:first-child {
 [data-action="open-design-studio"] {
   display: none !important;
 }
-/* ================================
-   LAUNCH HIDE — Design/Video Studios + Launcher Buttons
-   ================================ */
+/* ============================================
+   LAUNCH MODE – HIDE ALL CREATOR / LAUNCHER BUTTONS
+   Safe: DOM intact, JS untouched
+   ============================================ */
 
-/* Hide the launch tool buttons (Image/Video/Canvas/Design launcher row) */
+/* Individual launcher buttons */
 .designlauncher.tool-button,
-.designlauncher .tool-button,
-.tool-button.designlauncher {
-  display: none !important;
-}
+.imagelauncher.tool-button,
+.videolauncher.tool-button,
+.canvaslauncher.tool-button,
 
-/* OPTIONAL: if the launcher is a wrapper container too */
+/* Generic fallbacks */
+.tool-button.designlauncher,
+.tool-button.imagelauncher,
+.tool-button.videolauncher,
+.tool-button.canvaslauncher,
+
+/* Container safety (if wrapped) */
 #designLauncher,
-.designLauncher,
+#imageLauncher,
+#videoLauncher,
+#canvasLauncher,
 .design-launcher,
-.tools-launcher,
-.tool-launcher {
+.image-launcher,
+.video-launcher,
+.canvas-launcher {
   display: none !important;
 }
