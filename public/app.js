@@ -1,3 +1,12 @@
+// 👇 FIRST LINE OF app.js — NOTHING ABOVE THIS
+(function () {
+  const V = "10001";
+  console.log("🧨 APPJS TOP MARKER LOADED — v", V, Date.now());
+
+  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) return;
+  if (window.__LOTROCKET_APPJS_VERSION__ === V) return;
+  window.__LOTROCKET_APPJS_VERSION__ = V;
+})();
 
 
 
