@@ -1459,23 +1459,33 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+
 // ============================================
 // LAUNCH ENFORCE HIDE — overlays + video bottom
+// (safe + one-time)
 // ============================================
-(function enforceLaunchHide() {
+(() => {
+  if (window.__LOTROCKET_LAUNCH_HIDE_CALLED__) return;
+  window.__LOTROCKET_LAUNCH_HIDE_CALLED__ = true;
+
+  if (typeof document === "undefined") return;
+
+  const IDS = ["videoOutputBottom", "designStudioOverlay", "creativeStudioOverlay"];
+
   const kill = () => {
-    ["videoOutputBottom", "designStudioOverlay", "creativeStudioOverlay"].forEach((id) => {
+    for (const id of IDS) {
       const el = document.getElementById(id);
       if (el) el.style.display = "none";
-    });
+    }
   };
+
   kill();
   setTimeout(kill, 150);
   setTimeout(kill, 600);
 })();
 
-
 }); // ✅ CLOSE DOMContentLoaded (ONE COPY ONLY)
 
 // 🧨 EOF MARKER
 console.log("🧨 EOF MARKER — app.js loaded:", window.__LOTROCKET_APPJS_VERSION__);
+
