@@ -1624,6 +1624,14 @@ const taxPct = Number(
         message: "Price and term (in months) are required for payment.",
       });
     }
+
+    if (req.body.tax === undefined || req.body.tax === "" || isNaN(Number(req.body.tax))) {
+  return res.status(400).json({
+    error: "Tax rate is required",
+    message: "Please enter a valid sales tax percentage."
+  });
+}
+
 // ===== STATE RULES (GLOBAL TO PAYMENT ROUTE) =====
 const STATE_RULES = {
   MI: { taxTradeCredit: true,  taxFees: false, rebateReducesTaxable: false },
