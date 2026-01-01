@@ -1609,7 +1609,11 @@ const aprPct = Number(req.body.rate ?? req.body.apr ?? req.body.aprPct ?? 0);
 const term  = Number(req.body.term ?? req.body.months ?? 0);
 
 
-    const taxPct = Number(req.body.tax || 0);
+const taxPct = Number(
+  req.body.tax !== undefined && req.body.tax !== ""
+    ? req.body.tax
+    : (STATE_RULES[state]?.taxRate ?? 0)
+);
     const fees = Number(req.body.fees || 0);
     const rebate = Number(req.body.rebate || 0);
     const state = String(req.body.state || "MI").trim().toUpperCase();
@@ -1620,6 +1624,18 @@ const term  = Number(req.body.term ?? req.body.months ?? 0);
         message: "Price and term (in months) are required for payment.",
       });
     }
+// ===== STATE RULES (GLOBAL TO PAYMENT ROUTE) =====
+const STATE_RULES = {
+  MI: { taxTradeCredit: true,  taxFees: false, rebateReducesTaxable: false },
+  OH: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  IN: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  IL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  PA: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  NY: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  NJ: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+  FL: { taxTradeCredit: true,  taxFees: true,  rebateReducesTaxable: false },
+};
+const rules = STATE_RULES[state] || STATE_RULES.MI;
 
 const STATE_RULES = {
   MI: { taxTradeCredit: true,  taxFees: false, rebateReducesTaxable: false },
