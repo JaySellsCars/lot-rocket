@@ -1,6 +1,4 @@
-console.log("TOP OF FILE");
 
-console.log("START FILE");
 
 // ==================================================
 // HARD KILL: prevent older cached app.js from running
