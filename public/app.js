@@ -489,19 +489,67 @@ function wireObjectionCoach() {
       return null;
     };
 
-    const collectPaymentBody = (modal) => ({
-      price: num(pickInside(modal, ["#payPrice", "input[name='price']", "#price"])?.value),
-      down: num(pickInside(modal, ["#payDown", "input[name='down']", "#down"])?.value),
-      trade: num(pickInside(modal, ["#payTrade", "input[name='trade']", "#trade"])?.value),
-      payoff: num(pickInside(modal, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
-      rate: num(pickInside(modal, ["#payApr", "input[name='apr']", "#apr", "#rate"])?.value),
-      term: num(pickInside(modal, ["#payTerm", "input[name='term']", "#term"])?.value),
-      tax: num(pickInside(modal, ["#payTax", "input[name='tax']", "#tax"])?.value),
-      fees: num(pickInside(modal, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
-      state: String(pickInside(modal, ["#payState", "select[name='state']", "input[name='state']"])?.value || "")
-        .trim()
-        .toUpperCase(),
-      rebate: num(pickInside(modal, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
+// FRONT — Payment payload builder (requires TAX)
+const collectPaymentBody = (modal) => {
+  const getVal = (selectors) => pickInside(modal, selectors)?.value ?? "";
+
+  const price  = num(getVal(["#payPrice", "input[name='price']", "#price"]));
+  const down   = num(getVal(["#payDown", "input[name='down']", "#down"]));
+  const trade  = num(getVal(["#payTrade", "input[name='trade']", "#trade"]));
+  const payoff = num(getVal(["#payPayoff", "input[name='payoff']", "#payoff"]));
+
+  // ✅ APR: send canonical `apr` + keep `rate` for your current backend
+  const apr = num(getVal(["#payApr", "input[name='apr']", "#apr", "#rate"]));
+
+  const term = num(getVal(["#payTerm", "input[name='term']", "#term"]));
+
+  // ✅ TAX REQUIRED: do NOT allow empty/0-by-default
+  const taxRaw = String(getVal(["#payTax", "input[name='tax']", "#tax"])).trim();
+  const tax = taxRaw === "" ? null : num(taxRaw);
+
+  const fees = num(getVal(["#payFees", "#dealerFees", "input[name='fees']", "#fees"]));
+
+  const state = String(
+    getVal(["#payState", "select[name='state']", "input[name='state']"]) || "MI"
+  )
+    .trim()
+    .toUpperCase();
+
+  const rebate = num(getVal(["#payRebate", "input[name='rebate']", "#rebate"]));
+
+  // ✅ Hard stop if tax missing/invalid
+  if (tax === null || !Number.isFinite(tax) || tax < 0) {
+    // Prefer your app’s UI toast if you have one
+    if (typeof toast === "function") toast("Sales tax % is required.", "error");
+    else alert("Sales tax % is required.");
+
+    // Highlight the field if found
+    const taxEl = pickInside(modal, ["#payTax", "input[name='tax']", "#tax"]);
+    if (taxEl) {
+      taxEl.focus();
+      taxEl.style.outline = "2px solid #ff4d4f";
+      setTimeout(() => (taxEl.style.outline = ""), 1200);
+    }
+
+    // Throw so caller can abort fetch
+    throw new Error("missing_tax");
+  }
+
+  return {
+    price,
+    down,
+    trade,
+    payoff,
+    apr,      // ✅ canonical
+    rate: apr, // ✅ backward compat (your backend currently reads `rate`)
+    term,
+    tax,
+    fees,
+    state,
+    rebate,
+  };
+};
+
     });
 
     const collectIncomeBody = (modal) => ({
