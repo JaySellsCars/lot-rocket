@@ -1399,6 +1399,41 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+// ============================================
+// LAUNCH HARD-HIDE (Video + Design Studio)
+// ============================================
+(function launchHideStudios() {
+  const SELECTORS = [
+    "#designStudio",
+    ".designStudio",
+    ".design-studio",
+    "[data-panel='designStudio']",
+    "[data-panel='design-studio']",
+
+    "#videoScript",
+    ".videoScript",
+    ".video-script",
+    "[data-panel='videoScript']",
+    "[data-panel='video-script']"
+  ];
+
+  const hide = (el) => {
+    if (!el || el.dataset.hiddenByLaunch) return;
+    el.style.display = "none";
+    el.setAttribute("aria-hidden", "true");
+    el.dataset.hiddenByLaunch = "1";
+  };
+
+  const sweep = () => {
+    SELECTORS.forEach(sel => {
+      document.querySelectorAll(sel).forEach(hide);
+    });
+  };
+
+  // Run immediately + safety re-run
+  sweep();
+  setTimeout(sweep, 150);
+})();
 
 }); // ✅ CLOSE DOMContentLoaded (ONE COPY ONLY)
 
