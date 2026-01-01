@@ -1353,17 +1353,8 @@ const r = await fetch(cfg.url, {
           }),
         });
 
-
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url,
-            labelOverride: vehicleLabelInput?.value?.trim?.() || "",
-            priceOverride: priceInfoInput?.value?.trim?.() || "",
-          }),
-        });
-
         const data = await res.json().catch(() => ({}));
+
         if (!res.ok) {
           const msg = data?.rawMessage || data?.details || data?.message || data?.error || `HTTP ${res.status}`;
           throw new Error(msg);
