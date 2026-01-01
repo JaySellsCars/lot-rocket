@@ -196,28 +196,36 @@ function wireAutoGrowInModal(modal) {
       aicar: "carModal",
     };
 
-    function openSideModal(modalId) {
-      modalId = String(modalId || "").replace(/^#/, "").trim();
-      if (!modalId) return;
+function openSideModal(modalId) {
+  modalId = String(modalId || "").replace(/^#/, "").trim();
+  if (!modalId) return;
 
-      const modal = DOC.getElementById(modalId);
-      if (!modal) {
-        warn("❌ MODAL NOT FOUND:", modalId);
-        return;
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  modal.classList.add("open");
+
+  // ✅ AUTO-GROW ALL TEXTAREAS WHEN MODAL OPENS
+  setTimeout(() => {
+    modal.querySelectorAll("textarea").forEach((ta) => {
+      ta.style.overflow = "hidden";
+      ta.style.resize = "none";
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight + 2, 420) + "px";
+
+      // live resize while typing
+      if (!ta.dataset.autogrow) {
+        ta.dataset.autogrow = "true";
+        ta.addEventListener("input", () => {
+          ta.style.height = "auto";
+          ta.style.height = Math.min(ta.scrollHeight + 2, 420) + "px";
+        });
       }
-
-      modal.classList.remove("hidden");
-      modal.removeAttribute("hidden");
-      modal.setAttribute("aria-hidden", "false");
-      modal.classList.add("open");
-
-      const focusEl = modal.querySelector("textarea, input, button");
-      if (focusEl) {
-        try {
-          focusEl.focus();
-        } catch {}
-      }
-    }
+    });
+  }, 0);
+}
 
     function closeSideModal(modalEl) {
       if (!modalEl) return;
