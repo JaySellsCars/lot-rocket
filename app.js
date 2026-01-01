@@ -1954,3 +1954,48 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+// ...all your existing code above...
+
+// ============================================
+// LAUNCH HARD-HIDE (FINAL SAFETY NET)
+// ============================================
+(function launchHideStudios() {
+  const SELECTORS = [
+    "#designStudio",
+    ".designStudio",
+    ".design-studio",
+    "[data-panel='designStudio']",
+    "[data-panel='design-studio']",
+    "#videoScript",
+    ".videoScript",
+    ".video-script",
+    "[data-panel='videoScript']",
+    "[data-panel='video-script']",
+  ];
+
+  const HIDE_TEXT = ["video script", "script generator", "design studio"];
+
+  const hide = (el) => {
+    if (!el || el.dataset?.hiddenByLaunch) return;
+    el.style.display = "none";
+    el.setAttribute("aria-hidden", "true");
+    el.dataset.hiddenByLaunch = "1";
+  };
+
+  const sweep = () => {
+    SELECTORS.forEach(sel =>
+      document.querySelectorAll(sel).forEach(hide)
+    );
+
+    document.querySelectorAll("div, section").forEach(el => {
+      const t = (el.textContent || "").toLowerCase();
+      if (HIDE_TEXT.some(k => t.includes(k)) && el.offsetHeight > 80) {
+        hide(el);
+      }
+    });
+  };
+
+  sweep();
+  setTimeout(sweep, 100);
+  setTimeout(sweep, 300);
+})();
