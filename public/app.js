@@ -1249,38 +1249,46 @@ function runUiHiderSafe() {
 }
 
 // ==================================================
-// FINAL INIT — MUST BE LAST
+// FINAL INIT — MUST BE LAST (FRONT: public/app.js)
+// PUT THIS INSIDE: document.addEventListener("DOMContentLoaded", () => { ... HERE ... });
 // ==================================================
 try {
-  // Restore photos
-  if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
+  // Restore Step 1 photos (if any)
+  if (STORE?.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
-  if (STORE.holdingZonePhotos?.length) {
+  // Restore holding zone + tuner (if any)
+  if (STORE?.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto =
-      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
 
     if (typeof renderHoldingZone === "function") renderHoldingZone();
-    if (typeof loadPhotoTuner === "function") loadPhotoTuner(STORE.activeHoldingPhoto);
+
+    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
+      loadPhotoTuner(STORE.activeHoldingPhoto);
+    }
   }
 
-  // Core wiring
+  // Core render / wiring (guarded)
   if (typeof renderSocialStrip === "function") renderSocialStrip();
+
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
+
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
   if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 
-
-
   // UI hider (once)
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
     window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-    runUiHiderSafe();
-    setTimeout(runUiHiderSafe, 250);
-    setTimeout(runUiHiderSafe, 1000);
+
+    if (typeof runUiHiderSafe === "function") {
+      runUiHiderSafe();
+      setTimeout(runUiHiderSafe, 250);
+      setTimeout(runUiHiderSafe, 1000);
+    }
   }
 
   // Auto-grow textareas
@@ -1288,8 +1296,10 @@ try {
     setTimeout(() => autoGrowAllTextareas(document), 50);
   }
 
+  console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
 
-}); // ✅ CLOSE DOMContentLoaded
+// ✅ THE ONLY DOMContentLoaded CLOSER (KEEP EXACTLY ONE OF THESE IN THE FILE)
+}); // END DOMContentLoaded
