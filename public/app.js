@@ -1,3 +1,5 @@
+console.log("START FILE");
+
 // ==================================================
 // HARD KILL: prevent older cached app.js from running
 // (MUST BE AT VERY TOP OF public/app.js — FIRST EXECUTABLE JS)
@@ -1290,3 +1292,4 @@ try {
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
+console.log("END FILE");
