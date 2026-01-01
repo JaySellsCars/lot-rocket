@@ -1,44 +1,4 @@
-// TOP OF public/app.js (FIRST LINE)
-(function () {
-  const V = "10001";
-  console.log("🧨 APPJS TOP MARKER LOADED — v", V, Date.now());
 
-  // block double-load / mixed cache versions
-  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) return;
-  if (window.__LOTROCKET_APPJS_VERSION__ === V) return;
-  window.__LOTROCKET_APPJS_VERSION__ = V;
-})();
-
-// SAFE BOOT (NO CRASH)
-document.addEventListener("DOMContentLoaded", () => {
-  try {
-    if (window.__LOTROCKET_BOOTED__) return;
-    window.__LOTROCKET_BOOTED__ = true;
-
-    const DOC = document;
-    const $ = (id) => DOC.getElementById(id);
-    const q = (sel, root = DOC) => root.querySelector(sel);
-    const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
-
-    // minimal STORE so UI wiring can't crash
-    window.STORE = window.STORE || {};
-    const STORE = window.STORE;
-
-    // basic normalizers to prevent undefined errors
-    STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-    STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
-    STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-
-    // click-safe wiring (won't throw if ids missing)
-    on($("sendToDesignStudio"), "click", () => console.log("🟢 sendToDesignStudio click"));
-    on($("sendToSocialReady"), "click", () => console.log("🟢 sendToSocialReady click"));
-    on($("autoEnhanceBtn"), "click", () => console.log("🟢 autoEnhanceBtn click"));
-
-    console.log("✅ APP BOOT OK — v10001");
-  } catch (e) {
-    console.error("❌ BOOT FAILED", e);
-  }
-});
 
 
 // ==================================================
@@ -75,6 +35,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = (id) => DOC.getElementById(id);
   const log = (...a) => console.log(...a);
   const warn = (...a) => console.warn(...a);
+// ==================================================
+// AUTO-GROW (GLOBAL DELEGATE) — FIXES ALL MODALS
+// ==================================================
+DOC.addEventListener(
+  "input",
+  (e) => {
+    const ta = e.target;
+    if (!ta) return;
+    if ((ta.tagName || "").toUpperCase() !== "TEXTAREA") return;
+    // only grow textareas inside your side tools/modals
+    if (!ta.closest(".side-modal")) return;
+    autoGrowTextarea(ta);
+  },
+  true
+);
 
   // ================================
   // CONSTANTS + SINGLE STORE
@@ -152,11 +127,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function autoGrowTextarea(el) {
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = (el.scrollHeight || 0) + "px";
-  }
+function autoGrowTextarea(el, cap = 520) {
+  if (!el) return;
+  if ((el.tagName || "").toUpperCase() !== "TEXTAREA") return;
+
+  el.style.setProperty("overflow", "hidden", "important");
+  el.style.setProperty("resize", "none", "important");
+
+  // reset then grow
+  el.style.setProperty("height", "auto", "important");
+  const next = Math.min((el.scrollHeight || 0) + 2, cap);
+  el.style.setProperty("height", next + "px", "important");
+}
+
   function autoGrowAllTextareas(root = document) {
     root.querySelectorAll("textarea").forEach(autoGrowTextarea);
   }
@@ -214,28 +197,36 @@ function wireAutoGrowInModal(modal) {
       aicar: "carModal",
     };
 
-    function openSideModal(modalId) {
-      modalId = String(modalId || "").replace(/^#/, "").trim();
-      if (!modalId) return;
+function openSideModal(modalId) {
+  modalId = String(modalId || "").replace(/^#/, "").trim();
+  if (!modalId) return;
 
-      const modal = DOC.getElementById(modalId);
-      if (!modal) {
-        warn("❌ MODAL NOT FOUND:", modalId);
-        return;
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  modal.classList.add("open");
+
+  // ✅ AUTO-GROW ALL TEXTAREAS WHEN MODAL OPENS
+  setTimeout(() => {
+    modal.querySelectorAll("textarea").forEach((ta) => {
+      ta.style.overflow = "hidden";
+      ta.style.resize = "none";
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight + 2, 420) + "px";
+
+      // live resize while typing
+      if (!ta.dataset.autogrow) {
+        ta.dataset.autogrow = "true";
+        ta.addEventListener("input", () => {
+          ta.style.height = "auto";
+          ta.style.height = Math.min(ta.scrollHeight + 2, 420) + "px";
+        });
       }
-
-      modal.classList.remove("hidden");
-      modal.removeAttribute("hidden");
-      modal.setAttribute("aria-hidden", "false");
-      modal.classList.add("open");
-
-      const focusEl = modal.querySelector("textarea, input, button");
-      if (focusEl) {
-        try {
-          focusEl.focus();
-        } catch {}
-      }
-    }
+    });
+  }, 0);
+}
 
     function closeSideModal(modalEl) {
       if (!modalEl) return;
@@ -522,6 +513,8 @@ function wireObjectionCoach() {
     });
 
     modals.forEach((modal) => {
+      wireAutoGrowInModal(modal);
+
       if (modal.dataset.aiWired === "true") return;
       modal.dataset.aiWired = "true";
 
