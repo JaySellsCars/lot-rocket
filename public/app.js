@@ -550,7 +550,7 @@ const collectPaymentBody = (modal) => {
   };
 };
 
-    });
+
 
     const collectIncomeBody = (modal) => ({
       mtd: num(pickInside(modal, ["#incomeMtd", "input[name='mtd']", "#mtd"])?.value),
