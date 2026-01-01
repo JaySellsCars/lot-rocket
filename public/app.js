@@ -708,11 +708,12 @@ payment_calc: {
 const bodyObj = (typeof cfg.body === "function") ? cfg.body() : cfg.body;
 if (!bodyObj) return;
 
-            const r = await fetch(cfg.url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(cfg.body),
-            });
+const r = await fetch(cfg.url, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(bodyObj),
+});
+
 
             const data = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error(data?.message || data?.error || `HTTP ${r.status}`);
