@@ -119,6 +119,33 @@ document.addEventListener("DOMContentLoaded", () => {
   function autoGrowAllTextareas(root = document) {
     root.querySelectorAll("textarea").forEach(autoGrowTextarea);
   }
+// ==================================================
+// AUTO-GROW (AUTHORITATIVE) — ONE SOURCE
+// ==================================================
+function autoGrowTextarea(el, cap = 420) {
+  if (!el) return;
+  if ((el.tagName || "").toUpperCase() !== "TEXTAREA") return;
+
+  el.style.overflow = "hidden";
+  el.style.resize = "none";
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight + 2, cap) + "px";
+}
+
+function wireAutoGrowInModal(modal) {
+  if (!modal) return;
+  const taList = modal.querySelectorAll("textarea");
+  taList.forEach((ta) => {
+    // initial grow
+    autoGrowTextarea(ta);
+
+    // prevent double binding
+    if (ta.dataset.lrGrowWired === "true") return;
+    ta.dataset.lrGrowWired = "true";
+
+    ta.addEventListener("input", () => autoGrowTextarea(ta));
+  });
+}
 
   // ==================================================
   // SIDE TOOLS (FLOATING MODALS) — SINGLE SOURCE ✅
