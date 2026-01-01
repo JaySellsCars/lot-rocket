@@ -1298,6 +1298,7 @@ try {
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
+if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 
   // Step 4: Button labels (safe re-run)
   if (typeof updateStep2ButtonLabels === "function") {
