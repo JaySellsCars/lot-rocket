@@ -1230,93 +1230,77 @@ objection_coach: {
     };
   }
 
-  // ==================================================
-  // STEP 2 — BUTTON LABEL STACKER (ONE COPY)
-  // ==================================================
-  function updateStep2ButtonLabels() {
-    try {
-      DOC.querySelectorAll(".regen-btn").forEach((btn) => {
-        const text = String(btn.textContent || "").toLowerCase().trim();
+ // ==================================================
+// STEP 2 — BUTTON LABEL STACKER (ONE COPY)
+// ==================================================
+function updateStep2ButtonLabels() {
+  try {
+    document.querySelectorAll(".regen-btn").forEach((btn) => {
+      const text = String(btn.textContent || "").toLowerCase().trim();
 
-        if (text.includes("new") && text.includes("post")) {
-          btn.innerHTML = "<span>New</span><span>Post</span>";
-          return;
-        }
-
-        if (text.includes("remove") && text.includes("emoji")) {
-          btn.innerHTML = "<span>No</span><span>Emoji</span>";
-        }
-      });
-    } catch (e) {
-      console.warn("⚠️ updateStep2ButtonLabels error (non-fatal)", e);
-    }
-  }
-
-  // ==================================================
-  // UI HIDER SAFE (ONE COPY)
-  // ==================================================
-  function runUiHiderSafe() {
-    try {
-      if (typeof installHideNextVersionUI === "function") {
-        installHideNextVersionUI();
-        console.log("✅ UI HIDER RAN");
-      } else {
-        // optional: keep quiet, but this helps in dev
-        // console.warn("⚠️ installHideNextVersionUI not found");
+      if (text.includes("new") && text.includes("post")) {
+        btn.innerHTML = "<span>New</span><span>Post</span>";
+      } else if (text.includes("remove") && text.includes("emoji")) {
+        btn.innerHTML = "<span>No</span><span>Emoji</span>";
       }
-    } catch (e) {
-      console.warn("⚠️ UI HIDER ERROR (non-fatal)", e);
-    }
+    });
+  } catch (e) {
+    console.warn("⚠️ updateStep2ButtonLabels error", e);
   }
+}
 
 // ==================================================
-// FINAL INIT ✅ MUST BE LAST
+// UI HIDER (SAFE)
+// ==================================================
+function runUiHiderSafe() {
+  try {
+    if (typeof installHideNextVersionUI === "function") {
+      installHideNextVersionUI();
+      console.log("✅ UI HIDER RAN");
+    }
+  } catch (e) {
+    console.warn("⚠️ UI HIDER ERROR", e);
+  }
+}
+
+// ==================================================
+// FINAL INIT — MUST BE LAST
 // ==================================================
 try {
-  // Step 1: Restore previously selected photos
+  // Restore photos
   if (STORE.lastBoostPhotos?.length && typeof renderStep1Photos === "function") {
     renderStep1Photos(STORE.lastBoostPhotos);
   }
 
-  // Step 2: Restore holding zone + active photo
   if (STORE.holdingZonePhotos?.length) {
     STORE.activeHoldingPhoto =
-      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0] || "";
+      STORE.activeHoldingPhoto || STORE.holdingZonePhotos[0];
 
-    if (typeof renderHoldingZone === "function") {
-      renderHoldingZone();
-    }
-
-    if (STORE.activeHoldingPhoto && typeof loadPhotoTuner === "function") {
-      loadPhotoTuner(STORE.activeHoldingPhoto);
-    }
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+    if (typeof loadPhotoTuner === "function") loadPhotoTuner(STORE.activeHoldingPhoto);
   }
 
-  // Step 3: Core render / wiring
+  // Core wiring
   if (typeof renderSocialStrip === "function") renderSocialStrip();
   if (typeof wireCalculatorPad === "function") wireCalculatorPad();
   if (typeof wireIncomeCalcDirect === "function") wireIncomeCalcDirect();
   if (typeof wireAiModals === "function") wireAiModals();
   if (typeof wireSideTools === "function") wireSideTools();
-if (typeof wireObjectionCoach === "function") wireObjectionCoach();
+  if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 
-  // Step 4: Button labels (safe re-run)
-  if (typeof updateStep2ButtonLabels === "function") {
-    updateStep2ButtonLabels();
-    setTimeout(updateStep2ButtonLabels, 150);
-  }
+  // Button text refresh
+  updateStep2ButtonLabels();
+  setTimeout(updateStep2ButtonLabels, 150);
 
-  // Step 5: UI hider (run once globally)
+  // UI hider (once)
   if (!window.__LOTROCKET_UI_HIDER_CALLED__) {
     window.__LOTROCKET_UI_HIDER_CALLED__ = true;
-    if (typeof runUiHiderSafe === "function") {
-      runUiHiderSafe();
-      setTimeout(runUiHiderSafe, 250);
-      setTimeout(runUiHiderSafe, 1000);
-    }
+    runUiHiderSafe();
+    setTimeout(runUiHiderSafe, 250);
+    setTimeout(runUiHiderSafe, 1000);
   }
 
-  // Step 6: Auto-grow textareas
+  // Auto-grow textareas
   if (typeof autoGrowAllTextareas === "function") {
     setTimeout(() => autoGrowAllTextareas(document), 50);
   }
@@ -1325,14 +1309,3 @@ if (typeof wireObjectionCoach === "function") wireObjectionCoach();
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-
-
-
-}); // CLOSE DOMContentLoaded
-
-// ==================================================
-// 🧨 EOF MARKER — if you don't see this in Sources, you're not serving the file you edited
-// ==================================================
-console.log("🧨 EOF MARKER — app.js loaded:", window.__LOTROCKET_APPJS_VERSION__);
-
-
