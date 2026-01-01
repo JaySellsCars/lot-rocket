@@ -270,6 +270,8 @@ function wireObjectionCoach() {
 
   const autoGrow = (el) => {
     if (!el) return;
+   wireAutoGrowInModal(modal);
+
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight + 2, 420) + "px"; // cap so it doesn't go insane
   };
