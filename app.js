@@ -8,6 +8,7 @@
  * ✅ Step 2 payload always includes: description (string) + posts (string[]) + named fields
  * ✅ HARD-BAN URL-only “posts” (sanitizeCopy kills URL-only + strips URLs)
  * ✅ PROMPT LIBRARY DEDUPED (one source of truth, no duplicate const names)
+ * ✅ AUTH SCOPED: static + public helpers do NOT require Authorization
  */
 
 require("dotenv").config();
@@ -44,7 +45,47 @@ const OPENAI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static("public")); // ✅ PUBLIC ASSETS — NEVER AUTH-GATED
+
+// -------------------- Auth (SCOPED) --------------------
+// ✅ Only protect paid/AI routes. DO NOT block static files or public helpers.
+function requireAuth(req, res, next) {
+  const auth = req.headers.authorization || "";
+  if (!auth) {
+    // 401 is correct. 402 causes confusing browser behavior.
+    return res.status(401).send("bad request: missing required Authorization header");
+  }
+  return next();
+}
+
+// ✅ PUBLIC API (NO AUTH) — keep these open
+const PUBLIC_API_PREFIXES = new Set([
+  "/api/payment-helper",
+  "/api/income-helper",
+  "/api/proxy-image",
+  "/api/scrape",
+  "/api/zip",
+]);
+
+// ✅ AUTH GATE (scoped) — only applies to /api/* EXCEPT the public ones above
+app.use("/api", (req, res, next) => {
+  // allow listed public endpoints
+  for (const p of PUBLIC_API_PREFIXES) {
+    if (req.path === p || req.path.startsWith(p + "/")) return next();
+  }
+  // everything else under /api requires auth
+  return requireAuth(req, res, next);
+});
+
+// ======================================================
+// PROMPT LIBRARY (GLOBAL - SINGLE SOURCE OF TRUTH)
+// ======================================================
+// NOTE:
+// - We keep ONE prompt library object.
+// - Social kit uses BASE + SOCIAL_MASTER + SOCIAL_JSON_CONTRACT.
+// - /api/new-post uses BASE + PLATFORM[platformKey].
+// ======================================================
+
 
 // ======================================================
 // PROMPT LIBRARY (GLOBAL - SINGLE SOURCE OF TRUTH)
