@@ -683,21 +683,17 @@ objection_coach: {
               },
 payment_calc: {
   url: "/api/payment-helper",
-  body: (() => {
+  body: () => {
     try {
       return collectPaymentBody(modal);
     } catch (e) {
-      // stop request if validation fails
-      return null;
+      return null; // abort
     }
-  })(),
+  },
   pick: (data) =>
-    data?.breakdownText ||
-    data?.result ||
-    data?.text ||
-    data?.answer ||
-    "",
+    data?.breakdownText || data?.result || data?.text || data?.answer || "",
 },
+
 
               },
               income_calc: {
@@ -709,6 +705,8 @@ payment_calc: {
 
             const cfg = routeMap[action];
             if (!cfg) throw new Error(`No backend route mapped for action: ${action}`);
+const bodyObj = (typeof cfg.body === "function") ? cfg.body() : cfg.body;
+if (!bodyObj) return;
 
             const r = await fetch(cfg.url, {
               method: "POST",
