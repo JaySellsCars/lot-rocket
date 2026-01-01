@@ -827,12 +827,23 @@
       <h3>Workflow Builder</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
       <form>
-        <textarea data-ai-input placeholder="Describe the sales situation…"></textarea>
+        <!-- ✅ INPUT (auto-grow ready) -->
+        <textarea
+          id="workflowInput"
+          class="ai-input"
+          data-ai-input
+          placeholder="Describe the sales situation…"
+          rows="3"
+        ></textarea>
+
         <button type="button" data-ai-action="workflow_builder">Build Workflow</button>
       </form>
-      <div id="workflowOutput" data-ai-output></div>
+
+      <!-- ✅ OUTPUT -->
+      <div id="workflowOutput" class="ai-output" data-ai-output></div>
     </div>
   </div>
 </section>
@@ -843,12 +854,23 @@
       <h3>AI Message Builder</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
       <form>
-        <textarea data-ai-input placeholder="Describe the message you want to send…"></textarea>
+        <!-- ✅ INPUT (auto-grow ready) -->
+        <textarea
+          id="messageInput"
+          class="ai-input"
+          data-ai-input
+          placeholder="Describe the message you want to send…"
+          rows="3"
+        ></textarea>
+
         <button type="button" data-ai-action="message_builder">Build Message</button>
       </form>
-      <div id="messageOutput" data-ai-output></div>
+
+      <!-- ✅ OUTPUT -->
+      <div id="messageOutput" class="ai-output" data-ai-output></div>
     </div>
   </div>
 </section>
@@ -859,12 +881,23 @@
       <h3>Ask AI</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
       <form>
-        <textarea data-ai-input placeholder="Ask anything…"></textarea>
+        <!-- ✅ INPUT (auto-grow ready) -->
+        <textarea
+          id="askInput"
+          class="ai-input"
+          data-ai-input
+          placeholder="Ask anything…"
+          rows="3"
+        ></textarea>
+
         <button type="button" data-ai-action="ask_ai">Ask AI</button>
       </form>
-      <div id="askOutput" data-ai-output></div>
+
+      <!-- ✅ OUTPUT -->
+      <div id="askOutput" class="ai-output" data-ai-output></div>
     </div>
   </div>
 </section>
@@ -875,15 +908,27 @@
       <h3>AI Car Expert</h3>
       <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
+
     <div class="side-modal-body">
       <form>
-        <textarea data-ai-input placeholder="Ask about a vehicle…"></textarea>
+        <!-- ✅ INPUT (auto-grow ready) -->
+        <textarea
+          id="carInput"
+          class="ai-input"
+          data-ai-input
+          placeholder="Ask about a vehicle…"
+          rows="3"
+        ></textarea>
+
         <button type="button" data-ai-action="car_expert">Ask Car Expert</button>
       </form>
-      <div id="carOutput" data-ai-output></div>
+
+      <!-- ✅ OUTPUT -->
+      <div id="carOutput" class="ai-output" data-ai-output></div>
     </div>
   </div>
 </section>
+
 
 <section id="imageModal" class="side-modal hidden" aria-hidden="true">
   <div class="side-modal-content">
