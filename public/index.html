@@ -7,16 +7,11 @@
     - ONE app.js include only
 -->
 
-
 <!DOCTYPE html>
-<!-- DEPLOY_MARKER: 9999-ALPHA -->
-<script src="/app.js?v=10001" defer></script>
-
 <html lang="en">
-
-
-
 <head>
+  <!-- DEPLOY_MARKER: 10001-ALPHA -->
+
   <!-- KONVA (Design Studio 3.x) -->
   <script src="https://unpkg.com/konva/konva.min.js"></script>
 
@@ -32,7 +27,12 @@
   <meta name="theme-color" content="#111827" />
 
   <!-- ✅ ONE stylesheet (LOCKED) -->
-  <link rel="stylesheet" href="/style.css?v=999" />
+  <link rel="stylesheet" href="/style.css?v=10001" />
+
+  <!-- ✅ ONE app.js include ONLY (MUST BE INSIDE <head>, LAST) -->
+  <script src="/app.js?v=10001" defer></script>
+</head>
+
 
  
 <body class="dark-theme">
