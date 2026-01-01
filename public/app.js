@@ -56,9 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
   STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
   STORE.creativePhotos = Array.isArray(STORE.creativePhotos) ? STORE.creativePhotos : [];
 
-  // ==================================================
-  // ...rest of your app.js continues here
-  // ==================================================
+
 
 
 
@@ -1290,12 +1288,8 @@ try {
     setTimeout(() => autoGrowAllTextareas(document), 50);
   }
 
-  console.log("✅ FINAL INIT COMPLETE");
 } catch (e) {
   console.error("❌ FINAL INIT FAILED", e);
 }
-console.log("END FILE");
-}); // ✅ CLOSE DOMContentLoaded
-console.log("BOTTOM OF FILE");
 
-}); // CLOSE DOMContentLoaded
+}); // ✅ CLOSE DOMContentLoaded
