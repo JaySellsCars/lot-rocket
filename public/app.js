@@ -1293,3 +1293,5 @@ try {
   console.error("❌ FINAL INIT FAILED", e);
 }
 console.log("END FILE");
+}); // ✅ CLOSE DOMContentLoaded
+
