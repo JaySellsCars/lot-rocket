@@ -1185,3 +1185,49 @@ main > section:nth-of-type(3) > div > div:first-child {
   overflow: hidden !important;
   resize: none !important;
 }
+/* ================================
+   LAUNCH HIDE — Design Studio + Video Bottom + 4 Buttons
+   (Hide UI without removing DOM)
+   ================================ */
+
+/* 1) Any section/area named like design studio / canvas studio / video tools */
+#designStudio,
+#designStudioSection,
+#designStudioWrap,
+#designStudioPanel,
+#canvasStudio,
+#canvasStudioSection,
+#canvasStudioWrap,
+#videoCreator,
+#videoCreatorSection,
+#videoTools,
+#videoToolsBottom,
+#videoBottomArea,
+#videoBottomBar,
+#videoBottomPanel {
+  display: none !important;
+}
+
+/* 2) The 4 buttons (common IDs/classes + data attributes) */
+#btnImageGen,
+#btnVideoGen,
+#btnCanvasStudio,
+#btnDesignStudio,
+#imageGenBtn,
+#videoGenBtn,
+#canvasStudioBtn,
+#designStudioBtn,
+.image-gen-btn,
+.video-gen-btn,
+.canvas-studio-btn,
+.design-studio-btn,
+[data-tool="image-gen"],
+[data-tool="video-gen"],
+[data-tool="canvas-studio"],
+[data-tool="design-studio"],
+[data-action="image-gen"],
+[data-action="video-gen"],
+[data-action="open-canvas-studio"],
+[data-action="open-design-studio"] {
+  display: none !important;
+}
