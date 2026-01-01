@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==================================================
   // ...rest of your app.js continues here
   // ==================================================
-});
+
 
 
   // ==================================================
@@ -1298,3 +1298,4 @@ console.log("END FILE");
 }); // ✅ CLOSE DOMContentLoaded
 console.log("BOTTOM OF FILE");
 
+}); // CLOSE DOMContentLoaded
