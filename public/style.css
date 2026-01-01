@@ -1283,3 +1283,25 @@ main > section:nth-of-type(3) > div > div:first-child {
 [data-tool="studio"] {
   display: none !important;
 }
+/* ============================================
+   LAUNCH HIDE — Video Script + Design Studio + Canvas Overlay
+   (DOM stays, nothing breaks)
+   ============================================ */
+
+/* Bottom Video Output Display */
+#videoOutputBottom,
+section#videoOutputBottom.video-output-bottom {
+  display: none !important;
+}
+
+/* Design Studio (Konva) overlay */
+#designStudioOverlay,
+#designStudioOverlay.modal-overlay {
+  display: none !important;
+}
+
+/* Canvas Creative Studio (Fabric) overlay */
+#creativeStudioOverlay,
+#creativeStudioOverlay.creative-overlay {
+  display: none !important;
+}
