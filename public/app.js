@@ -111,11 +111,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function autoGrowTextarea(el) {
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = (el.scrollHeight || 0) + "px";
-  }
+function autoGrowTextarea(el, cap = 520) {
+  if (!el) return;
+  if ((el.tagName || "").toUpperCase() !== "TEXTAREA") return;
+
+  el.style.setProperty("overflow", "hidden", "important");
+  el.style.setProperty("resize", "none", "important");
+
+  // reset then grow
+  el.style.setProperty("height", "auto", "important");
+  const next = Math.min((el.scrollHeight || 0) + 2, cap);
+  el.style.setProperty("height", next + "px", "important");
+}
+
   function autoGrowAllTextareas(root = document) {
     root.querySelectorAll("textarea").forEach(autoGrowTextarea);
   }
