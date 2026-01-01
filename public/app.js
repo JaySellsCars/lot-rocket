@@ -466,37 +466,35 @@ function wireObjectionCoach() {
           e.stopPropagation();
 
           const action = String(btn.getAttribute("data-ai-action") || "").trim();
-// ✅ INPUT (force textarea when available) — CLEAN + SINGLE SOURCE
+// ✅ INPUT (must be THIS modal's textarea)
 let input =
   modal.querySelector("[data-ai-input]") ||
-  modal.querySelector("textarea") ||
-  modal.querySelector("input[type='text']");
+  modal.querySelector("textarea");
 
-// ✅ If [data-ai-input] accidentally points to an <input>, prefer any textarea in the modal
 if (input && input.tagName !== "TEXTAREA") {
-  const ta = modal.querySelector("textarea");
-  if (ta) input = ta;
+  input = modal.querySelector("textarea");
 }
 
-// ✅ Auto-grow ONLY works on textarea (inputs can't grow height)
 const autoGrow = (el) => {
   if (!el) return;
   el.style.overflow = "hidden";
   el.style.resize = "none";
-  el.style.height = "auto";
-  el.style.height = Math.min((el.scrollHeight || 0) + 2, 420) + "px";
+  el.style.height = "0px";               // 🔥 critical: force reflow
+  el.style.height = Math.min(el.scrollHeight + 2, 420) + "px";
 };
 
 if (input && input.tagName === "TEXTAREA") {
-  // initial grow (immediate, like Objection Coach)
+  // ✅ immediate grow like objection coach
   autoGrow(input);
 
-  // prevent double-binding
+  // ✅ bind once
   if (input.dataset.lrGrowWired !== "true") {
     input.dataset.lrGrowWired = "true";
     input.addEventListener("input", () => autoGrow(input));
+    input.addEventListener("focus", () => autoGrow(input));
   }
 }
+
 
 
 // ✅ If [data-ai-input] accidentally points to an <input>, prefer any textarea in the modal
