@@ -1,3 +1,44 @@
+// TOP OF public/app.js (FIRST LINE)
+(function () {
+  const V = "10001";
+  console.log("🧨 APPJS TOP MARKER LOADED — v", V, Date.now());
+
+  // block double-load / mixed cache versions
+  if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) return;
+  if (window.__LOTROCKET_APPJS_VERSION__ === V) return;
+  window.__LOTROCKET_APPJS_VERSION__ = V;
+})();
+
+// SAFE BOOT (NO CRASH)
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    if (window.__LOTROCKET_BOOTED__) return;
+    window.__LOTROCKET_BOOTED__ = true;
+
+    const DOC = document;
+    const $ = (id) => DOC.getElementById(id);
+    const q = (sel, root = DOC) => root.querySelector(sel);
+    const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+
+    // minimal STORE so UI wiring can't crash
+    window.STORE = window.STORE || {};
+    const STORE = window.STORE;
+
+    // basic normalizers to prevent undefined errors
+    STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+    STORE.lastBoostPhotos = Array.isArray(STORE.lastBoostPhotos) ? STORE.lastBoostPhotos : [];
+    STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+
+    // click-safe wiring (won't throw if ids missing)
+    on($("sendToDesignStudio"), "click", () => console.log("🟢 sendToDesignStudio click"));
+    on($("sendToSocialReady"), "click", () => console.log("🟢 sendToSocialReady click"));
+    on($("autoEnhanceBtn"), "click", () => console.log("🟢 autoEnhanceBtn click"));
+
+    console.log("✅ APP BOOT OK — v10001");
+  } catch (e) {
+    console.error("❌ BOOT FAILED", e);
+  }
+});
 
 
 // ==================================================
