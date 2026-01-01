@@ -1259,3 +1259,27 @@ main > section:nth-of-type(3) > div > div:first-child {
 .canvas-launcher {
   display: none !important;
 }
+/* ============================================
+   HIDE VIDEO SCRIPT + DESIGN STUDIO (LAUNCH MODE)
+   ============================================ */
+
+/* Video Script / Script Generator */
+.video-script,
+.videoScript,
+#videoScript,
+.video-script-container,
+.script-generator,
+[data-tool="video-script"],
+[data-tool="script-generator"] {
+  display: none !important;
+}
+
+/* Design Studio / Creative Studio */
+.design-studio,
+.designStudio,
+#designStudio,
+.design-studio-container,
+[data-tool="design-studio"],
+[data-tool="studio"] {
+  display: none !important;
+}
