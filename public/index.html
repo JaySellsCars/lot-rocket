@@ -1,18 +1,110 @@
-<!-- /public/index.html  (REPLACE ENTIRE FILE) -->
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lot Rocket</title>
-  <link rel="stylesheet" href="/style.css?v=10001" />
-</head>
-<body>
-  <div id="app" style="padding:24px;font-family:system-ui">
-    <h1>✅ Lot Rocket is Live</h1>
-    <p>If you see this, index.html is serving.</p>
-  </div>
+// /public/app.js  (REPLACE ENTIRE FILE)
+// FULL RESTORE (SAFE) — boots UI + wires core buttons without crashing
+(() => {
+  const V = "10001";
+  console.log("🧨 APPJS BOOT OK — v" + V);
 
-  <script src="/app.js?v=10001"></script>
-</body>
-</html>
+  const DOC = document;
+  const $ = (id) => DOC.getElementById(id);
+  const q = (sel, root = DOC) => root.querySelector(sel);
+  const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
+
+  // ---------- STORE ----------
+  const STORE = (window.STORE = window.STORE || {});
+  const asArr = (v) => (Array.isArray(v) ? v : []);
+  STORE.lastBoostPhotos = asArr(STORE.lastBoostPhotos);
+  STORE.holdingZonePhotos = asArr(STORE.holdingZonePhotos);
+  STORE.socialReadyPhotos = asArr(STORE.socialReadyPhotos);
+
+  // ---------- SAFE HELPERS ----------
+  const safe = (name, fn, ...args) => {
+    try {
+      if (typeof fn === "function") return fn(...args);
+      return;
+    } catch (e) {
+      console.error("❌", name, e);
+    }
+  };
+
+  const show = (el) => { if (el) { el.classList.remove("hidden"); el.setAttribute("aria-hidden", "false"); } };
+  const hide = (el) => { if (el) { el.classList.add("hidden"); el.setAttribute("aria-hidden", "true"); } };
+
+  function wireCloseButtons() {
+    DOC.querySelectorAll("[data-close]").forEach((btn) => {
+      on(btn, "click", () => hide(btn.closest(".side-modal,.modal,[role='dialog']")));
+    });
+  }
+
+  function wireDropZone() {
+    const dz = $("photoDropZone");
+    const inp = $("photoFileInput");
+    if (!dz || !inp) return;
+
+    on(dz, "click", () => inp.click());
+
+    const handleFiles = (files) => {
+      const arr = Array.from(files || []).filter(Boolean);
+      if (!arr.length) return;
+      // just show thumbnails for now (no crash)
+      const grid = $("creativeThumbGrid");
+      if (!grid) return;
+      arr.forEach((f) => {
+        const url = URL.createObjectURL(f);
+        const wrap = DOC.createElement("div");
+        wrap.className = "thumb";
+        wrap.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:10px" />`;
+        grid.appendChild(wrap);
+        STORE.holdingZonePhotos.push(url);
+      });
+    };
+
+    on(inp, "change", () => handleFiles(inp.files));
+    on(dz, "dragover", (e) => { e.preventDefault(); dz.classList.add("drag"); });
+    on(dz, "dragleave", () => dz.classList.remove("drag"));
+    on(dz, "drop", (e) => {
+      e.preventDefault();
+      dz.classList.remove("drag");
+      handleFiles(e.dataTransfer && e.dataTransfer.files);
+    });
+  }
+
+  function wireBasicButtons() {
+    on($("boostBtn"), "click", () => console.log("🟢 Boost clicked"));
+    on($("newPostBtn"), "click", () => console.log("🟢 New Post"));
+    on($("copyPostBtn"), "click", () => console.log("🟢 Copy Post"));
+    on($("newTextBtn"), "click", () => console.log("🟢 New Text"));
+    on($("copyTextBtn"), "click", () => console.log("🟢 Copy Text"));
+
+    on($("autoEnhanceBtn"), "click", () => console.log("🟢 Auto Enhance"));
+    on($("resetEditsBtn"), "click", () => console.log("🟢 Reset Edits"));
+
+    on($("sendToDesignStudio"), "click", () => console.log("🟢 Send to Design Studio"));
+    on($("sendToSocialReady"), "click", () => console.log("🟢 Send to Social Ready"));
+
+    on($("incomeCalcBtn"), "click", () => show($("incomeModal")));
+  }
+
+  function finalInit() {
+    wireCloseButtons();
+    wireDropZone();
+    wireBasicButtons();
+
+    // call legacy functions if present
+    safe("wireAiModals", window.wireAiModals);
+    safe("wireSideTools", window.wireSideTools);
+    safe("wireCalculatorPad", window.wireCalculatorPad);
+    safe("wireIncomeCalcDirect", window.wireIncomeCalcDirect);
+
+    safe("renderCreativeThumbs", window.renderCreativeThumbs);
+    safe("renderSocialStrip", window.renderSocialStrip);
+
+    console.log("✅ FINAL INIT COMPLETE");
+  }
+
+  DOC.addEventListener("DOMContentLoaded", () => {
+    if (window.__LOTROCKET_BOOTED__) return;
+    window.__LOTROCKET_BOOTED__ = true;
+    console.log("✅ DOM READY");
+    finalInit();
+  });
+})();
