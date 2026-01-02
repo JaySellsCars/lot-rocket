@@ -480,6 +480,15 @@ function wireRegenButtons() {
         alert(data?.error || "Boost failed");
         return;
       }
+// ✅ vehicle details
+STORE.lastVehicle = data.vehicle || { url };
+STORE.lastVehicle.url = STORE.lastVehicle.url || url;
+
+renderSummary(STORE.lastVehicle);
+
+// ✅ auto-generate Step 2
+wireRegenButtons();
+generateAllStep2();
 
       const rawImages = Array.isArray(data.images) ? data.images : [];
       const images = [...new Set(rawImages)].filter(Boolean);
