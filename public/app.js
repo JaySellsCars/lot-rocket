@@ -187,33 +187,31 @@
         badge.style.opacity = "0";
         badge.style.transition = "opacity .12s ease";
 
-        const syncUI = () => {
-          const active = STORE._step1Selected.includes(src);
-          badge.style.opacity = active ? "1" : "0";
-          tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
-        };
+const syncUI = () => {
+  const active = STORE.step1Selected.includes(src);
+  badge.style.opacity = active ? "1" : "0";
+  tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+};
 
-        tile.addEventListener("click", () => {
-          const list = STORE._step1Selected;
+tile.addEventListener("click", () => {
+  const idx = STORE.step1Selected.indexOf(src);
 
-          if (list.includes(src)) {
-            STORE._step1Selected = list.filter((s) => s !== src);
-          } else {
-            if (list.length >= 24) return;
-            list.push(src);
-          }
-
-          syncUI();
-          if (countEl) countEl.textContent = String(STORE._step1Selected.length);
-        });
-
-        syncUI();
-        tile.appendChild(img);
-        tile.appendChild(badge);
-        grid.appendChild(tile);
-      });
-    };
+  if (idx > -1) {
+    STORE.step1Selected.splice(idx, 1);
+  } else {
+    if (STORE.step1Selected.length >= 24) return;
+    STORE.step1Selected.push(src);
   }
+
+  syncUI();
+  if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+});
+
+syncUI();
+tile.appendChild(img);
+tile.appendChild(badge);
+grid.appendChild(tile);
+
 
   console.log("✅ APP READY");
 })();
