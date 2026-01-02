@@ -55,7 +55,8 @@ async function aiPost(platform) {
     body: JSON.stringify({ vehicle, platform }),
   });
   const j = await r.json();
-  if (!j?.ok) throw new Error(jz(j?.error || "AI failed");
+if (!j?.ok) throw new Error(j?.error || "AI failed");
+
   return j.text || "";
 }
 
