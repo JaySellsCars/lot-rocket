@@ -74,11 +74,9 @@
           <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
           <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
 
-<button id="sendToDesignStudio" class="secondary-btn full" type="button">
-  Send Selected Photos to Creative Lab
-</button>
-
-
+          <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+            Send Selected Photos to Creative Lab
+          </button>
 
           <div id="step1Photos" class="photo-grid"></div>
         </div>
@@ -183,28 +181,6 @@
 
         </div>
       </section>
-
-      <!-- SOCIAL READY STRIP -->
-      <section class="lab-card social-ready-panel" id="socialReadyPanel">
-        <div class="panel-header">
-          <h3>Social Ready Strip</h3>
-          <p class="small-note">Pick + lock your best photos. Preview + download when ready.</p>
-        </div>
-
-        <div class="social-carousel-preview">
-          <button id="socialCarouselPrev" class="ghost-circle-btn" type="button">◀</button>
-          <img id="socialCarouselPreviewImg" alt="Preview" />
-          <button id="socialCarouselNext" class="ghost-circle-btn" type="button">▶</button>
-        </div>
-
-        <div id="socialCarousel"></div>
-        <div id="socialCarouselStatus" class="small-note" style="margin-top:.5rem;"></div>
-
-        <div class="social-carousel-actions">
-          <button id="sendSelectedToSocialReady" class="secondary-btn" type="button">Send Selected to Social Ready</button>
-          <button id="downloadZipBtn" class="secondary-btn" type="button">Download ZIP</button>
-        </div>
-      </section>
     </div>
 
     <!-- STEP 3 FULL WIDTH -->
@@ -229,23 +205,46 @@
 
           <div id="creativeThumbGrid"></div>
 
-<button id="sendSelectedToCreativeLab" class="secondary-btn full" type="button">
-  Send Selected Photos to Creative Lab
-</button>
-
+          <button id="sendSelectedToCreativeLab" class="secondary-btn full" type="button">
+            Send Selected Photos to Creative Lab
+          </button>
         </div>
 
-        <!-- RIGHT -->
+        <!-- RIGHT (V1: SOCIAL READY STRIP HERE / DESIGN STUDIO HIDDEN) -->
         <div>
-          <h3>Design Studio</h3>
-          <div id="designStudioHost" class="tuner-preview"></div>
+          <section class="lab-card social-ready-panel" id="socialReadyPanel" style="margin:0;">
+            <div class="panel-header">
+              <h3>Social Ready Strip</h3>
+              <p class="small-note">Pick + lock your best photos. Preview + download when ready.</p>
+            </div>
 
-          <div style="display:flex; gap:.6rem; margin-top:.8rem;">
-            <button id="autoEnhanceBtn" class="secondary-btn" type="button">Auto Enhance</button>
-            <button id="resetEditsBtn" class="secondary-btn" type="button">Reset</button>
+            <div class="social-carousel-preview">
+              <button id="socialCarouselPrev" class="ghost-circle-btn" type="button">◀</button>
+              <img id="socialCarouselPreviewImg" alt="Preview" />
+              <button id="socialCarouselNext" class="ghost-circle-btn" type="button">▶</button>
+            </div>
+
+            <div id="socialCarousel"></div>
+            <div id="socialCarouselStatus" class="small-note" style="margin-top:.5rem;"></div>
+
+            <div class="social-carousel-actions">
+              <button id="sendSelectedToSocialReady" class="secondary-btn" type="button">Send Selected to Social Ready</button>
+              <button id="downloadZipBtn" class="secondary-btn" type="button">Download ZIP</button>
+            </div>
+          </section>
+
+          <!-- DESIGN STUDIO (HIDDEN FOR FIRST RELEASE) -->
+          <div id="designStudioWrap" class="hidden" aria-hidden="true">
+            <h3>Design Studio</h3>
+            <div id="designStudioHost" class="tuner-preview"></div>
+
+            <div style="display:flex; gap:.6rem; margin-top:.8rem;">
+              <button id="autoEnhanceBtn" class="secondary-btn" type="button">Auto Enhance</button>
+              <button id="resetEditsBtn" class="secondary-btn" type="button">Reset</button>
+            </div>
+
+            <div id="tunerControls"></div>
           </div>
-
-          <div id="tunerControls"></div>
         </div>
 
       </div>
