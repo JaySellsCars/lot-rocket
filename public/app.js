@@ -164,13 +164,9 @@ if (sendBtn) {
       }
     }
 
-    console.log("✅ SENT TO STEP 3:", picked.length);
-  };
-}
+  console.log("✅ SENT TO STEP 3:", picked.length);
+};
 
-
-
-
-
-  console.log("✅ APP READY");
+console.log("✅ APP READY");
 })();
+
