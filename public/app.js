@@ -131,60 +131,51 @@ function renderHoldingZone() {
         return;
       }
 
-      // ==============================
-      // SELECTION STATE (per boost)
-      // click = select/deselect
-      // confirm button sends to Step 3
-      // ==============================
-      const selected = new Set();
+// ==============================
+// SEND SELECTED PHOTOS → STEP 3
+// ==============================
 
-      const sendSelectedBtn =
-        DOC.getElementById("sendSelectedToCreativeLab") ||
-        DOC.getElementById("sendSelectedToStep3") ||
-        DOC.getElementById("sendToCreativeStudio") ||
-        DOC.getElementById("sendToHolding") ||
-        DOC.getElementById("sendToDesignStudio"); // fallback
+const sendSelectedBtn =
+  DOC.getElementById("sendSelectedToCreativeLab") ||
+  DOC.getElementById("sendToDesignStudio");
 
-      // Bind once (prevents stacking listeners across boosts)
-      if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
-        sendSelectedBtn.__LR_BOUND__ = true;
+if (sendSelectedBtn && !sendSelectedBtn.__BOUND__) {
+  sendSelectedBtn.__BOUND__ = true;
 
-       sendSelectedBtn.addEventListener("click", () => {
-  const picked = Array.from(selected);
-  if (!picked.length) return alert("Select at least 1 photo first.");
+  sendSelectedBtn.addEventListener("click", () => {
+    const picked = Array.from(selected);
+    if (!picked.length) {
+      alert("Select at least 1 photo first.");
+      return;
+    }
 
-  STORE.holdingZonePhotos = picked.slice(0, 24);
-  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+    // store selected photos
+    STORE.holdingZonePhotos = picked.slice(0, 24);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-if (typeof renderHoldingZone === "function") {
-  renderHoldingZone();
-} else {
-  const hz = DOC.getElementById("holdingZone");
-  if (hz) {
-    hz.innerHTML = "";
-    STORE.holdingZonePhotos.forEach((u) => {
-      const im = DOC.createElement("img");
-      im.src = u;
-      im.style.width = "120px";
-      im.style.height = "80px";
-      im.style.objectFit = "cover";
-      im.style.borderRadius = "10px";
-      im.style.margin = "6px";
-      hz.appendChild(im);
-    });
-  }
-}
-
-console.log("✅ SENT TO STEP 3:", picked.length);
-});
-
-
-          const step3 = DOC.getElementById("creativeHub");
-          if (step3) step3.scrollIntoView({ behavior: "smooth" });
-
-          console.log("✅ SENT TO STEP 3:", picked.length);
+    // render into Step 3
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
+    } else {
+      const hz = DOC.getElementById("holdingZone");
+      if (hz) {
+        hz.innerHTML = "";
+        STORE.holdingZonePhotos.forEach((src) => {
+          const img = DOC.createElement("img");
+          img.src = src;
+          img.style.width = "120px";
+          img.style.height = "80px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "10px";
+          img.style.margin = "6px";
+          hz.appendChild(img);
         });
       }
+    }
+
+    console.log("✅ SENT TO STEP 3:", picked.length);
+  });
+}
 
       // ==============================
       // RENDER STEP 1 (selectable tiles)
