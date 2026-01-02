@@ -334,3 +334,54 @@ textarea{
   }
   .ghost-circle-btn{ width:54px; height:54px; }
 }
+/* /public/style.css — ADD THESE (or replace matching blocks) */
+
+/* Make Step 1 buttons match + consistent */
+#boostBtn,
+#sendToDesignStudio{
+  width: 100%;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+}
+
+/* Make Send button look like your other secondary buttons */
+#sendToDesignStudio{
+  border: 1px solid rgba(148,163,184,.55);
+  background: rgba(2,6,23,.75);
+  color: var(--text-main);
+}
+
+/* Press animation (both) */
+.lr-press{
+  animation: lrPress .18s ease;
+}
+@keyframes lrPress{
+  0%{ transform: scale(1); }
+  50%{ transform: scale(.97); }
+  100%{ transform: scale(1); }
+}
+
+/* Loading shimmer (optional, used by JS) */
+.lr-loading{
+  position: relative;
+  opacity: .92;
+  cursor: wait !important;
+}
+.lr-loading::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.12), rgba(255,255,255,0));
+  animation: lrShimmer .85s linear infinite;
+  pointer-events:none;
+}
+@keyframes lrShimmer{
+  from{ transform: translateX(-30%); }
+  to{ transform: translateX(30%); }
+}
