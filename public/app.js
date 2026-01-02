@@ -12,6 +12,10 @@
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
 
+  // ✅ ensure arrays exist (prevents “undefined includes/indexOf” crashes)
+  STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+
   // --------------------------------------------------
   // STEP 3: HOLDING ZONE RENDER (horizontal, up to 24)
   // --------------------------------------------------
@@ -75,8 +79,8 @@
     btn.style.opacity = "1";
 
     btn.addEventListener("click", () => {
-      const picked = Array.isArray(STORE._step1Selected)
-        ? STORE._step1Selected.slice(0, 24)
+      const picked = Array.isArray(STORE.step1Selected)
+        ? STORE.step1Selected.slice(0, 24)
         : [];
 
       if (!picked.length) return alert("Select at least 1 photo first.");
@@ -148,8 +152,8 @@
         return;
       }
 
-      // reset selection for this boost
-      STORE._step1Selected = [];
+      // ✅ reset selection for this boost (SINGLE SOURCE OF TRUTH)
+      STORE.step1Selected = [];
 
       const countEl = DOC.getElementById("selectedCount");
       if (countEl) countEl.textContent = "0";
@@ -187,33 +191,33 @@
         badge.style.opacity = "0";
         badge.style.transition = "opacity .12s ease";
 
-const syncUI = () => {
-  const active = STORE.step1Selected.includes(src);
+        const syncUI = () => {
+          const active = STORE.step1Selected.includes(src);
+          badge.style.opacity = active ? "1" : "0";
+          tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+        };
 
+        tile.addEventListener("click", () => {
+          const idx = STORE.step1Selected.indexOf(src);
 
-  badge.style.opacity = active ? "1" : "0";
-  tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
-};
+          if (idx > -1) {
+            STORE.step1Selected.splice(idx, 1);
+          } else {
+            if (STORE.step1Selected.length >= 24) return;
+            STORE.step1Selected.push(src);
+          }
 
-tile.addEventListener("click", () => {
-  const idx = STORE.step1Selected.indexOf(src);
+          syncUI();
+          if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+        });
 
-  if (idx > -1) {
-    STORE.step1Selected.splice(idx, 1);
-  } else {
-    if (STORE.step1Selected.length >= 24) return;
-    STORE.step1Selected.push(src);
+        syncUI();
+        tile.appendChild(img);
+        tile.appendChild(badge);
+        grid.appendChild(tile);
+      });
+    };
   }
-
-  syncUI();
-  if (countEl) countEl.textContent = String(STORE.step1Selected.length);
-});
-
-syncUI();
-tile.appendChild(img);
-tile.appendChild(badge);
-grid.appendChild(tile);
-
 
   console.log("✅ APP READY");
 })();
