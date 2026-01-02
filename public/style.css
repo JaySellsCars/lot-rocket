@@ -385,3 +385,46 @@ textarea{
   from{ transform: translateX(-30%); }
   to{ transform: translateX(30%); }
 }
+/* ADD THIS AT THE VERY BOTTOM of /public/style.css */
+
+/* Press animation + loading state (boost + send to creative lab + zip) */
+.lr-press { transform: translateY(1px) scale(0.99); filter: brightness(1.05); }
+.lr-loading { opacity: .85; cursor: wait !important; }
+.lr-loading::after{
+  content:"";
+  display:inline-block;
+  width:14px;height:14px;
+  margin-left:10px;
+  border-radius:999px;
+  border:2px solid rgba(255,255,255,.45);
+  border-top-color: rgba(255,255,255,1);
+  animation: lrSpin .75s linear infinite;
+  vertical-align:-2px;
+}
+
+/* Social Ready: keep arrows on each side + slightly smaller preview so it doesn't shove buttons */
+.social-ready-row{
+  display:grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items:center;
+  gap: .75rem;
+}
+
+#socialCarouselPreviewImg{
+  height: 190px !important;   /* was too big */
+  max-height: 210px !important;
+  object-fit: contain !important;
+}
+
+/* make thumbs look correct + draggable hint */
+#socialCarousel .social-thumb-btn{
+  border: 1px solid rgba(148,163,184,.35);
+}
+#socialCarousel .social-thumb-btn.dragging{
+  opacity:.55;
+  transform: scale(.98);
+}
+#socialCarousel .social-lock{
+  cursor: default;
+  user-select: none;
+}
