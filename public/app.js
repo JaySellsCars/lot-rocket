@@ -126,6 +126,133 @@ STORE.aiPrompts = STORE.aiPrompts || {
   ask: "YOU WILL SET THIS PROMPT NEXT",
   car: "YOU WILL SET THIS PROMPT NEXT",
 };
+// ==================================================
+// FLOATING SIDE TOOLS — WIRE (ONE PASS) ✅
+// ==================================================
+(function wireFloatingTools() {
+  if (window.__LR_FLOATING_TOOLS__) return;
+  window.__LR_FLOATING_TOOLS__ = true;
+
+  const byId = (id) => DOC.getElementById(id);
+
+  // ✅ buttons you showed
+  const BTN = {
+    objection: "toolObjectionBtn",
+    calc: "toolCalcBtn",
+    payment: "toolPaymentBtn",
+    income: "toolIncomeBtn",
+    workflow: "toolWorkflowBtn",
+    message: "toolMessageBtn",
+    ask: "toolAskBtn",
+    car: "toolCarBtn",
+    image: "toolImageBtn", // hidden for now
+    video: "toolVideoBtn", // hidden for now
+  };
+
+  // ✅ modal IDs (edit ONLY these if your HTML uses different IDs)
+  const MODAL = {
+    objection: "objectionModal",
+    calc: "calcModal",
+    payment: "paymentModal",
+    income: "incomeModal",
+    workflow: "workflowModal",
+    message: "messageModal",
+    ask: "askModal",
+    car: "carExpertModal",
+    image: "imageGenModal",
+    video: "videoGenModal",
+  };
+
+  // hide image/video for now
+  [BTN.image, BTN.video].forEach((id) => {
+    const b = byId(id);
+    if (b) b.style.display = "none";
+  });
+
+  const allBtnIds = Object.values(BTN);
+
+  function setActive(btnId) {
+    allBtnIds.forEach((id) => {
+      const b = byId(id);
+      if (b) b.classList.toggle("active", id === btnId);
+    });
+  }
+
+  function closeModal(modalId) {
+    const m = byId(modalId);
+    if (!m) return;
+    m.classList.add("hidden");
+    m.style.display = "none";
+    m.setAttribute("aria-hidden", "true");
+  }
+
+  function closeAll() {
+    Object.values(MODAL).forEach(closeModal);
+    setActive(null);
+  }
+
+  function openModal(modalId, btnId) {
+    const m = byId(modalId);
+    if (!m) return console.warn("Modal missing:", modalId);
+
+    closeAll();
+
+    m.classList.remove("hidden");
+    m.style.display = "flex";
+    m.setAttribute("aria-hidden", "false");
+    setActive(btnId);
+
+    // close buttons inside modal
+    if (!m.__LR_CLOSE_WIRED__) {
+      m.__LR_CLOSE_WIRED__ = true;
+
+      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+        if (x.__LR_BOUND__) return;
+        x.__LR_BOUND__ = true;
+        x.addEventListener("click", closeAll);
+      });
+
+      // click backdrop closes
+      m.addEventListener("click", (e) => {
+        if (e.target === m) closeAll();
+      });
+    }
+
+    // focus
+    const focusEl =
+      m.querySelector("textarea") ||
+      m.querySelector("input:not([type='hidden'])") ||
+      m.querySelector("button");
+    if (focusEl) setTimeout(() => focusEl.focus(), 0);
+  }
+
+  // ESC closes all
+  DOC.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAll();
+  });
+
+  // wire button clicks
+  function bind(key) {
+    const b = byId(BTN[key]);
+    const mid = MODAL[key];
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", () => {
+      const m = byId(mid);
+      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+      if (isOpen) return closeAll();
+      openModal(mid, BTN[key]);
+    });
+  }
+
+  Object.keys(BTN).forEach(bind);
+
+  // expose helpers (optional)
+  window.LR_TOOLS = { openModal, closeAll };
+
+  console.log("✅ FLOATING TOOLS WIRED");
+})();
 
 // ==================================================
 // SIDE TOOLS — ONE WIRE PASS (NO DUPES)
