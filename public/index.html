@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#111827" />
   <title>Lot Rocket</title>
 
-  <!-- External libs (safe) -->
   <script src="https://unpkg.com/konva/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -16,23 +15,20 @@
 </head>
 <body class="dark-theme">
 
-  <!-- ================= HEADER ================= -->
   <header class="app-header">
     <div class="branding">
       <h1>🚀 Lot Rocket</h1>
       <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
     </div>
   </header>
-<!-- /public/index.html — ADD THESE BLOCKS (DO NOT DELETE ANYTHING) -->
 
-<!-- 1) ADD THIS RIGHT AFTER </header> (BEFORE <main id="appMain">) -->
-<div id="toolWire" class="toolwire" aria-label="Floating Tools">
-  <button id="toolIncomeBtn" type="button" class="toolwire-btn" title="Income Calculator">💰</button>
-  <button id="toolPaymentBtn" type="button" class="toolwire-btn" title="Payment Calculator">🧮</button>
-  <button id="toolAiBtn" type="button" class="toolwire-btn" title="AI Tools">🤖</button>
-</div>
+  <!-- FLOATING TOOLS -->
+  <div id="toolWire" class="toolwire" aria-label="Floating Tools">
+    <button id="toolIncomeBtn" type="button" class="toolwire-btn" title="Income Calculator">💰</button>
+    <button id="toolPaymentBtn" type="button" class="toolwire-btn" title="Payment Calculator">🧮</button>
+    <button id="toolAiBtn" type="button" class="toolwire-btn" title="AI Tools">🤖</button>
+  </div>
 
-  <!-- ================= MAIN ================= -->
   <main id="appMain">
     <!-- STEP 1 -->
     <section id="step1" class="lab-card">
@@ -74,11 +70,14 @@
             <button id="socialCarouselNext" type="button">▶</button>
           </div>
         </div>
+
         <div id="socialCarousel" class="social-carousel"></div>
+
         <div class="social-ready-preview">
           <img id="socialCarouselPreviewImg" alt="Preview" />
           <div id="socialCarouselStatus"></div>
         </div>
+
         <div class="social-ready-actions">
           <button id="sendToSocialReady" type="button">Send Selected to Social Ready</button>
           <button id="downloadSocialReadyZip" type="button">Download ZIP</button>
@@ -123,7 +122,7 @@
     </section>
   </main>
 
-  <!-- SIDE MODALS (SAFE MINIMUM) -->
+  <!-- SIDE MODALS -->
   <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
       <div class="side-modal-header">
@@ -140,33 +139,31 @@
       </div>
     </div>
   </section>
-<!-- 2) ADD THIS RIGHT AFTER YOUR incomeModal (BEFORE THE FINAL <script src="/app.js...">) -->
 
-<section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Payment Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Payment Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <div id="paymentCalcMount"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <div id="paymentCalcMount"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="aiToolsModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Tools</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+  <section id="aiToolsModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Tools</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <div id="aiToolsMount"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <div id="aiToolsMount"></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-  <!-- ✅ APP JS — MUST BE LAST -->
   <script src="/app.js?v=10001"></script>
 </body>
 </html>
