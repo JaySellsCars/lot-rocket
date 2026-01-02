@@ -91,8 +91,8 @@ if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
     const step3 = document.getElementById("creativeHub");
     if (step3) step3.scrollIntoView({ behavior: "smooth" });
 
-    console.log("✅ SENT TO STEP 3:", picked.length);
-  });
+ console.log("✅ SENT TO STEP 3:", picked.length);
+  }
 }
 
 
@@ -153,8 +153,12 @@ images.slice(0, MAX_UI).forEach((src) => {
   console.log("✅ SENT TO STEP 3:", picked.length);
 }
 
+  }; // closes boostBtn.onclick
+}    // closes if (boostBtn)
+
 console.log("✅ APP READY");
-})();
+})(); // closes (async () => { ... })();
+
 
 
 
