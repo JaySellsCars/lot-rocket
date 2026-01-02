@@ -118,6 +118,146 @@ function wireRegenButtons() {
     });
   });
 }
+// /public/app.js  — ADD THIS WHOLE BLOCK INSIDE YOUR IIFE (near top, after STORE init)
+// ==================================================
+// SIDE TOOLS — ONE WIRE PASS (NO DUPES)
+// - AI Image / AI Video hidden for now (next version)
+// - Opens side-modals by ID
+// - Close via [data-close] or .side-modal-close or ESC or backdrop click
+// ==================================================
+(function wireSideTools() {
+  if (window.__LR_SIDE_TOOLS_WIRED__) return;
+  window.__LR_SIDE_TOOLS_WIRED__ = true;
+
+  const byId = (id) => DOC.getElementById(id);
+
+  const TOOL_BTN_IDS = {
+    objection: "toolObjectionBtn",
+    calc: "toolCalcBtn",
+    payment: "toolPaymentBtn",
+    income: "toolIncomeBtn",
+
+    workflow: "toolWorkflowBtn",
+    message: "toolMessageBtn",
+    ask: "toolAskBtn",
+    car: "toolCarBtn",
+
+    image: "toolImageBtn", // HIDDEN (next version)
+    video: "toolVideoBtn", // HIDDEN (next version)
+  };
+
+  // Map tool -> modalId in your HTML
+  // ✅ change modal IDs here ONLY if yours differ
+  const TOOL_MODAL = {
+    objection: "objectionModal",
+    calc: "calcModal",
+    payment: "paymentModal",
+    income: "incomeModal",
+
+    workflow: "workflowModal",
+    message: "messageModal",
+    ask: "askModal",
+    car: "carExpertModal",
+
+    image: "imageGenModal",
+    video: "videoGenModal",
+  };
+
+  // Hide Image/Video (next version)
+  [TOOL_BTN_IDS.image, TOOL_BTN_IDS.video].forEach((id) => {
+    const b = byId(id);
+    if (b) b.style.display = "none";
+  });
+
+  const allBtnIds = Object.values(TOOL_BTN_IDS).filter(Boolean);
+
+  function setActive(btnId) {
+    allBtnIds.forEach((id) => {
+      const b = byId(id);
+      if (b) b.classList.toggle("active", id === btnId);
+    });
+  }
+
+  function closeAllModals() {
+    Object.values(TOOL_MODAL).forEach((mid) => {
+      const m = byId(mid);
+      if (!m) return;
+      m.classList.add("hidden");
+      m.style.display = "none";
+      m.setAttribute("aria-hidden", "true");
+    });
+    setActive(null);
+  }
+
+  function openModal(modalId, btnId) {
+    const m = byId(modalId);
+    if (!m) return console.warn("Modal missing:", modalId);
+
+    closeAllModals();
+
+    m.classList.remove("hidden");
+    m.style.display = "flex";
+    m.setAttribute("aria-hidden", "false");
+
+    if (btnId) setActive(btnId);
+
+    // autofocus if any input/textarea exists
+    const focusEl =
+      m.querySelector("textarea") ||
+      m.querySelector("input:not([type='hidden'])") ||
+      m.querySelector("button");
+    if (focusEl) setTimeout(() => focusEl.focus(), 0);
+  }
+
+  // Close wiring (once)
+  function wireModalClose(m) {
+    if (!m || m.__LR_CLOSE_WIRED__) return;
+    m.__LR_CLOSE_WIRED__ = true;
+
+    // close buttons
+    m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((btn) => {
+      if (btn.__LR_BOUND__) return;
+      btn.__LR_BOUND__ = true;
+      btn.addEventListener("click", () => closeAllModals());
+    });
+
+    // backdrop click closes
+    m.addEventListener("click", (e) => {
+      if (e.target === m) closeAllModals();
+    });
+  }
+
+  // Wire all modals close behavior
+  Object.values(TOOL_MODAL).forEach((mid) => wireModalClose(byId(mid)));
+
+  // ESC closes
+  DOC.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllModals();
+  });
+
+  // Button click opens mapped modal
+  function bindTool(toolKey) {
+    const btnId = TOOL_BTN_IDS[toolKey];
+    const modalId = TOOL_MODAL[toolKey];
+    const b = byId(btnId);
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", () => {
+      const m = byId(modalId);
+      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+      if (isOpen) return closeAllModals();
+      openModal(modalId, btnId);
+    });
+  }
+
+  Object.keys(TOOL_BTN_IDS).forEach(bindTool);
+
+  // expose for other modules
+  window.LR_TOOLS = { openModal, closeAllModals };
+
+  console.log("✅ SIDE TOOLS WIRED");
+})();
 
   // ==================================================
   // SOCIAL READY STORE (LOCKED DOWNLOAD)
