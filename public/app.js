@@ -6,9 +6,6 @@
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
 
-  // --------------------------------------------------
-  // SAFE GLOBAL STORE
-  // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
 
@@ -41,13 +38,10 @@
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
   // ==================================================
   if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
-
   if ("_step1Selected" in STORE) {
     console.warn("🧨 Removing legacy STORE._step1Selected");
     try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
   }
-
-  // ✅ ensure arrays exist (prevents undefined crashes)
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
   STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
 
@@ -64,7 +58,6 @@
   function renderSummary(vehicle) {
     const out = $("summaryOutput");
     if (!out) return;
-
     const v = vehicle || {};
     out.innerHTML = `
       <div class="small-note" style="margin:.35rem 0;">
@@ -180,8 +173,8 @@
       message: "toolMessageBtn",
       ask: "toolAskBtn",
       car: "toolCarBtn",
-      image: "toolImageBtn", // hidden v1
-      video: "toolVideoBtn", // hidden v1
+      image: "toolImageBtn",
+      video: "toolVideoBtn",
     };
 
     const MODAL = {
@@ -197,7 +190,6 @@
       video: "videoGenModal",
     };
 
-    // hide image/video now
     [BTN.image, BTN.video].forEach((id) => {
       const b = byId(id);
       if (b) b.style.display = "none";
@@ -227,10 +219,7 @@
 
     function openModal(modalId, btnId) {
       const m = byId(modalId);
-      if (!m) {
-        console.warn("Modal missing:", modalId);
-        return;
-      }
+      if (!m) return console.warn("Modal missing:", modalId);
 
       closeAll();
 
@@ -281,17 +270,24 @@
     }
 
     Object.keys(BTN).forEach(bind);
-
     window.LR_TOOLS = { openModal, closeAll };
     console.log("✅ FLOATING TOOLS WIRED");
   })();
 
   // ==================================================
-  // SOCIAL READY STORE (LOCKED DOWNLOAD)
-  // STORE.socialReadyPhotos = [{ url, locked, selected }]
+  // HIDE "Send Selected to Social Ready" (next version)
+  // ==================================================
+  (function hideNextVersionButtons() {
+    const b = $("sendSelectedToSocialReady");
+    if (b) b.style.display = "none";
+  })();
+
+  // ==================================================
+  // SOCIAL READY STORE (LOCK + ORDER + PROXY ZIP)
   // ==================================================
   function normalizeSocialReady() {
     if (!Array.isArray(STORE.socialReadyPhotos)) STORE.socialReadyPhotos = [];
+
     STORE.socialReadyPhotos = STORE.socialReadyPhotos
       .filter(Boolean)
       .map((p) => {
@@ -344,15 +340,28 @@
       return true;
     }
 
-    STORE.socialReadyPhotos.unshift({
-      url,
-      locked: !!lock,
-      selected: true,
-    });
-
+    STORE.socialReadyPhotos.unshift({ url, locked: !!lock, selected: true });
     STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, 24);
     renderSocialStrip();
     return true;
+  }
+
+  function moveSocial(fromIdx, toIdx) {
+    normalizeSocialReady();
+    const list = STORE.socialReadyPhotos;
+    if (!list.length) return;
+    const from = Math.max(0, Math.min(fromIdx, list.length - 1));
+    const to = Math.max(0, Math.min(toIdx, list.length - 1));
+    if (from === to) return;
+
+    const [item] = list.splice(from, 1);
+    list.splice(to, 0, item);
+
+    // keep selection on the moved item
+    list.forEach((p) => (p.selected = false));
+    item.selected = true;
+
+    STORE.socialReadyPhotos = list;
   }
 
   function renderSocialStrip() {
@@ -361,7 +370,6 @@
     const stripEl = $("socialCarousel");
     const previewEl = $("socialCarouselPreviewImg");
     const statusEl = $("socialCarouselStatus");
-
     if (!stripEl) return;
 
     stripEl.innerHTML = "";
@@ -383,6 +391,8 @@
       btn.type = "button";
       btn.className = "social-thumb-btn";
       btn.style.position = "relative";
+      btn.draggable = true;
+      btn.dataset.idx = String(idx);
 
       const img = DOC.createElement("img");
       img.src = p.url;
@@ -392,18 +402,20 @@
       const lock = DOC.createElement("div");
       lock.className = "social-lock";
       lock.textContent = p.locked ? "🔒" : "🔓";
-      lock.title = "Double-click thumbnail to lock/unlock";
+      lock.title = "Double-click to lock/unlock";
 
       if (p.selected) {
         btn.style.outline = "2px solid rgba(56,189,248,.95)";
         btn.style.outlineOffset = "0px";
       }
 
+      // select
       btn.addEventListener("click", () => {
         setSelectedSocialIndex(idx);
         renderSocialStrip();
       });
 
+      // lock toggle
       btn.addEventListener("dblclick", (e) => {
         e.preventDefault();
         normalizeSocialReady();
@@ -411,6 +423,28 @@
         if (!cur) return;
         cur.locked = !cur.locked;
         renderSocialStrip();
+      });
+
+      // drag reorder
+      btn.addEventListener("dragstart", (e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", String(idx));
+        btn.classList.add("dragging");
+      });
+      btn.addEventListener("dragend", () => btn.classList.remove("dragging"));
+
+      btn.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      });
+      btn.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const from = parseInt(e.dataTransfer.getData("text/plain") || "-1", 10);
+        const to = idx;
+        if (Number.isFinite(from) && from >= 0) {
+          moveSocial(from, to);
+          renderSocialStrip();
+        }
       });
 
       btn.appendChild(img);
@@ -442,6 +476,7 @@
     }
   }
 
+  // ✅ ZIP (FIX): fetch via same-origin proxy to avoid CORS
   async function downloadLockedZip() {
     normalizeSocialReady();
     const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
@@ -449,38 +484,49 @@
     if (!locked.length) return alert("Lock at least 1 photo first.");
     if (!window.JSZip) return alert("JSZip not loaded.");
 
-    const zip = new JSZip();
-    const folder = zip.folder("lot-rocket");
+    const zipBtn = $("downloadZipBtn");
+    setBtnLoading(zipBtn, true, "Zipping…");
 
-    let ok = 0;
-    for (let i = 0; i < locked.length; i++) {
-      const url = locked[i].url;
-      try {
-        const r = await fetch(url);
-        const blob = await r.blob();
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder("lot-rocket");
+      let ok = 0;
 
-        const ext =
-          (blob.type && blob.type.includes("png")) ? "png" :
-          (blob.type && blob.type.includes("webp")) ? "webp" :
-          (blob.type && blob.type.includes("jpeg")) ? "jpg" : "jpg";
+      for (let i = 0; i < locked.length; i++) {
+        const url = locked[i].url;
 
-        folder.file(`photo_${String(i + 1).padStart(2, "0")}.${ext}`, blob);
-        ok++;
-      } catch (e) {
-        console.warn("ZIP skip (fetch failed):", url);
+        try {
+          const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
+          const r = await fetch(prox);
+          if (!r.ok) throw new Error("proxy fetch failed");
+          const blob = await r.blob();
+
+          const ext =
+            (blob.type && blob.type.includes("png")) ? "png" :
+            (blob.type && blob.type.includes("webp")) ? "webp" :
+            (blob.type && blob.type.includes("jpeg")) ? "jpg" :
+            (blob.type && blob.type.includes("gif")) ? "gif" : "jpg";
+
+          folder.file(`photo_${String(i + 1).padStart(2, "0")}.${ext}`, blob);
+          ok++;
+        } catch (e) {
+          console.warn("ZIP skip:", url, e);
+        }
       }
+
+      if (!ok) return alert("Could not fetch images to zip.");
+
+      const out = await zip.generateAsync({ type: "blob" });
+      const a = DOC.createElement("a");
+      a.href = URL.createObjectURL(out);
+      a.download = "lot-rocket-social-ready.zip";
+      DOC.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+    } finally {
+      setBtnLoading(zipBtn, false);
     }
-
-    if (!ok) return alert("Could not fetch images to zip (CORS).");
-
-    const blob = await zip.generateAsync({ type: "blob" });
-    const a = DOC.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "lot-rocket-social-ready.zip";
-    DOC.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 30000);
   }
 
   function wireZipButton() {
@@ -493,25 +539,29 @@
     });
   }
 
-  function wireSendSelectedToSocialReady() {
-    const btn = $("sendSelectedToSocialReady");
-    if (!btn || btn.__LR_BOUND__) return;
-    btn.__LR_BOUND__ = true;
-    btn.addEventListener("click", () => {
-      pressAnim(btn);
-      const picked = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.slice(0, 24) : [];
-      if (!picked.length) return alert("Select at least 1 photo first.");
-      picked.forEach((u) => addToSocialReady(u, true));
-      renderSocialStrip();
-    });
+  // --------------------------------------------------
+  // STEP 3: HOLDING ZONE NOTE + RENDER (up to 24) + DBLCLICK → SOCIAL READY
+  // --------------------------------------------------
+  function ensureHoldingNote() {
+    const hz = $("holdingZone");
+    if (!hz) return;
+
+    let note = $("holdingZoneNote");
+    if (!note) {
+      note = DOC.createElement("div");
+      note.id = "holdingZoneNote";
+      note.className = "small-note";
+      note.style.margin = "0 0 .5rem 0";
+      note.textContent = "Tip: Double-click a photo to send it to the Social Ready Strip.";
+      hz.parentNode?.insertBefore(note, hz);
+    }
   }
 
-  // --------------------------------------------------
-  // STEP 3: HOLDING ZONE RENDER (up to 24) + DBLCLICK → SOCIAL READY
-  // --------------------------------------------------
   function renderHoldingZone() {
     const hz = $("holdingZone");
     if (!hz) return;
+
+    ensureHoldingNote();
 
     const photos = Array.isArray(STORE.holdingZonePhotos)
       ? STORE.holdingZonePhotos.slice(0, 24)
@@ -545,7 +595,7 @@
 
   // --------------------------------------------------
   // STEP 1: SEND SELECTED → STEP 3 (bind ONCE)
-  // Uses ID: #sendToDesignStudio
+  // Uses ID: #sendToDesignStudio  (KEEP THIS)
   // --------------------------------------------------
   function syncSendBtn() {
     const btn = $("sendToDesignStudio");
@@ -601,7 +651,7 @@
   }
 
   // --------------------------------------------------
-  // BASIC UI WIRES
+  // BOOST (Step 1) → photos + vehicle + Step 2 AI
   // --------------------------------------------------
   const boostBtn = $("boostBtn");
   const urlInput = $("dealerUrlInput");
@@ -627,20 +677,17 @@
           return;
         }
 
-        console.log("📦 BOOST DATA:", data);
-
         if (!data || !data.ok) {
           alert(data?.error || "Boost failed");
           return;
         }
 
-        // ✅ vehicle details
+        // ✅ vehicle details (server must send data.vehicle)
         STORE.lastVehicle = data.vehicle || { url };
         STORE.lastVehicle.url = STORE.lastVehicle.url || url;
 
         renderSummary(STORE.lastVehicle);
 
-        // ✅ auto-generate Step 2
         wireRegenButtons();
         generateAllStep2();
 
@@ -660,7 +707,6 @@
           return;
         }
 
-        // ✅ reset selection for this boost
         STORE.step1Selected = [];
         syncSendBtn();
 
@@ -707,14 +753,11 @@
 
           tile.addEventListener("click", () => {
             const idx = STORE.step1Selected.indexOf(src);
-
-            if (idx > -1) {
-              STORE.step1Selected.splice(idx, 1);
-            } else {
+            if (idx > -1) STORE.step1Selected.splice(idx, 1);
+            else {
               if (STORE.step1Selected.length >= 24) return;
               STORE.step1Selected.push(src);
             }
-
             syncUI();
             syncSendBtn();
             if (countEl) countEl.textContent = String(STORE.step1Selected.length);
@@ -736,10 +779,9 @@
   // --------------------------------------------------
   wireSocialNav();
   wireZipButton();
-  wireSendSelectedToSocialReady();
   renderSocialStrip();
 
-  // ensure modals closed on boot
+  // close modals on boot
   if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
     window.LR_TOOLS.closeAll();
   }
