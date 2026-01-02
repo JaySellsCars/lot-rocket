@@ -61,11 +61,30 @@ app.get("/api/health", (req, res) => {
 // ===============================
 function safeUrl(u) {
   try {
-    return new URL(u).toString();
+    let s = (u || "").toString().trim().replace(/\s+/g, "");
+
+    // keep last http(s) if duplicated
+    const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
+    if (lastHttp > 0) s = s.slice(lastHttp);
+
+    // fix common accidental prefix
+    s = s.replace(/^whttps:\/\//i, "https://");
+    s = s.replace(/^whttp:\/\//i, "http://");
+
+    const parsed = new URL(s);
+
+    // require http/https
+    if (!/^https?:$/.test(parsed.protocol)) return "";
+
+    // basic host sanity
+    if (!parsed.hostname || !parsed.hostname.includes(".")) return "";
+
+    return parsed.toString();
   } catch {
     return "";
   }
 }
+
 
 function absUrl(base, maybe) {
   try {
