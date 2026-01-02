@@ -131,6 +131,28 @@ images.slice(0, MAX_UI).forEach((src) => {
   tile.appendChild(badge);
   grid.appendChild(tile);
 });
+// STEP 1 → SEND SELECTED PHOTOS TO CREATIVE LAB
+const sendBtn = document.getElementById("sendSelectedToCreativeLab");
+
+if (sendBtn) {
+  sendBtn.addEventListener("click", () => {
+    if (!window.STORE || !STORE.holdingZonePhotos || !STORE.holdingZonePhotos.length) {
+      alert("No photos selected yet.");
+      return;
+    }
+
+    console.log("✅ Sending to Creative Lab:", STORE.holdingZonePhotos);
+
+    // Optional: auto-scroll to Step 3
+    const step3 = document.getElementById("creativeHub");
+    if (step3) step3.scrollIntoView({ behavior: "smooth" });
+
+    // If you later want to trigger rendering logic, this is the hook
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
+    }
+  });
+}
 
 // ===== Confirm send to Step 3 =====
 if (sendBtn) {
