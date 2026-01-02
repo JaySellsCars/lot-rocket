@@ -90,8 +90,6 @@
         <div class="small-note step2-subtitle">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</div>
 
         <div class="step2-grid">
-
-          <!-- Facebook -->
           <div class="platform-card step2-card">
             <h3>Facebook Post</h3>
             <textarea id="fbOutput" placeholder="Output..."></textarea>
@@ -102,7 +100,6 @@
             </div>
           </div>
 
-          <!-- Instagram -->
           <div class="platform-card step2-card">
             <h3>Instagram Caption</h3>
             <textarea id="igOutput" placeholder="Output..."></textarea>
@@ -113,7 +110,6 @@
             </div>
           </div>
 
-          <!-- TikTok -->
           <div class="platform-card step2-card">
             <h3>TikTok Caption</h3>
             <textarea id="ttOutput" placeholder="Output..."></textarea>
@@ -124,7 +120,6 @@
             </div>
           </div>
 
-          <!-- LinkedIn -->
           <div class="platform-card step2-card">
             <h3>LinkedIn Post</h3>
             <textarea id="liOutput" placeholder="Output..."></textarea>
@@ -135,7 +130,6 @@
             </div>
           </div>
 
-          <!-- X / Twitter -->
           <div class="platform-card step2-card">
             <h3>X / Twitter Post</h3>
             <textarea id="xOutput" placeholder="Output..."></textarea>
@@ -146,7 +140,6 @@
             </div>
           </div>
 
-          <!-- Text / DM -->
           <div class="platform-card step2-card">
             <h3>Text / DM</h3>
             <textarea id="dmOutput" placeholder="Output..."></textarea>
@@ -157,7 +150,6 @@
             </div>
           </div>
 
-          <!-- Marketplace -->
           <div class="platform-card step2-card">
             <h3>Marketplace Listing</h3>
             <textarea id="marketplaceOutput" placeholder="Output..."></textarea>
@@ -168,7 +160,6 @@
             </div>
           </div>
 
-          <!-- Hashtags -->
           <div class="platform-card step2-card">
             <h3>Hashtag Set</h3>
             <textarea id="hashtagsOutput" placeholder="Output..."></textarea>
@@ -178,7 +169,6 @@
               <button id="hashEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
             </div>
           </div>
-
         </div>
       </section>
     </div>
@@ -187,66 +177,40 @@
     <section id="creativeHub" class="lab-card creativeHubFull">
       <h3>Step 3 – Creative Lab</h3>
 
+      <!-- Holding thumbnails (stacked / all visible) -->
       <div id="holdingZone"></div>
 
-      <div class="creative-hub">
-
-        <!-- LEFT -->
-        <div>
-          <h3>Photos</h3>
-
-          <div id="photoDropZone" class="photo-dropzone">
-            <p>
-              Drag &amp; Drop Photos Here<br />
-              <span>(or click to upload)</span>
-            </p>
-            <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
-          </div>
-
-          <div id="creativeThumbGrid"></div>
-
-          <button id="sendSelectedToCreativeLab" class="secondary-btn full" type="button">
-            Send Selected Photos to Creative Lab
-          </button>
+      <!-- Bottom Social Ready Strip (this is the bottom strip) -->
+      <section class="lab-card social-ready-panel social-ready-bottom" id="socialReadyPanel">
+        <div class="panel-header">
+          <h3>Social Ready Strip</h3>
+          <p class="small-note">Double-click a Step 3 photo to add it here. Preview + download when ready.</p>
         </div>
 
-        <!-- RIGHT (V1: SOCIAL READY STRIP HERE / DESIGN STUDIO HIDDEN) -->
-        <div>
-          <section class="lab-card social-ready-panel" id="socialReadyPanel" style="margin:0;">
-            <div class="panel-header">
-              <h3>Social Ready Strip</h3>
-              <p class="small-note">Pick + lock your best photos. Preview + download when ready.</p>
-            </div>
+        <div class="social-ready-row">
+          <button id="socialCarouselPrev" class="ghost-circle-btn" type="button">◀</button>
 
-            <div class="social-carousel-preview">
-              <button id="socialCarouselPrev" class="ghost-circle-btn" type="button">◀</button>
-              <img id="socialCarouselPreviewImg" alt="Preview" />
-              <button id="socialCarouselNext" class="ghost-circle-btn" type="button">▶</button>
-            </div>
-
-            <div id="socialCarousel"></div>
+          <div class="social-ready-center">
+            <div class="small-note" style="margin-bottom:.35rem;">🖼️ Preview</div>
+            <img id="socialCarouselPreviewImg" alt="Preview" />
             <div id="socialCarouselStatus" class="small-note" style="margin-top:.5rem;"></div>
-
-            <div class="social-carousel-actions">
-              <button id="sendSelectedToSocialReady" class="secondary-btn" type="button">Send Selected to Social Ready</button>
-              <button id="downloadZipBtn" class="secondary-btn" type="button">Download ZIP</button>
-            </div>
-          </section>
-
-          <!-- DESIGN STUDIO (HIDDEN FOR FIRST RELEASE) -->
-          <div id="designStudioWrap" class="hidden" aria-hidden="true">
-            <h3>Design Studio</h3>
-            <div id="designStudioHost" class="tuner-preview"></div>
-
-            <div style="display:flex; gap:.6rem; margin-top:.8rem;">
-              <button id="autoEnhanceBtn" class="secondary-btn" type="button">Auto Enhance</button>
-              <button id="resetEditsBtn" class="secondary-btn" type="button">Reset</button>
-            </div>
-
-            <div id="tunerControls"></div>
           </div>
+
+          <button id="socialCarouselNext" class="ghost-circle-btn" type="button">▶</button>
         </div>
 
+        <div id="socialCarousel"></div>
+
+        <div class="social-carousel-actions">
+          <button id="sendSelectedToSocialReady" class="secondary-btn" type="button">Send Selected to Social Ready</button>
+          <button id="downloadZipBtn" class="secondary-btn" type="button">Download ZIP</button>
+        </div>
+      </section>
+
+      <!-- Design Studio hidden for v1 -->
+      <div id="designStudioWrap" class="hidden" aria-hidden="true">
+        <div id="designStudioHost" class="tuner-preview"></div>
+        <div id="tunerControls"></div>
       </div>
     </section>
 
