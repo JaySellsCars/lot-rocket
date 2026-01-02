@@ -1,4 +1,4 @@
-<!-- /public/index.html (REPLACE ENTIRE FILE) -->
+<!-- /public/index.html  (REPLACE ENTIRE FILE) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -7,184 +7,249 @@
   <meta name="theme-color" content="#111827" />
   <title>Lot Rocket</title>
 
+  <!-- KONVA / FABRIC / JSZIP -->
   <script src="https://unpkg.com/konva/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <link rel="stylesheet" href="/style.css?v=10001" />
 </head>
+
 <body class="dark-theme">
 
+  <!-- HEADER -->
   <header class="app-header">
     <div class="branding">
       <h1>🚀 Lot Rocket</h1>
-      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+      <p>AI Social Media Kit &amp; Creative Lab for Car Sales Pros</p>
     </div>
   </header>
 
-<!-- FLOATING TOOLS (Right Rail) -->
-<div class="floating-tools" id="floatingTools" aria-label="Floating Tools">
-  <button class="tool-button" type="button" data-open="objectionModal">Objection Coach</button>
-  <button class="tool-button" type="button" data-open="calcModal">Calculator</button>
-  <button class="tool-button" type="button" data-open="paymentModal">Payment Calculator</button>
-  <button class="tool-button" type="button" data-open="incomeModal">Income Calculator</button>
+  <!-- FLOATING TOOLS (RIGHT RAIL) -->
+  <div class="floating-tools" aria-label="Floating Tools">
+    <button class="tool-button" id="toolObjectionBtn" type="button">Objection Coach</button>
+    <button class="tool-button" id="toolCalcBtn" type="button">Calculator</button>
+    <button class="tool-button" id="toolPaymentBtn" type="button">Payment Calculator</button>
+    <button class="tool-button" id="toolIncomeBtn" type="button">Income Calculator</button>
 
-  <button class="tool-button" type="button" data-open="workflowModal">AI Work Flow Expert</button>
-  <button class="tool-button" type="button" data-open="messageModal">AI Message Builder</button>
-  <button class="tool-button" type="button" data-open="askModal">Ask A.I.</button>
-  <button class="tool-button" type="button" data-open="carModal">AI Car Expert</button>
-  <button class="tool-button" type="button" data-open="imageModal">AI Image Generation</button>
-  <button class="tool-button" type="button" data-open="videoModal">AI Video Generation</button>
-</div>
+    <button class="tool-button" id="toolWorkflowBtn" type="button">AI Work Flow Expert</button>
+    <button class="tool-button" id="toolMessageBtn" type="button">AI Message Builder</button>
+    <button class="tool-button" id="toolAskBtn" type="button">Ask A.I.</button>
+    <button class="tool-button" id="toolCarBtn" type="button">AI Car Expert</button>
+    <button class="tool-button" id="toolImageBtn" type="button">AI Image Generation</button>
+    <button class="tool-button" id="toolVideoBtn" type="button">AI Video Generation</button>
+  </div>
 
+  <!-- MAIN LAYOUT GRID -->
+  <main id="appMain" class="layout">
 
-  <main id="appMain">
-    <!-- STEP 1 -->
-    <section id="step1" class="lab-card">
-      <h3>Step 1 – Dealer URL Scraper</h3>
-      <div class="row">
-        <input id="dealerUrlInput" type="url" placeholder="Paste vehicle URL here…" />
-        <button id="boostBtn" type="button">Boost</button>
-      </div>
-      <div id="step1Photos" class="photo-grid"></div>
-    </section>
+    <!-- LEFT COLUMN (STEP 1) -->
+    <div class="column">
+      <section id="step1" class="lab-card">
+        <h3>Step 1 – Dealer URL Scraper</h3>
 
-    <!-- STEP 2 -->
-    <section id="step2" class="lab-card">
-      <h3>Step 2 – Social Media Kit</h3>
+        <label class="field">
+          <span>Dealer Vehicle URL</span>
+          <input id="dealerUrlInput" type="url" placeholder="Paste vehicle URL here..." />
+        </label>
 
-      <div class="kit-actions">
-        <button id="newPostBtn" type="button">New Post</button>
-        <button id="copyPostBtn" type="button">Copy</button>
-        <button id="newTextBtn" type="button">New Text</button>
-        <button id="copyTextBtn" type="button">Copy</button>
-      </div>
+        <label class="field">
+          <span>Vehicle Label (optional override)</span>
+          <input id="vehicleLabelInput" type="text" placeholder="Example: 2024 Chevy Silverado LTZ 4x4" />
+        </label>
 
-      <div class="kit-grid">
-        <div class="kit-card">
-          <h4>Marketplace Listing</h4>
-          <textarea id="marketplaceOutput" rows="8" placeholder="Output…"></textarea>
+        <label class="field">
+          <span>Price / Offer (optional override)</span>
+          <input id="priceOfferInput" type="text" placeholder="Example: $699/mo or $47,995 + tax" />
+        </label>
+
+        <div class="summary-box inner-summary" id="summarySnapshot">
+          <div class="small-note">Lot Rocket will scrape the page and pull title, price, description, and photos.</div>
+          <div id="summaryOutput" style="margin-top:.8rem;"></div>
         </div>
-        <div class="kit-card">
-          <h4>Hashtag Set</h4>
-          <textarea id="hashtagOutput" rows="8" placeholder="Output…"></textarea>
-        </div>
-      </div>
 
-      <div class="social-ready">
-        <div class="social-ready-head">
-          <h4>Social Ready Strip</h4>
-          <div class="social-ready-nav">
-            <button id="socialCarouselPrev" type="button">◀</button>
-            <button id="socialCarouselNext" type="button">▶</button>
+        <button id="boostBtn" class="primary-btn full summary-btn" type="button">Boost This Listing</button>
+
+        <div class="summary-box" style="margin-top:1rem;">
+          <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
+          <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
+
+          <button id="sendTopPhotosToCreative" class="secondary-btn full glow-send" type="button" style="margin-top:.8rem;">
+            Send top photos to Creative Studio
+          </button>
+
+          <div id="step1Photos" class="photo-grid"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN (STEP 2 TILE GRID) -->
+    <div class="column">
+      <section id="step2" class="lab-card">
+        <h3>Step 2 – Social Media Kit</h3>
+        <div class="small-note step2-subtitle">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</div>
+
+        <div class="step2-grid">
+
+          <!-- Facebook -->
+          <div class="platform-card step2-card">
+            <h3>Facebook Post</h3>
+            <textarea id="fbOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="fbNewBtn" class="regen-btn" type="button">New Post</button>
+              <button id="fbCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="fbEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
           </div>
+
+          <!-- Instagram -->
+          <div class="platform-card step2-card">
+            <h3>Instagram Caption</h3>
+            <textarea id="igOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="igNewBtn" class="regen-btn" type="button">New Post</button>
+              <button id="igCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="igEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+          <!-- TikTok -->
+          <div class="platform-card step2-card">
+            <h3>TikTok Caption</h3>
+            <textarea id="ttOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="ttNewBtn" class="regen-btn" type="button">New Post</button>
+              <button id="ttCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="ttEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+          <!-- LinkedIn -->
+          <div class="platform-card step2-card">
+            <h3>LinkedIn Post</h3>
+            <textarea id="liOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="liNewBtn" class="regen-btn" type="button">New Post</button>
+              <button id="liCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="liEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+          <!-- X / Twitter -->
+          <div class="platform-card step2-card">
+            <h3>X / Twitter Post</h3>
+            <textarea id="xOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="xNewBtn" class="regen-btn" type="button">New Post</button>
+              <button id="xCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="xEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+          <!-- Text / DM -->
+          <div class="platform-card step2-card">
+            <h3>Text / DM</h3>
+            <textarea id="dmOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="dmNewBtn" class="regen-btn" type="button">New Text</button>
+              <button id="dmCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="dmEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+          <!-- Marketplace -->
+          <div class="platform-card step2-card">
+            <h3>Marketplace Listing</h3>
+            <textarea id="marketplaceOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="mkNewBtn" class="regen-btn" type="button">New Post</button>
+              <button id="mkCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="mkEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+          <!-- Hashtags -->
+          <div class="platform-card step2-card">
+            <h3>Hashtag Set</h3>
+            <textarea id="hashtagsOutput" placeholder="Output..."></textarea>
+            <div class="btn-row">
+              <button id="hashNewBtn" class="regen-btn" type="button">New Set</button>
+              <button id="hashCopyBtn" class="copy-btn" type="button">Copy</button>
+              <button id="hashEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SOCIAL READY STRIP -->
+      <section class="lab-card social-ready-panel" id="socialReadyPanel">
+        <div class="panel-header">
+          <h3>Social Ready Strip</h3>
+          <p class="small-note">Pick + lock your best photos. Preview + download when ready.</p>
         </div>
 
-        <div id="socialCarousel" class="social-carousel"></div>
-
-        <div class="social-ready-preview">
+        <div class="social-carousel-preview">
+          <button id="socialCarouselPrev" class="ghost-circle-btn" type="button">◀</button>
           <img id="socialCarouselPreviewImg" alt="Preview" />
-          <div id="socialCarouselStatus"></div>
+          <button id="socialCarouselNext" class="ghost-circle-btn" type="button">▶</button>
         </div>
 
-        <div class="social-ready-actions">
-          <button id="sendToSocialReady" type="button">Send Selected to Social Ready</button>
-          <button id="downloadSocialReadyZip" type="button">Download ZIP</button>
+        <div id="socialCarousel"></div>
+        <div id="socialCarouselStatus" class="small-note" style="margin-top:.5rem;"></div>
+
+        <div class="social-carousel-actions">
+          <button id="sendSelectedToSocialReady" class="secondary-btn" type="button">Send Selected to Social Ready</button>
+          <button id="downloadZipBtn" class="secondary-btn" type="button">Download ZIP</button>
         </div>
+      </section>
+    </div>
+
+    <!-- STEP 3 FULL WIDTH -->
+    <section id="creativeHub" class="lab-card creativeHubFull">
+      <h3>Step 3 – Creative Lab</h3>
+
+      <div id="holdingZone"></div>
+
+      <div class="creative-hub">
+
+        <!-- LEFT -->
+        <div>
+          <h3>Photos</h3>
+
+          <div id="photoDropZone" class="photo-dropzone">
+            <p>
+              Drag &amp; Drop Photos Here<br />
+              <span>(or click to upload)</span>
+            </p>
+            <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
+          </div>
+
+          <div id="creativeThumbGrid"></div>
+
+          <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+            Send Selected to Design Studio 3.5
+          </button>
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+          <h3>Design Studio</h3>
+          <div id="designStudioHost" class="tuner-preview"></div>
+
+          <div style="display:flex; gap:.6rem; margin-top:.8rem;">
+            <button id="autoEnhanceBtn" class="secondary-btn" type="button">Auto Enhance</button>
+            <button id="resetEditsBtn" class="secondary-btn" type="button">Reset</button>
+          </div>
+
+          <div id="tunerControls"></div>
+        </div>
+
       </div>
     </section>
 
-    <!-- STEP 3 -->
-    <section id="creativeHub" class="creativeHubFull">
-      <div class="lab-card">
-        <h3>Step 3 – Creative Lab</h3>
-
-        <div id="holdingZone" class="holding-zone"></div>
-
-        <div class="creative-hub">
-          <div class="creative-left">
-            <h3>Photos</h3>
-
-            <div id="photoDropZone" class="photo-dropzone">
-              <p>Drag & Drop Photos Here<br /><span>(or click to upload)</span></p>
-              <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
-            </div>
-
-            <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
-
-            <button id="sendToDesignStudio" class="secondary-btn full" type="button">
-              Send Selected to Design Studio 3.5
-            </button>
-          </div>
-
-          <div class="creative-right">
-            <h3>Design Studio</h3>
-            <div id="designStudioMount" class="design-studio-mount"></div>
-
-            <div class="tuner-actions">
-              <button id="autoEnhanceBtn" type="button">Auto Enhance</button>
-              <button id="resetEditsBtn" type="button">Reset</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
-  <!-- SIDE MODALS -->
-  <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Income Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <form id="incomeForm">
-          <input id="incomeMtd" type="number" step="0.01" placeholder="Gross to date (e.g. 32000)" />
-          <input id="incomeLastPayDate" type="date" />
-          <button id="incomeCalcBtn" type="button">Estimate Income</button>
-        </form>
-        <div id="incomeOutput"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Payment Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <div id="paymentCalcMount"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="aiToolsModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Tools</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <div id="aiToolsMount"></div>
-      </div>
-    </div>
-  </section>
-
   <script src="/app.js?v=10001"></script>
-<!-- TOOLWIRE -->
-<div id="toolWire" class="toolwire hidden" aria-hidden="true">
-  <button class="toolwire-btn" type="button" data-tool="income">💰 Income</button>
-  <button class="toolwire-btn" type="button" data-tool="payment">💳 Payment</button>
-  <button class="toolwire-btn" type="button" data-tool="objection">🧠 Objection</button>
-  <button class="toolwire-btn" type="button" data-tool="askai">🤖 Ask AI</button>
-</div>
-
-<button id="toolWireToggle" class="toolwire-toggle" title="Tools">
-  ⚡
-</button>
-
 </body>
 </html>
