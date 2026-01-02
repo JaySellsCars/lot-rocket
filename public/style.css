@@ -1042,8 +1042,7 @@ textarea{
 main > section:nth-of-type(3) > div > div:first-child {
   display: none !important;
 }
-/* HIDE TOP HOLDING STRIP (we are using the LOWER row instead) */
-#holdingZone { display: none !important; }
+
 
 #holdingZone { display:none !important; }
 /* STEP 3 — LOWER HOLDING GRID (now using #creativeThumbGrid) */
