@@ -11,71 +11,87 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-function renderHoldingZone() {
-  const hz = document.getElementById("holdingZone");
-  if (!hz) return;
 
-  const photos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+  // --------------------------------------------------
+  // STEP 3: HOLDING ZONE RENDER (horizontal, up to 24)
+  // --------------------------------------------------
+  function renderHoldingZone() {
+    const hz = DOC.getElementById("holdingZone");
+    if (!hz) return;
 
-  hz.innerHTML = "";
+    const photos = Array.isArray(STORE.holdingZonePhotos)
+      ? STORE.holdingZonePhotos.slice(0, 24)
+      : [];
 
-  if (!photos.length) {
-    hz.innerHTML = `<div class="small-note" style="opacity:.7;padding:.5rem 0;">No photos in holding zone yet.</div>`;
-    return;
+    hz.innerHTML = "";
+
+    if (!photos.length) {
+      hz.innerHTML =
+        `<div class="small-note" style="opacity:.7;padding:.5rem 0;">
+          No photos in holding zone yet.
+        </div>`;
+      return;
+    }
+
+    // horizontal filmstrip
+    hz.style.display = "flex";
+    hz.style.flexDirection = "row";
+    hz.style.flexWrap = "nowrap";
+    hz.style.gap = "10px";
+    hz.style.overflowX = "auto";
+    hz.style.overflowY = "hidden";
+    hz.style.padding = "10px 0";
+    hz.style.alignItems = "center";
+
+    photos.forEach((src) => {
+      const img = DOC.createElement("img");
+      img.src = src;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.style.width = "120px";
+      img.style.height = "80px";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "10px";
+      img.style.border = "1px solid rgba(255,255,255,.15)";
+      img.style.flex = "0 0 auto";
+      img.style.margin = "0";
+      hz.appendChild(img);
+    });
   }
 
-  // simple horizontal strip
-  const wrap = document.createElement("div");
-  wrap.style.display = "flex";
-  wrap.style.gap = "10px";
-  wrap.style.flexWrap = "wrap";
-  wrap.style.padding = "10px 0";
+  // --------------------------------------------------
+  // STEP 1: SEND SELECTED → STEP 3 (bind ONCE)
+  // Uses your real ID: #sendToDesignStudio
+  // --------------------------------------------------
+  (() => {
+    const btn = DOC.getElementById("sendToDesignStudio");
+    if (!btn || btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
 
-  photos.forEach((u) => {
-    const im = document.createElement("img");
-    im.src = u;
-    im.style.width = "120px";
-    im.style.height = "80px";
-    im.style.objectFit = "cover";
-    im.style.borderRadius = "10px";
-    im.style.border = "1px solid rgba(255,255,255,.15)";
-    wrap.appendChild(im);
-  });
+    // keep visible
+    btn.classList.remove("hidden");
+    btn.style.display = "inline-flex";
+    btn.style.visibility = "visible";
+    btn.style.opacity = "1";
 
-  hz.appendChild(wrap);
-}
+    btn.addEventListener("click", () => {
+      const picked = Array.isArray(STORE._step1Selected)
+        ? STORE._step1Selected.slice(0, 24)
+        : [];
 
-  
-  // ✅ Bind Step 1 "Send Selected" button ONCE (uses your real ID)
-(() => {
-  const btn = document.getElementById("sendToDesignStudio");
-  if (!btn || btn.__LR_BOUND__) return;
-  btn.__LR_BOUND__ = true;
+      if (!picked.length) return alert("Select at least 1 photo first.");
 
-  // keep visible
-  btn.classList.remove("hidden");
-  btn.style.display = "inline-flex";
-  btn.style.visibility = "visible";
-  btn.style.opacity = "1";
+      STORE.holdingZonePhotos = picked.slice(0, 24);
+      STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-  btn.addEventListener("click", () => {
- const picked = Array.isArray(STORE._step1Selected) ? STORE._step1Selected : [];
+      renderHoldingZone();
 
-    if (!picked.length) return alert("Select at least 1 photo first.");
+      const step3 = DOC.getElementById("creativeHub");
+      if (step3) step3.scrollIntoView({ behavior: "smooth" });
 
-    STORE.holdingZonePhotos = picked.slice(0, 24);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-    if (typeof renderHoldingZone === "function") renderHoldingZone();
-
-    const step3 = document.getElementById("creativeHub");
-    if (step3) step3.scrollIntoView({ behavior: "smooth" });
-
-    console.log("✅ SENT TO STEP 3:", picked.length);
-  });
-})();
-
-
+      console.log("✅ SENT TO STEP 3:", picked.length);
+    });
+  })();
 
   // --------------------------------------------------
   // HEALTH CHECK
@@ -132,106 +148,72 @@ function renderHoldingZone() {
         return;
       }
 
-// ==============================
-// SEND SELECTED PHOTOS → STEP 3
-// ==============================
+      // reset selection for this boost
+      STORE._step1Selected = [];
 
-const sendSelectedBtn =
-  DOC.getElementById("sendSelectedToCreativeLab") ||
-  DOC.getElementById("sendToDesignStudio");
+      const countEl = DOC.getElementById("selectedCount");
+      if (countEl) countEl.textContent = "0";
 
-if (sendSelectedBtn && !sendSelectedBtn.__BOUND__) {
-  sendSelectedBtn.__BOUND__ = true;
+      // render selectable tiles (up to 24)
+      const MAX_UI = 24;
 
-  sendSelectedBtn.addEventListener("click", () => {
-    const picked = Array.isArray(STORE._step1Selected)
-      ? STORE._step1Selected
-      : [];
+      images.slice(0, MAX_UI).forEach((src) => {
+        const tile = DOC.createElement("div");
+        tile.style.position = "relative";
+        tile.style.cursor = "pointer";
+        tile.style.borderRadius = "12px";
+        tile.style.overflow = "hidden";
+        tile.style.border = "1px solid rgba(255,255,255,.12)";
 
-    if (!picked.length) {
-      alert("Select at least 1 photo first.");
-      return;
-    }
+        const img = DOC.createElement("img");
+        img.src = src;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.style.width = "100%";
+        img.style.display = "block";
 
-    // Save for Step 3
-    STORE.holdingZonePhotos = picked.slice(0, 24);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+        const badge = DOC.createElement("div");
+        badge.textContent = "✓";
+        badge.style.position = "absolute";
+        badge.style.top = "10px";
+        badge.style.right = "10px";
+        badge.style.width = "28px";
+        badge.style.height = "28px";
+        badge.style.display = "grid";
+        badge.style.placeItems = "center";
+        badge.style.borderRadius = "999px";
+        badge.style.background = "rgba(0,0,0,.55)";
+        badge.style.border = "1px solid rgba(255,255,255,.25)";
+        badge.style.opacity = "0";
+        badge.style.transition = "opacity .12s ease";
 
-    // Render into Step 3
-    if (typeof renderHoldingZone === "function") {
-      renderHoldingZone();
-    } else {
-      const hz = DOC.getElementById("holdingZone");
-      if (hz) {
-        hz.innerHTML = "";
-        STORE.holdingZonePhotos.forEach((src) => {
-          const img = document.createElement("img");
-          img.src = src;
-          img.style.width = "120px";
-          img.style.height = "80px";
-          img.style.objectFit = "cover";
-          img.style.borderRadius = "10px";
-          img.style.margin = "6px";
-          hz.appendChild(img);
+        const syncUI = () => {
+          const active = STORE._step1Selected.includes(src);
+          badge.style.opacity = active ? "1" : "0";
+          tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+        };
+
+        tile.addEventListener("click", () => {
+          const list = STORE._step1Selected;
+
+          if (list.includes(src)) {
+            STORE._step1Selected = list.filter((s) => s !== src);
+          } else {
+            if (list.length >= 24) return;
+            list.push(src);
+          }
+
+          syncUI();
+          if (countEl) countEl.textContent = String(STORE._step1Selected.length);
         });
-      }
-    }
 
-    console.log("✅ SENT TO STEP 3:", STORE.holdingZonePhotos.length);
-  });
-}
+        syncUI();
+        tile.appendChild(img);
+        tile.appendChild(badge);
+        grid.appendChild(tile);
+      });
+    };
+  }
 
-// ==============================
-// RENDER STEP 1 (Selectable Tiles)
-// ==============================
-
-const MAX_UI = 24;
-
-images.slice(0, MAX_UI).forEach((src) => {
-  const tile = DOC.createElement("div");
-  tile.style.position = "relative";
-  tile.style.cursor = "pointer";
-  tile.style.borderRadius = "12px";
-  tile.style.overflow = "hidden";
-  tile.style.border = "1px solid rgba(255,255,255,.12)";
-
-  const img = DOC.createElement("img");
-  img.src = src;
-  img.loading = "lazy";
-  img.style.width = "100%";
-  img.style.display = "block";
-
-  const badge = DOC.createElement("div");
-  badge.textContent = "✓";
-  badge.style.position = "absolute";
-  badge.style.top = "10px";
-  badge.style.right = "10px";
-  badge.style.width = "28px";
-  badge.style.height = "28px";
-  badge.style.display = "grid";
-  badge.style.placeItems = "center";
-  badge.style.borderRadius = "999px";
-  badge.style.background = "rgba(0,0,0,.55)";
-  badge.style.border = "1px solid rgba(255,255,255,.25)";
-  badge.style.opacity = "0";
-
-  const syncUI = () => {
-    const active = STORE._step1Selected?.includes(src);
-    badge.style.opacity = active ? "1" : "0";
-  };
-
-  tile.addEventListener("click", () => {
-    STORE._step1Selected = STORE._step1Selected || [];
-    if (STORE._step1Selected.includes(src)) {
-      STORE._step1Selected = STORE._step1Selected.filter((s) => s !== src);
-    } else {
-      STORE._step1Selected.push(src);
-    }
-    syncUI();
-  });
-
-  syncUI();
-  tile.appendChild(img);
-  tile.appendChild(badge);
-  grid.appendChild(tile);
-});
+  console.log("✅ APP READY");
+})();
