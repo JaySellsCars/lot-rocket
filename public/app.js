@@ -223,8 +223,8 @@ tile.addEventListener("click", () => {
   else selected.add(src);
 
   syncUI();
-
-  STORE._step1Selected = Array.from(selected); // ✅ ADD THIS
+  STORE._step1Selected = Array.from(selected);
+  
 
   const countEl = DOC.getElementById("selectedCount");
   if (countEl) countEl.textContent = String(selected.size);
