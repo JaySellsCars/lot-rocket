@@ -11,6 +11,15 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
+// FORCE SHOW: Step 1 send button (if present)
+(() => {
+  const b = document.getElementById("sendSelectedToCreativeLab");
+  if (!b) return;
+  b.classList.remove("hidden");
+  b.style.display = "inline-flex";
+  b.style.visibility = "visible";
+  b.style.opacity = "1";
+})();
 
   // --------------------------------------------------
   // HEALTH CHECK
