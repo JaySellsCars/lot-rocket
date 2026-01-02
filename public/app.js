@@ -11,6 +11,16 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
+// ==================================================
+// STEP 1 SELECTION — ENFORCE SINGLE SOURCE OF TRUTH
+// ==================================================
+if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
+
+// hard fail if old state exists (debug visibility)
+if ("_step1Selected" in STORE) {
+  console.warn("🧨 Removing legacy STORE._step1Selected");
+  try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
+}
 
   // ✅ ensure arrays exist (prevents “undefined includes/indexOf” crashes)
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
