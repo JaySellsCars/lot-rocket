@@ -802,3 +802,16 @@ textarea{
 .bottom-panel,
 .dev-tools,
 .debug-tools { display: none !important; }
+/* Force Step 1 "Send Selected Photos" button to be visible */
+#sendToDesignStudio,
+#sendSelectedToCreativeLab {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 12px;
+}
+
+/* If the container is clipping it, stop clipping */
+#step1 .summary-box {
+  overflow: visible !important;
+}
