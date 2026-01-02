@@ -445,6 +445,22 @@ textarea{
   border-color: rgba(56,189,248,0.95);
   box-shadow: 0 0 18px rgba(56,189,248,0.6);
 }
+#holdingZone {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+  white-space: nowrap;
+}
+
+#holdingZone img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
 
 /* Holding zone (VISIBLE) — ONE TRUE BLOCK */
 #holdingZone{
