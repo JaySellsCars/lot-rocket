@@ -11,29 +11,26 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-// Bind "Send Selected" button ONCE
+// ✅ Bind Step 1 "Send Selected" button ONCE (uses your real ID)
 (() => {
-  const btn = document.getElementById("sendSelectedToCreativeLab");
-  if (!btn || btn.__BOUND__) return;
+  const btn = document.getElementById("sendToDesignStudio");
+  if (!btn || btn.__LR_BOUND__) return;
+  btn.__LR_BOUND__ = true;
 
-  btn.__BOUND__ = true;
+  // keep visible
+  btn.classList.remove("hidden");
+  btn.style.display = "inline-flex";
+  btn.style.visibility = "visible";
+  btn.style.opacity = "1";
 
   btn.addEventListener("click", () => {
-    const picked = Array.isArray(STORE._step1Selected)
-      ? STORE._step1Selected
-      : [];
-
-    if (!picked.length) {
-      alert("Select at least one photo first.");
-      return;
-    }
+    const picked = Array.isArray(STORE._step1Selected) ? STORE._step1Selected : [];
+    if (!picked.length) return alert("Select at least 1 photo first.");
 
     STORE.holdingZonePhotos = picked.slice(0, 24);
     STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-    if (typeof renderHoldingZone === "function") {
-      renderHoldingZone();
-    }
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
 
     const step3 = document.getElementById("creativeHub");
     if (step3) step3.scrollIntoView({ behavior: "smooth" });
@@ -41,6 +38,7 @@
     console.log("✅ SENT TO STEP 3:", picked.length);
   });
 })();
+
 
 
   // --------------------------------------------------
