@@ -59,7 +59,8 @@ function renderHoldingZone() {
   btn.style.opacity = "1";
 
   btn.addEventListener("click", () => {
-    const picked = Array.isArray(STORE._step1Selected) ? STORE._step1Selected : [];
+ const picked = Array.isArray(STORE._step1Selected) ? STORE._step1Selected : [];
+
     if (!picked.length) return alert("Select at least 1 photo first.");
 
     STORE.holdingZonePhotos = picked.slice(0, 24);
