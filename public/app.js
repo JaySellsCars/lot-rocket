@@ -70,14 +70,12 @@ if (boostBtn) {
 // ===== Selection state (inside onclick, before rendering) =====
 const selected = new Set();
 
-// Step 1 confirm-send button (UNIQUE NAME so no redeclare crashes)
 const sendSelectedBtn =
   document.getElementById("sendSelectedToCreativeLab") ||
   document.getElementById("sendSelectedToStep3") ||
   document.getElementById("sendToCreativeStudio") ||
   document.getElementById("sendToHolding");
 
-// bind once
 if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
   sendSelectedBtn.__LR_BOUND__ = true;
 
@@ -85,7 +83,6 @@ if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
     const picked = Array.from(selected);
     if (!picked.length) return alert("Select at least 1 photo first.");
 
-    window.STORE = window.STORE || {};
     STORE.holdingZonePhotos = picked.slice(0, 24);
     STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
@@ -97,6 +94,7 @@ if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
     console.log("✅ SENT TO STEP 3:", picked.length);
   });
 }
+
 
 
 // ===== Render Step 1 images as selectable tiles =====
@@ -151,62 +149,6 @@ images.slice(0, MAX_UI).forEach((src) => {
   tile.appendChild(badge);
   grid.appendChild(tile);
 });
-// STEP 1 → SEND SELECTED PHOTOS TO CREATIVE LAB
-const sendBtn = document.getElementById("sendSelectedToCreativeLab");
-
-if (sendBtn) {
-  sendBtn.addEventListener("click", () => {
-    if (!window.STORE || !STORE.holdingZonePhotos || !STORE.holdingZonePhotos.length) {
-      alert("No photos selected yet.");
-      return;
-    }
-
-    console.log("✅ Sending to Creative Lab:", STORE.holdingZonePhotos);
-
-    // Optional: auto-scroll to Step 3
-    const step3 = document.getElementById("creativeHub");
-    if (step3) step3.scrollIntoView({ behavior: "smooth" });
-
-    // If you later want to trigger rendering logic, this is the hook
-    if (typeof renderHoldingZone === "function") {
-      renderHoldingZone();
-    }
-  });
-}
-
-// ===== Confirm send to Step 3 =====
-if (sendBtn) {
-  sendBtn.onclick = () => {
-    const picked = Array.from(selected);
-
-    if (!picked.length) {
-      alert("Select at least 1 photo first.");
-      return;
-    }
-
-    
-    window.STORE = window.STORE || {};
-    STORE.holdingZonePhotos = picked.slice(0, 24);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-    // If your Step 3 renderer exists, call it
-    if (typeof renderHoldingZone === "function") {
-      renderHoldingZone();
-    } else {
-      // fallback: render into #holdingZone if present
-      const hz = document.getElementById("holdingZone");
-      if (hz) {
-        hz.innerHTML = "";
-        STORE.holdingZonePhotos.forEach((u) => {
-          const im = document.createElement("img");
-          im.src = u;
-          im.style.width = "120px";
-          im.style.borderRadius = "10px";
-          im.style.margin = "6px";
-          hz.appendChild(im);
-        });
-      }
-    }
 
   console.log("✅ SENT TO STEP 3:", picked.length);
 }
