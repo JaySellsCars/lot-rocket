@@ -1,6 +1,18 @@
 /* /public/app.js (REPLACE ENTIRE FILE) — ROCKET-1 WIRED MVP (SAFE / DEDUPED) */
 (() => {
   const V = "10001";
+  // /public/app.js — ADD THIS NEAR THE TOP (after helpers $/q/on), ONCE
+const API_BASE = ""; // same-origin when using Web Service (recommended)
+
+// Replace your boost fetch with this exact line:
+const r = await fetch(`${API_BASE}/api/boost?url=${encodeURIComponent(url)}`);
+
+// Add this quick health probe (optional) — place inside DOMContentLoaded at start:
+fetch(`${API_BASE}/api/health`)
+  .then((res) => res.json())
+  .then((j) => console.log("✅ API HEALTH", j))
+  .catch((e) => console.warn("❌ API HEALTH FAIL", e));
+
   const DOC = document;
 
   // HARD BOOT GUARD (prevents double-loaded/cached copies)
