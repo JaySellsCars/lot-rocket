@@ -143,107 +143,95 @@ const sendSelectedBtn =
 if (sendSelectedBtn && !sendSelectedBtn.__BOUND__) {
   sendSelectedBtn.__BOUND__ = true;
 
-sendSelectedBtn.addEventListener("click", () => {
-  const picked = Array.isArray(STORE._step1Selected)
-    ? STORE._step1Selected
-    : [];
+  sendSelectedBtn.addEventListener("click", () => {
+    const picked = Array.isArray(STORE._step1Selected)
+      ? STORE._step1Selected
+      : [];
 
-  if (!picked.length) {
-    alert("Select at least 1 photo first.");
-    return;
-  }
-
-  // Save selected photos for Step 3
-  STORE.holdingZonePhotos = picked.slice(0, 24);
-  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
-
-  // Render into Step 3
-  if (typeof renderHoldingZone === "function") {
-    renderHoldingZone();
-  } else {
-    const hz = document.getElementById("holdingZone");
-    if (hz) {
-      hz.innerHTML = "";
-      STORE.holdingZonePhotos.forEach((src) => {
-        const img = document.createElement("img");
-        img.src = src;
-        img.style.width = "120px";
-        img.style.height = "80px";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "10px";
-        img.style.margin = "6px";
-        hz.appendChild(img);
-      });
+    if (!picked.length) {
+      alert("Select at least 1 photo first.");
+      return;
     }
-  }
 
-  console.log("✅ SENT TO STEP 3:", picked.length);
-});
+    // Save for Step 3
+    STORE.holdingZonePhotos = picked.slice(0, 24);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
+    // Render into Step 3
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
+    } else {
+      const hz = DOC.getElementById("holdingZone");
+      if (hz) {
+        hz.innerHTML = "";
+        STORE.holdingZonePhotos.forEach((src) => {
+          const img = document.createElement("img");
+          img.src = src;
+          img.style.width = "120px";
+          img.style.height = "80px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "10px";
+          img.style.margin = "6px";
+          hz.appendChild(img);
+        });
+      }
+    }
 
-      // ==============================
-      // RENDER STEP 1 (selectable tiles)
-      // ==============================
-      const MAX_UI = 24;
+    console.log("✅ SENT TO STEP 3:", STORE.holdingZonePhotos.length);
+  });
+}
 
-      images.slice(0, MAX_UI).forEach((src) => {
-        const tile = DOC.createElement("div");
-        tile.style.position = "relative";
-        tile.style.cursor = "pointer";
-        tile.style.borderRadius = "12px";
-        tile.style.overflow = "hidden";
-        tile.style.border = "1px solid rgba(255,255,255,.12)";
+// ==============================
+// RENDER STEP 1 (Selectable Tiles)
+// ==============================
 
-        const img = DOC.createElement("img");
-        img.src = src;
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.style.width = "100%";
-        img.style.display = "block";
+const MAX_UI = 24;
 
-        const badge = DOC.createElement("div");
-        badge.textContent = "✓";
-        badge.style.position = "absolute";
-        badge.style.top = "10px";
-        badge.style.right = "10px";
-        badge.style.width = "28px";
-        badge.style.height = "28px";
-        badge.style.display = "grid";
-        badge.style.placeItems = "center";
-        badge.style.borderRadius = "999px";
-        badge.style.background = "rgba(0,0,0,.55)";
-        badge.style.border = "1px solid rgba(255,255,255,.25)";
-        badge.style.opacity = "0";
-        badge.style.transition = "opacity .12s ease";
+images.slice(0, MAX_UI).forEach((src) => {
+  const tile = DOC.createElement("div");
+  tile.style.position = "relative";
+  tile.style.cursor = "pointer";
+  tile.style.borderRadius = "12px";
+  tile.style.overflow = "hidden";
+  tile.style.border = "1px solid rgba(255,255,255,.12)";
 
-        function syncUI() {
-          const on = selected.has(src);
-          badge.style.opacity = on ? "1" : "0";
-          tile.style.outline = on ? "2px solid rgba(255,255,255,.35)" : "none";
-        }
+  const img = DOC.createElement("img");
+  img.src = src;
+  img.loading = "lazy";
+  img.style.width = "100%";
+  img.style.display = "block";
 
-tile.addEventListener("click", () => {
-  if (selected.has(src)) selected.delete(src);
-  else selected.add(src);
+  const badge = DOC.createElement("div");
+  badge.textContent = "✓";
+  badge.style.position = "absolute";
+  badge.style.top = "10px";
+  badge.style.right = "10px";
+  badge.style.width = "28px";
+  badge.style.height = "28px";
+  badge.style.display = "grid";
+  badge.style.placeItems = "center";
+  badge.style.borderRadius = "999px";
+  badge.style.background = "rgba(0,0,0,.55)";
+  badge.style.border = "1px solid rgba(255,255,255,.25)";
+  badge.style.opacity = "0";
+
+  const syncUI = () => {
+    const active = STORE._step1Selected?.includes(src);
+    badge.style.opacity = active ? "1" : "0";
+  };
+
+  tile.addEventListener("click", () => {
+    STORE._step1Selected = STORE._step1Selected || [];
+    if (STORE._step1Selected.includes(src)) {
+      STORE._step1Selected = STORE._step1Selected.filter((s) => s !== src);
+    } else {
+      STORE._step1Selected.push(src);
+    }
+    syncUI();
+  });
 
   syncUI();
-  STORE._step1Selected = Array.from(selected);
-  
-
-  const countEl = DOC.getElementById("selectedCount");
-  if (countEl) countEl.textContent = String(selected.size);
+  tile.appendChild(img);
+  tile.appendChild(badge);
+  grid.appendChild(tile);
 });
-
-
-        // initial state
-        syncUI();
-
-        tile.appendChild(img);
-        tile.appendChild(badge);
-        grid.appendChild(tile);
-      });
-    };
-  }
-
-  console.log("✅ APP READY");
-})();
