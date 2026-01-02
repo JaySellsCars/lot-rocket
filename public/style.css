@@ -1,8 +1,9 @@
 /* /public/style.css  (REPLACE ENTIRE FILE)
-   LOT ROCKET — CLEAN STABLE CSS (v2.6.5)
-   - Holding zone: stacked
-   - Social Ready: taller panel + BIG centered preview + arrows toggle selection
-   - Social strip: stacked (wrap) up to 24, no scroll
+   LOT ROCKET — CLEAN STABLE CSS (v2.6.6)
+   - BIGGER Social Ready viewer
+   - Social Ready thumbs look correct (square, cover, crisp)
+   - Lock badge visible + positioned (🔒/🔓)
+   - Strip stacks (wrap), no scroll, up to 24 visible
 */
 
 *,
@@ -192,87 +193,113 @@ textarea{
 }
 
 /* ==================================================
-   SOCIAL READY — TALLER + BIG CENTER PREVIEW
+   SOCIAL READY — BIG VIEWER + GOOD THUMBS + LOCK
 ================================================== */
-.social-ready-bottom{ margin-top:14px; }
-
-/* make the panel taller / roomier like old */
 #socialReadyPanel{
   padding: 1.2rem;
-  min-height: 520px;                /* ✅ taller */
+  min-height: 600px;
 }
 
-/* row with arrows + preview */
-.social-ready-row{
+/* viewer row */
+.social-carousel-preview{
   display:grid;
-  grid-template-columns: 54px 1fr 54px;   /* ✅ bigger arrow columns */
-  gap: 16px;
+  grid-template-columns: 64px 1fr 64px;
+  gap: 18px;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 /* arrows */
 .ghost-circle-btn{
-  width: 54px;                      /* ✅ bigger */
-  height: 54px;
+  width: 64px;
+  height: 64px;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: rgba(2,6,23,.7);
   color: var(--text-main);
   cursor: pointer;
+  font-size: 18px;
 }
 
-/* center column */
-.social-ready-center{
-  min-width: 0;
-  display:flex;
-  flex-direction: column;
-  align-items: center;              /* ✅ centered */
-  justify-content: center;
-}
-
-/* BIG preview box (the “decent sized viewer”) */
+/* ✅ BIGGER viewer */
 #socialCarouselPreviewImg{
-  width: min(520px, 100%);          /* ✅ large but responsive */
-  height: 320px;                    /* ✅ bigger viewer */
+  width: min(760px, 100%);
+  height: 420px;
   object-fit: contain;
   border-radius: 18px;
   border: 1px solid rgba(148,163,184,.35);
   background: rgba(2,6,23,.65);
   display:block;
+  margin: 0 auto;
 }
 
-/* status under preview */
+/* status */
 #socialCarouselStatus{
   text-align:center;
   margin-top:.6rem;
 }
 
-/* STRIP AREA (stacked thumbs, no scroll) */
+/* strip container (stacked, no scroll) */
 #socialCarousel{
   display:flex;
-  flex-wrap:wrap;                   /* ✅ stack */
-  gap: 10px;
-  padding: 12px;
-  margin-top: 16px;
-  overflow: visible;                /* ✅ no scroll */
+  flex-wrap:wrap;
+  gap: 12px;
+  padding: 14px;
+  margin-top: 18px;
+  overflow: visible;
   border: 1px dashed rgba(148,163,184,.25);
   border-radius: 14px;
   background: rgba(2,6,23,.18);
-  min-height: 140px;                /* ✅ gives that “strip zone” presence */
+  min-height: 170px;
   align-content: flex-start;
 }
 
-/* thumbs */
-.social-carousel-item,
+/* ✅ thumbs look correct */
 #socialCarousel .social-thumb-btn{
-  width: 96px;
-  height: 96px;
-  border-radius: 12px;
+  width: 108px;
+  height: 108px;
+  padding: 0;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(148,163,184,.25);
   background: rgba(2,6,23,.55);
+  cursor: pointer;
+  position: relative;
   flex: 0 0 auto;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+#socialCarousel .social-thumb-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(56,189,248,0.22);
+  border-color: rgba(56,189,248,0.45);
+}
+#socialCarousel .social-thumb-btn img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;     /* ✅ IMPORTANT */
+  display: block;
+}
+
+/* ✅ lock badge */
+#socialCarousel .social-lock{
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.18);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;  /* click selects thumb; dblclick toggles lock via JS */
+}
+
+/* selected ring (JS uses outline inline; keep a nice default too) */
+#socialCarousel .social-thumb-btn[style*="outline"]{
+  box-shadow: 0 0 18px rgba(56,189,248,0.28);
 }
 
 /* actions */
@@ -301,5 +328,9 @@ textarea{
     margin-top:1rem;
   }
   #socialReadyPanel{ min-height: 0; }
-  #socialCarouselPreviewImg{ height: 260px; }
+  #socialCarouselPreviewImg{ height: 320px; }
+  .social-carousel-preview{
+    grid-template-columns: 54px 1fr 54px;
+  }
+  .ghost-circle-btn{ width:54px; height:54px; }
 }
