@@ -1,3 +1,9 @@
+/* /public/style.css  (REPLACE ENTIRE FILE) */
+html,body{height:100%}
+body{margin:0;background:#0b1020;color:#fff}
+a{color:#8ab4f8}
+
+
 /* ======================================================
    LOT ROCKET – CLEAN STABLE CSS (v2.6 – DEDUPED + JS-ALIGNED)
    Goals:
