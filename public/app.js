@@ -5,6 +5,126 @@
   const $ = (id) => DOC.getElementById(id);
   const q = (sel, root = DOC) => root.querySelector(sel);
   const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
+// ==================================================
+// CLICK ROUTER (failsafe wiring) ✅
+// Works even if HTML changes later
+// ==================================================
+(function clickRouter() {
+  if (window.__LR_CLICK_ROUTER__) return;
+  window.__LR_CLICK_ROUTER__ = true;
+
+  const byId = (id) => document.getElementById(id);
+
+  function openModal(modalId) {
+    const m = byId(modalId);
+    if (!m) return console.warn("Modal missing:", modalId);
+
+    // Your modals use .hidden + display flex
+    m.classList.remove("hidden");
+    m.style.display = "flex";
+  }
+
+  // Map right-side tool button labels -> modal ids
+  const TOOL_MAP = {
+    "objection coach": "objectionModal",
+    "calculator": "calcModal",
+    "payment calculator": "paymentModal",
+    "income calculator": "incomeModal",
+    "ai work flow expert": "workflowModal",
+    "ai message builder": "messageModal",
+    "ask a.i.": "askModal",
+    "ask a.i": "askModal",
+    "ai car expert": "carModal",
+    "ai image generation": "imageModal",
+    "ai video generation": "videoModal",
+  };
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    const id = btn.id || "";
+    const label = (btn.textContent || "").trim().toLowerCase();
+
+    // -------------------------
+    // STEP 1 — BOOST
+    // -------------------------
+    if (id === "boostBtn" || label === "boost this listing" || label === "boost") {
+      e.preventDefault();
+      const urlEl = byId("dealerUrlInput");
+      const url = (urlEl?.value || "").trim();
+
+      console.log("🚀 BOOST CLICK", { url });
+
+      if (!url) return alert("Paste a vehicle URL first.");
+
+      // Call whichever function exists in your app.js
+      if (typeof handleBoost === "function") return handleBoost(url);
+      if (typeof boostListing === "function") return boostListing(url);
+      if (typeof scrapeVehicle === "function") return scrapeVehicle(url);
+
+      console.warn("No boost handler found (handleBoost/boostListing/scrapeVehicle).");
+      return;
+    }
+
+    // -------------------------
+    // RIGHT SIDE TOOLS (your new layout buttons)
+    // -------------------------
+    if (btn.classList.contains("tool-button") || btn.closest(".floating-tools")) {
+      const modalId = TOOL_MAP[label];
+      if (modalId) {
+        e.preventDefault();
+        console.log("🧰 TOOL OPEN:", label, "->", modalId);
+        openModal(modalId);
+        btn.classList.add("active");
+      }
+      return;
+    }
+
+    // -------------------------
+    // COPY (generic)
+    // -------------------------
+    if (label === "copy") {
+      e.preventDefault();
+
+      const wrap =
+        btn.closest(".step2-card") ||
+        btn.closest(".platform-card") ||
+        btn.closest(".panel") ||
+        btn.closest(".lab-card") ||
+        document;
+
+      const box = wrap.querySelector("textarea, .output");
+      const txt = (box?.value ?? box?.textContent ?? "").trim();
+
+      if (!txt) return;
+
+      await navigator.clipboard.writeText(txt);
+      btn.classList.add("copied");
+      setTimeout(() => btn.classList.remove("copied"), 700);
+      return;
+    }
+
+    // -------------------------
+    // NEW POST / NEW TEXT / NEW SET (generic)
+    // NOTE: this just calls your existing generators if they exist
+    // -------------------------
+    if (label === "new post" || label === "new text" || label === "new set") {
+      e.preventDefault();
+
+      // Try the most common functions you’ve used
+      if (typeof regenAllSocial === "function") return regenAllSocial();
+      if (typeof generateSocialKit === "function") return generateSocialKit();
+      if (typeof generateHashtags === "function" && label === "new set") return generateHashtags();
+
+      console.warn("No generator found for:", label);
+      return;
+    }
+
+  }, true);
+
+  console.log("✅ CLICK ROUTER ARMED");
+})();
 
   // HARD BOOT GUARD
   if (window.__LOTROCKET_APPJS_VERSION__ && window.__LOTROCKET_APPJS_VERSION__ !== V) return;
