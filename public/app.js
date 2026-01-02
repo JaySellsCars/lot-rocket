@@ -11,15 +11,37 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-// FORCE SHOW: Step 1 send button (if present)
+// Bind "Send Selected" button ONCE
 (() => {
-  const b = document.getElementById("sendSelectedToCreativeLab");
-  if (!b) return;
-  b.classList.remove("hidden");
-  b.style.display = "inline-flex";
-  b.style.visibility = "visible";
-  b.style.opacity = "1";
+  const btn = document.getElementById("sendSelectedToCreativeLab");
+  if (!btn || btn.__BOUND__) return;
+
+  btn.__BOUND__ = true;
+
+  btn.addEventListener("click", () => {
+    const picked = Array.isArray(STORE._step1Selected)
+      ? STORE._step1Selected
+      : [];
+
+    if (!picked.length) {
+      alert("Select at least one photo first.");
+      return;
+    }
+
+    STORE.holdingZonePhotos = picked.slice(0, 24);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+    if (typeof renderHoldingZone === "function") {
+      renderHoldingZone();
+    }
+
+    const step3 = document.getElementById("creativeHub");
+    if (step3) step3.scrollIntoView({ behavior: "smooth" });
+
+    console.log("✅ SENT TO STEP 3:", picked.length);
+  });
 })();
+
 
   // --------------------------------------------------
   // HEALTH CHECK
