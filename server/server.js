@@ -12,6 +12,42 @@ app.use(express.json({ limit: "1mb" }));
 // STATIC FRONTEND
 // ===============================
 app.use(express.static(path.join(__dirname, "../public")));
+// /server/server.js — ADD THIS ENDPOINT (anywhere before app.get("*"...))
+// FIXES ZIP FAIL (CORS) by proxying images same-origin
+app.get("/api/proxy", async (req, res) => {
+  try {
+    const u = (req.query.url || "").toString().trim();
+    if (!u) return res.status(400).send("missing url");
+
+    let target;
+    try { target = new URL(u); } catch { return res.status(400).send("bad url"); }
+
+    // basic safety: only http/https
+    if (!/^https?:$/.test(target.protocol)) return res.status(400).send("bad protocol");
+
+    const r = await fetch(target.toString(), {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+      },
+    });
+
+    if (!r.ok) return res.status(502).send("fetch failed");
+
+    const ct = r.headers.get("content-type") || "application/octet-stream";
+    res.setHeader("Content-Type", ct);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
+    const buf = Buffer.from(await r.arrayBuffer());
+    return res.status(200).send(buf);
+  } catch (e) {
+    console.error("PROXY_ERR", e);
+    return res.status(500).send("proxy error");
+  }
+});
 
 // ===============================
 // API: HEALTH
