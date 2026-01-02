@@ -650,172 +650,155 @@
     console.warn("⚠️ API not available (ok in dev)");
   }
 
-  // --------------------------------------------------
-  // BOOST (Step 1) → photos + vehicle + Step 2 AI
-  // --------------------------------------------------
-  const boostBtn = $("boostBtn");
-  const urlInput = $("dealerUrlInput");
+// --------------------------------------------------
+// BOOST (Step 1) → photos + vehicle + Step 2 AI
+// --------------------------------------------------
+function normalizeDealerUrl(raw) {
+  let s = (raw || "").toString().trim();
 
-  if (boostBtn) {
-    boostBtn.onclick = async () => {
-      pressAnim(boostBtn);
-      setBtnLoading(boostBtn, true, "Boosting…");
+  // remove whitespace
+  s = s.replace(/\s+/g, "");
 
-      try {
-        const url = urlInput?.value?.trim();
-        if (!url) return alert("Paste a vehicle URL first.");
+  // if user pasted a bad double-scheme like: https://whttps://...
+  // keep the LAST http(s) occurrence
+  const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
+  if (lastHttp > 0) s = s.slice(lastHttp);
 
-        console.log("🚀 BOOST:", url);
-    // tight, browser-ish headers
-    const r = await fetch(target, {
-      method: "GET",
-      redirect: "follow",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    });
+  // common accidental prefix "whttps://"
+  s = s.replace(/^whttps:\/\//i, "https://");
+  s = s.replace(/^whttp:\/\//i, "http://");
 
-    out.finalUrl = r.url || target;
-
-    // ✅ handle blocked / non-200 responses (this is often the real issue)
-    const status = r.status || 0;
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-
-    // Always read body (even on 403/503) so we can debug
-    const html = await r.text();
-
-    if (!r.ok) {
-      out.meta.ms = Date.now() - started;
-      out.error = `Dealer blocked request (status ${status})`;
-      out.meta.notes.push(`HTTP ${status}`);
-      out.meta.notes.push(`CT ${ct || "unknown"}`);
-
-      // give a tiny snippet for debugging (safe length)
-      out.meta.snippet = (html || "").slice(0, 600);
-
-      return res.status(200).json(out); // ✅ return JSON, not 500
-    }
-
-    if (!ct.includes("text/html")) {
-      out.meta.ms = Date.now() - started;
-      out.error = `Unsupported content-type: ${ct || "unknown"}`;
-      return res.status(200).json(out); // ✅ return JSON, not 500
-    }
-
-        let res, data;
-        try {
-          res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
-          data = await res.json();
-        } catch (e) {
-          console.error("❌ BOOST FETCH FAILED", e);
-          alert("Boost request failed (network/json).");
-          return;
-        }
-
-        if (!data || !data.ok) {
-          alert(data?.error || "Boost failed");
-          return;
-        }
-
-        // ✅ vehicle details (server must send data.vehicle)
-        STORE.lastVehicle = data.vehicle || { url };
-        STORE.lastVehicle.url = STORE.lastVehicle.url || url;
-
-        renderSummary(STORE.lastVehicle);
-
-        wireRegenButtons();
-        generateAllStep2();
-
-        const rawImages = Array.isArray(data.images) ? data.images : [];
-        const images = [...new Set(rawImages)].filter(Boolean);
-
-        const grid = $("step1Photos");
-        if (!grid) return;
-
-        grid.innerHTML = "";
-
-        if (!images.length) {
-          grid.innerHTML =
-            `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
-              No images found.
-            </div>`;
-          return;
-        }
-
-        STORE.step1Selected = [];
-        syncSendBtn();
-
-        const countEl = $("selectedCount");
-        if (countEl) countEl.textContent = "0";
-
-        const MAX_UI = 24;
-
-        images.slice(0, MAX_UI).forEach((src) => {
-          const tile = DOC.createElement("div");
-          tile.style.position = "relative";
-          tile.style.cursor = "pointer";
-          tile.style.borderRadius = "12px";
-          tile.style.overflow = "hidden";
-          tile.style.border = "1px solid rgba(255,255,255,.12)";
-
-          const img = DOC.createElement("img");
-          img.src = src;
-          img.loading = "lazy";
-          img.decoding = "async";
-          img.style.width = "100%";
-          img.style.display = "block";
-
-          const badge = DOC.createElement("div");
-          badge.textContent = "✓";
-          badge.style.position = "absolute";
-          badge.style.top = "10px";
-          badge.style.right = "10px";
-          badge.style.width = "28px";
-          badge.style.height = "28px";
-          badge.style.display = "grid";
-          badge.style.placeItems = "center";
-          badge.style.borderRadius = "999px";
-          badge.style.background = "rgba(0,0,0,.55)";
-          badge.style.border = "1px solid rgba(255,255,255,.25)";
-          badge.style.opacity = "0";
-          badge.style.transition = "opacity .12s ease";
-
-          const syncUI = () => {
-            const active = STORE.step1Selected.includes(src);
-            badge.style.opacity = active ? "1" : "0";
-            tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
-          };
-
-          tile.addEventListener("click", () => {
-            const idx = STORE.step1Selected.indexOf(src);
-            if (idx > -1) STORE.step1Selected.splice(idx, 1);
-            else {
-              if (STORE.step1Selected.length >= 24) return;
-              STORE.step1Selected.push(src);
-            }
-            syncUI();
-            syncSendBtn();
-            if (countEl) countEl.textContent = String(STORE.step1Selected.length);
-          });
-
-          syncUI();
-          tile.appendChild(img);
-          tile.appendChild(badge);
-          grid.appendChild(tile);
-        });
-      } finally {
-        setBtnLoading(boostBtn, false);
-      }
-    };
+  // if missing scheme but looks like a domain
+  if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) {
+    s = "https://" + s;
   }
 
-  // --------------------------------------------------
+  return s;
+}
+
+const boostBtn = $("boostBtn");
+const urlInput = $("dealerUrlInput");
+
+if (boostBtn) {
+  boostBtn.onclick = async () => {
+    pressAnim(boostBtn);
+    setBtnLoading(boostBtn, true, "Boosting…");
+
+    try {
+      const raw = urlInput?.value?.trim();
+      const url = normalizeDealerUrl(raw);
+      if (!url) return alert("Paste a vehicle URL first.");
+
+      console.log("🚀 BOOST:", url);
+
+      let res, data;
+      try {
+        res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
+        data = await res.json();
+      } catch (e) {
+        console.error("❌ BOOST FETCH FAILED", e);
+        alert("Boost request failed (network/json).");
+        return;
+      }
+
+      if (!data || !data.ok) {
+        alert(data?.error || "Boost failed");
+        return;
+      }
+
+      // ✅ vehicle details (server should send data.vehicle; fallback to title if present)
+      STORE.lastVehicle = data.vehicle || { url, title: data.title || "" };
+      STORE.lastVehicle.url = STORE.lastVehicle.url || url;
+
+      renderSummary(STORE.lastVehicle);
+
+      wireRegenButtons();
+      generateAllStep2();
+
+      const rawImages = Array.isArray(data.images) ? data.images : [];
+      const images = [...new Set(rawImages)].filter(Boolean);
+
+      const grid = $("step1Photos");
+      if (!grid) return;
+
+      grid.innerHTML = "";
+
+      if (!images.length) {
+        grid.innerHTML =
+          `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+            No images found.
+          </div>`;
+        return;
+      }
+
+      STORE.step1Selected = [];
+      syncSendBtn();
+
+      const countEl = $("selectedCount");
+      if (countEl) countEl.textContent = "0";
+
+      const MAX_UI = 24;
+
+      images.slice(0, MAX_UI).forEach((src) => {
+        const tile = DOC.createElement("div");
+        tile.style.position = "relative";
+        tile.style.cursor = "pointer";
+        tile.style.borderRadius = "12px";
+        tile.style.overflow = "hidden";
+        tile.style.border = "1px solid rgba(255,255,255,.12)";
+
+        const img = DOC.createElement("img");
+        img.src = src;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.style.width = "100%";
+        img.style.display = "block";
+
+        const badge = DOC.createElement("div");
+        badge.textContent = "✓";
+        badge.style.position = "absolute";
+        badge.style.top = "10px";
+        badge.style.right = "10px";
+        badge.style.width = "28px";
+        badge.style.height = "28px";
+        badge.style.display = "grid";
+        badge.style.placeItems = "center";
+        badge.style.borderRadius = "999px";
+        badge.style.background = "rgba(0,0,0,.55)";
+        badge.style.border = "1px solid rgba(255,255,255,.25)";
+        badge.style.opacity = "0";
+        badge.style.transition = "opacity .12s ease";
+
+        const syncUI = () => {
+          const active = STORE.step1Selected.includes(src);
+          badge.style.opacity = active ? "1" : "0";
+          tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+        };
+
+        tile.addEventListener("click", () => {
+          const idx = STORE.step1Selected.indexOf(src);
+          if (idx > -1) STORE.step1Selected.splice(idx, 1);
+          else {
+            if (STORE.step1Selected.length >= 24) return;
+            STORE.step1Selected.push(src);
+          }
+          syncUI();
+          syncSendBtn();
+          if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+        });
+
+        syncUI();
+        tile.appendChild(img);
+        tile.appendChild(badge);
+        grid.appendChild(tile);
+      });
+    } finally {
+      setBtnLoading(boostBtn, false);
+    }
+  };
+}
+// --------------------------------------------------
+
   // SOCIAL READY WIRES (ONE PASS)
   // --------------------------------------------------
   wireSocialNav();
