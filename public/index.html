@@ -36,6 +36,8 @@
     <button class="tool-button" id="toolMessageBtn" type="button">AI Message Builder</button>
     <button class="tool-button" id="toolAskBtn" type="button">Ask A.I.</button>
     <button class="tool-button" id="toolCarBtn" type="button">AI Car Expert</button>
+
+    <!-- hidden v1 by app.js wiring -->
     <button class="tool-button" id="toolImageBtn" type="button">AI Image Generation</button>
     <button class="tool-button" id="toolVideoBtn" type="button">AI Video Generation</button>
   </div>
@@ -177,10 +179,10 @@
     <section id="creativeHub" class="lab-card creativeHubFull">
       <h3>Step 3 – Creative Lab</h3>
 
-      <!-- Holding thumbnails (stacked / all visible) -->
+      <!-- Holding thumbnails -->
       <div id="holdingZone"></div>
 
-      <!-- Bottom Social Ready Strip (this is the bottom strip) -->
+      <!-- Bottom Social Ready Strip -->
       <section class="lab-card social-ready-panel social-ready-bottom" id="socialReadyPanel">
         <div class="panel-header">
           <h3>Social Ready Strip</h3>
@@ -215,6 +217,171 @@
     </section>
 
   </main>
+
+  <!-- ==================================================
+       SIDE MODALS (REQUIRED FOR FLOATING TOOLS)
+       IDs match app.js wiring:
+       objectionModal, calcModal, paymentModal, incomeModal,
+       workflowModal, messageModal, askModal, carExpertModal
+  ================================================== -->
+
+  <!-- Objection Coach -->
+  <section id="objectionModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Objection Coach</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="objectionGoBtn" class="secondary-btn" type="button">Coach Me</button>
+        </div>
+        <div id="objectionOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calculator -->
+  <section id="calcModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <div class="calculator-body">
+          <input id="calcDisplay" type="text" placeholder="0" />
+          <div class="calc-grid">
+            <button type="button" data-calc="7">7</button>
+            <button type="button" data-calc="8">8</button>
+            <button type="button" data-calc="9">9</button>
+            <button type="button" data-calc="/">÷</button>
+            <button type="button" data-calc="4">4</button>
+            <button type="button" data-calc="5">5</button>
+            <button type="button" data-calc="6">6</button>
+            <button type="button" data-calc="*">×</button>
+            <button type="button" data-calc="1">1</button>
+            <button type="button" data-calc="2">2</button>
+            <button type="button" data-calc="3">3</button>
+            <button type="button" data-calc="-">−</button>
+            <button type="button" data-calc="0">0</button>
+            <button type="button" data-calc=".">.</button>
+            <button type="button" data-calc="=">=</button>
+            <button type="button" data-calc="+">+</button>
+            <button type="button" data-calc="C">C</button>
+            <button type="button" data-calc="⌫">⌫</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Payment Calculator -->
+  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Payment Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <label class="field"><span>Vehicle Price</span><input id="payPrice" type="number" step="0.01" placeholder="e.g. 27995" /></label>
+        <label class="field"><span>Down Payment</span><input id="payDown" type="number" step="0.01" placeholder="e.g. 1000" /></label>
+        <label class="field"><span>APR %</span><input id="payApr" type="number" step="0.01" placeholder="e.g. 9.99" /></label>
+        <label class="field"><span>Term (months)</span><input id="payTerm" type="number" step="1" placeholder="e.g. 72" /></label>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="payCalcBtn" class="secondary-btn" type="button">Calculate</button>
+        </div>
+        <div id="payOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Income Calculator -->
+  <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Income Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <label class="field"><span>Gross to date</span><input id="incomeMtd" type="number" step="0.01" placeholder="e.g. 32000" /></label>
+        <label class="field"><span>Last pay date</span><input id="incomeLastPayDate" type="date" /></label>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="incomeCalcBtn" class="secondary-btn" type="button">Estimate Income</button>
+        </div>
+        <div id="incomeOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Workflow Expert -->
+  <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Work Flow Expert</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="workflowInput" placeholder="Describe the situation and what you want to achieve…"></textarea>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="workflowGoBtn" class="secondary-btn" type="button">Build My Workflow</button>
+        </div>
+        <div id="workflowOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Message Builder -->
+  <section id="messageModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Message Builder</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="messageInput" placeholder="Who are you texting and what’s the goal?"></textarea>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="messageGoBtn" class="secondary-btn" type="button">Write My Message</button>
+        </div>
+        <div id="messageOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ask AI -->
+  <section id="askModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Ask A.I.</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="askInput" placeholder="Ask anything…"></textarea>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="askGoBtn" class="secondary-btn" type="button">Ask</button>
+        </div>
+        <div id="askOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Car Expert -->
+  <section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Car Expert</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="carInput" placeholder="Ask about trims, reliability, comparisons, features…"></textarea>
+        <div class="btn-row" style="justify-content:flex-start;">
+          <button id="carGoBtn" class="secondary-btn" type="button">Get Answer</button>
+        </div>
+        <div id="carOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
 
   <script src="/app.js?v=10001"></script>
 </body>
