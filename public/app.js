@@ -216,3 +216,22 @@ DM me “INFO” and I’ll send numbers + availability.`;
     on($("toolAiBtn"), "click", () => show("aiToolsModal"));
   });
 })();
+// /public/app.js — ADD THIS AT VERY BOTTOM OF THE FILE
+(() => {
+  const DOC = document;
+  const $ = (id) => DOC.getElementById(id);
+  const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+
+  const show = (id) => {
+    const m = $(id);
+    if (!m) return;
+    m.classList.remove("hidden");
+    m.setAttribute("aria-hidden", "false");
+  };
+
+  DOC.addEventListener("DOMContentLoaded", () => {
+    on($("toolIncomeBtn"), "click", () => show("incomeModal"));
+    on($("toolPaymentBtn"), "click", () => show("paymentModal"));
+    on($("toolAiBtn"), "click", () => show("aiToolsModal"));
+  });
+})();
