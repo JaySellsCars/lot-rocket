@@ -23,6 +23,14 @@
       <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
     </div>
   </header>
+<!-- /public/index.html — ADD THESE BLOCKS (DO NOT DELETE ANYTHING) -->
+
+<!-- 1) ADD THIS RIGHT AFTER </header> (BEFORE <main id="appMain">) -->
+<div id="toolWire" class="toolwire" aria-label="Floating Tools">
+  <button id="toolIncomeBtn" type="button" class="toolwire-btn" title="Income Calculator">💰</button>
+  <button id="toolPaymentBtn" type="button" class="toolwire-btn" title="Payment Calculator">🧮</button>
+  <button id="toolAiBtn" type="button" class="toolwire-btn" title="AI Tools">🤖</button>
+</div>
 
   <!-- ================= MAIN ================= -->
   <main id="appMain">
@@ -132,6 +140,31 @@
       </div>
     </div>
   </section>
+<!-- 2) ADD THIS RIGHT AFTER YOUR incomeModal (BEFORE THE FINAL <script src="/app.js...">) -->
+
+<section id="paymentModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Payment Calculator</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <div id="paymentCalcMount"></div>
+    </div>
+  </div>
+</section>
+
+<section id="aiToolsModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Tools</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <div id="aiToolsMount"></div>
+    </div>
+  </div>
+</section>
 
   <!-- ✅ APP JS — MUST BE LAST -->
   <script src="/app.js?v=10001"></script>
