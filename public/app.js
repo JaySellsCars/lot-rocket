@@ -666,6 +666,47 @@
         if (!url) return alert("Paste a vehicle URL first.");
 
         console.log("🚀 BOOST:", url);
+    // tight, browser-ish headers
+    const r = await fetch(target, {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    });
+
+    out.finalUrl = r.url || target;
+
+    // ✅ handle blocked / non-200 responses (this is often the real issue)
+    const status = r.status || 0;
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+
+    // Always read body (even on 403/503) so we can debug
+    const html = await r.text();
+
+    if (!r.ok) {
+      out.meta.ms = Date.now() - started;
+      out.error = `Dealer blocked request (status ${status})`;
+      out.meta.notes.push(`HTTP ${status}`);
+      out.meta.notes.push(`CT ${ct || "unknown"}`);
+
+      // give a tiny snippet for debugging (safe length)
+      out.meta.snippet = (html || "").slice(0, 600);
+
+      return res.status(200).json(out); // ✅ return JSON, not 500
+    }
+
+    if (!ct.includes("text/html")) {
+      out.meta.ms = Date.now() - started;
+      out.error = `Unsupported content-type: ${ct || "unknown"}`;
+      return res.status(200).json(out); // ✅ return JSON, not 500
+    }
 
         let res, data;
         try {
