@@ -67,17 +67,37 @@ if (boostBtn) {
         </div>`;
       return;
     }
-const step3Btn = document.getElementById("sendToDesignStudio");
-if (step3Btn) step3Btn.click();
-
 // ===== Selection state (inside onclick, before rendering) =====
 const selected = new Set();
 
-
-const sendBtn =
-  document.getElementById("sendToHolding") ||
+// Step 1 confirm-send button (UNIQUE NAME so no redeclare crashes)
+const sendSelectedBtn =
+  document.getElementById("sendSelectedToCreativeLab") ||
+  document.getElementById("sendSelectedToStep3") ||
   document.getElementById("sendToCreativeStudio") ||
-  document.getElementById("sendSelectedToStep3");
+  document.getElementById("sendToHolding");
+
+// bind once
+if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
+  sendSelectedBtn.__LR_BOUND__ = true;
+
+  sendSelectedBtn.addEventListener("click", () => {
+    const picked = Array.from(selected);
+    if (!picked.length) return alert("Select at least 1 photo first.");
+
+    window.STORE = window.STORE || {};
+    STORE.holdingZonePhotos = picked.slice(0, 24);
+    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+    if (typeof renderHoldingZone === "function") renderHoldingZone();
+
+    const step3 = document.getElementById("creativeHub");
+    if (step3) step3.scrollIntoView({ behavior: "smooth" });
+
+    console.log("✅ SENT TO STEP 3:", picked.length);
+  });
+}
+
 
 // ===== Render Step 1 images as selectable tiles =====
 const MAX_UI = 24;
