@@ -21,6 +21,102 @@
     console.warn("🧨 Removing legacy STORE._step1Selected");
     try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
   }
+// ==================================================
+// STEP 2 OUTPUT SETTERS
+// ==================================================
+function setVal(id, v) {
+  const el = $(id);
+  if (!el) return;
+  el.value = (v ?? "").toString();
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function renderSummary(vehicle) {
+  const out = $("summaryOutput");
+  if (!out) return;
+
+  const v = vehicle || {};
+  out.innerHTML = `
+    <div class="small-note" style="margin:.35rem 0;">
+      <b>${(v.title || "").replace(/</g,"&lt;")}</b>
+    </div>
+    <div class="small-note">Price: <b>${v.price || "—"}</b> • Mileage: <b>${v.mileage || "—"}</b></div>
+    <div class="small-note">VIN: <b>${v.vin || "—"}</b> • Stock: <b>${v.stock || "—"}</b></div>
+    <div class="small-note">Ext/Int: <b>${v.exterior || "—"}</b> / <b>${v.interior || "—"}</b></div>
+    <div class="small-note">Powertrain: <b>${v.engine || "—"}</b> • <b>${v.transmission || v.trans || "—"}</b></div>
+  `;
+}
+
+async function aiPost(platform) {
+  const vehicle = STORE.lastVehicle || {};
+  const r = await fetch("/api/ai/social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ vehicle, platform }),
+  });
+  const j = await r.json();
+  if (!j?.ok) throw new Error(jz(j?.error || "AI failed");
+  return j.text || "";
+}
+
+function mapPlatformToTextarea(platform) {
+  const m = {
+    facebook: "fbOutput",
+    instagram: "igOutput",
+    tiktok: "ttOutput",
+    linkedin: "liOutput",
+    x: "xOutput",
+    dm: "dmOutput",
+    marketplace: "marketplaceOutput",
+    hashtags: "hashtagsOutput",
+  };
+  return m[platform];
+}
+
+async function generateAllStep2() {
+  const platforms = ["facebook","instagram","tiktok","linkedin","x","dm","marketplace","hashtags"];
+  for (const p of platforms) {
+    const id = mapPlatformToTextarea(p);
+    if (!$(id)) continue;
+    setVal(id, "Generating…");
+    try {
+      const text = await aiPost(p);
+      setVal(id, text);
+    } catch (e) {
+      setVal(id, `AI ERROR: ${String(e?.message || e)}`);
+    }
+  }
+}
+
+function wireRegenButtons() {
+  const wires = [
+    ["fbNewBtn","facebook"],
+    ["igNewBtn","instagram"],
+    ["ttNewBtn","tiktok"],
+    ["liNewBtn","linkedin"],
+    ["xNewBtn","x"],
+    ["dmNewBtn","dm"],
+    ["mkNewBtn","marketplace"],
+    ["hashNewBtn","hashtags"],
+  ];
+
+  wires.forEach(([btnId, platform]) => {
+    const b = $(btnId);
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+    b.addEventListener("click", async () => {
+      const outId = mapPlatformToTextarea(platform);
+      if (!$(outId)) return;
+      setVal(outId, "Generating…");
+      try {
+        const text = await aiPost(platform);
+        setVal(outId, text);
+      } catch (e) {
+        setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
+      }
+    });
+  });
+}
 
   // ==================================================
   // SOCIAL READY STORE (LOCKED DOWNLOAD)
