@@ -149,30 +149,35 @@ function renderHoldingZone() {
       if (sendSelectedBtn && !sendSelectedBtn.__LR_BOUND__) {
         sendSelectedBtn.__LR_BOUND__ = true;
 
-        sendSelectedBtn.addEventListener("click", () => {
-          const picked = Array.from(selected);
-          if (!picked.length) return alert("Select at least 1 photo first.");
+       sendSelectedBtn.addEventListener("click", () => {
+  const picked = Array.from(selected);
+  if (!picked.length) return alert("Select at least 1 photo first.");
 
-          STORE.holdingZonePhotos = picked.slice(0, 24);
-          STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+  STORE.holdingZonePhotos = picked.slice(0, 24);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
 
-          if (typeof renderHoldingZone === "function") {
-            renderHoldingZone();
-          } else {
-            // fallback render into #holdingZone
-            const hz = DOC.getElementById("holdingZone");
-            if (hz) {
-              hz.innerHTML = "";
-              STORE.holdingZonePhotos.forEach((u) => {
-                const im = DOC.createElement("img");
-                im.src = u;
-                im.style.width = "120px";
-                im.style.borderRadius = "10px";
-                im.style.margin = "6px";
-                hz.appendChild(im);
-              });
-            }
-          }
+  if (typeof renderHoldingZone === "function") {
+    renderHoldingZone();
+  } else {
+    const hz = DOC.getElementById("holdingZone");
+    if (hz) {
+      hz.innerHTML = "";
+      STORE.holdingZonePhotos.forEach((u) => {
+        const im = DOC.createElement("img");
+        im.src = u;
+        im.style.width = "120px";
+        im.style.height = "80px";
+        im.style.objectFit = "cover";
+        im.style.borderRadius = "10px";
+        im.style.margin = "6px";
+        hz.appendChild(im);
+      });
+    }
+  }
+
+  console.log("✅ SENT TO STEP 3:", picked.length);
+});
+
 
           const step3 = DOC.getElementById("creativeHub");
           if (step3) step3.scrollIntoView({ behavior: "smooth" });
