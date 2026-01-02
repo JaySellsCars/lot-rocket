@@ -39,7 +39,9 @@
 
 
 
-const res = await fetch(`/api/boost?url=${encodeURIComponent(url)}`);
+
+const res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
+
 const data = await res.json();
 
 console.log("📦 BOOST DATA:", data);
