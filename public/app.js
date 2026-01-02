@@ -13,6 +13,31 @@
   const STORE = window.STORE;
 
   // ==================================================
+  // UI FX HELPERS (PRESS + LOADING)
+  // ==================================================
+  function pressAnim(el) {
+    if (!el) return;
+    el.classList.remove("lr-press");
+    void el.offsetWidth;
+    el.classList.add("lr-press");
+    setTimeout(() => el.classList.remove("lr-press"), 220);
+  }
+
+  function setBtnLoading(btn, on, label) {
+    if (!btn) return;
+    if (on) {
+      btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+      if (label) btn.textContent = label;
+      btn.disabled = true;
+      btn.classList.add("lr-loading");
+    } else {
+      btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
+      btn.disabled = false;
+      btn.classList.remove("lr-loading");
+    }
+  }
+
+  // ==================================================
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
   // ==================================================
   if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
@@ -21,510 +46,245 @@
     console.warn("🧨 Removing legacy STORE._step1Selected");
     try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
   }
-// ==================================================
-// STEP 2 OUTPUT SETTERS
-// ==================================================
-function setVal(id, v) {
-  const el = $(id);
-  if (!el) return;
-  el.value = (v ?? "").toString();
-  el.dispatchEvent(new Event("input", { bubbles: true }));
-}
 
-function renderSummary(vehicle) {
-  const out = $("summaryOutput");
-  if (!out) return;
+  // ✅ ensure arrays exist (prevents undefined crashes)
+  STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
 
-  const v = vehicle || {};
-  out.innerHTML = `
-    <div class="small-note" style="margin:.35rem 0;">
-      <b>${(v.title || "").replace(/</g,"&lt;")}</b>
-    </div>
-    <div class="small-note">Price: <b>${v.price || "—"}</b> • Mileage: <b>${v.mileage || "—"}</b></div>
-    <div class="small-note">VIN: <b>${v.vin || "—"}</b> • Stock: <b>${v.stock || "—"}</b></div>
-    <div class="small-note">Ext/Int: <b>${v.exterior || "—"}</b> / <b>${v.interior || "—"}</b></div>
-    <div class="small-note">Powertrain: <b>${v.engine || "—"}</b> • <b>${v.transmission || v.trans || "—"}</b></div>
-  `;
-}
-
-async function aiPost(platform) {
-  const vehicle = STORE.lastVehicle || {};
-  const r = await fetch("/api/ai/social", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ vehicle, platform }),
-  });
-  const j = await r.json();
-if (!j?.ok) throw new Error(j?.error || "AI failed");
-
-  return j.text || "";
-}
-
-function mapPlatformToTextarea(platform) {
-  const m = {
-    facebook: "fbOutput",
-    instagram: "igOutput",
-    tiktok: "ttOutput",
-    linkedin: "liOutput",
-    x: "xOutput",
-    dm: "dmOutput",
-    marketplace: "marketplaceOutput",
-    hashtags: "hashtagsOutput",
-  };
-  return m[platform];
-}
-
-async function generateAllStep2() {
-  const platforms = ["facebook","instagram","tiktok","linkedin","x","dm","marketplace","hashtags"];
-  for (const p of platforms) {
-    const id = mapPlatformToTextarea(p);
-    if (!$(id)) continue;
-    setVal(id, "Generating…");
-    try {
-      const text = await aiPost(p);
-      setVal(id, text);
-    } catch (e) {
-      setVal(id, `AI ERROR: ${String(e?.message || e)}`);
-    }
+  // ==================================================
+  // STEP 2 OUTPUT SETTERS
+  // ==================================================
+  function setVal(id, v) {
+    const el = $(id);
+    if (!el) return;
+    el.value = (v ?? "").toString();
+    el.dispatchEvent(new Event("input", { bubbles: true }));
   }
-}
 
-function wireRegenButtons() {
-  const wires = [
-    ["fbNewBtn","facebook"],
-    ["igNewBtn","instagram"],
-    ["ttNewBtn","tiktok"],
-    ["liNewBtn","linkedin"],
-    ["xNewBtn","x"],
-    ["dmNewBtn","dm"],
-    ["mkNewBtn","marketplace"],
-    ["hashNewBtn","hashtags"],
-  ];
+  function renderSummary(vehicle) {
+    const out = $("summaryOutput");
+    if (!out) return;
 
-  wires.forEach(([btnId, platform]) => {
-    const b = $(btnId);
-    if (!b || b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
-    b.addEventListener("click", async () => {
-      const outId = mapPlatformToTextarea(platform);
-      if (!$(outId)) return;
-      setVal(outId, "Generating…");
+    const v = vehicle || {};
+    out.innerHTML = `
+      <div class="small-note" style="margin:.35rem 0;">
+        <b>${(v.title || "").replace(/</g, "&lt;")}</b>
+      </div>
+      <div class="small-note">Price: <b>${v.price || "—"}</b> • Mileage: <b>${v.mileage || "—"}</b></div>
+      <div class="small-note">VIN: <b>${v.vin || "—"}</b> • Stock: <b>${v.stock || "—"}</b></div>
+      <div class="small-note">Ext/Int: <b>${v.exterior || "—"}</b> / <b>${v.interior || "—"}</b></div>
+      <div class="small-note">Powertrain: <b>${v.engine || "—"}</b> • <b>${v.transmission || v.trans || "—"}</b></div>
+    `;
+  }
+
+  async function aiPost(platform) {
+    const vehicle = STORE.lastVehicle || {};
+    const r = await fetch("/api/ai/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vehicle, platform }),
+    });
+    const j = await r.json();
+    if (!j?.ok) throw new Error(j?.error || "AI failed");
+    return j.text || "";
+  }
+
+  function mapPlatformToTextarea(platform) {
+    const m = {
+      facebook: "fbOutput",
+      instagram: "igOutput",
+      tiktok: "ttOutput",
+      linkedin: "liOutput",
+      x: "xOutput",
+      dm: "dmOutput",
+      marketplace: "marketplaceOutput",
+      hashtags: "hashtagsOutput",
+    };
+    return m[platform];
+  }
+
+  async function generateAllStep2() {
+    const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
+    for (const p of platforms) {
+      const id = mapPlatformToTextarea(p);
+      if (!$(id)) continue;
+      setVal(id, "Generating…");
       try {
-        const text = await aiPost(platform);
-        setVal(outId, text);
+        const text = await aiPost(p);
+        setVal(id, text);
       } catch (e) {
-        setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
+        setVal(id, `AI ERROR: ${String(e?.message || e)}`);
       }
-    });
-  });
-}
-// PROMPT SLOTS (NEXT) — add these now so each AI tool has its own prompt later
-// /public/app.js — ADD INSIDE IIFE (anywhere after STORE init)
-STORE.aiPrompts = STORE.aiPrompts || {
-  workflow: "YOU WILL SET THIS PROMPT NEXT",
-  message: "YOU WILL SET THIS PROMPT NEXT",
-  ask: "YOU WILL SET THIS PROMPT NEXT",
-  car: "YOU WILL SET THIS PROMPT NEXT",
-};
-// ==================================================
-// FLOATING SIDE TOOLS — WIRE (ONE PASS) ✅
-// ==================================================
-(function wireFloatingTools() {
-  if (window.__LR_FLOATING_TOOLS__) return;
-  window.__LR_FLOATING_TOOLS__ = true;
-
-  const byId = (id) => DOC.getElementById(id);
-
-  // ✅ buttons you showed
-  const BTN = {
-    objection: "toolObjectionBtn",
-    calc: "toolCalcBtn",
-    payment: "toolPaymentBtn",
-    income: "toolIncomeBtn",
-    workflow: "toolWorkflowBtn",
-    message: "toolMessageBtn",
-    ask: "toolAskBtn",
-    car: "toolCarBtn",
-    image: "toolImageBtn", // hidden for now
-    video: "toolVideoBtn", // hidden for now
-  };
-
-  // ✅ modal IDs (edit ONLY these if your HTML uses different IDs)
-  const MODAL = {
-    objection: "objectionModal",
-    calc: "calcModal",
-    payment: "paymentModal",
-    income: "incomeModal",
-    workflow: "workflowModal",
-    message: "messageModal",
-    ask: "askModal",
-    car: "carExpertModal",
-    image: "imageGenModal",
-    video: "videoGenModal",
-  };
-
-  // hide image/video for now
-  [BTN.image, BTN.video].forEach((id) => {
-    const b = byId(id);
-    if (b) b.style.display = "none";
-  });
-
-  const allBtnIds = Object.values(BTN);
-
-  function setActive(btnId) {
-    allBtnIds.forEach((id) => {
-      const b = byId(id);
-      if (b) b.classList.toggle("active", id === btnId);
-    });
+    }
   }
 
-  function closeModal(modalId) {
-    const m = byId(modalId);
-    if (!m) return;
-    m.classList.add("hidden");
-    m.style.display = "none";
-    m.setAttribute("aria-hidden", "true");
-  }
+  function wireRegenButtons() {
+    const wires = [
+      ["fbNewBtn", "facebook"],
+      ["igNewBtn", "instagram"],
+      ["ttNewBtn", "tiktok"],
+      ["liNewBtn", "linkedin"],
+      ["xNewBtn", "x"],
+      ["dmNewBtn", "dm"],
+      ["mkNewBtn", "marketplace"],
+      ["hashNewBtn", "hashtags"],
+    ];
 
-  function closeAll() {
-    Object.values(MODAL).forEach(closeModal);
-    setActive(null);
-  }
+    wires.forEach(([btnId, platform]) => {
+      const b = $(btnId);
+      if (!b || b.__LR_BOUND__) return;
+      b.__LR_BOUND__ = true;
 
-  function openModal(modalId, btnId) {
-    const m = byId(modalId);
-    if (!m) return console.warn("Modal missing:", modalId);
+      b.addEventListener("click", async () => {
+        pressAnim(b);
+        const outId = mapPlatformToTextarea(platform);
+        if (!$(outId)) return;
 
-    closeAll();
-
-    m.classList.remove("hidden");
-    m.style.display = "flex";
-    m.setAttribute("aria-hidden", "false");
-    setActive(btnId);
-
-    // close buttons inside modal
-    if (!m.__LR_CLOSE_WIRED__) {
-      m.__LR_CLOSE_WIRED__ = true;
-
-      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
-        if (x.__LR_BOUND__) return;
-        x.__LR_BOUND__ = true;
-        x.addEventListener("click", closeAll);
+        setVal(outId, "Generating…");
+        try {
+          const text = await aiPost(platform);
+          setVal(outId, text);
+        } catch (e) {
+          setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
+        }
       });
+    });
+  }
 
-      // click backdrop closes
-      m.addEventListener("click", (e) => {
-        if (e.target === m) closeAll();
+  // ==================================================
+  // PROMPT SLOTS (NEXT) — per AI tool
+  // ==================================================
+  STORE.aiPrompts = STORE.aiPrompts || {
+    workflow: "YOU WILL SET THIS PROMPT NEXT",
+    message: "YOU WILL SET THIS PROMPT NEXT",
+    ask: "YOU WILL SET THIS PROMPT NEXT",
+    car: "YOU WILL SET THIS PROMPT NEXT",
+  };
+
+  // ==================================================
+  // FLOATING TOOLS WIRING ✅ (ONE TRUE BLOCK)
+  // Image/Video tools hidden for v1.
+  // ==================================================
+  (function wireFloatingTools() {
+    if (window.__LR_FLOATING_TOOLS__) return;
+    window.__LR_FLOATING_TOOLS__ = true;
+
+    const byId = (id) => DOC.getElementById(id);
+
+    const BTN = {
+      objection: "toolObjectionBtn",
+      calc: "toolCalcBtn",
+      payment: "toolPaymentBtn",
+      income: "toolIncomeBtn",
+      workflow: "toolWorkflowBtn",
+      message: "toolMessageBtn",
+      ask: "toolAskBtn",
+      car: "toolCarBtn",
+      image: "toolImageBtn", // hidden v1
+      video: "toolVideoBtn", // hidden v1
+    };
+
+    const MODAL = {
+      objection: "objectionModal",
+      calc: "calcModal",
+      payment: "paymentModal",
+      income: "incomeModal",
+      workflow: "workflowModal",
+      message: "messageModal",
+      ask: "askModal",
+      car: "carExpertModal",
+      image: "imageGenModal",
+      video: "videoGenModal",
+    };
+
+    // hide image/video now
+    [BTN.image, BTN.video].forEach((id) => {
+      const b = byId(id);
+      if (b) b.style.display = "none";
+    });
+
+    const allBtnIds = Object.values(BTN);
+
+    function setActive(btnId) {
+      allBtnIds.forEach((id) => {
+        const b = byId(id);
+        if (b) b.classList.toggle("active", id === btnId);
       });
     }
 
-    // focus
-    const focusEl =
-      m.querySelector("textarea") ||
-      m.querySelector("input:not([type='hidden'])") ||
-      m.querySelector("button");
-    if (focusEl) setTimeout(() => focusEl.focus(), 0);
-  }
-
-  // ESC closes all
-  DOC.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAll();
-  });
-
-  // wire button clicks
-  function bind(key) {
-    const b = byId(BTN[key]);
-    const mid = MODAL[key];
-    if (!b || b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
-
-    b.addEventListener("click", () => {
-      const m = byId(mid);
-      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-      if (isOpen) return closeAll();
-      openModal(mid, BTN[key]);
-    });
-  }
-
-  Object.keys(BTN).forEach(bind);
-
-  // expose helpers (optional)
-  window.LR_TOOLS = { openModal, closeAll };
-
-  console.log("✅ FLOATING TOOLS WIRED");
-})();
-
-// ==================================================
-// SIDE TOOLS — ONE WIRE PASS (NO DUPES)
-// - AI Image / AI Video hidden for now (next version)
-// - Opens side-modals by ID
-// - Close via [data-close] or .side-modal-close or ESC or backdrop click
-// ==================================================
-(function wireSideTools() {
-  if (window.__LR_SIDE_TOOLS_WIRED__) return;
-  window.__LR_SIDE_TOOLS_WIRED__ = true;
-
-  const byId = (id) => DOC.getElementById(id);
-
-  const TOOL_BTN_IDS = {
-    objection: "toolObjectionBtn",
-    calc: "toolCalcBtn",
-    payment: "toolPaymentBtn",
-    income: "toolIncomeBtn",
-
-    workflow: "toolWorkflowBtn",
-    message: "toolMessageBtn",
-    ask: "toolAskBtn",
-    car: "toolCarBtn",
-
-    image: "toolImageBtn", // HIDDEN (next version)
-    video: "toolVideoBtn", // HIDDEN (next version)
-  };
-
-  // Map tool -> modalId in your HTML
-  // ✅ change modal IDs here ONLY if yours differ
-  const TOOL_MODAL = {
-    objection: "objectionModal",
-    calc: "calcModal",
-    payment: "paymentModal",
-    income: "incomeModal",
-
-    workflow: "workflowModal",
-    message: "messageModal",
-    ask: "askModal",
-    car: "carExpertModal",
-
-    image: "imageGenModal",
-    video: "videoGenModal",
-  };
-
-  // Hide Image/Video (next version)
-  [TOOL_BTN_IDS.image, TOOL_BTN_IDS.video].forEach((id) => {
-    const b = byId(id);
-    if (b) b.style.display = "none";
-  });
-
-  const allBtnIds = Object.values(TOOL_BTN_IDS).filter(Boolean);
-
-  function setActive(btnId) {
-    allBtnIds.forEach((id) => {
-      const b = byId(id);
-      if (b) b.classList.toggle("active", id === btnId);
-    });
-  }
-
-  function closeAllModals() {
-    Object.values(TOOL_MODAL).forEach((mid) => {
-      const m = byId(mid);
+    function closeModal(modalId) {
+      const m = byId(modalId);
       if (!m) return;
       m.classList.add("hidden");
       m.style.display = "none";
       m.setAttribute("aria-hidden", "true");
-    });
-    setActive(null);
-  }
-
-  function openModal(modalId, btnId) {
-    const m = byId(modalId);
-    if (!m) return console.warn("Modal missing:", modalId);
-
-    closeAllModals();
-
-    m.classList.remove("hidden");
-    m.style.display = "flex";
-    m.setAttribute("aria-hidden", "false");
-
-    if (btnId) setActive(btnId);
-
-    // autofocus if any input/textarea exists
-    const focusEl =
-      m.querySelector("textarea") ||
-      m.querySelector("input:not([type='hidden'])") ||
-      m.querySelector("button");
-    if (focusEl) setTimeout(() => focusEl.focus(), 0);
-  }
-
-  // Close wiring (once)
-  function wireModalClose(m) {
-    if (!m || m.__LR_CLOSE_WIRED__) return;
-    m.__LR_CLOSE_WIRED__ = true;
-
-    // close buttons
-    m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((btn) => {
-      if (btn.__LR_BOUND__) return;
-      btn.__LR_BOUND__ = true;
-      btn.addEventListener("click", () => closeAllModals());
-    });
-
-    // backdrop click closes
-    m.addEventListener("click", (e) => {
-      if (e.target === m) closeAllModals();
-    });
-  }
-
-  // Wire all modals close behavior
-  Object.values(TOOL_MODAL).forEach((mid) => wireModalClose(byId(mid)));
-
-  // ESC closes
-  DOC.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAllModals();
-  });
-
-  // Button click opens mapped modal
-  function bindTool(toolKey) {
-    const btnId = TOOL_BTN_IDS[toolKey];
-    const modalId = TOOL_MODAL[toolKey];
-    const b = byId(btnId);
-    if (!b || b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
-
-    b.addEventListener("click", () => {
-      const m = byId(modalId);
-      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-      if (isOpen) return closeAllModals();
-      openModal(modalId, btnId);
-    });
-  }
-
-  Object.keys(TOOL_BTN_IDS).forEach(bindTool);
-
-  // expose for other modules
-  window.LR_TOOLS = { openModal, closeAllModals };
-
-  console.log("✅ SIDE TOOLS WIRED");
-})();
-// /public/app.js — ADD THIS WHOLE BLOCK INSIDE YOUR IIFE (near top, after STORE init)
-// ==================================================
-// FLOATING TOOLS WIRING ✅ (matches your index.html button IDs)
-// NOTE: You still need the modal HTML blocks in index.html for these IDs.
-// This block will safely no-op if a modal is missing.
-// Image/Video tools hidden for v1.
-// ==================================================
-(function wireFloatingTools() {
-  if (window.__LR_FLOATING_TOOLS__) return;
-  window.__LR_FLOATING_TOOLS__ = true;
-
-  const byId = (id) => DOC.getElementById(id);
-
-  const BTN = {
-    objection: "toolObjectionBtn",
-    calc: "toolCalcBtn",
-    payment: "toolPaymentBtn",
-    income: "toolIncomeBtn",
-    workflow: "toolWorkflowBtn",
-    message: "toolMessageBtn",
-    ask: "toolAskBtn",
-    car: "toolCarBtn",
-    image: "toolImageBtn", // hidden v1
-    video: "toolVideoBtn", // hidden v1
-  };
-
-  // ✅ DEFAULT modal IDs (edit these to your real modal IDs)
-  // If you don't have these modals yet, paste them and I'll align IDs.
-  const MODAL = {
-    objection: "objectionModal",
-    calc: "calcModal",
-    payment: "paymentModal",
-    income: "incomeModal",
-    workflow: "workflowModal",
-    message: "messageModal",
-    ask: "askModal",
-    car: "carExpertModal",
-    image: "imageGenModal",
-    video: "videoGenModal",
-  };
-
-  // hide image/video now
-  [BTN.image, BTN.video].forEach((id) => {
-    const b = byId(id);
-    if (b) b.style.display = "none";
-  });
-
-  const allBtnIds = Object.values(BTN);
-
-  function setActive(btnId) {
-    allBtnIds.forEach((id) => {
-      const b = byId(id);
-      if (b) b.classList.toggle("active", id === btnId);
-    });
-  }
-
-  function closeModal(modalId) {
-    const m = byId(modalId);
-    if (!m) return;
-    m.classList.add("hidden");
-    m.style.display = "none";
-    m.setAttribute("aria-hidden", "true");
-  }
-
-  function closeAll() {
-    Object.values(MODAL).forEach(closeModal);
-    setActive(null);
-  }
-
-  function openModal(modalId, btnId) {
-    const m = byId(modalId);
-    if (!m) {
-      console.warn("Modal missing:", modalId);
-      return;
     }
 
-    closeAll();
+    function closeAll() {
+      Object.values(MODAL).forEach(closeModal);
+      setActive(null);
+    }
 
-    m.classList.remove("hidden");
-    m.style.display = "flex";
-    m.setAttribute("aria-hidden", "false");
-    setActive(btnId);
+    function openModal(modalId, btnId) {
+      const m = byId(modalId);
+      if (!m) {
+        console.warn("Modal missing:", modalId);
+        return;
+      }
 
-    // close wiring once per modal
-    if (!m.__LR_CLOSE_WIRED__) {
-      m.__LR_CLOSE_WIRED__ = true;
+      closeAll();
 
-      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
-        if (x.__LR_BOUND__) return;
-        x.__LR_BOUND__ = true;
-        x.addEventListener("click", closeAll);
-      });
+      m.classList.remove("hidden");
+      m.style.display = "flex";
+      m.setAttribute("aria-hidden", "false");
+      setActive(btnId);
 
-      // backdrop click closes
-      m.addEventListener("click", (e) => {
-        if (e.target === m) closeAll();
+      if (!m.__LR_CLOSE_WIRED__) {
+        m.__LR_CLOSE_WIRED__ = true;
+
+        m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+          if (x.__LR_BOUND__) return;
+          x.__LR_BOUND__ = true;
+          x.addEventListener("click", closeAll);
+        });
+
+        m.addEventListener("click", (e) => {
+          if (e.target === m) closeAll();
+        });
+      }
+
+      const focusEl =
+        m.querySelector("textarea") ||
+        m.querySelector("input:not([type='hidden'])") ||
+        m.querySelector("button");
+      if (focusEl) setTimeout(() => focusEl.focus(), 0);
+    }
+
+    DOC.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAll();
+    });
+
+    function bind(key) {
+      const btnId = BTN[key];
+      const modalId = MODAL[key];
+      const b = byId(btnId);
+      if (!b || b.__LR_BOUND__) return;
+      b.__LR_BOUND__ = true;
+
+      b.addEventListener("click", () => {
+        pressAnim(b);
+        const m = byId(modalId);
+        const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+        if (isOpen) return closeAll();
+        openModal(modalId, btnId);
       });
     }
 
-    const focusEl =
-      m.querySelector("textarea") ||
-      m.querySelector("input:not([type='hidden'])") ||
-      m.querySelector("button");
-    if (focusEl) setTimeout(() => focusEl.focus(), 0);
-  }
+    Object.keys(BTN).forEach(bind);
 
-  DOC.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeAll();
-  });
-
-  function bind(key) {
-    const btnId = BTN[key];
-    const modalId = MODAL[key];
-    const b = byId(btnId);
-    if (!b || b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
-
-    b.addEventListener("click", () => {
-      const m = byId(modalId);
-      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-      if (isOpen) return closeAll();
-      openModal(modalId, btnId);
-    });
-  }
-
-  Object.keys(BTN).forEach(bind);
-
-  // expose for debugging
-  window.LR_TOOLS = { openModal, closeAll };
-
-  console.log("✅ FLOATING TOOLS WIRED");
-})();
+    window.LR_TOOLS = { openModal, closeAll };
+    console.log("✅ FLOATING TOOLS WIRED");
+  })();
 
   // ==================================================
   // SOCIAL READY STORE (LOCKED DOWNLOAD)
@@ -544,7 +304,6 @@ STORE.aiPrompts = STORE.aiPrompts || {
       })
       .filter((p) => !!p.url);
 
-    // dedupe by url
     const seen = new Set();
     STORE.socialReadyPhotos = STORE.socialReadyPhotos.filter((p) => {
       if (seen.has(p.url)) return false;
@@ -552,10 +311,8 @@ STORE.aiPrompts = STORE.aiPrompts || {
       return true;
     });
 
-    // cap 24
     STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, 24);
 
-    // ensure one selected (if any)
     if (STORE.socialReadyPhotos.length && !STORE.socialReadyPhotos.some((p) => p.selected)) {
       STORE.socialReadyPhotos[0].selected = true;
     }
@@ -577,7 +334,6 @@ STORE.aiPrompts = STORE.aiPrompts || {
     if (!url) return false;
     normalizeSocialReady();
 
-    // deselect all
     STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false }));
 
     const i = STORE.socialReadyPhotos.findIndex((p) => p.url === url);
@@ -613,9 +369,7 @@ STORE.aiPrompts = STORE.aiPrompts || {
     const list = STORE.socialReadyPhotos || [];
     const sel = list.find((p) => p.selected) || list[0];
 
-    if (previewEl) {
-      previewEl.src = sel?.url || "";
-    }
+    if (previewEl) previewEl.src = sel?.url || "";
 
     if (statusEl) {
       const lockedCount = list.filter((p) => p.locked).length;
@@ -635,25 +389,21 @@ STORE.aiPrompts = STORE.aiPrompts || {
       img.loading = "lazy";
       img.decoding = "async";
 
-      // lock badge
       const lock = DOC.createElement("div");
       lock.className = "social-lock";
       lock.textContent = p.locked ? "🔒" : "🔓";
-      lock.title = "Click to lock/unlock";
+      lock.title = "Double-click thumbnail to lock/unlock";
 
-      // selected ring
       if (p.selected) {
         btn.style.outline = "2px solid rgba(56,189,248,.95)";
         btn.style.outlineOffset = "0px";
       }
 
-      // CLICK: select
       btn.addEventListener("click", () => {
         setSelectedSocialIndex(idx);
         renderSocialStrip();
       });
 
-      // DOUBLE CLICK: toggle lock
       btn.addEventListener("dblclick", (e) => {
         e.preventDefault();
         normalizeSocialReady();
@@ -669,13 +419,13 @@ STORE.aiPrompts = STORE.aiPrompts || {
     });
   }
 
-  // prev/next
   function wireSocialNav() {
     const prevBtn = $("socialCarouselPrev");
     const nextBtn = $("socialCarouselNext");
     if (prevBtn && !prevBtn.__LR_BOUND__) {
       prevBtn.__LR_BOUND__ = true;
       prevBtn.addEventListener("click", () => {
+        pressAnim(prevBtn);
         const i = getSelectedSocialIndex();
         setSelectedSocialIndex(i - 1);
         renderSocialStrip();
@@ -684,6 +434,7 @@ STORE.aiPrompts = STORE.aiPrompts || {
     if (nextBtn && !nextBtn.__LR_BOUND__) {
       nextBtn.__LR_BOUND__ = true;
       nextBtn.addEventListener("click", () => {
+        pressAnim(nextBtn);
         const i = getSelectedSocialIndex();
         setSelectedSocialIndex(i + 1);
         renderSocialStrip();
@@ -691,33 +442,23 @@ STORE.aiPrompts = STORE.aiPrompts || {
     }
   }
 
-  // download locked photos only
   async function downloadLockedZip() {
     normalizeSocialReady();
     const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
 
-    if (!locked.length) {
-      alert("Lock at least 1 photo first.");
-      return;
-    }
-
-    if (!window.JSZip) {
-      alert("JSZip not loaded.");
-      return;
-    }
+    if (!locked.length) return alert("Lock at least 1 photo first.");
+    if (!window.JSZip) return alert("JSZip not loaded.");
 
     const zip = new JSZip();
     const folder = zip.folder("lot-rocket");
 
     let ok = 0;
-
     for (let i = 0; i < locked.length; i++) {
       const url = locked[i].url;
       try {
         const r = await fetch(url);
         const blob = await r.blob();
 
-        // extension guess
         const ext =
           (blob.type && blob.type.includes("png")) ? "png" :
           (blob.type && blob.type.includes("webp")) ? "webp" :
@@ -730,10 +471,7 @@ STORE.aiPrompts = STORE.aiPrompts || {
       }
     }
 
-    if (!ok) {
-      alert("Could not fetch images to zip (CORS).");
-      return;
-    }
+    if (!ok) return alert("Could not fetch images to zip (CORS).");
 
     const blob = await zip.generateAsync({ type: "blob" });
     const a = DOC.createElement("a");
@@ -749,15 +487,18 @@ STORE.aiPrompts = STORE.aiPrompts || {
     const btn = $("downloadZipBtn");
     if (!btn || btn.__LR_BOUND__) return;
     btn.__LR_BOUND__ = true;
-    btn.addEventListener("click", downloadLockedZip);
+    btn.addEventListener("click", () => {
+      pressAnim(btn);
+      downloadLockedZip();
+    });
   }
 
-  // allow Step 3 button to push currently selected Step 1 picks into Social Ready (optional)
   function wireSendSelectedToSocialReady() {
     const btn = $("sendSelectedToSocialReady");
     if (!btn || btn.__LR_BOUND__) return;
     btn.__LR_BOUND__ = true;
     btn.addEventListener("click", () => {
+      pressAnim(btn);
       const picked = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.slice(0, 24) : [];
       if (!picked.length) return alert("Select at least 1 photo first.");
       picked.forEach((u) => addToSocialReady(u, true));
@@ -792,7 +533,6 @@ STORE.aiPrompts = STORE.aiPrompts || {
       img.loading = "lazy";
       img.decoding = "async";
 
-      // ✅ DBLCLICK → add + lock in Social Ready
       img.addEventListener("dblclick", (e) => {
         e.preventDefault();
         addToSocialReady(src, true);
@@ -829,6 +569,8 @@ STORE.aiPrompts = STORE.aiPrompts || {
     syncSendBtn();
 
     btn.addEventListener("click", () => {
+      pressAnim(btn);
+
       const picked = Array.isArray(STORE.step1Selected)
         ? STORE.step1Selected.slice(0, 24)
         : [];
@@ -866,118 +608,126 @@ STORE.aiPrompts = STORE.aiPrompts || {
 
   if (boostBtn) {
     boostBtn.onclick = async () => {
-      const url = urlInput?.value?.trim();
-      if (!url) return alert("Paste a vehicle URL first.");
+      pressAnim(boostBtn);
+      setBtnLoading(boostBtn, true, "Boosting…");
 
-      console.log("🚀 BOOST:", url);
-
-      let res, data;
       try {
-        res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
-        data = await res.json();
-      } catch (e) {
-        console.error("❌ BOOST FETCH FAILED", e);
-        alert("Boost request failed (network/json).");
-        return;
-      }
+        const url = urlInput?.value?.trim();
+        if (!url) return alert("Paste a vehicle URL first.");
 
-      console.log("📦 BOOST DATA:", data);
+        console.log("🚀 BOOST:", url);
 
-      if (!data || !data.ok) {
-        alert(data?.error || "Boost failed");
-        return;
-      }
-// ✅ vehicle details
-STORE.lastVehicle = data.vehicle || { url };
-STORE.lastVehicle.url = STORE.lastVehicle.url || url;
+        let res, data;
+        try {
+          res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
+          data = await res.json();
+        } catch (e) {
+          console.error("❌ BOOST FETCH FAILED", e);
+          alert("Boost request failed (network/json).");
+          return;
+        }
 
-renderSummary(STORE.lastVehicle);
+        console.log("📦 BOOST DATA:", data);
 
-// ✅ auto-generate Step 2
-wireRegenButtons();
-generateAllStep2();
+        if (!data || !data.ok) {
+          alert(data?.error || "Boost failed");
+          return;
+        }
 
-      const rawImages = Array.isArray(data.images) ? data.images : [];
-      const images = [...new Set(rawImages)].filter(Boolean);
+        // ✅ vehicle details
+        STORE.lastVehicle = data.vehicle || { url };
+        STORE.lastVehicle.url = STORE.lastVehicle.url || url;
 
-      const grid = $("step1Photos");
-      if (!grid) return;
+        renderSummary(STORE.lastVehicle);
 
-      grid.innerHTML = "";
+        // ✅ auto-generate Step 2
+        wireRegenButtons();
+        generateAllStep2();
 
-      if (!images.length) {
-        grid.innerHTML =
-          `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
-            No images found.
-          </div>`;
-        return;
-      }
+        const rawImages = Array.isArray(data.images) ? data.images : [];
+        const images = [...new Set(rawImages)].filter(Boolean);
 
-      // ✅ reset selection for this boost
-      STORE.step1Selected = [];
-      syncSendBtn();
+        const grid = $("step1Photos");
+        if (!grid) return;
 
-      const countEl = $("selectedCount");
-      if (countEl) countEl.textContent = "0";
+        grid.innerHTML = "";
 
-      const MAX_UI = 24;
+        if (!images.length) {
+          grid.innerHTML =
+            `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+              No images found.
+            </div>`;
+          return;
+        }
 
-      images.slice(0, MAX_UI).forEach((src) => {
-        const tile = DOC.createElement("div");
-        tile.style.position = "relative";
-        tile.style.cursor = "pointer";
-        tile.style.borderRadius = "12px";
-        tile.style.overflow = "hidden";
-        tile.style.border = "1px solid rgba(255,255,255,.12)";
+        // ✅ reset selection for this boost
+        STORE.step1Selected = [];
+        syncSendBtn();
 
-        const img = DOC.createElement("img");
-        img.src = src;
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.style.width = "100%";
-        img.style.display = "block";
+        const countEl = $("selectedCount");
+        if (countEl) countEl.textContent = "0";
 
-        const badge = DOC.createElement("div");
-        badge.textContent = "✓";
-        badge.style.position = "absolute";
-        badge.style.top = "10px";
-        badge.style.right = "10px";
-        badge.style.width = "28px";
-        badge.style.height = "28px";
-        badge.style.display = "grid";
-        badge.style.placeItems = "center";
-        badge.style.borderRadius = "999px";
-        badge.style.background = "rgba(0,0,0,.55)";
-        badge.style.border = "1px solid rgba(255,255,255,.25)";
-        badge.style.opacity = "0";
-        badge.style.transition = "opacity .12s ease";
+        const MAX_UI = 24;
 
-        const syncUI = () => {
-          const active = STORE.step1Selected.includes(src);
-          badge.style.opacity = active ? "1" : "0";
-          tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
-        };
+        images.slice(0, MAX_UI).forEach((src) => {
+          const tile = DOC.createElement("div");
+          tile.style.position = "relative";
+          tile.style.cursor = "pointer";
+          tile.style.borderRadius = "12px";
+          tile.style.overflow = "hidden";
+          tile.style.border = "1px solid rgba(255,255,255,.12)";
 
-        tile.addEventListener("click", () => {
-          const idx = STORE.step1Selected.indexOf(src);
+          const img = DOC.createElement("img");
+          img.src = src;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.style.width = "100%";
+          img.style.display = "block";
 
-          if (idx > -1) {
-            STORE.step1Selected.splice(idx, 1);
-          } else {
-            if (STORE.step1Selected.length >= 24) return;
-            STORE.step1Selected.push(src);
-          }
+          const badge = DOC.createElement("div");
+          badge.textContent = "✓";
+          badge.style.position = "absolute";
+          badge.style.top = "10px";
+          badge.style.right = "10px";
+          badge.style.width = "28px";
+          badge.style.height = "28px";
+          badge.style.display = "grid";
+          badge.style.placeItems = "center";
+          badge.style.borderRadius = "999px";
+          badge.style.background = "rgba(0,0,0,.55)";
+          badge.style.border = "1px solid rgba(255,255,255,.25)";
+          badge.style.opacity = "0";
+          badge.style.transition = "opacity .12s ease";
+
+          const syncUI = () => {
+            const active = STORE.step1Selected.includes(src);
+            badge.style.opacity = active ? "1" : "0";
+            tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+          };
+
+          tile.addEventListener("click", () => {
+            const idx = STORE.step1Selected.indexOf(src);
+
+            if (idx > -1) {
+              STORE.step1Selected.splice(idx, 1);
+            } else {
+              if (STORE.step1Selected.length >= 24) return;
+              STORE.step1Selected.push(src);
+            }
+
+            syncUI();
+            syncSendBtn();
+            if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+          });
 
           syncUI();
-          syncSendBtn();
-          if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+          tile.appendChild(img);
+          tile.appendChild(badge);
+          grid.appendChild(tile);
         });
-
-        syncUI();
-        tile.appendChild(img);
-        tile.appendChild(badge);
-        grid.appendChild(tile);
-      });
+      } finally {
+        setBtnLoading(boostBtn, false);
+      }
     };
   }
 
@@ -988,11 +738,11 @@ generateAllStep2();
   wireZipButton();
   wireSendSelectedToSocialReady();
   renderSocialStrip();
-// /public/app.js — ADD THIS AT THE VERY END (right before console.log("✅ APP READY"); is fine)
-// ensures modals are closable + wires exist even if DOM changes later
-if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAllModals === "function") {
-  window.LR_TOOLS.closeAllModals();
-}
+
+  // ensure modals closed on boot
+  if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
+    window.LR_TOOLS.closeAll();
+  }
 
   console.log("✅ APP READY");
 })();
