@@ -705,9 +705,10 @@ if (boostBtn) {
     setBtnLoading(boostBtn, true, "Boosting…");
 
     try {
-      const raw = urlInput?.value?.trim();
-      const url = normalizeDealerUrl(raw);
-      if (!url) return alert("Paste a vehicle URL first.");
+const raw = urlInput?.value?.trim();
+const url = normalizeDealerUrl(raw);
+if (!url) return alert("Paste a valid vehicle URL first.");
+
 
       console.log("🚀 BOOST:", url);
 
