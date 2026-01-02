@@ -1,30 +1,23 @@
-/* /public/style.css  (REPLACE ENTIRE FILE) */
-html,body{height:100%}
-body{margin:0;background:#0b1020;color:#fff}
-a{color:#8ab4f8}
+/* /public/style.css  (REPLACE ENTIRE FILE)
+   LOT ROCKET — CLEAN STABLE CSS (v2.6.1) ✅ DEDUPED + JS-ALIGNED
+   - Restores your “good layout” grid (Step 1 left, Step 2 center, tools right)
+   - Keeps Step 2 tiles, Step 3 Creative Lab
+   - Social strip uses: #socialCarousel + .social-carousel-item / .social-thumb-btn
+   - Removes ALL conflicting duplicates (especially #holdingZone / #creativeThumbGrid / .floating-tools)
+*/
 
-
-/* ======================================================
-   LOT ROCKET – CLEAN STABLE CSS (v2.6 – DEDUPED + JS-ALIGNED)
-   Goals:
-   - Remove duplicate/legacy strip CSS that doesn’t match v2.6 HTML/JS
-   - Keep Step 2 tiles + Step 3 2-column Creative Lab
-   - Ensure “selected” styling matches what app.js toggles:
-       - Dealer photos: .photo-thumb-btn + .photo-thumb-selected + .photo-thumb-img
-       - Creative thumbs: .creative-thumb + .selected
-       - Social strip items: .social-carousel-item + .selected + .picked + .locked
-   ====================================================== */
-
-/* ---------- RESET ---------- */
 *,
 *::before,
 *::after { box-sizing: border-box; }
 
-html, body {
-  margin: 0;
-  padding: 0;
+html, body { height: 100%; margin: 0; padding: 0; }
+body{
+  margin:0;
+  background:#0b1020;
+  color:#fff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+a{ color:#8ab4f8; }
 
 /* ---------- THEME TOKENS ---------- */
 :root{
@@ -104,24 +97,14 @@ textarea{
   border: 1px solid var(--border-soft);
   color: var(--text-main);
 }
-/* Social post boxes should grow + show full content */
+
 .social-box textarea,
 .post-box textarea,
-.platform-box textarea {
+.platform-box textarea{
   height: auto;
   min-height: 110px;
   max-height: none;
-  overflow: hidden;          /* we’ll auto-resize via JS */
-  white-space: pre-wrap;
-  word-break: break-word;
-  resize: none;              /* optional */
-}
-.social-box .output,
-.post-box .output,
-.platform-box .output {
-  height: auto;
-  max-height: none;
-  overflow: visible;
+  overflow: hidden;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -143,7 +126,7 @@ textarea{
 }
 
 /* ---------- LAYOUT ---------- */
-/* Two main columns, leave space on right for floating tools */
+/* Two main columns + reserve space on right for floating tools */
 .layout{
   display: grid;
   grid-template-columns: 1.05fr 1.6fr;
@@ -154,10 +137,8 @@ textarea{
 
 .column{ min-width: 0; }
 
-/* Step 3 should span full width below Step 1 & 2 */
-.creativeHubFull{
-  grid-column: 1 / -1;
-}
+/* Step 3 spans full width below Step 1 & 2 */
+.creativeHubFull{ grid-column: 1 / -1; }
 
 /* ---------- PANELS ---------- */
 .summary-box,
@@ -209,10 +190,7 @@ textarea{
   gap: .5rem;
 }
 
-.summary-btn{
-  margin-top: .8rem;
-  width: 100%;
-}
+.summary-btn{ margin-top: .8rem; width: 100%; }
 
 .btn-row{
   display: flex;
@@ -238,16 +216,14 @@ textarea{
   border-color: rgba(56,189,248,0.7);
 }
 
-.glow-send{
-  box-shadow: 0 0 28px rgba(249,115,22,0.55);
-}
+.glow-send{ box-shadow: 0 0 28px rgba(249,115,22,0.55); }
+
 /* Button loading animation (reused by setBtnLoading) */
 .btn-loading{
   opacity: .85;
   cursor: wait !important;
   position: relative;
 }
-
 .btn-loading::after{
   content: "";
   display: inline-block;
@@ -260,24 +236,9 @@ textarea{
   animation: lrSpin .75s linear infinite;
   vertical-align: -2px;
 }
-.floating-tools {
-  position: fixed;
-  z-index: 999999 !important;
-  pointer-events: auto !important;
-}
-
-.floating-tools * {
-  pointer-events: auto !important;
-}
-
-@keyframes lrSpin{
-  to { transform: rotate(360deg); }
-}
+@keyframes lrSpin{ to { transform: rotate(360deg); } }
 
 /* ---------- PHOTOS GRID (Step 1 dealer photos) ---------- */
-/* v2.6 JS renders buttons with:
-   .photo-thumb-btn + .photo-thumb-selected, containing img.photo-thumb-img
-*/
 .photo-grid{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -286,15 +247,15 @@ textarea{
 }
 
 .photo-thumb-btn{
-  position: relative;            /* ✅ add */
-  width: 100%;                   /* ✅ add */
-  height: 86px;                  /* ✅ add (locks thumbnail size) */
+  position: relative;
+  width: 100%;
+  height: 86px;
   padding: 0;
   border: 1px solid rgba(148,163,184,.35);
   border-radius: 12px;
   background: rgba(2,6,23,.6);
   cursor: pointer;
-  overflow: hidden;              /* ✅ keep (required for crop) */
+  overflow: hidden;
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 
@@ -305,7 +266,7 @@ textarea{
 
 .photo-thumb-img{
   width: 100%;
-  height: 100%;                  /* ✅ change from 86px -> 100% */
+  height: 100%;
   object-fit: cover;
   display: block;
 }
@@ -344,11 +305,8 @@ textarea{
   border-radius: 16px;
   background: rgba(2,6,23,.85);
 }
-/* ==============================
-   STEP 2 — BUTTON ROW CLEANUP
-   ============================== */
 
-/* Keep the row aligned and inside the card */
+/* Step 2 button row: consistent */
 .step2-card .btn-row{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -357,7 +315,6 @@ textarea{
   align-items: center;
 }
 
-/* Uniform button baseline */
 .step2-card .btn-row button{
   width: 100%;
   height: 40px;
@@ -380,86 +337,46 @@ textarea{
   white-space: nowrap;
 }
 
-/* Hover / active */
 .step2-card .btn-row button:hover{
   background: rgba(30,64,175,.18);
   border-color: rgba(96,165,250,.55);
   box-shadow: 0 10px 25px rgba(0,0,0,.25);
   transform: translateY(-1px);
 }
-.step2-card .btn-row button:active{
-  transform: translateY(0);
-}
+.step2-card .btn-row button:active{ transform: translateY(0); }
 
-/* Make Copy slightly “primary” */
 .step2-card .btn-row .copy-btn{
   background: rgba(37,99,235,.18);
   border-color: rgba(96,165,250,.6);
 }
+.step2-card .btn-row .emoji-strip-btn{ background: rgba(15,23,42,.65); }
 
-/* Make Remove Emojis look neutral but clear */
-.step2-card .btn-row .emoji-strip-btn{
-  background: rgba(15,23,42,.65);
-}
-
-/* Responsive: stack if card gets narrow */
-@media (max-width: 520px){
-  .step2-card .btn-row{
-    grid-template-columns: 1fr;
-  }
-  .step2-card .btn-row button{
-    height: 42px;
-    font-size: 13px;
-  }
-}
-
-/* ---------- FLOATING TOOLS ---------- */
+/* ---------- FLOATING TOOLS (ONE TRUE BLOCK) ---------- */
 .floating-tools{
-  position: fixed;
-  right: 1.5rem;
-  top: 150px;
+  position: fixed !important;
+  right: 18px !important;
+  top: 120px !important;
   display: flex;
   flex-direction: column;
   gap: .6rem;
-  z-index: 50;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
 }
+.floating-tools *{ pointer-events: auto !important; }
 
 .tool-button{
   display: flex;
   align-items: center;
   gap: .55rem;
-  padding: .45rem 1rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  font-size: .78rem;
-  cursor: pointer;
-  box-shadow: var(--glow-2);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-
-.tool-button:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 0 26px rgba(56,189,248,0.9);
-}
-/* =====================================
-   FLOATING TOOLS — MATCH APP BUTTONS
-===================================== */
-.tool-button{
+  padding: .55rem 1rem;
   border-radius: 12px;
   background: linear-gradient(135deg, #f97316, #ec4899);
   color: #fff;
   border: none;
   font-weight: 600;
-  transition:
-    transform .12s ease,
-    box-shadow .12s ease,
-    filter .12s ease,
-    opacity .12s ease;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
 }
-
-/* Hover = alive */
 .tool-button:hover{
   transform: translateY(-1px);
   filter: brightness(1.05);
@@ -467,8 +384,6 @@ textarea{
     0 0 0 2px rgba(249,115,22,.25),
     0 14px 34px rgba(0,0,0,.45);
 }
-
-/* Active = panel is open */
 .tool-button.active{
   box-shadow:
     0 0 0 2px rgba(249,115,22,.45),
@@ -477,7 +392,6 @@ textarea{
 }
 
 /* ---------- STEP 3 CREATIVE HUB ---------- */
-
 .creative-hub{
   display: grid;
   grid-template-columns: 1.65fr .95fr;
@@ -494,43 +408,78 @@ textarea{
   cursor: pointer;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-
 .photo-dropzone span{ color: var(--text-muted); }
-
 .photo-dropzone.dragover{
   border-color: rgba(56,189,248,.9);
   box-shadow: 0 0 18px rgba(56,189,248,.35);
 }
 
+/* Creative thumbs grid container */
+#creativeThumbGrid,
 .creative-thumb-grid{
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: .65rem;
+  gap: 10px;
+  padding: 10px;
   margin: 1rem 0;
+  align-content: start;
 }
 
-/* v2.6 JS uses className: "creative-thumb" and toggles ".selected" */
+/* v2.6 JS uses class "creative-thumb" and toggles ".selected" */
 .creative-thumb{
   width: 100%;
-  height: 72px;
+  height: 92px;
   object-fit: cover;
   border-radius: 12px;
   border: 1px solid rgba(148,163,184,.35);
   cursor: pointer;
   display: block;
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  background: #000;
 }
-
 .creative-thumb:hover{
   transform: translateY(-1px);
   box-shadow: 0 0 18px rgba(56,189,248,0.25);
 }
-
 .creative-thumb.selected{
   border-color: rgba(56,189,248,0.95);
   box-shadow: 0 0 18px rgba(56,189,248,0.6);
 }
 
+/* Holding zone (VISIBLE) — ONE TRUE BLOCK */
+#holdingZone{
+  display: grid !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 10px !important;
+  padding: 10px !important;
+  min-height: 90px !important;
+  margin-bottom: 12px !important;
+  border: 1px dashed rgba(148,163,184,.35) !important;
+  border-radius: 14px !important;
+  background: rgba(2,6,23,.25) !important;
+  overflow: auto !important;
+  max-width: 100% !important;
+}
+
+#holdingZone .holding-thumb-btn{
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 12px;
+  background: rgba(2,6,23,.45);
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+}
+#holdingZone .holding-thumb-btn.active{
+  outline: 2px solid rgba(99,102,241,.9);
+}
+#holdingZone .holding-thumb-img{
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Photo tuner preview */
 .tuner-preview{
   width: 100%;
   height: 220px;
@@ -539,39 +488,22 @@ textarea{
   overflow: hidden;
   background: rgba(2,6,23,.7);
 }
-
 .tuner-preview img{
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-
-.slider-block{
-  margin-top: .9rem;
-}
-
+.slider-block{ margin-top: .9rem; }
 .slider-block label{
   display: block;
   font-size: .85rem;
   color: var(--text-muted);
   margin-bottom: .35rem;
 }
+.slider-block input[type="range"]{ width: 100%; }
 
-.slider-block input[type="range"]{
-  width: 100%;
-}
-.floating-tools {
-  position: fixed;
-  z-index: 999999 !important;
-  pointer-events: auto !important;
-}
-
-.floating-tools * {
-  pointer-events: auto !important;
-}
-
-/* ---------- Social-ready strip (v2.6 JS uses .social-carousel-item) ---------- */
+/* ---------- SOCIAL READY (VIEWER + STRIP) ---------- */
 .social-ready-panel{ margin-top: 1.5rem; }
 .panel-header p{ margin: .35rem 0 0; color: var(--text-muted); }
 
@@ -600,16 +532,22 @@ textarea{
   border-radius: 16px;
   border: 1px solid rgba(148,163,184,.35);
   background: rgba(2,6,23,.65);
+  max-width: 100%;
+  max-height: 260px;
 }
 
+/* strip container (supports either layout) */
+#socialCarousel,
 .social-carousel{
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: .6rem;
-  margin-top: 1rem;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  overflow: auto;
+  max-width: 100%;
+  margin-top: 10px;
 }
 
-/* JS creates buttons with class "social-carousel-item" and img "social-carousel-img" */
+/* v2.6 JS: either .social-carousel-item or .social-thumb-btn */
 .social-carousel-item{
   padding: 0;
   border-radius: 12px;
@@ -618,35 +556,30 @@ textarea{
   overflow: hidden;
   cursor: pointer;
   position: relative;
+  flex: 0 0 auto;
+  width: 92px;
+  height: 92px;
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, opacity .12s ease;
 }
-
 .social-carousel-item:hover{
   transform: translateY(-1px);
   box-shadow: 0 0 16px rgba(56,189,248,0.25);
 }
-
 .social-carousel-img{
   width: 100%;
-  height: 68px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
-
 .social-carousel-item.selected{
   border-color: rgba(56,189,248,0.95);
   box-shadow: 0 0 18px rgba(56,189,248,0.55);
 }
-
 .social-carousel-item.picked{
   outline: 2px solid rgba(249,115,22,0.75);
   outline-offset: 0px;
 }
-
-.social-carousel-item.locked{
-  opacity: .65;
-}
-
+.social-carousel-item.locked{ opacity: .65; }
 .social-carousel-item.locked::after{
   content: "🔒";
   position: absolute;
@@ -659,21 +592,25 @@ textarea{
   padding: 2px 6px;
 }
 
-.social-carousel-actions{
-  display: flex;
-  gap: .75rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
-/* Social-ready thumb button + lock badge */
+/* social-thumb-btn variant */
 #socialCarousel .social-thumb-btn{
-  position: relative;
-  border: 0;
-  background: transparent;
+  width: 92px;
+  height: 92px;
   padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border: 1px solid rgba(148,163,184,.25);
+  background: rgba(2,6,23,.55);
   cursor: pointer;
+  position: relative;
 }
-
+#socialCarousel .social-thumb-btn img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 #socialCarousel .social-lock{
   position: absolute;
   top: 6px;
@@ -689,19 +626,14 @@ textarea{
 }
 
 /* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
-/* IMPORTANT: wireToolDrawer uses:
-   modal.classList.remove("hidden"); modal.style.display="flex";
-   and close adds hidden + style.display="none"
-*/
 .side-modal{
   position: fixed;
   inset: 0;
   display: flex;
   justify-content: flex-end;
   background: rgba(0,0,0,.75);
-  z-index: 100;
+  z-index: 100000 !important;
 }
-
 .side-modal.hidden{ display: none; }
 
 .side-modal-content{
@@ -712,7 +644,6 @@ textarea{
   flex-direction: column;
   padding-bottom: 1rem;
 }
-
 .side-modal-header{
   display: flex;
   justify-content: space-between;
@@ -720,12 +651,10 @@ textarea{
   padding: 1rem;
   border-bottom: 1px solid rgba(148,163,184,.25);
 }
-
 .side-modal-body{
   padding: 1rem;
   overflow: auto;
 }
-
 .modal-close-btn,
 .side-modal-close{
   border: 1px solid rgba(148,163,184,.35);
@@ -736,7 +665,16 @@ textarea{
   cursor: pointer;
 }
 
-/* ---------- DRILL MODE ---------- */
+/* Force textarea auto-grow inside modals */
+.side-modal textarea{
+  height: auto !important;
+  min-height: 60px;
+  max-height: 420px;
+  overflow: hidden !important;
+  resize: none !important;
+}
+
+/* Drill mode */
 #drillModeModal{
   position: fixed;
   inset: 0;
@@ -744,11 +682,9 @@ textarea{
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 120;
+  z-index: 100000 !important;
 }
-
 #drillModeModal.hidden{ display: none; }
-
 #drillModeModal .modal-content{
   width: 420px;
   background: #0a0f1c;
@@ -756,33 +692,28 @@ textarea{
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.1);
 }
-
 .objection-box{
   background: rgba(255,255,255,.06);
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 12px;
 }
-
 .timer-display{
   font-size: 2rem;
   text-align: center;
   margin: 12px 0;
   color: var(--accent-1);
 }
-
 .drill-result{
   margin-top: 14px;
   padding: 12px;
   border-radius: 10px;
   background: rgba(255,255,255,.08);
 }
-
 .drill-result.hidden{ display: none; }
 
-/* ---------- TOOLTIP ---------- */
+/* Tooltip */
 .tooltip{ position: relative; cursor: pointer; }
-
 .tooltip::after{
   content: attr(data-tooltip);
   position: absolute;
@@ -799,20 +730,14 @@ textarea{
   transition: opacity .2s ease;
   pointer-events: none;
 }
+.tooltip:hover::after{ opacity: 1; visibility: visible; }
 
-.tooltip:hover::after{
-  opacity: 1;
-  visibility: visible;
-}
-/* =========================
-   CALCULATOR (SIDE MODAL)
-   ========================= */
+/* Calculator (side modal) */
 #calcModal .calculator-body{
   display:flex;
   flex-direction:column;
   gap:12px;
 }
-
 #calcModal #calcDisplay{
   width:100%;
   height:56px;
@@ -822,13 +747,11 @@ textarea{
   color:#e5e7eb;
   outline:none;
 }
-
 #calcModal .calc-grid{
   display:grid;
   grid-template-columns: repeat(4, 1fr);
   gap:10px;
 }
-
 #calcModal .calc-grid button{
   height:54px;
   border-radius:14px;
@@ -839,332 +762,34 @@ textarea{
   cursor:pointer;
   transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
 }
-
 #calcModal .calc-grid button:hover{
   border-color: rgba(56,189,248,.55);
   box-shadow: 0 0 14px rgba(56,189,248,.18);
 }
+#calcModal .calc-grid button:active{ transform: translateY(1px); }
 
-#calcModal .calc-grid button:active{
-  transform: translateY(1px);
-}
-
-/* ---------- MOBILE / SMALL SCREENS ---------- */
+/* ---------- MOBILE ---------- */
 @media (max-width: 1100px){
   .layout{
     grid-template-columns: 1fr;
     padding: 1.2rem;
   }
-
-  .step2-grid{
-    grid-template-columns: 1fr;
-  }
-
-  .creative-hub{
-    grid-template-columns: 1fr;
-  }
-
+  .step2-grid{ grid-template-columns: 1fr; }
+  .creative-hub{ grid-template-columns: 1fr; }
   .floating-tools{
-    position: static;
+    position: static !important;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     margin-top: 1rem;
+    z-index: 1 !important;
   }
 }
-/* ==================================================
-   ROCKET-2: SIDE TOOLS CLICK FIX
-   If buttons show but don't click, it's usually z-index or pointer-events.
-   ================================================== */
-.floating-tools,
-.floating-tools * {
-  pointer-events: auto !important;
-}
 
-.floating-tools {
-  position: fixed !important;
-  right: 18px !important;
-  top: 120px !important;
-  z-index: 99999 !important;
-}
+/* TEMP: hide design studio button (if you still want it hidden) */
+#sendToDesignStudio{ display: none !important; }
 
-/* Side modals must be above app */
-.side-modal,
-.side-drawer,
-.tool-modal,
-#objectionModal,
-#calcModal,
-#paymentModal,
-#incomeModal,
-#workflowModal,
-#messageModal,
-#askModal,
-#carModal,
-#imageModal,
-#videoModal,
-#drillModeModal {
-  z-index: 100000 !important;
-}
-
-
-/* ======================================================
-   REMOVED (DEDUPED): legacy “social-ready-*” strip CSS
-   Why:
-   - Your v2.6 HTML/JS uses #socialCarousel + .social-carousel-item,
-     not .social-ready-viewport / .social-ready-thumb.
-   If you *still* have those legacy elements in HTML, delete them
-   OR tell me and I’ll re-add a compatibility block.
-   ====================================================== */
-/* ==============================
-   STEP 3 — HOLDING ZONE THUMBS (SMALL)
-   ============================== */
-#holdingZone{
-  display:flex !important;
-  gap:10px !important;
-  padding:10px !important;
-  overflow:auto !important;
-  max-width:100% !important;
-}
-
-#holdingZone img.holding-thumb{
-  width:92px !important;
-  height:92px !important;
-  object-fit:cover !important;
-  border-radius:10px !important;
-  display:block !important;
-  flex:0 0 auto !important;
-}
-
-/* ==============================
-   STEP 3 — CREATIVE GRID (RED BOX) 24 THUMBS
-   ============================== */
-#creativeThumbGrid{
-  display:grid !important;
-  grid-template-columns:repeat(6, minmax(0, 1fr)) !important;
-  gap:10px !important;
-  padding:10px !important;
-  align-content:start !important;
-}
-
-#creativeThumbGrid img.creative-thumb{
-  width:100% !important;
-  height:92px !important;
-  object-fit:cover !important;
-  border-radius:10px !important;
-  display:block !important;
-}
-/* ==============================
-   STEP 3 — HARD THUMB LOCK (OVERRIDE EVERYTHING)
-   ============================== */
-
-/* Holding Zone thumbs */
-#holdingZone{
-  display:flex !important;
-  gap:10px !important;
-  padding:10px !important;
-  overflow:auto !important;
-  max-width:100% !important;
-}
-#holdingZone img.holding-thumb{
-  width:92px !important;
-  height:92px !important;
-  object-fit:cover !important;
-  border-radius:10px !important;
-  display:block !important;
-  flex:0 0 auto !important;
-}
-
-/* Creative grid thumbs (red box) */
-#creativeThumbGrid{
-  display:grid !important;
-  grid-template-columns:repeat(6, minmax(0, 1fr)) !important;
-  gap:10px !important;
-  padding:10px !important;
-  align-content:start !important;
-}
-#creativeThumbGrid img.creative-thumb{
-  width:100% !important;
-  height:92px !important;
-  object-fit:cover !important;
-  border-radius:10px !important;
-  display:block !important;
-}
-/* ==============================
-   SOCIAL READY VIEWER — HARD CLAMP
-   ============================== */
-.social-carousel-preview,
-#socialCarouselPreviewImg{
-  max-width: 100% !important;
-}
-
-.social-carousel-preview{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  overflow:hidden !important;
-  border-radius:16px !important;
-  min-height:240px !important;
-}
-
-#socialCarouselPreviewImg{
-  display:block !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-height: 260px !important;
-  object-fit: contain !important; /* prevents huge blow-up */
-}
-/* SOCIAL READY STRIP (THUMBS) — DIRECTLY UNDER VIEWER */
-#socialCarousel{
-  display:flex !important;
-  gap:10px !important;
-  padding:10px !important;
-  overflow:auto !important;
-  max-width:100% !important;
-  margin-top:10px !important;
-}
-
-#socialCarousel .social-thumb-btn{
-  width:92px !important;
-  height:92px !important;
-  padding:0 !important;
-  border-radius:12px !important;
-  overflow:hidden !important;
-  flex:0 0 auto !important;
-}
-
-#socialCarousel .social-thumb-btn img{
-  width:100% !important;
-  height:100% !important;
-  object-fit:cover !important;
-  display:block !important;
-}
-/* KILL THE EXTRA ROW ABOVE STEP 3 (targeted by XPath: /main/section[3]/div/div[1]) */
-main > section:nth-of-type(3) > div > div:first-child {
-  display: none !important;
-}
-
-
-#holdingZone { display:none !important; }
-/* STEP 3 — LOWER HOLDING GRID (now using #creativeThumbGrid) */
-#creativeThumbGrid{
-  display:grid !important;
-  grid-template-columns:repeat(6, minmax(0, 1fr)) !important;
-  gap:10px !important;
-  padding:10px !important;
-  align-content:start !important;
-  overflow:hidden !important;
-}
-
-#creativeThumbGrid img{
-  width:100% !important;
-  height:92px !important;
-  object-fit:cover !important;
-  border-radius:12px !important;
-  display:block !important;
-  background:#000 !important;
-}
-.calc-grid{
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
-  gap:.7rem;
-  margin-bottom:.9rem;
-}
-.calc-field span{
-  display:block;
-  font-size:.85rem;
-  opacity:.85;
-  margin-bottom:.25rem;
-}
-.calc-field input{
-  width:100%;
-  padding:.65rem .75rem;
-  border-radius:12px;
-  border:1px solid rgba(148,163,184,.25);
-  background: rgba(2,6,23,.55);
-  color:#fff;
-}
-.calc-result{
-  margin-top:.8rem;
-  padding:.8rem;
-  border-radius:12px;
-  border:1px solid rgba(148,163,184,.18);
-  background: rgba(2,6,23,.35);
-  min-height: 44px;
-  white-space: pre-wrap;
-}
-/* Step 3 holding zone thumbs */
-#holdingZone {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  padding: 10px;
-}
-
-.holding-thumb-btn {
-  border: 1px solid rgba(148,163,184,.35);
-  border-radius: 12px;
-  background: rgba(2,6,23,.45);
-  overflow: hidden;
-  padding: 0;
-  cursor: pointer;
-}
-
-.holding-thumb-btn.active {
-  outline: 2px solid rgba(99,102,241,.9);
-}
-
-.holding-thumb-img {
-  width: 100%;
-  height: 72px;
-  object-fit: cover;
-  display: block;
-}
-/* ============================================
-   FORCE Step 3 HOLDING ZONE VISIBLE (override)
-   ============================================ */
-#holdingZone {
-  display: grid !important;
-  grid-template-columns: repeat(6, 1fr) !important;
-  gap: 10px !important;
-  padding: 10px !important;
-
-  /* makes it visibly “exist” */
-  min-height: 90px !important;
-  margin-bottom: 12px !important;
-  border: 1px dashed rgba(148,163,184,.35) !important;
-  border-radius: 14px !important;
-  background: rgba(2,6,23,.25) !important;
-}
-
-#holdingZone .holding-thumb-btn {
-  border: 1px solid rgba(148,163,184,.35);
-  border-radius: 12px;
-  background: rgba(2,6,23,.45);
-  overflow: hidden;
-  padding: 0;
-  cursor: pointer;
-}
-
-#holdingZone .holding-thumb-img {
-  width: 100%;
-  height: 72px;
-  object-fit: cover;
-  display: block;
-}
-
-/* ==================================================
-   TEMP: HIDE DESIGN STUDIO BUTTON (NEXT VERSION)
-   ================================================== */
-#sendToDesignStudio {
-  display: none !important;
-}
-/* Hide "Send Selected to Design Studio" button */
-#sendToDesignStudio {
-  display: none !important;
-}
-/* ==================================================
-   TEMP: HIDE BOTTOM DEBUG / EXTRA UI (NEXT VERSION)
-   ================================================== */
+/* TEMP: hide bottom debug/extras */
 #bottomPanel,
 #bottomTools,
 #debugPanel,
@@ -1176,14 +801,4 @@ main > section:nth-of-type(3) > div > div:first-child {
 .bottom-tools,
 .bottom-panel,
 .dev-tools,
-.debug-tools {
-  display: none !important;
-}
-/* === FORCE TEXTAREA AUTO-GROW (AI INPUTS) === */
-.side-modal textarea {
-  height: auto !important;
-  min-height: 60px;
-  max-height: 420px;
-  overflow: hidden !important;
-  resize: none !important;
-}
+.debug-tools { display: none !important; }
