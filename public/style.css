@@ -1,9 +1,10 @@
 /* /public/style.css  (REPLACE ENTIRE FILE)
-   LOT ROCKET — CLEAN STABLE CSS (v2.6.1) ✅ DEDUPED + JS-ALIGNED
-   - Restores your “good layout” grid (Step 1 left, Step 2 center, tools right)
-   - Keeps Step 2 tiles, Step 3 Creative Lab
-   - Social strip uses: #socialCarousel + .social-carousel-item / .social-thumb-btn
-   - Removes ALL conflicting duplicates (especially #holdingZone / #creativeThumbGrid / .floating-tools)
+   LOT ROCKET — CLEAN STABLE CSS (v2.6.2) ✅ DEDUPED + JS-ALIGNED
+   - Step 1 left, Step 2 right
+   - Step 3 full width
+   - Step 3 holding zone STACKS (wrap) so all 24 are visible (no horizontal scroll)
+   - Social Ready Strip moved into Step 3 right column (Design Studio hidden for v1)
+   - Removes ALL conflicting duplicates (especially #holdingZone + social strip)
 */
 
 *,
@@ -73,6 +74,7 @@ label.field > span{
 input[type="text"],
 input[type="number"],
 input[type="date"],
+input[type="url"],
 select{
   width: 100%;
   border-radius: 999px;
@@ -200,7 +202,8 @@ textarea{
 }
 
 .copy-btn,
-.regen-btn{
+.regen-btn,
+.emoji-strip-btn{
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: #020617;
@@ -445,58 +448,39 @@ textarea{
   border-color: rgba(56,189,248,0.95);
   box-shadow: 0 0 18px rgba(56,189,248,0.6);
 }
-#holdingZone {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 10px 0;
-  white-space: nowrap;
-}
 
-#holdingZone img {
-  width: 120px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-/* Holding zone (VISIBLE) — ONE TRUE BLOCK */
+/* HOLDING ZONE (STACK / WRAP / ALL VISIBLE) — ONE TRUE BLOCK ✅ */
 #holdingZone{
-  display: grid !important;
-  grid-template-columns: repeat(6, 1fr) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;            /* ✅ stack */
   gap: 10px !important;
+  overflow: visible !important;          /* ✅ no horizontal scroll */
   padding: 10px !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+
   min-height: 90px !important;
   margin-bottom: 12px !important;
   border: 1px dashed rgba(148,163,184,.35) !important;
   border-radius: 14px !important;
   background: rgba(2,6,23,.25) !important;
-  overflow: auto !important;
   max-width: 100% !important;
 }
-#holdingZone img:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 2px #ff7a00;
-}
-
-#holdingZone .holding-thumb-btn{
-  border: 1px solid rgba(148,163,184,.35);
-  border-radius: 12px;
-  background: rgba(2,6,23,.45);
-  overflow: hidden;
-  padding: 0;
+#holdingZone img{
+  width:120px !important;
+  height:80px !important;
+  object-fit:cover !important;
+  border-radius:10px !important;
+  flex:0 0 auto !important;
+  margin:0 !important;
+  display:block !important;
   cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-#holdingZone .holding-thumb-btn.active{
-  outline: 2px solid rgba(99,102,241,.9);
-}
-#holdingZone .holding-thumb-img{
-  width: 100%;
-  height: 72px;
-  object-fit: cover;
-  display: block;
+#holdingZone img:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(249,115,22,.55);
 }
 
 /* Photo tuner preview */
@@ -556,13 +540,14 @@ textarea{
   max-height: 260px;
 }
 
-/* strip container (supports either layout) */
+/* strip container — STACK / WRAP / ALL VISIBLE ✅ */
 #socialCarousel,
 .social-carousel{
   display: flex;
+  flex-wrap: wrap;             /* ✅ all visible */
   gap: 10px;
   padding: 10px;
-  overflow: auto;
+  overflow: visible;           /* ✅ no scroll */
   max-width: 100%;
   margin-top: 10px;
 }
@@ -643,6 +628,14 @@ textarea{
   background: rgba(0,0,0,.55);
   font-size: 12px;
   line-height: 1;
+}
+
+/* Social actions row */
+.social-carousel-actions{
+  display:flex;
+  gap: .6rem;
+  margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 /* ---------- MODALS (RIGHT SLIDE-IN) ---------- */
@@ -788,6 +781,9 @@ textarea{
 }
 #calcModal .calc-grid button:active{ transform: translateY(1px); }
 
+/* ---------- UTIL ---------- */
+.hidden{ display: none !important; }
+
 /* ---------- MOBILE ---------- */
 @media (max-width: 1100px){
   .layout{
@@ -804,65 +800,4 @@ textarea{
     margin-top: 1rem;
     z-index: 1 !important;
   }
-}
-
-/* TEMP: hide design studio button (if you still want it hidden) */
-#sendToDesignStudio{ display: none !important; }
-
-/* TEMP: hide bottom debug/extras */
-#bottomPanel,
-#bottomTools,
-#debugPanel,
-#devPanel,
-#rawOutput,
-#toolOutput,
-#aiOutputPanel,
-.footer-tools,
-.bottom-tools,
-.bottom-panel,
-.dev-tools,
-.debug-tools { display: none !important; }
-/* Force Step 1 "Send Selected Photos" button to be visible */
-#sendToDesignStudio,
-#sendSelectedToCreativeLab {
-  display: inline-flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  margin-top: 12px;
-}
-
-/* If the container is clipping it, stop clipping */
-#step1 .summary-box {
-  overflow: visible !important;
-}
-/* STEP 3 HOLDING ZONE — FORCE HORIZONTAL STRIP */
-#holdingZone{
-  display:flex !important;
-  flex-direction:row !important;
-  flex-wrap:nowrap !important;
-  gap:10px !important;
-  overflow-x:auto !important;
-  overflow-y:hidden !important;
-  padding:10px !important;
-  align-items:center !important;
-}
-
-/* If your JS wraps images in an inner div, force that inner div horizontal too */
-#holdingZone > div{
-  display:flex !important;
-  flex-direction:row !important;
-  flex-wrap:nowrap !important;
-  gap:10px !important;
-  align-items:center !important;
-}
-
-/* FORCE thumb size */
-#holdingZone img{
-  width:120px !important;
-  height:80px !important;
-  object-fit:cover !important;
-  border-radius:10px !important;
-  flex:0 0 auto !important;
-  margin:0 !important;
-  display:block !important;
 }
