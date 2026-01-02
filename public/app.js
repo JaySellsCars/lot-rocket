@@ -11,7 +11,42 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-// ✅ Bind Step 1 "Send Selected" button ONCE (uses your real ID)
+function renderHoldingZone() {
+  const hz = document.getElementById("holdingZone");
+  if (!hz) return;
+
+  const photos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+
+  hz.innerHTML = "";
+
+  if (!photos.length) {
+    hz.innerHTML = `<div class="small-note" style="opacity:.7;padding:.5rem 0;">No photos in holding zone yet.</div>`;
+    return;
+  }
+
+  // simple horizontal strip
+  const wrap = document.createElement("div");
+  wrap.style.display = "flex";
+  wrap.style.gap = "10px";
+  wrap.style.flexWrap = "wrap";
+  wrap.style.padding = "10px 0";
+
+  photos.forEach((u) => {
+    const im = document.createElement("img");
+    im.src = u;
+    im.style.width = "120px";
+    im.style.height = "80px";
+    im.style.objectFit = "cover";
+    im.style.borderRadius = "10px";
+    im.style.border = "1px solid rgba(255,255,255,.15)";
+    wrap.appendChild(im);
+  });
+
+  hz.appendChild(wrap);
+}
+
+  
+  // ✅ Bind Step 1 "Send Selected" button ONCE (uses your real ID)
 (() => {
   const btn = document.getElementById("sendToDesignStudio");
   if (!btn || btn.__LR_BOUND__) return;
