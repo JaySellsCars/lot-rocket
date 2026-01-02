@@ -21,6 +21,14 @@ if ("_step1Selected" in STORE) {
   console.warn("🧨 Removing legacy STORE._step1Selected");
   try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
 }
+function syncSendBtn() {
+  const btn = DOC.getElementById("sendToDesignStudio");
+  if (!btn) return;
+  const n = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.length : 0;
+  btn.disabled = n === 0;
+  btn.style.opacity = n === 0 ? "0.55" : "1";
+  btn.style.pointerEvents = n === 0 ? "none" : "auto";
+}
 
   // ✅ ensure arrays exist (prevents “undefined includes/indexOf” crashes)
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
