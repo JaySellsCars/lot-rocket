@@ -428,3 +428,44 @@ textarea{
   cursor: default;
   user-select: none;
 }
+/* ==================================================
+   SOCIAL READY PREVIEW — SKINNIER UI, BIGGER IMAGE
+   ================================================== */
+
+.social-ready-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+/* center preview column */
+.social-ready-center {
+  flex: 1;
+  max-width: 720px;   /* ⬅️ makes viewer longer */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* actual preview image */
+#socialCarouselPreviewImg {
+  width: 100%;
+  max-width: 720px;
+  height: 280px;      /* ⬅️ skinnier but still big */
+  object-fit: contain;
+  background: rgba(0,0,0,.35);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
+}
+
+/* arrows stay vertically centered */
+.ghost-circle-btn {
+  align-self: center;
+}
+
+/* tighten header spacing above preview */
+.social-ready-panel .panel-header {
+  margin-bottom: .6rem;
+}
