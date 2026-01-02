@@ -1,7 +1,8 @@
 /* /public/style.css  (REPLACE ENTIRE FILE)
-   LOT ROCKET — CLEAN STABLE CSS (v2.6.4) ✅
-   - Step 3 holding zone: stacked, all visible
-   - Social Ready strip (BOTTOM): stacked thumbnails, NO SCROLL, up to 24
+   LOT ROCKET — CLEAN STABLE CSS (v2.6.5)
+   - Holding zone: stacked
+   - Social Ready: taller panel + BIG centered preview + arrows toggle selection
+   - Social strip: stacked (wrap) up to 24, no scroll
 */
 
 *,
@@ -16,7 +17,6 @@ body{
 }
 a{ color:#8ab4f8; }
 
-/* ---------- TOKENS ---------- */
 :root{
   --bg-panel:#020617;
   --border-soft:rgba(148,163,184,.55);
@@ -29,7 +29,7 @@ a{ color:#8ab4f8; }
   --shadow:0 20px 50px rgba(0,0,0,.6);
 }
 
-/* ---------- HEADER ---------- */
+/* HEADER */
 .app-header{
   display:flex;
   align-items:center;
@@ -37,20 +37,21 @@ a{ color:#8ab4f8; }
   padding:1.2rem 3rem;
   border-bottom:1px solid var(--border-soft);
 }
-.branding h1{ font-size:1.6rem; }
+.branding h1{ font-size:1.6rem; margin:0; }
 .branding p{ margin:.25rem 0 0; font-size:.85rem; color:var(--text-muted); }
 
-/* ---------- LAYOUT ---------- */
+/* LAYOUT */
 .layout{
   display:grid;
   grid-template-columns:1.05fr 1.6fr;
   gap:2.5rem;
   padding:1.5rem 15rem 3rem 3rem;
+  align-items:start;
 }
 .column{ min-width:0; }
 .creativeHubFull{ grid-column:1 / -1; }
 
-/* ---------- PANELS ---------- */
+/* PANELS */
 .lab-card,
 .summary-box,
 .platform-card{
@@ -67,7 +68,42 @@ a{ color:#8ab4f8; }
   line-height:1.35;
 }
 
-/* ---------- BUTTONS ---------- */
+label.field{ display:block; margin:.65rem 0; }
+label.field > span{
+  display:block;
+  font-weight:600;
+  font-size:.9rem;
+  margin-bottom:.35rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="url"],
+select{
+  width: 100%;
+  border-radius: 999px;
+  padding: .6rem .9rem;
+  border: 1px solid var(--border-soft);
+  background: #020617;
+  color: var(--text-main);
+  outline: none;
+}
+input::placeholder{ color: rgba(156,163,175,.7); }
+
+textarea{
+  width: 100%;
+  resize: none;
+  overflow-y: hidden;
+  line-height: 1.5;
+  border-radius: var(--inner);
+  padding: .75rem;
+  background: #020617;
+  border: 1px solid var(--border-soft);
+  color: var(--text-main);
+}
+
+/* BUTTONS */
 .primary-btn{
   border-radius:999px;
   border:none;
@@ -93,7 +129,7 @@ a{ color:#8ab4f8; }
   align-items:center;
 }
 
-/* ---------- STEP 1 PHOTOS ---------- */
+/* STEP 1 PHOTOS */
 .photo-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -101,7 +137,7 @@ a{ color:#8ab4f8; }
   margin-top:.9rem;
 }
 
-/* ---------- STEP 2 ---------- */
+/* STEP 2 */
 .step2-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -113,7 +149,7 @@ a{ color:#8ab4f8; }
   background:rgba(2,6,23,.85);
 }
 
-/* ---------- FLOATING TOOLS ---------- */
+/* FLOATING TOOLS */
 .floating-tools{
   position:fixed;
   right:18px;
@@ -134,7 +170,7 @@ a{ color:#8ab4f8; }
 }
 
 /* ==================================================
-   STEP 3 — HOLDING ZONE (STACKED / ALL VISIBLE)
+   STEP 3 — HOLDING ZONE (STACKED)
 ================================================== */
 #holdingZone{
   display:flex;
@@ -156,73 +192,101 @@ a{ color:#8ab4f8; }
 }
 
 /* ==================================================
-   SOCIAL READY — BOTTOM STRIP (STACK / NO SCROLL)
+   SOCIAL READY — TALLER + BIG CENTER PREVIEW
 ================================================== */
 .social-ready-bottom{ margin-top:14px; }
 
+/* make the panel taller / roomier like old */
+#socialReadyPanel{
+  padding: 1.2rem;
+  min-height: 520px;                /* ✅ taller */
+}
+
+/* row with arrows + preview */
 .social-ready-row{
   display:grid;
-  grid-template-columns:44px 1fr 44px;
-  gap:12px;
-  align-items:center;
-  margin-top:10px;
+  grid-template-columns: 54px 1fr 54px;   /* ✅ bigger arrow columns */
+  gap: 16px;
+  align-items: center;
+  margin-top: 12px;
 }
 
+/* arrows */
 .ghost-circle-btn{
-  width:44px;
-  height:44px;
-  border-radius:999px;
-  border:1px solid var(--border-soft);
-  background:rgba(2,6,23,.7);
-  color:var(--text-main);
-  cursor:pointer;
+  width: 54px;                      /* ✅ bigger */
+  height: 54px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: rgba(2,6,23,.7);
+  color: var(--text-main);
+  cursor: pointer;
 }
 
+/* center column */
+.social-ready-center{
+  min-width: 0;
+  display:flex;
+  flex-direction: column;
+  align-items: center;              /* ✅ centered */
+  justify-content: center;
+}
+
+/* BIG preview box (the “decent sized viewer”) */
 #socialCarouselPreviewImg{
-  width:100%;
-  height:220px;
-  object-fit:contain;
-  border-radius:16px;
-  border:1px solid rgba(148,163,184,.35);
-  background:rgba(2,6,23,.65);
+  width: min(520px, 100%);          /* ✅ large but responsive */
+  height: 320px;                    /* ✅ bigger viewer */
+  object-fit: contain;
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.65);
+  display:block;
 }
 
-/* 🔑 THIS IS THE CHANGE */
+/* status under preview */
+#socialCarouselStatus{
+  text-align:center;
+  margin-top:.6rem;
+}
+
+/* STRIP AREA (stacked thumbs, no scroll) */
 #socialCarousel{
   display:flex;
-  flex-wrap:wrap;            /* ✅ STACK */
-  gap:10px;
-  padding:10px;
-  margin-top:10px;
-  overflow:visible;          /* ✅ NO SCROLL */
-  border:1px dashed rgba(148,163,184,.25);
-  border-radius:14px;
-  background:rgba(2,6,23,.18);
+  flex-wrap:wrap;                   /* ✅ stack */
+  gap: 10px;
+  padding: 12px;
+  margin-top: 16px;
+  overflow: visible;                /* ✅ no scroll */
+  border: 1px dashed rgba(148,163,184,.25);
+  border-radius: 14px;
+  background: rgba(2,6,23,.18);
+  min-height: 140px;                /* ✅ gives that “strip zone” presence */
+  align-content: flex-start;
 }
 
-/* Thumbnails (up to 24 visible) */
+/* thumbs */
 .social-carousel-item,
 #socialCarousel .social-thumb-btn{
-  width:92px;
-  height:92px;
-  border-radius:12px;
-  overflow:hidden;
-  border:1px solid rgba(148,163,184,.25);
-  background:rgba(2,6,23,.55);
-  flex:0 0 auto;
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,.25);
+  background: rgba(2,6,23,.55);
+  flex: 0 0 auto;
 }
 
+/* actions */
 .social-carousel-actions{
   display:flex;
-  gap:.6rem;
-  margin-top:12px;
+  gap:.8rem;
+  margin-top:14px;
   flex-wrap:wrap;
 }
 
-/* ---------- UTIL ---------- */
+/* UTIL */
 .hidden{ display:none !important; }
 
-/* ---------- MOBILE ---------- */
+/* MOBILE */
 @media (max-width:1100px){
   .layout{
     grid-template-columns:1fr;
@@ -236,4 +300,6 @@ a{ color:#8ab4f8; }
     justify-content:center;
     margin-top:1rem;
   }
+  #socialReadyPanel{ min-height: 0; }
+  #socialCarouselPreviewImg{ height: 260px; }
 }
