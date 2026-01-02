@@ -118,7 +118,15 @@ function wireRegenButtons() {
     });
   });
 }
-// /public/app.js  — ADD THIS WHOLE BLOCK INSIDE YOUR IIFE (near top, after STORE init)
+// PROMPT SLOTS (NEXT) — add these now so each AI tool has its own prompt later
+// /public/app.js — ADD INSIDE IIFE (anywhere after STORE init)
+STORE.aiPrompts = STORE.aiPrompts || {
+  workflow: "YOU WILL SET THIS PROMPT NEXT",
+  message: "YOU WILL SET THIS PROMPT NEXT",
+  ask: "YOU WILL SET THIS PROMPT NEXT",
+  car: "YOU WILL SET THIS PROMPT NEXT",
+};
+
 // ==================================================
 // SIDE TOOLS — ONE WIRE PASS (NO DUPES)
 // - AI Image / AI Video hidden for now (next version)
