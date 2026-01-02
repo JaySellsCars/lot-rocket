@@ -187,15 +187,18 @@
           tile.style.outline = on ? "2px solid rgba(255,255,255,.35)" : "none";
         }
 
-        tile.addEventListener("click", () => {
-          if (selected.has(src)) selected.delete(src);
-          else selected.add(src);
+tile.addEventListener("click", () => {
+  if (selected.has(src)) selected.delete(src);
+  else selected.add(src);
 
-          syncUI();
+  syncUI();
 
-          const countEl = DOC.getElementById("selectedCount");
-          if (countEl) countEl.textContent = String(selected.size);
-        });
+  STORE._step1Selected = Array.from(selected); // ✅ ADD THIS
+
+  const countEl = DOC.getElementById("selectedCount");
+  if (countEl) countEl.textContent = String(selected.size);
+});
+
 
         // initial state
         syncUI();
