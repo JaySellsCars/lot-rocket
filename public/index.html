@@ -1,110 +1,139 @@
-// /public/app.js  (REPLACE ENTIRE FILE)
-// FULL RESTORE (SAFE) — boots UI + wires core buttons without crashing
-(() => {
-  const V = "10001";
-  console.log("🧨 APPJS BOOT OK — v" + V);
+<!-- /public/index.html (REPLACE ENTIRE FILE) -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Lot Rocket</title>
 
-  const DOC = document;
-  const $ = (id) => DOC.getElementById(id);
-  const q = (sel, root = DOC) => root.querySelector(sel);
-  const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
+  <!-- External libs (safe) -->
+  <script src="https://unpkg.com/konva/konva.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  // ---------- STORE ----------
-  const STORE = (window.STORE = window.STORE || {});
-  const asArr = (v) => (Array.isArray(v) ? v : []);
-  STORE.lastBoostPhotos = asArr(STORE.lastBoostPhotos);
-  STORE.holdingZonePhotos = asArr(STORE.holdingZonePhotos);
-  STORE.socialReadyPhotos = asArr(STORE.socialReadyPhotos);
+  <link rel="stylesheet" href="/style.css?v=10001" />
+</head>
+<body class="dark-theme">
 
-  // ---------- SAFE HELPERS ----------
-  const safe = (name, fn, ...args) => {
-    try {
-      if (typeof fn === "function") return fn(...args);
-      return;
-    } catch (e) {
-      console.error("❌", name, e);
-    }
-  };
+  <!-- ================= HEADER ================= -->
+  <header class="app-header">
+    <div class="branding">
+      <h1>🚀 Lot Rocket</h1>
+      <p>AI Social Media Kit & Creative Lab for Car Sales Pros</p>
+    </div>
+  </header>
 
-  const show = (el) => { if (el) { el.classList.remove("hidden"); el.setAttribute("aria-hidden", "false"); } };
-  const hide = (el) => { if (el) { el.classList.add("hidden"); el.setAttribute("aria-hidden", "true"); } };
+  <!-- ================= MAIN ================= -->
+  <main id="appMain">
+    <!-- STEP 1 -->
+    <section id="step1" class="lab-card">
+      <h3>Step 1 – Dealer URL Scraper</h3>
+      <div class="row">
+        <input id="dealerUrlInput" type="url" placeholder="Paste vehicle URL here…" />
+        <button id="boostBtn" type="button">Boost</button>
+      </div>
+      <div id="step1Photos" class="photo-grid"></div>
+    </section>
 
-  function wireCloseButtons() {
-    DOC.querySelectorAll("[data-close]").forEach((btn) => {
-      on(btn, "click", () => hide(btn.closest(".side-modal,.modal,[role='dialog']")));
-    });
-  }
+    <!-- STEP 2 -->
+    <section id="step2" class="lab-card">
+      <h3>Step 2 – Social Media Kit</h3>
 
-  function wireDropZone() {
-    const dz = $("photoDropZone");
-    const inp = $("photoFileInput");
-    if (!dz || !inp) return;
+      <div class="kit-actions">
+        <button id="newPostBtn" type="button">New Post</button>
+        <button id="copyPostBtn" type="button">Copy</button>
+        <button id="newTextBtn" type="button">New Text</button>
+        <button id="copyTextBtn" type="button">Copy</button>
+      </div>
 
-    on(dz, "click", () => inp.click());
+      <div class="kit-grid">
+        <div class="kit-card">
+          <h4>Marketplace Listing</h4>
+          <textarea id="marketplaceOutput" rows="8" placeholder="Output…"></textarea>
+        </div>
+        <div class="kit-card">
+          <h4>Hashtag Set</h4>
+          <textarea id="hashtagOutput" rows="8" placeholder="Output…"></textarea>
+        </div>
+      </div>
 
-    const handleFiles = (files) => {
-      const arr = Array.from(files || []).filter(Boolean);
-      if (!arr.length) return;
-      // just show thumbnails for now (no crash)
-      const grid = $("creativeThumbGrid");
-      if (!grid) return;
-      arr.forEach((f) => {
-        const url = URL.createObjectURL(f);
-        const wrap = DOC.createElement("div");
-        wrap.className = "thumb";
-        wrap.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:10px" />`;
-        grid.appendChild(wrap);
-        STORE.holdingZonePhotos.push(url);
-      });
-    };
+      <div class="social-ready">
+        <div class="social-ready-head">
+          <h4>Social Ready Strip</h4>
+          <div class="social-ready-nav">
+            <button id="socialCarouselPrev" type="button">◀</button>
+            <button id="socialCarouselNext" type="button">▶</button>
+          </div>
+        </div>
+        <div id="socialCarousel" class="social-carousel"></div>
+        <div class="social-ready-preview">
+          <img id="socialCarouselPreviewImg" alt="Preview" />
+          <div id="socialCarouselStatus"></div>
+        </div>
+        <div class="social-ready-actions">
+          <button id="sendToSocialReady" type="button">Send Selected to Social Ready</button>
+          <button id="downloadSocialReadyZip" type="button">Download ZIP</button>
+        </div>
+      </div>
+    </section>
 
-    on(inp, "change", () => handleFiles(inp.files));
-    on(dz, "dragover", (e) => { e.preventDefault(); dz.classList.add("drag"); });
-    on(dz, "dragleave", () => dz.classList.remove("drag"));
-    on(dz, "drop", (e) => {
-      e.preventDefault();
-      dz.classList.remove("drag");
-      handleFiles(e.dataTransfer && e.dataTransfer.files);
-    });
-  }
+    <!-- STEP 3 -->
+    <section id="creativeHub" class="creativeHubFull">
+      <div class="lab-card">
+        <h3>Step 3 – Creative Lab</h3>
 
-  function wireBasicButtons() {
-    on($("boostBtn"), "click", () => console.log("🟢 Boost clicked"));
-    on($("newPostBtn"), "click", () => console.log("🟢 New Post"));
-    on($("copyPostBtn"), "click", () => console.log("🟢 Copy Post"));
-    on($("newTextBtn"), "click", () => console.log("🟢 New Text"));
-    on($("copyTextBtn"), "click", () => console.log("🟢 Copy Text"));
+        <div id="holdingZone" class="holding-zone"></div>
 
-    on($("autoEnhanceBtn"), "click", () => console.log("🟢 Auto Enhance"));
-    on($("resetEditsBtn"), "click", () => console.log("🟢 Reset Edits"));
+        <div class="creative-hub">
+          <div class="creative-left">
+            <h3>Photos</h3>
 
-    on($("sendToDesignStudio"), "click", () => console.log("🟢 Send to Design Studio"));
-    on($("sendToSocialReady"), "click", () => console.log("🟢 Send to Social Ready"));
+            <div id="photoDropZone" class="photo-dropzone">
+              <p>Drag & Drop Photos Here<br /><span>(or click to upload)</span></p>
+              <input type="file" id="photoFileInput" accept="image/*" multiple hidden />
+            </div>
 
-    on($("incomeCalcBtn"), "click", () => show($("incomeModal")));
-  }
+            <div id="creativeThumbGrid" class="creative-thumb-grid"></div>
 
-  function finalInit() {
-    wireCloseButtons();
-    wireDropZone();
-    wireBasicButtons();
+            <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+              Send Selected to Design Studio 3.5
+            </button>
+          </div>
 
-    // call legacy functions if present
-    safe("wireAiModals", window.wireAiModals);
-    safe("wireSideTools", window.wireSideTools);
-    safe("wireCalculatorPad", window.wireCalculatorPad);
-    safe("wireIncomeCalcDirect", window.wireIncomeCalcDirect);
+          <div class="creative-right">
+            <h3>Design Studio</h3>
+            <div id="designStudioMount" class="design-studio-mount"></div>
 
-    safe("renderCreativeThumbs", window.renderCreativeThumbs);
-    safe("renderSocialStrip", window.renderSocialStrip);
+            <div class="tuner-actions">
+              <button id="autoEnhanceBtn" type="button">Auto Enhance</button>
+              <button id="resetEditsBtn" type="button">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-    console.log("✅ FINAL INIT COMPLETE");
-  }
+  <!-- SIDE MODALS (SAFE MINIMUM) -->
+  <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Income Calculator</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <form id="incomeForm">
+          <input id="incomeMtd" type="number" step="0.01" placeholder="Gross to date (e.g. 32000)" />
+          <input id="incomeLastPayDate" type="date" />
+          <button id="incomeCalcBtn" type="button">Estimate Income</button>
+        </form>
+        <div id="incomeOutput"></div>
+      </div>
+    </div>
+  </section>
 
-  DOC.addEventListener("DOMContentLoaded", () => {
-    if (window.__LOTROCKET_BOOTED__) return;
-    window.__LOTROCKET_BOOTED__ = true;
-    console.log("✅ DOM READY");
-    finalInit();
-  });
-})();
+  <!-- ✅ APP JS — MUST BE LAST -->
+  <script src="/app.js?v=10001"></script>
+</body>
+</html>
