@@ -721,6 +721,11 @@ generateAllStep2();
   wireZipButton();
   wireSendSelectedToSocialReady();
   renderSocialStrip();
+// /public/app.js — ADD THIS AT THE VERY END (right before console.log("✅ APP READY"); is fine)
+// ensures modals are closable + wires exist even if DOM changes later
+if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAllModals === "function") {
+  window.LR_TOOLS.closeAllModals();
+}
 
   console.log("✅ APP READY");
 })();
