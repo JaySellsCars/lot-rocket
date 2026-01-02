@@ -33,6 +33,26 @@
       btn.classList.remove("lr-loading");
     }
   }
+function normalizeDealerUrl(raw) {
+  let s = (raw || "").trim();
+
+  // kill weird copy/paste prefixes like "whttps://"
+  s = s.replace(/^w+https?:\/\//i, "https://");
+  s = s.replace(/^w+https?:/i, "https:");
+
+  // remove accidental duplicates like "https://https://"
+  s = s.replace(/^https?:\/\/https?:\/\//i, "https://");
+
+  // if someone pasted "www.site.com/..." without scheme
+  if (!/^https?:\/\//i.test(s) && /^www\./i.test(s)) s = "https://" + s;
+
+  // strip spaces
+  s = s.replace(/\s+/g, "");
+
+  // final sanity: if it STILL doesn’t start with http, reject
+  if (!/^https?:\/\//i.test(s)) return "";
+  return s;
+}
 
   // ==================================================
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
