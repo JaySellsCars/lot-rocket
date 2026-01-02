@@ -39,9 +39,69 @@
   // ✅ ensure arrays exist (prevents “undefined includes/indexOf” crashes)
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
   STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
 
   // --------------------------------------------------
-  // STEP 3: HOLDING ZONE RENDER (horizontal, up to 24)
+  // SOCIAL READY — MINIMAL STORE + RENDER (if UI exists)
+  // --------------------------------------------------
+  const getSocialStripEl = () =>
+    $("socialCarousel") ||
+    $("socialReadyZone") ||
+    DOC.querySelector("[data-social-strip]") ||
+    DOC.querySelector(".social-carousel") ||
+    DOC.querySelector(".social-ready-strip");
+
+  function renderSocialReady() {
+    const strip = getSocialStripEl();
+    if (!strip) return; // UI may exist in your full build; this stays safe if not.
+
+    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos.slice(0, 24) : [];
+    strip.innerHTML = "";
+
+    if (!list.length) {
+      strip.innerHTML = `<div style="opacity:.65;padding:.5rem 0;">No photos in Social Ready yet.</div>`;
+      return;
+    }
+
+    // stack in plain sight (wrap)
+    strip.style.display = "flex";
+    strip.style.flexWrap = "wrap";
+    strip.style.gap = "10px";
+    strip.style.alignItems = "flex-start";
+    strip.style.justifyContent = "flex-start";
+    strip.style.overflow = "visible";
+    strip.style.padding = "10px 0";
+
+    list.forEach((src) => {
+      const img = DOC.createElement("img");
+      img.src = src;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.style.width = "120px";
+      img.style.height = "80px";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "10px";
+      img.style.border = "1px solid rgba(255,255,255,.15)";
+      img.style.flex = "0 0 auto";
+      img.style.margin = "0";
+      strip.appendChild(img);
+    });
+  }
+
+  function addToSocialReady(src) {
+    if (!src) return false;
+    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+    // remove if already exists then unshift to front
+    const next = [src, ...list.filter((u) => u !== src)].slice(0, 24);
+    STORE.socialReadyPhotos = next;
+    renderSocialReady();
+    console.log("✅ MOVED TO SOCIAL READY:", src);
+    return true;
+  }
+
+  // --------------------------------------------------
+  // STEP 3: HOLDING ZONE RENDER (STACK / NO SCROLL, up to 24)
+  // Double-click thumbnail => move to Social Ready
   // --------------------------------------------------
   function renderHoldingZone() {
     const hz = DOC.getElementById("holdingZone");
@@ -62,29 +122,48 @@
       return;
     }
 
-    // horizontal filmstrip
+    // ✅ STACK IN PLAIN SIGHT (wrap grid-ish)
     hz.style.display = "flex";
     hz.style.flexDirection = "row";
-    hz.style.flexWrap = "nowrap";
+    hz.style.flexWrap = "wrap";
     hz.style.gap = "10px";
-    hz.style.overflowX = "auto";
-    hz.style.overflowY = "hidden";
+    hz.style.overflow = "visible";
     hz.style.padding = "10px 0";
-    hz.style.alignItems = "center";
+    hz.style.alignItems = "flex-start";
+    hz.style.justifyContent = "flex-start";
 
     photos.forEach((src) => {
+      const wrap = DOC.createElement("div");
+      wrap.style.position = "relative";
+      wrap.style.flex = "0 0 auto";
+      wrap.style.cursor = "default";
+
       const img = DOC.createElement("img");
       img.src = src;
       img.loading = "lazy";
       img.decoding = "async";
+      img.title = "Double-click to move to Social Ready";
       img.style.width = "120px";
       img.style.height = "80px";
       img.style.objectFit = "cover";
       img.style.borderRadius = "10px";
       img.style.border = "1px solid rgba(255,255,255,.15)";
-      img.style.flex = "0 0 auto";
       img.style.margin = "0";
-      hz.appendChild(img);
+      img.style.cursor = "pointer";
+
+      // ✅ DOUBLE CLICK => move to social ready zone
+      img.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addToSocialReady(src);
+
+        // quick flash feedback
+        img.style.outline = "2px solid rgba(255,255,255,.45)";
+        setTimeout(() => (img.style.outline = "none"), 220);
+      });
+
+      wrap.appendChild(img);
+      hz.appendChild(wrap);
     });
   }
 
@@ -249,6 +328,11 @@
       });
     };
   }
+
+  // initial renders (safe)
+  renderHoldingZone();
+  renderSocialReady();
+  syncSendBtn();
 
   console.log("✅ APP READY");
 })();
