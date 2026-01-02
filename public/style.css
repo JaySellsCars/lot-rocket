@@ -469,3 +469,74 @@ textarea{
 .social-ready-panel .panel-header {
   margin-bottom: .6rem;
 }
+/* ==================================================
+   STEP 1 BUTTONS — MATCH STYLE + FEEL "PRESSED"
+   ================================================== */
+
+/* Make the Step 1 send button match the Boost gradient style */
+#sendToDesignStudio {
+  border: none !important;
+  color: #020617 !important;
+  font-weight: 800 !important;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2)) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), var(--glow-1) !important;
+}
+
+/* Give BOTH buttons better hover + click feel */
+#boostBtn,
+#sendToDesignStudio {
+  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease !important;
+  will-change: transform;
+}
+
+/* Hover = slightly lifted */
+#boostBtn:hover,
+#sendToDesignStudio:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.04) !important;
+  box-shadow: 0 0 0 2px rgba(249,115,22,.18), 0 18px 44px rgba(0,0,0,.55) !important;
+}
+
+/* Active press = down + tighter shadow */
+#boostBtn:active,
+#sendToDesignStudio:active {
+  transform: translateY(2px) scale(.99) !important;
+  box-shadow: 0 0 0 2px rgba(236,72,153,.18), 0 10px 24px rgba(0,0,0,.45) !important;
+}
+
+/* If your JS adds .btn-loading, make it feel alive */
+#boostBtn.btn-loading,
+#sendToDesignStudio.btn-loading {
+  filter: saturate(1.1) brightness(1.02) !important;
+}
+
+/* ==================================================
+   SOCIAL READY PREVIEW — MORE SQUARE (BIGGER CAR)
+   ================================================== */
+
+/* Keep arrows on the sides, center stays stable */
+.social-ready-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Make center area wider but not tall UI */
+.social-ready-center {
+  flex: 1;
+  max-width: 520px; /* tweak 480–620 if you want */
+}
+
+/* Square-ish preview so car looks bigger */
+#socialCarouselPreviewImg {
+  width: 100% !important;
+  max-width: 520px !important;
+  aspect-ratio: 1 / 1 !important;   /* ✅ square */
+  height: auto !important;          /* ✅ let aspect-ratio control it */
+  object-fit: contain !important;
+  border-radius: 16px !important;
+  background: rgba(0,0,0,.35) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.55) !important;
+}
