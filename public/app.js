@@ -1,3 +1,17 @@
+(async () => {
+
+  const V = "10001";
+  console.log("APPJS BOOT OK", V);
+
+  // ✅ YOUR EXISTING CODE GOES BELOW
+  // you can now safely use `await` anywhere in this file
+
+  // example:
+  // const data = await fetch("/api/test").then(r => r.json());
+
+})();
+
+
 /* /public/app.js (REPLACE ENTIRE FILE) — ROCKET-1 WIRED MVP (SAFE / DEDUPED) */
 (() => {
   const V = "10001";
