@@ -37,24 +37,46 @@
 
       console.log("🚀 BOOST:", url);
 
-// Demo fallback (replace later with real API)
-const demoImages = [
-  "https://picsum.photos/600/400?1",
-  "https://picsum.photos/600/400?2",
-  "https://picsum.photos/600/400?3"
-];
+
+
+const res = await fetch(`/api/boost?url=${encodeURIComponent(url)}`);
+const data = await res.json();
+
+console.log("📦 BOOST DATA:", data);
+
+if (!data || !data.ok) {
+  alert(data?.error || "Boost failed");
+  return;
+}
+
+const images = Array.isArray(data.images) ? data.images : [];
 
 const grid = document.getElementById("step1Photos");
-if (grid) {
-  grid.innerHTML = "";
-  demoImages.forEach(src => {
-    const img = document.createElement("img");
-    img.src = src;
-    img.style.width = "100%";
-    img.style.borderRadius = "12px";
-    grid.appendChild(img);
-  });
+if (!grid) return;
+
+grid.innerHTML = "";
+
+if (!images.length) {
+  grid.innerHTML =
+    `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+      No images found.
+    </div>`;
+  return;
 }
+
+// Optional: cap to 24 for UI sanity
+const MAX_UI = 24;
+
+images.slice(0, MAX_UI).forEach((src) => {
+  const img = document.createElement("img");
+  img.src = src;
+  img.loading = "lazy";
+  img.decoding = "async";
+  img.style.width = "100%";
+  img.style.borderRadius = "12px";
+  grid.appendChild(img);
+});
+
 
 
 
