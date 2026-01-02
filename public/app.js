@@ -1,4 +1,4 @@
-// /public/app.js  — SINGLE SAFE BOOT FILE (CLEAN / STABLE)
+// /public/app.js  — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10001
 (async () => {
   const V = "10001";
   console.log("🚀 APP BOOT OK —", V);
@@ -13,98 +13,259 @@
   const STORE = window.STORE;
 
   // ==================================================
-  // STEP 1 SELECTION — ENFORCE SINGLE SOURCE OF TRUTH
+  // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
   // ==================================================
   if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
 
-  // hard fail if old state exists (debug visibility)
   if ("_step1Selected" in STORE) {
     console.warn("🧨 Removing legacy STORE._step1Selected");
-    try {
-      delete STORE._step1Selected;
-    } catch (e) {
-      STORE._step1Selected = undefined;
-    }
+    try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
   }
 
-  function syncSendBtn() {
-    const btn = DOC.getElementById("sendToDesignStudio");
-    if (!btn) return;
-    const n = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.length : 0;
-    btn.disabled = n === 0;
-    btn.style.opacity = n === 0 ? "0.55" : "1";
-    btn.style.pointerEvents = n === 0 ? "none" : "auto";
-  }
+  // ==================================================
+  // SOCIAL READY STORE (LOCKED DOWNLOAD)
+  // STORE.socialReadyPhotos = [{ url, locked, selected }]
+  // ==================================================
+  function normalizeSocialReady() {
+    if (!Array.isArray(STORE.socialReadyPhotos)) STORE.socialReadyPhotos = [];
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos
+      .filter(Boolean)
+      .map((p) => {
+        if (typeof p === "string") return { url: p, locked: true, selected: false };
+        return {
+          url: p.url || p.src || "",
+          locked: !!p.locked,
+          selected: !!p.selected,
+        };
+      })
+      .filter((p) => !!p.url);
 
-  // ✅ ensure arrays exist (prevents “undefined includes/indexOf” crashes)
-  STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-
-  // --------------------------------------------------
-  // SOCIAL READY — MINIMAL STORE + RENDER (if UI exists)
-  // --------------------------------------------------
-  const getSocialStripEl = () =>
-    $("socialCarousel") ||
-    $("socialReadyZone") ||
-    DOC.querySelector("[data-social-strip]") ||
-    DOC.querySelector(".social-carousel") ||
-    DOC.querySelector(".social-ready-strip");
-
-  function renderSocialReady() {
-    const strip = getSocialStripEl();
-    if (!strip) return; // UI may exist in your full build; this stays safe if not.
-
-    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos.slice(0, 24) : [];
-    strip.innerHTML = "";
-
-    if (!list.length) {
-      strip.innerHTML = `<div style="opacity:.65;padding:.5rem 0;">No photos in Social Ready yet.</div>`;
-      return;
-    }
-
-    // stack in plain sight (wrap)
-    strip.style.display = "flex";
-    strip.style.flexWrap = "wrap";
-    strip.style.gap = "10px";
-    strip.style.alignItems = "flex-start";
-    strip.style.justifyContent = "flex-start";
-    strip.style.overflow = "visible";
-    strip.style.padding = "10px 0";
-
-    list.forEach((src) => {
-      const img = DOC.createElement("img");
-      img.src = src;
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.style.width = "120px";
-      img.style.height = "80px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "10px";
-      img.style.border = "1px solid rgba(255,255,255,.15)";
-      img.style.flex = "0 0 auto";
-      img.style.margin = "0";
-      strip.appendChild(img);
+    // dedupe by url
+    const seen = new Set();
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.filter((p) => {
+      if (seen.has(p.url)) return false;
+      seen.add(p.url);
+      return true;
     });
+
+    // cap 24
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, 24);
+
+    // ensure one selected (if any)
+    if (STORE.socialReadyPhotos.length && !STORE.socialReadyPhotos.some((p) => p.selected)) {
+      STORE.socialReadyPhotos[0].selected = true;
+    }
   }
 
-  function addToSocialReady(src) {
-    if (!src) return false;
-    const list = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
-    // remove if already exists then unshift to front
-    const next = [src, ...list.filter((u) => u !== src)].slice(0, 24);
-    STORE.socialReadyPhotos = next;
-    renderSocialReady();
-    console.log("✅ MOVED TO SOCIAL READY:", src);
+  function getSelectedSocialIndex() {
+    normalizeSocialReady();
+    return Math.max(0, STORE.socialReadyPhotos.findIndex((p) => p.selected));
+  }
+
+  function setSelectedSocialIndex(idx) {
+    normalizeSocialReady();
+    if (!STORE.socialReadyPhotos.length) return;
+    const clamped = Math.max(0, Math.min(idx, STORE.socialReadyPhotos.length - 1));
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p, i) => ({ ...p, selected: i === clamped }));
+  }
+
+  function addToSocialReady(url, lock = true) {
+    if (!url) return false;
+    normalizeSocialReady();
+
+    // deselect all
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.map((p) => ({ ...p, selected: false }));
+
+    const i = STORE.socialReadyPhotos.findIndex((p) => p.url === url);
+    if (i !== -1) {
+      STORE.socialReadyPhotos[i].selected = true;
+      if (lock) STORE.socialReadyPhotos[i].locked = true;
+      renderSocialStrip();
+      return true;
+    }
+
+    STORE.socialReadyPhotos.unshift({
+      url,
+      locked: !!lock,
+      selected: true,
+    });
+
+    STORE.socialReadyPhotos = STORE.socialReadyPhotos.slice(0, 24);
+    renderSocialStrip();
     return true;
   }
 
+  function renderSocialStrip() {
+    normalizeSocialReady();
+
+    const stripEl = $("socialCarousel");
+    const previewEl = $("socialCarouselPreviewImg");
+    const statusEl = $("socialCarouselStatus");
+
+    if (!stripEl) return;
+
+    stripEl.innerHTML = "";
+
+    const list = STORE.socialReadyPhotos || [];
+    const sel = list.find((p) => p.selected) || list[0];
+
+    if (previewEl) {
+      previewEl.src = sel?.url || "";
+    }
+
+    if (statusEl) {
+      const lockedCount = list.filter((p) => p.locked).length;
+      statusEl.textContent = list.length
+        ? `Selected: ${list.findIndex((p) => p.selected) + 1}/${list.length} • Locked: ${lockedCount}`
+        : "No Social Ready photos yet.";
+    }
+
+    list.forEach((p, idx) => {
+      const btn = DOC.createElement("button");
+      btn.type = "button";
+      btn.className = "social-thumb-btn";
+      btn.style.position = "relative";
+
+      const img = DOC.createElement("img");
+      img.src = p.url;
+      img.loading = "lazy";
+      img.decoding = "async";
+
+      // lock badge
+      const lock = DOC.createElement("div");
+      lock.className = "social-lock";
+      lock.textContent = p.locked ? "🔒" : "🔓";
+      lock.title = "Click to lock/unlock";
+
+      // selected ring
+      if (p.selected) {
+        btn.style.outline = "2px solid rgba(56,189,248,.95)";
+        btn.style.outlineOffset = "0px";
+      }
+
+      // CLICK: select
+      btn.addEventListener("click", () => {
+        setSelectedSocialIndex(idx);
+        renderSocialStrip();
+      });
+
+      // DOUBLE CLICK: toggle lock
+      btn.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        normalizeSocialReady();
+        const cur = STORE.socialReadyPhotos[idx];
+        if (!cur) return;
+        cur.locked = !cur.locked;
+        renderSocialStrip();
+      });
+
+      btn.appendChild(img);
+      btn.appendChild(lock);
+      stripEl.appendChild(btn);
+    });
+  }
+
+  // prev/next
+  function wireSocialNav() {
+    const prevBtn = $("socialCarouselPrev");
+    const nextBtn = $("socialCarouselNext");
+    if (prevBtn && !prevBtn.__LR_BOUND__) {
+      prevBtn.__LR_BOUND__ = true;
+      prevBtn.addEventListener("click", () => {
+        const i = getSelectedSocialIndex();
+        setSelectedSocialIndex(i - 1);
+        renderSocialStrip();
+      });
+    }
+    if (nextBtn && !nextBtn.__LR_BOUND__) {
+      nextBtn.__LR_BOUND__ = true;
+      nextBtn.addEventListener("click", () => {
+        const i = getSelectedSocialIndex();
+        setSelectedSocialIndex(i + 1);
+        renderSocialStrip();
+      });
+    }
+  }
+
+  // download locked photos only
+  async function downloadLockedZip() {
+    normalizeSocialReady();
+    const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
+
+    if (!locked.length) {
+      alert("Lock at least 1 photo first.");
+      return;
+    }
+
+    if (!window.JSZip) {
+      alert("JSZip not loaded.");
+      return;
+    }
+
+    const zip = new JSZip();
+    const folder = zip.folder("lot-rocket");
+
+    let ok = 0;
+
+    for (let i = 0; i < locked.length; i++) {
+      const url = locked[i].url;
+      try {
+        const r = await fetch(url);
+        const blob = await r.blob();
+
+        // extension guess
+        const ext =
+          (blob.type && blob.type.includes("png")) ? "png" :
+          (blob.type && blob.type.includes("webp")) ? "webp" :
+          (blob.type && blob.type.includes("jpeg")) ? "jpg" : "jpg";
+
+        folder.file(`photo_${String(i + 1).padStart(2, "0")}.${ext}`, blob);
+        ok++;
+      } catch (e) {
+        console.warn("ZIP skip (fetch failed):", url);
+      }
+    }
+
+    if (!ok) {
+      alert("Could not fetch images to zip (CORS).");
+      return;
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = DOC.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "lot-rocket-social-ready.zip";
+    DOC.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+  }
+
+  function wireZipButton() {
+    const btn = $("downloadZipBtn");
+    if (!btn || btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
+    btn.addEventListener("click", downloadLockedZip);
+  }
+
+  // allow Step 3 button to push currently selected Step 1 picks into Social Ready (optional)
+  function wireSendSelectedToSocialReady() {
+    const btn = $("sendSelectedToSocialReady");
+    if (!btn || btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
+    btn.addEventListener("click", () => {
+      const picked = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.slice(0, 24) : [];
+      if (!picked.length) return alert("Select at least 1 photo first.");
+      picked.forEach((u) => addToSocialReady(u, true));
+      renderSocialStrip();
+    });
+  }
+
   // --------------------------------------------------
-  // STEP 3: HOLDING ZONE RENDER (STACK / NO SCROLL, up to 24)
-  // Double-click thumbnail => move to Social Ready
+  // STEP 3: HOLDING ZONE RENDER (up to 24) + DBLCLICK → SOCIAL READY
   // --------------------------------------------------
   function renderHoldingZone() {
-    const hz = DOC.getElementById("holdingZone");
+    const hz = $("holdingZone");
     if (!hz) return;
 
     const photos = Array.isArray(STORE.holdingZonePhotos)
@@ -112,77 +273,56 @@
       : [];
 
     hz.innerHTML = "";
-    hz.removeAttribute("style"); // prevents style drift
 
     if (!photos.length) {
-      hz.innerHTML = `
-        <div class="small-note" style="opacity:.7;padding:.5rem 0;">
+      hz.innerHTML =
+        `<div class="small-note" style="opacity:.7;padding:.5rem 0;">
           No photos in holding zone yet.
         </div>`;
       return;
     }
 
-    // ✅ STACK IN PLAIN SIGHT (wrap grid-ish)
-    hz.style.display = "flex";
-    hz.style.flexDirection = "row";
-    hz.style.flexWrap = "wrap";
-    hz.style.gap = "10px";
-    hz.style.overflow = "visible";
-    hz.style.padding = "10px 0";
-    hz.style.alignItems = "flex-start";
-    hz.style.justifyContent = "flex-start";
-
     photos.forEach((src) => {
-      const wrap = DOC.createElement("div");
-      wrap.style.position = "relative";
-      wrap.style.flex = "0 0 auto";
-      wrap.style.cursor = "default";
-
       const img = DOC.createElement("img");
       img.src = src;
       img.loading = "lazy";
       img.decoding = "async";
-      img.title = "Double-click to move to Social Ready";
-      img.style.width = "120px";
-      img.style.height = "80px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "10px";
-      img.style.border = "1px solid rgba(255,255,255,.15)";
-      img.style.margin = "0";
-      img.style.cursor = "pointer";
 
-      // ✅ DOUBLE CLICK => move to social ready zone
+      // ✅ DBLCLICK → add + lock in Social Ready
       img.addEventListener("dblclick", (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        addToSocialReady(src);
-
-        // quick flash feedback
-        img.style.outline = "2px solid rgba(255,255,255,.45)";
-        setTimeout(() => (img.style.outline = "none"), 220);
+        addToSocialReady(src, true);
+        console.log("🔒 ADDED TO SOCIAL READY:", src);
       });
 
-      wrap.appendChild(img);
-      hz.appendChild(wrap);
+      hz.appendChild(img);
     });
   }
 
   // --------------------------------------------------
   // STEP 1: SEND SELECTED → STEP 3 (bind ONCE)
-  // Uses your real ID: #sendToDesignStudio
+  // Uses ID: #sendToDesignStudio
   // --------------------------------------------------
+  function syncSendBtn() {
+    const btn = $("sendToDesignStudio");
+    if (!btn) return;
+    const n = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.length : 0;
+    btn.disabled = n === 0;
+    btn.style.opacity = n === 0 ? "0.55" : "1";
+    btn.style.pointerEvents = n === 0 ? "none" : "auto";
+  }
+
   (() => {
-    const btn = DOC.getElementById("sendToDesignStudio");
+    const btn = $("sendToDesignStudio");
     if (!btn || btn.__LR_BOUND__) return;
     btn.__LR_BOUND__ = true;
 
-    // keep visible
     btn.classList.remove("hidden");
     btn.style.display = "inline-flex";
     btn.style.visibility = "visible";
     btn.style.opacity = "1";
 
-    syncSendBtn(); // enable/disable based on selection
+    syncSendBtn();
 
     btn.addEventListener("click", () => {
       const picked = Array.isArray(STORE.step1Selected)
@@ -196,7 +336,7 @@
 
       renderHoldingZone();
 
-      const step3 = DOC.getElementById("creativeHub");
+      const step3 = $("creativeHub");
       if (step3) step3.scrollIntoView({ behavior: "smooth" });
 
       console.log("✅ SENT TO STEP 3:", picked.length);
@@ -247,27 +387,26 @@
       const rawImages = Array.isArray(data.images) ? data.images : [];
       const images = [...new Set(rawImages)].filter(Boolean);
 
-      const grid = DOC.getElementById("step1Photos");
+      const grid = $("step1Photos");
       if (!grid) return;
 
       grid.innerHTML = "";
 
       if (!images.length) {
-        grid.innerHTML = `
-          <div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+        grid.innerHTML =
+          `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
             No images found.
           </div>`;
         return;
       }
 
-      // ✅ reset selection for this boost (SINGLE SOURCE OF TRUTH)
+      // ✅ reset selection for this boost
       STORE.step1Selected = [];
       syncSendBtn();
 
-      const countEl = DOC.getElementById("selectedCount");
+      const countEl = $("selectedCount");
       if (countEl) countEl.textContent = "0";
 
-      // render selectable tiles (up to 24)
       const MAX_UI = 24;
 
       images.slice(0, MAX_UI).forEach((src) => {
@@ -317,8 +456,8 @@
           }
 
           syncUI();
-          if (countEl) countEl.textContent = String(STORE.step1Selected.length);
           syncSendBtn();
+          if (countEl) countEl.textContent = String(STORE.step1Selected.length);
         });
 
         syncUI();
@@ -329,10 +468,13 @@
     };
   }
 
-  // initial renders (safe)
-  renderHoldingZone();
-  renderSocialReady();
-  syncSendBtn();
+  // --------------------------------------------------
+  // SOCIAL READY WIRES (ONE PASS)
+  // --------------------------------------------------
+  wireSocialNav();
+  wireZipButton();
+  wireSendSelectedToSocialReady();
+  renderSocialStrip();
 
   console.log("✅ APP READY");
 })();
