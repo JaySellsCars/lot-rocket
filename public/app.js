@@ -393,6 +393,138 @@ STORE.aiPrompts = STORE.aiPrompts || {
 
   console.log("✅ SIDE TOOLS WIRED");
 })();
+// /public/app.js — ADD THIS WHOLE BLOCK INSIDE YOUR IIFE (near top, after STORE init)
+// ==================================================
+// FLOATING TOOLS WIRING ✅ (matches your index.html button IDs)
+// NOTE: You still need the modal HTML blocks in index.html for these IDs.
+// This block will safely no-op if a modal is missing.
+// Image/Video tools hidden for v1.
+// ==================================================
+(function wireFloatingTools() {
+  if (window.__LR_FLOATING_TOOLS__) return;
+  window.__LR_FLOATING_TOOLS__ = true;
+
+  const byId = (id) => DOC.getElementById(id);
+
+  const BTN = {
+    objection: "toolObjectionBtn",
+    calc: "toolCalcBtn",
+    payment: "toolPaymentBtn",
+    income: "toolIncomeBtn",
+    workflow: "toolWorkflowBtn",
+    message: "toolMessageBtn",
+    ask: "toolAskBtn",
+    car: "toolCarBtn",
+    image: "toolImageBtn", // hidden v1
+    video: "toolVideoBtn", // hidden v1
+  };
+
+  // ✅ DEFAULT modal IDs (edit these to your real modal IDs)
+  // If you don't have these modals yet, paste them and I'll align IDs.
+  const MODAL = {
+    objection: "objectionModal",
+    calc: "calcModal",
+    payment: "paymentModal",
+    income: "incomeModal",
+    workflow: "workflowModal",
+    message: "messageModal",
+    ask: "askModal",
+    car: "carExpertModal",
+    image: "imageGenModal",
+    video: "videoGenModal",
+  };
+
+  // hide image/video now
+  [BTN.image, BTN.video].forEach((id) => {
+    const b = byId(id);
+    if (b) b.style.display = "none";
+  });
+
+  const allBtnIds = Object.values(BTN);
+
+  function setActive(btnId) {
+    allBtnIds.forEach((id) => {
+      const b = byId(id);
+      if (b) b.classList.toggle("active", id === btnId);
+    });
+  }
+
+  function closeModal(modalId) {
+    const m = byId(modalId);
+    if (!m) return;
+    m.classList.add("hidden");
+    m.style.display = "none";
+    m.setAttribute("aria-hidden", "true");
+  }
+
+  function closeAll() {
+    Object.values(MODAL).forEach(closeModal);
+    setActive(null);
+  }
+
+  function openModal(modalId, btnId) {
+    const m = byId(modalId);
+    if (!m) {
+      console.warn("Modal missing:", modalId);
+      return;
+    }
+
+    closeAll();
+
+    m.classList.remove("hidden");
+    m.style.display = "flex";
+    m.setAttribute("aria-hidden", "false");
+    setActive(btnId);
+
+    // close wiring once per modal
+    if (!m.__LR_CLOSE_WIRED__) {
+      m.__LR_CLOSE_WIRED__ = true;
+
+      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+        if (x.__LR_BOUND__) return;
+        x.__LR_BOUND__ = true;
+        x.addEventListener("click", closeAll);
+      });
+
+      // backdrop click closes
+      m.addEventListener("click", (e) => {
+        if (e.target === m) closeAll();
+      });
+    }
+
+    const focusEl =
+      m.querySelector("textarea") ||
+      m.querySelector("input:not([type='hidden'])") ||
+      m.querySelector("button");
+    if (focusEl) setTimeout(() => focusEl.focus(), 0);
+  }
+
+  DOC.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAll();
+  });
+
+  function bind(key) {
+    const btnId = BTN[key];
+    const modalId = MODAL[key];
+    const b = byId(btnId);
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", () => {
+      const m = byId(modalId);
+      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+      if (isOpen) return closeAll();
+      openModal(modalId, btnId);
+    });
+  }
+
+  Object.keys(BTN).forEach(bind);
+
+  // expose for debugging
+  window.LR_TOOLS = { openModal, closeAll };
+
+  console.log("✅ FLOATING TOOLS WIRED");
+})();
 
   // ==================================================
   // SOCIAL READY STORE (LOCKED DOWNLOAD)
