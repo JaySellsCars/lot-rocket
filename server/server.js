@@ -2,10 +2,11 @@
 const express = require("express");
 const path = require("path");
 
-// Node 18+ has global fetch. If you ever run older Node locally, install node-fetch.
-// Render is typically Node 18+.
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ✅ allow JSON bodies for AI route
+app.use(express.json({ limit: "1mb" }));
 
 // ===============================
 // STATIC FRONTEND
@@ -33,7 +34,6 @@ function safeUrl(u) {
 function absUrl(base, maybe) {
   try {
     if (!maybe) return "";
-    // handle protocol-relative //cdn...
     if (maybe.startsWith("//")) return "https:" + maybe;
     return new URL(maybe, base).toString();
   } catch {
@@ -43,7 +43,6 @@ function absUrl(base, maybe) {
 
 function pickFromSrcset(srcset) {
   if (!srcset || typeof srcset !== "string") return "";
-  // pick highest width candidate
   const parts = srcset
     .split(",")
     .map((p) => p.trim())
@@ -62,17 +61,15 @@ function isProbablyJunkImage(u) {
   if (!u) return true;
   const s = u.toLowerCase();
 
-  // obvious non-photo assets
   if (s.startsWith("data:")) return true;
   if (s.endsWith(".svg")) return true;
 
-  // common tiny / tracker / icon patterns
   if (s.includes("sprite")) return true;
   if (s.includes("favicon")) return true;
-  if (s.includes("icon")) return true;
+  if (s.includes("/icons/")) return true;
+  if (s.includes("icon-")) return true;
   if (s.includes("logo")) return true;
 
-  // 1x1 / tiny hints in URL
   if (s.includes("1x1")) return true;
   if (s.includes("pixel")) return true;
   if (s.includes("spacer")) return true;
@@ -85,7 +82,7 @@ function uniq(arr) {
   const seen = new Set();
   for (const x of arr || []) {
     if (!x) continue;
-    const k = x.trim();
+    const k = String(x).trim();
     if (!k) continue;
     if (seen.has(k)) continue;
     seen.add(k);
@@ -94,8 +91,21 @@ function uniq(arr) {
   return out;
 }
 
+function htmlEntityDecode(s) {
+  if (!s) return "";
+  return String(s)
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function cleanText(s) {
+  return htmlEntityDecode(String(s || "").replace(/\s+/g, " ").trim());
+}
+
 function extractOgImage(html, base) {
-  // <meta property="og:image" content="...">
   const re = /<meta[^>]+property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/gi;
   const found = [];
   let m;
@@ -106,12 +116,25 @@ function extractOgImage(html, base) {
   return found;
 }
 
+function extractOgText(html) {
+  const get = (prop) => {
+    const re = new RegExp(
+      `<meta[^>]+property=["']${prop}["'][^>]*content=["']([^"']+)["'][^>]*>`,
+      "i"
+    );
+    const m = re.exec(html);
+    return cleanText(m?.[1] || "");
+  };
+  return {
+    title: get("og:title"),
+    description: get("og:description"),
+    image: get("og:image"),
+  };
+}
+
 function extractImgs(html, base) {
-  // naive but effective regex scraping (no cheerio dependency)
-  // looks for src=, data-src=, data-lazy=, data-original=, and srcset=
   const found = [];
 
-  // srcset first
   const srcsetRe = /\ssrcset=["']([^"']+)["']/gi;
   let m;
   while ((m = srcsetRe.exec(html))) {
@@ -120,7 +143,6 @@ function extractImgs(html, base) {
     if (u && !isProbablyJunkImage(u)) found.push(u);
   }
 
-  // common attributes
   const attrRe =
     /\s(?:src|data-src|data-lazy|data-original|data-url)=["']([^"']+)["']/gi;
   while ((m = attrRe.exec(html))) {
@@ -131,73 +153,72 @@ function extractImgs(html, base) {
   return found;
 }
 
-function extractLdJsonImages(html, base) {
-  // <script type="application/ld+json"> ... </script>
-  const found = [];
+function extractLdJsonImagesAndVehicle(html, base) {
+  const images = [];
+  let vehicle = null;
+
   const re = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let m;
+
+  const pushImg = (x) => {
+    if (!x) return;
+    if (typeof x === "string") {
+      const u = absUrl(base, x);
+      if (u && !isProbablyJunkImage(u)) images.push(u);
+    } else if (x && typeof x === "object") {
+      if (x.url) {
+        const u = absUrl(base, x.url);
+        if (u && !isProbablyJunkImage(u)) images.push(u);
+      }
+    }
+  };
+
+  const walk = (node) => {
+    if (!node) return;
+    if (Array.isArray(node)) return node.forEach(walk);
+    if (typeof node === "object") {
+      if (node.image) {
+        if (Array.isArray(node.image)) node.image.forEach(pushImg);
+        else pushImg(node.image);
+      }
+      if (node.images) {
+        if (Array.isArray(node.images)) node.images.forEach(pushImg);
+        else pushImg(node.images);
+      }
+      if (node.thumbnailUrl) pushImg(node.thumbnailUrl);
+      if (node.contentUrl) pushImg(node.contentUrl);
+
+      // try to capture vehicle-ish objects
+      const t = String(node["@type"] || "").toLowerCase();
+      if (!vehicle && (t === "vehicle" || t === "car" || t === "product" || t === "offer")) {
+        vehicle = node;
+      }
+
+      for (const k of Object.keys(node)) walk(node[k]);
+    }
+  };
+
   while ((m = re.exec(html))) {
     const raw = (m[1] || "").trim();
     if (!raw) continue;
-
-    // ld+json sometimes includes multiple objects or invalid trailing chars
-    // try parse directly, else skip
     try {
       const parsed = JSON.parse(raw);
-
-      const walk = (node) => {
-        if (!node) return;
-        if (Array.isArray(node)) return node.forEach(walk);
-        if (typeof node === "object") {
-          // common keys: image, images, thumbnailUrl, contentUrl
-          const candidates = [];
-          if (node.image) candidates.push(node.image);
-          if (node.images) candidates.push(node.images);
-          if (node.thumbnailUrl) candidates.push(node.thumbnailUrl);
-          if (node.contentUrl) candidates.push(node.contentUrl);
-
-          for (const c of candidates) {
-            if (Array.isArray(c)) {
-              c.forEach((x) => {
-                if (typeof x === "string") {
-                  const u = absUrl(base, x);
-                  if (u && !isProbablyJunkImage(u)) found.push(u);
-                } else if (x && typeof x === "object" && x.url) {
-                  const u = absUrl(base, x.url);
-                  if (u && !isProbablyJunkImage(u)) found.push(u);
-                }
-              });
-            } else if (typeof c === "string") {
-              const u = absUrl(base, c);
-              if (u && !isProbablyJunkImage(u)) found.push(u);
-            } else if (c && typeof c === "object" && c.url) {
-              const u = absUrl(base, c.url);
-              if (u && !isProbablyJunkImage(u)) found.push(u);
-            }
-          }
-
-          for (const k of Object.keys(node)) walk(node[k]);
-        }
-      };
-
       walk(parsed);
     } catch {
       // ignore
     }
   }
-  return found;
+
+  return { images, vehicle };
 }
 
 function extractJsonBlobImages(html, base) {
-  // catches common patterns like "images":["..."] or "image":"..."
   const found = [];
 
-  // arrays: "images":["...","..."]
   const arrRe = /"images"\s*:\s*\[([^\]]+)\]/gi;
   let m;
   while ((m = arrRe.exec(html))) {
     const block = m[1] || "";
-    // grab "http..." strings inside
     const urlRe = /"([^"]+)"/g;
     let u;
     while ((u = urlRe.exec(block))) {
@@ -206,7 +227,6 @@ function extractJsonBlobImages(html, base) {
     }
   }
 
-  // single: "image":"..."
   const singleRe = /"image"\s*:\s*"([^"]+)"/gi;
   while ((m = singleRe.exec(html))) {
     const abs = absUrl(base, m[1]);
@@ -215,9 +235,40 @@ function extractJsonBlobImages(html, base) {
 
   return found;
 }
+
+function pickMoney(s) {
+  const m = String(s || "").match(/\$[\s]*[\d,]+(\.\d{2})?/);
+  return m ? m[0].replace(/\s+/g, "") : "";
+}
+
+function pickMileage(s) {
+  const m = String(s || "").match(/([\d,]{2,})\s*(miles|mi)\b/i);
+  return m ? `${m[1]} ${m[2]}`.replace(/\s+/g, " ") : "";
+}
+
+function pickVin(s) {
+  const m = String(s || "").match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
+  return m ? m[1].toUpperCase() : "";
+}
+
+function pickStock(s) {
+  const m = String(s || "").match(/\b(Stock\s*#?\s*[:\-]?\s*)([A-Z0-9\-]{3,})\b/i);
+  return m ? m[2].toUpperCase() : "";
+}
+
+function bestVehicleFromHtml(html, og) {
+  const text = cleanText(html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "));
+  const title = og.title || cleanText((/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] || ""));
+  const price = pickMoney(text) || pickMoney(og.description) || "";
+  const mileage = pickMileage(text) || "";
+  const vin = pickVin(text) || "";
+  const stock = pickStock(text) || "";
+
+  return { title, price, mileage, vin, stock };
+}
+
 // ==================================================
 // AI SOCIAL POSTS — /api/ai/social
-// Body: { vehicle: {...}, platform: "facebook"|"instagram"|"tiktok"|"linkedin"|"x"|"dm"|"marketplace"|"hashtags" }
 // ==================================================
 app.post("/api/ai/social", async (req, res) => {
   try {
@@ -227,7 +278,6 @@ app.post("/api/ai/social", async (req, res) => {
       return res.json({ ok: false, error: "Missing OPENAI_API_KEY on server env" });
     }
 
-    // keep inputs tight
     const v = {
       title: vehicle.title || "",
       price: vehicle.price || "",
@@ -287,7 +337,6 @@ Link: ${v.url}
 OUTPUT: return the final post ONLY.
 `.trim();
 
-    // OpenAI Chat Completions (works with Node 18+ fetch)
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -317,13 +366,14 @@ OUTPUT: return the final post ONLY.
 });
 
 // ===============================
-// API: BOOST (STABLE CONTRACT)
-// GET /api/boost?url=...
+// API: BOOST (IMAGES + VEHICLE DETAILS)
+// GET /api/boost?url=...&debug=1
 // ===============================
 app.get("/api/boost", async (req, res) => {
   const started = Date.now();
   const input = (req.query.url || "").toString().trim();
   const target = safeUrl(input);
+  const debug = String(req.query.debug || "") === "1";
 
   const out = {
     ok: false,
@@ -331,6 +381,21 @@ app.get("/api/boost", async (req, res) => {
     finalUrl: "",
     title: "",
     images: [],
+    vehicle: {
+      title: "",
+      price: "",
+      mileage: "",
+      vin: "",
+      stock: "",
+      exterior: "",
+      interior: "",
+      engine: "",
+      transmission: "",
+      drivetrain: "",
+      dealer: "",
+      url: "",
+      location: "",
+    },
     meta: {
       ms: 0,
       counts: {},
@@ -346,7 +411,6 @@ app.get("/api/boost", async (req, res) => {
   }
 
   try {
-    // tight, browser-ish headers
     const r = await fetch(target, {
       method: "GET",
       redirect: "follow",
@@ -371,24 +435,24 @@ app.get("/api/boost", async (req, res) => {
     }
 
     const html = await r.text();
-
-    // title
-    const t = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
-    out.title = (t?.[1] || "").replace(/\s+/g, " ").trim();
-
     const base = out.finalUrl || target;
 
-    const og = extractOgImage(html, base);
-    const imgs = extractImgs(html, base);
-    const ld = extractLdJsonImages(html, base);
-    const blob = extractJsonBlobImages(html, base);
+    // OG + <title>
+    const ogText = extractOgText(html);
+    const t = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
+    out.title = cleanText(ogText.title || t?.[1] || "");
 
-    const merged = uniq([].concat(og, ld, blob, imgs));
+    // images: OG + LDJSON + JSON blob + IMG attrs
+    const ogImgs = extractOgImage(html, base);
+    const ldPack = extractLdJsonImagesAndVehicle(html, base);
+    const ldImgs = ldPack.images || [];
+    const blobImgs = extractJsonBlobImages(html, base);
+    const attrImgs = extractImgs(html, base);
 
-    // final filters (basic)
+    const merged = uniq([].concat(ogImgs, ldImgs, blobImgs, attrImgs));
+
     const filtered = merged.filter((u) => {
       const s = u.toLowerCase();
-      // keep common photo formats and also allow querystring cdn images
       const okExt =
         s.includes(".jpg") ||
         s.includes(".jpeg") ||
@@ -404,11 +468,53 @@ app.get("/api/boost", async (req, res) => {
 
     out.images = uniq(filtered).slice(0, 60);
 
+    // vehicle details: best-effort from OG + HTML text + LDJSON (if present)
+    const vFromHtml = bestVehicleFromHtml(html, ogText);
+
+    const dealerHost = (() => {
+      try { return new URL(base).hostname.replace(/^www\./, ""); } catch { return ""; }
+    })();
+
+    out.vehicle.title = cleanText(vFromHtml.title || out.title || "");
+    out.vehicle.price = vFromHtml.price || "";
+    out.vehicle.mileage = vFromHtml.mileage || "";
+    out.vehicle.vin = vFromHtml.vin || "";
+    out.vehicle.stock = vFromHtml.stock || "";
+    out.vehicle.url = base;
+    out.vehicle.dealer = dealerHost;
+    out.vehicle.location = "Detroit area";
+
+    // if LDJSON had something useful, lightly upgrade fields (safe)
+    const ldVehicle = ldPack.vehicle;
+    if (ldVehicle && typeof ldVehicle === "object") {
+      const name = cleanText(ldVehicle.name || ldVehicle.title || "");
+      if (name && name.length > out.vehicle.title.length) out.vehicle.title = name;
+
+      const sku = cleanText(ldVehicle.sku || "");
+      if (sku && !out.vehicle.stock) out.vehicle.stock = sku;
+
+      const vin = cleanText(ldVehicle.vehicleIdentificationNumber || ldVehicle.vin || "");
+      if (vin && !out.vehicle.vin) out.vehicle.vin = vin;
+
+      const offers = ldVehicle.offers;
+      const price = cleanText(offers?.price || offers?.priceSpecification?.price || "");
+      if (price && !out.vehicle.price) out.vehicle.price = price.startsWith("$") ? price : `$${price}`;
+
+      const mileage = cleanText(ldVehicle.mileageFromOdometer?.value || "");
+      if (mileage && !out.vehicle.mileage) out.vehicle.mileage = `${mileage} mi`;
+
+      const ext = cleanText(ldVehicle.color || "");
+      if (ext && !out.vehicle.exterior) out.vehicle.exterior = ext;
+
+      const trans = cleanText(ldVehicle.vehicleTransmission || "");
+      if (trans && !out.vehicle.transmission) out.vehicle.transmission = trans;
+    }
+
     out.meta.counts = {
-      og: og.length,
-      ldjson: ld.length,
-      jsonblob: blob.length,
-      imgAttrs: imgs.length,
+      og: ogImgs.length,
+      ldjson: ldImgs.length,
+      jsonblob: blobImgs.length,
+      imgAttrs: attrImgs.length,
       merged: merged.length,
       final: out.images.length,
     };
@@ -416,7 +522,6 @@ app.get("/api/boost", async (req, res) => {
     out.meta.ms = Date.now() - started;
     out.ok = true;
 
-    // minimal one-line log
     console.log(
       "BOOST",
       out.images.length,
@@ -424,6 +529,12 @@ app.get("/api/boost", async (req, res) => {
       "ms=" + out.meta.ms,
       "url=" + target
     );
+
+    if (!debug) {
+      // keep response lean if not debugging
+      delete out.meta.counts;
+      delete out.meta.notes;
+    }
 
     return res.json(out);
   } catch (e) {
