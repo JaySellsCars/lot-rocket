@@ -67,6 +67,8 @@ if (boostBtn) {
         </div>`;
       return;
     }
+const step3Btn = document.getElementById("sendToDesignStudio");
+if (step3Btn) step3Btn.click();
 
 // ===== Selection state (inside onclick, before rendering) =====
 const selected = new Set();
