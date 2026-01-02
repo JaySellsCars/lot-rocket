@@ -27,57 +27,59 @@
   // --------------------------------------------------
   // BASIC UI WIRES
   // --------------------------------------------------
-  const boostBtn = $("boostBtn");
-  const urlInput = $("dealerUrlInput");
+const boostBtn = $("boostBtn");
+const urlInput = $("dealerUrlInput");
 
-  if (boostBtn) {
-    boostBtn.onclick = async () => {
-      const url = urlInput?.value?.trim();
-      if (!url) return alert("Paste a vehicle URL first.");
+if (boostBtn) {
+  boostBtn.onclick = async () => {
+    const url = urlInput?.value?.trim();
+    if (!url) return alert("Paste a vehicle URL first.");
 
-      console.log("🚀 BOOST:", url);
+    console.log("🚀 BOOST:", url);
 
+    let res, data;
+    try {
+      res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
+      data = await res.json();
+    } catch (e) {
+      console.error("❌ BOOST FETCH FAILED", e);
+      alert("Boost request failed (network/json).");
+      return;
+    }
 
+    console.log("📦 BOOST DATA:", data);
 
+    if (!data || !data.ok) {
+      alert(data?.error || "Boost failed");
+      return;
+    }
 
-const res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
+    const images = Array.isArray(data.images) ? data.images : [];
+    const grid = document.getElementById("step1Photos");
+    if (!grid) return;
 
-const data = await res.json();
+    grid.innerHTML = "";
 
-console.log("📦 BOOST DATA:", data);
+    if (!images.length) {
+      grid.innerHTML =
+        `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+          No images found.
+        </div>`;
+      return;
+    }
 
-if (!data || !data.ok) {
-  alert(data?.error || "Boost failed");
-  return;
+    const MAX_UI = 24;
+    images.slice(0, MAX_UI).forEach((src) => {
+      const img = document.createElement("img");
+      img.src = src;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.style.width = "100%";
+      img.style.borderRadius = "12px";
+      grid.appendChild(img);
+    });
+  };
 }
-
-const images = Array.isArray(data.images) ? data.images : [];
-
-const grid = document.getElementById("step1Photos");
-if (!grid) return;
-
-grid.innerHTML = "";
-
-if (!images.length) {
-  grid.innerHTML =
-    `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
-      No images found.
-    </div>`;
-  return;
-}
-
-// Optional: cap to 24 for UI sanity
-const MAX_UI = 24;
-
-images.slice(0, MAX_UI).forEach((src) => {
-  const img = document.createElement("img");
-  img.src = src;
-  img.loading = "lazy";
-  img.decoding = "async";
-  img.style.width = "100%";
-  img.style.borderRadius = "12px";
-  grid.appendChild(img);
-});
 
 
 
