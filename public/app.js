@@ -11,24 +11,30 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-// ==================================================
-// STEP 1 SELECTION — ENFORCE SINGLE SOURCE OF TRUTH
-// ==================================================
-if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
 
-// hard fail if old state exists (debug visibility)
-if ("_step1Selected" in STORE) {
-  console.warn("🧨 Removing legacy STORE._step1Selected");
-  try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
-}
-function syncSendBtn() {
-  const btn = DOC.getElementById("sendToDesignStudio");
-  if (!btn) return;
-  const n = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.length : 0;
-  btn.disabled = n === 0;
-  btn.style.opacity = n === 0 ? "0.55" : "1";
-  btn.style.pointerEvents = n === 0 ? "none" : "auto";
-}
+  // ==================================================
+  // STEP 1 SELECTION — ENFORCE SINGLE SOURCE OF TRUTH
+  // ==================================================
+  if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
+
+  // hard fail if old state exists (debug visibility)
+  if ("_step1Selected" in STORE) {
+    console.warn("🧨 Removing legacy STORE._step1Selected");
+    try {
+      delete STORE._step1Selected;
+    } catch (e) {
+      STORE._step1Selected = undefined;
+    }
+  }
+
+  function syncSendBtn() {
+    const btn = DOC.getElementById("sendToDesignStudio");
+    if (!btn) return;
+    const n = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.length : 0;
+    btn.disabled = n === 0;
+    btn.style.opacity = n === 0 ? "0.55" : "1";
+    btn.style.pointerEvents = n === 0 ? "none" : "auto";
+  }
 
   // ✅ ensure arrays exist (prevents “undefined includes/indexOf” crashes)
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
@@ -46,10 +52,11 @@ function syncSendBtn() {
       : [];
 
     hz.innerHTML = "";
+    hz.removeAttribute("style"); // prevents style drift
 
     if (!photos.length) {
-      hz.innerHTML =
-        `<div class="small-note" style="opacity:.7;padding:.5rem 0;">
+      hz.innerHTML = `
+        <div class="small-note" style="opacity:.7;padding:.5rem 0;">
           No photos in holding zone yet.
         </div>`;
       return;
@@ -95,6 +102,8 @@ function syncSendBtn() {
     btn.style.display = "inline-flex";
     btn.style.visibility = "visible";
     btn.style.opacity = "1";
+
+    syncSendBtn(); // enable/disable based on selection
 
     btn.addEventListener("click", () => {
       const picked = Array.isArray(STORE.step1Selected)
@@ -156,8 +165,8 @@ function syncSendBtn() {
         return;
       }
 
-     const rawImages = Array.isArray(data.images) ? data.images : [];
-const images = [...new Set(rawImages)].filter(Boolean);
+      const rawImages = Array.isArray(data.images) ? data.images : [];
+      const images = [...new Set(rawImages)].filter(Boolean);
 
       const grid = DOC.getElementById("step1Photos");
       if (!grid) return;
@@ -165,8 +174,8 @@ const images = [...new Set(rawImages)].filter(Boolean);
       grid.innerHTML = "";
 
       if (!images.length) {
-        grid.innerHTML =
-          `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+        grid.innerHTML = `
+          <div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
             No images found.
           </div>`;
         return;
@@ -174,6 +183,7 @@ const images = [...new Set(rawImages)].filter(Boolean);
 
       // ✅ reset selection for this boost (SINGLE SOURCE OF TRUTH)
       STORE.step1Selected = [];
+      syncSendBtn();
 
       const countEl = DOC.getElementById("selectedCount");
       if (countEl) countEl.textContent = "0";
@@ -229,6 +239,7 @@ const images = [...new Set(rawImages)].filter(Boolean);
 
           syncUI();
           if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+          syncSendBtn();
         });
 
         syncUI();
