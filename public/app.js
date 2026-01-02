@@ -148,7 +148,9 @@ if ("_step1Selected" in STORE) {
         return;
       }
 
-      const images = Array.isArray(data.images) ? data.images : [];
+     const rawImages = Array.isArray(data.images) ? data.images : [];
+const images = [...new Set(rawImages)].filter(Boolean);
+
       const grid = DOC.getElementById("step1Photos");
       if (!grid) return;
 
