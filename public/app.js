@@ -189,7 +189,7 @@
 
 const syncUI = () => {
   const active = STORE.step1Selected.includes(src);
- STORE.step1Selected = [];
+
 
   badge.style.opacity = active ? "1" : "0";
   tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
