@@ -143,40 +143,43 @@ const sendSelectedBtn =
 if (sendSelectedBtn && !sendSelectedBtn.__BOUND__) {
   sendSelectedBtn.__BOUND__ = true;
 
-  sendSelectedBtn.addEventListener("click", () => {
-    const picked = Array.from(selected);
-    if (!picked.length) {
-      alert("Select at least 1 photo first.");
-      return;
+sendSelectedBtn.addEventListener("click", () => {
+  const picked = Array.isArray(STORE._step1Selected)
+    ? STORE._step1Selected
+    : [];
+
+  if (!picked.length) {
+    alert("Select at least 1 photo first.");
+    return;
+  }
+
+  // Save selected photos for Step 3
+  STORE.holdingZonePhotos = picked.slice(0, 24);
+  STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+
+  // Render into Step 3
+  if (typeof renderHoldingZone === "function") {
+    renderHoldingZone();
+  } else {
+    const hz = document.getElementById("holdingZone");
+    if (hz) {
+      hz.innerHTML = "";
+      STORE.holdingZonePhotos.forEach((src) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.style.width = "120px";
+        img.style.height = "80px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "10px";
+        img.style.margin = "6px";
+        hz.appendChild(img);
+      });
     }
+  }
 
-    // store selected photos
-    STORE.holdingZonePhotos = picked.slice(0, 24);
-    STORE.activeHoldingPhoto = STORE.holdingZonePhotos[0] || "";
+  console.log("✅ SENT TO STEP 3:", picked.length);
+});
 
-    // render into Step 3
-    if (typeof renderHoldingZone === "function") {
-      renderHoldingZone();
-    } else {
-      const hz = DOC.getElementById("holdingZone");
-      if (hz) {
-        hz.innerHTML = "";
-        STORE.holdingZonePhotos.forEach((src) => {
-          const img = DOC.createElement("img");
-          img.src = src;
-          img.style.width = "120px";
-          img.style.height = "80px";
-          img.style.objectFit = "cover";
-          img.style.borderRadius = "10px";
-          img.style.margin = "6px";
-          hz.appendChild(img);
-        });
-      }
-    }
-
-    console.log("✅ SENT TO STEP 3:", picked.length);
-  });
-}
 
       // ==============================
       // RENDER STEP 1 (selectable tiles)
