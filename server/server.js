@@ -215,6 +215,106 @@ function extractJsonBlobImages(html, base) {
 
   return found;
 }
+// ==================================================
+// AI SOCIAL POSTS — /api/ai/social
+// Body: { vehicle: {...}, platform: "facebook"|"instagram"|"tiktok"|"linkedin"|"x"|"dm"|"marketplace"|"hashtags" }
+// ==================================================
+app.post("/api/ai/social", async (req, res) => {
+  try {
+    const { vehicle = {}, platform = "facebook" } = req.body || {};
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.json({ ok: false, error: "Missing OPENAI_API_KEY on server env" });
+    }
+
+    // keep inputs tight
+    const v = {
+      title: vehicle.title || "",
+      price: vehicle.price || "",
+      mileage: vehicle.mileage || "",
+      vin: vehicle.vin || "",
+      stock: vehicle.stock || "",
+      exterior: vehicle.exterior || "",
+      interior: vehicle.interior || "",
+      engine: vehicle.engine || "",
+      trans: vehicle.transmission || vehicle.trans || "",
+      drivetrain: vehicle.drivetrain || "",
+      dealer: vehicle.dealer || "",
+      url: vehicle.url || "",
+      location: vehicle.location || "Detroit area",
+    };
+
+    const platformRules = {
+      facebook:  "2 paragraphs. Emojis. Strong urgency. Clear CTA. Include 8-15 hashtags at end.",
+      instagram: "Punchy caption. Emojis. Line breaks. Include 12-20 hashtags at end.",
+      tiktok:    "Short hook + bullets. Emojis. CTA. Include 6-12 hashtags.",
+      linkedin:  "Professional but exciting. Minimal emojis. 3-6 hashtags. CTA.",
+      x:         "Max 280 chars. Emojis ok. 2-5 hashtags. CTA.",
+      dm:        "Short friendly DM. 2 variants. No huge emoji spam. CTA to reply YES.",
+      marketplace:"Marketplace style: title line + specs bullets + condition + CTA. Emojis ok. No fluff.",
+      hashtags:  "Return ONLY hashtags line (space-separated). 18-30 relevant tags.",
+    };
+
+    const instruction = platformRules[String(platform).toLowerCase()] || platformRules.facebook;
+
+    const system = `
+You are Lot Rocket — the best automotive social copywriter.
+Write high-converting posts that create urgency, appointments, and replies.
+No disclaimers. No markdown. No quotes. No "as an AI".
+If info is missing, write around it cleanly.
+Always include a clear CTA to message/call.
+`.trim();
+
+    const user = `
+PLATFORM: ${platform}
+RULES: ${instruction}
+
+VEHICLE:
+Title: ${v.title}
+Price/Offer: ${v.price}
+Mileage: ${v.mileage}
+Exterior: ${v.exterior}
+Interior: ${v.interior}
+Engine: ${v.engine}
+Transmission: ${v.trans}
+Drivetrain: ${v.drivetrain}
+VIN: ${v.vin}
+Stock: ${v.stock}
+Dealer: ${v.dealer}
+Location: ${v.location}
+Link: ${v.url}
+
+OUTPUT: return the final post ONLY.
+`.trim();
+
+    // OpenAI Chat Completions (works with Node 18+ fetch)
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        temperature: 0.9,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+
+    const j = await r.json();
+    const text = j?.choices?.[0]?.message?.content?.trim() || "";
+
+    if (!text) return res.json({ ok: false, error: "Empty AI response", raw: j });
+
+    return res.json({ ok: true, text });
+  } catch (e) {
+    console.error("AI SOCIAL ERROR", e);
+    return res.json({ ok: false, error: String(e?.message || e) });
+  }
+});
 
 // ===============================
 // API: BOOST (STABLE CONTRACT)
