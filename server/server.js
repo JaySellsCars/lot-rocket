@@ -462,8 +462,9 @@ app.get("/api/boost", async (req, res) => {
   if (!target) {
     out.meta.ms = Date.now() - started;
     out.error = "Missing or invalid url parameter";
-    return res.status(400).json(out);
+    return res.status(200).json(out);
   }
+
 
   try {
     const r = await fetch(target, {
