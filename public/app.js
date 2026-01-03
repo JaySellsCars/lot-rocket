@@ -1559,6 +1559,10 @@ function wireIncomeCalcDirect() {
     wireIncomeCalcDirect();
   }
 
-  console.log("✅ TOOLS INIT COMPLETE");
+  // --------------------------------------------------
+  // FINAL
+  // --------------------------------------------------
+  console.log("✅ APP READY");
 })();
+
 
