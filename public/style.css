@@ -820,3 +820,47 @@ textarea.ai-response {
   grid-column: span 2;
 }
 */
+/* =========================================
+   SIDE MODAL CLOSE BUTTON — SMALL TOP RIGHT
+========================================= */
+
+.side-modal-header {
+  position: relative;
+  padding-right: 2.2rem; /* room for close button */
+}
+
+.side-modal-close,
+.side-modal [data-close] {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  width: 26px;
+  height: 26px;
+  padding: 0;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  line-height: 1;
+
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  transition: background .12s ease, color .12s ease, transform .06s ease;
+}
+
+.side-modal-close:hover,
+.side-modal [data-close]:hover {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.95);
+}
+
+.side-modal-close:active,
+.side-modal [data-close]:active {
+  transform: scale(0.96);
+}
