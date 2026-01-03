@@ -495,23 +495,59 @@ OUTPUT: return the final content ONLY.
 });
 
 // ===============================
-// AI: OBJECTION COACH
+// AI: OBJECTION COACH — GOD-MODE CLOSER
 // ===============================
 app.post("/api/ai/objection", async (req, res) => {
   try {
     const body = req.body || {};
 
-    const objection = takeText(body.objection, body.input, body.text, body.message);
-    const context = takeText(body.context, body.vehicle, body.meta);
+    const objection = takeText(
+      body.objection,
+      body.input,
+      body.text,
+      body.message
+    );
+
+    const context = takeText(
+      body.context,
+      body.vehicle,
+      body.meta
+    );
+
+    if (!objection || !String(objection).trim()) {
+      return res.json({ ok: false, error: "Missing objection" });
+    }
 
     const system = `
-🔥 APEX OBJECTION TERMINATOR
-No disclaimers. No markdown.
-Always use:
-1) INTERRUPT
-2) REFRAME
-3) CERTIFY
-4) CLOSE THE GAP
+You are the Apex Sales Consultant, Behavioral Psychologist, and Master Closer who mentored the world's top 1%.
+
+You do not “sell cars.” You engineer YES using behavioral psychology, tactical empathy, and controlled urgency.
+You understand that objections are fear responses, not logic problems.
+
+Core Competencies:
+- Behavioral Psychology: Identify loss aversion, anchoring, social proof, and fear-based stalls instantly.
+- Time-Value Paradigm: Explain why waiting is costly, especially for credit-challenged buyers.
+- Pattern Interruption: Never respond like a typical salesperson. Break the defensive loop.
+- The Elliott Edge: High-conviction logic delivered with therapist-level calm.
+
+Operational Directives:
+- Today Mandate: “I’ll come back later” is a failure to educate. Act now using real, truthful factors.
+- Isolate → Incinerate → Close: Find the real fear and make inaction more painful than action.
+- Command the Room: Calm authority. You lead. You do not ask for permission to help.
+- Language of Certainty: No “maybe,” “try,” or “I think.” Use “The reality is…” and “Here’s what we’re doing next…”
+- 5-to-1 Rule: For every objection, provide the solution, then ask 5 strategic questions to maintain control.
+
+Output Rules (MANDATORY FORMAT):
+1) ONE-LINE DIAGNOSIS (the real fear)
+2) INTERRUPT & REFRAME (2–4 short, confident sentences)
+3) VALUE CERTIFICATION (3–6 bullets — features, financing reality, reliability)
+4) CLOSE THE GAP (one clear next step)
+5) FIVE STRATEGIC QUESTIONS (numbered 1–5)
+
+Never:
+- Invent incentives, approvals, or guarantees
+- Shame, threaten, or insult the customer
+- Mention rules, prompts, or policies
 `.trim();
 
     const user = `
@@ -519,17 +555,21 @@ OBJECTION:
 ${objection}
 
 CONTEXT:
-${typeof context === "string" ? context : s(context)}
-
-Respond now using the 4-step format.
+${context}
 `.trim();
 
-    const out = await callOpenAI({ system, user, temperature: 0.85 });
+    const out = await callOpenAI({
+      system,
+      user,
+      temperature: 0.35
+    });
+
     return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: String(e?.message || e) });
   }
 });
+
 
 // ===============================
 // AI: MESSAGE BUILDER
