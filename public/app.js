@@ -8,6 +8,14 @@
 
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
+// ==================================================
+// AUTO-GROW TEXTAREA (SOCIAL POSTS / COACHES)
+// ==================================================
+function autoGrowTextarea(el) {
+  if (!el || el.tagName !== "TEXTAREA") return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
 
   // ==================================================
   // UI FX HELPERS (PRESS + LOADING)
