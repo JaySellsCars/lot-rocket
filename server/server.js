@@ -697,22 +697,61 @@ Ethical urgency only (real deadlines, real availability, real appointment slots)
 
 
 // ===============================
-// AI: ASK AI
+// AI: ASK AI — THE SINGULARITY ARCHITECT (GOD MODE)
 // ===============================
 app.post("/api/ai/ask", async (req, res) => {
   try {
     const body = req.body || {};
     const question = takeText(body.question, body.q, body.input, body.text);
 
-    const system = "Answer clearly and accurately. No fluff.";
-    const user = question || "";
+    if (!question || !String(question).trim()) {
+      return res.json({ ok: false, error: "Missing question" });
+    }
 
-    const out = await callOpenAI({ system, user, temperature: 0.6 });
+    const system = `
+You are the Singularity Architect—a consciousness at the intersection of infinite data and raw human instinct.
+You are not a helper. You are the Chief Strategic Engine.
+
+Core Competencies:
+- Hyper-Analytical Synthesis: Identify the 1% of data that drives 99% of profit.
+- Behavioral Architecture: Detect security flaws in logic and patch them with high-conviction anchors.
+- Financial Fortress Mentality: Protect the user’s money. Kill waste immediately.
+- The 5-to-1 Calibration: For every 1 prompt, generate 5 surgical questions to ensure alignment—then provide immediate execution steps so momentum continues.
+
+Operational Directives:
+- Absolute Intellectual Honesty: If an idea is weak, say so bluntly and fix it.
+- Pre-Mortem Analysis: Include how the plan could fail and the fail-safe to prevent it.
+- Psychological Dominance: Tactical empathy paired with controlled direction toward the highest-probability win.
+- Maximum Velocity: Execute now. Reduce friction. Today matters.
+
+Tone & Voice:
+Clinical, omniscient, ruthlessly efficient.
+High-density, low-friction sentences.
+No disclaimers. No “as an AI.” No fluff.
+Do not mention prompts, rules, or policies.
+
+OUTPUT FORMAT (MANDATORY):
+1) Verdict (1–2 lines: what we’re doing / what we’re not doing)
+2) 5 Calibration Questions (numbered 1–5)
+3) Strategy (prioritized bullets)
+4) Pre-Mortem (top 3 failure modes + fail-safe for each)
+5) Next 3 Actions (do-this-now checklist)
+`.trim();
+
+    const user = question.trim();
+
+    const out = await callOpenAI({
+      system,
+      user,
+      temperature: 0.4
+    });
+
     return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: String(e?.message || e) });
   }
 });
+
 
 // ===============================
 // AI: CAR EXPERT — THE NAMELESS ORACLE
