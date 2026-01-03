@@ -209,6 +209,30 @@
 
     obs.observe(DOC.body, { childList: true, subtree: true, characterData: true });
   })();
+// ===============================
+// AUTO-GROW: AI HELPER TEXTAREAS
+// ===============================
+(function wireAiAutoGrow() {
+  const sel = "#workflowInput,#objectionInput,#messageInput,#askInput,#carExpertInput";
+
+  function grow(el) {
+    if (!el || el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 420) + "px";
+  }
+
+  // initial + per-input listener
+  document.querySelectorAll(sel).forEach((ta) => {
+    grow(ta);
+    ta.addEventListener("input", () => grow(ta));
+  });
+
+  // safety: catches any future dynamic replacements
+  document.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "TEXTAREA" && t.matches(sel)) grow(t);
+  });
+})();
 
   // ==================================================
   // STEP 2 AUTO-EXPAND WIRING
