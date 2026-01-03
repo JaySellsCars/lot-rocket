@@ -244,6 +244,114 @@ function normalizeDealerUrl(raw) {
       });
     });
   }
+// ==================================================
+// STEP 2 — COPY + REMOVE EMOJIS (FIX ALL BUTTONS)
+// ==================================================
+const STEP2 = {
+  fb: { ta: "fbOutput", copy: "fbCopyBtn", emoji: "fbEmojiBtn" },
+  ig: { ta: "igOutput", copy: "igCopyBtn", emoji: "igEmojiBtn" },
+  tt: { ta: "ttOutput", copy: "ttCopyBtn", emoji: "ttEmojiBtn" },
+  li: { ta: "liOutput", copy: "liCopyBtn", emoji: "liEmojiBtn" },
+  x:  { ta: "xOutput",  copy: "xCopyBtn",  emoji: "xEmojiBtn" },
+  dm: { ta: "dmOutput", copy: "dmCopyBtn", emoji: "dmEmojiBtn" },
+  mk: { ta: "marketplaceOutput", copy: "mkCopyBtn", emoji: "mkEmojiBtn" },
+  hash:{ ta: "hashtagsOutput", copy: "hashCopyBtn", emoji: "hashEmojiBtn" },
+};
+
+function getEl(id) { return document.getElementById(id); }
+function getVal(id) { const el = getEl(id); return el ? (el.value || "") : ""; }
+function setVal(id, v) { const el = getEl(id); if (!el) return; el.value = v; if (typeof autoGrowTextarea === "function") autoGrowTextarea(el); }
+
+function stripEmojis(text) {
+  if (!text) return "";
+  // Remove most emoji + pictographs + variation selectors + ZWJ sequences
+  return text
+    .replace(/[\p{Extended_Pictographic}]/gu, "")
+    .replace(/[\uFE0E\uFE0F]/g, "")     // variation selectors
+    .replace(/\u200D/g, "")             // ZWJ
+    .replace(/[^\S\r\n]{2,}/g, " ")     // collapse double spaces
+    .trim();
+}
+
+async function copyText(text) {
+  if (!text) return false;
+
+  // Primary: Clipboard API
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  // Fallback
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand("copy");
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function setBtnLoading(btn, on, label) {
+  if (!btn) return;
+  if (on) {
+    btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+    if (label) btn.textContent = label;
+    btn.disabled = true;
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
+  }
+}
+
+// Wire each platform buttons
+Object.values(STEP2).forEach((cfg) => {
+  const copyBtn = getEl(cfg.copy);
+  const emojiBtn = getEl(cfg.emoji);
+  const ta = getEl(cfg.ta);
+
+  // Copy
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const text = getVal(cfg.ta);
+      setBtnLoading(copyBtn, true, "Copied!");
+      try {
+        await copyText(text);
+      } catch (err) {
+        console.warn("Copy failed:", cfg.copy, err);
+      }
+      setTimeout(() => setBtnLoading(copyBtn, false), 700);
+    });
+  }
+
+  // Remove emojis (toggle)
+  if (emojiBtn && ta) {
+    emojiBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      // toggle: store original once
+      if (!ta.__LR_EMOJI_ORIG__) ta.__LR_EMOJI_ORIG__ = ta.value || "";
+
+      const isStripped = !!ta.__LR_EMOJI_STRIPPED__;
+      if (!isStripped) {
+        const stripped = stripEmojis(ta.value || "");
+        ta.value = stripped;
+        ta.__LR_EMOJI_STRIPPED__ = true;
+        emojiBtn.textContent = "Restore Emojis";
+      } else {
+        ta.value = ta.__LR_EMOJI_ORIG__ || "";
+        ta.__LR_EMOJI_STRIPPED__ = false;
+        emojiBtn.textContent = "Remove Emojis";
+      }
+
+      if (typeof autoGrowTextarea === "function") autoGrowTextarea(ta);
+    });
+  }
+});
 
   // ==================================================
   // PROMPT SLOTS (NEXT) — per AI tool
