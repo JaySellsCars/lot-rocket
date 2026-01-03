@@ -23,144 +23,6 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-// ==================================================
-// AI EXPERTS — BULLETPROOF DELEGATED BINDING
-// Works even if IDs are duplicated (reads input inside the SAME modal as clicked button)
-// Supports BOTH id sets: runXBtn / XRunBtn / carExpertRunBtn etc.
-// ==================================================
-(function wireAiExpertsDelegated() {
-  if (window.__LR_AI_EXPERTS_DELEGATED__) return;
-  window.__LR_AI_EXPERTS_DELEGATED__ = true;
-
-  const endpointMap = {
-    // Objection
-    runObjectionBtn: "/api/ai/objection",
-    objectionRunBtn: "/api/ai/objection",
-
-    // Message
-    runMessageBtn: "/api/ai/message",
-    messageRunBtn: "/api/ai/message",
-
-    // Workflow
-    runWorkflowBtn: "/api/ai/workflow",
-    workflowRunBtn: "/api/ai/workflow",
-
-    // Ask
-    runAskBtn: "/api/ai/ask",
-    askRunBtn: "/api/ai/ask",
-
-    // Car expert
-    runCarExpertBtn: "/api/ai/car",
-    carExpertRunBtn: "/api/ai/car",
-    carExpertRunBtn: "/api/ai/car",
-  };
-
-  function closestModal(el) {
-    return el?.closest?.(".side-modal") || null;
-  }
-
-  function findInput(modal) {
-    // prefer textarea (your UI)
-    return (
-      modal?.querySelector("textarea") ||
-      modal?.querySelector("input[type='text']") ||
-      modal?.querySelector("input:not([type])") ||
-      null
-    );
-  }
-
-  function findOutput(modal) {
-    // prefer known outputs first if present
-    return (
-      modal?.querySelector("#objectionOutput, #messageOutput, #workflowOutput, #askOutput, #carExpertOutput") ||
-      modal?.querySelector("[data-ai-output]") ||
-      modal?.querySelector(".ai-output") ||
-      // fallback: first div after the button area
-      modal?.querySelector("div") ||
-      null
-    );
-  }
-
-  async function callAI(endpoint, inputText) {
-    const r = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        input: inputText,
-        vehicle: window.STORE?.lastVehicle || {},
-      }),
-    });
-
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    const raw = await r.text();
-    if (!ct.includes("application/json")) throw new Error("Server returned non-JSON");
-    const j = JSON.parse(raw);
-    if (!j?.ok) throw new Error(j?.error || "AI failed");
-    return j.text || "";
-  }
-
-  function setBusy(btn, on) {
-    if (!btn) return;
-    if (on) {
-      btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
-      btn.textContent = "Working…";
-      btn.disabled = true;
-    } else {
-      btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
-      btn.disabled = false;
-    }
-  }
-
-  document.addEventListener("click", async (e) => {
-    const btn = e.target?.closest?.("button");
-    if (!btn) return;
-
-    const endpoint = endpointMap[btn.id];
-    if (!endpoint) return; // not an AI run button
-
-    e.preventDefault();
-
-    const modal = closestModal(btn);
-    const input = findInput(modal);
-    const output = findOutput(modal);
-
-    // HARD DEBUG (shows in console exactly what it read)
-    console.log("🧠 AI CLICK", {
-      btnId: btn.id,
-      endpoint,
-      modalId: modal?.id,
-      inputEl: input,
-      outputEl: output,
-      inputValueLen: (input?.value || "").length,
-      inputValueHead: (input?.value || "").slice(0, 80),
-    });
-
-    if (!input || !output) {
-      alert("AI modal missing input/output elements. Check console.");
-      return;
-    }
-
-    const text = (input.value || "").trim();
-    if (!text) {
-      output.textContent = "⚠️ Type something in the box first.";
-      return;
-    }
-
-    setBusy(btn, true);
-    output.textContent = "Thinking…";
-
-    try {
-      const answer = await callAI(endpoint, text);
-      output.textContent = answer;
-    } catch (err) {
-      output.textContent = "AI ERROR: " + (err?.message || err);
-    } finally {
-      setBusy(btn, false);
-    }
-  });
-
-  console.log("✅ AI EXPERTS DELEGATED WIRED");
-})();
 
   // ==================================================
   // AUTO-GROW TEXTAREA (SOCIAL POSTS / COACHES)
@@ -204,130 +66,150 @@
     btn.textContent = label;
     setTimeout(() => (btn.textContent = old), ms);
   }
-// ==================================================
-// CALCULATOR — REAL FEEL (ONE PASS)
-// Uses: #calcModal, #calcDisplay, buttons [data-calc]
-// ==================================================
-(function wireCalculatorPad() {
-  if (window.__LR_CALC_WIRED__) return;
-  window.__LR_CALC_WIRED__ = true;
 
-  const modal = document.getElementById("calcModal");
-  const display = document.getElementById("calcDisplay");
-  if (!modal || !display) return;
+  // ==================================================
+  // CALCULATOR — REAL FEEL (ONE PASS)
+  // Uses: #calcModal, #calcDisplay, buttons [data-calc]
+  // ==================================================
+  (function wireCalculatorPad() {
+    if (window.__LR_CALC_WIRED__) return;
+    window.__LR_CALC_WIRED__ = true;
 
-  // Make it behave like a calculator display
-  display.setAttribute("readonly", "readonly");
-  display.value = display.value || "";
+    const modal = document.getElementById("calcModal");
+    const display = document.getElementById("calcDisplay");
+    if (!modal || !display) return;
 
-  const buttons = modal.querySelectorAll("[data-calc]");
+    // Make it behave like a calculator display
+    display.setAttribute("readonly", "readonly");
+    display.value = display.value || "";
 
-  const isOp = (c) => ["+", "-", "*", "/"].includes(c);
+    const buttons = modal.querySelectorAll("[data-calc]");
+    const isOp = (c) => ["+", "-", "*", "/"].includes(c);
 
-  function safeEval(expr) {
-    // allow only digits, ops, decimal, parentheses, spaces
-    const ok = /^[0-9+\-*/().\s]+$/.test(expr);
-    if (!ok) throw new Error("bad_chars");
-    // avoid things like 2**3 (optional)
-    if (expr.includes("**")) throw new Error("bad_op");
-    // eslint-disable-next-line no-new-func
-    return Function(`"use strict"; return (${expr});`)();
-  }
-
-  function setVal(v) {
-    display.value = String(v ?? "");
-  }
-
-  function append(ch) {
-    const cur = display.value || "";
-
-    // Start clean if it says Error
-    if (cur === "Error") return setVal(ch);
-
-    // Prevent double operators
-    if (isOp(ch)) {
-      if (!cur) return; // can't start with op
-      const last = cur.slice(-1);
-      if (isOp(last)) return setVal(cur.slice(0, -1) + ch);
+    function safeEval(expr) {
+      const ok = /^[0-9+\-*/().\s]+$/.test(expr);
+      if (!ok) throw new Error("bad_chars");
+      if (expr.includes("**")) throw new Error("bad_op");
+      // eslint-disable-next-line no-new-func
+      return Function(`"use strict"; return (${expr});`)();
     }
 
-    // Prevent multiple decimals in the current number chunk
-    if (ch === ".") {
-      const parts = cur.split(/[\+\-\*\/]/);
-      const lastChunk = parts[parts.length - 1] || "";
-      if (lastChunk.includes(".")) return;
-      if (!lastChunk.length) return setVal(cur + "0.");
+    function setVal(v) {
+      display.value = String(v ?? "");
     }
 
-    setVal(cur + ch);
-  }
+    function append(ch) {
+      const cur = display.value || "";
+      if (cur === "Error") return setVal(ch);
 
-  function backspace() {
-    const cur = display.value || "";
-    if (!cur || cur === "Error") return setVal("");
-    setVal(cur.slice(0, -1));
-  }
+      if (isOp(ch)) {
+        if (!cur) return;
+        const last = cur.slice(-1);
+        if (isOp(last)) return setVal(cur.slice(0, -1) + ch);
+      }
 
-  function clearAll() {
-    setVal("");
-  }
+      if (ch === ".") {
+        const parts = cur.split(/[\+\-\*\/]/);
+        const lastChunk = parts[parts.length - 1] || "";
+        if (lastChunk.includes(".")) return;
+        if (!lastChunk.length) return setVal(cur + "0.");
+      }
 
-  function evaluate() {
-    const expr = (display.value || "").trim();
-    if (!expr) return;
-
-    try {
-      const result = safeEval(expr);
-      if (!Number.isFinite(result)) throw new Error("nan");
-      // Keep it clean (avoid huge floats)
-      const rounded =
-        Math.abs(result) > 1e12 ? result.toExponential(6) :
-        (Math.round(result * 1e9) / 1e9);
-      setVal(rounded);
-    } catch {
-      setVal("Error");
-      setTimeout(() => {
-        if (display.value === "Error") setVal("");
-      }, 700);
+      setVal(cur + ch);
     }
-  }
 
-  // Button clicks
-  buttons.forEach((b) => {
-    if (b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
+    function backspace() {
+      const cur = display.value || "";
+      if (!cur || cur === "Error") return setVal("");
+      setVal(cur.slice(0, -1));
+    }
 
-    b.addEventListener("click", () => {
-      const v = b.getAttribute("data-calc");
-      if (!v) return;
+    function clearAll() {
+      setVal("");
+    }
 
-      if (v === "C") return clearAll();
-      if (v === "⌫") return backspace();
-      if (v === "=") return evaluate();
+    function evaluate() {
+      const expr = (display.value || "").trim();
+      if (!expr) return;
 
-      append(v);
+      try {
+        const result = safeEval(expr);
+        if (!Number.isFinite(result)) throw new Error("nan");
+        const rounded =
+          Math.abs(result) > 1e12
+            ? result.toExponential(6)
+            : Math.round(result * 1e9) / 1e9;
+        setVal(rounded);
+      } catch {
+        setVal("Error");
+        setTimeout(() => {
+          if (display.value === "Error") setVal("");
+        }, 700);
+      }
+    }
+
+    buttons.forEach((b) => {
+      if (b.__LR_BOUND__) return;
+      b.__LR_BOUND__ = true;
+
+      b.addEventListener("click", () => {
+        const v = b.getAttribute("data-calc");
+        if (!v) return;
+
+        if (v === "C") return clearAll();
+        if (v === "⌫") return backspace();
+        if (v === "=") return evaluate();
+
+        append(v);
+      });
     });
-  });
 
-  // Keyboard support only when modal is open
-  document.addEventListener("keydown", (e) => {
-    const isOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
-    if (!isOpen) return;
+    document.addEventListener("keydown", (e) => {
+      const isOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
+      if (!isOpen) return;
 
-    const k = e.key;
+      const k = e.key;
 
-    if (k === "Escape") { e.preventDefault(); clearAll(); return; }
-    if (k === "Enter" || k === "=") { e.preventDefault(); evaluate(); return; }
-    if (k === "Backspace") { e.preventDefault(); backspace(); return; }
+      if (k === "Escape") {
+        e.preventDefault();
+        clearAll();
+        return;
+      }
+      if (k === "Enter" || k === "=") {
+        e.preventDefault();
+        evaluate();
+        return;
+      }
+      if (k === "Backspace") {
+        e.preventDefault();
+        backspace();
+        return;
+      }
 
-    if (/[0-9]/.test(k)) { e.preventDefault(); append(k); return; }
-    if (["+", "-", "*", "/"].includes(k)) { e.preventDefault(); append(k); return; }
-    if (k === ".") { e.preventDefault(); append("."); return; }
-    if (k === "(" || k === ")") { e.preventDefault(); append(k); return; }
-  });
+      if (/[0-9]/.test(k)) {
+        e.preventDefault();
+        append(k);
+        return;
+      }
+      if (["+", "-", "*", "/"].includes(k)) {
+        e.preventDefault();
+        append(k);
+        return;
+      }
+      if (k === ".") {
+        e.preventDefault();
+        append(".");
+        return;
+      }
+      if (k === "(" || k === ")") {
+        e.preventDefault();
+        append(k);
+        return;
+      }
+    });
 
-  console.log("✅ CALCULATOR WIRED");
-})();
+    console.log("✅ CALCULATOR WIRED");
+  })();
 
   // ==================================================
   // AUTO-GROW OBSERVER (SAFE)
@@ -374,15 +256,12 @@
     let s = (raw || "").toString().trim();
     s = s.replace(/\s+/g, "");
 
-    // keep LAST http(s) if user pasted double protocol junk
     const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
     if (lastHttp > 0) s = s.slice(lastHttp);
 
-    // common accidental prefix
     s = s.replace(/^whttps:\/\//i, "https://");
     s = s.replace(/^whttp:\/\//i, "http://");
 
-    // if missing scheme but looks like a domain
     if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) {
       s = "https://" + s;
     }
@@ -450,7 +329,6 @@
       throw new Error("Bad JSON from AI");
     }
 
-    // Accept either {ok:true,text:""} or {text:""}
     if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j.error || "AI failed");
     return j.text || "";
   }
@@ -517,9 +395,7 @@
     });
   }
 
-  // OPTIONAL: Generate-all button if you have one
-  const genAllBtn =
-    $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
+  const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
   if (genAllBtn && !genAllBtn.__LR_BOUND__) {
     genAllBtn.__LR_BOUND__ = true;
     genAllBtn.addEventListener("click", (e) => {
@@ -650,7 +526,6 @@
       video: "videoGenModal",
     };
 
-    // Hide image/video tools for v1
     [BTN.image, BTN.video].forEach((id) => {
       const b = $(id);
       if (b) b.style.display = "none";
@@ -735,142 +610,198 @@
     console.log("✅ FLOATING TOOLS WIRED");
   })();
 
-// ==================================================
-// AI EXPERT WIRES — ONE PASS (OBJECTION, MESSAGE, WORKFLOW, ASK, CAR)
-// FIXED: reads input/output INSIDE the same modal as the clicked button
-// ==================================================
-(function wireAiExperts() {
-  if (window.__LR_AI_EXPERTS__) return;
-  window.__LR_AI_EXPERTS__ = true;
+  // ==================================================
+  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (FIXED)
+  // IMPORTANT: server expects different keys per endpoint
+  // ==================================================
+  (function wireAiExpertsDelegated() {
+    if (window.__LR_AI_EXPERTS_DELEGATED__) return;
+    window.__LR_AI_EXPERTS_DELEGATED__ = true;
 
-  const byId = (id) => document.getElementById(id);
+    const btnToType = {
+      // Objection
+      runObjectionBtn: "objection",
+      objectionRunBtn: "objection",
 
-  function findInSameModal(btn, id, fallbackSelector) {
-    // Prefer finding elements inside the same modal panel as the clicked button
-    const modal =
-      btn?.closest(".side-modal") ||
-      btn?.closest("section.side-modal") ||
-      btn?.closest("div.side-modal");
+      // Message
+      runMessageBtn: "message",
+      messageRunBtn: "message",
 
-    if (modal) {
-      // 1) Exact ID inside modal
-      if (id) {
-        const el = modal.querySelector(`#${CSS.escape(id)}`);
-        if (el) return el;
+      // Workflow
+      runWorkflowBtn: "workflow",
+      workflowRunBtn: "workflow",
+
+      // Ask
+      runAskBtn: "ask",
+      askRunBtn: "ask",
+
+      // Car expert
+      runCarExpertBtn: "car",
+      carExpertRunBtn: "car",
+    };
+
+    const typeToEndpoint = {
+      objection: "/api/ai/objection",
+      message: "/api/ai/message",
+      workflow: "/api/ai/workflow",
+      ask: "/api/ai/ask",
+      car: "/api/ai/car",
+    };
+
+    const typeToOutputId = {
+      objection: "objectionOutput",
+      message: "messageOutput",
+      workflow: "workflowOutput",
+      ask: "askOutput",
+      car: "carExpertOutput",
+    };
+
+    function closestModal(el) {
+      return el?.closest?.(".side-modal") || null;
+    }
+
+    function findInput(modal) {
+      return (
+        modal?.querySelector("textarea") ||
+        modal?.querySelector("input[type='text']") ||
+        modal?.querySelector("input:not([type])") ||
+        null
+      );
+    }
+
+    function findOutput(modal, type) {
+      const preferred = typeToOutputId[type];
+      return (
+        (preferred ? modal?.querySelector(`#${CSS.escape(preferred)}`) : null) ||
+        modal?.querySelector("[data-ai-output]") ||
+        modal?.querySelector(".ai-output") ||
+        // fallback: any div that isn't the modal container
+        modal?.querySelector("div") ||
+        null
+      );
+    }
+
+    function vehicleToString(v) {
+      if (!v || typeof v !== "object") return "";
+      const parts = [
+        v.title ? `Title: ${v.title}` : "",
+        v.price ? `Price: ${v.price}` : "",
+        v.mileage ? `Mileage: ${v.mileage}` : "",
+        v.exterior ? `Exterior: ${v.exterior}` : "",
+        v.interior ? `Interior: ${v.interior}` : "",
+        v.engine ? `Engine: ${v.engine}` : "",
+        (v.transmission || v.trans) ? `Transmission: ${v.transmission || v.trans}` : "",
+        v.drivetrain ? `Drivetrain: ${v.drivetrain}` : "",
+        v.vin ? `VIN: ${v.vin}` : "",
+        v.stock ? `Stock: ${v.stock}` : "",
+      ].filter(Boolean);
+      return parts.join("\n");
+    }
+
+    function buildPayload(type, text) {
+      const v = window.STORE?.lastVehicle || {};
+
+      if (type === "objection") {
+        return { objection: text, context: "" };
       }
-      // 2) Fallback selector inside modal
-      if (fallbackSelector) {
-        const el = modal.querySelector(fallbackSelector);
-        if (el) return el;
+      if (type === "message") {
+        // minimal + safe: treat textarea as DETAILS
+        return { goal: "", tone: "", details: text };
+      }
+      if (type === "workflow") {
+        return { scenario: text };
+      }
+      if (type === "ask") {
+        return { question: text };
+      }
+      if (type === "car") {
+        return { vehicle: vehicleToString(v), question: text };
+      }
+      return { input: text };
+    }
+
+    async function callAI(endpoint, payload) {
+      const r = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const ct = (r.headers.get("content-type") || "").toLowerCase();
+      const raw = await r.text();
+      if (!ct.includes("application/json")) throw new Error("Server returned non-JSON");
+      const j = JSON.parse(raw);
+
+      if (j && typeof j === "object" && "ok" in j && !j.ok) {
+        throw new Error(j?.error || "AI failed");
+      }
+      return j?.text || "";
+    }
+
+    function setBusy(btn, onBusy) {
+      if (!btn) return;
+      if (onBusy) {
+        btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+        btn.textContent = "Working…";
+        btn.disabled = true;
+      } else {
+        btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
+        btn.disabled = false;
       }
     }
 
-    // Final fallback: global ID
-    if (id) return byId(id);
-    return null;
-  }
+    document.addEventListener("click", async (e) => {
+      const btn = e.target?.closest?.("button");
+      if (!btn || !btn.id) return;
 
-  async function runAI({ btnIds = [], inputId, outputId, endpoint }) {
-    const btn =
-      btnIds.map(byId).find(Boolean) ||
-      null;
+      const type = btnToType[btn.id];
+      if (!type) return;
 
-    if (!btn) return;
+      const endpoint = typeToEndpoint[type];
+      if (!endpoint) return;
 
-    if (btn.__LR_BOUND__) return;
-    btn.__LR_BOUND__ = true;
+      e.preventDefault();
 
-    btn.addEventListener("click", async () => {
-      const input = findInSameModal(btn, inputId, "textarea, input[type='text']");
-      const output = findInSameModal(btn, outputId, "[data-ai-output], .ai-output, .small-note, div");
+      const modal = closestModal(btn);
+      const input = findInput(modal);
+      const output = findOutput(modal, type);
+
+      console.log("🧠 AI CLICK", {
+        btnId: btn.id,
+        type,
+        endpoint,
+        modalId: modal?.id,
+        inputValueLen: (input?.value || "").length,
+        inputHead: (input?.value || "").slice(0, 80),
+      });
 
       if (!input || !output) {
-        console.warn("AI modal wiring missing elements:", { endpoint, inputId, outputId, btn });
+        alert("AI modal missing input/output. Check index.html for duplicate IDs.");
         return;
       }
 
       const text = (input.value || "").trim();
-
       if (!text) {
-        // Visible debug so you KNOW it’s reading the right box
-        output.textContent = "⚠️ I’m not seeing any text in the input box. Click into the box and type again.";
+        output.textContent = "⚠️ Type something in the box first.";
         return;
       }
 
-      btn.disabled = true;
-      const old = btn.textContent;
-      btn.textContent = "Working…";
+      setBusy(btn, true);
       output.textContent = "Thinking…";
 
       try {
-        const r = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            input: text,
-            vehicle: window.STORE?.lastVehicle || {},
-          }),
-        });
-
-        const ct = (r.headers.get("content-type") || "").toLowerCase();
-        const raw = await r.text();
-
-        if (!ct.includes("application/json")) {
-          throw new Error("Server returned non-JSON");
-        }
-
-        const j = JSON.parse(raw);
-        if (!j?.ok) throw new Error(j?.error || "AI failed");
-
-        output.textContent = j.text || "";
-      } catch (e) {
-        output.textContent = "AI ERROR: " + (e?.message || e);
+        const payload = buildPayload(type, text);
+        const answer = await callAI(endpoint, payload);
+        output.textContent = answer;
+      } catch (err) {
+        output.textContent = "AI ERROR: " + (err?.message || err);
       } finally {
-        btn.disabled = false;
-        btn.textContent = old;
+        setBusy(btn, false);
       }
     });
-  }
 
-  // ✅ Support BOTH possible button IDs (older/newer HTML)
-  runAI({
-    btnIds: ["runObjectionBtn", "objectionRunBtn"],
-    inputId: "objectionInput",
-    outputId: "objectionOutput",
-    endpoint: "/api/ai/objection",
-  });
-
-  runAI({
-    btnIds: ["runMessageBtn", "messageRunBtn"],
-    inputId: "messageInput",
-    outputId: "messageOutput",
-    endpoint: "/api/ai/message",
-  });
-
-  runAI({
-    btnIds: ["runWorkflowBtn", "workflowRunBtn"],
-    inputId: "workflowInput",
-    outputId: "workflowOutput",
-    endpoint: "/api/ai/workflow",
-  });
-
-  runAI({
-    btnIds: ["runAskBtn", "askRunBtn"],
-    inputId: "askInput",
-    outputId: "askOutput",
-    endpoint: "/api/ai/ask",
-  });
-
-  runAI({
-    btnIds: ["runCarExpertBtn", "carExpertRunBtn", "carExpertRunBtn"],
-    inputId: "carExpertInput",
-    outputId: "carExpertOutput",
-    endpoint: "/api/ai/car",
-  });
-
-  console.log("✅ AI EXPERTS WIRED (modal-scoped inputs)");
-})();
-
+    console.log("✅ AI EXPERTS DELEGATED WIRED (payloads fixed)");
+  })();
 
   // ==================================================
   // HIDE "Send Selected to Social Ready" (next version)
@@ -1131,129 +1062,121 @@
       downloadLockedZip();
     });
   }
-// ===============================
-// PAYMENT CALCULATOR (SAFE / ISOLATED)
-// Uses server: POST /api/payment-helper
-// Modal: #paymentModal
-// Inputs: payPrice, payDown, payTrade, payPayoff, payApr OR payRate, payTerm, payTax, payFees, payState, payRebate
-// Output: #payOutput
-// Button: #payCalcBtn
-// ===============================
-function wirePaymentCalculator() {
-  const modal = document.getElementById("paymentModal");
-  if (!modal) return;
 
-  const byId = (id) => document.getElementById(id);
+  // ===============================
+  // PAYMENT CALCULATOR (SAFE / ISOLATED)
+  // Uses server: POST /api/payment-helper
+  // ===============================
+  function wirePaymentCalculator() {
+    const modal = document.getElementById("paymentModal");
+    if (!modal) return;
 
-  const pickInside = (root, selectors) => {
-    for (const sel of selectors) {
-      const el = root.querySelector(sel);
-      if (el) return el;
-    }
-    return null;
-  };
+    const pickInside = (root, selectors) => {
+      for (const sel of selectors) {
+        const el = root.querySelector(sel);
+        if (el) return el;
+      }
+      return null;
+    };
 
-  const num = (v) => {
-    if (v == null) return 0;
-    const s = String(v).replace(/[$,%\s,]/g, "").trim();
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
-  };
+    const num = (v) => {
+      if (v == null) return 0;
+      const s = String(v).replace(/[$,%\s,]/g, "").trim();
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    };
 
-  const collectPaymentBody = (root) => ({
-    price: num(pickInside(root, ["#payPrice", "input[name='price']", "#price"])?.value),
-    down: num(pickInside(root, ["#payDown", "input[name='down']", "#down"])?.value),
-    trade: num(pickInside(root, ["#payTrade", "input[name='trade']", "#trade"])?.value),
-    payoff: num(pickInside(root, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
+    const collectPaymentBody = (root) => ({
+      price: num(pickInside(root, ["#payPrice", "input[name='price']", "#price"])?.value),
+      down: num(pickInside(root, ["#payDown", "input[name='down']", "#down"])?.value),
+      trade: num(pickInside(root, ["#payTrade", "input[name='trade']", "#trade"])?.value),
+      payoff: num(pickInside(root, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
 
-    // ✅ support BOTH ids (your HTML currently uses payRate)
-    rate: num(pickInside(root, ["#payApr", "#payRate", "input[name='apr']", "#apr", "#rate"])?.value),
+      // support BOTH ids
+      rate: num(pickInside(root, ["#payApr", "#payRate", "input[name='apr']", "#apr", "#rate"])?.value),
 
-    term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
-    tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
-    fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
+      term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
+      tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
+      fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
 
-    state: String(
-      pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
-    )
-      .trim()
-      .toUpperCase(),
+      state: String(
+        pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
+      )
+        .trim()
+        .toUpperCase(),
 
-    rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
-  });
+      rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
+    });
 
-  const btn = byId("payCalcBtn") || modal.querySelector("#payCalcBtn");
-  const out = byId("payOutput") || modal.querySelector("#payOutput");
+    const btn = modal.querySelector("#payCalcBtn");
+    const out = modal.querySelector("#payOutput");
 
-  if (!btn || !out) return;
-  if (btn.__LR_BOUND__) return;
-  btn.__LR_BOUND__ = true;
+    if (!btn || !out) return;
+    if (btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
 
-  const setLoading = (on) => {
-    btn.disabled = !!on;
-    if (on) {
-      btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
-      btn.textContent = "Calculating…";
-    } else {
-      btn.textContent = btn.__LR_OLD_TEXT__ || "Calculate";
-    }
-  };
+    const setLoading = (onBusy) => {
+      btn.disabled = !!onBusy;
+      if (onBusy) {
+        btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+        btn.textContent = "Calculating…";
+      } else {
+        btn.textContent = btn.__LR_OLD_TEXT__ || "Calculate";
+      }
+    };
 
-  async function runPaymentCalc() {
-    const body = collectPaymentBody(modal);
+    async function runPaymentCalc() {
+      const body = collectPaymentBody(modal);
 
-    // hard validation (client-side)
-    if (!body.price || !body.term) {
-      out.textContent = "Enter at least Price and Term (months).";
-      return;
-    }
-
-    setLoading(true);
-    out.textContent = "Working…";
-
-    try {
-      const r = await fetch("/api/payment-helper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const j = await r.json().catch(() => null);
-
-      if (!r.ok) {
-        const msg = j?.message || j?.error || `Request failed (${r.status})`;
-        out.textContent = msg;
+      if (!body.price || !body.term) {
+        out.textContent = "Enter at least Price and Term (months).";
         return;
       }
 
-      // Prefer breakdownText (rich), fallback to result
-      out.textContent = j?.breakdownText || j?.result || "Done.";
-    } catch (e) {
-      out.textContent = "Network error. Check server logs / endpoint.";
-      console.error("payment calc failed:", e);
-    } finally {
-      setLoading(false);
-    }
-  }
+      setLoading(true);
+      out.textContent = "Working…";
 
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    runPaymentCalc();
-  });
+      try {
+        const r = await fetch("/api/payment-helper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(body),
+        });
 
-  // Enter key submits from any input in the modal
-  modal.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const t = e.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-        e.preventDefault();
-        runPaymentCalc();
+        const j = await r.json().catch(() => null);
+
+        if (!r.ok) {
+          const msg = j?.message || j?.error || `Request failed (${r.status})`;
+          out.textContent = msg;
+          return;
+        }
+
+        out.textContent = j?.breakdownText || j?.result || "Done.";
+      } catch (e) {
+        out.textContent = "Network error. Check server logs / endpoint.";
+        console.error("payment calc failed:", e);
+      } finally {
+        setLoading(false);
       }
     }
-  });
 
-  console.log("✅ PAYMENT CALC WIRED");
-}
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      runPaymentCalc();
+    });
+
+    modal.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          e.preventDefault();
+          runPaymentCalc();
+        }
+      }
+    });
+
+    console.log("✅ PAYMENT CALC WIRED");
+  }
 
   // --------------------------------------------------
   // STEP 3: HOLDING ZONE NOTE + RENDER (up to 24) + DBLCLICK → SOCIAL READY
@@ -1411,17 +1334,14 @@ function wirePaymentCalculator() {
           return;
         }
 
-        // vehicle details
         STORE.lastVehicle = data.vehicle || { url, title: data.title || "" };
         STORE.lastVehicle.url = STORE.lastVehicle.url || url;
 
         renderSummary(STORE.lastVehicle);
 
-        // wire step2 + generate
         wireRegenButtons();
         generateAllStep2();
 
-        // images
         const rawImages = Array.isArray(data.images) ? data.images : [];
         const images = [...new Set(rawImages)].filter(Boolean);
 
@@ -1516,9 +1436,10 @@ function wirePaymentCalculator() {
   if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
     window.LR_TOOLS.closeAll();
   }
-if (typeof wirePaymentCalculator === "function") {
-  wirePaymentCalculator();
-}
+
+  if (typeof wirePaymentCalculator === "function") {
+    wirePaymentCalculator();
+  }
 
   console.log("✅ APP READY");
 })();
