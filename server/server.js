@@ -152,12 +152,7 @@ function findVehicleInJsonLd(obj) {
     if (t) {
       const types = Array.isArray(t) ? t : [t];
       const lc = types.map((x) => String(x).toLowerCase());
-      if (
-        lc.includes("vehicle") ||
-        lc.includes("car") ||
-        lc.includes("product")
-      )
-        hits.push(n);
+      if (lc.includes("vehicle") || lc.includes("car") || lc.includes("product")) hits.push(n);
     }
 
     for (const k of Object.keys(n)) walk(n[k]);
@@ -206,34 +201,14 @@ function extractVehicle(html, finalUrl) {
   for (const block of jsonlds) {
     const hits = findVehicleInJsonLd(block);
     for (const h of hits) {
-      vehicle.title = firstNonEmpty(
-        vehicle.title,
-        h.name,
-        h.model,
-        h.vehicleModel,
-        h.description
-      );
-      vehicle.vin = firstNonEmpty(
-        vehicle.vin,
-        h.vehicleIdentificationNumber,
-        h.vin,
-        h.sku
-      );
-      vehicle.stock = firstNonEmpty(
-        vehicle.stock,
-        h.sku,
-        h.mpn,
-        h.stockNumber
-      );
+      vehicle.title = firstNonEmpty(vehicle.title, h.name, h.model, h.vehicleModel, h.description);
+      vehicle.vin = firstNonEmpty(vehicle.vin, h.vehicleIdentificationNumber, h.vin, h.sku);
+      vehicle.stock = firstNonEmpty(vehicle.stock, h.sku, h.mpn, h.stockNumber);
 
       const offers = h.offers || h.offer || null;
       if (offers) {
         const o = Array.isArray(offers) ? offers[0] : offers;
-        vehicle.price = firstNonEmpty(
-          vehicle.price,
-          o.price,
-          o.priceSpecification?.price
-        );
+        vehicle.price = firstNonEmpty(vehicle.price, o.price, o.priceSpecification?.price);
       }
 
       const odo =
@@ -243,14 +218,9 @@ function extractVehicle(html, finalUrl) {
         h.odometerReading ||
         null;
       if (odo) {
-        if (typeof odo === "string")
-          vehicle.mileage = firstNonEmpty(vehicle.mileage, odo);
+        if (typeof odo === "string") vehicle.mileage = firstNonEmpty(vehicle.mileage, odo);
         else if (typeof odo === "object") {
-          vehicle.mileage = firstNonEmpty(
-            vehicle.mileage,
-            odo.value,
-            odo.valueText
-          );
+          vehicle.mileage = firstNonEmpty(vehicle.mileage, odo.value, odo.valueText);
         }
       }
 
@@ -258,16 +228,8 @@ function extractVehicle(html, finalUrl) {
       vehicle.interior = firstNonEmpty(vehicle.interior, h.interiorColor);
 
       vehicle.engine = firstNonEmpty(vehicle.engine, h.vehicleEngine?.name, h.engine);
-      vehicle.transmission = firstNonEmpty(
-        vehicle.transmission,
-        h.vehicleTransmission,
-        h.transmission
-      );
-      vehicle.drivetrain = firstNonEmpty(
-        vehicle.drivetrain,
-        h.driveWheelConfiguration,
-        h.drivetrain
-      );
+      vehicle.transmission = firstNonEmpty(vehicle.transmission, h.vehicleTransmission, h.transmission);
+      vehicle.drivetrain = firstNonEmpty(vehicle.drivetrain, h.driveWheelConfiguration, h.drivetrain);
 
       vehicle.dealer = firstNonEmpty(
         vehicle.dealer,
@@ -292,10 +254,7 @@ function extractVehicle(html, finalUrl) {
     extractByRegex(html, /"stockNumber"\s*:\s*"([^"]+)"/i)
   );
 
-  const price1 = extractByRegex(
-    html,
-    /\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{2})?)/
-  );
+  const price1 = extractByRegex(html, /\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{2})?)/);
   const price2 = extractByRegex(html, /"price"\s*:\s*"?\$?([0-9]{4,6})"?/i);
   vehicle.price = firstNonEmpty(
     vehicle.price,
@@ -395,8 +354,7 @@ async function callOpenAI({ system, user, temperature = 0.8, model }) {
     if (!text) return { ok: false, error: j?.error?.message || "Empty AI response", raw: j };
     return { ok: true, text };
   } catch (e) {
-    const msg =
-      e?.name === "AbortError" ? "OpenAI request timed out" : String(e?.message || e);
+    const msg = e?.name === "AbortError" ? "OpenAI request timed out" : String(e?.message || e);
     return { ok: false, error: msg };
   } finally {
     clearTimeout(t);
@@ -465,16 +423,13 @@ app.post("/api/ai/social", async (req, res) => {
     const platform = normPlatform(body.platform || body.platformKey || body.p || "");
 
     const platformRules = {
-      facebook:
-        "2 paragraphs. Emojis. Strong urgency. Clear CTA. Include 8-15 hashtags at end.",
-      instagram:
-        "Punchy caption. Emojis. Line breaks. Include 12-20 hashtags at end.",
+      facebook: "2 paragraphs. Emojis. Strong urgency. Clear CTA. Include 8-15 hashtags at end.",
+      instagram: "Punchy caption. Emojis. Line breaks. Include 12-20 hashtags at end.",
       tiktok: "Short hook + bullets. Emojis. CTA. Include 6-12 hashtags.",
       linkedin: "Professional but exciting. Minimal emojis. 3-6 hashtags. CTA.",
       x: "Max 280 chars. Emojis ok. 2-5 hashtags. CTA.",
       dm: "Short friendly DM. 2 variants. No huge emoji spam. CTA to reply YES.",
-      marketplace:
-        "Marketplace style: title line + specs bullets + condition + CTA. Emojis ok. No fluff.",
+      marketplace: "Marketplace style: title line + specs bullets + condition + CTA. Emojis ok. No fluff.",
       hashtags: "Return ONLY hashtags line (space-separated). 18-30 relevant tags.",
     };
 
@@ -505,16 +460,7 @@ Features/Description: ${(vehicle.featuresText || vehicle.description || "").toSt
     // ALL
     if (!platform || platform === "all") {
       const outputs = {};
-      const keys = [
-        "facebook",
-        "instagram",
-        "tiktok",
-        "linkedin",
-        "x",
-        "dm",
-        "marketplace",
-        "hashtags",
-      ];
+      const keys = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
 
       for (const k of keys) {
         const instruction = platformRules[k] || platformRules.facebook;
@@ -694,6 +640,142 @@ ${question}
 });
 
 // ===============================
+// API: PAYMENT HELPER
+// POST /api/payment-helper
+// Returns: { ok, result, breakdown, breakdownText }
+// ===============================
+app.post("/api/payment-helper", (req, res) => {
+  try {
+    const price = Number(req.body.price || 0);
+    const down = Number(req.body.down || 0);
+    const trade = Number(req.body.trade || 0);
+    const payoff = Number(req.body.payoff || 0);
+    const aprPct = Number(req.body.rate || 0);
+    const term = Number(req.body.term || 0);
+    const taxPct = Number(req.body.tax || 0);
+    const fees = Number(req.body.fees || 0);
+    const rebate = Number(req.body.rebate || 0);
+    const state = String(req.body.state || "MI").trim().toUpperCase();
+
+    if (!price || !term) {
+      return res.status(400).json({
+        ok: false,
+        error: "missing_inputs",
+        message: "Price and term (in months) are required for payment.",
+      });
+    }
+
+    const STATE_RULES = {
+      MI: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      OH: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      IN: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      IL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      PA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      NY: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      NJ: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      FL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      TX: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+      CA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
+    };
+
+    const rules = STATE_RULES[state] || STATE_RULES.MI;
+
+    const taxTradeCredit =
+      typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
+    const taxFees = typeof req.body.taxFees === "boolean" ? req.body.taxFees : rules.taxFees;
+    const rebateReducesTaxable =
+      typeof req.body.rebateReducesTaxable === "boolean"
+        ? req.body.rebateReducesTaxable
+        : rules.rebateReducesTaxable;
+
+    const tradeEquity = trade - payoff;
+    const negativeEquity = Math.max(payoff - trade, 0);
+
+    const feesTaxable = taxFees ? fees : 0;
+    const tradeTaxCredit = taxTradeCredit ? trade : 0;
+    const rebateTaxableReduction = rebateReducesTaxable ? rebate : 0;
+
+    const taxableBase = Math.max(price + feesTaxable - tradeTaxCredit - rebateTaxableReduction, 0);
+    const taxRate = taxPct / 100;
+    const taxAmount = taxableBase * taxRate;
+
+    // amount financed includes payoff (negative equity) because payoff is added back in formula already
+    const amountFinanced = Math.max(price + fees + taxAmount - down - trade + payoff - rebate, 0);
+
+    const monthlyRate = aprPct / 100 / 12;
+
+    let payment;
+    if (!monthlyRate) payment = amountFinanced / term;
+    else {
+      payment =
+        (amountFinanced * monthlyRate * Math.pow(1 + monthlyRate, term)) /
+        (Math.pow(1 + monthlyRate, term) - 1);
+    }
+
+    const money = (n) =>
+      `$${Number(n || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+
+    const equityLine = tradeEquity >= 0 ? `+${money(tradeEquity)}` : `${money(tradeEquity)}`;
+
+    const breakdown = {
+      state,
+      price,
+      fees,
+      taxableBase,
+      taxRate: taxPct,
+      taxAmount,
+      down,
+      trade,
+      payoff,
+      tradeEquity,
+      negativeEquity,
+      rebate,
+      amountFinanced,
+      aprPct,
+      term,
+      assumptions: { taxTradeCredit, taxFees, rebateReducesTaxable },
+    };
+
+    const breakdownText = [
+      `~${money(payment)}/mo (estimate — not a binding quote).`,
+      "",
+      "Breakdown:",
+      `• State: ${state}`,
+      `• Price: ${money(price)}`,
+      `• Dealer Fees/Add-ons: ${money(fees)}`,
+      `• Taxable Base: ${money(taxableBase)}`,
+      `• Tax (${taxPct.toFixed(2)}%): ${money(taxAmount)}`,
+      `• Rebate: ${money(rebate)}`,
+      `• Down: ${money(down)}`,
+      `• Trade: ${money(trade)} | Payoff: ${money(payoff)}`,
+      `• Trade Equity: ${equityLine} (${tradeEquity >= 0 ? "positive equity" : "negative equity"})`,
+      `• Amount Financed: ${money(amountFinanced)}`,
+      `• APR: ${aprPct.toFixed(2)}% | Term: ${term} months`,
+      "",
+      "Assumptions:",
+      `• Trade-in credit ${taxTradeCredit ? "DOES" : "does NOT"} reduce taxable base`,
+      `• Dealer fees/add-ons ${taxFees ? "ARE" : "are NOT"} taxable`,
+      `• Rebates ${rebateReducesTaxable ? "DO" : "do NOT"} reduce taxable base`,
+      `• Sales tax calculated before down payment`,
+      `• Estimate only — dealer & state rules may vary`,
+    ].join("\n");
+
+    return res.json({
+      ok: true,
+      result: `~${money(payment)} per month (rough estimate only, not a binding quote).`,
+      breakdown,
+      breakdownText,
+    });
+  } catch (err) {
+    console.error("payment-helper error", err);
+    return res.status(500).json({ ok: false, error: "Failed to estimate payment" });
+  }
+});
+
+// ===============================
 // API: BOOST (STABLE CONTRACT)
 // GET /api/boost?url=...
 // Returns: { ok, finalUrl, title, images, vehicle, meta, error }
@@ -775,8 +857,7 @@ app.get("/api/boost", async (req, res) => {
           if (node.contentUrl) candidates.push(node.contentUrl);
 
           for (const c of candidates) {
-            if (Array.isArray(c))
-              c.forEach((x) => typeof x === "string" && ldImgs.push(absUrl(base, x)));
+            if (Array.isArray(c)) c.forEach((x) => typeof x === "string" && ldImgs.push(absUrl(base, x)));
             else if (typeof c === "string") ldImgs.push(absUrl(base, c));
             else if (c && typeof c === "object" && c.url) ldImgs.push(absUrl(base, c.url));
           }
