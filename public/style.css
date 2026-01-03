@@ -726,3 +726,97 @@ textarea.ai-response {
   line-height: 1.4;
 }
 <div id="sendToLabWrap">
+/* =========================================
+   CALCULATOR (REAL FEEL)
+   Targets: #calcModal, #calcDisplay, .calc-grid
+========================================= */
+
+#calcModal .side-modal-content {
+  max-width: 420px;
+}
+
+#calcModal .calculator-body {
+  display: grid;
+  gap: 12px;
+}
+
+#calcDisplay {
+  width: 100%;
+  height: 64px;
+  padding: 14px 14px;
+  border-radius: 14px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: right;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.95);
+  outline: none;
+}
+
+#calcDisplay::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+
+/* Grid: 4 columns, calculator spacing */
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* Base key */
+.calc-grid button {
+  height: 54px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.95);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .06s ease, background .12s ease, border-color .12s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.24);
+}
+
+.calc-grid button:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.calc-grid button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* Operator keys */
+.calc-grid button[data-calc="+"],
+.calc-grid button[data-calc="-"],
+.calc-grid button[data-calc="*"],
+.calc-grid button[data-calc="/"] {
+  background: rgba(99,102,241,0.20);
+  border-color: rgba(99,102,241,0.35);
+}
+
+/* Equals key */
+.calc-grid button[data-calc="="] {
+  background: rgba(16,185,129,0.22);
+  border-color: rgba(16,185,129,0.40);
+}
+
+/* Clear + Backspace */
+.calc-grid button[data-calc="C"],
+.calc-grid button[data-calc="⌫"] {
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.35);
+}
+
+/* Make 0 wider if you want (optional)
+   Requires your 0 button to be first in last row.
+*/
+/*
+.calc-grid button[data-calc="0"] {
+  grid-column: span 2;
+}
+*/
