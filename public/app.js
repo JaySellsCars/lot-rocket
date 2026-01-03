@@ -473,133 +473,142 @@
     console.log("✅ FLOATING TOOLS WIRED");
   })();
 
-  // ==================================================
-  // AI EXPERT WIRES — ONE PASS (OBJECTION, MESSAGE, WORKFLOW, ASK, CAR)
-  // ==================================================
-  (function wireAiExperts() {
-    if (window.__LR_AI_EXPERTS__) return;
-    window.__LR_AI_EXPERTS__ = true;
+// ==================================================
+// AI EXPERT WIRES — ONE PASS (OBJECTION, MESSAGE, WORKFLOW, ASK, CAR)
+// FIXED: reads input/output INSIDE the same modal as the clicked button
+// ==================================================
+(function wireAiExperts() {
+  if (window.__LR_AI_EXPERTS__) return;
+  window.__LR_AI_EXPERTS__ = true;
 
-    function pickOutput(primaryId, fallbacks = []) {
-      return $(primaryId) || fallbacks.map((id) => $(id)).find(Boolean) || null;
+  const byId = (id) => document.getElementById(id);
+
+  function findInSameModal(btn, id, fallbackSelector) {
+    // Prefer finding elements inside the same modal panel as the clicked button
+    const modal =
+      btn?.closest(".side-modal") ||
+      btn?.closest("section.side-modal") ||
+      btn?.closest("div.side-modal");
+
+    if (modal) {
+      // 1) Exact ID inside modal
+      if (id) {
+        const el = modal.querySelector(`#${CSS.escape(id)}`);
+        if (el) return el;
+      }
+      // 2) Fallback selector inside modal
+      if (fallbackSelector) {
+        const el = modal.querySelector(fallbackSelector);
+        if (el) return el;
+      }
     }
 
-    async function runAI({ btnId, inputId, outputId, endpoint, outputFallbacks = [] }) {
-      const btn = $(btnId);
-      const input = $(inputId);
-      const output = pickOutput(outputId, outputFallbacks);
+    // Final fallback: global ID
+    if (id) return byId(id);
+    return null;
+  }
 
-      if (!btn || !input || !output) return;
+  async function runAI({ btnIds = [], inputId, outputId, endpoint }) {
+    const btn =
+      btnIds.map(byId).find(Boolean) ||
+      null;
 
-      if (btn.__LR_BOUND__) return;
-      btn.__LR_BOUND__ = true;
+    if (!btn) return;
 
-      btn.addEventListener("click", async () => {
-        pressAnim(btn);
+    if (btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
 
-        const text = (input.value || "").trim();
-        const vehicle = STORE.lastVehicle || STORE.vehicle || {};
+    btn.addEventListener("click", async () => {
+      const input = findInSameModal(btn, inputId, "textarea, input[type='text']");
+      const output = findInSameModal(btn, outputId, "[data-ai-output], .ai-output, .small-note, div");
 
-        if (!text) {
-          if (output.tagName === "TEXTAREA") output.value = "Enter input first.";
-          else output.textContent = "Enter input first.";
-          return;
+      if (!input || !output) {
+        console.warn("AI modal wiring missing elements:", { endpoint, inputId, outputId, btn });
+        return;
+      }
+
+      const text = (input.value || "").trim();
+
+      if (!text) {
+        // Visible debug so you KNOW it’s reading the right box
+        output.textContent = "⚠️ I’m not seeing any text in the input box. Click into the box and type again.";
+        return;
+      }
+
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = "Working…";
+      output.textContent = "Thinking…";
+
+      try {
+        const r = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input: text,
+            vehicle: window.STORE?.lastVehicle || {},
+          }),
+        });
+
+        const ct = (r.headers.get("content-type") || "").toLowerCase();
+        const raw = await r.text();
+
+        if (!ct.includes("application/json")) {
+          throw new Error("Server returned non-JSON");
         }
 
-        setBtnLoading(btn, true, "Working…");
-        if (output.tagName === "TEXTAREA") {
-          output.value = "Thinking…";
-          autoGrowTextarea(output);
-        } else {
-          output.textContent = "Thinking…";
-          output.style.whiteSpace = "pre-wrap";
-        }
+        const j = JSON.parse(raw);
+        if (!j?.ok) throw new Error(j?.error || "AI failed");
 
-        try {
-          const r = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ input: text, vehicle }),
-          });
-
-          const ct = (r.headers.get("content-type") || "").toLowerCase();
-          const raw = await r.text();
-
-          if (!ct.includes("application/json")) {
-            console.error("❌ COACH NON-JSON", endpoint, raw.slice(0, 200));
-            throw new Error("Non-JSON response");
-          }
-
-          let j;
-          try {
-            j = JSON.parse(raw);
-          } catch {
-            throw new Error("Bad JSON");
-          }
-
-          if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j.error || "AI failed");
-          const outText = j.text || "";
-
-          if (output.tagName === "TEXTAREA") {
-            output.value = outText;
-            autoGrowTextarea(output);
-          } else {
-            output.textContent = outText;
-            output.style.whiteSpace = "pre-wrap";
-          }
-        } catch (e) {
-          const msg = "AI ERROR: " + (e?.message || e);
-          if (output.tagName === "TEXTAREA") {
-            output.value = msg;
-            autoGrowTextarea(output);
-          } else {
-            output.textContent = msg;
-            output.style.whiteSpace = "pre-wrap";
-          }
-        } finally {
-          setBtnLoading(btn, false);
-        }
-      });
-    }
-
-    runAI({
-      btnId: "runObjectionBtn",
-      inputId: "objectionInput",
-      outputId: "objectionOutput",
-      endpoint: "/api/ai/objection",
+        output.textContent = j.text || "";
+      } catch (e) {
+        output.textContent = "AI ERROR: " + (e?.message || e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
     });
+  }
 
-    runAI({
-      btnId: "runMessageBtn",
-      inputId: "messageInput",
-      outputId: "messageOutput",
-      endpoint: "/api/ai/message",
-    });
+  // ✅ Support BOTH possible button IDs (older/newer HTML)
+  runAI({
+    btnIds: ["runObjectionBtn", "objectionRunBtn"],
+    inputId: "objectionInput",
+    outputId: "objectionOutput",
+    endpoint: "/api/ai/objection",
+  });
 
-    runAI({
-      btnId: "runWorkflowBtn",
-      inputId: "workflowInput",
-      outputId: "workflowOutput",
-      endpoint: "/api/ai/workflow",
-    });
+  runAI({
+    btnIds: ["runMessageBtn", "messageRunBtn"],
+    inputId: "messageInput",
+    outputId: "messageOutput",
+    endpoint: "/api/ai/message",
+  });
 
-    runAI({
-      btnId: "runAskBtn",
-      inputId: "askInput",
-      outputId: "askOutput",
-      endpoint: "/api/ai/ask",
-    });
+  runAI({
+    btnIds: ["runWorkflowBtn", "workflowRunBtn"],
+    inputId: "workflowInput",
+    outputId: "workflowOutput",
+    endpoint: "/api/ai/workflow",
+  });
 
-    runAI({
-      btnId: "runCarExpertBtn",
-      inputId: "carExpertInput",
-      outputId: "carExpertOutput",
-      outputFallbacks: ["carOutput"], // ✅ fixes mismatch if HTML uses carOutput
-      endpoint: "/api/ai/car",
-    });
+  runAI({
+    btnIds: ["runAskBtn", "askRunBtn"],
+    inputId: "askInput",
+    outputId: "askOutput",
+    endpoint: "/api/ai/ask",
+  });
 
-    console.log("✅ AI EXPERTS WIRED");
-  })();
+  runAI({
+    btnIds: ["runCarExpertBtn", "carExpertRunBtn", "carExpertRunBtn"],
+    inputId: "carExpertInput",
+    outputId: "carExpertOutput",
+    endpoint: "/api/ai/car",
+  });
+
+  console.log("✅ AI EXPERTS WIRED (modal-scoped inputs)");
+})();
+
 
   // ==================================================
   // HIDE "Send Selected to Social Ready" (next version)
