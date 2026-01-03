@@ -929,3 +929,14 @@ textarea.ai-response {
     grid-template-columns: 1fr;
   }
 }
+/* AI helper inputs: auto-grow friendly */
+#workflowInput,
+#objectionInput,
+#messageInput,
+#askInput,
+#carExpertInput {
+  resize: none;
+  overflow: hidden;
+  min-height: 44px;
+  line-height: 1.4;
+}
