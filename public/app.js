@@ -75,11 +75,10 @@
     if (window.__LR_CALC_WIRED__) return;
     window.__LR_CALC_WIRED__ = true;
 
-    const modal = document.getElementById("calcModal");
-    const display = document.getElementById("calcDisplay");
+    const modal = $("calcModal");
+    const display = $("calcDisplay");
     if (!modal || !display) return;
 
-    // Make it behave like a calculator display
     display.setAttribute("readonly", "readonly");
     display.value = display.value || "";
 
@@ -94,38 +93,38 @@
       return Function(`"use strict"; return (${expr});`)();
     }
 
-    function setVal(v) {
+    function setDisplay(v) {
       display.value = String(v ?? "");
     }
 
     function append(ch) {
       const cur = display.value || "";
-      if (cur === "Error") return setVal(ch);
+      if (cur === "Error") return setDisplay(ch);
 
       if (isOp(ch)) {
         if (!cur) return;
         const last = cur.slice(-1);
-        if (isOp(last)) return setVal(cur.slice(0, -1) + ch);
+        if (isOp(last)) return setDisplay(cur.slice(0, -1) + ch);
       }
 
       if (ch === ".") {
         const parts = cur.split(/[\+\-\*\/]/);
         const lastChunk = parts[parts.length - 1] || "";
         if (lastChunk.includes(".")) return;
-        if (!lastChunk.length) return setVal(cur + "0.");
+        if (!lastChunk.length) return setDisplay(cur + "0.");
       }
 
-      setVal(cur + ch);
+      setDisplay(cur + ch);
     }
 
     function backspace() {
       const cur = display.value || "";
-      if (!cur || cur === "Error") return setVal("");
-      setVal(cur.slice(0, -1));
+      if (!cur || cur === "Error") return setDisplay("");
+      setDisplay(cur.slice(0, -1));
     }
 
     function clearAll() {
-      setVal("");
+      setDisplay("");
     }
 
     function evaluate() {
@@ -136,14 +135,12 @@
         const result = safeEval(expr);
         if (!Number.isFinite(result)) throw new Error("nan");
         const rounded =
-          Math.abs(result) > 1e12
-            ? result.toExponential(6)
-            : Math.round(result * 1e9) / 1e9;
-        setVal(rounded);
+          Math.abs(result) > 1e12 ? result.toExponential(6) : Math.round(result * 1e9) / 1e9;
+        setDisplay(rounded);
       } catch {
-        setVal("Error");
+        setDisplay("Error");
         setTimeout(() => {
-          if (display.value === "Error") setVal("");
+          if (display.value === "Error") setDisplay("");
         }, 700);
       }
     }
@@ -164,7 +161,7 @@
       });
     });
 
-    document.addEventListener("keydown", (e) => {
+    DOC.addEventListener("keydown", (e) => {
       const isOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
       if (!isOpen) return;
 
@@ -186,26 +183,10 @@
         return;
       }
 
-      if (/[0-9]/.test(k)) {
-        e.preventDefault();
-        append(k);
-        return;
-      }
-      if (["+", "-", "*", "/"].includes(k)) {
-        e.preventDefault();
-        append(k);
-        return;
-      }
-      if (k === ".") {
-        e.preventDefault();
-        append(".");
-        return;
-      }
-      if (k === "(" || k === ")") {
-        e.preventDefault();
-        append(k);
-        return;
-      }
+      if (/[0-9]/.test(k)) return (e.preventDefault(), append(k));
+      if (["+", "-", "*", "/"].includes(k)) return (e.preventDefault(), append(k));
+      if (k === ".") return (e.preventDefault(), append("."));
+      if (k === "(" || k === ")") return (e.preventDefault(), append(k));
     });
 
     console.log("✅ CALCULATOR WIRED");
@@ -272,7 +253,6 @@
   // ==================================================
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
   // ==================================================
-  if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
   STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
   STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
@@ -612,30 +592,24 @@
 
   // ==================================================
   // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (FIXED)
-  // IMPORTANT: server expects different keys per endpoint
   // ==================================================
   (function wireAiExpertsDelegated() {
     if (window.__LR_AI_EXPERTS_DELEGATED__) return;
     window.__LR_AI_EXPERTS_DELEGATED__ = true;
 
     const btnToType = {
-      // Objection
       runObjectionBtn: "objection",
       objectionRunBtn: "objection",
 
-      // Message
       runMessageBtn: "message",
       messageRunBtn: "message",
 
-      // Workflow
       runWorkflowBtn: "workflow",
       workflowRunBtn: "workflow",
 
-      // Ask
       runAskBtn: "ask",
       askRunBtn: "ask",
 
-      // Car expert
       runCarExpertBtn: "car",
       carExpertRunBtn: "car",
     };
@@ -675,7 +649,6 @@
         (preferred ? modal?.querySelector(`#${CSS.escape(preferred)}`) : null) ||
         modal?.querySelector("[data-ai-output]") ||
         modal?.querySelector(".ai-output") ||
-        // fallback: any div that isn't the modal container
         modal?.querySelector("div") ||
         null
       );
@@ -701,22 +674,11 @@
     function buildPayload(type, text) {
       const v = window.STORE?.lastVehicle || {};
 
-      if (type === "objection") {
-        return { objection: text, context: "" };
-      }
-      if (type === "message") {
-        // minimal + safe: treat textarea as DETAILS
-        return { goal: "", tone: "", details: text };
-      }
-      if (type === "workflow") {
-        return { scenario: text };
-      }
-      if (type === "ask") {
-        return { question: text };
-      }
-      if (type === "car") {
-        return { vehicle: vehicleToString(v), question: text };
-      }
+      if (type === "objection") return { objection: text, context: "" };
+      if (type === "message") return { goal: "", tone: "", details: text };
+      if (type === "workflow") return { scenario: text };
+      if (type === "ask") return { question: text };
+      if (type === "car") return { vehicle: vehicleToString(v), question: text };
       return { input: text };
     }
 
@@ -730,11 +692,9 @@
       const ct = (r.headers.get("content-type") || "").toLowerCase();
       const raw = await r.text();
       if (!ct.includes("application/json")) throw new Error("Server returned non-JSON");
-      const j = JSON.parse(raw);
 
-      if (j && typeof j === "object" && "ok" in j && !j.ok) {
-        throw new Error(j?.error || "AI failed");
-      }
+      const j = JSON.parse(raw);
+      if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j?.error || "AI failed");
       return j?.text || "";
     }
 
@@ -750,7 +710,7 @@
       }
     }
 
-    document.addEventListener("click", async (e) => {
+    DOC.addEventListener("click", async (e) => {
       const btn = e.target?.closest?.("button");
       if (!btn || !btn.id) return;
 
@@ -765,15 +725,6 @@
       const modal = closestModal(btn);
       const input = findInput(modal);
       const output = findOutput(modal, type);
-
-      console.log("🧠 AI CLICK", {
-        btnId: btn.id,
-        type,
-        endpoint,
-        modalId: modal?.id,
-        inputValueLen: (input?.value || "").length,
-        inputHead: (input?.value || "").slice(0, 80),
-      });
 
       if (!input || !output) {
         alert("AI modal missing input/output. Check index.html for duplicate IDs.");
@@ -1021,7 +972,7 @@
 
         try {
           const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
-          const r = await fetch(prox);
+          const r = await fetch(prox, { cache: "no-store" });
           if (!r.ok) throw new Error("proxy fetch failed");
           const blob = await r.blob();
 
@@ -1068,7 +1019,7 @@
   // Uses server: POST /api/payment-helper
   // ===============================
   function wirePaymentCalculator() {
-    const modal = document.getElementById("paymentModal");
+    const modal = $("paymentModal");
     if (!modal) return;
 
     const pickInside = (root, selectors) => {
@@ -1091,20 +1042,15 @@
       down: num(pickInside(root, ["#payDown", "input[name='down']", "#down"])?.value),
       trade: num(pickInside(root, ["#payTrade", "input[name='trade']", "#trade"])?.value),
       payoff: num(pickInside(root, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
-
-      // support BOTH ids
       rate: num(pickInside(root, ["#payApr", "#payRate", "input[name='apr']", "#apr", "#rate"])?.value),
-
       term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
       tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
       fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
-
       state: String(
         pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
       )
         .trim()
         .toUpperCase(),
-
       rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
     });
 
@@ -1177,116 +1123,111 @@
 
     console.log("✅ PAYMENT CALC WIRED");
   }
-// ===============================
-// INCOME CALCULATOR (SAFE / ISOLATED)
-// Inputs: #incomeMtd, #incomeLastPayDate
-// Button: #incomeCalcBtn
-// Output: #incomeOutput
-// Modal: #incomeModal
-// ===============================
-function wireIncomeCalcDirect() {
-  const modal = document.getElementById("incomeModal");
-  if (!modal) return;
 
-  const $in = (sel) => modal.querySelector(sel);
+  // ===============================
+  // INCOME CALCULATOR (SAFE / ISOLATED)
+  // ===============================
+  function wireIncomeCalcDirect() {
+    const modal = $("incomeModal");
+    if (!modal) return;
 
-  const mtdEl = $in("#incomeMtd");
-  const dateEl = $in("#incomeLastPayDate");
-  const btn = $in("#incomeCalcBtn");
-  const out = $in("#incomeOutput");
+    const $in = (sel) => modal.querySelector(sel);
 
-  if (!mtdEl || !dateEl || !btn || !out) return;
-  if (btn.__LR_BOUND__) return;
-  btn.__LR_BOUND__ = true;
+    const mtdEl = $in("#incomeMtd");
+    const dateEl = $in("#incomeLastPayDate");
+    const btn = $in("#incomeCalcBtn");
+    const out = $in("#incomeOutput");
 
-  const num = (v) => {
-    if (v == null) return 0;
-    const s = String(v).replace(/[$,%\s,]/g, "").trim();
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
-  };
+    if (!mtdEl || !dateEl || !btn || !out) return;
+    if (btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
 
-  const money = (n) =>
-    `$${Number(n || 0).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    const num = (v) => {
+      if (v == null) return 0;
+      const s = String(v).replace(/[$,%\s,]/g, "").trim();
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    };
 
-  function daysInYear(year) {
-    const start = new Date(year, 0, 1);
-    const end = new Date(year + 1, 0, 1);
-    return Math.round((end - start) / 86400000);
-  }
+    const money = (n) =>
+      `$${Number(n || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
 
-  function clamp(n, a, b) {
-    return Math.max(a, Math.min(b, n));
-  }
-
-  function calc() {
-    const grossToDate = num(mtdEl.value);
-    const payDateRaw = (dateEl.value || "").trim();
-
-    if (!grossToDate || !payDateRaw) {
-      out.textContent = "Enter Gross to date and your last pay date.";
-      return;
+    function daysInYear(year) {
+      const start = new Date(year, 0, 1);
+      const end = new Date(year + 1, 0, 1);
+      return Math.round((end - start) / 86400000);
     }
 
-    const payDate = new Date(payDateRaw + "T12:00:00");
-    if (Number.isNaN(payDate.getTime())) {
-      out.textContent = "Invalid pay date.";
-      return;
+    function clamp(n, a, b) {
+      return Math.max(a, Math.min(b, n));
     }
 
-    const year = payDate.getFullYear();
-    const yearStart = new Date(year, 0, 1, 12, 0, 0);
-    const yearEnd = new Date(year + 1, 0, 1, 12, 0, 0);
+    function calc() {
+      const grossToDate = num(mtdEl.value);
+      const payDateRaw = (dateEl.value || "").trim();
 
-    if (payDate < yearStart || payDate >= yearEnd) {
-      out.textContent = "Pay date must be within the same year you’re calculating.";
-      return;
-    }
-
-    const elapsedDays = Math.max(1, Math.floor((payDate - yearStart) / 86400000) + 1); // inclusive day count
-    const totalDays = daysInYear(year);
-
-    const fractionOfYear = clamp(elapsedDays / totalDays, 1 / totalDays, 1);
-    const weeksIntoYear = elapsedDays / 7;
-
-    // Annualize based on fraction of year elapsed
-    const estAnnual = grossToDate / fractionOfYear;
-    const avgWeekly = estAnnual / 52;
-    const avgMonthly = estAnnual / 12;
-
-    out.textContent = [
-      `Estimated Annual Gross: ${money(estAnnual)}`,
-      `Weeks into year: ${weeksIntoYear.toFixed(1)} (as of ${payDateRaw})`,
-      `Gross-to-date: ${money(grossToDate)}`,
-      "",
-      `Average Weekly: ${money(avgWeekly)}`,
-      `Average Monthly: ${money(avgMonthly)}`,
-      "",
-      "Note: This annualizes your year-to-date earnings based on how far into the year your last pay date is.",
-    ].join("\n");
-  }
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    calc();
-  });
-
-  // Enter submits from either input
-  modal.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const t = e.target;
-      if (t && (t === mtdEl || t === dateEl)) {
-        e.preventDefault();
-        calc();
+      if (!grossToDate || !payDateRaw) {
+        out.textContent = "Enter Gross to date and your last pay date.";
+        return;
       }
-    }
-  });
 
-  console.log("✅ INCOME CALC WIRED");
-}
+      const payDate = new Date(payDateRaw + "T12:00:00");
+      if (Number.isNaN(payDate.getTime())) {
+        out.textContent = "Invalid pay date.";
+        return;
+      }
+
+      const year = payDate.getFullYear();
+      const yearStart = new Date(year, 0, 1, 12, 0, 0);
+      const yearEnd = new Date(year + 1, 0, 1, 12, 0, 0);
+
+      if (payDate < yearStart || payDate >= yearEnd) {
+        out.textContent = "Pay date must be within the same year you’re calculating.";
+        return;
+      }
+
+      const elapsedDays = Math.max(1, Math.floor((payDate - yearStart) / 86400000) + 1);
+      const totalDays = daysInYear(year);
+
+      const fractionOfYear = clamp(elapsedDays / totalDays, 1 / totalDays, 1);
+      const weeksIntoYear = elapsedDays / 7;
+
+      const estAnnual = grossToDate / fractionOfYear;
+      const avgWeekly = estAnnual / 52;
+      const avgMonthly = estAnnual / 12;
+
+      out.textContent = [
+        `Estimated Annual Gross: ${money(estAnnual)}`,
+        `Weeks into year: ${weeksIntoYear.toFixed(1)} (as of ${payDateRaw})`,
+        `Gross-to-date: ${money(grossToDate)}`,
+        "",
+        `Average Weekly: ${money(avgWeekly)}`,
+        `Average Monthly: ${money(avgMonthly)}`,
+        "",
+        "Note: This annualizes your year-to-date earnings based on how far into the year your last pay date is.",
+      ].join("\n");
+    }
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      calc();
+    });
+
+    modal.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const t = e.target;
+        if (t && (t === mtdEl || t === dateEl)) {
+          e.preventDefault();
+          calc();
+        }
+      }
+    });
+
+    console.log("✅ INCOME CALC WIRED");
+  }
 
   // --------------------------------------------------
   // STEP 3: HOLDING ZONE NOTE + RENDER (up to 24) + DBLCLICK → SOCIAL READY
@@ -1349,7 +1290,7 @@ function wireIncomeCalcDirect() {
     btn.style.pointerEvents = n === 0 ? "none" : "auto";
   }
 
-  (() => {
+  (function wireSendToCreativeLab() {
     const btn = $("sendToDesignStudio");
     if (!btn || btn.__LR_BOUND__) return;
     btn.__LR_BOUND__ = true;
@@ -1383,7 +1324,7 @@ function wireIncomeCalcDirect() {
   // HEALTH CHECK
   // --------------------------------------------------
   try {
-    const res = await fetch("/api/health");
+    const res = await fetch("/api/health", { cache: "no-store" });
     const json = await res.json();
     console.log("✅ API HEALTH:", json);
   } catch (e) {
@@ -1542,27 +1483,23 @@ function wireIncomeCalcDirect() {
   wireZipButton();
   renderSocialStrip();
 
-// close modals + wire calculators (ONE PASS)
-(function initToolsOnce() {
-  if (window.__LR_TOOLS_INIT__) return;
-  window.__LR_TOOLS_INIT__ = true;
+  // close modals + wire calculators (ONE PASS)
+  (function initToolsOnce() {
+    if (window.__LR_TOOLS_INIT__) return;
+    window.__LR_TOOLS_INIT__ = true;
 
-  if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
-    window.LR_TOOLS.closeAll();
-  }
+    if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
+      window.LR_TOOLS.closeAll();
+    }
 
-  if (typeof wirePaymentCalculator === "function") {
     wirePaymentCalculator();
-  }
-
-  if (typeof wireIncomeCalcDirect === "function") {
     wireIncomeCalcDirect();
-  }
+
+    console.log("✅ TOOLS INIT COMPLETE");
+  })();
 
   // --------------------------------------------------
   // FINAL
   // --------------------------------------------------
   console.log("✅ APP READY");
 })();
-
-
