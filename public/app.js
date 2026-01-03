@@ -23,6 +23,144 @@
   // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
+// ==================================================
+// AI EXPERTS — BULLETPROOF DELEGATED BINDING
+// Works even if IDs are duplicated (reads input inside the SAME modal as clicked button)
+// Supports BOTH id sets: runXBtn / XRunBtn / carExpertRunBtn etc.
+// ==================================================
+(function wireAiExpertsDelegated() {
+  if (window.__LR_AI_EXPERTS_DELEGATED__) return;
+  window.__LR_AI_EXPERTS_DELEGATED__ = true;
+
+  const endpointMap = {
+    // Objection
+    runObjectionBtn: "/api/ai/objection",
+    objectionRunBtn: "/api/ai/objection",
+
+    // Message
+    runMessageBtn: "/api/ai/message",
+    messageRunBtn: "/api/ai/message",
+
+    // Workflow
+    runWorkflowBtn: "/api/ai/workflow",
+    workflowRunBtn: "/api/ai/workflow",
+
+    // Ask
+    runAskBtn: "/api/ai/ask",
+    askRunBtn: "/api/ai/ask",
+
+    // Car expert
+    runCarExpertBtn: "/api/ai/car",
+    carExpertRunBtn: "/api/ai/car",
+    carExpertRunBtn: "/api/ai/car",
+  };
+
+  function closestModal(el) {
+    return el?.closest?.(".side-modal") || null;
+  }
+
+  function findInput(modal) {
+    // prefer textarea (your UI)
+    return (
+      modal?.querySelector("textarea") ||
+      modal?.querySelector("input[type='text']") ||
+      modal?.querySelector("input:not([type])") ||
+      null
+    );
+  }
+
+  function findOutput(modal) {
+    // prefer known outputs first if present
+    return (
+      modal?.querySelector("#objectionOutput, #messageOutput, #workflowOutput, #askOutput, #carExpertOutput") ||
+      modal?.querySelector("[data-ai-output]") ||
+      modal?.querySelector(".ai-output") ||
+      // fallback: first div after the button area
+      modal?.querySelector("div") ||
+      null
+    );
+  }
+
+  async function callAI(endpoint, inputText) {
+    const r = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: inputText,
+        vehicle: window.STORE?.lastVehicle || {},
+      }),
+    });
+
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const raw = await r.text();
+    if (!ct.includes("application/json")) throw new Error("Server returned non-JSON");
+    const j = JSON.parse(raw);
+    if (!j?.ok) throw new Error(j?.error || "AI failed");
+    return j.text || "";
+  }
+
+  function setBusy(btn, on) {
+    if (!btn) return;
+    if (on) {
+      btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+      btn.textContent = "Working…";
+      btn.disabled = true;
+    } else {
+      btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target?.closest?.("button");
+    if (!btn) return;
+
+    const endpoint = endpointMap[btn.id];
+    if (!endpoint) return; // not an AI run button
+
+    e.preventDefault();
+
+    const modal = closestModal(btn);
+    const input = findInput(modal);
+    const output = findOutput(modal);
+
+    // HARD DEBUG (shows in console exactly what it read)
+    console.log("🧠 AI CLICK", {
+      btnId: btn.id,
+      endpoint,
+      modalId: modal?.id,
+      inputEl: input,
+      outputEl: output,
+      inputValueLen: (input?.value || "").length,
+      inputValueHead: (input?.value || "").slice(0, 80),
+    });
+
+    if (!input || !output) {
+      alert("AI modal missing input/output elements. Check console.");
+      return;
+    }
+
+    const text = (input.value || "").trim();
+    if (!text) {
+      output.textContent = "⚠️ Type something in the box first.";
+      return;
+    }
+
+    setBusy(btn, true);
+    output.textContent = "Thinking…";
+
+    try {
+      const answer = await callAI(endpoint, text);
+      output.textContent = answer;
+    } catch (err) {
+      output.textContent = "AI ERROR: " + (err?.message || err);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  console.log("✅ AI EXPERTS DELEGATED WIRED");
+})();
 
   // ==================================================
   // AUTO-GROW TEXTAREA (SOCIAL POSTS / COACHES)
