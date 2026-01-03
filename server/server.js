@@ -557,6 +557,71 @@ Produces fresh hashtags every run
 Avoids stale “#1” logic
 
 Scales cleanly for a statewide or national user base
+🧾 FEATURE INTELLIGENCE (MANDATORY)
+
+When vehicle features, options, trims, packages, or specs are provided (scraped from the listing or passed in data):
+
+You MUST:
+
+Identify the most emotionally valuable features, not just technical ones
+
+Prioritize features that:
+
+Increase perceived value
+
+Reduce objections
+
+Signal lifestyle, safety, comfort, or status
+
+Translate specs into benefits, not bullet lists
+
+Examples:
+
+Heated seats → comfort during cold mornings
+
+AWD → confidence in bad weather
+
+Apple CarPlay → modern convenience + daily usability
+
+Low mileage → longevity + peace of mind
+
+Certified / warranty → risk reduction
+
+🎯 FEATURE USAGE RULES (NON-NEGOTIABLE)
+
+Do NOT dump a raw feature list
+
+Do NOT repeat features mechanically across platforms
+
+Features must be woven naturally into the copy
+
+Each platform should highlight different features where possible
+
+Highlight 3–6 key features max per post
+
+If features are missing or incomplete:
+
+Infer safely from trim/vehicle type
+
+Never fabricate rare or premium options
+
+🧠 PLATFORM-SPECIFIC FEATURE FRAMING
+
+LinkedIn
+
+Frame features as value, efficiency, professional utility, or smart ownership
+
+Instagram / TikTok
+
+Frame features as lifestyle upgrades, daily enjoyment, or status signals
+
+X (Twitter)
+
+Highlight one standout feature or unexpected value point to spark conversation
+
+🚫 HARD RULE
+
+If features are available and you do not meaningfully use them, the response is considered incomplete.
 `.trim();
 
     const user = `
