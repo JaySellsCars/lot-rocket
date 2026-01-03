@@ -940,3 +940,10 @@ textarea.ai-response {
   min-height: 44px;
   line-height: 1.4;
 }
+/* follow-up boxes should behave like auto-grow textareas too */
+.ai-followup textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 44px;
+  line-height: 1.4;
+}
