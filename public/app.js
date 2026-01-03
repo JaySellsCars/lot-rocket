@@ -53,6 +53,26 @@ function normalizeDealerUrl(raw) {
   if (!/^https?:\/\//i.test(s)) return "";
   return s;
 }
+function normalizeDealerUrl(raw) {
+  let s = String(raw || "").trim();
+
+  // remove quotes/spaces
+  s = s.replace(/^["']|["']$/g, "").trim();
+
+  // fix common bad paste: whttps:// or whttp://
+  s = s.replace(/^whttps?:\/\//i, (m) => m.slice(1)); // remove leading "w"
+
+  // fix double protocol paste: https://https://...
+  s = s.replace(/^(https?:\/\/)(https?:\/\/)/i, "$2");
+
+  // if user pasted "www." only
+  if (/^www\./i.test(s)) s = "https://" + s;
+
+  // if missing protocol entirely
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+
+  return s;
+}
 
   // ==================================================
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
