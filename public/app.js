@@ -204,6 +204,130 @@
     btn.textContent = label;
     setTimeout(() => (btn.textContent = old), ms);
   }
+// ==================================================
+// CALCULATOR — REAL FEEL (ONE PASS)
+// Uses: #calcModal, #calcDisplay, buttons [data-calc]
+// ==================================================
+(function wireCalculatorPad() {
+  if (window.__LR_CALC_WIRED__) return;
+  window.__LR_CALC_WIRED__ = true;
+
+  const modal = document.getElementById("calcModal");
+  const display = document.getElementById("calcDisplay");
+  if (!modal || !display) return;
+
+  // Make it behave like a calculator display
+  display.setAttribute("readonly", "readonly");
+  display.value = display.value || "";
+
+  const buttons = modal.querySelectorAll("[data-calc]");
+
+  const isOp = (c) => ["+", "-", "*", "/"].includes(c);
+
+  function safeEval(expr) {
+    // allow only digits, ops, decimal, parentheses, spaces
+    const ok = /^[0-9+\-*/().\s]+$/.test(expr);
+    if (!ok) throw new Error("bad_chars");
+    // avoid things like 2**3 (optional)
+    if (expr.includes("**")) throw new Error("bad_op");
+    // eslint-disable-next-line no-new-func
+    return Function(`"use strict"; return (${expr});`)();
+  }
+
+  function setVal(v) {
+    display.value = String(v ?? "");
+  }
+
+  function append(ch) {
+    const cur = display.value || "";
+
+    // Start clean if it says Error
+    if (cur === "Error") return setVal(ch);
+
+    // Prevent double operators
+    if (isOp(ch)) {
+      if (!cur) return; // can't start with op
+      const last = cur.slice(-1);
+      if (isOp(last)) return setVal(cur.slice(0, -1) + ch);
+    }
+
+    // Prevent multiple decimals in the current number chunk
+    if (ch === ".") {
+      const parts = cur.split(/[\+\-\*\/]/);
+      const lastChunk = parts[parts.length - 1] || "";
+      if (lastChunk.includes(".")) return;
+      if (!lastChunk.length) return setVal(cur + "0.");
+    }
+
+    setVal(cur + ch);
+  }
+
+  function backspace() {
+    const cur = display.value || "";
+    if (!cur || cur === "Error") return setVal("");
+    setVal(cur.slice(0, -1));
+  }
+
+  function clearAll() {
+    setVal("");
+  }
+
+  function evaluate() {
+    const expr = (display.value || "").trim();
+    if (!expr) return;
+
+    try {
+      const result = safeEval(expr);
+      if (!Number.isFinite(result)) throw new Error("nan");
+      // Keep it clean (avoid huge floats)
+      const rounded =
+        Math.abs(result) > 1e12 ? result.toExponential(6) :
+        (Math.round(result * 1e9) / 1e9);
+      setVal(rounded);
+    } catch {
+      setVal("Error");
+      setTimeout(() => {
+        if (display.value === "Error") setVal("");
+      }, 700);
+    }
+  }
+
+  // Button clicks
+  buttons.forEach((b) => {
+    if (b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", () => {
+      const v = b.getAttribute("data-calc");
+      if (!v) return;
+
+      if (v === "C") return clearAll();
+      if (v === "⌫") return backspace();
+      if (v === "=") return evaluate();
+
+      append(v);
+    });
+  });
+
+  // Keyboard support only when modal is open
+  document.addEventListener("keydown", (e) => {
+    const isOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
+    if (!isOpen) return;
+
+    const k = e.key;
+
+    if (k === "Escape") { e.preventDefault(); clearAll(); return; }
+    if (k === "Enter" || k === "=") { e.preventDefault(); evaluate(); return; }
+    if (k === "Backspace") { e.preventDefault(); backspace(); return; }
+
+    if (/[0-9]/.test(k)) { e.preventDefault(); append(k); return; }
+    if (["+", "-", "*", "/"].includes(k)) { e.preventDefault(); append(k); return; }
+    if (k === ".") { e.preventDefault(); append("."); return; }
+    if (k === "(" || k === ")") { e.preventDefault(); append(k); return; }
+  });
+
+  console.log("✅ CALCULATOR WIRED");
+})();
 
   // ==================================================
   // AUTO-GROW OBSERVER (SAFE)
