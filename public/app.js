@@ -13,7 +13,8 @@
   // --------------------------------------------------
   const domReady = () =>
     new Promise((res) => {
-      if (DOC.readyState === "loading") DOC.addEventListener("DOMContentLoaded", res, { once: true });
+      if (DOC.readyState === "loading")
+        DOC.addEventListener("DOMContentLoaded", res, { once: true });
       else res();
     });
   await domReady();
@@ -135,7 +136,9 @@
         const result = safeEval(expr);
         if (!Number.isFinite(result)) throw new Error("nan");
         const rounded =
-          Math.abs(result) > 1e12 ? result.toExponential(6) : Math.round(result * 1e9) / 1e9;
+          Math.abs(result) > 1e12
+            ? result.toExponential(6)
+            : Math.round(result * 1e9) / 1e9;
         setDisplay(rounded);
       } catch {
         setDisplay("Error");
@@ -162,7 +165,8 @@
     });
 
     DOC.addEventListener("keydown", (e) => {
-      const isOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
+      const isOpen =
+        !modal.classList.contains("hidden") && modal.style.display !== "none";
       if (!isOpen) return;
 
       const k = e.key;
@@ -246,7 +250,6 @@
     if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) {
       s = "https://" + s;
     }
-
     return s;
   }
 
@@ -254,8 +257,12 @@
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
   // ==================================================
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos)
+    ? STORE.holdingZonePhotos
+    : [];
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
+    ? STORE.socialReadyPhotos
+    : [];
 
   // ==================================================
   // STEP 2 OUTPUT SETTERS + SUMMARY
@@ -485,7 +492,7 @@
       calc: "toolCalcBtn",
       payment: "toolPaymentBtn",
       income: "toolIncomeBtn",
-      workflow: "toolWorkflowBtn",
+      workflow: "toolWorkflowBtn", // will be labeled "AI Campaign Builder"
       message: "toolMessageBtn",
       ask: "toolAskBtn",
       car: "toolCarBtn",
@@ -506,10 +513,19 @@
       video: "videoGenModal",
     };
 
+    // Hide future tools
     [BTN.image, BTN.video].forEach((id) => {
       const b = $(id);
       if (b) b.style.display = "none";
     });
+
+    // Rename workflow button label to AI Campaign Builder
+    const wfBtn = $(BTN.workflow);
+    if (wfBtn) wfBtn.textContent = "AI Campaign Builder";
+
+    // Also rename the run button inside the workflow modal if present
+    const wfRun = $("runWorkflowBtn");
+    if (wfRun) wfRun.textContent = "Build Campaign";
 
     const allBtnIds = Object.values(BTN);
 
@@ -591,25 +607,72 @@
   })();
 
   // ==================================================
-  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (FIXED)
+  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (Campaign Builder added)
   // ==================================================
   (function wireAiExpertsDelegated() {
     if (window.__LR_AI_EXPERTS_DELEGATED__) return;
     window.__LR_AI_EXPERTS_DELEGATED__ = true;
 
+    // ---- Campaign Builder: turn a messy request into a professional campaign brief
+    function buildCampaignScenario(userText) {
+      const v = window.STORE?.lastVehicle || {};
+      const vehicleLine =
+        v?.title || v?.price || v?.mileage
+          ? `Vehicle Context (if relevant): ${[
+              v.title ? v.title : "",
+              v.price ? `Price ${v.price}` : "",
+              v.mileage ? `Miles ${v.mileage}` : "",
+              v.vin ? `VIN ${v.vin}` : "",
+              v.stock ? `Stock ${v.stock}` : "",
+            ]
+              .filter(Boolean)
+              .join(" • ")}`
+          : "";
+
+      return [
+        "ROLE: You are the Lot Rocket AI Campaign Builder (Campaign Architect).",
+        "GOAL: Capture buying appointments. Every step must drive a clear CTA to book an appointment, call, or DM.",
+        "STYLE: Professional, easy to follow, platform-specific, no fluff. Use short steps and checklists.",
+        "RULE: Ask 5 alignment questions first IF critical details are missing, then produce the campaign.",
+        "",
+        "DELIVERABLES REQUIRED:",
+        "1) Campaign Blueprint (Day-by-day).",
+        "2) Platform Assets: Facebook post(s), Marketplace listing, IG/TikTok hooks + scripts, DM/SMS scripts, email follow-ups.",
+        "3) Appointment Follow-Up Automation: multi-touch sequence (DM + SMS + email) with timing.",
+        "4) Objection handling and next steps.",
+        "",
+        vehicleLine ? vehicleLine : "",
+        vehicleLine ? "" : "",
+        "USER REQUEST / SITUATION:",
+        (userText || "").trim(),
+        "",
+        "IMPORTANT:",
+        "- Handle ALL buying situations (cash, finance, lease, challenged credit, prime, trade, upside-down, etc.).",
+        "- Default to Detroit/Michigan vibe if location not provided.",
+        "- Always include a clear appointment booking CTA and a fast-response DM script.",
+      ]
+        .filter((x) => x !== "")
+        .join("\n");
+    }
+
     const btnToType = {
+      // Objection
       runObjectionBtn: "objection",
       objectionRunBtn: "objection",
 
+      // Message
       runMessageBtn: "message",
       messageRunBtn: "message",
 
-      runWorkflowBtn: "workflow",
-      workflowRunBtn: "workflow",
+      // Campaign Builder (formerly workflow)
+      runWorkflowBtn: "campaign", // ✅ your real HTML button
+      // workflowRunBtn removed on purpose (legacy)
 
+      // Ask
       runAskBtn: "ask",
       askRunBtn: "ask",
 
+      // Car expert
       runCarExpertBtn: "car",
       carExpertRunBtn: "car",
     };
@@ -617,7 +680,7 @@
     const typeToEndpoint = {
       objection: "/api/ai/objection",
       message: "/api/ai/message",
-      workflow: "/api/ai/workflow",
+      campaign: "/api/ai/workflow", // ✅ keep server endpoint, but we send a professional campaign scenario
       ask: "/api/ai/ask",
       car: "/api/ai/car",
     };
@@ -625,7 +688,7 @@
     const typeToOutputId = {
       objection: "objectionOutput",
       message: "messageOutput",
-      workflow: "workflowOutput",
+      campaign: "workflowOutput",
       ask: "askOutput",
       car: "carExpertOutput",
     };
@@ -649,6 +712,7 @@
         (preferred ? modal?.querySelector(`#${CSS.escape(preferred)}`) : null) ||
         modal?.querySelector("[data-ai-output]") ||
         modal?.querySelector(".ai-output") ||
+        modal?.querySelector("pre") ||
         modal?.querySelector("div") ||
         null
       );
@@ -676,7 +740,11 @@
 
       if (type === "objection") return { objection: text, context: "" };
       if (type === "message") return { goal: "", tone: "", details: text };
-      if (type === "workflow") return { scenario: text };
+
+      // ✅ Campaign Builder lives on the same server route as workflow.
+      // We pack the "scenario" with a professional campaign brief.
+      if (type === "campaign") return { scenario: buildCampaignScenario(text) };
+
       if (type === "ask") return { question: text };
       if (type === "car") return { vehicle: vehicleToString(v), question: text };
       return { input: text };
@@ -751,7 +819,7 @@
       }
     });
 
-    console.log("✅ AI EXPERTS DELEGATED WIRED (payloads fixed)");
+    console.log("✅ AI EXPERTS DELEGATED WIRED (Campaign Builder ready)");
   })();
 
   // ==================================================
@@ -1253,7 +1321,9 @@
 
     ensureHoldingNote();
 
-    const photos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos.slice(0, 24) : [];
+    const photos = Array.isArray(STORE.holdingZonePhotos)
+      ? STORE.holdingZonePhotos.slice(0, 24)
+      : [];
     hz.innerHTML = "";
 
     if (!photos.length) {
@@ -1305,7 +1375,9 @@
     btn.addEventListener("click", () => {
       pressAnim(btn);
 
-      const picked = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.slice(0, 24) : [];
+      const picked = Array.isArray(STORE.step1Selected)
+        ? STORE.step1Selected.slice(0, 24)
+        : [];
       if (!picked.length) return alert("Select at least 1 photo first.");
 
       STORE.holdingZonePhotos = picked.slice(0, 24);
