@@ -40,12 +40,186 @@ document.addEventListener("DOMContentLoaded", () => {
     autoGrowTextarea(ta); // initial expand
   });
 
-  // ===============================
-  // AI BUTTON WIRING / FETCH LOGIC
-  // ===============================
-  // wireSocialAI()
-  // wireButtons()
-  // etc...
+// ==================================================
+// STEP 2 — AI SOCIAL BUTTONS (NEW POST / AUTO FILL)
+// Uses: POST /api/ai/social  { vehicle, geo?, platform? }
+// Expects server returns either {text:"..."} or {outputs:{...}} or flat keys.
+// ==================================================
+function safeText(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  try { return JSON.stringify(v, null, 2); } catch { return String(v); }
+}
+
+function setOut(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = safeText(val || "");
+  if (typeof autoGrowTextarea === "function") autoGrowTextarea(el);
+}
+
+function getVehicleForAI() {
+  // ✅ single source: STORE.vehicle (from boost)
+  // fallback to STORE.lastVehicle or STORE.boostVehicle if you used older names
+  return (window.STORE && (STORE.vehicle || STORE.lastVehicle || STORE.boostVehicle)) || {};
+}
+
+async function postJSON(url, body) {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const raw = await r.text();
+
+  if (!ct.includes("application/json")) {
+    console.warn("AI returned non-JSON:", url, r.status, raw.slice(0, 300));
+    throw new Error("AI returned non-JSON");
+  }
+
+  let data;
+  try { data = JSON.parse(raw); } catch { throw new Error("Bad JSON from AI"); }
+  return data;
+}
+
+function normalizeSocialResponse(data) {
+  // Accept a bunch of shapes safely
+  const d = data || {};
+  const outputs = d.outputs || d.result || d.data || d;
+
+  return {
+    facebook: outputs.facebook || outputs.fb || outputs.facebookPost || outputs.facebook_post || outputs.Facebook || "",
+    instagram: outputs.instagram || outputs.ig || outputs.instagramCaption || outputs.instagram_caption || outputs.Instagram || "",
+    tiktok: outputs.tiktok || outputs.tt || outputs.tikTok || outputs.tiktokCaption || outputs.tiktok_caption || outputs.TikTok || "",
+    linkedin: outputs.linkedin || outputs.li || outputs.linkedIn || outputs.linkedinPost || outputs.linkedin_post || outputs.LinkedIn || "",
+    x: outputs.x || outputs.twitter || outputs.tweet || outputs.xPost || outputs.twitterPost || outputs.Twitter || "",
+    dm: outputs.dm || outputs.text || outputs.sms || outputs.message || outputs.Text || "",
+    marketplace: outputs.marketplace || outputs.fbMarketplace || outputs.marketplaceListing || outputs.marketplace_listing || "",
+    hashtags: outputs.hashtags || outputs.hash || outputs.tags || outputs.Hashtags || "",
+  };
+}
+
+async function generateAllSocial() {
+  const vehicle = getVehicleForAI();
+  const payload = { vehicle };
+
+  const btns = [
+    "fbNewBtn","igNewBtn","ttNewBtn","liNewBtn","xNewBtn","dmNewBtn","mkNewBtn","hashNewBtn"
+  ].map((id) => document.getElementById(id)).filter(Boolean);
+
+  btns.forEach((b) => setBtnLoading?.(b, true, "Generating..."));
+
+  try {
+    const data = await postJSON("/api/ai/social", payload);
+    const out = normalizeSocialResponse(data);
+
+    setOut("fbOutput", out.facebook);
+    setOut("igOutput", out.instagram);
+    setOut("ttOutput", out.tiktok);
+    setOut("liOutput", out.linkedin);
+    setOut("xOutput", out.x);
+    setOut("dmOutput", out.dm);
+    setOut("marketplaceOutput", out.marketplace);
+    setOut("hashtagsOutput", out.hashtags);
+
+    // keep originals for emoji restore toggles
+    ["fbOutput","igOutput","ttOutput","liOutput","xOutput","dmOutput","marketplaceOutput","hashtagsOutput"]
+      .forEach((id) => {
+        const ta = document.getElementById(id);
+        if (ta) {
+          ta.__LR_EMOJI_ORIG__ = ta.value || "";
+          ta.__LR_EMOJI_STRIPPED__ = false;
+        }
+      });
+
+  } finally {
+    btns.forEach((b) => setBtnLoading?.(b, false));
+  }
+}
+
+async function generateOne(platformKey) {
+  const vehicle = getVehicleForAI();
+  const payload = { vehicle, platform: platformKey };
+
+  const map = {
+    fb: { out: "fbOutput", btn: "fbNewBtn" },
+    ig: { out: "igOutput", btn: "igNewBtn" },
+    tt: { out: "ttOutput", btn: "ttNewBtn" },
+    li: { out: "liOutput", btn: "liNewBtn" },
+    x:  { out: "xOutput",  btn: "xNewBtn" },
+    dm: { out: "dmOutput", btn: "dmNewBtn" },
+    mk: { out: "marketplaceOutput", btn: "mkNewBtn" },
+    hash:{ out: "hashtagsOutput", btn: "hashNewBtn" },
+  };
+
+  const cfg = map[platformKey];
+  if (!cfg) return;
+
+  const btn = document.getElementById(cfg.btn);
+  setBtnLoading?.(btn, true, "Generating...");
+
+  try {
+    const data = await postJSON("/api/ai/social", payload);
+    const out = normalizeSocialResponse(data);
+
+    // pick only the relevant field
+    const pick =
+      platformKey === "fb" ? out.facebook :
+      platformKey === "ig" ? out.instagram :
+      platformKey === "tt" ? out.tiktok :
+      platformKey === "li" ? out.linkedin :
+      platformKey === "x"  ? out.x :
+      platformKey === "dm" ? out.dm :
+      platformKey === "mk" ? out.marketplace :
+      platformKey === "hash" ? out.hashtags :
+      "";
+
+    setOut(cfg.out, pick);
+
+    const ta = document.getElementById(cfg.out);
+    if (ta) {
+      ta.__LR_EMOJI_ORIG__ = ta.value || "";
+      ta.__LR_EMOJI_STRIPPED__ = false;
+    }
+  } finally {
+    setBtnLoading?.(btn, false);
+  }
+}
+
+// ---- Wire "New Post" buttons (Step 2) ----
+const W = [
+  ["fbNewBtn","fb"],
+  ["igNewBtn","ig"],
+  ["ttNewBtn","tt"],
+  ["liNewBtn","li"],
+  ["xNewBtn","x"],
+  ["dmNewBtn","dm"],
+  ["mkNewBtn","mk"],
+  ["hashNewBtn","hash"],
+];
+
+W.forEach(([btnId, key]) => {
+  const b = document.getElementById(btnId);
+  if (!b) return;
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    generateOne(key);
+  });
+});
+
+// OPTIONAL: if you have a "Generate All" button, wire it here
+const genAllBtn =
+  document.getElementById("generateAllSocialBtn") ||
+  document.querySelector("[data-generate-all-social]");
+if (genAllBtn) {
+  genAllBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    generateAllSocial();
+  });
+}
+
 
 });
 
