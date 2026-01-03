@@ -820,20 +820,34 @@ if (!url) return alert("Paste a valid vehicle URL first.");
 
       console.log("🚀 BOOST:", url);
 
-      let res, data;
-      try {
-        res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`);
-        data = await res.json();
-      } catch (e) {
-        console.error("❌ BOOST FETCH FAILED", e);
-        alert("Boost request failed (network/json).");
-        return;
-      }
+let res, data;
+try {
+  res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`, {
+    cache: "no-store",
+  });
 
-      if (!data || !data.ok) {
-        alert(data?.error || "Boost failed");
-        return;
-      }
+  const text = await res.text(); // ALWAYS read as text first
+
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    console.error("❌ BOOST NON-JSON RESPONSE", res.status, text.slice(0, 400));
+    alert(`Boost failed: server returned non-JSON (status ${res.status}). Check console.`);
+    return;
+  }
+
+} catch (e) {
+  console.error("❌ BOOST FETCH FAILED", e);
+  alert("Boost request failed (network).");
+  return;
+}
+
+if (!res.ok || !data || !data.ok) {
+  console.error("❌ BOOST ERROR PAYLOAD", data);
+  alert(data?.error || `Boost failed (status ${res?.status || "?"})`);
+  return;
+}
+
 
       // ✅ vehicle details (server should send data.vehicle; fallback to title if present)
       STORE.lastVehicle = data.vehicle || { url, title: data.title || "" };
