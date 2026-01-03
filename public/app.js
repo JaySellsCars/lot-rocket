@@ -293,6 +293,94 @@ function normalizeDealerUrl(raw) {
     window.LR_TOOLS = { openModal, closeAll };
     console.log("✅ FLOATING TOOLS WIRED");
   })();
+// ==================================================
+// AI EXPERT WIRES — ONE PASS (OBJECTION, MESSAGE, WORKFLOW, ASK, CAR)
+// ==================================================
+(function wireAiExperts() {
+  if (window.__LR_AI_EXPERTS__) return;
+  window.__LR_AI_EXPERTS__ = true;
+
+  const byId = (id) => document.getElementById(id);
+
+  async function runAI({ btnId, inputId, outputId, endpoint }) {
+    const btn = byId(btnId);
+    const input = byId(inputId);
+    const output = byId(outputId);
+    if (!btn || !input || !output) return;
+
+    if (btn.__LR_BOUND__) return;
+    btn.__LR_BOUND__ = true;
+
+    btn.addEventListener("click", async () => {
+      const text = (input.value || "").trim();
+      if (!text) {
+        output.textContent = "Enter input first.";
+        return;
+      }
+
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = "Working…";
+      output.textContent = "Thinking…";
+
+      try {
+        const r = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input: text,
+            vehicle: window.STORE?.lastVehicle || {},
+          }),
+        });
+        const j = await r.json();
+        if (!j?.ok) throw new Error(j?.error || "AI failed");
+        output.textContent = j.text || "";
+      } catch (e) {
+        output.textContent = "AI ERROR: " + (e?.message || e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
+    });
+  }
+
+  runAI({
+    btnId: "runObjectionBtn",
+    inputId: "objectionInput",
+    outputId: "objectionOutput",
+    endpoint: "/api/ai/objection",
+  });
+
+  runAI({
+    btnId: "runMessageBtn",
+    inputId: "messageInput",
+    outputId: "messageOutput",
+    endpoint: "/api/ai/message",
+  });
+
+  runAI({
+    btnId: "runWorkflowBtn",
+    inputId: "workflowInput",
+    outputId: "workflowOutput",
+    endpoint: "/api/ai/workflow",
+  });
+
+  runAI({
+    btnId: "runAskBtn",
+    inputId: "askInput",
+    outputId: "askOutput",
+    endpoint: "/api/ai/ask",
+  });
+
+  runAI({
+    btnId: "runCarExpertBtn",
+    inputId: "carExpertInput",
+    outputId: "carExpertOutput",
+    endpoint: "/api/ai/car",
+  });
+
+  console.log("✅ AI EXPERTS WIRED");
+})();
 
   // ==================================================
   // HIDE "Send Selected to Social Ready" (next version)
