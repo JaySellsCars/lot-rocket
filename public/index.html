@@ -253,6 +253,38 @@
     </section>
 
   </main>
+<!-- AI WORKFLOW / CAMPAIGN BUILDER -->
+<section id="workflowModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Campaign Builder</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
+
+    <div class="side-modal-body">
+      <label class="field">
+        <span>Campaign Objective</span>
+        <textarea
+          id="workflowInput"
+          placeholder="Example: Book 5 appointments in 72 hours for a used SUV"
+          rows="5"
+        ></textarea>
+      </label>
+
+      <div class="btn-row" style="margin-top:.75rem;">
+        <button id="runWorkflowBtn" class="regen-btn" type="button">
+          Build Campaign
+        </button>
+      </div>
+
+      <pre
+        id="workflowOutput"
+        class="summary-box"
+        style="margin-top:1rem; white-space:pre-wrap;"
+      ></pre>
+    </div>
+  </div>
+</section>
 
   <!-- ========================= -->
   <!-- SIDE TOOL MODALS (OVERLAYS) -->
