@@ -651,3 +651,13 @@ textarea.ai-response {
   resize: none !important;
   height: auto;
 }
+/* STEP 2 — AUTO EXPAND SOCIAL OUTPUTS */
+.step2-card textarea {
+  width: 100%;
+  min-height: 120px;
+  height: auto;
+  resize: none;
+  overflow: hidden;      /* CRITICAL */
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
