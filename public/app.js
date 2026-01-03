@@ -1637,30 +1637,36 @@ function wireAiFollowups() {
   });
 }
 
-  // --------------------------------------------------
-  // SOCIAL READY WIRES (ONE PASS)
-  // --------------------------------------------------
-  wireSocialNav();
-  wireZipButton();
-  renderSocialStrip();
+// --------------------------------------------------
+// SOCIAL READY WIRES (ONE PASS)
+// --------------------------------------------------
+wireSocialNav();
+wireZipButton();
+renderSocialStrip();
 
-  // close modals + wire calculators (ONE PASS)
-  (function initToolsOnce() {
-    if (window.__LR_TOOLS_INIT__) return;
-    window.__LR_TOOLS_INIT__ = true;
+// --------------------------------------------------
+// AI FOLLOW-UP WIRES (ONE PASS) ✅ ADD THIS
+// --------------------------------------------------
+wireAiFollowups();
 
-    if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
-      window.LR_TOOLS.closeAll();
-    }
+// close modals + wire calculators (ONE PASS)
+(function initToolsOnce() {
+  if (window.__LR_TOOLS_INIT__) return;
+  window.__LR_TOOLS_INIT__ = true;
 
-    wirePaymentCalculator();
-    wireIncomeCalcDirect();
+  if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
+    window.LR_TOOLS.closeAll();
+  }
 
-    console.log("✅ TOOLS INIT COMPLETE");
-  })();
+  wirePaymentCalculator();
+  wireIncomeCalcDirect();
 
-  // --------------------------------------------------
-  // FINAL
-  // --------------------------------------------------
-  console.log("✅ APP READY");
+  console.log("✅ TOOLS INIT COMPLETE");
 })();
+
+// --------------------------------------------------
+// FINAL
+// --------------------------------------------------
+console.log("✅ APP READY");
+})();
+
