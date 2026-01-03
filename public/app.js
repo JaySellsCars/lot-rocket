@@ -1177,6 +1177,116 @@
 
     console.log("✅ PAYMENT CALC WIRED");
   }
+// ===============================
+// INCOME CALCULATOR (SAFE / ISOLATED)
+// Inputs: #incomeMtd, #incomeLastPayDate
+// Button: #incomeCalcBtn
+// Output: #incomeOutput
+// Modal: #incomeModal
+// ===============================
+function wireIncomeCalcDirect() {
+  const modal = document.getElementById("incomeModal");
+  if (!modal) return;
+
+  const $in = (sel) => modal.querySelector(sel);
+
+  const mtdEl = $in("#incomeMtd");
+  const dateEl = $in("#incomeLastPayDate");
+  const btn = $in("#incomeCalcBtn");
+  const out = $in("#incomeOutput");
+
+  if (!mtdEl || !dateEl || !btn || !out) return;
+  if (btn.__LR_BOUND__) return;
+  btn.__LR_BOUND__ = true;
+
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[$,%\s,]/g, "").trim();
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const money = (n) =>
+    `$${Number(n || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  function daysInYear(year) {
+    const start = new Date(year, 0, 1);
+    const end = new Date(year + 1, 0, 1);
+    return Math.round((end - start) / 86400000);
+  }
+
+  function clamp(n, a, b) {
+    return Math.max(a, Math.min(b, n));
+  }
+
+  function calc() {
+    const grossToDate = num(mtdEl.value);
+    const payDateRaw = (dateEl.value || "").trim();
+
+    if (!grossToDate || !payDateRaw) {
+      out.textContent = "Enter Gross to date and your last pay date.";
+      return;
+    }
+
+    const payDate = new Date(payDateRaw + "T12:00:00");
+    if (Number.isNaN(payDate.getTime())) {
+      out.textContent = "Invalid pay date.";
+      return;
+    }
+
+    const year = payDate.getFullYear();
+    const yearStart = new Date(year, 0, 1, 12, 0, 0);
+    const yearEnd = new Date(year + 1, 0, 1, 12, 0, 0);
+
+    if (payDate < yearStart || payDate >= yearEnd) {
+      out.textContent = "Pay date must be within the same year you’re calculating.";
+      return;
+    }
+
+    const elapsedDays = Math.max(1, Math.floor((payDate - yearStart) / 86400000) + 1); // inclusive day count
+    const totalDays = daysInYear(year);
+
+    const fractionOfYear = clamp(elapsedDays / totalDays, 1 / totalDays, 1);
+    const weeksIntoYear = elapsedDays / 7;
+
+    // Annualize based on fraction of year elapsed
+    const estAnnual = grossToDate / fractionOfYear;
+    const avgWeekly = estAnnual / 52;
+    const avgMonthly = estAnnual / 12;
+
+    out.textContent = [
+      `Estimated Annual Gross: ${money(estAnnual)}`,
+      `Weeks into year: ${weeksIntoYear.toFixed(1)} (as of ${payDateRaw})`,
+      `Gross-to-date: ${money(grossToDate)}`,
+      "",
+      `Average Weekly: ${money(avgWeekly)}`,
+      `Average Monthly: ${money(avgMonthly)}`,
+      "",
+      "Note: This annualizes your year-to-date earnings based on how far into the year your last pay date is.",
+    ].join("\n");
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    calc();
+  });
+
+  // Enter submits from either input
+  modal.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const t = e.target;
+      if (t && (t === mtdEl || t === dateEl)) {
+        e.preventDefault();
+        calc();
+      }
+    }
+  });
+
+  console.log("✅ INCOME CALC WIRED");
+}
 
   // --------------------------------------------------
   // STEP 3: HOLDING ZONE NOTE + RENDER (up to 24) + DBLCLICK → SOCIAL READY
