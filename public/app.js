@@ -1571,6 +1571,71 @@
       }
     });
   }
+// ===============================
+// UNIVERSAL AI FOLLOW-UP (ALL MODALS)
+// ===============================
+function wireAiFollowups() {
+  const isQuestiony = (t) => {
+    t = String(t || "");
+    return (
+      /\n\s*1[\)\.]\s.+\n\s*2[\)\.]\s.+\n\s*3[\)\.]\s.+/m.test(t) ||
+      /questions?/i.test(t) ||
+      /need to know/i.test(t) ||
+      /please answer/i.test(t) ||
+      /clarify/i.test(t) ||
+      /alignment/i.test(t)
+    );
+  };
+
+  // modalId, mainInputId, runBtnId, outputElId
+  const configs = [
+    ["workflowModal", "workflowInput", "runWorkflowBtn", "workflowOutput"],
+    ["objectionModal", "objectionInput", "runObjectionBtn", "objectionOutput"],
+    ["messageModal", "messageInput", "runMessageBtn", "messageOutput"],
+    ["askModal", "askInput", "runAskBtn", "askOutput"],
+    ["carExpertModal", "carExpertInput", "runCarExpertBtn", "carExpertOutput"],
+  ];
+
+  configs.forEach(([modalId, inputId, runBtnId, outputId]) => {
+    const modal = document.getElementById(modalId);
+    const mainInput = document.getElementById(inputId);
+    const runBtn = document.getElementById(runBtnId);
+    const outEl = document.getElementById(outputId);
+
+    if (!modal || !mainInput || !runBtn || !outEl) return;
+
+    const followWrap = modal.querySelector("[data-ai-followup]");
+    const followInput = modal.querySelector("[data-ai-followup-input]");
+    const followBtn = modal.querySelector("[data-ai-followup-btn]");
+
+    if (!followWrap || !followInput || !followBtn) return;
+
+    const showIfNeeded = () => {
+      const text =
+        outEl.textContent || outEl.innerText || outEl.value || "";
+      followWrap.style.display = isQuestiony(text) ? "block" : "none";
+    };
+
+    // Watch output changes
+    const mo = new MutationObserver(showIfNeeded);
+    mo.observe(outEl, { childList: true, subtree: true, characterData: true });
+
+    // Continue merges follow-up into main input and re-runs
+    followBtn.addEventListener("click", () => {
+      const extra = (followInput.value || "").trim();
+      if (!extra) return;
+
+      const base = (mainInput.value || "").trim();
+      mainInput.value = `${base}\n\nFOLLOW-UP / ANSWERS:\n${extra}\n`;
+      followInput.value = "";
+
+      runBtn.click();
+    });
+
+    // initial
+    showIfNeeded();
+  });
+}
 
   // --------------------------------------------------
   // SOCIAL READY WIRES (ONE PASS)
