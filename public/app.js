@@ -16,6 +16,38 @@ function autoGrowTextarea(el) {
   el.style.height = "auto";
   el.style.height = el.scrollHeight + "px";
 }
+document.addEventListener("DOMContentLoaded", () => {
+
+  // helpers ($, q, on) already defined above ✔️
+
+  // ===============================
+  // STEP 2 AUTO-EXPAND WIRING  ✅ (#3 GOES HERE)
+  // ===============================
+  [
+    "fbOutput",
+    "igOutput",
+    "ttOutput",
+    "liOutput",
+    "xOutput",
+    "dmOutput",
+    "marketplaceOutput",
+    "hashtagsOutput",
+  ].forEach((id) => {
+    const ta = document.getElementById(id);
+    if (!ta) return;
+
+    ta.addEventListener("input", () => autoGrowTextarea(ta));
+    autoGrowTextarea(ta); // initial expand
+  });
+
+  // ===============================
+  // AI BUTTON WIRING / FETCH LOGIC
+  // ===============================
+  // wireSocialAI()
+  // wireButtons()
+  // etc...
+
+});
 
   // ==================================================
   // UI FX HELPERS (PRESS + LOADING)
