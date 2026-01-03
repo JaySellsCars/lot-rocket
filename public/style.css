@@ -864,3 +864,68 @@ textarea.ai-response {
 .side-modal [data-close]:active {
   transform: scale(0.96);
 }
+/* =========================================
+   PAYMENT MODAL: 2-column layout (desktop)
+   Hide State/Rebate (next version)
+   ========================================= */
+
+#paymentModal .side-modal-content {
+  max-width: 980px;           /* wider so we can fit 2 columns */
+  width: min(980px, 96vw);
+}
+
+/* form/body wrapper: force a 2-col grid */
+#paymentModal .side-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* 2 columns */
+  gap: 14px 16px;
+  align-items: start;
+}
+
+/* If your body contains a <form>, grid that instead */
+#paymentModal .side-modal-body form {
+  display: contents; /* lets children participate in the grid */
+}
+
+/* Make the output span full width at the bottom */
+#paymentModal #payOutput,
+#paymentModal [id*="payOutput"] {
+  grid-column: 1 / -1;
+  white-space: pre-wrap;
+  margin-top: 6px;
+}
+
+/* Make the Calculate button span full width */
+#paymentModal #payCalcBtn,
+#paymentModal [id*="payCalcBtn"] {
+  grid-column: 1 / -1;
+}
+
+/* Hide State + Rebate fields (label + input/select) */
+#paymentModal #payState,
+#paymentModal #payRebate {
+  display: none !important;
+}
+
+/* Try to hide their labels too (common patterns) */
+#paymentModal label[for="payState"],
+#paymentModal label[for="payRebate"] {
+  display: none !important;
+}
+
+/* If you have wrappers around inputs, hide wrappers via :has() (Chrome supports) */
+#paymentModal .form-row:has(#payState),
+#paymentModal .form-row:has(#payRebate),
+#paymentModal .field:has(#payState),
+#paymentModal .field:has(#payRebate),
+#paymentModal .input-group:has(#payState),
+#paymentModal .input-group:has(#payRebate) {
+  display: none !important;
+}
+
+/* Mobile: fall back to 1 column */
+@media (max-width: 720px) {
+  #paymentModal .side-modal-body {
+    grid-template-columns: 1fr;
+  }
+}
