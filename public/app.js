@@ -1542,7 +1542,11 @@ function wireIncomeCalcDirect() {
   wireZipButton();
   renderSocialStrip();
 
-  // close modals on boot
+// close modals + wire calculators (ONE PASS)
+(function initToolsOnce() {
+  if (window.__LR_TOOLS_INIT__) return;
+  window.__LR_TOOLS_INIT__ = true;
+
   if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
     window.LR_TOOLS.closeAll();
   }
@@ -1551,5 +1555,10 @@ function wireIncomeCalcDirect() {
     wirePaymentCalculator();
   }
 
-  console.log("✅ APP READY");
+  if (typeof wireIncomeCalcDirect === "function") {
+    wireIncomeCalcDirect();
+  }
+
+  console.log("✅ TOOLS INIT COMPLETE");
 })();
+
