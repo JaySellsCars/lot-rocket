@@ -1131,6 +1131,129 @@
       downloadLockedZip();
     });
   }
+// ===============================
+// PAYMENT CALCULATOR (SAFE / ISOLATED)
+// Uses server: POST /api/payment-helper
+// Modal: #paymentModal
+// Inputs: payPrice, payDown, payTrade, payPayoff, payApr OR payRate, payTerm, payTax, payFees, payState, payRebate
+// Output: #payOutput
+// Button: #payCalcBtn
+// ===============================
+function wirePaymentCalculator() {
+  const modal = document.getElementById("paymentModal");
+  if (!modal) return;
+
+  const byId = (id) => document.getElementById(id);
+
+  const pickInside = (root, selectors) => {
+    for (const sel of selectors) {
+      const el = root.querySelector(sel);
+      if (el) return el;
+    }
+    return null;
+  };
+
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[$,%\s,]/g, "").trim();
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const collectPaymentBody = (root) => ({
+    price: num(pickInside(root, ["#payPrice", "input[name='price']", "#price"])?.value),
+    down: num(pickInside(root, ["#payDown", "input[name='down']", "#down"])?.value),
+    trade: num(pickInside(root, ["#payTrade", "input[name='trade']", "#trade"])?.value),
+    payoff: num(pickInside(root, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
+
+    // ✅ support BOTH ids (your HTML currently uses payRate)
+    rate: num(pickInside(root, ["#payApr", "#payRate", "input[name='apr']", "#apr", "#rate"])?.value),
+
+    term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
+    tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
+    fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
+
+    state: String(
+      pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
+    )
+      .trim()
+      .toUpperCase(),
+
+    rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
+  });
+
+  const btn = byId("payCalcBtn") || modal.querySelector("#payCalcBtn");
+  const out = byId("payOutput") || modal.querySelector("#payOutput");
+
+  if (!btn || !out) return;
+  if (btn.__LR_BOUND__) return;
+  btn.__LR_BOUND__ = true;
+
+  const setLoading = (on) => {
+    btn.disabled = !!on;
+    if (on) {
+      btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+      btn.textContent = "Calculating…";
+    } else {
+      btn.textContent = btn.__LR_OLD_TEXT__ || "Calculate";
+    }
+  };
+
+  async function runPaymentCalc() {
+    const body = collectPaymentBody(modal);
+
+    // hard validation (client-side)
+    if (!body.price || !body.term) {
+      out.textContent = "Enter at least Price and Term (months).";
+      return;
+    }
+
+    setLoading(true);
+    out.textContent = "Working…";
+
+    try {
+      const r = await fetch("/api/payment-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const j = await r.json().catch(() => null);
+
+      if (!r.ok) {
+        const msg = j?.message || j?.error || `Request failed (${r.status})`;
+        out.textContent = msg;
+        return;
+      }
+
+      // Prefer breakdownText (rich), fallback to result
+      out.textContent = j?.breakdownText || j?.result || "Done.";
+    } catch (e) {
+      out.textContent = "Network error. Check server logs / endpoint.";
+      console.error("payment calc failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    runPaymentCalc();
+  });
+
+  // Enter key submits from any input in the modal
+  modal.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        runPaymentCalc();
+      }
+    }
+  });
+
+  console.log("✅ PAYMENT CALC WIRED");
+}
 
   // --------------------------------------------------
   // STEP 3: HOLDING ZONE NOTE + RENDER (up to 24) + DBLCLICK → SOCIAL READY
@@ -1393,6 +1516,9 @@
   if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
     window.LR_TOOLS.closeAll();
   }
+if (typeof wirePaymentCalculator === "function") {
+  wirePaymentCalculator();
+}
 
   console.log("✅ APP READY");
 })();
