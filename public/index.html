@@ -295,22 +295,67 @@
   </section>
 
   <!-- PAYMENT CALCULATOR -->
-  <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Payment Calculator</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <label class="field"><span>Price</span><input id="payPrice" type="number" step="0.01" placeholder="e.g. 25000" /></label>
-        <label class="field"><span>Down Payment</span><input id="payDown" type="number" step="0.01" placeholder="e.g. 2000" /></label>
-        <label class="field"><span>APR %</span><input id="payApr" type="number" step="0.01" placeholder="e.g. 9.99" /></label>
-        <label class="field"><span>Term (months)</span><input id="payTerm" type="number" step="1" placeholder="e.g. 72" /></label>
-        <button id="payCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Calculate</button>
-        <div id="payOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-      </div>
+<section id="paymentModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Payment Calculator</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
     </div>
-  </section>
+
+    <div class="side-modal-body">
+
+      <label class="field"><span>Price</span>
+        <input id="payPrice" type="number" step="0.01" placeholder="e.g. 25000" />
+      </label>
+
+      <label class="field"><span>Down Payment</span>
+        <input id="payDown" type="number" step="0.01" placeholder="e.g. 2000" />
+      </label>
+
+      <!-- ✅ OLD FEATURE: Trade + Payoff -->
+      <label class="field"><span>Trade-In Value</span>
+        <input id="payTrade" type="number" step="0.01" placeholder="e.g. 8000" />
+      </label>
+
+      <label class="field"><span>Payoff Owed on Trade</span>
+        <input id="payPayoff" type="number" step="0.01" placeholder="e.g. 4500" />
+      </label>
+
+      <label class="field"><span>APR %</span>
+        <input id="payApr" type="number" step="0.01" placeholder="e.g. 9.99" />
+      </label>
+
+      <label class="field"><span>Term (months)</span>
+        <input id="payTerm" type="number" step="1" placeholder="e.g. 72" />
+      </label>
+
+      <label class="field"><span>Tax %</span>
+        <input id="payTax" type="number" step="0.01" placeholder="e.g. 6.00" />
+      </label>
+
+      <!-- ✅ OLD FEATURE: Shared Fees/Add-ons (dealer fees + warranties) -->
+      <label class="field"><span>Dealer Fees + Warranties/Add-ons</span>
+        <input id="payFees" type="number" step="0.01" placeholder="e.g. 1495" />
+      </label>
+
+      <!-- optional but recommended (your endpoint supports it) -->
+      <label class="field"><span>State</span>
+        <input id="payState" type="text" maxlength="2" placeholder="MI" />
+      </label>
+
+      <label class="field"><span>Rebate</span>
+        <input id="payRebate" type="number" step="0.01" placeholder="e.g. 0" />
+      </label>
+
+      <button id="payCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">
+        Calculate
+      </button>
+
+      <div id="payOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+    </div>
+  </div>
+</section>
+
 
   <!-- INCOME CALCULATOR -->
   <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
