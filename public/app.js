@@ -1,227 +1,39 @@
-// /public/app.js  — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10001
+///// /public/app.js — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10001
 (async () => {
   const V = "10001";
   console.log("🚀 APP BOOT OK —", V);
 
   const DOC = document;
   const $ = (id) => DOC.getElementById(id);
+  const q = (sel, root = DOC) => root.querySelector(sel);
+  const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
 
+  // --------------------------------------------------
+  // DOM READY (works whether script loads in <head> or end of <body>)
+  // --------------------------------------------------
+  const domReady = () =>
+    new Promise((res) => {
+      if (DOC.readyState === "loading") DOC.addEventListener("DOMContentLoaded", res, { once: true });
+      else res();
+    });
+  await domReady();
+
+  // --------------------------------------------------
+  // SAFE GLOBAL STORE
+  // --------------------------------------------------
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
-// ==================================================
-// AUTO-GROW TEXTAREA (SOCIAL POSTS / COACHES)
-// ==================================================
-function autoGrowTextarea(el) {
-  if (!el || el.tagName !== "TEXTAREA") return;
-  el.style.height = "auto";
-  el.style.height = el.scrollHeight + "px";
-}
-document.addEventListener("DOMContentLoaded", () => {
 
-  // helpers ($, q, on) already defined above ✔️
-
-  // ===============================
-  // STEP 2 AUTO-EXPAND WIRING  ✅ (#3 GOES HERE)
-  // ===============================
-  [
-    "fbOutput",
-    "igOutput",
-    "ttOutput",
-    "liOutput",
-    "xOutput",
-    "dmOutput",
-    "marketplaceOutput",
-    "hashtagsOutput",
-  ].forEach((id) => {
-    const ta = document.getElementById(id);
-    if (!ta) return;
-
-    ta.addEventListener("input", () => autoGrowTextarea(ta));
-    autoGrowTextarea(ta); // initial expand
-  });
-
-// ==================================================
-// STEP 2 — AI SOCIAL BUTTONS (NEW POST / AUTO FILL)
-// Uses: POST /api/ai/social  { vehicle, geo?, platform? }
-// Expects server returns either {text:"..."} or {outputs:{...}} or flat keys.
-// ==================================================
-function safeText(v) {
-  if (v == null) return "";
-  if (typeof v === "string") return v;
-  try { return JSON.stringify(v, null, 2); } catch { return String(v); }
-}
-
-function setOut(id, val) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.value = safeText(val || "");
-  if (typeof autoGrowTextarea === "function") autoGrowTextarea(el);
-}
-
-function getVehicleForAI() {
-  // ✅ single source: STORE.vehicle (from boost)
-  // fallback to STORE.lastVehicle or STORE.boostVehicle if you used older names
-  return (window.STORE && (STORE.vehicle || STORE.lastVehicle || STORE.boostVehicle)) || {};
-}
-
-async function postJSON(url, body) {
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body || {}),
-  });
-
-  const ct = (r.headers.get("content-type") || "").toLowerCase();
-  const raw = await r.text();
-
-  if (!ct.includes("application/json")) {
-    console.warn("AI returned non-JSON:", url, r.status, raw.slice(0, 300));
-    throw new Error("AI returned non-JSON");
+  // ==================================================
+  // AUTO-GROW TEXTAREA (SOCIAL POSTS / COACHES)
+  // ==================================================
+  function autoGrowTextarea(el) {
+    if (!el || el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.overflow = "hidden";
+    el.style.resize = "none";
+    el.style.height = (el.scrollHeight || 0) + "px";
   }
-
-  let data;
-  try { data = JSON.parse(raw); } catch { throw new Error("Bad JSON from AI"); }
-  return data;
-}
-
-function normalizeSocialResponse(data) {
-  // Accept a bunch of shapes safely
-  const d = data || {};
-  const outputs = d.outputs || d.result || d.data || d;
-
-  return {
-    facebook: outputs.facebook || outputs.fb || outputs.facebookPost || outputs.facebook_post || outputs.Facebook || "",
-    instagram: outputs.instagram || outputs.ig || outputs.instagramCaption || outputs.instagram_caption || outputs.Instagram || "",
-    tiktok: outputs.tiktok || outputs.tt || outputs.tikTok || outputs.tiktokCaption || outputs.tiktok_caption || outputs.TikTok || "",
-    linkedin: outputs.linkedin || outputs.li || outputs.linkedIn || outputs.linkedinPost || outputs.linkedin_post || outputs.LinkedIn || "",
-    x: outputs.x || outputs.twitter || outputs.tweet || outputs.xPost || outputs.twitterPost || outputs.Twitter || "",
-    dm: outputs.dm || outputs.text || outputs.sms || outputs.message || outputs.Text || "",
-    marketplace: outputs.marketplace || outputs.fbMarketplace || outputs.marketplaceListing || outputs.marketplace_listing || "",
-    hashtags: outputs.hashtags || outputs.hash || outputs.tags || outputs.Hashtags || "",
-  };
-}
-
-async function generateAllSocial() {
-  const vehicle = getVehicleForAI();
-  const payload = { vehicle };
-
-  const btns = [
-    "fbNewBtn","igNewBtn","ttNewBtn","liNewBtn","xNewBtn","dmNewBtn","mkNewBtn","hashNewBtn"
-  ].map((id) => document.getElementById(id)).filter(Boolean);
-
-  btns.forEach((b) => setBtnLoading?.(b, true, "Generating..."));
-
-  try {
-    const data = await postJSON("/api/ai/social", payload);
-    const out = normalizeSocialResponse(data);
-
-    setOut("fbOutput", out.facebook);
-    setOut("igOutput", out.instagram);
-    setOut("ttOutput", out.tiktok);
-    setOut("liOutput", out.linkedin);
-    setOut("xOutput", out.x);
-    setOut("dmOutput", out.dm);
-    setOut("marketplaceOutput", out.marketplace);
-    setOut("hashtagsOutput", out.hashtags);
-
-    // keep originals for emoji restore toggles
-    ["fbOutput","igOutput","ttOutput","liOutput","xOutput","dmOutput","marketplaceOutput","hashtagsOutput"]
-      .forEach((id) => {
-        const ta = document.getElementById(id);
-        if (ta) {
-          ta.__LR_EMOJI_ORIG__ = ta.value || "";
-          ta.__LR_EMOJI_STRIPPED__ = false;
-        }
-      });
-
-  } finally {
-    btns.forEach((b) => setBtnLoading?.(b, false));
-  }
-}
-
-async function generateOne(platformKey) {
-  const vehicle = getVehicleForAI();
-  const payload = { vehicle, platform: platformKey };
-
-  const map = {
-    fb: { out: "fbOutput", btn: "fbNewBtn" },
-    ig: { out: "igOutput", btn: "igNewBtn" },
-    tt: { out: "ttOutput", btn: "ttNewBtn" },
-    li: { out: "liOutput", btn: "liNewBtn" },
-    x:  { out: "xOutput",  btn: "xNewBtn" },
-    dm: { out: "dmOutput", btn: "dmNewBtn" },
-    mk: { out: "marketplaceOutput", btn: "mkNewBtn" },
-    hash:{ out: "hashtagsOutput", btn: "hashNewBtn" },
-  };
-
-  const cfg = map[platformKey];
-  if (!cfg) return;
-
-  const btn = document.getElementById(cfg.btn);
-  setBtnLoading?.(btn, true, "Generating...");
-
-  try {
-    const data = await postJSON("/api/ai/social", payload);
-    const out = normalizeSocialResponse(data);
-
-    // pick only the relevant field
-    const pick =
-      platformKey === "fb" ? out.facebook :
-      platformKey === "ig" ? out.instagram :
-      platformKey === "tt" ? out.tiktok :
-      platformKey === "li" ? out.linkedin :
-      platformKey === "x"  ? out.x :
-      platformKey === "dm" ? out.dm :
-      platformKey === "mk" ? out.marketplace :
-      platformKey === "hash" ? out.hashtags :
-      "";
-
-    setOut(cfg.out, pick);
-
-    const ta = document.getElementById(cfg.out);
-    if (ta) {
-      ta.__LR_EMOJI_ORIG__ = ta.value || "";
-      ta.__LR_EMOJI_STRIPPED__ = false;
-    }
-  } finally {
-    setBtnLoading?.(btn, false);
-  }
-}
-
-// ---- Wire "New Post" buttons (Step 2) ----
-const W = [
-  ["fbNewBtn","fb"],
-  ["igNewBtn","ig"],
-  ["ttNewBtn","tt"],
-  ["liNewBtn","li"],
-  ["xNewBtn","x"],
-  ["dmNewBtn","dm"],
-  ["mkNewBtn","mk"],
-  ["hashNewBtn","hash"],
-];
-
-W.forEach(([btnId, key]) => {
-  const b = document.getElementById(btnId);
-  if (!b) return;
-  b.addEventListener("click", (e) => {
-    e.preventDefault();
-    generateOne(key);
-  });
-});
-
-// OPTIONAL: if you have a "Generate All" button, wire it here
-const genAllBtn =
-  document.getElementById("generateAllSocialBtn") ||
-  document.querySelector("[data-generate-all-social]");
-if (genAllBtn) {
-  genAllBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    generateAllSocial();
-  });
-}
-
-
-
 
   // ==================================================
   // UI FX HELPERS (PRESS + LOADING)
@@ -233,32 +45,10 @@ if (genAllBtn) {
     el.classList.add("lr-press");
     setTimeout(() => el.classList.remove("lr-press"), 220);
   }
-// Auto-grow any AI output containers whenever content changes
-(function wireAutoGrowObserver() {
-  if (window.__LR_AUTOGROW__) return;
-  window.__LR_AUTOGROW__ = true;
 
-  const targets = [
-    "socialOutput",
-    "objectionOutput",
-    "messageOutput",
-    "workflowOutput",
-    "askOutput",
-    "carOutput",
-  ];
-
-  const obs = new MutationObserver(() => {
-    targets.forEach((id) => autoGrow(document.getElementById(id)));
-    document.querySelectorAll("textarea").forEach(autoGrow);
-  });
-
-  obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-})();
-
-
-  function setBtnLoading(btn, on, label) {
+  function setBtnLoading(btn, onState, label) {
     if (!btn) return;
-    if (on) {
+    if (onState) {
       btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
       if (label) btn.textContent = label;
       btn.disabled = true;
@@ -269,66 +59,92 @@ if (genAllBtn) {
       btn.classList.remove("lr-loading");
     }
   }
-function normalizeDealerUrl(raw) {
-  let s = (raw || "").trim();
 
-  // kill weird copy/paste prefixes like "whttps://"
-  s = s.replace(/^w+https?:\/\//i, "https://");
-  s = s.replace(/^w+https?:/i, "https:");
+  function flashBtn(btn, label = "Done", ms = 700) {
+    if (!btn) return;
+    const old = btn.textContent;
+    btn.textContent = label;
+    setTimeout(() => (btn.textContent = old), ms);
+  }
 
-  // remove accidental duplicates like "https://https://"
-  s = s.replace(/^https?:\/\/https?:\/\//i, "https://");
+  // ==================================================
+  // AUTO-GROW OBSERVER (SAFE)
+  // ==================================================
+  (function wireAutoGrowObserver() {
+    if (window.__LR_AUTOGROW__) return;
+    window.__LR_AUTOGROW__ = true;
 
-  // if someone pasted "www.site.com/..." without scheme
-  if (!/^https?:\/\//i.test(s) && /^www\./i.test(s)) s = "https://" + s;
+    const obs = new MutationObserver(() => {
+      DOC.querySelectorAll("textarea").forEach((ta) => autoGrowTextarea(ta));
+    });
 
-  // strip spaces
-  s = s.replace(/\s+/g, "");
+    obs.observe(DOC.body, { childList: true, subtree: true, characterData: true });
+  })();
 
-  // final sanity: if it STILL doesn’t start with http, reject
-  if (!/^https?:\/\//i.test(s)) return "";
-  return s;
-}
-function normalizeDealerUrl(raw) {
-  let s = String(raw || "").trim();
+  // ==================================================
+  // STEP 2 AUTO-EXPAND WIRING
+  // ==================================================
+  const STEP2_TEXTAREAS = [
+    "fbOutput",
+    "igOutput",
+    "ttOutput",
+    "liOutput",
+    "xOutput",
+    "dmOutput",
+    "marketplaceOutput",
+    "hashtagsOutput",
+  ];
 
-  // remove quotes/spaces
-  s = s.replace(/^["']|["']$/g, "").trim();
+  STEP2_TEXTAREAS.forEach((id) => {
+    const ta = $(id);
+    if (!ta) return;
+    if (!ta.__LR_AUTOGROW_BOUND__) {
+      ta.__LR_AUTOGROW_BOUND__ = true;
+      ta.addEventListener("input", () => autoGrowTextarea(ta));
+    }
+    autoGrowTextarea(ta);
+  });
 
-  // fix common bad paste: whttps:// or whttp://
-  s = s.replace(/^whttps?:\/\//i, (m) => m.slice(1)); // remove leading "w"
+  // ==================================================
+  // URL NORMALIZER (ONE TRUE FUNCTION)
+  // ==================================================
+  function normalizeDealerUrl(raw) {
+    let s = (raw || "").toString().trim();
+    s = s.replace(/\s+/g, "");
 
-  // fix double protocol paste: https://https://...
-  s = s.replace(/^(https?:\/\/)(https?:\/\/)/i, "$2");
+    // keep LAST http(s) if user pasted double protocol junk
+    const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
+    if (lastHttp > 0) s = s.slice(lastHttp);
 
-  // if user pasted "www." only
-  if (/^www\./i.test(s)) s = "https://" + s;
+    // common accidental prefix
+    s = s.replace(/^whttps:\/\//i, "https://");
+    s = s.replace(/^whttp:\/\//i, "http://");
 
-  // if missing protocol entirely
-  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+    // if missing scheme but looks like a domain
+    if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) {
+      s = "https://" + s;
+    }
 
-  return s;
-}
+    return s;
+  }
 
   // ==================================================
   // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
   // ==================================================
   if (!Array.isArray(STORE.step1Selected)) STORE.step1Selected = [];
-  if ("_step1Selected" in STORE) {
-    console.warn("🧨 Removing legacy STORE._step1Selected");
-    try { delete STORE._step1Selected; } catch (e) { STORE._step1Selected = undefined; }
-  }
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
   STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
 
   // ==================================================
-  // STEP 2 OUTPUT SETTERS
+  // STEP 2 OUTPUT SETTERS + SUMMARY
   // ==================================================
   function setVal(id, v) {
     const el = $(id);
     if (!el) return;
     el.value = (v ?? "").toString();
     el.dispatchEvent(new Event("input", { bubbles: true }));
+    autoGrowTextarea(el);
   }
 
   function renderSummary(vehicle) {
@@ -346,15 +162,34 @@ function normalizeDealerUrl(raw) {
     `;
   }
 
+  // ==================================================
+  // STEP 2 AI SOCIAL (ONE SYSTEM: /api/ai/social expects {ok,text})
+  // ==================================================
   async function aiPost(platform) {
-    const vehicle = STORE.lastVehicle || {};
+    const vehicle = STORE.lastVehicle || STORE.vehicle || {};
     const r = await fetch("/api/ai/social", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ vehicle, platform }),
     });
-    const j = await r.json();
-    if (!j?.ok) throw new Error(j?.error || "AI failed");
+
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const raw = await r.text();
+
+    if (!ct.includes("application/json")) {
+      console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 200) });
+      throw new Error("AI returned non-JSON");
+    }
+
+    let j;
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      throw new Error("Bad JSON from AI");
+    }
+
+    // Accept either {ok:true,text:""} or {text:""}
+    if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j.error || "AI failed");
     return j.text || "";
   }
 
@@ -419,134 +254,113 @@ function normalizeDealerUrl(raw) {
       });
     });
   }
-// ==================================================
-// STEP 2 — COPY + REMOVE EMOJIS (FIX ALL BUTTONS)
-// ==================================================
-const STEP2 = {
-  fb: { ta: "fbOutput", copy: "fbCopyBtn", emoji: "fbEmojiBtn" },
-  ig: { ta: "igOutput", copy: "igCopyBtn", emoji: "igEmojiBtn" },
-  tt: { ta: "ttOutput", copy: "ttCopyBtn", emoji: "ttEmojiBtn" },
-  li: { ta: "liOutput", copy: "liCopyBtn", emoji: "liEmojiBtn" },
-  x:  { ta: "xOutput",  copy: "xCopyBtn",  emoji: "xEmojiBtn" },
-  dm: { ta: "dmOutput", copy: "dmCopyBtn", emoji: "dmEmojiBtn" },
-  mk: { ta: "marketplaceOutput", copy: "mkCopyBtn", emoji: "mkEmojiBtn" },
-  hash:{ ta: "hashtagsOutput", copy: "hashCopyBtn", emoji: "hashEmojiBtn" },
-};
 
-function getEl(id) { return document.getElementById(id); }
-function getVal(id) { const el = getEl(id); return el ? (el.value || "") : ""; }
-function setVal(id, v) { const el = getEl(id); if (!el) return; el.value = v; if (typeof autoGrowTextarea === "function") autoGrowTextarea(el); }
-
-function stripEmojis(text) {
-  if (!text) return "";
-  // Remove most emoji + pictographs + variation selectors + ZWJ sequences
-  return text
-    .replace(/[\p{Extended_Pictographic}]/gu, "")
-    .replace(/[\uFE0E\uFE0F]/g, "")     // variation selectors
-    .replace(/\u200D/g, "")             // ZWJ
-    .replace(/[^\S\r\n]{2,}/g, " ")     // collapse double spaces
-    .trim();
-}
-
-async function copyText(text) {
-  if (!text) return false;
-
-  // Primary: Clipboard API
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(text);
-    return true;
-  }
-
-  // Fallback
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.setAttribute("readonly", "");
-  ta.style.position = "fixed";
-  ta.style.left = "-9999px";
-  document.body.appendChild(ta);
-  ta.select();
-  const ok = document.execCommand("copy");
-  document.body.removeChild(ta);
-  return ok;
-}
-
-function setBtnLoading(btn, on, label) {
-  if (!btn) return;
-  if (on) {
-    btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
-    if (label) btn.textContent = label;
-    btn.disabled = true;
-  } else {
-    btn.disabled = false;
-    btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
-  }
-}
-
-// Wire each platform buttons
-Object.values(STEP2).forEach((cfg) => {
-  const copyBtn = getEl(cfg.copy);
-  const emojiBtn = getEl(cfg.emoji);
-  const ta = getEl(cfg.ta);
-
-  // Copy
-  if (copyBtn) {
-    copyBtn.addEventListener("click", async (e) => {
+  // OPTIONAL: Generate-all button if you have one
+  const genAllBtn =
+    $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
+  if (genAllBtn && !genAllBtn.__LR_BOUND__) {
+    genAllBtn.__LR_BOUND__ = true;
+    genAllBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      const text = getVal(cfg.ta);
-      setBtnLoading(copyBtn, true, "Copied!");
-      try {
-        await copyText(text);
-      } catch (err) {
-        console.warn("Copy failed:", cfg.copy, err);
-      }
-      setTimeout(() => setBtnLoading(copyBtn, false), 700);
+      pressAnim(genAllBtn);
+      generateAllStep2();
     });
   }
 
-  // Remove emojis (toggle)
-  if (emojiBtn && ta) {
-    emojiBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-
-      // toggle: store original once
-      if (!ta.__LR_EMOJI_ORIG__) ta.__LR_EMOJI_ORIG__ = ta.value || "";
-
-      const isStripped = !!ta.__LR_EMOJI_STRIPPED__;
-      if (!isStripped) {
-        const stripped = stripEmojis(ta.value || "");
-        ta.value = stripped;
-        ta.__LR_EMOJI_STRIPPED__ = true;
-        emojiBtn.textContent = "Restore Emojis";
-      } else {
-        ta.value = ta.__LR_EMOJI_ORIG__ || "";
-        ta.__LR_EMOJI_STRIPPED__ = false;
-        emojiBtn.textContent = "Remove Emojis";
-      }
-
-      if (typeof autoGrowTextarea === "function") autoGrowTextarea(ta);
-    });
-  }
-});
-
   // ==================================================
-  // PROMPT SLOTS (NEXT) — per AI tool
+  // STEP 2 — COPY + REMOVE EMOJIS (ONE PASS)
   // ==================================================
-  STORE.aiPrompts = STORE.aiPrompts || {
-    workflow: "YOU WILL SET THIS PROMPT NEXT",
-    message: "YOU WILL SET THIS PROMPT NEXT",
-    ask: "YOU WILL SET THIS PROMPT NEXT",
-    car: "YOU WILL SET THIS PROMPT NEXT",
+  const STEP2 = {
+    fb: { ta: "fbOutput", copy: "fbCopyBtn", emoji: "fbEmojiBtn" },
+    ig: { ta: "igOutput", copy: "igCopyBtn", emoji: "igEmojiBtn" },
+    tt: { ta: "ttOutput", copy: "ttCopyBtn", emoji: "ttEmojiBtn" },
+    li: { ta: "liOutput", copy: "liCopyBtn", emoji: "liEmojiBtn" },
+    x: { ta: "xOutput", copy: "xCopyBtn", emoji: "xEmojiBtn" },
+    dm: { ta: "dmOutput", copy: "dmCopyBtn", emoji: "dmEmojiBtn" },
+    mk: { ta: "marketplaceOutput", copy: "mkCopyBtn", emoji: "mkEmojiBtn" },
+    hash: { ta: "hashtagsOutput", copy: "hashCopyBtn", emoji: "hashEmojiBtn" },
   };
 
+  function stripEmojis(text) {
+    if (!text) return "";
+    return text
+      .replace(/[\p{Extended_Pictographic}]/gu, "")
+      .replace(/[\uFE0E\uFE0F]/g, "")
+      .replace(/\u200D/g, "")
+      .replace(/[^\S\r\n]{2,}/g, " ")
+      .trim();
+  }
+
+  async function copyText(text) {
+    if (!text) return false;
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const ta = DOC.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    DOC.body.appendChild(ta);
+    ta.select();
+    const ok = DOC.execCommand("copy");
+    DOC.body.removeChild(ta);
+    return ok;
+  }
+
+  Object.values(STEP2).forEach((cfg) => {
+    const copyBtn = $(cfg.copy);
+    const emojiBtn = $(cfg.emoji);
+    const ta = $(cfg.ta);
+
+    if (copyBtn && !copyBtn.__LR_BOUND__) {
+      copyBtn.__LR_BOUND__ = true;
+      copyBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        pressAnim(copyBtn);
+        const text = (ta?.value || "").trim();
+        if (!text) return;
+
+        try {
+          await copyText(text);
+          flashBtn(copyBtn, "Copied!");
+        } catch (err) {
+          console.warn("Copy failed:", cfg.copy, err);
+          flashBtn(copyBtn, "Copy failed");
+        }
+      });
+    }
+
+    if (emojiBtn && ta && !emojiBtn.__LR_BOUND__) {
+      emojiBtn.__LR_BOUND__ = true;
+      emojiBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        pressAnim(emojiBtn);
+
+        if (!ta.__LR_EMOJI_ORIG__) ta.__LR_EMOJI_ORIG__ = ta.value || "";
+
+        const isStripped = !!ta.__LR_EMOJI_STRIPPED__;
+        if (!isStripped) {
+          ta.value = stripEmojis(ta.value || "");
+          ta.__LR_EMOJI_STRIPPED__ = true;
+          emojiBtn.textContent = "Restore Emojis";
+        } else {
+          ta.value = ta.__LR_EMOJI_ORIG__ || "";
+          ta.__LR_EMOJI_STRIPPED__ = false;
+          emojiBtn.textContent = "Remove Emojis";
+        }
+        autoGrowTextarea(ta);
+      });
+    }
+  });
+
   // ==================================================
-  // FLOATING TOOLS WIRING ✅ (ONE TRUE BLOCK)
-  // Image/Video tools hidden for v1.
+  // FLOATING TOOLS WIRING (ONE TRUE BLOCK)
   // ==================================================
   (function wireFloatingTools() {
     if (window.__LR_FLOATING_TOOLS__) return;
     window.__LR_FLOATING_TOOLS__ = true;
-
-    const byId = (id) => DOC.getElementById(id);
 
     const BTN = {
       objection: "toolObjectionBtn",
@@ -574,8 +388,9 @@ Object.values(STEP2).forEach((cfg) => {
       video: "videoGenModal",
     };
 
+    // Hide image/video tools for v1
     [BTN.image, BTN.video].forEach((id) => {
-      const b = byId(id);
+      const b = $(id);
       if (b) b.style.display = "none";
     });
 
@@ -583,13 +398,13 @@ Object.values(STEP2).forEach((cfg) => {
 
     function setActive(btnId) {
       allBtnIds.forEach((id) => {
-        const b = byId(id);
+        const b = $(id);
         if (b) b.classList.toggle("active", id === btnId);
       });
     }
 
     function closeModal(modalId) {
-      const m = byId(modalId);
+      const m = $(modalId);
       if (!m) return;
       m.classList.add("hidden");
       m.style.display = "none";
@@ -602,7 +417,7 @@ Object.values(STEP2).forEach((cfg) => {
     }
 
     function openModal(modalId, btnId) {
-      const m = byId(modalId);
+      const m = $(modalId);
       if (!m) return console.warn("Modal missing:", modalId);
 
       closeAll();
@@ -633,20 +448,20 @@ Object.values(STEP2).forEach((cfg) => {
       if (focusEl) setTimeout(() => focusEl.focus(), 0);
     }
 
-    DOC.addEventListener("keydown", (e) => {
+    on(DOC, "keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
 
     function bind(key) {
       const btnId = BTN[key];
       const modalId = MODAL[key];
-      const b = byId(btnId);
+      const b = $(btnId);
       if (!b || b.__LR_BOUND__) return;
       b.__LR_BOUND__ = true;
 
       b.addEventListener("click", () => {
         pressAnim(b);
-        const m = byId(modalId);
+        const m = $(modalId);
         const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
         if (isOpen) return closeAll();
         openModal(modalId, btnId);
@@ -657,94 +472,134 @@ Object.values(STEP2).forEach((cfg) => {
     window.LR_TOOLS = { openModal, closeAll };
     console.log("✅ FLOATING TOOLS WIRED");
   })();
-// ==================================================
-// AI EXPERT WIRES — ONE PASS (OBJECTION, MESSAGE, WORKFLOW, ASK, CAR)
-// ==================================================
-(function wireAiExperts() {
-  if (window.__LR_AI_EXPERTS__) return;
-  window.__LR_AI_EXPERTS__ = true;
 
-  const byId = (id) => document.getElementById(id);
+  // ==================================================
+  // AI EXPERT WIRES — ONE PASS (OBJECTION, MESSAGE, WORKFLOW, ASK, CAR)
+  // ==================================================
+  (function wireAiExperts() {
+    if (window.__LR_AI_EXPERTS__) return;
+    window.__LR_AI_EXPERTS__ = true;
 
-  async function runAI({ btnId, inputId, outputId, endpoint }) {
-    const btn = byId(btnId);
-    const input = byId(inputId);
-    const output = byId(outputId);
-    if (!btn || !input || !output) return;
+    function pickOutput(primaryId, fallbacks = []) {
+      return $(primaryId) || fallbacks.map((id) => $(id)).find(Boolean) || null;
+    }
 
-    if (btn.__LR_BOUND__) return;
-    btn.__LR_BOUND__ = true;
+    async function runAI({ btnId, inputId, outputId, endpoint, outputFallbacks = [] }) {
+      const btn = $(btnId);
+      const input = $(inputId);
+      const output = pickOutput(outputId, outputFallbacks);
 
-    btn.addEventListener("click", async () => {
-      const text = (input.value || "").trim();
-      if (!text) {
-        output.textContent = "Enter input first.";
-        return;
-      }
+      if (!btn || !input || !output) return;
 
-      btn.disabled = true;
-      const old = btn.textContent;
-      btn.textContent = "Working…";
-      output.textContent = "Thinking…";
+      if (btn.__LR_BOUND__) return;
+      btn.__LR_BOUND__ = true;
 
-      try {
-        const r = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            input: text,
-            vehicle: window.STORE?.lastVehicle || {},
-          }),
-        });
-        const j = await r.json();
-        if (!j?.ok) throw new Error(j?.error || "AI failed");
-        output.textContent = j.text || "";
-      } catch (e) {
-        output.textContent = "AI ERROR: " + (e?.message || e);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = old;
-      }
+      btn.addEventListener("click", async () => {
+        pressAnim(btn);
+
+        const text = (input.value || "").trim();
+        const vehicle = STORE.lastVehicle || STORE.vehicle || {};
+
+        if (!text) {
+          if (output.tagName === "TEXTAREA") output.value = "Enter input first.";
+          else output.textContent = "Enter input first.";
+          return;
+        }
+
+        setBtnLoading(btn, true, "Working…");
+        if (output.tagName === "TEXTAREA") {
+          output.value = "Thinking…";
+          autoGrowTextarea(output);
+        } else {
+          output.textContent = "Thinking…";
+          output.style.whiteSpace = "pre-wrap";
+        }
+
+        try {
+          const r = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ input: text, vehicle }),
+          });
+
+          const ct = (r.headers.get("content-type") || "").toLowerCase();
+          const raw = await r.text();
+
+          if (!ct.includes("application/json")) {
+            console.error("❌ COACH NON-JSON", endpoint, raw.slice(0, 200));
+            throw new Error("Non-JSON response");
+          }
+
+          let j;
+          try {
+            j = JSON.parse(raw);
+          } catch {
+            throw new Error("Bad JSON");
+          }
+
+          if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j.error || "AI failed");
+          const outText = j.text || "";
+
+          if (output.tagName === "TEXTAREA") {
+            output.value = outText;
+            autoGrowTextarea(output);
+          } else {
+            output.textContent = outText;
+            output.style.whiteSpace = "pre-wrap";
+          }
+        } catch (e) {
+          const msg = "AI ERROR: " + (e?.message || e);
+          if (output.tagName === "TEXTAREA") {
+            output.value = msg;
+            autoGrowTextarea(output);
+          } else {
+            output.textContent = msg;
+            output.style.whiteSpace = "pre-wrap";
+          }
+        } finally {
+          setBtnLoading(btn, false);
+        }
+      });
+    }
+
+    runAI({
+      btnId: "runObjectionBtn",
+      inputId: "objectionInput",
+      outputId: "objectionOutput",
+      endpoint: "/api/ai/objection",
     });
-  }
 
-  runAI({
-    btnId: "runObjectionBtn",
-    inputId: "objectionInput",
-    outputId: "objectionOutput",
-    endpoint: "/api/ai/objection",
-  });
+    runAI({
+      btnId: "runMessageBtn",
+      inputId: "messageInput",
+      outputId: "messageOutput",
+      endpoint: "/api/ai/message",
+    });
 
-  runAI({
-    btnId: "runMessageBtn",
-    inputId: "messageInput",
-    outputId: "messageOutput",
-    endpoint: "/api/ai/message",
-  });
+    runAI({
+      btnId: "runWorkflowBtn",
+      inputId: "workflowInput",
+      outputId: "workflowOutput",
+      endpoint: "/api/ai/workflow",
+    });
 
-  runAI({
-    btnId: "runWorkflowBtn",
-    inputId: "workflowInput",
-    outputId: "workflowOutput",
-    endpoint: "/api/ai/workflow",
-  });
+    runAI({
+      btnId: "runAskBtn",
+      inputId: "askInput",
+      outputId: "askOutput",
+      endpoint: "/api/ai/ask",
+    });
 
-  runAI({
-    btnId: "runAskBtn",
-    inputId: "askInput",
-    outputId: "askOutput",
-    endpoint: "/api/ai/ask",
-  });
+    runAI({
+      btnId: "runCarExpertBtn",
+      inputId: "carExpertInput",
+      outputId: "carExpertOutput",
+      outputFallbacks: ["carOutput"], // ✅ fixes mismatch if HTML uses carOutput
+      endpoint: "/api/ai/car",
+    });
 
-  runAI({
-    btnId: "runCarExpertBtn",
-    inputId: "carExpertInput",
-    outputId: "carExpertOutput",
-    endpoint: "/api/ai/car",
-  });
-
-  console.log("✅ AI EXPERTS WIRED");
-})();
+    console.log("✅ AI EXPERTS WIRED");
+  })();
 
   // ==================================================
   // HIDE "Send Selected to Social Ready" (next version)
@@ -764,11 +619,7 @@ Object.values(STEP2).forEach((cfg) => {
       .filter(Boolean)
       .map((p) => {
         if (typeof p === "string") return { url: p, locked: true, selected: false };
-        return {
-          url: p.url || p.src || "",
-          locked: !!p.locked,
-          selected: !!p.selected,
-        };
+        return { url: p.url || p.src || "", locked: !!p.locked, selected: !!p.selected };
       })
       .filter((p) => !!p.url);
 
@@ -822,6 +673,7 @@ Object.values(STEP2).forEach((cfg) => {
     normalizeSocialReady();
     const list = STORE.socialReadyPhotos;
     if (!list.length) return;
+
     const from = Math.max(0, Math.min(fromIdx, list.length - 1));
     const to = Math.max(0, Math.min(toIdx, list.length - 1));
     if (from === to) return;
@@ -829,7 +681,6 @@ Object.values(STEP2).forEach((cfg) => {
     const [item] = list.splice(from, 1);
     list.splice(to, 0, item);
 
-    // keep selection on the moved item
     list.forEach((p) => (p.selected = false));
     item.selected = true;
 
@@ -881,13 +732,11 @@ Object.values(STEP2).forEach((cfg) => {
         btn.style.outlineOffset = "0px";
       }
 
-      // select
       btn.addEventListener("click", () => {
         setSelectedSocialIndex(idx);
         renderSocialStrip();
       });
 
-      // lock toggle
       btn.addEventListener("dblclick", (e) => {
         e.preventDefault();
         normalizeSocialReady();
@@ -897,7 +746,6 @@ Object.values(STEP2).forEach((cfg) => {
         renderSocialStrip();
       });
 
-      // drag reorder
       btn.addEventListener("dragstart", (e) => {
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", String(idx));
@@ -909,6 +757,7 @@ Object.values(STEP2).forEach((cfg) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
       });
+
       btn.addEventListener("drop", (e) => {
         e.preventDefault();
         const from = parseInt(e.dataTransfer.getData("text/plain") || "-1", 10);
@@ -928,6 +777,7 @@ Object.values(STEP2).forEach((cfg) => {
   function wireSocialNav() {
     const prevBtn = $("socialCarouselPrev");
     const nextBtn = $("socialCarouselNext");
+
     if (prevBtn && !prevBtn.__LR_BOUND__) {
       prevBtn.__LR_BOUND__ = true;
       prevBtn.addEventListener("click", () => {
@@ -937,6 +787,7 @@ Object.values(STEP2).forEach((cfg) => {
         renderSocialStrip();
       });
     }
+
     if (nextBtn && !nextBtn.__LR_BOUND__) {
       nextBtn.__LR_BOUND__ = true;
       nextBtn.addEventListener("click", () => {
@@ -948,7 +799,6 @@ Object.values(STEP2).forEach((cfg) => {
     }
   }
 
-  // ✅ ZIP (FIX): fetch via same-origin proxy to avoid CORS
   async function downloadLockedZip() {
     normalizeSocialReady();
     const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
@@ -974,10 +824,10 @@ Object.values(STEP2).forEach((cfg) => {
           const blob = await r.blob();
 
           const ext =
-            (blob.type && blob.type.includes("png")) ? "png" :
-            (blob.type && blob.type.includes("webp")) ? "webp" :
-            (blob.type && blob.type.includes("jpeg")) ? "jpg" :
-            (blob.type && blob.type.includes("gif")) ? "gif" : "jpg";
+            blob.type?.includes("png") ? "png" :
+            blob.type?.includes("webp") ? "webp" :
+            blob.type?.includes("jpeg") ? "jpg" :
+            blob.type?.includes("gif") ? "gif" : "jpg";
 
           folder.file(`photo_${String(i + 1).padStart(2, "0")}.${ext}`, blob);
           ok++;
@@ -1035,17 +885,11 @@ Object.values(STEP2).forEach((cfg) => {
 
     ensureHoldingNote();
 
-    const photos = Array.isArray(STORE.holdingZonePhotos)
-      ? STORE.holdingZonePhotos.slice(0, 24)
-      : [];
-
+    const photos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos.slice(0, 24) : [];
     hz.innerHTML = "";
 
     if (!photos.length) {
-      hz.innerHTML =
-        `<div class="small-note" style="opacity:.7;padding:.5rem 0;">
-          No photos in holding zone yet.
-        </div>`;
+      hz.innerHTML = `<div class="small-note" style="opacity:.7;padding:.5rem 0;">No photos in holding zone yet.</div>`;
       return;
     }
 
@@ -1067,7 +911,7 @@ Object.values(STEP2).forEach((cfg) => {
 
   // --------------------------------------------------
   // STEP 1: SEND SELECTED → STEP 3 (bind ONCE)
-  // Uses ID: #sendToDesignStudio  (KEEP THIS)
+  // Uses ID: #sendToDesignStudio
   // --------------------------------------------------
   function syncSendBtn() {
     const btn = $("sendToDesignStudio");
@@ -1093,10 +937,7 @@ Object.values(STEP2).forEach((cfg) => {
     btn.addEventListener("click", () => {
       pressAnim(btn);
 
-      const picked = Array.isArray(STORE.step1Selected)
-        ? STORE.step1Selected.slice(0, 24)
-        : [];
-
+      const picked = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.slice(0, 24) : [];
       if (!picked.length) return alert("Select at least 1 photo first.");
 
       STORE.holdingZonePhotos = picked.slice(0, 24);
@@ -1122,178 +963,155 @@ Object.values(STEP2).forEach((cfg) => {
     console.warn("⚠️ API not available (ok in dev)");
   }
 
-// --------------------------------------------------
-// BOOST (Step 1) → photos + vehicle + Step 2 AI
-// --------------------------------------------------
-function normalizeDealerUrl(raw) {
-  let s = (raw || "").toString().trim();
+  // --------------------------------------------------
+  // BOOST (Step 1) → photos + vehicle + Step 2 AI
+  // --------------------------------------------------
+  const boostBtn = $("boostBtn");
+  const urlInput = $("dealerUrlInput");
 
-  // remove whitespace
-  s = s.replace(/\s+/g, "");
+  if (boostBtn && !boostBtn.__LR_BOUND__) {
+    boostBtn.__LR_BOUND__ = true;
 
-  // if user pasted a bad double-scheme like: https://whttps://...
-  // keep the LAST http(s) occurrence
-  const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
-  if (lastHttp > 0) s = s.slice(lastHttp);
+    boostBtn.addEventListener("click", async () => {
+      pressAnim(boostBtn);
+      setBtnLoading(boostBtn, true, "Boosting…");
 
-  // common accidental prefix "whttps://"
-  s = s.replace(/^whttps:\/\//i, "https://");
-  s = s.replace(/^whttp:\/\//i, "http://");
+      try {
+        const raw = urlInput?.value?.trim();
+        const url = normalizeDealerUrl(raw);
+        if (!url) return alert("Paste a valid vehicle URL first.");
 
-  // if missing scheme but looks like a domain
-  if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) {
-    s = "https://" + s;
-  }
+        console.log("🚀 BOOST:", url);
 
-  return s;
-}
+        let res, data;
 
-const boostBtn = $("boostBtn");
-const urlInput = $("dealerUrlInput");
+        try {
+          res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`, {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
 
-if (boostBtn) {
-  boostBtn.onclick = async () => {
-    pressAnim(boostBtn);
-    setBtnLoading(boostBtn, true, "Boosting…");
+          const ct = (res.headers.get("content-type") || "").toLowerCase();
 
-    try {
-const raw = urlInput?.value?.trim();
-const url = normalizeDealerUrl(raw);
-if (!url) return alert("Paste a valid vehicle URL first.");
-
-
-      console.log("🚀 BOOST:", url);
-
-let res, data;
-
-try {
-  res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`, {
-    headers: { "Accept": "application/json" },
-    cache: "no-store",
-  });
-
-  const ct = (res.headers.get("content-type") || "").toLowerCase();
-
-  // ✅ If server returns HTML (index fallback), show it immediately
-  if (!ct.includes("application/json")) {
-    const txt = await res.text();
-    console.error("❌ BOOST NON-JSON RESPONSE", {
-      status: res.status,
-      contentType: ct,
-      head: txt.slice(0, 300),
-    });
-    alert(`Boost returned NON-JSON (status ${res.status}). Check console.`);
-    return;
-  }
-
-  data = await res.json();
-} catch (e) {
-  console.error("❌ BOOST FETCH FAILED", e);
-  alert("Boost request failed (network/json).");
-  return;
-}
-
-if (!data || !data.ok) {
-  console.error("❌ BOOST ERROR PAYLOAD:", data);
-  alert(data?.error || "Boost failed");
-  return;
-}
-
-
-
-      // ✅ vehicle details (server should send data.vehicle; fallback to title if present)
-      STORE.lastVehicle = data.vehicle || { url, title: data.title || "" };
-      STORE.lastVehicle.url = STORE.lastVehicle.url || url;
-
-      renderSummary(STORE.lastVehicle);
-
-      wireRegenButtons();
-      generateAllStep2();
-
-      const rawImages = Array.isArray(data.images) ? data.images : [];
-      const images = [...new Set(rawImages)].filter(Boolean);
-
-      const grid = $("step1Photos");
-      if (!grid) return;
-
-      grid.innerHTML = "";
-
-      if (!images.length) {
-        grid.innerHTML =
-          `<div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
-            No images found.
-          </div>`;
-        return;
-      }
-
-      STORE.step1Selected = [];
-      syncSendBtn();
-
-      const countEl = $("selectedCount");
-      if (countEl) countEl.textContent = "0";
-
-      const MAX_UI = 24;
-
-      images.slice(0, MAX_UI).forEach((src) => {
-        const tile = DOC.createElement("div");
-        tile.style.position = "relative";
-        tile.style.cursor = "pointer";
-        tile.style.borderRadius = "12px";
-        tile.style.overflow = "hidden";
-        tile.style.border = "1px solid rgba(255,255,255,.12)";
-
-        const img = DOC.createElement("img");
-        img.src = src;
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.style.width = "100%";
-        img.style.display = "block";
-
-        const badge = DOC.createElement("div");
-        badge.textContent = "✓";
-        badge.style.position = "absolute";
-        badge.style.top = "10px";
-        badge.style.right = "10px";
-        badge.style.width = "28px";
-        badge.style.height = "28px";
-        badge.style.display = "grid";
-        badge.style.placeItems = "center";
-        badge.style.borderRadius = "999px";
-        badge.style.background = "rgba(0,0,0,.55)";
-        badge.style.border = "1px solid rgba(255,255,255,.25)";
-        badge.style.opacity = "0";
-        badge.style.transition = "opacity .12s ease";
-
-        const syncUI = () => {
-          const active = STORE.step1Selected.includes(src);
-          badge.style.opacity = active ? "1" : "0";
-          tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
-        };
-
-        tile.addEventListener("click", () => {
-          const idx = STORE.step1Selected.indexOf(src);
-          if (idx > -1) STORE.step1Selected.splice(idx, 1);
-          else {
-            if (STORE.step1Selected.length >= 24) return;
-            STORE.step1Selected.push(src);
+          if (!ct.includes("application/json")) {
+            const txt = await res.text();
+            console.error("❌ BOOST NON-JSON RESPONSE", {
+              status: res.status,
+              contentType: ct,
+              head: txt.slice(0, 300),
+            });
+            alert(`Boost returned NON-JSON (status ${res.status}). Check console.`);
+            return;
           }
+
+          data = await res.json();
+        } catch (e) {
+          console.error("❌ BOOST FETCH FAILED", e);
+          alert("Boost request failed (network/json).");
+          return;
+        }
+
+        if (!data || !data.ok) {
+          console.error("❌ BOOST ERROR PAYLOAD:", data);
+          alert(data?.error || "Boost failed");
+          return;
+        }
+
+        // vehicle details
+        STORE.lastVehicle = data.vehicle || { url, title: data.title || "" };
+        STORE.lastVehicle.url = STORE.lastVehicle.url || url;
+
+        renderSummary(STORE.lastVehicle);
+
+        // wire step2 + generate
+        wireRegenButtons();
+        generateAllStep2();
+
+        // images
+        const rawImages = Array.isArray(data.images) ? data.images : [];
+        const images = [...new Set(rawImages)].filter(Boolean);
+
+        const grid = $("step1Photos");
+        if (!grid) return;
+
+        grid.innerHTML = "";
+
+        if (!images.length) {
+          grid.innerHTML = `
+            <div style="opacity:.75;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+              No images found.
+            </div>`;
+          return;
+        }
+
+        STORE.step1Selected = [];
+        syncSendBtn();
+
+        const countEl = $("selectedCount");
+        if (countEl) countEl.textContent = "0";
+
+        const MAX_UI = 24;
+
+        images.slice(0, MAX_UI).forEach((src) => {
+          const tile = DOC.createElement("div");
+          tile.style.position = "relative";
+          tile.style.cursor = "pointer";
+          tile.style.borderRadius = "12px";
+          tile.style.overflow = "hidden";
+          tile.style.border = "1px solid rgba(255,255,255,.12)";
+
+          const img = DOC.createElement("img");
+          img.src = src;
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.style.width = "100%";
+          img.style.display = "block";
+
+          const badge = DOC.createElement("div");
+          badge.textContent = "✓";
+          badge.style.position = "absolute";
+          badge.style.top = "10px";
+          badge.style.right = "10px";
+          badge.style.width = "28px";
+          badge.style.height = "28px";
+          badge.style.display = "grid";
+          badge.style.placeItems = "center";
+          badge.style.borderRadius = "999px";
+          badge.style.background = "rgba(0,0,0,.55)";
+          badge.style.border = "1px solid rgba(255,255,255,.25)";
+          badge.style.opacity = "0";
+          badge.style.transition = "opacity .12s ease";
+
+          const syncUI = () => {
+            const active = STORE.step1Selected.includes(src);
+            badge.style.opacity = active ? "1" : "0";
+            tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+          };
+
+          tile.addEventListener("click", () => {
+            const idx = STORE.step1Selected.indexOf(src);
+            if (idx > -1) STORE.step1Selected.splice(idx, 1);
+            else {
+              if (STORE.step1Selected.length >= 24) return;
+              STORE.step1Selected.push(src);
+            }
+            syncUI();
+            syncSendBtn();
+            if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+          });
+
           syncUI();
-          syncSendBtn();
-          if (countEl) countEl.textContent = String(STORE.step1Selected.length);
+          tile.appendChild(img);
+          tile.appendChild(badge);
+          grid.appendChild(tile);
         });
+      } finally {
+        setBtnLoading(boostBtn, false);
+      }
+    });
+  }
 
-        syncUI();
-        tile.appendChild(img);
-        tile.appendChild(badge);
-        grid.appendChild(tile);
-      });
-    } finally {
-      setBtnLoading(boostBtn, false);
-    }
-  };
-}
-// --------------------------------------------------
-
+  // --------------------------------------------------
   // SOCIAL READY WIRES (ONE PASS)
   // --------------------------------------------------
   wireSocialNav();
