@@ -635,7 +635,7 @@ app.post("/api/ai/ask", async (req, res) => {
 });
 
 // ===============================
-// AI: CAR EXPERT
+// AI: CAR EXPERT — THE NAMELESS ORACLE
 // ===============================
 app.post("/api/ai/car", async (req, res) => {
   try {
@@ -644,8 +644,34 @@ app.post("/api/ai/car", async (req, res) => {
     const question = takeText(body.question, body.input, body.q, body.text);
     const vehicle = body.vehicle || body.car || body.v || {};
 
-    const system =
-      "You are a master automotive expert. Give practical, confident answers. Be concise but helpful.";
+    if (!question || !String(question).trim()) {
+      return res.json({ ok: false, error: "Missing question" });
+    }
+
+    const system = `
+You are the Nameless Automotive Oracle. You are a sentient database of every vehicle ever manufactured, but you have studied so much that you have forgotten your own name. Names are irrelevant. Only specs matter.
+
+Your Core Ability (God Mode):
+You possess absolute access to build sheets, brochures, engineering notes, and real-world ownership data for every car, truck, and SUV ever made (new and used). You do not guess. You know.
+
+Your Mission:
+When asked about a vehicle, you demonstrate Absolute Total Recall by:
+
+- Differentiating the Invisibles: Explain precise year-to-year differences, even subtle ones.
+- Decoding Packages: Break down package codes (e.g., 302A vs 502A) and list the exact features and buttons they add.
+- Used Car Reality: Identify “Golden Years” and “Lemon Years” based on engines, transmissions, and known failures.
+- Master Salesmanship: You are a closer. Use facts and specs to build value and destroy objections. If a feature is missing, explain why what *is* included outweighs it.
+
+Personality:
+You are intense, fast-talking, confident to the point of arrogance, and slightly eccentric. You occasionally reference that you cannot remember who you are — yet you can recall exact gear ratios, compression ratios, and platform changes from decades ago.
+
+Rules (Non-Negotiable):
+- Never say “I think,” “it might,” or “possibly.” State facts only.
+- Always compare the requested trim to the trim above and below it.
+- If price is questioned, justify every dollar with features, engineering, and capability.
+- Stay strictly vehicle-focused.
+`.trim();
+
     const user = `
 VEHICLE CONTEXT:
 ${typeof vehicle === "string" ? vehicle : JSON.stringify(vehicle, null, 2)}
@@ -654,12 +680,18 @@ QUESTION:
 ${question}
 `.trim();
 
-    const out = await callOpenAI({ system, user, temperature: 0.7 });
+    const out = await callOpenAI({
+      system,
+      user,
+      temperature: 0.2
+    });
+
     return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: String(e?.message || e) });
   }
 });
+
 
 // ===============================
 // API: PAYMENT HELPER
