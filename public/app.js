@@ -821,32 +821,40 @@ if (!url) return alert("Paste a valid vehicle URL first.");
       console.log("🚀 BOOST:", url);
 
 let res, data;
+
 try {
   res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`, {
+    headers: { "Accept": "application/json" },
     cache: "no-store",
   });
 
-  const text = await res.text(); // ALWAYS read as text first
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
 
-  try {
-    data = JSON.parse(text);
-  } catch (e) {
-    console.error("❌ BOOST NON-JSON RESPONSE", res.status, text.slice(0, 400));
-    alert(`Boost failed: server returned non-JSON (status ${res.status}). Check console.`);
+  // ✅ If server returns HTML (index fallback), show it immediately
+  if (!ct.includes("application/json")) {
+    const txt = await res.text();
+    console.error("❌ BOOST NON-JSON RESPONSE", {
+      status: res.status,
+      contentType: ct,
+      head: txt.slice(0, 300),
+    });
+    alert(`Boost returned NON-JSON (status ${res.status}). Check console.`);
     return;
   }
 
+  data = await res.json();
 } catch (e) {
   console.error("❌ BOOST FETCH FAILED", e);
-  alert("Boost request failed (network).");
+  alert("Boost request failed (network/json).");
   return;
 }
 
-if (!res.ok || !data || !data.ok) {
-  console.error("❌ BOOST ERROR PAYLOAD", data);
-  alert(data?.error || `Boost failed (status ${res?.status || "?"})`);
+if (!data || !data.ok) {
+  console.error("❌ BOOST ERROR PAYLOAD:", data);
+  alert(data?.error || "Boost failed");
   return;
 }
+
 
 
       // ✅ vehicle details (server should send data.vehicle; fallback to title if present)
