@@ -1572,7 +1572,11 @@
     });
   }
 // ===============================
-// UNIVERSAL AI FOLLOW-UP (ALL MODALS)
+// UNIVERSAL AI FOLLOW-UP (ALL MODALS) — v1 POLISHED
+// - Auto-shows follow-up when output asks questions
+// - Auto-focuses follow-up when it appears
+// - Auto-grows follow-up textarea
+// - Enter = Continue, Shift+Enter = newline
 // ===============================
 function wireAiFollowups() {
   const isQuestiony = (t) => {
@@ -1596,6 +1600,14 @@ function wireAiFollowups() {
     ["carExpertModal", "carExpertInput", "runCarExpertBtn", "carExpertOutput"],
   ];
 
+  const labelMap = {
+    workflowModal: "Continue Campaign",
+    objectionModal: "Continue Objection",
+    messageModal: "Continue Message",
+    askModal: "Continue Strategy",
+    carExpertModal: "Continue Car Expert",
+  };
+
   configs.forEach(([modalId, inputId, runBtnId, outputId]) => {
     const modal = document.getElementById(modalId);
     const mainInput = document.getElementById(inputId);
@@ -1610,13 +1622,53 @@ function wireAiFollowups() {
 
     if (!followWrap || !followInput || !followBtn) return;
 
+    // set contextual button label
+    followBtn.textContent = labelMap[modalId] || "Continue";
+
+    // follow-up auto-grow (cap to keep modal stable)
+    function grow(el) {
+      if (!el || el.tagName !== "TEXTAREA") return;
+      el.style.overflow = "hidden";
+      el.style.resize = "none";
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight || 0, 240) + "px";
+    }
+
+    // Enter submits, Shift+Enter newline
+    followInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        followBtn.click();
+      }
+    });
+
+    // initial grow + on input
+    grow(followInput);
+    followInput.addEventListener("input", () => grow(followInput));
+
     const showIfNeeded = () => {
-      const text =
-        outEl.textContent || outEl.innerText || outEl.value || "";
-      followWrap.style.display = isQuestiony(text) ? "block" : "none";
+      const text = outEl.textContent || outEl.innerText || outEl.value || "";
+      const shouldShow = isQuestiony(text);
+
+      const wasHidden =
+        followWrap.style.display === "none" || !followWrap.style.display;
+
+      followWrap.style.display = shouldShow ? "block" : "none";
+
+      // autofocus only when it just became visible
+      if (shouldShow && wasHidden) {
+        setTimeout(() => {
+          followInput.focus();
+          const v = followInput.value || "";
+          try {
+            followInput.setSelectionRange(v.length, v.length);
+          } catch {}
+          grow(followInput);
+        }, 0);
+      }
     };
 
-    // Watch output changes
+    // Watch output changes (div/pre)
     const mo = new MutationObserver(showIfNeeded);
     mo.observe(outEl, { childList: true, subtree: true, characterData: true });
 
@@ -1628,6 +1680,7 @@ function wireAiFollowups() {
       const base = (mainInput.value || "").trim();
       mainInput.value = `${base}\n\nFOLLOW-UP / ANSWERS:\n${extra}\n`;
       followInput.value = "";
+      grow(followInput);
 
       runBtn.click();
     });
@@ -1645,7 +1698,7 @@ wireZipButton();
 renderSocialStrip();
 
 // --------------------------------------------------
-// AI FOLLOW-UP WIRES (ONE PASS) ✅ ADD THIS
+// AI FOLLOW-UP WIRES (ONE PASS)
 // --------------------------------------------------
 wireAiFollowups();
 
