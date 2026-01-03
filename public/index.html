@@ -357,22 +357,7 @@
        workflowModal, messageModal, askModal, carExpertModal
   ================================================== -->
 
-  <!-- Objection Coach -->
-  <section id="objectionModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Objection Coach</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <textarea id="objectionInput" placeholder="Type the customer objection…"></textarea>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="objectionGoBtn" class="secondary-btn" type="button">Coach Me</button>
-        </div>
-        <div id="objectionOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
-      </div>
-    </div>
-  </section>
+
 
   <!-- Calculator -->
   <section id="calcModal" class="side-modal hidden" aria-hidden="true">
@@ -447,73 +432,80 @@
     </div>
   </section>
 
-  <!-- AI Workflow Expert -->
-  <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Work Flow Expert</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <textarea id="workflowInput" placeholder="Describe the situation and what you want to achieve…"></textarea>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="workflowGoBtn" class="secondary-btn" type="button">Build My Workflow</button>
-        </div>
-        <div id="workflowOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
-      </div>
-    </div>
-  </section>
+<!-- ============================= -->
+<!-- AI EXPERT SIDE MODALS -->
+<!-- ============================= -->
 
-  <!-- AI Message Builder -->
-  <section id="messageModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Message Builder</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <textarea id="messageInput" placeholder="Who are you texting and what’s the goal?"></textarea>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="messageGoBtn" class="secondary-btn" type="button">Write My Message</button>
-        </div>
-        <div id="messageOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
-      </div>
+<div id="objectionModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Objection Coach</h3>
+      <button class="side-modal-close" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <textarea id="objectionInput" placeholder="Paste customer objection here..."></textarea>
+      <button id="runObjectionBtn" class="primary-btn full">Break the Objection</button>
+      <div id="objectionOutput"></div>
+    </div>
+  </div>
+</div>
 
-  <!-- Ask AI -->
-  <section id="askModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Ask A.I.</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <textarea id="askInput" placeholder="Ask anything…"></textarea>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="askGoBtn" class="secondary-btn" type="button">Ask</button>
-        </div>
-        <div id="askOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
-      </div>
+<div id="messageModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Message Builder</h3>
+      <button class="side-modal-close" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <textarea id="messageInput" placeholder="What do you want to say?"></textarea>
+      <button id="runMessageBtn" class="primary-btn full">Generate Message</button>
+      <div id="messageOutput"></div>
+    </div>
+  </div>
+</div>
 
-  <!-- AI Car Expert -->
-  <section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>AI Car Expert</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
-      <div class="side-modal-body">
-        <textarea id="carInput" placeholder="Ask about trims, reliability, comparisons, features…"></textarea>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="carGoBtn" class="secondary-btn" type="button">Get Answer</button>
-        </div>
-        <div id="carOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
-      </div>
+<div id="workflowModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Workflow Expert</h3>
+      <button class="side-modal-close" data-close>✕</button>
     </div>
-  </section>
+    <div class="side-modal-body">
+      <textarea id="workflowInput" placeholder="Describe the sales scenario..."></textarea>
+      <button id="runWorkflowBtn" class="primary-btn full">Build Workflow</button>
+      <div id="workflowOutput"></div>
+    </div>
+  </div>
+</div>
+
+<div id="askModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Ask A.I.</h3>
+      <button class="side-modal-close" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <textarea id="askInput" placeholder="Ask anything..."></textarea>
+      <button id="runAskBtn" class="primary-btn full">Ask</button>
+      <div id="askOutput"></div>
+    </div>
+  </div>
+</div>
+
+<div id="carExpertModal" class="side-modal hidden">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>AI Car Expert</h3>
+      <button class="side-modal-close" data-close>✕</button>
+    </div>
+    <div class="side-modal-body">
+      <textarea id="carExpertInput" placeholder="Ask about the vehicle..."></textarea>
+      <button id="runCarExpertBtn" class="primary-btn full">Explain Vehicle</button>
+      <div id="carExpertOutput"></div>
+    </div>
+  </div>
+</div>
+
 
   <script src="/app.js?v=10001"></script>
 </body>
