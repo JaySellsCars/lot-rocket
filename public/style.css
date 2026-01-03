@@ -567,3 +567,57 @@ textarea{
 #sendToDesignStudio:active {
   animation: lr-press-glow .35s ease-out;
 }
+/* =====================================================
+   SIDE TOOL MODALS — FORCE VERTICAL LAYOUT
+   ===================================================== */
+
+/* Overlay container */
+.side-modal{
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0,0,0,.75);
+  z-index: 100000;
+}
+
+/* Slide-in panel */
+.side-modal-content{
+  width: 360px;
+  background: #020617;
+  border-left: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1rem;
+}
+
+/* Header stays on top */
+.side-modal-header{
+  padding: 1rem;
+  border-bottom: 1px solid rgba(148,163,184,.25);
+}
+
+/* BODY — THIS IS THE FIX */
+.side-modal-body{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Stack all form elements vertically */
+.side-modal-body > *,
+.side-modal form{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Inputs & buttons full width */
+.side-modal input,
+.side-modal textarea,
+.side-modal select,
+.side-modal button{
+  width: 100%;
+}
