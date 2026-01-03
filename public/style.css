@@ -947,3 +947,17 @@ textarea.ai-response {
   min-height: 44px;
   line-height: 1.4;
 }
+/* --------------------------------------------------
+   STEP 3: HIDE BROKEN IMAGE PREVIEW PLACEHOLDERS
+-------------------------------------------------- */
+
+/* Hide preview image when no src is loaded */
+#socialCarouselPreviewImg:not([src]),
+#socialCarouselPreviewImg[src=""] {
+  display: none !important;
+}
+
+/* Hide stray preview labels/icons */
+.social-ready-center .small-note {
+  display: none;
+}
