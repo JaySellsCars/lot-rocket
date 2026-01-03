@@ -19,6 +19,27 @@
     el.classList.add("lr-press");
     setTimeout(() => el.classList.remove("lr-press"), 220);
   }
+// Auto-grow any AI output containers whenever content changes
+(function wireAutoGrowObserver() {
+  if (window.__LR_AUTOGROW__) return;
+  window.__LR_AUTOGROW__ = true;
+
+  const targets = [
+    "socialOutput",
+    "objectionOutput",
+    "messageOutput",
+    "workflowOutput",
+    "askOutput",
+    "carOutput",
+  ];
+
+  const obs = new MutationObserver(() => {
+    targets.forEach((id) => autoGrow(document.getElementById(id)));
+    document.querySelectorAll("textarea").forEach(autoGrow);
+  });
+
+  obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+})();
 
   function setBtnLoading(btn, on, label) {
     if (!btn) return;
