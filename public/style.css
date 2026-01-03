@@ -169,6 +169,70 @@ textarea{
   font-weight:600;
   cursor:pointer;
 }
+/* ================================
+   STEP 2 – INNER BUTTONS (NICE UI)
+   ================================ */
+.lr-step2-actions{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lr-step2-actions-row{
+  display: flex;
+  justify-content: space-between; /* New Post left, Copy right */
+  align-items: center;
+  gap: 12px;
+}
+
+.lr-step2-actions-emoji{
+  display: flex;
+  justify-content: center; /* center under the two */
+}
+
+/* Button look to match your app buttons */
+.lr-btn{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,.16);
+  color: rgba(255,255,255,.92);
+  font-weight: 700;
+  letter-spacing: .2px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .08s ease, filter .15s ease, border-color .15s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,.32);
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(10px);
+}
+
+.lr-btn:hover{
+  filter: brightness(1.08);
+  border-color: rgba(255,255,255,.26);
+}
+
+.lr-btn:active{
+  transform: translateY(1px) scale(.99);
+}
+
+.lr-btn:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Make these “inner” buttons match your secondary vibe */
+.lr-btn-secondary{
+  background: linear-gradient(90deg, rgba(255,153,0,.55), rgba(255,59,203,.55));
+  border-color: rgba(255,255,255,.18);
+}
+
+/* If you want the emoji button slightly different */
+.lr-step2-actions-emoji .lr-btn{
+  min-width: 180px; /* feels like a centered CTA */
+}
 
 /* ==================================================
    STEP 3 — HOLDING ZONE (STACKED)
