@@ -621,3 +621,33 @@ textarea{
 .side-modal button{
   width: 100%;
 }
+/* =========================
+   AUTO-GROW OUTPUT BOXES
+   ========================= */
+.ai-output,
+.ai-box,
+.ai-result,
+.ai-response,
+.side-modal-output,
+#socialOutput,
+#objectionOutput,
+#messageOutput,
+#workflowOutput,
+#askOutput,
+#carOutput {
+  overflow: visible !important;   /* kill scrollbars */
+  max-height: none !important;    /* remove caps */
+  height: auto !important;
+  white-space: pre-wrap;          /* keep line breaks */
+  word-break: break-word;
+}
+
+/* If you used textarea for outputs anywhere */
+textarea.ai-output,
+textarea.ai-box,
+textarea.ai-result,
+textarea.ai-response {
+  overflow: hidden !important;
+  resize: none !important;
+  height: auto;
+}
