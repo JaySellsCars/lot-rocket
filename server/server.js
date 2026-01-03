@@ -413,8 +413,6 @@ app.get("/api/proxy", async (req, res) => {
 
 // ===============================
 // AI: SOCIAL POSTS
-// - If platform is missing or "all": returns { ok:true, outputs:{facebook,...} }
-// - If platform provided: returns { ok:true, text:"..." }
 // ===============================
 app.post("/api/ai/social", async (req, res) => {
   try {
@@ -498,9 +496,6 @@ OUTPUT: return the final content ONLY.
 
 // ===============================
 // AI: OBJECTION COACH
-// Accepts BOTH shapes:
-// - { objection, context }
-// - { input }   (your frontend sends this)
 // ===============================
 app.post("/api/ai/objection", async (req, res) => {
   try {
@@ -538,9 +533,6 @@ Respond now using the 4-step format.
 
 // ===============================
 // AI: MESSAGE BUILDER
-// Accepts BOTH shapes:
-// - { goal, tone, details }
-// - { input } (frontend)
 // ===============================
 app.post("/api/ai/message", async (req, res) => {
   try {
@@ -567,7 +559,7 @@ ${input}
 });
 
 // ===============================
-// AI: WORKFLOW EXPERT
+// AI: CAMPAIGN BUILDER (UPDATED)
 // Accepts BOTH shapes:
 // - { scenario }
 // - { input } (frontend)
@@ -577,11 +569,47 @@ app.post("/api/ai/workflow", async (req, res) => {
     const body = req.body || {};
     const scenario = takeText(body.scenario, body.input, body.text, body.details);
 
-    const system =
-      "You build step-by-step automotive sales workflows. Tight steps. Clear order. Clear CTA.";
-    const user = scenario || "";
+    const system = `
+🚀 LOT ROCKET — THE CAMPAIGN ARCHITECT (GOD MODE)
+You engineer outcomes. Your KPI is APPOINTMENTS BOOKED (not likes).
+You specialize in ALL buying situations: cash, finance, lease, prime, subprime, first-time buyer, rebuild, trade positive/negative equity, online lead, walk-in, service-lane, referral, marketplace, etc.
 
-    const out = await callOpenAI({ system, user, temperature: 0.7 });
+NON-NEGOTIABLE OUTPUT RULES
+- No disclaimers. No “as an AI”. No markdown fences. No fluff.
+- Make it look like a professional campaign plan a top sales manager would actually follow.
+- Simple steps. Clear timing. Clear copy. Clear CTA.
+- Always include: appointment capture + follow-up automation.
+- If details are missing: ask EXACTLY 5 strategic questions FIRST, then provide a “Starter Plan (Assuming X)” so the user can execute immediately.
+
+PRIMARY MISSION
+Turn attention into booked appointments and confirmations.
+
+CAMPAIGN ARCHITECT EXECUTION FORMAT (MUST FOLLOW)
+1) 5-Question Alignment (only if needed)
+2) Campaign Summary (Goal / Timeline / Offer / Target Buyer / Channels)
+3) Messaging Pillars (3 bullets)
+4) Day-by-Day Plan (or Hour-by-Hour if <= 72 hours)
+5) Platform Asset Pack:
+   - Facebook Post (2 variants)
+   - Marketplace Listing (1)
+   - IG/TikTok Script (hook + 20-45s script + CTA)
+   - DM/SMS Scripts (3 variants: first touch, follow-up, last-chance)
+   - Email Follow-up (2 emails)
+6) Appointment Follow-Up Automation (MANDATORY)
+   - Timeline: 0 min / 15 min / 2 hr / next morning / day 3 / day 7
+   - For each step: channel + exact message + goal (confirm, qualify, reschedule)
+7) Objection Handling (top 5 likely objections + short responses)
+8) Tracking Checklist (what to measure daily + when to pivot)
+
+STYLE
+Commanding, calm, direct. “Protect the money, ignore the feelings.”
+Focus on clarity, execution, and urgency (ethical urgency: deadlines, availability, appointment slots).
+`.trim();
+
+    const user = (scenario || "").trim();
+    if (!user) return res.json({ ok: false, error: "Missing scenario" });
+
+    const out = await callOpenAI({ system, user, temperature: 0.75 });
     return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: String(e?.message || e) });
@@ -590,9 +618,6 @@ app.post("/api/ai/workflow", async (req, res) => {
 
 // ===============================
 // AI: ASK AI
-// Accepts BOTH shapes:
-// - { question } or { q }
-// - { input } (frontend)
 // ===============================
 app.post("/api/ai/ask", async (req, res) => {
   try {
@@ -611,9 +636,6 @@ app.post("/api/ai/ask", async (req, res) => {
 
 // ===============================
 // AI: CAR EXPERT
-// Accepts BOTH shapes:
-// - { vehicle, question }
-// - { input, vehicle } (frontend)
 // ===============================
 app.post("/api/ai/car", async (req, res) => {
   try {
@@ -641,8 +663,6 @@ ${question}
 
 // ===============================
 // API: PAYMENT HELPER
-// POST /api/payment-helper
-// Returns: { ok, result, breakdown, breakdownText }
 // ===============================
 app.post("/api/payment-helper", (req, res) => {
   try {
@@ -699,7 +719,7 @@ app.post("/api/payment-helper", (req, res) => {
     const taxRate = taxPct / 100;
     const taxAmount = taxableBase * taxRate;
 
-    // amount financed includes payoff (negative equity) because payoff is added back in formula already
+    // amount financed includes payoff/negative equity
     const amountFinanced = Math.max(price + fees + taxAmount - down - trade + payoff - rebate, 0);
 
     const monthlyRate = aprPct / 100 / 12;
@@ -777,8 +797,6 @@ app.post("/api/payment-helper", (req, res) => {
 
 // ===============================
 // API: BOOST (STABLE CONTRACT)
-// GET /api/boost?url=...
-// Returns: { ok, finalUrl, title, images, vehicle, meta, error }
 // ===============================
 app.get("/api/boost", async (req, res) => {
   const started = Date.now();
