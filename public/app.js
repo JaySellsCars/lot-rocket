@@ -255,6 +255,7 @@ if (genAllBtn) {
   obs.observe(document.body, { childList: true, subtree: true, characterData: true });
 })();
 
+
   function setBtnLoading(btn, on, label) {
     if (!btn) return;
     if (on) {
