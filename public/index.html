@@ -11,138 +11,6 @@
   <script src="https://unpkg.com/konva/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<!-- ========================= -->
-<!-- SIDE TOOL MODALS (OVERLAYS) -->
-<!-- ========================= -->
-
-<!-- OBJECTION COACH -->
-<section id="objectionModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Objection Coach</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="objectionInput" placeholder="Paste the customer objection here..."></textarea>
-      <button id="objectionRunBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate Response</button>
-      <div id="objectionOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- CALCULATOR -->
-<section id="calcModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body calculator-body">
-      <input id="calcDisplay" type="text" placeholder="0" />
-      <div class="calc-grid">
-        <button type="button" data-calc="7">7</button><button type="button" data-calc="8">8</button><button type="button" data-calc="9">9</button><button type="button" data-calc="/">÷</button>
-        <button type="button" data-calc="4">4</button><button type="button" data-calc="5">5</button><button type="button" data-calc="6">6</button><button type="button" data-calc="*">×</button>
-        <button type="button" data-calc="1">1</button><button type="button" data-calc="2">2</button><button type="button" data-calc="3">3</button><button type="button" data-calc="-">−</button>
-        <button type="button" data-calc="0">0</button><button type="button" data-calc=".">.</button><button type="button" data-calc="=">=</button><button type="button" data-calc="+">+</button>
-      </div>
-      <button id="calcClearBtn" class="secondary-btn full" type="button">Clear</button>
-    </div>
-  </div>
-</section>
-
-<!-- PAYMENT CALCULATOR -->
-<section id="paymentModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Payment Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <label class="field"><span>Price</span><input id="payPrice" type="number" step="0.01" placeholder="e.g. 25000" /></label>
-      <label class="field"><span>Down Payment</span><input id="payDown" type="number" step="0.01" placeholder="e.g. 2000" /></label>
-      <label class="field"><span>APR %</span><input id="payApr" type="number" step="0.01" placeholder="e.g. 9.99" /></label>
-      <label class="field"><span>Term (months)</span><input id="payTerm" type="number" step="1" placeholder="e.g. 72" /></label>
-      <button id="payCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Calculate</button>
-      <div id="payOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- INCOME CALCULATOR -->
-<section id="incomeModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Income Calculator</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <label class="field"><span>Gross to date</span><input id="incomeMtd" type="number" step="0.01" placeholder="e.g. 32000" /></label>
-      <label class="field"><span>Last pay date</span><input id="incomeLastPayDate" type="date" /></label>
-      <button id="incomeCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Estimate Income</button>
-      <div id="incomeOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- AI WORKFLOW EXPERT -->
-<section id="workflowModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Work Flow Expert</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="workflowInput" placeholder="Describe the situation/workflow you want to improve..."></textarea>
-      <button id="workflowRunBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
-      <div id="workflowOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- AI MESSAGE BUILDER -->
-<section id="messageModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Message Builder</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="messageInput" placeholder="Who are you messaging and what’s the goal?"></textarea>
-      <button id="messageRunBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
-      <div id="messageOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ASK AI -->
-<section id="askModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Ask A.I.</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="askInput" placeholder="Ask anything..."></textarea>
-      <button id="askRunBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Ask</button>
-      <div id="askOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- AI CAR EXPERT -->
-<section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Car Expert</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="carExpertInput" placeholder="Ask a car question (trim, towing, reliability, comparisons, etc.)"></textarea>
-      <button id="carExpertRunBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
-      <div id="carExpertOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
-    </div>
-  </div>
-</section>
 
   <link rel="stylesheet" href="/style.css?v=10001" />
 </head>
@@ -208,12 +76,11 @@
           <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
           <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
 
-<div id="sendToLabWrap">
-  <button id="sendToDesignStudio" class="secondary-btn full" type="button">
-    Send Selected Photos to Creative Lab
-  </button>
-</div>
-
+          <div id="sendToLabWrap">
+            <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+              Send Selected Photos to Creative Lab
+            </button>
+          </div>
 
           <div id="step1Photos" class="photo-grid"></div>
         </div>
@@ -227,85 +94,119 @@
         <div class="small-note step2-subtitle">Copy, tweak, and paste into each platform. Spin fresh versions anytime.</div>
 
         <div class="step2-grid">
+
           <div class="platform-card step2-card">
             <h3>Facebook Post</h3>
             <textarea id="fbOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="fbNewBtn" class="regen-btn" type="button">New Post</button>
-              <button id="fbCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="fbEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="fbNewBtn" class="lr-btn lr-btn-secondary" type="button">New Post</button>
+                <button id="fbCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="fbEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>Instagram Caption</h3>
             <textarea id="igOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="igNewBtn" class="regen-btn" type="button">New Post</button>
-              <button id="igCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="igEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="igNewBtn" class="lr-btn lr-btn-secondary" type="button">New Post</button>
+                <button id="igCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="igEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>TikTok Caption</h3>
             <textarea id="ttOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="ttNewBtn" class="regen-btn" type="button">New Post</button>
-              <button id="ttCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="ttEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="ttNewBtn" class="lr-btn lr-btn-secondary" type="button">New Post</button>
+                <button id="ttCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="ttEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>LinkedIn Post</h3>
             <textarea id="liOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="liNewBtn" class="regen-btn" type="button">New Post</button>
-              <button id="liCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="liEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="liNewBtn" class="lr-btn lr-btn-secondary" type="button">New Post</button>
+                <button id="liCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="liEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>X / Twitter Post</h3>
             <textarea id="xOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="xNewBtn" class="regen-btn" type="button">New Post</button>
-              <button id="xCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="xEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="xNewBtn" class="lr-btn lr-btn-secondary" type="button">New Post</button>
+                <button id="xCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="xEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>Text / DM</h3>
             <textarea id="dmOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="dmNewBtn" class="regen-btn" type="button">New Text</button>
-              <button id="dmCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="dmEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="dmNewBtn" class="lr-btn lr-btn-secondary" type="button">New Text</button>
+                <button id="dmCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="dmEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>Marketplace Listing</h3>
             <textarea id="marketplaceOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="mkNewBtn" class="regen-btn" type="button">New Post</button>
-              <button id="mkCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="mkEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="mkNewBtn" class="lr-btn lr-btn-secondary" type="button">New Post</button>
+                <button id="mkCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="mkEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
 
           <div class="platform-card step2-card">
             <h3>Hashtag Set</h3>
             <textarea id="hashtagsOutput" placeholder="Output..."></textarea>
-            <div class="btn-row">
-              <button id="hashNewBtn" class="regen-btn" type="button">New Set</button>
-              <button id="hashCopyBtn" class="copy-btn" type="button">Copy</button>
-              <button id="hashEmojiBtn" class="emoji-strip-btn" type="button">Remove Emojis</button>
+            <div class="lr-step2-actions">
+              <div class="lr-step2-actions-row">
+                <button id="hashNewBtn" class="lr-btn lr-btn-secondary" type="button">New Set</button>
+                <button id="hashCopyBtn" class="lr-btn lr-btn-secondary" type="button">Copy</button>
+              </div>
+              <div class="lr-step2-actions-emoji">
+                <button id="hashEmojiBtn" class="lr-btn lr-btn-secondary" type="button">Remove Emojis</button>
+              </div>
             </div>
           </div>
+
         </div>
       </section>
     </div>
@@ -353,51 +254,47 @@
 
   </main>
 
-  <!-- ==================================================
-       SIDE MODALS (REQUIRED FOR FLOATING TOOLS)
-       IDs match app.js wiring:
-       objectionModal, calcModal, paymentModal, incomeModal,
-       workflowModal, messageModal, askModal, carExpertModal
-  ================================================== -->
+  <!-- ========================= -->
+  <!-- SIDE TOOL MODALS (OVERLAYS) -->
+  <!-- IDs MUST MATCH app.js WIRING -->
+  <!-- ========================= -->
 
+  <!-- OBJECTION COACH -->
+  <section id="objectionModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Objection Coach</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="objectionInput" placeholder="Paste the customer objection here..."></textarea>
+        <button id="runObjectionBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate Response</button>
+        <div id="objectionOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
 
-
-  <!-- Calculator -->
+  <!-- CALCULATOR -->
   <section id="calcModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
       <div class="side-modal-header">
         <h3>Calculator</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
-      <div class="side-modal-body">
-        <div class="calculator-body">
-          <input id="calcDisplay" type="text" placeholder="0" />
-          <div class="calc-grid">
-            <button type="button" data-calc="7">7</button>
-            <button type="button" data-calc="8">8</button>
-            <button type="button" data-calc="9">9</button>
-            <button type="button" data-calc="/">÷</button>
-            <button type="button" data-calc="4">4</button>
-            <button type="button" data-calc="5">5</button>
-            <button type="button" data-calc="6">6</button>
-            <button type="button" data-calc="*">×</button>
-            <button type="button" data-calc="1">1</button>
-            <button type="button" data-calc="2">2</button>
-            <button type="button" data-calc="3">3</button>
-            <button type="button" data-calc="-">−</button>
-            <button type="button" data-calc="0">0</button>
-            <button type="button" data-calc=".">.</button>
-            <button type="button" data-calc="=">=</button>
-            <button type="button" data-calc="+">+</button>
-            <button type="button" data-calc="C">C</button>
-            <button type="button" data-calc="⌫">⌫</button>
-          </div>
+      <div class="side-modal-body calculator-body">
+        <input id="calcDisplay" type="text" placeholder="0" />
+        <div class="calc-grid">
+          <button type="button" data-calc="7">7</button><button type="button" data-calc="8">8</button><button type="button" data-calc="9">9</button><button type="button" data-calc="/">÷</button>
+          <button type="button" data-calc="4">4</button><button type="button" data-calc="5">5</button><button type="button" data-calc="6">6</button><button type="button" data-calc="*">×</button>
+          <button type="button" data-calc="1">1</button><button type="button" data-calc="2">2</button><button type="button" data-calc="3">3</button><button type="button" data-calc="-">−</button>
+          <button type="button" data-calc="0">0</button><button type="button" data-calc=".">.</button><button type="button" data-calc="=">=</button><button type="button" data-calc="+">+</button>
         </div>
+        <button id="calcClearBtn" class="secondary-btn full" type="button">Clear</button>
       </div>
     </div>
   </section>
 
-  <!-- Payment Calculator -->
+  <!-- PAYMENT CALCULATOR -->
   <section id="paymentModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
       <div class="side-modal-header">
@@ -405,19 +302,17 @@
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
       <div class="side-modal-body">
-        <label class="field"><span>Vehicle Price</span><input id="payPrice" type="number" step="0.01" placeholder="e.g. 27995" /></label>
-        <label class="field"><span>Down Payment</span><input id="payDown" type="number" step="0.01" placeholder="e.g. 1000" /></label>
+        <label class="field"><span>Price</span><input id="payPrice" type="number" step="0.01" placeholder="e.g. 25000" /></label>
+        <label class="field"><span>Down Payment</span><input id="payDown" type="number" step="0.01" placeholder="e.g. 2000" /></label>
         <label class="field"><span>APR %</span><input id="payApr" type="number" step="0.01" placeholder="e.g. 9.99" /></label>
         <label class="field"><span>Term (months)</span><input id="payTerm" type="number" step="1" placeholder="e.g. 72" /></label>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="payCalcBtn" class="secondary-btn" type="button">Calculate</button>
-        </div>
-        <div id="payOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+        <button id="payCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Calculate</button>
+        <div id="payOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
       </div>
     </div>
   </section>
 
-  <!-- Income Calculator -->
+  <!-- INCOME CALCULATOR -->
   <section id="incomeModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
       <div class="side-modal-header">
@@ -427,88 +322,71 @@
       <div class="side-modal-body">
         <label class="field"><span>Gross to date</span><input id="incomeMtd" type="number" step="0.01" placeholder="e.g. 32000" /></label>
         <label class="field"><span>Last pay date</span><input id="incomeLastPayDate" type="date" /></label>
-        <div class="btn-row" style="justify-content:flex-start;">
-          <button id="incomeCalcBtn" class="secondary-btn" type="button">Estimate Income</button>
-        </div>
-        <div id="incomeOutput" class="small-note" style="margin-top:.8rem; white-space:pre-wrap;"></div>
+        <button id="incomeCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Estimate Income</button>
+        <div id="incomeOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
       </div>
     </div>
   </section>
 
-<!-- ============================= -->
-<!-- AI EXPERT SIDE MODALS -->
-<!-- ============================= -->
+  <!-- AI WORKFLOW EXPERT -->
+  <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Work Flow Expert</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="workflowInput" placeholder="Describe the situation/workflow you want to improve..."></textarea>
+        <button id="runWorkflowBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
+        <div id="workflowOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+      </div>
+    </div>
+  </section>
 
-<div id="objectionModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Objection Coach</h3>
-      <button class="side-modal-close" data-close>✕</button>
+  <!-- AI MESSAGE BUILDER -->
+  <section id="messageModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Message Builder</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="messageInput" placeholder="Who are you messaging and what’s the goal?"></textarea>
+        <button id="runMessageBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
+        <div id="messageOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <textarea id="objectionInput" placeholder="Paste customer objection here..."></textarea>
-      <button id="runObjectionBtn" class="primary-btn full">Break the Objection</button>
-      <div id="objectionOutput"></div>
-    </div>
-  </div>
-</div>
+  </section>
 
-<div id="messageModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Message Builder</h3>
-      <button class="side-modal-close" data-close>✕</button>
+  <!-- ASK AI -->
+  <section id="askModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Ask A.I.</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="askInput" placeholder="Ask anything..."></textarea>
+        <button id="runAskBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Ask</button>
+        <div id="askOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <textarea id="messageInput" placeholder="What do you want to say?"></textarea>
-      <button id="runMessageBtn" class="primary-btn full">Generate Message</button>
-      <div id="messageOutput"></div>
-    </div>
-  </div>
-</div>
+  </section>
 
-<div id="workflowModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Workflow Expert</h3>
-      <button class="side-modal-close" data-close>✕</button>
+  <!-- AI CAR EXPERT -->
+  <section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>AI Car Expert</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+      <div class="side-modal-body">
+        <textarea id="carExpertInput" placeholder="Ask a car question (trim, towing, reliability, comparisons, etc.)"></textarea>
+        <button id="runCarExpertBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
+        <div id="carExpertOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+      </div>
     </div>
-    <div class="side-modal-body">
-      <textarea id="workflowInput" placeholder="Describe the sales scenario..."></textarea>
-      <button id="runWorkflowBtn" class="primary-btn full">Build Workflow</button>
-      <div id="workflowOutput"></div>
-    </div>
-  </div>
-</div>
-
-<div id="askModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Ask A.I.</h3>
-      <button class="side-modal-close" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="askInput" placeholder="Ask anything..."></textarea>
-      <button id="runAskBtn" class="primary-btn full">Ask</button>
-      <div id="askOutput"></div>
-    </div>
-  </div>
-</div>
-
-<div id="carExpertModal" class="side-modal hidden">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>AI Car Expert</h3>
-      <button class="side-modal-close" data-close>✕</button>
-    </div>
-    <div class="side-modal-body">
-      <textarea id="carExpertInput" placeholder="Ask about the vehicle..."></textarea>
-      <button id="runCarExpertBtn" class="primary-btn full">Explain Vehicle</button>
-      <div id="carExpertOutput"></div>
-    </div>
-  </div>
-</div>
-
+  </section>
 
   <script src="/app.js?v=10001"></script>
 </body>
