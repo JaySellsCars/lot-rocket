@@ -67,6 +67,32 @@ app.post("/api/ai/generate", async (req, res) => {
 // ===============================
 // AI PING (frontend sanity)
 // ===============================
+// ===============================
+// AI ROUTE ALIASES (match whatever frontend calls)
+// ===============================
+function aiStub(req, res) {
+  return res.json({
+    ok: false,
+    error: "AI route not wired yet",
+    path: req.path,
+    method: req.method,
+  });
+}
+
+// Most common possibilities:
+app.post("/api/ai", aiStub);
+app.post("/api/ai/generate", aiStub);
+app.post("/api/ai/chat", aiStub);
+app.post("/api/ai/run", aiStub);
+app.post("/api/generate", aiStub);
+app.post("/api/chat", aiStub);
+app.post("/api/openai", aiStub);
+
+// Some frontends call GET ping/status
+app.get("/api/ai", (req, res) => res.json({ ok: true, note: "ai endpoint alive" }));
+app.get("/api/ai/ping", (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+
 app.use("/api", (req, res) => {
   res.status(404).json({ ok: false, error: "Unknown API route", path: req.path });
 });
