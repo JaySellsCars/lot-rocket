@@ -31,14 +31,17 @@ a{ color:#8ab4f8; }
 }
 
 /* =========================
-   APP HEADER — PREMIUM
+   APP HEADER — PREMIUM (ALL)
    ========================= */
 
 .app-header {
+  position: sticky;           /* ✅ sticky */
+  top: 0;
+  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.6rem 3rem;
+  padding: 1.4rem 3rem;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   background: linear-gradient(
     180deg,
@@ -46,6 +49,13 @@ a{ color:#8ab4f8; }
     rgba(10,10,20,0.96)
   );
   backdrop-filter: blur(10px);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+/* adds subtle “elevated” look once scrolled */
+.app-header.is-scrolled {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  border-bottom-color: rgba(255,255,255,0.10);
 }
 
 /* BRAND WRAPPER */
@@ -53,15 +63,23 @@ a{ color:#8ab4f8; }
   display: flex;
   align-items: center;
   gap: 18px;
+  cursor: pointer;            /* ✅ click-to-top */
+  user-select: none;
 }
 
-/* LOGO — BIG + CLEAN */
+/* LOGO — BIG + CLEAN + HOVER */
 .app-logo {
-  height: 72px;              /* 🔥 BIG PREMIUM SIZE */
+  height: 78px;               /* ✅ bigger premium */
   width: auto;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 6px 18px rgba(255,90,0,0.25));
+  filter: drop-shadow(0 10px 22px rgba(255,90,0,0.26));
+  transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+}
+
+.branding:hover .app-logo {
+  transform: translateY(-1px) scale(1.03);  /* ✅ premium hover */
+  filter: drop-shadow(0 14px 30px rgba(255,90,0,0.34));
 }
 
 /* TEXT BLOCK */
@@ -71,21 +89,42 @@ a{ color:#8ab4f8; }
   justify-content: center;
 }
 
+/* TOPLINE: Title + Badge */
+.brand-topline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* TITLE */
 .brand-text h1 {
-  font-size: 1.85rem;
+  font-size: 1.9rem;
   margin: 0;
   line-height: 1.05;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.4px;
+}
+
+/* VERSION BADGE */
+.version-badge {
+  font-size: 0.72rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.86);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* TAGLINE */
 .brand-text p {
-  margin-top: 0.3rem;
-  font-size: 0.9rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+  font-size: 0.92rem;
   color: var(--text-muted);
-  opacity: 0.85;
+  opacity: 0.86;
 }
 
 /* =========================
@@ -94,31 +133,27 @@ a{ color:#8ab4f8; }
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 1.2rem 1.5rem;
+    padding: 1.05rem 1.25rem;
   }
 
   .app-logo {
-    height: 54px;
+    height: 58px;
+  }
+
+  .brand-text h1 {
+    font-size: 1.45rem;
   }
 
   .brand-text p {
-    display: none; /* clean mobile look */
+    display: none; /* clean mobile */
+  }
+
+  .version-badge {
+    font-size: 0.66rem;
+    padding: 0.24rem 0.5rem;
   }
 }
 
-
-/* MOBILE TWEAK */
-@media (max-width: 640px){
-  .app-header{
-    padding:0.9rem 1.2rem;
-  }
-  .app-logo{
-    height:36px;
-  }
-  .branding p{
-    display:none; /* keeps header clean on mobile */
-  }
-}
 
 
 /* LAYOUT */
