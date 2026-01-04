@@ -595,62 +595,57 @@ Return ONLY the message.
 });
 
 /* ===============================
-   AI: WORKFLOW / CAMPAIGN BUILDER (PRECISION)
+   AI: WORKFLOW (Campaign Builder)
    Accepts: {scenario} OR {objective} OR {input} OR {text}
+   Output: EXACTLY what was asked (count/timeframe/channel)
 ================================ */
 app.post("/api/ai/workflow", async (req, res) => {
   try {
-    const scenario = takeText(
-      req.body.scenario,
-      req.body.objective,
-      req.body.input,
-      req.body.text
-    );
-    if (!scenario) return jsonErr(res, "Missing scenario/objective");
+    const scenario = takeText(req.body.scenario, req.body.objective, req.body.input, req.body.text);
+    if (!scenario) return res.json({ ok:false, error:"Missing scenario/objective" });
 
     const system = `
-You are an elite automotive campaign strategist.
+You are LOT ROCKET's Campaign Builder — elite automotive follow-up strategist.
 
-MISSION:
-Build EXACTLY what the user asked for — nothing extra.
+YOUR JOB:
+Deliver EXACTLY what the user requested. No extras. No drifting.
 
-HARD RULES:
-- Follow the timeframe EXACTLY (1 day means 1 day)
-- Follow the channel EXACTLY (text means text only, facebook means facebook only)
-- Follow the quantity EXACTLY (4 texts means 4 texts)
-- Do NOT add extra platforms
-- Do NOT add extra days
-- Do NOT add “bonus” sequences
+HARD ENFORCEMENT:
+- If user asks for "1 day 5 texts" => output EXACTLY 5 text messages for the same day.
+- If user asks for "4 texts" => output EXACTLY 4.
+- If user asks for "5 day Facebook campaign" => output EXACTLY 5 days of Facebook posts.
+- Do NOT add other platforms.
+- Do NOT add extra days.
+- Do NOT add extra sections.
 
-STYLE:
-- Urgent but human
-- Short, punchy, appointment-focused
-- No filler explanations
-- Output ONLY the campaign content
+QUALITY RULES (Texts):
+- Human, punchy, confident. Not corny.
+- No "Exciting news!" / no generic hype.
+- Each text has a different angle:
+  1) direct + simple
+  2) value/benefit
+  3) scarcity/availability (realistic)
+  4) objection-prevent (rate/payment/credit) without sounding desperate
+  5) close for a time (two options)
+- Always one clear CTA per text.
+- Keep each text under ~240 characters unless user asks otherwise.
 
-FORMAT:
-If text blast requested:
-Return:
-Text 1:
-Text 2:
-Text 3:
-Text 4:
-
-If multi-day requested:
-Return:
-Day 1:
-Day 2:
-... exactly as requested.
-
-Return ONLY the output. No commentary.
+OUTPUT FORMAT (EXACT):
+Text 1: ...
+Text 2: ...
+Text 3: ...
+Text 4: ...
+Text 5: ...
+(Only include as many texts as requested.)
 `.trim();
 
-    const out = await callOpenAI({ system, user: scenario, temperature: 0.55 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+    const out = await callOpenAI({ system, user: scenario, temperature: 0.6 });
+    return res.json(out.ok ? { ok:true, text: out.text } : out);
   } catch (e) {
-    return jsonErr(res, e?.message || String(e));
+    return res.json({ ok:false, error: e?.message || String(e) });
   }
 });
+
 
 /* ===============================
    AI: ASK AI
