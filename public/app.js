@@ -457,22 +457,21 @@
     `;
   }
 
-  // ==================================================
-  // STEP 2 AI SOCIAL
-  // ==================================================
+// ==================================================
+// STEP 2 AI SOCIAL
+// ==================================================
 async function aiPost(platform) {
   const v = STORE.lastVehicle || STORE.vehicle || {};
 
-  // 🔥 Normalize features into bullet-ready text (prevents generic AI output)
+  // Normalize desired features for bullet-heavy posts
   const features = [
-    v.engine && `${v.engine} Engine`,
-    v.drivetrain && `${v.drivetrain}`,
+    v.engine && `${v.engine}`,
+    v.drivetrain && v.drivetrain,
     v.mileage && `Only ${v.mileage}`,
-    v.interior && `${v.interior} Interior`,
     v.exterior && `${v.exterior} Exterior`,
+    v.interior && `${v.interior} Interior`,
     v.price && `Priced at ${v.price}`,
     v.certified && "Certified Pre-Owned",
-    v.packages && v.packages,
   ].filter(Boolean);
 
   const payload = {
@@ -505,7 +504,6 @@ async function aiPost(platform) {
   const ct = (r.headers.get("content-type") || "").toLowerCase();
   const raw = await r.text();
 
-  // ❌ HARD STOP: never allow silent garbage posts
   if (!ct.includes("application/json")) {
     console.error("❌ AI SOCIAL NON-JSON", {
       status: r.status,
@@ -525,8 +523,9 @@ async function aiPost(platform) {
     throw new Error(j.error || "AI failed");
   }
 
-  // ✅ Final safety: ensure bullets exist (last-resort fix)
   let text = j.text || "";
+
+  // Safety net: force feature bullets if AI gets generic
   if (!/•|\n-|\n⭐/g.test(text) && features.length) {
     text +=
       "\n\n⭐ MOST-WANTED FEATURES:\n" +
@@ -536,97 +535,6 @@ async function aiPost(platform) {
   return text;
 }
 
-
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    const raw = await r.text();
-
-    if (!ct.includes("application/json")) {
-      console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 200) });
-      throw new Error("AI returned non-JSON");
-    }
-
-    let j;
-    try {
-      j = JSON.parse(raw);
-    } catch {
-      throw new Error("Bad JSON from AI");
-    }
-
-    if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j.error || "AI failed");
-    return j.text || "";
-  }
-
-  function mapPlatformToTextarea(platform) {
-    const m = {
-      facebook: "fbOutput",
-      instagram: "igOutput",
-      tiktok: "ttOutput",
-      linkedin: "liOutput",
-      x: "xOutput",
-      dm: "dmOutput",
-      marketplace: "marketplaceOutput",
-      hashtags: "hashtagsOutput",
-    };
-    return m[platform];
-  }
-
-  async function generateAllStep2() {
-    const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
-    for (const p of platforms) {
-      const id = mapPlatformToTextarea(p);
-      if (!$(id)) continue;
-      setVal(id, "Generating…");
-      try {
-        const text = await aiPost(p);
-        setVal(id, text);
-      } catch (e) {
-        setVal(id, `AI ERROR: ${String(e?.message || e)}`);
-      }
-    }
-  }
-
-  function wireRegenButtons() {
-    const wires = [
-      ["fbNewBtn", "facebook"],
-      ["igNewBtn", "instagram"],
-      ["ttNewBtn", "tiktok"],
-      ["liNewBtn", "linkedin"],
-      ["xNewBtn", "x"],
-      ["dmNewBtn", "dm"],
-      ["mkNewBtn", "marketplace"],
-      ["hashNewBtn", "hashtags"],
-    ];
-
-    wires.forEach(([btnId, platform]) => {
-      const b = $(btnId);
-      if (!b || b.__LR_BOUND__) return;
-      b.__LR_BOUND__ = true;
-
-      b.addEventListener("click", async () => {
-        pressAnim(b);
-        const outId = mapPlatformToTextarea(platform);
-        if (!$(outId)) return;
-
-        setVal(outId, "Generating…");
-        try {
-          const text = await aiPost(platform);
-          setVal(outId, text);
-        } catch (e) {
-          setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
-        }
-      });
-    });
-  }
-
-  const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
-  if (genAllBtn && !genAllBtn.__LR_BOUND__) {
-    genAllBtn.__LR_BOUND__ = true;
-    genAllBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      pressAnim(genAllBtn);
-      generateAllStep2();
-    });
-  }
 
   // ==================================================
   // STEP 2 — COPY + REMOVE EMOJIS
