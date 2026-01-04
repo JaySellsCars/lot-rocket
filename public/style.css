@@ -31,18 +31,39 @@ a{ color:#8ab4f8; }
 }
 
 /* ===============================
-   HEADER — PREMIUM LAUNCH
+   HEADER — PREMIUM + STICKY + MOBILE
 ================================ */
 
 .app-header{
+  position:relative;
+  z-index:50;
   display:flex;
   align-items:center;
   justify-content:space-between;
   padding:1.4rem 3.5rem;
   border-bottom:1px solid rgba(255,255,255,.08);
+
   background:
     radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.18), transparent 60%),
     linear-gradient(180deg, #0b0b1a, #070711);
+
+  transition: padding .18s ease, background .18s ease, box-shadow .18s ease, backdrop-filter .18s ease;
+}
+
+/* Sticky state */
+.app-header.is-sticky{
+  position:sticky;
+  top:0;
+  backdrop-filter: blur(10px);
+  background:
+    radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.14), transparent 60%),
+    linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
+  box-shadow: 0 8px 30px rgba(0,0,0,.35);
+  padding:1.05rem 3.5rem;
+}
+
+.header-spacer{
+  height:0; /* JS will set when sticky turns on */
 }
 
 /* Branding container */
@@ -52,13 +73,21 @@ a{ color:#8ab4f8; }
   gap:18px;
 }
 
-/* LOGO — BIGGER + WHITE */
+/* LOGO — BIGGER + WHITE + PREMIUM GLOW */
 .app-logo{
-  height:64px;              /* 👈 key upgrade */
+  height:64px;
   width:auto;
   object-fit:contain;
-  filter: brightness(0) invert(1); /* turns logo white */
+  filter: brightness(0) invert(1);
   opacity:.95;
+  transform: translateZ(0);
+  transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+}
+
+.branding:hover .app-logo{
+  opacity:1;
+  transform: scale(1.04);
+  filter: brightness(0) invert(1) drop-shadow(0 0 18px rgba(236,72,153,.45));
 }
 
 /* Text stack */
@@ -85,20 +114,51 @@ a{ color:#8ab4f8; }
 /* Launch badge */
 .launch-badge{
   font-size:.65rem;
-  font-weight:700;
-  padding:4px 8px;
+  font-weight:800;
+  padding:4px 9px;
   border-radius:999px;
   background:linear-gradient(135deg,#f59e0b,#ec4899);
   color:#fff;
-  letter-spacing:.6px;
+  letter-spacing:.7px;
+  box-shadow: 0 8px 20px rgba(236,72,153,.18);
 }
 
 /* Tagline */
-.branding p{
+.brand-tagline{
   margin:0;
   font-size:.88rem;
   color:rgba(255,255,255,.65);
 }
+
+/* Sticky makes logo slightly smaller (looks pro) */
+.app-header.is-sticky .app-logo{ height:56px; }
+.app-header.is-sticky .branding h1{ font-size:1.9rem; }
+
+/* ===============================
+   MOBILE POLISH
+================================ */
+@media (max-width: 900px){
+  .app-header{ padding:1.1rem 1.3rem; }
+  .app-header.is-sticky{ padding:.9rem 1.3rem; }
+  .app-logo{ height:54px; }
+  .branding h1{ font-size:1.65rem; }
+  .brand-tagline{ font-size:.82rem; }
+}
+
+@media (max-width: 520px){
+  .branding{ gap:12px; }
+  .app-logo{ height:46px; }
+  .branding h1{ font-size:1.45rem; }
+
+  /* collapse tagline on small screens */
+  .brand-tagline{ display:none; }
+
+  .launch-badge{
+    font-size:.6rem;
+    padding:3px 8px;
+  }
+}
+
 
 
 /* =========================
