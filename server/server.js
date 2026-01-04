@@ -1,4 +1,9 @@
-// /server/server.js — LOT ROCKET (FINAL / LAUNCH READY)
+// /server/server.js — LOT ROCKET (FINAL / LAUNCH READY) ✅
+// Fixes: ✅ /api/boost always returns JSON (no more HTML 200)
+// Adds: ✅ /api/boost (scrape) ✅ /api/proxy (ZIP images) ✅ /api/payment-helper
+// Adds: ✅ /api/ai/workflow ✅ /api/ai/car
+// Fixes: ✅ objection/message payload compatibility
+// Critical: ✅ API routes come BEFORE static + SPA fallback
 
 const express = require("express");
 const path = require("path");
@@ -13,9 +18,64 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 /* ===============================
-   STATIC FRONTEND
+   SMALL UTILS
 ================================ */
-app.use(express.static(path.join(__dirname, "../public")));
+const s = (v) => (v == null ? "" : typeof v === "string" ? v : JSON.stringify(v));
+const takeText = (...vals) => vals.map(s).map((t) => t.trim()).find(Boolean) || "";
+
+function safeUrl(u) {
+  try {
+    return new URL(String(u)).toString();
+  } catch {
+    return "";
+  }
+}
+function absUrl(base, maybe) {
+  try {
+    if (!maybe) return "";
+    const s = String(maybe).trim();
+    if (!s) return "";
+    if (s.startsWith("data:")) return ""; // ignore huge data urls
+    if (s.startsWith("//")) return "https:" + s;
+    return new URL(s, base).toString();
+  } catch {
+    return "";
+  }
+}
+const uniq = (arr) => Array.from(new Set((arr || []).filter(Boolean)));
+
+/* ===============================
+   PLATFORM NORMALIZER
+================================ */
+const normPlatform = (p) =>
+  ({
+    fb: "facebook",
+    facebook: "facebook",
+    ig: "instagram",
+    instagram: "instagram",
+    tt: "tiktok",
+    tiktok: "tiktok",
+    li: "linkedin",
+    linkedin: "linkedin",
+    twitter: "x",
+    x: "x",
+    dm: "dm",
+    sms: "dm",
+    text: "dm",
+    marketplace: "marketplace",
+    hashtags: "hashtags",
+    all: "all",
+  }[String(p || "").toLowerCase()] || "facebook");
+
+/* ===============================
+   FETCH HELPER (Render/Node safe)
+================================ */
+async function getFetch() {
+  if (typeof fetch === "function") return fetch;
+  // fallback if environment doesn't expose fetch
+  const mod = await import("node-fetch");
+  return mod.default;
+}
 
 /* ===============================
    HEALTH
@@ -24,22 +84,245 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
 
-/* ===============================
-   SMALL UTILS
-================================ */
-const s = (v) => (v == null ? "" : typeof v === "string" ? v : JSON.stringify(v));
-const takeText = (...vals) => vals.map(s).map(t => t.trim()).find(Boolean) || "";
-const normPlatform = (p) => ({
-  fb: "facebook", facebook: "facebook",
-  ig: "instagram", instagram: "instagram",
-  tt: "tiktok", tiktok: "tiktok",
-  li: "linkedin", linkedin: "linkedin",
-  twitter: "x", x: "x",
-  dm: "dm", sms: "dm", text: "dm",
-  marketplace: "marketplace",
-  hashtags: "hashtags",
-  all: "all"
-}[String(p||"").toLowerCase()] || "facebook");
+/* ==================================================
+   BOOST (SCRAPE) — MUST RETURN JSON ALWAYS ✅
+   GET /api/boost?url=...&debug=1
+================================================== */
+app.get("/api/boost", async (req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  const raw = req.query.url;
+  const url = safeUrl(raw);
+  const debug = String(req.query.debug || "") === "1";
+
+  if (!url) {
+    return res.status(400).json({ ok: false, error: "Missing or invalid url" });
+  }
+
+  let cheerio = null;
+  try {
+    cheerio = require("cheerio");
+  } catch {
+    // not fatal: we can still return something, but scraping will be weak
+    cheerio = null;
+  }
+
+  try {
+    const f = await getFetch();
+
+    const r = await f(url, {
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+
+    const html = await r.text();
+
+    // If dealer blocks us / returns non-html, we still respond JSON
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    if (!ct.includes("text/html") && !ct.includes("application/xhtml")) {
+      return res.status(200).json({
+        ok: false,
+        error: `Dealer returned non-HTML (${ct || "unknown"})`,
+        url,
+        status: r.status,
+      });
+    }
+
+    let title = "";
+    let description = "";
+    let images = [];
+
+    if (cheerio) {
+      const $ = cheerio.load(html);
+
+      title =
+        takeText(
+          $("meta[property='og:title']").attr("content"),
+          $("meta[name='twitter:title']").attr("content"),
+          $("title").text(),
+          $("h1").first().text()
+        ) || "";
+
+      description =
+        takeText(
+          $("meta[property='og:description']").attr("content"),
+          $("meta[name='description']").attr("content"),
+          $("meta[name='twitter:description']").attr("content")
+        ) || "";
+
+      // Images: og:image first, then all imgs (filtered)
+      const ogImg = absUrl(url, $("meta[property='og:image']").attr("content"));
+      if (ogImg) images.push(ogImg);
+
+      $("img").each((_, el) => {
+        const src =
+          $(el).attr("data-src") ||
+          $(el).attr("data-lazy") ||
+          $(el).attr("data-original") ||
+          $(el).attr("src") ||
+          "";
+        const abs = absUrl(url, src);
+
+        if (!abs) return;
+        // keep likely photos, skip icons/svgs
+        const lower = abs.toLowerCase();
+        if (lower.endsWith(".svg")) return;
+        if (lower.includes("logo")) return;
+        if (lower.includes("sprite")) return;
+
+        images.push(abs);
+      });
+
+      images = uniq(images).slice(0, 60);
+
+      // Light attempt to find price/mileage/vin/stock if present
+      const textBlob = $("body").text().replace(/\s+/g, " ").trim();
+
+      const find = (re) => {
+        const m = textBlob.match(re);
+        return m ? m[0] : "";
+      };
+
+      const price = find(/\$\s?\d{1,3}(?:,\d{3})+(?:\.\d{2})?/);
+      const vin = find(/\b[A-HJ-NPR-Z0-9]{17}\b/);
+      const mileage = find(/\b\d{1,3}(?:,\d{3})+\s?(?:miles|mi)\b/i);
+      const stock = find(/\bStock\s*#?\s*[:\-]?\s*[A-Za-z0-9\-]+\b/i);
+
+      const vehicle = {
+        url,
+        title: title || "",
+        description: description || "",
+        price: price || "",
+        mileage: mileage || "",
+        vin: vin || "",
+        stock: stock ? stock.replace(/^Stock\s*#?\s*[:\-]?\s*/i, "") : "",
+      };
+
+      return res.status(200).json({
+        ok: true,
+        vehicle,
+        images,
+        ...(debug ? { debug: { status: r.status, contentType: ct, imageCount: images.length } } : {}),
+      });
+    }
+
+    // No cheerio available (still JSON)
+    return res.status(200).json({
+      ok: false,
+      error: "cheerio not installed. Run: npm i cheerio",
+      url,
+    });
+  } catch (e) {
+    return res.status(200).json({
+      ok: false,
+      error: e?.message || String(e),
+      url,
+    });
+  }
+});
+
+/* ==================================================
+   PROXY (for ZIP downloads)
+   GET /api/proxy?url=...
+================================================== */
+app.get("/api/proxy", async (req, res) => {
+  const url = safeUrl(req.query.url);
+  if (!url) return res.status(400).send("Missing url");
+
+  try {
+    const f = await getFetch();
+    const r = await f(url, {
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
+        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+      },
+    });
+
+    if (!r.ok) return res.status(502).send("Proxy fetch failed");
+
+    const ct = r.headers.get("content-type") || "application/octet-stream";
+    res.setHeader("Content-Type", ct);
+    res.setHeader("Cache-Control", "no-store");
+
+    // stream
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.status(200).send(buf);
+  } catch (e) {
+    res.status(500).send("Proxy error");
+  }
+});
+
+/* ==================================================
+   PAYMENT HELPER (server calc)
+   POST /api/payment-helper
+================================================== */
+app.post("/api/payment-helper", (req, res) => {
+  const num = (v) => {
+    const n = Number(String(v ?? "").replace(/[$,%\s,]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const money = (n) =>
+    `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  try {
+    const price = num(req.body.price);
+    const down = num(req.body.down);
+    const trade = num(req.body.trade);
+    const payoff = num(req.body.payoff);
+    const rate = num(req.body.rate);
+    const term = Math.max(0, Math.round(num(req.body.term)));
+    const tax = num(req.body.tax);
+    const fees = num(req.body.fees);
+    const rebate = num(req.body.rebate);
+
+    if (!price || !term) {
+      return res.status(400).json({ ok: false, message: "Enter at least Price and Term (months)." });
+    }
+
+    const tradeNet = trade - payoff;
+    const taxable = Math.max(0, price - Math.max(0, tradeNet) - rebate) + fees;
+    const taxAmt = taxable * (Math.max(0, tax) / 100);
+    const amountFinanced = Math.max(0, taxable + taxAmt - down);
+
+    const monthlyRate = Math.max(0, rate) / 100 / 12;
+
+    let payment = 0;
+    if (monthlyRate === 0) {
+      payment = amountFinanced / term;
+    } else {
+      const p = amountFinanced;
+      const n = term;
+      const r = monthlyRate;
+      payment = (p * r) / (1 - Math.pow(1 + r, -n));
+    }
+
+    const breakdownText = [
+      `Estimated Payment: ${money(payment)} / mo`,
+      "",
+      `Amount Financed: ${money(amountFinanced)}`,
+      `Price: ${money(price)}`,
+      `Fees/Add-ons: ${money(fees)}`,
+      `Rebate: -${money(rebate)}`,
+      `Trade: ${money(trade)}  •  Payoff: ${money(payoff)}  •  Net: ${money(tradeNet)}`,
+      `Down: ${money(down)}`,
+      `Tax (${tax.toFixed(2)}%): ${money(taxAmt)}`,
+      "",
+      `APR: ${rate.toFixed(2)}%  •  Term: ${term} months`,
+      "",
+      "Note: Estimate only. Exact figures depend on lender, taxes, fees, rebates, and approval structure.",
+    ].join("\n");
+
+    return res.json({ ok: true, breakdownText });
+  } catch (e) {
+    return res.status(500).json({ ok: false, message: e?.message || String(e) });
+  }
+});
 
 /* ===============================
    OPENAI HELPER
@@ -49,7 +332,8 @@ async function callOpenAI({ system, user, temperature = 0.8 }) {
     return { ok: false, error: "Missing OPENAI_API_KEY" };
   }
 
-  const r = await fetch("https://api.openai.com/v1/chat/completions", {
+  const f = await getFetch();
+  const r = await f("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -60,14 +344,14 @@ async function callOpenAI({ system, user, temperature = 0.8 }) {
       temperature,
       messages: [
         { role: "system", content: system },
-        { role: "user", content: user }
-      ]
-    })
+        { role: "user", content: user },
+      ],
+    }),
   });
 
-  const j = await r.json();
+  const j = await r.json().catch(() => null);
   const text = j?.choices?.[0]?.message?.content?.trim();
-  return text ? { ok: true, text } : { ok: false, error: "Empty AI response" };
+  return text ? { ok: true, text } : { ok: false, error: j?.error?.message || "Empty AI response" };
 }
 
 /* ===============================
@@ -112,17 +396,17 @@ ${JSON.stringify(vehicle, null, 2)}
 
     const out = await callOpenAI({ system, user, temperature: 0.85 });
     return res.json(out.ok ? { ok: true, text: out.text } : out);
-
   } catch (e) {
     return res.json({ ok: false, error: e.message });
   }
 });
 
 /* ===============================
-   AI: OBJECTION COACH (FIXED)
+   AI: OBJECTION COACH (COMPAT)
+   Accepts: {objection} OR {input} OR {text}
 ================================ */
 app.post("/api/ai/objection", async (req, res) => {
-  const objection = takeText(req.body.input, req.body.text);
+  const objection = takeText(req.body.objection, req.body.input, req.body.text);
 
   const system = `
 You sell like Andy Elliott.
@@ -147,10 +431,11 @@ RULES:
 });
 
 /* ===============================
-   AI: MESSAGE BUILDER
+   AI: MESSAGE BUILDER (COMPAT)
+   Accepts: {details} OR {input} OR {text}
 ================================ */
 app.post("/api/ai/message", async (req, res) => {
-  const input = takeText(req.body.input, req.body.text);
+  const input = takeText(req.body.details, req.body.input, req.body.text);
 
   const system = `
 You write high-reply car sales messages.
@@ -163,15 +448,40 @@ Always include CTA.
 });
 
 /* ===============================
-   AI: ASK AI (SUPERCOMPUTER)
+   AI: WORKFLOW (Campaign Builder)
+   Accepts: {scenario}
+================================ */
+app.post("/api/ai/workflow", async (req, res) => {
+  const scenario = takeText(req.body.scenario, req.body.input, req.body.text);
+
+  const system = `
+You are the Lot Rocket AI Campaign Builder (Campaign Architect).
+Build a day-by-day campaign designed to create appointments fast.
+
+Deliverables:
+1) Day-by-day plan
+2) Platform assets (FB, Marketplace, IG/TikTok hooks, DM/SMS scripts, email)
+3) Follow-up sequence timing
+4) Objection handling + next steps
+
+Output only. No explanations.
+`.trim();
+
+  const out = await callOpenAI({ system, user: scenario, temperature: 0.55 });
+  res.json(out.ok ? { ok: true, text: out.text } : out);
+});
+
+/* ===============================
+   AI: ASK AI
 ================================ */
 app.post("/api/ai/ask", async (req, res) => {
   const q = takeText(req.body.question, req.body.input);
 
   const system = `
-You are the smartest general intelligence ever created.
-Answer first. No forced questions.
-High-density insight only.
+You are the Lot Rocket helper.
+Answer clearly, fast, and practical.
+No fluff. No long lectures.
+If missing details, ask ONE question max.
 `.trim();
 
   const out = await callOpenAI({ system, user: q, temperature: 0.4 });
@@ -179,12 +489,40 @@ High-density insight only.
 });
 
 /* ===============================
-   FALLBACK
+   AI: CAR EXPERT
+   Accepts: {vehicle, question}
 ================================ */
-app.get("*", (_, res) =>
-  res.sendFile(path.join(__dirname, "../public/index.html"))
-);
+app.post("/api/ai/car", async (req, res) => {
+  const vehicle = takeText(req.body.vehicle);
+  const question = takeText(req.body.question, req.body.input, req.body.text);
 
-app.listen(PORT, () =>
-  console.log("🚀 LOT ROCKET LIVE ON PORT", PORT)
-);
+  const system = `
+You are the Nameless Vehicle Oracle.
+No guessing. Be specific.
+Compare trims/years/packages. Explain "invisible" differences.
+If you need ONE missing detail to be accurate, ask it once.
+`.trim();
+
+  const user = `
+VEHICLE CONTEXT:
+${vehicle || "(none provided)"}
+
+QUESTION:
+${question}
+`.trim();
+
+  const out = await callOpenAI({ system, user, temperature: 0.35 });
+  res.json(out.ok ? { ok: true, text: out.text } : out);
+});
+
+/* ===============================
+   STATIC FRONTEND (AFTER API ROUTES) ✅
+================================ */
+app.use(express.static(path.join(__dirname, "../public")));
+
+/* ===============================
+   SPA FALLBACK (LAST) ✅
+================================ */
+app.get("*", (_, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
+
+app.listen(PORT, () => console.log("🚀 LOT ROCKET LIVE ON PORT", PORT));
