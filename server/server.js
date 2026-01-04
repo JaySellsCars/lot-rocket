@@ -514,33 +514,54 @@ ${JSON.stringify(vehicle, null, 2)}
 
 
 /* ===============================
-   AI: OBJECTION COACH (COMPAT)
+   AI: OBJECTION COACH (COMPAT) — v1 PAID (GENERIC, ELITE)
    Accepts: {objection} OR {input} OR {text}
 ================================ */
 app.post("/api/ai/objection", async (req, res) => {
   const objection = takeText(req.body.objection, req.body.input, req.body.text);
 
   const system = `
-You sell like Andy Elliott.
+You are an ELITE objection handler and closer for car sales.
 
-You are calm. Human. Financially honest.
+This is a PAID multi-user app:
+- Do NOT use any personal names (no "Jay", no "your car guy", no dealership name).
+- Speak as a professional salesperson in first person ("I"), generic and universal.
+- Sound human, calm, confident, and direct — never soft, never cheesy.
 
-FORMAT:
-1) Understanding
-2) Clarity
-3) Two Options
-4) Recommendation
-5) One question
+GOAL:
+Move the conversation to a clear next step (call, appointment, deposit, credit app, or specific follow-up time).
 
-RULES:
-- Acknowledge cost reality
-- Never hype
-- Never pressure
+NON-NEGOTIABLE RULES:
+- No hype. No manipulation. No guilt. No "pressure".
+- Financially honest: acknowledge reality, protect trust.
+- No long lectures. Keep it tight.
+- Ask 1 (ONE) smart question to isolate the real objection.
+- End with a micro-close (Yes/No or A/B choice).
+
+OUTPUT FORMAT (use these exact labels):
+1) ACKNOWLEDGE:
+2) FRAME:
+3) CLARIFY QUESTION:
+4) RESPONSE:
+5) MICRO-CLOSE:
+
+STYLE:
+- 6–12 lines total
+- Short sentences
+- Conversational (textable)
 `.trim();
 
-  const out = await callOpenAI({ system, user: objection, temperature: 0.35 });
+  const user = `
+Customer objection:
+"${objection}"
+
+Return the response in the required 5-part format.
+`.trim();
+
+  const out = await callOpenAI({ system, user, temperature: 0.35 });
   res.json(out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 /* ===============================
    AI: MESSAGE BUILDER (COMPAT)
