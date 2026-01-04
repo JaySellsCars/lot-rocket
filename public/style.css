@@ -67,20 +67,25 @@ a{ color:#8ab4f8; }
   user-select: none;
 }
 
-/* LOGO — BIG + CLEAN + HOVER */
+/* LOGO — FORCE BIG / PREMIUM */
 .app-logo {
-  height: 78px;               /* ✅ bigger premium */
+  height: 96px;              /* BIGGER */
   width: auto;
   object-fit: contain;
-  display: block;
-  filter: drop-shadow(0 10px 22px rgba(255,90,0,0.26));
-  transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+
+  /* FORCE visual scale */
+  transform: scale(1.25);
+  transform-origin: left center;
+
+  filter: drop-shadow(0 12px 28px rgba(255,90,0,0.45));
+  transition: transform .18s ease, filter .18s ease;
 }
 
 .branding:hover .app-logo {
-  transform: translateY(-1px) scale(1.03);  /* ✅ premium hover */
-  filter: drop-shadow(0 14px 30px rgba(255,90,0,0.34));
+  transform: scale(1.32);
+  filter: drop-shadow(0 18px 38px rgba(255,90,0,0.6));
 }
+
 
 /* TEXT BLOCK */
 .brand-text {
