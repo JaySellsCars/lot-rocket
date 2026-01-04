@@ -735,3 +735,50 @@ textarea{
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
+/* =====================================================
+   LOT ROCKET — THUMBNAIL SQUARE FIX (FINAL)
+   Forces all photo thumbnails to true squares
+===================================================== */
+
+/* 1️⃣ The thumbnail CARD (container) */
+.photo-thumb,
+.thumb,
+.holding-thumb,
+#step1Photos .thumb,
+#photoGrid .thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;     /* 🔥 forces square */
+  overflow: hidden;
+  border-radius: 14px;
+  background: #0b1020;
+}
+
+/* 2️⃣ The IMAGE inside the card */
+.photo-thumb img,
+.thumb img,
+.holding-thumb img,
+#step1Photos img,
+#photoGrid img {
+  position: absolute;
+  inset: 0;                /* top right bottom left = 0 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* 🔥 crop, don’t stretch */
+  object-position: center;
+  display: block;
+}
+
+/* 3️⃣ Grid consistency (prevents tall rows) */
+#step1Photos,
+#photoGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* 4️⃣ Kill legacy max-height / inline sizing */
+#step1Photos img,
+#photoGrid img {
+  max-height: none !important;
+}
