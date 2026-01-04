@@ -842,3 +842,39 @@ textarea{
 .step2-card .lr-btn:active{
   transform: translateY(1px) scale(.99) !important;
 }
+/* =========================================================
+   STEP 3 — SOCIAL READY STRIP FINAL FIX
+   - Arrows vertically centered on image sides
+   - Remove stray small preview icon
+========================================================= */
+
+/* Force the viewer row to be a true 3-column layout */
+.social-ready-row,
+.social-carousel-preview{
+  display: grid !important;
+  grid-template-columns: 56px 1fr 56px !important;
+  align-items: center !important;
+}
+
+/* Arrow buttons — centered vertically beside image */
+.social-ready-row .ghost-circle-btn,
+.social-carousel-preview .ghost-circle-btn{
+  align-self: center !important;
+}
+
+/* Center image cleanly */
+#socialCarouselPreviewImg{
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* ❌ REMOVE the tiny preview icon/image/text */
+.social-ready-center img:not(#socialCarouselPreviewImg),
+.social-ready-center .preview,
+.social-ready-center .preview-icon,
+.social-ready-center .preview-thumb,
+.social-ready-center .small-preview,
+.social-ready-center [data-preview],
+.social-ready-center svg{
+  display: none !important;
+}
