@@ -80,20 +80,19 @@ a{ color:#8ab4f8; }
   margin-bottom:0;        /* prevents header misalignment */
 }
 
-/* LOGO — desktop primary size */
 .app-logo{
-  height:165px;           /* restored visual weight */
+  height:165px;
   width:auto;
   object-fit:contain;
   filter: brightness(0) invert(1);
 
-  /* Compensate for padded PNG */
   transform: scale(1.22);
-  transform-origin:left center;
+  transform-origin: left center;
 
   opacity:.98;
   transition: transform .18s ease, filter .18s ease, opacity .18s ease;
 }
+
 
 /* Premium hover (unchanged behavior) */
 .branding:hover .app-logo{
