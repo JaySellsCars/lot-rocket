@@ -520,6 +520,42 @@ app.post("/api/ai/social", async (req, res) => {
       .split(/\s+/)
       .slice(0, 2)
       .join(" ") || "INFO";
+  // Tone preset (optional): closer | chill | viral | luxe | marketplace
+  const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "").trim().toLowerCase();
+
+  const TONE_PRESETS = {
+    closer: [
+      "TONE PRESET: CLOSER",
+      "- High intent. Strong urgency. Assume buyer is ready.",
+      "- Short lines. Firm CTA. No soft language.",
+    ].join("\n"),
+
+    chill: [
+      "TONE PRESET: CHILL",
+      "- Friendly, conversational, car-guy energy.",
+      "- No pressure. Still DM-driven.",
+    ].join("\n"),
+
+    viral: [
+      "TONE PRESET: VIRAL",
+      "- Scroll-stopping hooks. Bold questions. High energy.",
+      "- Emojis used as anchors (within platform limits).",
+    ].join("\n"),
+
+    luxe: [
+      "TONE PRESET: LUXE",
+      "- Clean, premium, confident.",
+      "- Fewer emojis. Focus on experience and quality.",
+    ].join("\n"),
+
+    marketplace: [
+      "TONE PRESET: MARKETPLACE",
+      "- Price early. Bullet facts. Zero fluff.",
+      "- Minimal emojis. Direct availability.",
+    ].join("\n"),
+  };
+
+  const toneBlock = TONE_PRESETS[toneRaw] ? `\n${TONE_PRESETS[toneRaw]}\n` : "";
 
   const system = [
     "YOU ARE LOT ROCKET — VIRAL CAR SALES COPY ENGINE.",
