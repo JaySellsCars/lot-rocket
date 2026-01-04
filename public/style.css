@@ -829,3 +829,50 @@ textarea{
 #socialReadyPanel .small-note + div{
   display:none !important;
 }
+/* =========================================================
+   STEP 3 — SOCIAL READY: FINAL STABLE FIX
+   - kill 🖼️ Preview row (deterministic)
+   - lock arrows left/right centered
+   - keep viewer big + stable
+========================================================= */
+
+/* 1) Kill the Preview row */
+#srPreviewRow{ display:none !important; }
+
+/* 2) Lock the row as 3 columns (arrows | viewer | arrows) */
+#socialReadyPanel .social-ready-row{
+  display:grid !important;
+  grid-template-columns: 84px 1fr 84px !important; /* gutters so arrows don't touch */
+  gap: 14px !important;
+  align-items:center !important;
+}
+
+/* 3) Center arrow buttons inside their gutter cells */
+#socialReadyPanel .social-ready-row > button{
+  justify-self:center !important;
+  align-self:center !important;
+}
+
+/* 4) Arrow size (clean) */
+#socialReadyPanel .ghost-circle-btn{
+  width:56px !important;
+  height:56px !important;
+}
+
+/* 5) Keep viewer centered and big */
+#socialCarouselPreviewImg{
+  display:block !important;
+  margin:0 auto !important;
+  width:min(760px, 100%) !important;
+  height:420px !important;
+  object-fit:contain !important;
+  border-radius:18px !important;
+  border:1px solid rgba(148,163,184,.35) !important;
+  background:rgba(2,6,23,.65) !important;
+}
+
+/* hide image box ONLY when empty (prevents "viewer gone" confusion) */
+#socialCarouselPreviewImg:not([src]),
+#socialCarouselPreviewImg[src=""]{
+  display:none !important;
+}
