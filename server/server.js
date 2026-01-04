@@ -564,6 +564,8 @@ app.post("/api/ai/social", async (req, res) => {
     "Generate a scroll-stopping, DM-generating post for ONE individual salesperson.",
     "It must feel human, fast, and native to the platform — not a dealership ad.",
     "",
+         toneBlock || "",
+
     "VOICE (NON-NEGOTIABLE):",
     "- First-person singular (I/me). Confident. Direct. No corporate fluff.",
     "- NEVER say: 'Ready to elevate your drive', 'Check out', 'Stop by', 'Come on in', 'Visit our website', 'Call the dealership'.",
