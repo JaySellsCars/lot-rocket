@@ -571,28 +571,78 @@ COACH:
 
 
 /* ===============================
-   AI: MESSAGE BUILDER (COMPAT)
+   AI: MESSAGE BUILDER (DIRECT)
    Accepts: {details} OR {input} OR {text}
+   Purpose: Single, direct message (email, text, DM, reply)
 ================================ */
 app.post("/api/ai/message", async (req, res) => {
   try {
     const input = takeText(req.body.details, req.body.input, req.body.text);
-    if (!input) return jsonErr(res, "Missing input");
+    if (!input) return res.json({ ok: false, error: "Missing message input" });
 
     const system = `
-You write high-reply car sales messages.
-Short. Human. Direct.
-No corporate tone.
-Always include a clear CTA.
-Return ONLY the message.
+You are an elite automotive sales communicator.
+
+This tool is for ONE message only.
+Not campaigns. Not sequences.
+
+You write:
+- Urgent texts
+- Professional emails
+- Calm but firm follow-ups
+- Funding / bank / approval issue messages
+- Time-sensitive callbacks
+- Direct DM replies
+
+STYLE:
+- Human
+- Professional
+- Clear
+- Confident
+- No fluff
+- No hype
+- No emojis unless explicitly appropriate
+
+RULES:
+- Match the tone required (urgent, professional, calm, firm)
+- Be concise but complete
+- Do NOT oversell
+- Do NOT sound scripted
+- Do NOT ask unnecessary questions
+- Include a clear next step or action when appropriate
+
+EMAIL RULES:
+- If it’s an email, include:
+  Subject:
+  Body:
+
+TEXT / DM RULES:
+- Short, conversational, direct
+- Sounds like a real salesperson typing
+
+IMPORTANT:
+- Assume this message is being sent to a real customer
+- Protect credibility at all times
+- Never mention being an AI
+- Never mention internal process unless necessary
+
+OUTPUT:
+Return ONLY the final message.
+No explanations.
 `.trim();
 
-    const out = await callOpenAI({ system, user: input, temperature: 0.5 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+    const out = await callOpenAI({
+      system,
+      user: input,
+      temperature: 0.4
+    });
+
+    return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
-    return jsonErr(res, e?.message || String(e));
+    return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+
 
 /* ===============================
    AI: WORKFLOW (Campaign Builder) — UNIVERSAL
