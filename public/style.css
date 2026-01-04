@@ -973,3 +973,16 @@ textarea{
 #socialReadyPanel .small-note + *{
   display: none !important;
 }
+/* =========================================================
+   STEP 1 — MOVE "SEND SELECTED PHOTOS TO CREATIVE LAB" DOWN
+========================================================= */
+
+/* Add breathing room ABOVE the button (below photo grid) */
+#sendToDesignStudio{
+  margin-top: 18px !important;   /* try 18 → 24 if you want more */
+}
+
+/* Ensure the photo grid itself stays tight */
+.photo-grid{
+  margin-bottom: 0 !important;
+}
