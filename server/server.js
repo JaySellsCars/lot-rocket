@@ -402,7 +402,8 @@ app.get("/api/proxy", async (req, res) => {
 
   try {
     const f = await getFetch();
-    const r = await f(url, {
+   const r = await fetchHtmlWithFallback(url);
+
       redirect: "follow",
       headers: {
         "User-Agent":
