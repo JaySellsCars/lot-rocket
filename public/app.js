@@ -467,155 +467,279 @@
     `;
   }
 
-  // ==================================================
-  // STEP 2 PLATFORM MAP (ids must match your index.html)
-  // ==================================================
-  function mapPlatformToOutputId(platform) {
-    const m = {
-      facebook: "fbOutput",
-      instagram: "igOutput",
-      tiktok: "ttOutput",
-      linkedin: "liOutput",
-      x: "xOutput",
-      dm: "dmOutput",
-      marketplace: "marketplaceOutput",
-      hashtags: "hashtagsOutput",
-    };
-    return m[platform] || "";
+// ==================================================
+// STEP 2 — HARDENED SOCIAL GENERATOR (NO GENERIC POSTS)
+// ==================================================
+
+// map platform -> textarea id (must match index.html)
+function mapPlatformToTextarea(platform) {
+  const m = {
+    facebook: "fbOutput",
+    instagram: "igOutput",
+    tiktok: "ttOutput",
+    linkedin: "liOutput",
+    x: "xOutput",
+    dm: "dmOutput",
+    marketplace: "marketplaceOutput",
+    hashtags: "hashtagsOutput",
+  };
+  return m[String(platform || "").toLowerCase()] || "";
+}
+
+// pull “known” features only if we have evidence (vehicle fields OR description text)
+function buildDesiredFeatures(v) {
+  v = v || {};
+  const feats = [];
+
+  const add = (x) => {
+    const s = (x || "").toString().trim();
+    if (!s) return;
+    feats.push(s);
+  };
+
+  // from structured fields (safe)
+  add(v.engine ? `${v.engine}` : "");
+  add(v.drivetrain ? `${v.drivetrain}` : "");
+  add(v.transmission ? `${v.transmission}` : (v.trans ? `${v.trans}` : ""));
+  add(v.trim ? `${v.trim}` : "");
+  add(v.mileage ? `Only ${v.mileage}` : "");
+  add(v.exterior ? `${v.exterior} Exterior` : "");
+  add(v.interior ? `${v.interior} Interior` : "");
+  add(v.price ? `Priced at ${v.price}` : "");
+  add(v.certified ? "Certified Pre-Owned" : "");
+  add(v.oneOwner ? "One Owner" : "");
+  add(v.noAccidents ? "No Accidents" : "");
+
+  // from description text (pattern only — no guessing)
+  const txt = (v.description || "").toString();
+
+  const has = (re) => re.test(txt);
+  if (has(/\bcarplay\b/i)) add("Apple CarPlay");
+  if (has(/\bandroid auto\b/i)) add("Android Auto");
+  if (has(/\badaptive cruise\b|\bacc\b/i)) add("Adaptive Cruise Control");
+  if (has(/\bheated steering wheel\b/i)) add("Heated Steering Wheel");
+  if (has(/\bheated seats?\b/i)) add("Heated Seats");
+  if (has(/\bremote start\b/i)) add("Remote Start");
+  if (has(/\bblind spot\b/i)) add("Blind Spot Monitor");
+  if (has(/\bcross[-\s]?traffic\b/i)) add("Rear Cross-Traffic Alert");
+  if (has(/\blane keep\b|\blane assist\b/i)) add("Lane Keep Assist");
+  if (has(/\brear park\b|\bpark assist\b/i)) add("Rear Park Assist");
+
+  // optional: packages if provided explicitly
+  if (v.packages) add(v.packages);
+
+  // de-dupe + cap
+  const seen = new Set();
+  const out = [];
+  for (const f of feats) {
+    const key = f.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(f);
+    if (out.length >= 12) break;
+  }
+  return out;
+}
+
+function ensureBullets(text, features) {
+  const t = (text || "").toString().trim();
+  const hasBullets = /(^|\n)\s*(•|-|⭐)/.test(t);
+  if (hasBullets || !features?.length) return t;
+
+  return (
+    t +
+    "\n\n⭐ MOST-WANTED FEATURES:\n" +
+    features.map((f) => `• ${f}`).join("\n")
+  );
+}
+
+// strict, platform-specific rules to stop “generic” output
+function platformRules(platform) {
+  const p = String(platform || "").toLowerCase();
+  if (p === "x") return { maxChars: 280, short: true };
+  if (p === "dm") return { maxChars: 420, short: true };
+  if (p === "tiktok") return { maxChars: 700, short: false };
+  if (p === "instagram") return { maxChars: 900, short: false };
+  if (p === "marketplace") return { maxChars: 1400, short: false };
+  if (p === "hashtags") return { hashtagsOnly: true };
+  return { maxChars: 1200, short: false };
+}
+
+function clampText(text, maxChars) {
+  if (!maxChars) return text;
+  const t = (text || "").toString();
+  if (t.length <= maxChars) return t;
+  return t.slice(0, maxChars - 1).trimEnd() + "…";
+}
+
+async function aiPost(platform) {
+  const v = STORE.lastVehicle || STORE.vehicle || {};
+  const rules = platformRules(platform);
+  const desiredFeatures = buildDesiredFeatures(v);
+
+  // HARD REQUIREMENTS: hook + bullets + CTA (and hashtags only for hashtags)
+  const payload = {
+    platform,
+    vehicle: {
+      url: v.url || "",
+      title: v.title || "",
+      trim: v.trim || "",
+      price: v.price || "",
+      mileage: v.mileage || "",
+      vin: v.vin || "",
+      stock: v.stock || "",
+      exterior: v.exterior || "",
+      interior: v.interior || "",
+      engine: v.engine || "",
+      drivetrain: v.drivetrain || "",
+      transmission: v.transmission || v.trans || "",
+      description: v.description || "",
+    },
+    style: {
+      tone: "high-energy closer",
+      structure: "HOOK + BULLETS + CTA",
+      bulletsRequired: true,
+      hookRequired: true,
+      ctaRequired: true,
+      noFluff: true,
+      rules,
+    },
+    desiredFeatures, // bullet seeds (evidence-based)
+  };
+
+  const r = await fetch("/api/ai/social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const raw = await r.text();
+
+  if (!ct.includes("application/json")) {
+    console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 350) });
+    throw new Error("AI returned non-JSON");
   }
 
-  // ==================================================
-  // STEP 2 AI SOCIAL (bullet-safe, non-json safe)
-  // ==================================================
-  async function aiPost(platform) {
-    const v = STORE.lastVehicle || STORE.vehicle || {};
+  let j;
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    console.error("❌ AI SOCIAL BAD JSON", raw.slice(0, 350));
+    throw new Error("Bad JSON from AI");
+  }
 
-    const features = [
-      v.engine && `${v.engine}`,
-      v.drivetrain && v.drivetrain,
-      v.transmission && v.transmission,
-      v.mileage && `Only ${v.mileage}`,
-      v.exterior && `${v.exterior} Exterior`,
-      v.interior && `${v.interior} Interior`,
-      v.price && `Priced at ${v.price}`,
-      v.certified && "Certified Pre-Owned",
-    ].filter(Boolean);
+  if (!j?.ok) throw new Error(j?.error || "AI failed");
 
-    const payload = {
-      platform,
-      vehicle: {
-        title: v.title || "",
-        price: v.price || "",
-        mileage: v.mileage || "",
-        vin: v.vin || "",
-        stock: v.stock || "",
-      },
-      style: {
-        tone: "high-energy closer",
-        urgency: "today",
-        structure: "hook + bullets + CTA",
-        bulletsRequired: true,
-      },
-      desiredFeatures: features,
-    };
+  let text = (j.text || "").toString().trim();
 
-    const r = await fetch("/api/ai/social", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    const raw = await r.text();
-
-    if (!ct.includes("application/json")) {
-      console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 300) });
-      throw new Error("AI returned non-JSON");
+  // enforce bullets + clamp
+  if (!rules.hashtagsOnly) {
+    text = ensureBullets(text, desiredFeatures);
+    text = clampText(text, rules.maxChars);
+  } else {
+    // hashtags-only safety
+    text = text
+      .split(/\s+/)
+      .filter((w) => w.startsWith("#"))
+      .slice(0, 25)
+      .join(" ");
+    if (!text) {
+      // last resort if AI fails: make hashtags from title words (still safe)
+      const base = (v.title || "Car For Sale")
+        .replace(/[^a-z0-9\s]/gi, " ")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 6)
+        .map((w) => `#${w}`);
+      text = base.join(" ");
     }
+  }
 
-    let j;
+  return text;
+}
+
+async function generateAllStep2() {
+  const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
+  for (const p of platforms) {
+    const id = mapPlatformToTextarea(p);
+    const ta = id ? $(id) : null;
+    if (!ta) continue;
+
+    setVal(id, "Generating…");
     try {
-      j = JSON.parse(raw);
-    } catch {
-      throw new Error("Bad JSON from AI");
+      const text = await aiPost(p);
+      setVal(id, text);
+    } catch (e) {
+      setVal(id, `AI ERROR: ${String(e?.message || e)}`);
     }
-
-    if (!j.ok) throw new Error(j.error || "AI failed");
-
-    let text = j.text || "";
-
-    // last-resort bullet force if AI gets generic
-    if (!/•|\n-|\n⭐/g.test(text) && features.length) {
-      text += "\n\n⭐ MOST-WANTED FEATURES:\n" + features.map((f) => `• ${f}`).join("\n");
-    }
-
-    return text;
   }
+}
 
-  // ==================================================
-  // STEP 2 GENERATE (single + all)
-  // ==================================================
-  async function generateAllStep2() {
-    const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
+function wireRegenButtons() {
+  const wires = [
+    ["fbNewBtn", "facebook"],
+    ["igNewBtn", "instagram"],
+    ["ttNewBtn", "tiktok"],
+    ["liNewBtn", "linkedin"],
+    ["xNewBtn", "x"],
+    ["dmNewBtn", "dm"],
+    ["mkNewBtn", "marketplace"],
+    ["hashNewBtn", "hashtags"],
+  ];
 
-    for (const p of platforms) {
-      const outId = mapPlatformToOutputId(p);
-      if (!outId || !$(outId)) continue;
+  wires.forEach(([btnId, platform]) => {
+    const b = $(btnId);
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", async () => {
+      pressAnim(b);
+      const outId = mapPlatformToTextarea(platform);
+      if (!outId || !$(outId)) return;
 
       setVal(outId, "Generating…");
       try {
-        const text = await aiPost(p);
+        const text = await aiPost(platform);
         setVal(outId, text);
       } catch (e) {
         setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
       }
-    }
-  }
-
-  function wireRegenButtons() {
-    const wires = [
-      ["fbNewBtn", "facebook"],
-      ["igNewBtn", "instagram"],
-      ["ttNewBtn", "tiktok"],
-      ["liNewBtn", "linkedin"],
-      ["xNewBtn", "x"],
-      ["dmNewBtn", "dm"],
-      ["mkNewBtn", "marketplace"],
-      ["hashNewBtn", "hashtags"],
-    ];
-
-    wires.forEach(([btnId, platform]) => {
-      const b = $(btnId);
-      if (!b || b.__LR_BOUND__) return;
-      b.__LR_BOUND__ = true;
-
-      b.addEventListener("click", async (e) => {
-        e.preventDefault();
-        pressAnim(b);
-
-        const outId = mapPlatformToOutputId(platform);
-        if (!outId || !$(outId)) return;
-
-        setVal(outId, "Generating…");
-        try {
-          const text = await aiPost(platform);
-          setVal(outId, text);
-        } catch (err) {
-          setVal(outId, `AI ERROR: ${String(err?.message || err)}`);
-        }
-      });
     });
+  });
+}
 
-    const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
-    if (genAllBtn && !genAllBtn.__LR_BOUND__) {
-      genAllBtn.__LR_BOUND__ = true;
-      genAllBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        pressAnim(genAllBtn);
-        generateAllStep2();
-      });
+// Generate All button (works with id OR data attribute)
+(function wireGenerateAll() {
+  const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
+  if (!genAllBtn || genAllBtn.__LR_BOUND__) return;
+  genAllBtn.__LR_BOUND__ = true;
+
+  genAllBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    pressAnim(genAllBtn);
+    generateAllStep2();
+  });
+})();
+
+// Step2 boot hardening: if placeholders exist, keep them but make sure boxes can be filled
+(function step2BootHarden() {
+  // do NOT erase user text if already there
+  const ids = ["fbOutput","igOutput","ttOutput","liOutput","xOutput","dmOutput","marketplaceOutput","hashtagsOutput"];
+  ids.forEach((id) => {
+    const ta = $(id);
+    if (!ta) return;
+    // if a textarea literally contains "Output..." from template, clear it once
+    if (!ta.__LR_CLEARED_ONCE__ && (ta.value || "").trim() === "Output...") {
+      ta.value = "";
+      ta.__LR_CLEARED_ONCE__ = true;
+      autoGrowTextarea(ta);
     }
-  }
+  });
+
+  // make sure buttons are wired even before first boost
+  wireRegenButtons();
+})();
 
 
 
