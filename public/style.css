@@ -955,3 +955,21 @@ textarea{
 #socialReadyPanel .small-note a{
   display:none !important;
 }
+/* =========================================================
+   STEP 3 — KILL THE "🖼 Preview" ROW (FINAL, CONTENT-BASED)
+========================================================= */
+
+/* Hide any small row inside the Social Ready panel that contains the word "Preview" */
+#socialReadyPanel :is(a, button, label, div, span, p):has(> :is(img, svg, i, .icon, .emoji)),
+#socialReadyPanel :is(a, button, label, div, span, p):has(> :is(img, svg, i, .icon, .emoji)) *{
+  /* no-op: keeps selector stable */
+}
+
+/* Actual kill: any element in the panel that literally contains 'Preview' text */
+#socialReadyPanel :is(a, button, label, div, span, p):has-text("Preview"){
+  display: none !important;
+}
+/* Fallback: hide the first small inline line under the Social Ready instruction text */
+#socialReadyPanel .small-note + *{
+  display: none !important;
+}
