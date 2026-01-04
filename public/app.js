@@ -460,13 +460,82 @@
   // ==================================================
   // STEP 2 AI SOCIAL
   // ==================================================
-  async function aiPost(platform) {
-    const vehicle = STORE.lastVehicle || STORE.vehicle || {};
-    const r = await fetch("/api/ai/social", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ vehicle, platform }),
+async function aiPost(platform) {
+  const v = STORE.lastVehicle || STORE.vehicle || {};
+
+  // 🔥 Normalize features into bullet-ready text (prevents generic AI output)
+  const features = [
+    v.engine && `${v.engine} Engine`,
+    v.drivetrain && `${v.drivetrain}`,
+    v.mileage && `Only ${v.mileage}`,
+    v.interior && `${v.interior} Interior`,
+    v.exterior && `${v.exterior} Exterior`,
+    v.price && `Priced at ${v.price}`,
+    v.certified && "Certified Pre-Owned",
+    v.packages && v.packages,
+  ].filter(Boolean);
+
+  const payload = {
+    platform,
+    vehicle: {
+      title: v.title || "",
+      price: v.price || "",
+      mileage: v.mileage || "",
+      vin: v.vin || "",
+      stock: v.stock || "",
+    },
+    style: {
+      tone: "high-energy closer",
+      urgency: "today",
+      structure: "hook + bullets + CTA",
+      bulletsRequired: true,
+    },
+    desiredFeatures: features,
+  };
+
+  const r = await fetch("/api/ai/social", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const raw = await r.text();
+
+  // ❌ HARD STOP: never allow silent garbage posts
+  if (!ct.includes("application/json")) {
+    console.error("❌ AI SOCIAL NON-JSON", {
+      status: r.status,
+      head: raw.slice(0, 300),
     });
+    throw new Error("AI returned non-JSON");
+  }
+
+  let j;
+  try {
+    j = JSON.parse(raw);
+  } catch {
+    throw new Error("Bad JSON from AI");
+  }
+
+  if (!j.ok) {
+    throw new Error(j.error || "AI failed");
+  }
+
+  // ✅ Final safety: ensure bullets exist (last-resort fix)
+  let text = j.text || "";
+  if (!/•|\n-|\n⭐/g.test(text) && features.length) {
+    text +=
+      "\n\n⭐ MOST-WANTED FEATURES:\n" +
+      features.map((f) => `• ${f}`).join("\n");
+  }
+
+  return text;
+}
+
 
     const ct = (r.headers.get("content-type") || "").toLowerCase();
     const raw = await r.text();
