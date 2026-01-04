@@ -766,3 +766,66 @@ textarea{
 #socialReadyPanel [class*="Preview"]:not(.social-carousel-preview){
   display:none !important;
 }
+/* =========================================================
+   STEP 3 — FINAL LOCK
+   1) Arrows left/right on viewer
+   2) Remove ONLY the "🖼 Preview" line
+========================================================= */
+
+/* 1) Arrows: lock them to the viewer */
+#socialReadyPanel .social-carousel-preview{
+  position: relative !important;
+}
+
+/* keep image stable */
+#socialReadyPanel #socialCarouselPreviewImg{
+  display:block !important;
+  margin: 0 auto !important;
+}
+
+/* both arrows */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn{
+  position:absolute !important;
+  top:50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+}
+
+/* left arrow */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn:first-of-type{
+  left: 14px !important;
+}
+
+/* right arrow */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn:last-of-type{
+  right: 14px !important;
+}
+
+
+/* 2) Kill ONLY the Preview line (icon + word) */
+#socialReadyPanel a,
+#socialReadyPanel button,
+#socialReadyPanel label,
+#socialReadyPanel span,
+#socialReadyPanel div{
+  /* nothing */
+}
+
+/* This hides the element whose visible text is "Preview" in Step 3 panel */
+#socialReadyPanel a[href="#preview"],
+#socialReadyPanel a[href*="preview"],
+#socialReadyPanel button[value="preview"],
+#socialReadyPanel [data-action="preview"],
+#socialReadyPanel [data-preview="true"]{
+  display:none !important;
+}
+
+/* Most common case: it’s literally an <a> right under the instruction line */
+#socialReadyPanel .small-note + a{
+  display:none !important;
+}
+
+/* If it’s wrapped (icon + text) inside a div right under the instruction line */
+#socialReadyPanel .small-note + div{
+  display:none !important;
+}
