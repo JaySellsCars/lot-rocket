@@ -709,3 +709,29 @@ textarea{
   .brand-text p{ display:none; }
   .brand-text h1{ font-size:1.5rem; }
 }
+/* FORCE PHOTO THUMBS: SQUARE + CRISP */
+#step1Photos img,
+#photoGrid img,
+.photo-thumb img,
+.thumb img,
+.holding-thumb img{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+}
+
+/* If your thumbs are inside buttons/cards, keep them tight */
+#step1Photos .thumb,
+#photoGrid .thumb,
+.photo-thumb,
+.thumb{
+  overflow: hidden;
+  border-radius: 12px;
+}
+#step1Photos, #photoGrid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
