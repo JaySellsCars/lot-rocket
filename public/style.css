@@ -38,8 +38,44 @@ a{ color:#8ab4f8; }
   padding:1.2rem 3rem;
   border-bottom:1px solid var(--border-soft);
 }
-.branding h1{ font-size:1.6rem; margin:0; }
-.branding p{ margin:.25rem 0 0; font-size:.85rem; color:var(--text-muted); }
+
+.branding{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.branding h1{
+  font-size:1.6rem;
+  margin:0;
+}
+
+.branding p{
+  margin:.25rem 0 0;
+  font-size:.85rem;
+  color:var(--text-muted);
+}
+
+/* LOGO */
+.app-logo{
+  height:44px;        /* desktop default */
+  width:auto;
+  object-fit:contain;
+}
+
+/* MOBILE TWEAK */
+@media (max-width: 640px){
+  .app-header{
+    padding:0.9rem 1.2rem;
+  }
+  .app-logo{
+    height:36px;
+  }
+  .branding p{
+    display:none; /* keeps header clean on mobile */
+  }
+}
+
 
 /* LAYOUT */
 .layout{
