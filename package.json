@@ -2,12 +2,13 @@
   "name": "lot-rocket",
   "version": "1.0.0",
   "private": true,
-  "main": "server/server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server/server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "cheerio": "^1.0.0-rc.12"
   }
 }
 
