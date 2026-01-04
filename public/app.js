@@ -28,6 +28,63 @@
       else res();
     });
   await domReady();
+// ==================================================
+// HARD OVERRIDE: Step 1 thumbnails MUST be square
+// (wins over any CSS regressions)
+// ==================================================
+(function forceSquareThumbs() {
+  if (window.__LR_SQUARE_THUMBS__) return;
+  window.__LR_SQUARE_THUMBS__ = true;
+
+  const style = document.createElement("style");
+  style.id = "lr-square-thumbs-override";
+  style.textContent = `
+    /* Step 1 photo grid (try multiple ids in case HTML changed) */
+    #step1Photos, #boostPhotoGrid, #photoGrid, #creativeThumbGrid{
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 14px !important;
+    }
+
+    /* Any tile wrapper we create */
+    .lr-thumb{
+      position: relative !important;
+      overflow: hidden !important;
+      border-radius: 14px !important;
+      aspect-ratio: 1 / 1 !important;
+      background: rgba(255,255,255,.04) !important;
+      border: 1px solid rgba(255,255,255,.12) !important;
+    }
+
+    /* If images are direct children (no wrapper), still force square */
+    #step1Photos > img,
+    #boostPhotoGrid > img,
+    #photoGrid > img,
+    #creativeThumbGrid > img{
+      width: 100% !important;
+      aspect-ratio: 1 / 1 !important;
+      height: auto !important;
+      object-fit: cover !important;
+      object-position: center !important;
+      border-radius: 14px !important;
+      display: block !important;
+    }
+
+    /* If images are inside wrappers */
+    .lr-thumb img{
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: center !important;
+      display: block !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  console.log("✅ SQUARE THUMB OVERRIDE LOADED");
+})();
 
   // --------------------------------------------------
   // SAFE GLOBAL STORE
