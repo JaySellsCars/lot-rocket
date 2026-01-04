@@ -1715,8 +1715,9 @@ function buildFeatureBullets(v){
         const rawImages = Array.isArray(data.images) ? data.images : [];
         const images = [...new Set(rawImages)].filter(Boolean);
 
-        const grid = $("step1Photos");
-        if (!grid) return;
+const grid = $("step1Photos") || $("boostPhotoGrid") || $("photoGrid") || $("creativeThumbGrid");
+if (!grid) return;
+
 
         // ✅ FORCE GRID VISUALS HERE (bypasses CSS regressions)
         grid.style.display = "grid";
