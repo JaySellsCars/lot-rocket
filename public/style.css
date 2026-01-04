@@ -57,42 +57,50 @@ a{ color:#8ab4f8; }
   position:relative;
   z-index:50;
   display:flex;
-  align-items:center;
+  align-items:flex-end;          /* ✅ anchors content bottoms */
   justify-content:space-between;
-  padding:1.35rem 3.5rem;
+  padding:1.15rem 3.5rem;        /* ✅ slightly tighter = cleaner */
   border-bottom:1px solid rgba(255,255,255,.08);
+
   background:
     radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.16), transparent 60%),
     linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
 }
 
-/* Branding container — bottom aligned for logo + tagline */
+
+/* Branding container — baseline locked for logo + text */
 .branding{
   display:flex;
-  align-items:flex-end;
+  align-items:flex-end;   /* hard baseline alignment */
   gap:18px;
 }
 
-/* Fine-tune logo vertical alignment with tagline */
-.logo-wrap{ margin-bottom: 6px; }
+/* Logo wrapper — no artificial vertical offset */
+.logo-wrap{
+  margin-bottom:0;        /* prevents header misalignment */
+}
 
-/* LOGO */
+/* LOGO — desktop primary size */
 .app-logo{
-  height:150px;
+  height:165px;           /* restored visual weight */
   width:auto;
   object-fit:contain;
   filter: brightness(0) invert(1);
-  transform: scale(1.18);
+
+  /* Compensate for padded PNG */
+  transform: scale(1.22);
   transform-origin:left center;
+
   opacity:.98;
   transition: transform .18s ease, filter .18s ease, opacity .18s ease;
 }
 
+/* Premium hover (unchanged behavior) */
 .branding:hover .app-logo{
-  opacity:1;
-  transform: scale(1.24);
+  transform: scale(1.28);
   filter: brightness(0) invert(1) drop-shadow(0 0 22px rgba(236,72,153,.45));
 }
+
 
 /* Title + tagline */
 .brand-text h1{
