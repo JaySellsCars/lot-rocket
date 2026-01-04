@@ -355,7 +355,10 @@ async function callOpenAI({ system, user, temperature = 0.8 }) {
 }
 
 /* ===============================
-   AI: SOCIAL POSTS (CORE VALUE — ANTI-STALE + SEEDED)
+   AI: SOCIAL POSTS (CORE VALUE — ANTI-STALE + SEEDED) ✅
+   - Seeded variation (changes every request)
+   - Enforces angle + structure + CTA rotation
+   - Works for Boost + per-box "New Post" buttons
 ================================ */
 app.post("/api/ai/social", async (req, res) => {
   try {
@@ -365,8 +368,15 @@ app.post("/api/ai/social", async (req, res) => {
     // Variation seed (changes every request)
     // Helps force different hooks + structure + angle even for same car.
     const seed =
-      String(req.body.seed || "") ||
+      String(req.body.seed || "").trim() ||
       `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    // Optional but killer context helpers (safe, non-breaking)
+    const label = String(vehicle.title || vehicle.label || "").trim();
+    const price = String(vehicle.price || "").trim();
+    const miles = String(vehicle.mileage || "").trim();
+    const ext = String(vehicle.exterior || "").trim();
+    const vin = String(vehicle.vin || "").trim();
 
     const system = `
 YOU ARE LOT ROCKET.
@@ -471,11 +481,19 @@ No explanations.
 No markdown.
 `.trim();
 
+    // "Both": seed + optional killer context (still uses full JSON)
     const user = `
 PLATFORM: ${platform}
 
 VARIATION SEED (do not mention this): ${seed}
 Use the seed to ensure hook + structure + angle are DIFFERENT each time.
+
+OPTIONAL CONTEXT (use if helpful, do not mention as labels):
+- Label: ${label || "—"}
+- Price: ${price || "—"}
+- Miles: ${miles || "—"}
+- Color: ${ext || "—"}
+- VIN: ${vin ? vin.slice(-6) : "—"} (last 6 only)
 
 VEHICLE DATA:
 ${JSON.stringify(vehicle, null, 2)}
@@ -484,7 +502,7 @@ ${JSON.stringify(vehicle, null, 2)}
     const out = await callOpenAI({
       system,
       user,
-      temperature: 0.95, // slightly higher to increase variation
+      temperature: 0.95, // higher = more variation
     });
 
     return res.json(out.ok ? { ok: true, text: out.text } : out);
@@ -492,6 +510,7 @@ ${JSON.stringify(vehicle, null, 2)}
     return res.json({ ok: false, error: e.message });
   }
 });
+
 
 
 /* ===============================
