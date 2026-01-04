@@ -27,20 +27,28 @@ a{ color:#8ab4f8; }
 .hidden{ display:none !important; }
 
 :root{
+  /* Core surfaces */
   --bg-panel:#020617;
   --border-soft:rgba(148,163,184,.55);
+
+  /* Text */
   --text-main:#e5e7eb;
   --text-muted:#9ca3af;
+
+  /* Brand accents */
   --accent-1:#f97316;
   --accent-2:#ec4899;
 
+  /* Shape + depth */
   --radius:18px;
   --inner:14px;
   --shadow:0 20px 50px rgba(0,0,0,.6);
 
-  /* ✅ SINGLE DIAL: FLOATING TOOLS ALIGNMENT */
-  --tools-top: 190px;
+  /* ✅ SINGLE DIAL — Floating tools vertical alignment */
+  /* Adjust ONLY this number to line up with Step cards */
+  --tools-top: 210px;
 }
+
 
 /* ---------------------------------
    HEADER — SAFE PREMIUM
