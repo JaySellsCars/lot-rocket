@@ -1,15 +1,16 @@
 ///// /public/app.js  (REPLACE ENTIRE FILE)
-// LOT ROCKET — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10001
-// ✅ Fixes: Helper AI uses /api/ai/ask correctly (no prompt-injection payload), consistent payload keys
-// ✅ Fixes: Message Builder payload now matches server (/api/ai/message expects {input|text})
+// LOT ROCKET — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10002
+// ✅ Fixes: Step 1 thumbnails forced SQUARE (grid + wrapper + cover)
+// ✅ Fixes: Helper AI uses /api/ai/ask correctly, consistent payload keys
+// ✅ Fixes: Message Builder payload matches server (/api/ai/message expects {input|text})
 // ✅ Fixes: Campaign Builder payload matches server (/api/ai/workflow expects {scenario|objective|input|text})
 // ✅ Fixes: Ask + Help both hit /api/ai/ask with {question, context}
 // ✅ Fixes: Vehicle Oracle payload matches server (/api/ai/car expects {vehicle, question})
-// ✅ Fixes: Boost fetch call typo (ensures fetch options object is correct)
+// ✅ Fixes: Boost fetch call typo (fetch options object correct)
 // ✅ Keeps: Single-pass wiring, no duplicates, no explanations
 
 (async () => {
-  const V = "10001";
+  const V = "10002";
   console.log("🚀 APP BOOT OK —", V);
 
   const DOC = document;
@@ -18,7 +19,7 @@
   const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
 
   // --------------------------------------------------
-  // DOM READY (works whether script loads in <head> or end of <body>)
+  // DOM READY
   // --------------------------------------------------
   const domReady = () =>
     new Promise((res) => {
@@ -46,7 +47,7 @@
   }
 
   // ===============================
-  // HEADER UX (ALL): sticky shadow, click-to-top, logo swap
+  // HEADER UX
   // ===============================
   (function wirePremiumHeader() {
     if (window.__LR_HEADER_WIRED__) return;
@@ -98,12 +99,11 @@
     }
 
     window.LR_applyLogoTheme = applyLogo;
-
     console.log("✅ PREMIUM HEADER WIRED");
   })();
 
   // ===============================
-  // HEADER COMPACT ON SCROLL (ONE PASS)
+  // HEADER COMPACT ON SCROLL
   // ===============================
   (function wireHeaderCompact() {
     if (window.__LR_HEADER_COMPACT__) return;
@@ -122,7 +122,7 @@
   })();
 
   // ==================================================
-  // UI FX HELPERS (PRESS + LOADING)
+  // UI FX HELPERS
   // ==================================================
   function pressAnim(el) {
     if (!el) return;
@@ -154,8 +154,7 @@
   }
 
   // ==================================================
-  // CALCULATOR — REAL FEEL (ONE PASS)
-  // Uses: #calcModal, #calcDisplay, buttons [data-calc]
+  // CALCULATOR PAD
   // ==================================================
   (function wireCalculatorPad() {
     if (window.__LR_CALC_WIRED__) return;
@@ -282,7 +281,7 @@
   })();
 
   // ==================================================
-  // AUTO-GROW OBSERVER (SAFE)
+  // AUTO-GROW OBSERVER
   // ==================================================
   (function wireAutoGrowObserver() {
     if (window.__LR_AUTOGROW__) return;
@@ -296,7 +295,7 @@
   })();
 
   // ===============================
-  // AUTO-GROW: AI HELPER TEXTAREAS (includes HELP modal)
+  // AUTO-GROW: AI HELPER TEXTAREAS
   // ===============================
   (function wireAiAutoGrow() {
     const sel =
@@ -346,7 +345,7 @@
   });
 
   // ==================================================
-  // URL NORMALIZER (ONE TRUE FUNCTION)
+  // URL NORMALIZER
   // ==================================================
   function normalizeDealerUrl(raw) {
     let s = (raw || "").toString().trim();
@@ -365,7 +364,7 @@
   }
 
   // ==================================================
-  // STEP 1 SELECTION — SINGLE SOURCE OF TRUTH
+  // STEP 1 SELECTION — STORE
   // ==================================================
   STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
   STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos)
@@ -402,7 +401,7 @@
   }
 
   // ==================================================
-  // STEP 2 AI SOCIAL (/api/ai/social expects {ok,text})
+  // STEP 2 AI SOCIAL
   // ==================================================
   async function aiPost(platform) {
     const vehicle = STORE.lastVehicle || STORE.vehicle || {};
@@ -504,7 +503,7 @@
   }
 
   // ==================================================
-  // STEP 2 — COPY + REMOVE EMOJIS (ONE PASS)
+  // STEP 2 — COPY + REMOVE EMOJIS
   // ==================================================
   const STEP2 = {
     fb: { ta: "fbOutput", copy: "fbCopyBtn", emoji: "fbEmojiBtn" },
@@ -592,7 +591,7 @@
   });
 
   // ==================================================
-  // FLOATING TOOLS WIRING (ONE TRUE BLOCK) — includes HELP ✅
+  // FLOATING TOOLS WIRING
   // ==================================================
   (function wireFloatingTools() {
     if (window.__LR_FLOATING_TOOLS__) return;
@@ -717,13 +716,12 @@
   })();
 
   // ==================================================
-  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (includes HELP) ✅
+  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS
   // ==================================================
   (function wireAiExpertsDelegated() {
     if (window.__LR_AI_EXPERTS_DELEGATED__) return;
     window.__LR_AI_EXPERTS_DELEGATED__ = true;
 
-    // --- Campaign scenario builder (kept for richer campaigns) ---
     function buildCampaignScenario(userText) {
       const v = window.STORE?.lastVehicle || {};
       const vehicleLine =
@@ -837,12 +835,11 @@
       return parts.join("\n");
     }
 
-    // ✅ Payloads aligned to server routes (server.js you approved)
     function buildPayload(type, text) {
       const v = window.STORE?.lastVehicle || {};
 
       if (type === "objection") return { objection: text };
-      if (type === "message") return { input: text }; // ✅ server reads input/text
+      if (type === "message") return { input: text };
       if (type === "campaign") return { scenario: buildCampaignScenario(text) };
       if (type === "ask") return { question: text, context: { tool: "ask" } };
       if (type === "help")
@@ -928,7 +925,7 @@
       }
     });
 
-    console.log("✅ AI EXPERTS DELEGATED WIRED (Help updated)");
+    console.log("✅ AI EXPERTS DELEGATED WIRED");
   })();
 
   // ==================================================
@@ -1193,8 +1190,7 @@
   }
 
   // ===============================
-  // PAYMENT CALCULATOR (SAFE / ISOLATED)
-  // Uses server: POST /api/payment-helper
+  // PAYMENT CALCULATOR
   // ===============================
   function wirePaymentCalculator() {
     const modal = $("paymentModal");
@@ -1303,7 +1299,7 @@
   }
 
   // ===============================
-  // INCOME CALCULATOR (SAFE / ISOLATED)
+  // INCOME CALCULATOR
   // ===============================
   function wireIncomeCalcDirect() {
     const modal = $("incomeModal");
@@ -1408,7 +1404,7 @@
   }
 
   // --------------------------------------------------
-  // STEP 3: HOLDING ZONE NOTE + RENDER (up to 24) + DBLCLICK → SOCIAL READY
+  // STEP 3: HOLDING ZONE
   // --------------------------------------------------
   function ensureHoldingNote() {
     const hz = $("holdingZone");
@@ -1459,8 +1455,7 @@
   }
 
   // --------------------------------------------------
-  // STEP 1: SEND SELECTED → STEP 3 (bind ONCE)
-  // Uses ID: #sendToDesignStudio
+  // STEP 1: SEND SELECTED → STEP 3
   // --------------------------------------------------
   function syncSendBtn() {
     const btn = $("sendToDesignStudio");
@@ -1537,7 +1532,6 @@
         let res, data;
 
         try {
-          // ✅ fixed fetch options object
           res = await fetch(`/api/boost?url=${encodeURIComponent(url)}`, {
             headers: { Accept: "application/json" },
             cache: "no-store",
@@ -1583,6 +1577,11 @@
         const grid = $("step1Photos");
         if (!grid) return;
 
+        // ✅ FORCE GRID VISUALS HERE (bypasses CSS regressions)
+        grid.style.display = "grid";
+        grid.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+        grid.style.gap = "14px";
+
         grid.innerHTML = "";
 
         if (!images.length) {
@@ -1602,20 +1601,30 @@
         const MAX_UI = 24;
 
         images.slice(0, MAX_UI).forEach((src) => {
+          // ✅ GUARANTEED SQUARE THUMB WRAPPER
           const tile = DOC.createElement("div");
+          tile.className = "lr-thumb"; // for CSS if present
           tile.style.position = "relative";
           tile.style.cursor = "pointer";
-          tile.style.borderRadius = "12px";
+          tile.style.borderRadius = "14px";
           tile.style.overflow = "hidden";
           tile.style.border = "1px solid rgba(255,255,255,.12)";
+          tile.style.background = "rgba(255,255,255,.04)";
+          tile.style.aspectRatio = "1 / 1";
 
           const img = DOC.createElement("img");
           img.src = src;
           img.loading = "lazy";
           img.decoding = "async";
-          img.style.width = "100%";
-          img.style.display = "block";
           img.alt = "";
+          // ✅ FORCE COVER + FILL
+          img.style.position = "absolute";
+          img.style.inset = "0";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "cover";
+          img.style.objectPosition = "center";
+          img.style.display = "block";
 
           const badge = DOC.createElement("div");
           badge.textContent = "✓";
@@ -1635,7 +1644,7 @@
           const syncUI = () => {
             const active = STORE.step1Selected.includes(src);
             badge.style.opacity = active ? "1" : "0";
-            tile.style.outline = active ? "2px solid rgba(255,255,255,.35)" : "none";
+            tile.style.outline = active ? "2px solid rgba(56,189,248,.55)" : "none";
           };
 
           tile.addEventListener("click", () => {
@@ -1662,21 +1671,9 @@
   }
 
   // ===============================
-  // UNIVERSAL AI FOLLOW-UP (ALL MODALS) — v1 POLISHED
+  // UNIVERSAL AI FOLLOW-UP (ALL MODALS)
   // ===============================
   function wireAiFollowups() {
-    const isQuestiony = (t) => {
-      t = String(t || "");
-      return (
-        /\n\s*1[\)\.]\s.+\n\s*2[\)\.]\s.+\n\s*3[\)\.]\s.+/m.test(t) ||
-        /questions?/i.test(t) ||
-        /need to know/i.test(t) ||
-        /please answer/i.test(t) ||
-        /clarify/i.test(t) ||
-        /alignment/i.test(t)
-      );
-    };
-
     const configs = [
       ["workflowModal", "workflowInput", "runWorkflowBtn", "workflowOutput"],
       ["objectionModal", "objectionInput", "runObjectionBtn", "objectionOutput"],
@@ -1729,29 +1726,25 @@
       grow(followInput);
       followInput.addEventListener("input", () => grow(followInput));
 
-   const showIfNeeded = () => {
-  const text = (outEl.textContent || outEl.innerText || outEl.value || "").trim();
+      const showIfNeeded = () => {
+        const text = (outEl.textContent || outEl.innerText || outEl.value || "").trim();
+        const shouldShow = text.length > 0;
 
-  // ✅ SHOW FOLLOW-UP whenever there is ANY output (not just “questiony” output)
-  const shouldShow = text.length > 0;
+        const wasHidden = followWrap.style.display === "none" || !followWrap.style.display;
 
-  const wasHidden =
-    followWrap.style.display === "none" || !followWrap.style.display;
+        followWrap.style.display = shouldShow ? "block" : "none";
 
-  followWrap.style.display = shouldShow ? "block" : "none";
-
-  if (shouldShow && wasHidden) {
-    setTimeout(() => {
-      followInput.focus();
-      const v = followInput.value || "";
-      try {
-        followInput.setSelectionRange(v.length, v.length);
-      } catch {}
-      grow(followInput);
-    }, 0);
-  }
-};
-
+        if (shouldShow && wasHidden) {
+          setTimeout(() => {
+            followInput.focus();
+            const v = followInput.value || "";
+            try {
+              followInput.setSelectionRange(v.length, v.length);
+            } catch {}
+            grow(followInput);
+          }, 0);
+        }
+      };
 
       const mo = new MutationObserver(showIfNeeded);
       mo.observe(outEl, { childList: true, subtree: true, characterData: true });
@@ -1773,18 +1766,18 @@
   }
 
   // --------------------------------------------------
-  // SOCIAL READY WIRES (ONE PASS)
+  // SOCIAL READY WIRES
   // --------------------------------------------------
   wireSocialNav();
   wireZipButton();
   renderSocialStrip();
 
   // --------------------------------------------------
-  // AI FOLLOW-UP WIRES (ONE PASS)
+  // AI FOLLOW-UP WIRES
   // --------------------------------------------------
   wireAiFollowups();
 
-  // close modals + wire calculators (ONE PASS)
+  // close modals + wire calculators
   (function initToolsOnce() {
     if (window.__LR_TOOLS_INIT__) return;
     window.__LR_TOOLS_INIT__ = true;
@@ -1799,8 +1792,5 @@
     console.log("✅ TOOLS INIT COMPLETE");
   })();
 
-  // --------------------------------------------------
-  // FINAL
-  // --------------------------------------------------
   console.log("✅ APP READY");
 })();
