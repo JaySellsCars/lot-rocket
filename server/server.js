@@ -83,6 +83,9 @@ async function getFetch() {
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
+app.post("/api/ai/ping", (req, res) => {
+  res.json({ ok: true, got: req.body || null, ts: Date.now() });
+});
 
 /* ==================================================
    BOOST (SCRAPE) — MUST RETURN JSON ALWAYS ✅
