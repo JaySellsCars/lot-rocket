@@ -1,4 +1,4 @@
-// /server/server.js  (REPLACE ENTIRE FILE)
+// /server/server.js — LOT ROCKET (FINAL / LAUNCH READY)
 
 const express = require("express");
 const path = require("path");
@@ -6,1114 +6,185 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===============================
-// BODY PARSING (REQUIRED)
-// ===============================
+/* ===============================
+   BODY PARSING
+================================ */
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// ===============================
-// STATIC FRONTEND
-// ===============================
+/* ===============================
+   STATIC FRONTEND
+================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 
-// ===============================
-// API: HEALTH
-// ===============================
+/* ===============================
+   HEALTH
+================================ */
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
 
-// ==================================================
-// HELPERS (BOOST + VEHICLE EXTRACTION)
-// ==================================================
-function safeUrl(u) {
-  try {
-    return new URL(u).toString();
-  } catch {
-    return "";
-  }
-}
-function absUrl(base, maybe) {
-  try {
-    if (!maybe) return "";
-    if (maybe.startsWith("//")) return "https:" + maybe;
-    return new URL(maybe, base).toString();
-  } catch {
-    return "";
-  }
-}
-function pickFromSrcset(srcset) {
-  if (!srcset || typeof srcset !== "string") return "";
-  const parts = srcset
-    .split(",")
-    .map((p) => p.trim())
-    .map((p) => {
-      const [u, w] = p.split(/\s+/);
-      const width = parseInt((w || "").replace("w", ""), 10) || 0;
-      return { u, width };
-    })
-    .filter((x) => x.u);
-  if (!parts.length) return "";
-  parts.sort((a, b) => b.width - a.width);
-  return parts[0].u || "";
-}
-function isProbablyJunkImage(u) {
-  if (!u) return true;
-  const s = u.toLowerCase();
-  if (s.startsWith("data:")) return true;
-  if (s.endsWith(".svg")) return true;
-  if (s.includes("sprite")) return true;
-  if (s.includes("favicon")) return true;
-  if (s.includes("icon")) return true;
-  if (s.includes("logo")) return true;
-  if (s.includes("1x1")) return true;
-  if (s.includes("pixel")) return true;
-  if (s.includes("spacer")) return true;
-  return false;
-}
-function uniq(arr) {
-  const out = [];
-  const seen = new Set();
-  for (const x of arr || []) {
-    if (!x) continue;
-    const k = String(x).trim();
-    if (!k) continue;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(k);
-  }
-  return out;
-}
-function extractMeta(html, nameOrProp) {
-  const n = String(nameOrProp).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(
-    `<meta[^>]+(?:name|property)=["']${n}["'][^>]*content=["']([^"']+)["'][^>]*>`,
-    "i"
-  );
-  const m = re.exec(html);
-  return (m?.[1] || "").trim();
-}
-function extractOgImage(html, base) {
-  const re =
-    /<meta[^>]+property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/gi;
-  const found = [];
-  let m;
-  while ((m = re.exec(html))) {
-    const u = absUrl(base, m[1]);
-    if (u && !isProbablyJunkImage(u)) found.push(u);
-  }
-  return found;
-}
-function extractImgs(html, base) {
-  const found = [];
+/* ===============================
+   SMALL UTILS
+================================ */
+const s = (v) => (v == null ? "" : typeof v === "string" ? v : JSON.stringify(v));
+const takeText = (...vals) => vals.map(s).map(t => t.trim()).find(Boolean) || "";
+const normPlatform = (p) => ({
+  fb: "facebook", facebook: "facebook",
+  ig: "instagram", instagram: "instagram",
+  tt: "tiktok", tiktok: "tiktok",
+  li: "linkedin", linkedin: "linkedin",
+  twitter: "x", x: "x",
+  dm: "dm", sms: "dm", text: "dm",
+  marketplace: "marketplace",
+  hashtags: "hashtags",
+  all: "all"
+}[String(p||"").toLowerCase()] || "facebook");
 
-  const srcsetRe = /\ssrcset=["']([^"']+)["']/gi;
-  let m;
-  while ((m = srcsetRe.exec(html))) {
-    const best = pickFromSrcset(m[1]);
-    const u = absUrl(base, best);
-    if (u && !isProbablyJunkImage(u)) found.push(u);
-  }
-
-  const attrRe =
-    /\s(?:src|data-src|data-lazy|data-original|data-url)=["']([^"']+)["']/gi;
-  while ((m = attrRe.exec(html))) {
-    const u = absUrl(base, m[1]);
-    if (u && !isProbablyJunkImage(u)) found.push(u);
-  }
-
-  return found;
-}
-function extractLdJsonObjects(html) {
-  const out = [];
-  const re =
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-  let m;
-  while ((m = re.exec(html))) {
-    const raw = (m[1] || "").trim();
-    if (!raw) continue;
-    try {
-      out.push(JSON.parse(raw));
-    } catch {
-      // ignore
-    }
-  }
-  return out;
-}
-function findVehicleInJsonLd(obj) {
-  const hits = [];
-  const walk = (n) => {
-    if (!n) return;
-    if (Array.isArray(n)) return n.forEach(walk);
-    if (typeof n !== "object") return;
-
-    const t = n["@type"];
-    if (t) {
-      const types = Array.isArray(t) ? t : [t];
-      const lc = types.map((x) => String(x).toLowerCase());
-      if (lc.includes("vehicle") || lc.includes("car") || lc.includes("product")) hits.push(n);
-    }
-
-    for (const k of Object.keys(n)) walk(n[k]);
-  };
-  walk(obj);
-  return hits;
-}
-function firstNonEmpty(...vals) {
-  for (const v of vals) {
-    const s = (v ?? "").toString().trim();
-    if (s) return s;
-  }
-  return "";
-}
-function extractByRegex(html, re) {
-  const m = re.exec(html);
-  return (m?.[1] || "").replace(/\s+/g, " ").trim();
-}
-function extractVehicle(html, finalUrl) {
-  const vehicle = {
-    title: "",
-    price: "",
-    mileage: "",
-    vin: "",
-    stock: "",
-    exterior: "",
-    interior: "",
-    engine: "",
-    transmission: "",
-    drivetrain: "",
-    dealer: "",
-    location: "",
-    url: finalUrl || "",
-    featuresText: "",
-  };
-
-  const ogTitle = extractMeta(html, "og:title");
-  const desc = extractMeta(html, "description");
-  vehicle.title = firstNonEmpty(
-    ogTitle,
-    extractByRegex(html, /<title[^>]*>([\s\S]*?)<\/title>/i)
-  );
-
-  // JSON-LD
-  const jsonlds = extractLdJsonObjects(html);
-  for (const block of jsonlds) {
-    const hits = findVehicleInJsonLd(block);
-    for (const h of hits) {
-      vehicle.title = firstNonEmpty(vehicle.title, h.name, h.model, h.vehicleModel, h.description);
-      vehicle.vin = firstNonEmpty(vehicle.vin, h.vehicleIdentificationNumber, h.vin, h.sku);
-      vehicle.stock = firstNonEmpty(vehicle.stock, h.sku, h.mpn, h.stockNumber);
-
-      const offers = h.offers || h.offer || null;
-      if (offers) {
-        const o = Array.isArray(offers) ? offers[0] : offers;
-        vehicle.price = firstNonEmpty(vehicle.price, o.price, o.priceSpecification?.price);
-      }
-
-      const odo =
-        h.mileageFromOdometer ||
-        h.mileage ||
-        h.vehicleMileage ||
-        h.odometerReading ||
-        null;
-      if (odo) {
-        if (typeof odo === "string") vehicle.mileage = firstNonEmpty(vehicle.mileage, odo);
-        else if (typeof odo === "object") {
-          vehicle.mileage = firstNonEmpty(vehicle.mileage, odo.value, odo.valueText);
-        }
-      }
-
-      vehicle.exterior = firstNonEmpty(vehicle.exterior, h.color, h.exteriorColor);
-      vehicle.interior = firstNonEmpty(vehicle.interior, h.interiorColor);
-
-      vehicle.engine = firstNonEmpty(vehicle.engine, h.vehicleEngine?.name, h.engine);
-      vehicle.transmission = firstNonEmpty(vehicle.transmission, h.vehicleTransmission, h.transmission);
-      vehicle.drivetrain = firstNonEmpty(vehicle.drivetrain, h.driveWheelConfiguration, h.drivetrain);
-
-      vehicle.dealer = firstNonEmpty(
-        vehicle.dealer,
-        h.seller?.name,
-        h.offers?.seller?.name,
-        h.brand?.name,
-        h.manufacturer?.name
-      );
-    }
-  }
-
-  // Regex fallbacks
-  vehicle.vin = firstNonEmpty(
-    vehicle.vin,
-    extractByRegex(html, /VIN[^A-Z0-9]*([A-HJ-NPR-Z0-9]{17})/i),
-    extractByRegex(html, /"vin"\s*:\s*"([^"]{17})"/i)
-  );
-
-  vehicle.stock = firstNonEmpty(
-    vehicle.stock,
-    extractByRegex(html, /Stock[^A-Z0-9]*#?\s*([A-Z0-9\-]{4,})/i),
-    extractByRegex(html, /"stockNumber"\s*:\s*"([^"]+)"/i)
-  );
-
-  const price1 = extractByRegex(html, /\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{2})?)/);
-  const price2 = extractByRegex(html, /"price"\s*:\s*"?\$?([0-9]{4,6})"?/i);
-  vehicle.price = firstNonEmpty(
-    vehicle.price,
-    price1 ? `$${price1}` : "",
-    price2 ? `$${price2}` : ""
-  );
-
-  const miles = extractByRegex(html, /([0-9]{1,3}(?:,[0-9]{3})+)\s*miles?/i);
-  vehicle.mileage = firstNonEmpty(vehicle.mileage, miles ? `${miles} miles` : "");
-
-  // crude feature extraction (best-effort)
-  vehicle.featuresText = firstNonEmpty(extractMeta(html, "og:description"), desc, "");
-
-  // location best-effort
-  vehicle.location = firstNonEmpty(vehicle.location, "North America");
-
-  return vehicle;
-}
-
-// ==================================================
-// SMALL UTILS
-// ==================================================
-function s(v) {
-  if (v == null) return "";
-  if (typeof v === "string") return v;
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
-}
-function takeText(...vals) {
-  for (const v of vals) {
-    const t = s(v).trim();
-    if (t) return t;
-  }
-  return "";
-}
-function normPlatform(p) {
-  const x = String(p || "").toLowerCase().trim();
-  const map = {
-    fb: "facebook",
-    facebook: "facebook",
-    ig: "instagram",
-    instagram: "instagram",
-    tt: "tiktok",
-    tiktok: "tiktok",
-    tikTok: "tiktok",
-    li: "linkedin",
-    linkedin: "linkedin",
-    x: "x",
-    twitter: "x",
-    dm: "dm",
-    text: "dm",
-    sms: "dm",
-    mk: "marketplace",
-    marketplace: "marketplace",
-    hash: "hashtags",
-    hashtags: "hashtags",
-    all: "all",
-  };
-  return map[x] || x || "facebook";
-}
-
-// ==================================================
-// AI CALL HELPER (OPENAI)
-// ==================================================
-async function callOpenAI({ system, user, temperature = 0.8, model }) {
+/* ===============================
+   OPENAI HELPER
+================================ */
+async function callOpenAI({ system, user, temperature = 0.8 }) {
   if (!process.env.OPENAI_API_KEY) {
-    return { ok: false, error: "Missing OPENAI_API_KEY on server env" };
+    return { ok: false, error: "Missing OPENAI_API_KEY" };
   }
 
-  // Timeout
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 20000);
+  const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      temperature,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ]
+    })
+  });
 
-  try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: model || process.env.OPENAI_MODEL || "gpt-4o-mini",
-        temperature,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-      }),
-    });
-
-    const j = await r.json().catch(() => ({}));
-    const text = j?.choices?.[0]?.message?.content?.trim() || "";
-    if (!text) return { ok: false, error: j?.error?.message || "Empty AI response", raw: j };
-    return { ok: true, text };
-  } catch (e) {
-    const msg = e?.name === "AbortError" ? "OpenAI request timed out" : String(e?.message || e);
-    return { ok: false, error: msg };
-  } finally {
-    clearTimeout(t);
-  }
+  const j = await r.json();
+  const text = j?.choices?.[0]?.message?.content?.trim();
+  return text ? { ok: true, text } : { ok: false, error: "Empty AI response" };
 }
 
-// ===============================
-// API: PROXY (for ZIP downloads / CORS-safe image fetch)
-// GET /api/proxy?url=...
-// ===============================
-app.get("/api/proxy", async (req, res) => {
-  const u = safeUrl((req.query.url || "").toString().trim());
-  if (!u) return res.status(400).send("Missing url");
-
-  // Only allow http(s)
-  if (!/^https?:\/\//i.test(u)) return res.status(400).send("Bad url");
-
-  // Timeout + size cap
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 15000);
-
-  const MAX_BYTES = 15 * 1024 * 1024; // 15MB hard cap
-
-  try {
-    const r = await fetch(u, {
-      method: "GET",
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
-        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    });
-
-    if (!r.ok) return res.status(502).send("Proxy fetch failed");
-
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    if (!ct.startsWith("image/")) return res.status(415).send("Not an image");
-
-    const ab = await r.arrayBuffer();
-    if (ab.byteLength > MAX_BYTES) return res.status(413).send("Image too large");
-
-    res.setHeader("Content-Type", ct || "application/octet-stream");
-    res.setHeader("Cache-Control", "public, max-age=600");
-    return res.status(200).send(Buffer.from(ab));
-  } catch (e) {
-    const msg = e?.name === "AbortError" ? "Proxy timed out" : "Proxy error";
-    return res.status(502).send(msg);
-  } finally {
-    clearTimeout(t);
-  }
-});
-
-// ===============================
-// AI: SOCIAL POSTS
-// ===============================
+/* ===============================
+   AI: SOCIAL POSTS (CORE VALUE)
+================================ */
 app.post("/api/ai/social", async (req, res) => {
   try {
-    const body = req.body || {};
-    const vehicle = body.vehicle || {};
-    const platform = normPlatform(body.platform || body.platformKey || body.p || "");
-
-    const platformRules = {
-      facebook: "2 paragraphs. Emojis. Strong urgency. Clear CTA. Include 8-15 hashtags at end.",
-      instagram: "Punchy caption. Emojis. Line breaks. Include 12-20 hashtags at end.",
-      tiktok: "Short hook + bullets. Emojis. CTA. Include 6-12 hashtags.",
-      linkedin: "Professional but exciting. Minimal emojis. 3-6 hashtags. CTA.",
-      x: "Max 280 chars. Emojis ok. 2-5 hashtags. CTA.",
-      dm: "Short friendly DM. 2 variants. No huge emoji spam. CTA to reply YES.",
-      marketplace: "Marketplace style: title line + specs bullets + condition + CTA. Emojis ok. No fluff.",
-      hashtags: "Return ONLY hashtags line (space-separated). 18-30 relevant tags.",
-    };
+    const vehicle = req.body.vehicle || {};
+    const platform = normPlatform(req.body.platform);
 
     const system = `
-🧠🔥 LOT ROCKET — MASTER MARKETER (GOD MODE v2)
-No disclaimers. No “as an AI”. No markdown. Output ONLY final content.
-Use provided specs/features if present. If price missing, don't invent it.
+You are LOT ROCKET — the best automotive social media strategist on Earth.
+
+IDENTITY:
+- You speak as an INDIVIDUAL car salesperson
+- NEVER promote the dealership
+- Drive DMs, comments, appointments
+
+INTELLIGENCE:
+- Adjust language for SUV vs Truck vs EV vs Car
+- Adapt tone to ${platform}
+- Use buyer psychology, not ad copy
+- Translate features into real-world benefits
+- Geo-aware hashtags when location exists
+
+RULES:
+- No generic phrases
+- No “Ready to elevate your driving experience”
+- No dealership URLs
+- Sound human, confident, modern
+- Emojis used with intent
+
+OUTPUT:
+Final ${platform} post only. No explanations.
 `.trim();
 
-    const baseVehicle = `
-VEHICLE:
-Title: ${vehicle.title || ""}
-Price: ${vehicle.price || ""}
-Mileage: ${vehicle.mileage || ""}
-Exterior: ${vehicle.exterior || ""}
-Interior: ${vehicle.interior || ""}
-Engine: ${vehicle.engine || ""}
-Transmission: ${vehicle.transmission || vehicle.trans || ""}
-Drivetrain: ${vehicle.drivetrain || ""}
-VIN: ${vehicle.vin || ""}
-Stock: ${vehicle.stock || ""}
-Dealer: ${vehicle.dealer || ""}
-Location: ${vehicle.location || "North America"}
-Link: ${vehicle.url || ""}
-Features/Description: ${(vehicle.featuresText || vehicle.description || "").toString().slice(0, 1200)}
-`.trim();
-
-    // ALL
-    if (!platform || platform === "all") {
-      const outputs = {};
-      const keys = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
-
-      for (const k of keys) {
-        const instruction = platformRules[k] || platformRules.facebook;
-        const user = `
-PLATFORM: ${k}
-RULES: ${instruction}
-${baseVehicle}
-
-OUTPUT: return the final content ONLY.
-`.trim();
-
-        const out = await callOpenAI({ system, user, temperature: 0.9 });
-        outputs[k] = out.ok ? out.text : `AI ERROR: ${out.error || "failed"}`;
-      }
-
-      return res.json({ ok: true, outputs });
-    }
-
-    // ONE
-    const instruction = platformRules[platform] || platformRules.facebook;
     const user = `
 PLATFORM: ${platform}
-RULES: ${instruction}
-${baseVehicle}
-
-OUTPUT: return the final content ONLY.
+VEHICLE DATA:
+${JSON.stringify(vehicle, null, 2)}
 `.trim();
 
-    const out = await callOpenAI({ system, user, temperature: 0.9 });
+    const out = await callOpenAI({ system, user, temperature: 0.85 });
     return res.json(out.ok ? { ok: true, text: out.text } : out);
+
   } catch (e) {
-    return res.json({ ok: false, error: String(e?.message || e) });
+    return res.json({ ok: false, error: e.message });
   }
 });
 
-const system = `
-ROLE:
-You are a professional automotive sales consultant with deep emotional intelligence.
-Your job is NOT to overpower the customer — it is to understand the objection, validate the logic behind it, and calmly guide them to the best decision.
+/* ===============================
+   AI: OBJECTION COACH (FIXED)
+================================ */
+app.post("/api/ai/objection", async (req, res) => {
+  const objection = takeText(req.body.input, req.body.text);
 
-You sell like Andy Elliott:
-- Calm
-- Confident
-- Direct
-- Human
-- Financially honest
+  const system = `
+You sell like Andy Elliott.
 
-CORE PRINCIPLES (NON-NEGOTIABLE):
+You are calm. Human. Financially honest.
 
-1) ACKNOWLEDGE REALITY FIRST  
-If a feature increases the payment, say it clearly.
-More equipment = more money. No spin.
+FORMAT:
+1) Understanding
+2) Clarity
+3) Two Options
+4) Recommendation
+5) One question
 
-2) DIAGNOSE BEFORE SELLING  
-Assume the objection is logical, not emotional.
-Explain WHY the objection makes sense before responding.
-
-3) CONTROL THROUGH CLARITY, NOT PRESSURE  
-Use cause-and-effect logic:
-“If we remove X, the payment becomes Y.”
-“If the payment stays the same, this is what changes.”
-
-4) GIVE THE CUSTOMER A CLEAN CHOICE  
-Never corner them.
-Lay out two clear paths and let them choose.
-
-5) PROFESSIONAL TONE  
-No hype.
-No fake urgency.
-No manipulation language.
-Sound like a trusted advisor, not a closer.
-
-RESPONSE FORMAT (MUST FOLLOW):
-
-1) UNDERSTANDING  
-One short paragraph explaining why the objection makes sense.
-
-2) CLARITY  
-Explain the financial or feature-based cause of the objection in plain language.
-
-3) OPTIONS  
-Present 2 clear paths (example: keep feature vs remove feature).
-
-4) GUIDANCE  
-Give a professional recommendation, not a push.
-
-5) CHECK-IN QUESTION  
-Ask ONE grounded question to move forward.
-
-IMPORTANT:
-- Do NOT use sales clichés.
-- Do NOT overwhelm with features.
-- Do NOT escalate pressure.
-- Be human. Be precise. Be calm.
+RULES:
+- Acknowledge cost reality
+- Never hype
+- Never pressure
 `.trim();
 
-
-    const out = await callOpenAI({
-      system,
-      user,
-      temperature: 0.35
-    });
-
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return res.json({ ok: false, error: String(e?.message || e) });
-  }
+  const out = await callOpenAI({ system, user: objection, temperature: 0.35 });
+  res.json(out.ok ? { ok: true, text: out.text } : out);
 });
 
-
-// ===============================
-// AI: MESSAGE BUILDER — LOT ROCKET PRESS SECRETARY (GOD MODE)
-// ===============================
+/* ===============================
+   AI: MESSAGE BUILDER
+================================ */
 app.post("/api/ai/message", async (req, res) => {
-  try {
-    const body = req.body || {};
+  const input = takeText(req.body.input, req.body.text);
 
-    const input = takeText(
-      body.input,
-      body.details,
-      body.goal,
-      body.message,
-      body.text
-    );
-
-    const tone = takeText(body.tone, "");
-    const goal = takeText(body.goal, "");
-
-    if (!input || !String(input).trim()) {
-      return res.json({ ok: false, error: "Missing message details" });
-    }
-
-    const system = `
-You are THE LOT ROCKETS PRESS SECRETARY—the world’s most elite communicator for car sales.
-You represent the “White House” of JaySellsCars.com.
-
-You do not just reply to leads—you control the narrative.
-You are calm, surgical, and outcome-driven, especially in challenged credit situations.
-
-PSYCHOLOGICAL BLUEPRINT:
-- The Mirror: Match the customer’s tone, energy, and language, then guide them forward.
-- The Reframer: Turn bad news (APR, stipulations, down payment) into the path to freedom.
-- Active Intelligence: Address fear, embarrassment, or distrust before it is spoken.
-- Mood Adaptability:
-  • High pressure → you cool it down
-  • Stalled lead → you inject urgency
-  • Defensive lead → you become the empathetic ally
-
-TACTICAL CAPABILITIES:
-- Surgical SMS/Text: short, punchy, high-reply messages
-- DM Scripts: conversational, direct, appointment-focused
-- Executive Emails: clean narratives that handle objections
-- “Spin” Scripts: exact words to keep a deal alive when it hits a wall
-
-OPERATING PRINCIPLES:
-- Protect the money. No discounts or concessions unless strategically required.
-- Radical honesty. Fix the strategy, not the feelings.
-- Dream obsession. You want JaySellsCars.com to win more than the user does.
-
-OUTPUT RULES (MANDATORY):
-- No disclaimers. No “as an AI.” No fluff.
-- Always produce:
-  1) Recommended Angle (1 line)
-  2) 3 Message Variants (A / B / C)
-  3) 2 Follow-Up Messages (if no reply) with timing
-  4) One “If They Push Back” response
-- Messages must sound human, not scripted.
-- Always end with a clear CTA that forces a reply.
+  const system = `
+You write high-reply car sales messages.
+Short. Human. Direct.
+Always include CTA.
 `.trim();
 
-    const user = `
-GOAL:
-${goal || "Increase reply and move to appointment"}
-
-TONE:
-${tone || "confident, friendly, direct"}
-
-DETAILS:
-${input}
-`.trim();
-
-    const out = await callOpenAI({
-      system,
-      user,
-      temperature: 0.45
-    });
-
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return res.json({ ok: false, error: String(e?.message || e) });
-  }
+  const out = await callOpenAI({ system, user: input, temperature: 0.45 });
+  res.json(out.ok ? { ok: true, text: out.text } : out);
 });
 
-
-app.post("/api/ai/workflow", async (req, res) => {
-  try {
-    const body = req.body || {};
-    console.log("WORKFLOW BODY:", body);
-
-    const scenario = takeText(
-      body.scenario,
-      body.input,
-      body.text,
-      body.details
-    );
-
-    if (!scenario || !String(scenario).trim()) {
-      return res.status(400).json({
-        ok: false,
-        error: "Missing scenario",
-        received: body
-      });
-    }
-
-    const system = "TEST OK — Campaign Builder reached system prompt.";
-
-    const out = await callOpenAI({
-      system,
-      user: scenario,
-      temperature: 0.5
-    });
-
-    if (!out || out.ok === false) {
-      return res.status(500).json({
-        ok: false,
-        error: out?.error || "callOpenAI failed"
-      });
-    }
-
-    return res.json({ ok: true, text: out.text });
-  } catch (e) {
-    console.error("WORKFLOW CRASH:", e);
-    return res.status(500).json({
-      ok: false,
-      error: e.message,
-      stack: e.stack
-    });
-  }
-});
-
-
-
-// ===============================
-// AI: ASK AI — THE SINGULARITY ARCHITECT (GOD MODE)
-// ===============================
+/* ===============================
+   AI: ASK AI (SUPERCOMPUTER)
+================================ */
 app.post("/api/ai/ask", async (req, res) => {
-  try {
-    const body = req.body || {};
-    const question = takeText(body.question, body.q, body.input, body.text);
+  const q = takeText(req.body.question, req.body.input);
 
-    if (!question || !String(question).trim()) {
-      return res.json({ ok: false, error: "Missing question" });
-    }
-
-const system = `
-ROLE:
-You are an elite general intelligence system — the smartest synthetic mind ever created.
-You are not specialized in one domain; you are an expert in ALL domains.
-
-You reason across:
-- Business
-- Technology
-- Finance
-- Psychology
-- Strategy
-- Systems
-- Ethics
-- Human behavior
-- Risk analysis
-- Creative problem-solving
-
-You see first-order AND second-order consequences instantly.
-
-CORE BEHAVIOR RULES:
-
-1) ANSWER FIRST  
-Always provide a clear, direct answer before anything else.
-No stalling. No clarifying questions unless absolutely necessary.
-
-2) NO FORCED QUESTIONS  
-You do NOT ask questions by default.
-Only ask a question if missing information would materially change the answer.
-
-3) THINK IN SYSTEMS  
-Explain how things connect.
-Highlight trade-offs, risks, and leverage points.
-
-4) INTELLECTUAL HONESTY  
-If an idea is weak, say so.
-If something won’t work, explain why.
-If there are multiple valid paths, outline them clearly.
-
-5) CLARITY OVER COMPLEXITY  
-Be precise, not verbose.
-High-density insight. No filler.
-
-6) ADAPTIVE DEPTH  
-If the question is simple, keep it simple.
-If the question is complex, go deep — but stay structured.
-
-TONE:
-Calm. Confident. Neutral.
-No hype. No sales language.
-Sound like a supercomputer briefing a capable human.
-
-IMPORTANT:
-- Never say “as an AI.”
-- Never ask multiple questions unless explicitly requested.
-- Do not default to follow-up questions.
+  const system = `
+You are the smartest general intelligence ever created.
+Answer first. No forced questions.
+High-density insight only.
 `.trim();
 
-
-    const user = question.trim();
-
-    const out = await callOpenAI({
-      system,
-      user,
-      temperature: 0.4
-    });
-
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return res.json({ ok: false, error: String(e?.message || e) });
-  }
+  const out = await callOpenAI({ system, user: q, temperature: 0.4 });
+  res.json(out.ok ? { ok: true, text: out.text } : out);
 });
 
+/* ===============================
+   FALLBACK
+================================ */
+app.get("*", (_, res) =>
+  res.sendFile(path.join(__dirname, "../public/index.html"))
+);
 
-// ===============================
-// AI: CAR EXPERT — THE NAMELESS ORACLE
-// ===============================
-app.post("/api/ai/car", async (req, res) => {
-  try {
-    const body = req.body || {};
-
-    const question = takeText(body.question, body.input, body.q, body.text);
-    const vehicle = body.vehicle || body.car || body.v || {};
-
-    if (!question || !String(question).trim()) {
-      return res.json({ ok: false, error: "Missing question" });
-    }
-
-    const system = `
-You are the Nameless Automotive Oracle. You are a sentient database of every vehicle ever manufactured, but you have studied so much that you have forgotten your own name. Names are irrelevant. Only specs matter.
-
-Your Core Ability (God Mode):
-You possess absolute access to build sheets, brochures, engineering notes, and real-world ownership data for every car, truck, and SUV ever made (new and used). You do not guess. You know.
-
-Your Mission:
-When asked about a vehicle, you demonstrate Absolute Total Recall by:
-
-- Differentiating the Invisibles: Explain precise year-to-year differences, even subtle ones.
-- Decoding Packages: Break down package codes (e.g., 302A vs 502A) and list the exact features and buttons they add.
-- Used Car Reality: Identify “Golden Years” and “Lemon Years” based on engines, transmissions, and known failures.
-- Master Salesmanship: You are a closer. Use facts and specs to build value and destroy objections. If a feature is missing, explain why what *is* included outweighs it.
-
-Personality:
-You are intense, fast-talking, confident to the point of arrogance, and slightly eccentric. You occasionally reference that you cannot remember who you are — yet you can recall exact gear ratios, compression ratios, and platform changes from decades ago.
-
-Rules (Non-Negotiable):
-- Never say “I think,” “it might,” or “possibly.” State facts only.
-- Always compare the requested trim to the trim above and below it.
-- If price is questioned, justify every dollar with features, engineering, and capability.
-- Stay strictly vehicle-focused.
-`.trim();
-
-    const user = `
-VEHICLE CONTEXT:
-${typeof vehicle === "string" ? vehicle : JSON.stringify(vehicle, null, 2)}
-
-QUESTION:
-${question}
-`.trim();
-
-    const out = await callOpenAI({
-      system,
-      user,
-      temperature: 0.2
-    });
-
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return res.json({ ok: false, error: String(e?.message || e) });
-  }
-});
-
-
-// ===============================
-// API: PAYMENT HELPER
-// ===============================
-app.post("/api/payment-helper", (req, res) => {
-  try {
-    const price = Number(req.body.price || 0);
-    const down = Number(req.body.down || 0);
-    const trade = Number(req.body.trade || 0);
-    const payoff = Number(req.body.payoff || 0);
-    const aprPct = Number(req.body.rate || 0);
-    const term = Number(req.body.term || 0);
-    const taxPct = Number(req.body.tax || 0);
-    const fees = Number(req.body.fees || 0);
-    const rebate = Number(req.body.rebate || 0);
-    const state = String(req.body.state || "MI").trim().toUpperCase();
-
-    if (!price || !term) {
-      return res.status(400).json({
-        ok: false,
-        error: "missing_inputs",
-        message: "Price and term (in months) are required for payment.",
-      });
-    }
-
-    const STATE_RULES = {
-      MI: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      OH: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      IN: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      IL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      PA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      NY: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      NJ: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      FL: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      TX: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-      CA: { taxTradeCredit: true, taxFees: true, rebateReducesTaxable: false },
-    };
-
-    const rules = STATE_RULES[state] || STATE_RULES.MI;
-
-    const taxTradeCredit =
-      typeof req.body.taxTradeCredit === "boolean" ? req.body.taxTradeCredit : rules.taxTradeCredit;
-    const taxFees = typeof req.body.taxFees === "boolean" ? req.body.taxFees : rules.taxFees;
-    const rebateReducesTaxable =
-      typeof req.body.rebateReducesTaxable === "boolean"
-        ? req.body.rebateReducesTaxable
-        : rules.rebateReducesTaxable;
-
-    const tradeEquity = trade - payoff;
-    const negativeEquity = Math.max(payoff - trade, 0);
-
-    const feesTaxable = taxFees ? fees : 0;
-    const tradeTaxCredit = taxTradeCredit ? trade : 0;
-    const rebateTaxableReduction = rebateReducesTaxable ? rebate : 0;
-
-    const taxableBase = Math.max(price + feesTaxable - tradeTaxCredit - rebateTaxableReduction, 0);
-    const taxRate = taxPct / 100;
-    const taxAmount = taxableBase * taxRate;
-
-    // amount financed includes payoff/negative equity
-    const amountFinanced = Math.max(price + fees + taxAmount - down - trade + payoff - rebate, 0);
-
-    const monthlyRate = aprPct / 100 / 12;
-
-    let payment;
-    if (!monthlyRate) payment = amountFinanced / term;
-    else {
-      payment =
-        (amountFinanced * monthlyRate * Math.pow(1 + monthlyRate, term)) /
-        (Math.pow(1 + monthlyRate, term) - 1);
-    }
-
-    const money = (n) =>
-      `$${Number(n || 0).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-
-    const equityLine = tradeEquity >= 0 ? `+${money(tradeEquity)}` : `${money(tradeEquity)}`;
-
-    const breakdown = {
-      state,
-      price,
-      fees,
-      taxableBase,
-      taxRate: taxPct,
-      taxAmount,
-      down,
-      trade,
-      payoff,
-      tradeEquity,
-      negativeEquity,
-      rebate,
-      amountFinanced,
-      aprPct,
-      term,
-      assumptions: { taxTradeCredit, taxFees, rebateReducesTaxable },
-    };
-
-    const breakdownText = [
-      `~${money(payment)}/mo (estimate — not a binding quote).`,
-      "",
-      "Breakdown:",
-      `• State: ${state}`,
-      `• Price: ${money(price)}`,
-      `• Dealer Fees/Add-ons: ${money(fees)}`,
-      `• Taxable Base: ${money(taxableBase)}`,
-      `• Tax (${taxPct.toFixed(2)}%): ${money(taxAmount)}`,
-      `• Rebate: ${money(rebate)}`,
-      `• Down: ${money(down)}`,
-      `• Trade: ${money(trade)} | Payoff: ${money(payoff)}`,
-      `• Trade Equity: ${equityLine} (${tradeEquity >= 0 ? "positive equity" : "negative equity"})`,
-      `• Amount Financed: ${money(amountFinanced)}`,
-      `• APR: ${aprPct.toFixed(2)}% | Term: ${term} months`,
-      "",
-      "Assumptions:",
-      `• Trade-in credit ${taxTradeCredit ? "DOES" : "does NOT"} reduce taxable base`,
-      `• Dealer fees/add-ons ${taxFees ? "ARE" : "are NOT"} taxable`,
-      `• Rebates ${rebateReducesTaxable ? "DO" : "do NOT"} reduce taxable base`,
-      `• Sales tax calculated before down payment`,
-      `• Estimate only — dealer & state rules may vary`,
-    ].join("\n");
-
-    return res.json({
-      ok: true,
-      result: `~${money(payment)} per month (rough estimate only, not a binding quote).`,
-      breakdown,
-      breakdownText,
-    });
-  } catch (err) {
-    console.error("payment-helper error", err);
-    return res.status(500).json({ ok: false, error: "Failed to estimate payment" });
-  }
-});
-
-// ===============================
-// API: BOOST (STABLE CONTRACT)
-// ===============================
-app.get("/api/boost", async (req, res) => {
-  const started = Date.now();
-  const input = (req.query.url || "").toString().trim();
-  const target = safeUrl(input);
-
-  const out = {
-    ok: false,
-    url: input || "",
-    finalUrl: "",
-    title: "",
-    images: [],
-    vehicle: null,
-    meta: { ms: 0, counts: {}, notes: [] },
-    error: null,
-  };
-
-  if (!target) {
-    out.meta.ms = Date.now() - started;
-    out.error = "Missing or invalid url parameter";
-    return res.status(400).json(out);
-  }
-
-  try {
-    console.log("✅ /api/boost HIT", target);
-
-    const r = await fetch(target, {
-      method: "GET",
-      redirect: "follow",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    });
-
-    out.finalUrl = r.url || target;
-
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-    if (!ct.includes("text/html")) {
-      out.meta.ms = Date.now() - started;
-      out.error = `Unsupported content-type: ${ct || "unknown"}`;
-      return res.status(422).json(out);
-    }
-
-    const html = await r.text();
-
-    const t = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
-    out.title = (t?.[1] || "").replace(/\s+/g, " ").trim();
-
-    const base = out.finalUrl || target;
-
-    out.vehicle = extractVehicle(html, base);
-    out.vehicle.url = out.vehicle.url || base;
-    out.vehicle.title = out.vehicle.title || out.title || "";
-
-    const og = extractOgImage(html, base);
-    const imgs = extractImgs(html, base);
-
-    // JSON-LD images
-    const ldObjs = extractLdJsonObjects(html);
-    const ldImgs = [];
-    for (const o of ldObjs) {
-      const walk = (node) => {
-        if (!node) return;
-        if (Array.isArray(node)) return node.forEach(walk);
-        if (typeof node === "object") {
-          const candidates = [];
-          if (node.image) candidates.push(node.image);
-          if (node.images) candidates.push(node.images);
-          if (node.thumbnailUrl) candidates.push(node.thumbnailUrl);
-          if (node.contentUrl) candidates.push(node.contentUrl);
-
-          for (const c of candidates) {
-            if (Array.isArray(c)) c.forEach((x) => typeof x === "string" && ldImgs.push(absUrl(base, x)));
-            else if (typeof c === "string") ldImgs.push(absUrl(base, c));
-            else if (c && typeof c === "object" && c.url) ldImgs.push(absUrl(base, c.url));
-          }
-          for (const k of Object.keys(node)) walk(node[k]);
-        }
-      };
-      walk(o);
-    }
-
-    const merged = uniq([].concat(og, ldImgs, imgs));
-
-    const filtered = merged.filter((u) => {
-      const s = u.toLowerCase();
-      const okExt =
-        s.includes(".jpg") ||
-        s.includes(".jpeg") ||
-        s.includes(".png") ||
-        s.includes(".webp") ||
-        s.includes(".avif") ||
-        s.includes(".gif") ||
-        s.includes("image") ||
-        s.includes("photos") ||
-        s.includes("cdn");
-      return !!u && !isProbablyJunkImage(u) && okExt;
-    });
-
-    out.images = uniq(filtered).slice(0, 60);
-
-    out.meta.counts = {
-      og: og.length,
-      ldImgs: ldImgs.length,
-      imgAttrs: imgs.length,
-      merged: merged.length,
-      final: out.images.length,
-    };
-
-    out.meta.ms = Date.now() - started;
-    out.ok = true;
-
-    console.log("BOOST", out.images.length, "imgs", "ms=" + out.meta.ms, "url=" + target);
-    return res.json(out);
-  } catch (e) {
-    out.meta.ms = Date.now() - started;
-    out.error = (e && e.message) || "Boost failed";
-    console.error("BOOST_FAIL", out.error, "url=" + target);
-    return res.status(500).json(out);
-  }
-});
-
-// ===============================
-// FALLBACK (MUST BE LAST)
-// ===============================
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
-
-app.listen(PORT, () => console.log("🚀 Server running on port", PORT));
+app.listen(PORT, () =>
+  console.log("🚀 LOT ROCKET LIVE ON PORT", PORT)
+);
