@@ -432,14 +432,24 @@
     : [];
 
   // ==================================================
-  // STEP 2 OUTPUT SETTERS + SUMMARY
+  // STEP 2 OUTPUT SETTERS + SUMMARY (works with textarea OR div)
   // ==================================================
   function setVal(id, v) {
     const el = $(id);
     if (!el) return;
-    el.value = (v ?? "").toString();
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    autoGrowTextarea(el);
+
+    const text = (v ?? "").toString();
+
+    // textarea / input
+    if ("value" in el) {
+      el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      autoGrowTextarea(el);
+      return;
+    }
+
+    // div / pre / anything else
+    el.textContent = text;
   }
 
   function renderSummary(vehicle) {
@@ -457,83 +467,156 @@
     `;
   }
 
-// ==================================================
-// STEP 2 AI SOCIAL
-// ==================================================
-async function aiPost(platform) {
-  const v = STORE.lastVehicle || STORE.vehicle || {};
+  // ==================================================
+  // STEP 2 PLATFORM MAP (ids must match your index.html)
+  // ==================================================
+  function mapPlatformToOutputId(platform) {
+    const m = {
+      facebook: "fbOutput",
+      instagram: "igOutput",
+      tiktok: "ttOutput",
+      linkedin: "liOutput",
+      x: "xOutput",
+      dm: "dmOutput",
+      marketplace: "marketplaceOutput",
+      hashtags: "hashtagsOutput",
+    };
+    return m[platform] || "";
+  }
 
-  // Normalize desired features for bullet-heavy posts
-  const features = [
-    v.engine && `${v.engine}`,
-    v.drivetrain && v.drivetrain,
-    v.mileage && `Only ${v.mileage}`,
-    v.exterior && `${v.exterior} Exterior`,
-    v.interior && `${v.interior} Interior`,
-    v.price && `Priced at ${v.price}`,
-    v.certified && "Certified Pre-Owned",
-  ].filter(Boolean);
+  // ==================================================
+  // STEP 2 AI SOCIAL (bullet-safe, non-json safe)
+  // ==================================================
+  async function aiPost(platform) {
+    const v = STORE.lastVehicle || STORE.vehicle || {};
 
-  const payload = {
-    platform,
-    vehicle: {
-      title: v.title || "",
-      price: v.price || "",
-      mileage: v.mileage || "",
-      vin: v.vin || "",
-      stock: v.stock || "",
-    },
-    style: {
-      tone: "high-energy closer",
-      urgency: "today",
-      structure: "hook + bullets + CTA",
-      bulletsRequired: true,
-    },
-    desiredFeatures: features,
-  };
+    const features = [
+      v.engine && `${v.engine}`,
+      v.drivetrain && v.drivetrain,
+      v.transmission && v.transmission,
+      v.mileage && `Only ${v.mileage}`,
+      v.exterior && `${v.exterior} Exterior`,
+      v.interior && `${v.interior} Interior`,
+      v.price && `Priced at ${v.price}`,
+      v.certified && "Certified Pre-Owned",
+    ].filter(Boolean);
 
-  const r = await fetch("/api/ai/social", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+    const payload = {
+      platform,
+      vehicle: {
+        title: v.title || "",
+        price: v.price || "",
+        mileage: v.mileage || "",
+        vin: v.vin || "",
+        stock: v.stock || "",
+      },
+      style: {
+        tone: "high-energy closer",
+        urgency: "today",
+        structure: "hook + bullets + CTA",
+        bulletsRequired: true,
+      },
+      desiredFeatures: features,
+    };
 
-  const ct = (r.headers.get("content-type") || "").toLowerCase();
-  const raw = await r.text();
-
-  if (!ct.includes("application/json")) {
-    console.error("❌ AI SOCIAL NON-JSON", {
-      status: r.status,
-      head: raw.slice(0, 300),
+    const r = await fetch("/api/ai/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
     });
-    throw new Error("AI returned non-JSON");
+
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const raw = await r.text();
+
+    if (!ct.includes("application/json")) {
+      console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 300) });
+      throw new Error("AI returned non-JSON");
+    }
+
+    let j;
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      throw new Error("Bad JSON from AI");
+    }
+
+    if (!j.ok) throw new Error(j.error || "AI failed");
+
+    let text = j.text || "";
+
+    // last-resort bullet force if AI gets generic
+    if (!/•|\n-|\n⭐/g.test(text) && features.length) {
+      text += "\n\n⭐ MOST-WANTED FEATURES:\n" + features.map((f) => `• ${f}`).join("\n");
+    }
+
+    return text;
   }
 
-  let j;
-  try {
-    j = JSON.parse(raw);
-  } catch {
-    throw new Error("Bad JSON from AI");
+  // ==================================================
+  // STEP 2 GENERATE (single + all)
+  // ==================================================
+  async function generateAllStep2() {
+    const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
+
+    for (const p of platforms) {
+      const outId = mapPlatformToOutputId(p);
+      if (!outId || !$(outId)) continue;
+
+      setVal(outId, "Generating…");
+      try {
+        const text = await aiPost(p);
+        setVal(outId, text);
+      } catch (e) {
+        setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
+      }
+    }
   }
 
-  if (!j.ok) {
-    throw new Error(j.error || "AI failed");
+  function wireRegenButtons() {
+    const wires = [
+      ["fbNewBtn", "facebook"],
+      ["igNewBtn", "instagram"],
+      ["ttNewBtn", "tiktok"],
+      ["liNewBtn", "linkedin"],
+      ["xNewBtn", "x"],
+      ["dmNewBtn", "dm"],
+      ["mkNewBtn", "marketplace"],
+      ["hashNewBtn", "hashtags"],
+    ];
+
+    wires.forEach(([btnId, platform]) => {
+      const b = $(btnId);
+      if (!b || b.__LR_BOUND__) return;
+      b.__LR_BOUND__ = true;
+
+      b.addEventListener("click", async (e) => {
+        e.preventDefault();
+        pressAnim(b);
+
+        const outId = mapPlatformToOutputId(platform);
+        if (!outId || !$(outId)) return;
+
+        setVal(outId, "Generating…");
+        try {
+          const text = await aiPost(platform);
+          setVal(outId, text);
+        } catch (err) {
+          setVal(outId, `AI ERROR: ${String(err?.message || err)}`);
+        }
+      });
+    });
+
+    const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
+    if (genAllBtn && !genAllBtn.__LR_BOUND__) {
+      genAllBtn.__LR_BOUND__ = true;
+      genAllBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        pressAnim(genAllBtn);
+        generateAllStep2();
+      });
+    }
   }
 
-  let text = j.text || "";
-
-  // Safety net: force feature bullets if AI gets generic
-  if (!/•|\n-|\n⭐/g.test(text) && features.length) {
-    text +=
-      "\n\n⭐ MOST-WANTED FEATURES:\n" +
-      features.map((f) => `• ${f}`).join("\n");
-  }
-
-  return text;
-}
 
 
   // ==================================================
