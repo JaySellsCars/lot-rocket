@@ -1,22 +1,30 @@
 /* /public/style.css  (REPLACE ENTIRE FILE)
-   LOT ROCKET — CLEAN STABLE CSS (v2.6.6)
+   LOT ROCKET — CLEAN STABLE CSS (v2.6.7 CLEAN)
    - BIGGER Social Ready viewer
-   - Social Ready thumbs look correct (square, cover, crisp)
+   - Social Ready thumbs square, cover, crisp
    - Lock badge visible + positioned (🔒/🔓)
    - Strip stacks (wrap), no scroll, up to 24 visible
+   - Floating tools alignment via ONE dial: --tools-top
 */
 
+/* ---------------------------------
+   RESET / BASE
+---------------------------------- */
 *,
 *::before,
 *::after { box-sizing: border-box; }
 
 html, body { height: 100%; margin: 0; padding: 0; }
+
 body{
   background:#0b1020;
   color:#fff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+
 a{ color:#8ab4f8; }
+
+.hidden{ display:none !important; }
 
 :root{
   --bg-panel:#020617;
@@ -25,15 +33,18 @@ a{ color:#8ab4f8; }
   --text-muted:#9ca3af;
   --accent-1:#f97316;
   --accent-2:#ec4899;
+
   --radius:18px;
   --inner:14px;
   --shadow:0 20px 50px rgba(0,0,0,.6);
+
+  /* ✅ SINGLE DIAL: FLOATING TOOLS ALIGNMENT */
+  --tools-top: 190px;
 }
 
-/* ===============================
-   HEADER — SAFE PREMIUM (NO HTML CHANGES REQUIRED)
-================================ */
-
+/* ---------------------------------
+   HEADER — SAFE PREMIUM
+---------------------------------- */
 .app-header{
   position:relative;
   z-index:50;
@@ -42,7 +53,6 @@ a{ color:#8ab4f8; }
   justify-content:space-between;
   padding:1.35rem 3.5rem;
   border-bottom:1px solid rgba(255,255,255,.08);
-
   background:
     radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.16), transparent 60%),
     linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
@@ -51,37 +61,25 @@ a{ color:#8ab4f8; }
 /* Branding container — bottom aligned for logo + tagline */
 .branding{
   display:flex;
-  align-items:flex-end; /* ⬅️ THIS fixes the lineup */
+  align-items:flex-end;
   gap:18px;
 }
+
 /* Fine-tune logo vertical alignment with tagline */
-.logo-wrap{
-  margin-bottom: 6px; /* ⬅️ fine-tune: try 4–10px */
-}
+.logo-wrap{ margin-bottom: 6px; }
 
-
-
-/* ===============================
-   LOGO — BIGGER ON PC (NO WRAP)
-   Fixes “small logo” even with padded PNG
-================================ */
+/* LOGO */
 .app-logo{
-  height:120px;              /* 🔥 BIG on PC */
+  height:150px;
   width:auto;
   object-fit:contain;
-
-  /* White logo look without needing a separate file */
   filter: brightness(0) invert(1);
-
-  /* Makes padded PNG feel bigger */
   transform: scale(1.18);
   transform-origin:left center;
-
   opacity:.98;
   transition: transform .18s ease, filter .18s ease, opacity .18s ease;
 }
 
-/* Premium hover glow (NO red box) */
 .branding:hover .app-logo{
   opacity:1;
   transform: scale(1.24);
@@ -101,7 +99,7 @@ a{ color:#8ab4f8; }
   color:rgba(255,255,255,.68);
 }
 
-/* Badge (if you use .version-badge already) */
+/* Badge */
 .version-badge{
   font-size:.72rem;
   font-weight:900;
@@ -113,38 +111,9 @@ a{ color:#8ab4f8; }
   box-shadow: 0 10px 24px rgba(236,72,153,.18);
 }
 
-/* ===============================
-   RESPONSIVE
-================================ */
-@media (max-width: 900px){
-  .app-header{ padding:1.1rem 1.3rem; }
-  .app-logo{ height:84px; transform: scale(1.12); }
-  .brand-text h1{ font-size:1.75rem; }
-  .brand-text p{ font-size:.84rem; }
-}
-
-@media (max-width: 520px){
-  .app-logo{ height:64px; transform: scale(1.08); }
-  .brand-text p{ display:none; }
-  .brand-text h1{ font-size:1.5rem; }
-}
-
-
-
-
-
-
-
-
-/* =========================
-   RESPONSIVE POLISH
-   ========================= */
-
-
-
-
-
-/* LAYOUT */
+/* ---------------------------------
+   LAYOUT
+---------------------------------- */
 .layout{
   display:grid;
   grid-template-columns:1.05fr 1.6fr;
@@ -155,7 +124,9 @@ a{ color:#8ab4f8; }
 .column{ min-width:0; }
 .creativeHubFull{ grid-column:1 / -1; }
 
-/* PANELS */
+/* ---------------------------------
+   PANELS
+---------------------------------- */
 .lab-card,
 .summary-box,
 .platform-card{
@@ -172,6 +143,9 @@ a{ color:#8ab4f8; }
   line-height:1.35;
 }
 
+/* ---------------------------------
+   FORMS
+---------------------------------- */
 label.field{ display:block; margin:.65rem 0; }
 label.field > span{
   display:block;
@@ -205,18 +179,34 @@ textarea{
   background: #020617;
   border: 1px solid var(--border-soft);
   color: var(--text-main);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-/* BUTTONS */
+/* ---------------------------------
+   BUTTONS
+---------------------------------- */
 .primary-btn{
   border-radius:999px;
   border:none;
   padding:.6rem 1.4rem;
-  font-weight:700;
+  font-weight:800;
   cursor:pointer;
   background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
   color:#020617;
+  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+  will-change: transform;
 }
+.primary-btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 0 0 2px rgba(249,115,22,.18), 0 18px 44px rgba(0,0,0,.55);
+}
+.primary-btn:active{
+  transform: translateY(2px) scale(.99);
+  box-shadow: 0 0 0 2px rgba(236,72,153,.18), 0 10px 24px rgba(0,0,0,.45);
+}
+
 .secondary-btn{
   border-radius:999px;
   border:1px solid var(--border-soft);
@@ -224,7 +214,18 @@ textarea{
   color:var(--text-main);
   padding:.55rem 1.2rem;
   cursor:pointer;
+  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+  will-change: transform;
 }
+.secondary-btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow: 0 16px 38px rgba(0,0,0,.45);
+}
+.secondary-btn:active{
+  transform: translateY(2px) scale(.99);
+}
+
 .primary-btn.full,
 .secondary-btn.full{
   width:100%;
@@ -233,7 +234,29 @@ textarea{
   align-items:center;
 }
 
-/* STEP 1 PHOTOS */
+/* Step 1 buttons consistency */
+#boostBtn,
+#sendToDesignStudio{
+  width:100%;
+  border-radius:999px;
+  font-weight:900;
+  letter-spacing:.2px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.55rem;
+}
+
+/* Make Send match Boost vibe (override safely) */
+#sendToDesignStudio{
+  border:none !important;
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2)) !important;
+  color:#020617 !important;
+}
+
+/* ---------------------------------
+   STEP 1 PHOTOS
+---------------------------------- */
 .photo-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -241,7 +264,9 @@ textarea{
   margin-top:.9rem;
 }
 
-/* STEP 2 */
+/* ---------------------------------
+   STEP 2
+---------------------------------- */
 .step2-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -251,110 +276,169 @@ textarea{
   min-height:140px;
   border-radius:16px;
   background:rgba(2,6,23,.85);
+  overflow:hidden; /* key for auto-grow JS */
 }
 
-/* FLOATING TOOLS */
-.floating-tools{
+/* Step 2 inner actions UI */
+.lr-step2-actions{
+  margin-top: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.lr-step2-actions-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.lr-step2-actions-emoji{
+  display:flex;
+  justify-content:center;
+}
+
+.lr-btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.16);
+  color:rgba(255,255,255,.92);
+  font-weight:800;
+  letter-spacing:.2px;
+  padding:10px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  user-select:none;
+  transition: transform .08s ease, filter .15s ease, border-color .15s ease;
+  box-shadow:0 10px 24px rgba(0,0,0,.32);
+  background:rgba(255,255,255,.06);
+  backdrop-filter: blur(10px);
+}
+.lr-btn:hover{
+  filter: brightness(1.08);
+  border-color: rgba(255,255,255,.26);
+}
+.lr-btn:active{ transform: translateY(1px) scale(.99); }
+.lr-btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+.lr-btn-secondary{
+  background: linear-gradient(90deg, rgba(255,153,0,.55), rgba(255,59,203,.55));
+  border-color: rgba(255,255,255,.18);
+}
+.lr-step2-actions-emoji .lr-btn{ min-width:180px; }
+
+/* ---------------------------------
+   FLOATING TOOLS (ONE DIAL)
+---------------------------------- */
+.floating-tools,
+.toolwire,
+#toolWire{
   position:fixed;
   right:18px;
-  top:120px;
+  top: var(--tools-top) !important; /* ✅ ONLY alignment control */
   display:flex;
   flex-direction:column;
   gap:.6rem;
   z-index:99999;
 }
 
-/* =========================================
-   ALIGN FLOATING TOOLS WITH STEP 1 / STEP 2
-   ========================================= */
-.toolwire,
-#toolWire,
-.floating-tools{
-  top: 160px !important; /* ← this is the alignment control */
-}
-
-
 .tool-button{
-  padding: .55rem 1rem;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg,#f97316,#ec4899);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
+  padding:.55rem 1rem;
+  border-radius:12px;
+  border:none;
+  background:linear-gradient(135deg,#f97316,#ec4899);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
 }
 
-
-
-
-/* ================================
-   STEP 2 – INNER BUTTONS (NICE UI)
-   ================================ */
-.lr-step2-actions{
-  margin-top: 10px;
+/* ---------------------------------
+   SIDE MODALS — VERTICAL LAYOUT FIX
+---------------------------------- */
+.side-modal{
+  position: fixed;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: flex-end;
+  background: rgba(0,0,0,.75);
+  z-index: 100000;
 }
 
-.lr-step2-actions-row{
-  display: flex;
-  justify-content: space-between; /* New Post left, Copy right */
-  align-items: center;
-  gap: 12px;
+.side-modal-content{
+  width: 360px;
+  background: #020617;
+  border-left: 1px solid var(--border-soft);
+  display:flex;
+  flex-direction:column;
+  padding-bottom: 1rem;
 }
 
-.lr-step2-actions-emoji{
-  display: flex;
-  justify-content: center; /* center under the two */
+.side-modal-header{
+  position: relative;
+  padding: 1rem;
+  padding-right: 2.2rem;
+  border-bottom: 1px solid rgba(148,163,184,.25);
 }
 
-/* Button look to match your app buttons */
-.lr-btn{
-  appearance: none;
-  border: 1px solid rgba(255,255,255,.16);
-  color: rgba(255,255,255,.92);
-  font-weight: 700;
-  letter-spacing: .2px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  user-select: none;
-  transition: transform .08s ease, filter .15s ease, border-color .15s ease;
-  box-shadow: 0 10px 24px rgba(0,0,0,.32);
+.side-modal-close,
+.side-modal [data-close]{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:26px;
+  height:26px;
+  padding:0;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
   background: rgba(255,255,255,.06);
-  backdrop-filter: blur(10px);
+  color: rgba(255,255,255,.75);
+  font-size:14px;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: background .12s ease, color .12s ease, transform .06s ease;
+}
+.side-modal-close:hover,
+.side-modal [data-close]:hover{
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.95);
+}
+.side-modal-close:active,
+.side-modal [data-close]:active{ transform: scale(.96); }
+
+.side-modal-body{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:1rem;
+  overflow-y:auto;
 }
 
-.lr-btn:hover{
-  filter: brightness(1.08);
-  border-color: rgba(255,255,255,.26);
+.side-modal-body > *,
+.side-modal form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
-.lr-btn:active{
-  transform: translateY(1px) scale(.99);
+.side-modal input,
+.side-modal textarea,
+.side-modal select,
+.side-modal button{ width:100%; }
+
+/* Helpful inputs (auto-grow friendly) */
+#workflowInput,
+#objectionInput,
+#messageInput,
+#askInput,
+#carExpertInput{
+  resize:none;
+  overflow:hidden;
+  min-height:44px;
+  line-height:1.4;
 }
 
-.lr-btn:disabled{
-  opacity: .55;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Make these “inner” buttons match your secondary vibe */
-.lr-btn-secondary{
-  background: linear-gradient(90deg, rgba(255,153,0,.55), rgba(255,59,203,.55));
-  border-color: rgba(255,255,255,.18);
-}
-
-/* If you want the emoji button slightly different */
-.lr-step2-actions-emoji .lr-btn{
-  min-width: 180px; /* feels like a centered CTA */
-}
-
-/* ==================================================
-   STEP 3 — HOLDING ZONE (STACKED)
-================================================== */
+/* ---------------------------------
+   STEP 3 — HOLDING ZONE (WRAP, up to 24)
+---------------------------------- */
 #holdingZone{
   display:flex;
   flex-wrap:wrap;
@@ -374,9 +458,9 @@ textarea{
   cursor:pointer;
 }
 
-/* ==================================================
-   SOCIAL READY — BIG VIEWER + GOOD THUMBS + LOCK
-================================================== */
+/* ---------------------------------
+   SOCIAL READY — BIG VIEWER + THUMBS + LOCK
+---------------------------------- */
 #socialReadyPanel{
   padding: 1.2rem;
   min-height: 600px;
@@ -415,13 +499,19 @@ textarea{
   margin: 0 auto;
 }
 
+/* hide preview if empty */
+#socialCarouselPreviewImg:not([src]),
+#socialCarouselPreviewImg[src=""]{
+  display:none !important;
+}
+
 /* status */
 #socialCarouselStatus{
   text-align:center;
   margin-top:.6rem;
 }
 
-/* strip container (stacked, no scroll) */
+/* strip container (wrap, no scroll) */
 #socialCarousel{
   display:flex;
   flex-wrap:wrap;
@@ -458,30 +548,26 @@ textarea{
 #socialCarousel .social-thumb-btn img{
   width: 100%;
   height: 100%;
-  object-fit: cover;     /* ✅ IMPORTANT */
+  object-fit: cover;
   display: block;
 }
 
 /* ✅ lock badge */
 #socialCarousel .social-lock{
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
   background: rgba(0,0,0,.55);
   border: 1px solid rgba(255,255,255,.18);
-  font-size: 14px;
-  line-height: 1;
-  pointer-events: none;  /* click selects thumb; dblclick toggles lock via JS */
-}
-
-/* selected ring (JS uses outline inline; keep a nice default too) */
-#socialCarousel .social-thumb-btn[style*="outline"]{
-  box-shadow: 0 0 18px rgba(56,189,248,0.28);
+  font-size:14px;
+  line-height:1;
+  pointer-events:none;
+  user-select:none;
 }
 
 /* actions */
@@ -492,23 +578,95 @@ textarea{
   flex-wrap:wrap;
 }
 
-/* UTIL */
-.hidden{ display:none !important; }
+/* ---------------------------------
+   CALCULATOR (SKIN)
+---------------------------------- */
+#calcModal .side-modal-content{ max-width:420px; }
 
-/* MOBILE */
-@media (max-width:1100px){
+#calcModal .calculator-body{
+  display:grid;
+  gap:12px;
+}
+
+#calcDisplay{
+  width:100%;
+  height:64px;
+  padding:14px 14px;
+  border-radius:14px;
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-align:right;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.95);
+  outline:none;
+}
+#calcDisplay::placeholder{ color: rgba(255,255,255,0.35); }
+
+.calc-grid{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:10px;
+}
+.calc-grid button{
+  height:54px;
+  border-radius:14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.95);
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+  transition: transform .06s ease, background .12s ease, border-color .12s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.24);
+}
+.calc-grid button:hover{
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+}
+.calc-grid button:active{ transform: translateY(1px) scale(0.99); }
+
+.calc-grid button[data-calc="+"],
+.calc-grid button[data-calc="-"],
+.calc-grid button[data-calc="*"],
+.calc-grid button[data-calc="/"]{
+  background: rgba(99,102,241,0.20);
+  border-color: rgba(99,102,241,0.35);
+}
+.calc-grid button[data-calc="="]{
+  background: rgba(16,185,129,0.22);
+  border-color: rgba(16,185,129,0.40);
+}
+.calc-grid button[data-calc="C"],
+.calc-grid button[data-calc="⌫"]{
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.35);
+}
+
+/* ---------------------------------
+   RESPONSIVE
+---------------------------------- */
+@media (max-width: 1100px){
   .layout{
     grid-template-columns:1fr;
     padding:1.2rem;
   }
   .step2-grid{ grid-template-columns:1fr; }
-  .floating-tools{
+
+  .floating-tools,
+  .toolwire,
+  #toolWire{
     position:static;
+    top:auto !important;
+    right:auto;
     flex-direction:row;
     flex-wrap:wrap;
     justify-content:center;
     margin-top:1rem;
   }
+
   #socialReadyPanel{ min-height: 0; }
   #socialCarouselPreviewImg{ height: 320px; }
   .social-carousel-preview{
@@ -516,593 +674,16 @@ textarea{
   }
   .ghost-circle-btn{ width:54px; height:54px; }
 }
-/* /public/style.css — ADD THESE (or replace matching blocks) */
 
-/* Make Step 1 buttons match + consistent */
-#boostBtn,
-#sendToDesignStudio{
-  width: 100%;
-  border-radius: 999px;
-  font-weight: 800;
-  letter-spacing: .2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .55rem;
+@media (max-width: 900px){
+  .app-header{ padding:1.1rem 1.3rem; }
+  .app-logo{ height:84px; transform: scale(1.12); }
+  .brand-text h1{ font-size:1.75rem; }
+  .brand-text p{ font-size:.84rem; }
 }
 
-/* Make Send button look like your other secondary buttons */
-#sendToDesignStudio{
-  border: 1px solid rgba(148,163,184,.55);
-  background: rgba(2,6,23,.75);
-  color: var(--text-main);
-}
-
-/* Press animation (both) */
-.lr-press{
-  animation: lrPress .18s ease;
-}
-@keyframes lrPress{
-  0%{ transform: scale(1); }
-  50%{ transform: scale(.97); }
-  100%{ transform: scale(1); }
-}
-
-/* Loading shimmer (optional, used by JS) */
-.lr-loading{
-  position: relative;
-  opacity: .92;
-  cursor: wait !important;
-}
-.lr-loading::after{
-  content:"";
-  position:absolute;
-  inset:-2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.12), rgba(255,255,255,0));
-  animation: lrShimmer .85s linear infinite;
-  pointer-events:none;
-}
-@keyframes lrShimmer{
-  from{ transform: translateX(-30%); }
-  to{ transform: translateX(30%); }
-}
-/* ADD THIS AT THE VERY BOTTOM of /public/style.css */
-
-/* Press animation + loading state (boost + send to creative lab + zip) */
-.lr-press { transform: translateY(1px) scale(0.99); filter: brightness(1.05); }
-.lr-loading { opacity: .85; cursor: wait !important; }
-.lr-loading::after{
-  content:"";
-  display:inline-block;
-  width:14px;height:14px;
-  margin-left:10px;
-  border-radius:999px;
-  border:2px solid rgba(255,255,255,.45);
-  border-top-color: rgba(255,255,255,1);
-  animation: lrSpin .75s linear infinite;
-  vertical-align:-2px;
-}
-
-/* Social Ready: keep arrows on each side + slightly smaller preview so it doesn't shove buttons */
-.social-ready-row{
-  display:grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items:center;
-  gap: .75rem;
-}
-
-#socialCarouselPreviewImg{
-  height: 190px !important;   /* was too big */
-  max-height: 210px !important;
-  object-fit: contain !important;
-}
-
-/* make thumbs look correct + draggable hint */
-#socialCarousel .social-thumb-btn{
-  border: 1px solid rgba(148,163,184,.35);
-}
-#socialCarousel .social-thumb-btn.dragging{
-  opacity:.55;
-  transform: scale(.98);
-}
-#socialCarousel .social-lock{
-  cursor: default;
-  user-select: none;
-}
-/* ==================================================
-   SOCIAL READY PREVIEW — SKINNIER UI, BIGGER IMAGE
-   ================================================== */
-
-.social-ready-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.2rem;
-}
-
-/* center preview column */
-.social-ready-center {
-  flex: 1;
-  max-width: 720px;   /* ⬅️ makes viewer longer */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* actual preview image */
-#socialCarouselPreviewImg {
-  width: 100%;
-  max-width: 720px;
-  height: 280px;      /* ⬅️ skinnier but still big */
-  object-fit: contain;
-  background: rgba(0,0,0,.35);
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.18);
-  box-shadow: 0 12px 28px rgba(0,0,0,.45);
-}
-
-/* arrows stay vertically centered */
-.ghost-circle-btn {
-  align-self: center;
-}
-
-/* tighten header spacing above preview */
-.social-ready-panel .panel-header {
-  margin-bottom: .6rem;
-}
-/* ==================================================
-   STEP 1 BUTTONS — MATCH STYLE + FEEL "PRESSED"
-   ================================================== */
-
-/* Make the Step 1 send button match the Boost gradient style */
-#sendToDesignStudio {
-  border: none !important;
-  color: #020617 !important;
-  font-weight: 800 !important;
-  background: linear-gradient(90deg, var(--accent-1), var(--accent-2)) !important;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.06), var(--glow-1) !important;
-}
-
-/* Give BOTH buttons better hover + click feel */
-#boostBtn,
-#sendToDesignStudio {
-  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease !important;
-  will-change: transform;
-}
-
-/* Hover = slightly lifted */
-#boostBtn:hover,
-#sendToDesignStudio:hover {
-  transform: translateY(-1px) !important;
-  filter: brightness(1.04) !important;
-  box-shadow: 0 0 0 2px rgba(249,115,22,.18), 0 18px 44px rgba(0,0,0,.55) !important;
-}
-
-/* Active press = down + tighter shadow */
-#boostBtn:active,
-#sendToDesignStudio:active {
-  transform: translateY(2px) scale(.99) !important;
-  box-shadow: 0 0 0 2px rgba(236,72,153,.18), 0 10px 24px rgba(0,0,0,.45) !important;
-}
-
-/* If your JS adds .btn-loading, make it feel alive */
-#boostBtn.btn-loading,
-#sendToDesignStudio.btn-loading {
-  filter: saturate(1.1) brightness(1.02) !important;
-}
-
-/* ==================================================
-   SOCIAL READY PREVIEW — MORE SQUARE (BIGGER CAR)
-   ================================================== */
-
-/* Keep arrows on the sides, center stays stable */
-.social-ready-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-/* Make center area wider but not tall UI */
-.social-ready-center {
-  flex: 1;
-  max-width: 520px; /* tweak 480–620 if you want */
-}
-
-/* Square-ish preview so car looks bigger */
-#socialCarouselPreviewImg {
-  width: 100% !important;
-  max-width: 520px !important;
-  aspect-ratio: 1 / 1 !important;   /* ✅ square */
-  height: auto !important;          /* ✅ let aspect-ratio control it */
-  object-fit: contain !important;
-  border-radius: 16px !important;
-  background: rgba(0,0,0,.35) !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-  box-shadow: 0 14px 34px rgba(0,0,0,.55) !important;
-}
-/* ==================================================
-   BUTTON PRESS GLOW PULSE (TACTILE FEEDBACK)
-   ================================================== */
-
-@keyframes lr-press-glow {
-  0% {
-    box-shadow:
-      0 0 0 0 rgba(249,115,22,.0),
-      0 12px 28px rgba(0,0,0,.45);
-  }
-  50% {
-    box-shadow:
-      0 0 0 6px rgba(249,115,22,.35),
-      0 16px 42px rgba(0,0,0,.6);
-  }
-  100% {
-    box-shadow:
-      0 0 0 0 rgba(236,72,153,.0),
-      0 10px 24px rgba(0,0,0,.45);
-  }
-}
-
-/* Trigger pulse ONLY when pressed */
-#boostBtn:active,
-#sendToDesignStudio:active {
-  animation: lr-press-glow .35s ease-out;
-}
-/* =====================================================
-   SIDE TOOL MODALS — FORCE VERTICAL LAYOUT
-   ===================================================== */
-
-/* Overlay container */
-.side-modal{
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: flex-end;
-  background: rgba(0,0,0,.75);
-  z-index: 100000;
-}
-
-/* Slide-in panel */
-.side-modal-content{
-  width: 360px;
-  background: #020617;
-  border-left: 1px solid var(--border-soft);
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 1rem;
-}
-
-/* Header stays on top */
-.side-modal-header{
-  padding: 1rem;
-  border-bottom: 1px solid rgba(148,163,184,.25);
-}
-
-/* BODY — THIS IS THE FIX */
-.side-modal-body{
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
-/* Stack all form elements vertically */
-.side-modal-body > *,
-.side-modal form{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Inputs & buttons full width */
-.side-modal input,
-.side-modal textarea,
-.side-modal select,
-.side-modal button{
-  width: 100%;
-}
-/* =========================
-   AUTO-GROW OUTPUT BOXES
-   ========================= */
-.ai-output,
-.ai-box,
-.ai-result,
-.ai-response,
-.side-modal-output,
-#socialOutput,
-#objectionOutput,
-#messageOutput,
-#workflowOutput,
-#askOutput,
-#carOutput {
-  overflow: visible !important;   /* kill scrollbars */
-  max-height: none !important;    /* remove caps */
-  height: auto !important;
-  white-space: pre-wrap;          /* keep line breaks */
-  word-break: break-word;
-}
-
-/* If you used textarea for outputs anywhere */
-textarea.ai-output,
-textarea.ai-box,
-textarea.ai-result,
-textarea.ai-response {
-  overflow: hidden !important;
-  resize: none !important;
-  height: auto;
-}
-/* STEP 2 — AUTO EXPAND SOCIAL OUTPUTS */
-.step2-card textarea {
-  width: 100%;
-  min-height: 120px;
-  height: auto;
-  resize: none;
-  overflow: hidden;      /* CRITICAL */
-  white-space: pre-wrap;
-  line-height: 1.4;
-}
-<div id="sendToLabWrap">
-/* =========================================
-   CALCULATOR (REAL FEEL)
-   Targets: #calcModal, #calcDisplay, .calc-grid
-========================================= */
-
-#calcModal .side-modal-content {
-  max-width: 420px;
-}
-
-#calcModal .calculator-body {
-  display: grid;
-  gap: 12px;
-}
-
-#calcDisplay {
-  width: 100%;
-  height: 64px;
-  padding: 14px 14px;
-  border-radius: 14px;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-align: right;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.95);
-  outline: none;
-}
-
-#calcDisplay::placeholder {
-  color: rgba(255,255,255,0.35);
-}
-
-/* Grid: 4 columns, calculator spacing */
-.calc-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-/* Base key */
-.calc-grid button {
-  height: 54px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.95);
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  user-select: none;
-  transition: transform .06s ease, background .12s ease, border-color .12s ease;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.24);
-}
-
-.calc-grid button:hover {
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.22);
-}
-
-.calc-grid button:active {
-  transform: translateY(1px) scale(0.99);
-}
-
-/* Operator keys */
-.calc-grid button[data-calc="+"],
-.calc-grid button[data-calc="-"],
-.calc-grid button[data-calc="*"],
-.calc-grid button[data-calc="/"] {
-  background: rgba(99,102,241,0.20);
-  border-color: rgba(99,102,241,0.35);
-}
-
-/* Equals key */
-.calc-grid button[data-calc="="] {
-  background: rgba(16,185,129,0.22);
-  border-color: rgba(16,185,129,0.40);
-}
-
-/* Clear + Backspace */
-.calc-grid button[data-calc="C"],
-.calc-grid button[data-calc="⌫"] {
-  background: rgba(239,68,68,0.18);
-  border-color: rgba(239,68,68,0.35);
-}
-
-/* Make 0 wider if you want (optional)
-   Requires your 0 button to be first in last row.
-*/
-/*
-.calc-grid button[data-calc="0"] {
-  grid-column: span 2;
-}
-*/
-/* =========================================
-   SIDE MODAL CLOSE BUTTON — SMALL TOP RIGHT
-========================================= */
-
-.side-modal-header {
-  position: relative;
-  padding-right: 2.2rem; /* room for close button */
-}
-
-.side-modal-close,
-.side-modal [data-close] {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-
-  width: 26px;
-  height: 26px;
-  padding: 0;
-
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-
-  color: rgba(255,255,255,0.75);
-  font-size: 14px;
-  line-height: 1;
-
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-
-  transition: background .12s ease, color .12s ease, transform .06s ease;
-}
-
-.side-modal-close:hover,
-.side-modal [data-close]:hover {
-  background: rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.95);
-}
-
-.side-modal-close:active,
-.side-modal [data-close]:active {
-  transform: scale(0.96);
-}
-/* =========================================
-   PAYMENT MODAL: 2-column layout (desktop)
-   Hide State/Rebate (next version)
-   ========================================= */
-
-#paymentModal .side-modal-content {
-  max-width: 980px;           /* wider so we can fit 2 columns */
-  width: min(980px, 96vw);
-}
-
-/* form/body wrapper: force a 2-col grid */
-#paymentModal .side-modal-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;  /* 2 columns */
-  gap: 14px 16px;
-  align-items: start;
-}
-
-/* If your body contains a <form>, grid that instead */
-#paymentModal .side-modal-body form {
-  display: contents; /* lets children participate in the grid */
-}
-
-/* Make the output span full width at the bottom */
-#paymentModal #payOutput,
-#paymentModal [id*="payOutput"] {
-  grid-column: 1 / -1;
-  white-space: pre-wrap;
-  margin-top: 6px;
-}
-
-/* Make the Calculate button span full width */
-#paymentModal #payCalcBtn,
-#paymentModal [id*="payCalcBtn"] {
-  grid-column: 1 / -1;
-}
-
-/* Hide State + Rebate fields (label + input/select) */
-#paymentModal #payState,
-#paymentModal #payRebate {
-  display: none !important;
-}
-
-/* Try to hide their labels too (common patterns) */
-#paymentModal label[for="payState"],
-#paymentModal label[for="payRebate"] {
-  display: none !important;
-}
-
-/* If you have wrappers around inputs, hide wrappers via :has() (Chrome supports) */
-#paymentModal .form-row:has(#payState),
-#paymentModal .form-row:has(#payRebate),
-#paymentModal .field:has(#payState),
-#paymentModal .field:has(#payRebate),
-#paymentModal .input-group:has(#payState),
-#paymentModal .input-group:has(#payRebate) {
-  display: none !important;
-}
-
-/* Mobile: fall back to 1 column */
-@media (max-width: 720px) {
-  #paymentModal .side-modal-body {
-    grid-template-columns: 1fr;
-  }
-}
-/* AI helper inputs: auto-grow friendly */
-#workflowInput,
-#objectionInput,
-#messageInput,
-#askInput,
-#carExpertInput {
-  resize: none;
-  overflow: hidden;
-  min-height: 44px;
-  line-height: 1.4;
-}
-/* follow-up boxes should behave like auto-grow textareas too */
-.ai-followup textarea {
-  resize: none;
-  overflow: hidden;
-  min-height: 44px;
-  line-height: 1.4;
-}
-/* --------------------------------------------------
-   STEP 3: HIDE BROKEN IMAGE PREVIEW PLACEHOLDERS
--------------------------------------------------- */
-
-/* Hide preview image when no src is loaded */
-#socialCarouselPreviewImg:not([src]),
-#socialCarouselPreviewImg[src=""] {
-  display: none !important;
-}
-
-/* Hide stray preview labels/icons */
-.social-ready-center .small-note {
-  display: none;
-}
-/* =====================================
-   LOGO SIZE ADJUSTMENT — GROW DOWN ONLY
-   (ADD ONLY — DO NOT REMOVE EXISTING CSS)
-===================================== */
-
-.branding{
-  align-items:flex-start; /* keeps top locked */
-}
-
-/* Desktop logo size */
-.app-logo{
-  height:150px;           /* adjust 150–175px */
-  transform-origin: left top;
-}
-
-/* Hover stays smooth */
-.branding:hover .app-logo{
-  transform: scale(1.24);
-}
-/* TEMP TEST — you should instantly see a neon outline */
-.floating-tools{
-  outline: 3px solid lime !important;
-}
-/* FINAL — FLOATING TOOLS ALIGN WITH STEP CARDS */
-.floating-tools{
-  top: 190px !important;  /* try 190 → 220 if needed */
+@media (max-width: 520px){
+  .app-logo{ height:64px; transform: scale(1.08); }
+  .brand-text p{ display:none; }
+  .brand-text h1{ font-size:1.5rem; }
 }
