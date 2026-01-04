@@ -95,6 +95,25 @@
 
   console.log("✅ PREMIUM HEADER WIRED");
 })();
+// ===============================
+// HEADER COMPACT ON SCROLL (ONE PASS)
+// ===============================
+(function wireHeaderCompact() {
+  if (window.__LR_HEADER_COMPACT__) return;
+  window.__LR_HEADER_COMPACT__ = true;
+
+  const header = document.getElementById("appHeader");
+  if (!header) return;
+
+  const THRESH = 70;
+
+  function onScroll() {
+    header.classList.toggle("is-compact", window.scrollY > THRESH);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
 
   // ==================================================
   // UI FX HELPERS (PRESS + LOADING)
