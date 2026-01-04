@@ -48,12 +48,17 @@ a{ color:#8ab4f8; }
     linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
 }
 
-/* Branding container stays stable */
+/* Branding container — bottom aligned for logo + tagline */
 .branding{
   display:flex;
-  align-items:center;
+  align-items:flex-end; /* ⬅️ THIS fixes the lineup */
   gap:18px;
 }
+/* Fine-tune logo vertical alignment with tagline */
+.logo-wrap{
+  margin-bottom: 6px; /* adjust 4–10px if needed */
+}
+
 
 /* ===============================
    LOGO — BIGGER ON PC (NO WRAP)
