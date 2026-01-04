@@ -158,6 +158,35 @@ app.get("/api/boost", async (req, res) => {
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
   };
+async function fetchHtmlWithFallback(url) {
+  // First attempt (normal)
+  let r = await f(url, {
+    redirect: "follow",
+    headers: baseHeaders,
+  });
+
+  if (r.ok) return r;
+
+  // If blocked (403 / 429), retry with heavier headers
+  if (r.status === 403 || r.status === 429) {
+    const fallbackHeaders = {
+      ...baseHeaders,
+      Referer: url,
+      Origin: new URL(url).origin,
+      "Sec-Fetch-Dest": "document",
+      "Sec-Fetch-Mode": "navigate",
+      "Sec-Fetch-Site": "none",
+      "Upgrade-Insecure-Requests": "1",
+    };
+
+    r = await f(url, {
+      redirect: "follow",
+      headers: fallbackHeaders,
+    });
+  }
+
+  return r;
+}
 
   async function fetchHtmlDirect(targetUrl) {
     const r = await f(targetUrl, {
