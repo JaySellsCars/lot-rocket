@@ -287,7 +287,8 @@ const ld = parseJsonLdVehicles();
 
     return res.json({
       ok: true,
-      vehicle: { url, title, description, price: "", mileage: "", vin: "", stock: "" },
+      vehicle: { url, title, description, price: ld.price || "", mileage: ld.mileage || "", vin: ld.vin || "", stock: ld.stock || "" },
+
       images,
       debug: debug ? { status: r.status, contentType: r.contentType, imageCount: images.length } : undefined,
     });
