@@ -15,6 +15,13 @@ const PORT = process.env.PORT || 3000;
    BODY PARSING
 ================================ */
 app.use(express.json({ limit: "2mb" }));
+app.use((req, _res, next) => {
+  if (req.path.startsWith("/api/ai/")) {
+    console.log("✅ AI HIT:", req.method, req.path, "body keys:", Object.keys(req.body || {}));
+  }
+  next();
+});
+
 app.use(express.urlencoded({ extended: true }));
 
 /* ===============================
