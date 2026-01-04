@@ -1098,3 +1098,7 @@ textarea.ai-response {
 .branding:hover .app-logo{
   transform: scale(1.24);
 }
+/* TEMP TEST — you should instantly see a neon outline */
+.floating-tools{
+  outline: 3px solid lime !important;
+}
