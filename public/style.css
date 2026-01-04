@@ -793,3 +793,52 @@ textarea{
   gap: 18px !important;
   align-items: center !important;
 }
+/* =========================================================
+   v2.6.7 ALIGNMENT + BUTTON COLOR RESTORE (SAFE OVERRIDE)
+   Paste at VERY BOTTOM of style.css
+========================================================= */
+
+/* 1) FLOATING TOOLS — align with Step 1 / Step 2 card tops */
+:root{
+  /* Start here. If tools are still high/low, move by 5–10px. */
+  --tools-top: 240px;
+}
+
+/* Ensure ONLY the var controls the stack (no other top rules win) */
+.floating-tools,
+.toolwire,
+#toolWire{
+  top: var(--tools-top) !important;
+}
+
+
+/* 2) HEADER BRANDING — make logo + words line up clean */
+.branding{
+  align-items: center !important; /* lock logo + text on same center line */
+}
+
+.logo-wrap{
+  margin-bottom: 0 !important;
+}
+
+/* If the text still feels a hair low/high, tweak ONLY this */
+.brand-text{
+  padding-top: 6px !important; /* try 0px, 6px, 10px */
+}
+
+
+/* 3) RESTORE “SOCIAL MEDIA” BUTTON COLORS (Step 2 action buttons) */
+.step2-card .lr-btn{
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2)) !important;
+  border: none !important;
+  color: #020617 !important;
+  font-weight: 900 !important;
+}
+
+.step2-card .lr-btn:hover{
+  filter: brightness(1.06) !important;
+}
+
+.step2-card .lr-btn:active{
+  transform: translateY(1px) scale(.99) !important;
+}
