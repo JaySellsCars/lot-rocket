@@ -1058,3 +1058,22 @@ textarea.ai-response {
 .social-ready-center .small-note {
   display: none;
 }
+/* =====================================
+   LOGO SIZE ADJUSTMENT — GROW DOWN ONLY
+   (ADD ONLY — DO NOT REMOVE EXISTING CSS)
+===================================== */
+
+.branding{
+  align-items:flex-start; /* keeps top locked */
+}
+
+/* Desktop logo size */
+.app-logo{
+  height:150px;           /* adjust 150–175px */
+  transform-origin: left top;
+}
+
+/* Hover stays smooth */
+.branding:hover .app-logo{
+  transform: scale(1.24);
+}
