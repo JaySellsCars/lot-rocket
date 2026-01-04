@@ -1,10 +1,11 @@
 /* /public/style.css  (REPLACE ENTIRE FILE)
-   LOT ROCKET — CLEAN STABLE CSS (v2.6.7 CLEAN)
-   - BIGGER Social Ready viewer
-   - Social Ready thumbs square, cover, crisp
-   - Lock badge visible + positioned (🔒/🔓)
-   - Strip stacks (wrap), no scroll, up to 24 visible
-   - Floating tools alignment via ONE dial: --tools-top
+   LOT ROCKET — CLEAN STABLE CSS (v2.6.8 SANITY)
+   - Matches current /public/index.html
+   - Step 3 arrows correct (uses .social-ready-row from HTML)
+   - Removes stacked/conflicting "final fixes"
+   - Adds missing header-spacer + brand row + badges + tool-help
+   - Adds Step 1 photo selection highlight
+   - Adds .ai-helper-tip style (for Message + Campaign Builder)
 */
 
 /* ---------------------------------
@@ -12,14 +13,14 @@
 ---------------------------------- */
 *,
 *::before,
-*::after { box-sizing: border-box; }
+*::after{ box-sizing:border-box; }
 
-html, body { height: 100%; margin: 0; padding: 0; }
+html, body{ height:100%; margin:0; padding:0; }
 
 body{
   background:#0b1020;
   color:#fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 a{ color:#8ab4f8; }
@@ -51,7 +52,7 @@ a{ color:#8ab4f8; }
 }
 
 /* ---------------------------------
-   HEADER
+   HEADER + SPACER
 ---------------------------------- */
 .app-header{
   position:relative;
@@ -61,51 +62,61 @@ a{ color:#8ab4f8; }
   justify-content:space-between;
   padding:1.15rem var(--page-right) 1.15rem var(--page-left);
   border-bottom:1px solid rgba(255,255,255,.08);
-
   background:
     radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.16), transparent 60%),
     linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
 }
 
-/* Branding */
+/* keeps layout from jumping if header becomes sticky */
+.header-spacer{ height:0; }
+
 .branding{
   display:flex;
-  align-items:center; /* keeps logo + text lined up */
+  align-items:center;
   gap:18px;
 }
-.logo-wrap{ margin-bottom:0; }
+
+.logo-wrap{ margin:0; }
+.logo-gradient{ display:none !important; } /* optional */
 
 .app-logo{
   height:165px;
   width:auto;
   object-fit:contain;
-  filter: brightness(0) invert(1);
-  transform: scale(1.22);
-  transform-origin: left center;
+  filter:brightness(0) invert(1);
+  transform:scale(1.22);
+  transform-origin:left center;
   opacity:.98;
-  transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+  transition:transform .18s ease, filter .18s ease, opacity .18s ease;
 }
 .branding:hover .app-logo{
-  transform: scale(1.28);
-  filter: brightness(0) invert(1) drop-shadow(0 0 22px rgba(236,72,153,.45));
+  transform:scale(1.28);
+  filter:brightness(0) invert(1) drop-shadow(0 0 22px rgba(236,72,153,.45));
 }
 
-.brand-text{
-  padding-top: 6px; /* micro baseline nudge */
+.brand-text{ padding-top:6px; }
+
+.brand-title-row{
+  display:flex;
+  align-items:baseline;
+  gap:12px;
 }
+
 .brand-text h1{
   font-size:2.25rem;
   font-weight:900;
   margin:0;
   letter-spacing:.4px;
 }
+
+.brand-tagline,
 .brand-text p{
   margin:.25rem 0 0;
   font-size:.92rem;
   color:rgba(255,255,255,.68);
 }
 
-.version-badge{
+.launch-badge{
   font-size:.72rem;
   font-weight:900;
   padding:5px 10px;
@@ -113,7 +124,7 @@ a{ color:#8ab4f8; }
   background:linear-gradient(135deg,#f59e0b,#ec4899);
   color:#fff;
   letter-spacing:.7px;
-  box-shadow: 0 10px 24px rgba(236,72,153,.18);
+  box-shadow:0 10px 24px rgba(236,72,153,.18);
 }
 
 /* ---------------------------------
@@ -164,53 +175,50 @@ input[type="number"],
 input[type="date"],
 input[type="url"],
 select{
-  width: 100%;
-  border-radius: 999px;
-  padding: .6rem .9rem;
-  border: 1px solid var(--border-soft);
-  background: #020617;
-  color: var(--text-main);
-  outline: none;
+  width:100%;
+  border-radius:999px;
+  padding:.6rem .9rem;
+  border:1px solid var(--border-soft);
+  background:#020617;
+  color:var(--text-main);
+  outline:none;
 }
-input::placeholder{ color: rgba(156,163,175,.7); }
+input::placeholder{ color:rgba(156,163,175,.7); }
 
 textarea{
-  width: 100%;
-  resize: none;
-  overflow-y: hidden;
-  line-height: 1.5;
-  border-radius: var(--inner);
-  padding: .75rem;
-  background: #020617;
-  border: 1px solid var(--border-soft);
-  color: var(--text-main);
-  white-space: pre-wrap;
-  word-break: break-word;
+  width:100%;
+  resize:none;
+  overflow-y:hidden;
+  line-height:1.5;
+  border-radius:var(--inner);
+  padding:.75rem;
+  background:#020617;
+  border:1px solid var(--border-soft);
+  color:var(--text-main);
+  white-space:pre-wrap;
+  word-break:break-word;
 }
 
 /* ---------------------------------
-   BUTTONS (core)
+   BUTTONS
 ---------------------------------- */
 .primary-btn{
   border-radius:999px;
   border:none;
   padding:.6rem 1.4rem;
-  font-weight:800;
+  font-weight:900;
   cursor:pointer;
   background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
   color:#020617;
-  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
-  will-change: transform;
+  transition:transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+  will-change:transform;
 }
 .primary-btn:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.04);
-  box-shadow: 0 0 0 2px rgba(249,115,22,.18), 0 18px 44px rgba(0,0,0,.55);
+  transform:translateY(-1px);
+  filter:brightness(1.04);
+  box-shadow:0 0 0 2px rgba(249,115,22,.18), 0 18px 44px rgba(0,0,0,.55);
 }
-.primary-btn:active{
-  transform: translateY(2px) scale(.99);
-  box-shadow: 0 0 0 2px rgba(236,72,153,.18), 0 10px 24px rgba(0,0,0,.45);
-}
+.primary-btn:active{ transform:translateY(2px) scale(.99); }
 
 .secondary-btn{
   border-radius:999px;
@@ -219,15 +227,15 @@ textarea{
   color:var(--text-main);
   padding:.55rem 1.2rem;
   cursor:pointer;
-  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
-  will-change: transform;
+  transition:transform .08s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+  will-change:transform;
 }
 .secondary-btn:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.03);
-  box-shadow: 0 16px 38px rgba(0,0,0,.45);
+  transform:translateY(-1px);
+  filter:brightness(1.03);
+  box-shadow:0 16px 38px rgba(0,0,0,.45);
 }
-.secondary-btn:active{ transform: translateY(2px) scale(.99); }
+.secondary-btn:active{ transform:translateY(2px) scale(.99); }
 
 .primary-btn.full,
 .secondary-btn.full{
@@ -255,11 +263,11 @@ textarea{
   border:none !important;
   background:linear-gradient(90deg,var(--accent-1),var(--accent-2)) !important;
   color:#020617 !important;
-  margin-top: 18px; /* ✅ moved down from photo grid */
+  margin-top:18px;
 }
 
 /* ---------------------------------
-   STEP 1 PHOTOS
+   STEP 1 PHOTOS (+ selection highlight)
 ---------------------------------- */
 .photo-grid{
   display:grid;
@@ -267,6 +275,29 @@ textarea{
   gap:.6rem;
   margin-top:.9rem;
   margin-bottom:0;
+}
+
+#step1Photos img,
+.photo-grid img{
+  width:100%;
+  height:92px;
+  object-fit:cover;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  cursor:pointer;
+  background:rgba(2,6,23,.55);
+  transition:transform .08s ease, border-color .12s ease, box-shadow .12s ease;
+}
+#step1Photos img:hover,
+.photo-grid img:hover{
+  transform:translateY(-1px);
+  border-color:rgba(56,189,248,.45);
+  box-shadow:0 0 0 2px rgba(56,189,248,.12);
+}
+#step1Photos img.selected,
+.photo-grid img.selected{
+  border-color:rgba(236,72,153,.75);
+  box-shadow:0 0 0 2px rgba(236,72,153,.18);
 }
 
 /* ---------------------------------
@@ -282,12 +313,11 @@ textarea{
   min-height:140px;
   border-radius:16px;
   background:rgba(2,6,23,.85);
-  overflow:hidden; /* key for auto-grow JS */
+  overflow:hidden;
 }
 
-/* Step 2 inner actions */
 .lr-step2-actions{
-  margin-top: 10px;
+  margin-top:10px;
   display:flex;
   flex-direction:column;
   gap:10px;
@@ -303,7 +333,6 @@ textarea{
   justify-content:center;
 }
 
-/* ✅ LOCK Step2 buttons to gradient (prevents gray drift) */
 .step2-card .lr-btn{
   appearance:none;
   border:none;
@@ -314,66 +343,68 @@ textarea{
   border-radius:999px;
   cursor:pointer;
   user-select:none;
-  transition: transform .08s ease, filter .15s ease;
+  transition:transform .08s ease, filter .15s ease;
   box-shadow:0 10px 24px rgba(0,0,0,.32);
   background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
 }
-.step2-card .lr-btn:hover{ filter: brightness(1.06); }
-.step2-card .lr-btn:active{ transform: translateY(1px) scale(.99); }
+.step2-card .lr-btn:hover{ filter:brightness(1.06); }
+.step2-card .lr-btn:active{ transform:translateY(1px) scale(.99); }
 .step2-card .lr-btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 .lr-step2-actions-emoji .lr-btn{ min-width:180px; }
 
 /* ---------------------------------
    FLOATING TOOLS (ONE DIAL)
 ---------------------------------- */
-.floating-tools,
-.toolwire,
-#toolWire{
+.floating-tools{
   position:fixed;
   right:18px;
-  top: var(--tools-top) !important;
+  top:var(--tools-top);
   display:flex;
   flex-direction:column;
   gap:.6rem;
   z-index:99999;
 }
-
 .tool-button{
   padding:.55rem 1rem;
   border-radius:12px;
   border:none;
   background:linear-gradient(135deg,#f97316,#ec4899);
   color:#fff;
-  font-weight:700;
+  font-weight:800;
   cursor:pointer;
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+}
+.tool-help{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16);
 }
 
 /* ---------------------------------
-   SIDE MODALS — VERTICAL LAYOUT
+   SIDE MODALS
 ---------------------------------- */
 .side-modal{
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: flex-end;
-  background: rgba(0,0,0,.75);
-  z-index: 100000;
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:flex-end;
+  background:rgba(0,0,0,.75);
+  z-index:100000;
 }
 
 .side-modal-content{
-  width: 360px;
-  background: #020617;
-  border-left: 1px solid var(--border-soft);
+  width:360px;
+  background:#020617;
+  border-left:1px solid var(--border-soft);
   display:flex;
   flex-direction:column;
-  padding-bottom: 1rem;
+  padding-bottom:1rem;
 }
 
 .side-modal-header{
-  position: relative;
-  padding: 1rem;
-  padding-right: 2.2rem;
-  border-bottom: 1px solid rgba(148,163,184,.25);
+  position:relative;
+  padding:1rem;
+  padding-right:2.2rem;
+  border-bottom:1px solid rgba(148,163,184,.25);
 }
 
 .side-modal-close,
@@ -386,22 +417,14 @@ textarea{
   padding:0;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.75);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.75);
   font-size:14px;
   line-height:1;
   display:grid;
   place-items:center;
   cursor:pointer;
-  transition: background .12s ease, color .12s ease, transform .06s ease;
 }
-.side-modal-close:hover,
-.side-modal [data-close]:hover{
-  background: rgba(255,255,255,.12);
-  color: rgba(255,255,255,.95);
-}
-.side-modal-close:active,
-.side-modal [data-close]:active{ transform: scale(.96); }
 
 .side-modal-body{
   display:flex;
@@ -409,13 +432,6 @@ textarea{
   gap:12px;
   padding:1rem;
   overflow-y:auto;
-}
-
-.side-modal-body > *,
-.side-modal form{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
 }
 
 .side-modal input,
@@ -427,11 +443,36 @@ textarea{
 #objectionInput,
 #messageInput,
 #askInput,
-#carExpertInput{
+#carExpertInput,
+#helpInput{
   resize:none;
   overflow:hidden;
   min-height:44px;
   line-height:1.4;
+}
+
+/* ✅ AI tip note (Message Builder + Campaign Builder) */
+.ai-helper-tip{
+  font-size:.85rem;
+  color:#9ca3af;
+  margin:.15rem 0 .75rem;
+  line-height:1.4;
+  border-left:3px solid rgba(255,255,255,.14);
+  padding-left:.65rem;
+}
+
+/* Ensure output blocks wrap and stay visible */
+#workflowOutput,
+#objectionOutput,
+#messageOutput,
+#askOutput,
+#carExpertOutput,
+#helpOutput,
+#payOutput,
+#incomeOutput{
+  display:block;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
 }
 
 /* ---------------------------------
@@ -457,106 +498,108 @@ textarea{
 }
 
 /* ---------------------------------
-   SOCIAL READY — VIEWER + THUMBS + LOCK
+   STEP 3 — SOCIAL READY (MATCHES YOUR HTML)
 ---------------------------------- */
 #socialReadyPanel{
-  padding: 1.2rem;
-  min-height: 600px;
+  padding:1.2rem;
+  min-height:600px;
 }
 
-/* Viewer row: gutters so arrows never overlap the inner box */
-.social-carousel-preview{
+/* ✅ Correct row container from HTML */
+#socialReadyPanel .social-ready-row{
   display:grid;
-  grid-template-columns: 84px 1fr 84px;
-  gap: 14px;
-  align-items: center;
-  margin-top: 14px;
-}
-.social-carousel-preview > :first-child,
-.social-carousel-preview > :last-child{
-  display:flex;
+  grid-template-columns:84px 1fr 84px;
+  gap:14px;
   align-items:center;
-  justify-content:center;
+  margin-top:14px;
 }
 
-/* Arrows */
+/* center the arrow buttons in their gutter cells */
+#socialCarouselPrev,
+#socialCarouselNext{
+  justify-self:center;
+  align-self:center;
+}
+
 .ghost-circle-btn{
-  width: 56px;
-  height: 56px;
-  border-radius: 999px;
-  border: 1px solid var(--border-soft);
-  background: rgba(2,6,23,.7);
-  color: var(--text-main);
-  cursor: pointer;
-  font-size: 18px;
+  width:56px;
+  height:56px;
+  border-radius:999px;
+  border:1px solid var(--border-soft);
+  background:rgba(2,6,23,.7);
+  color:var(--text-main);
+  cursor:pointer;
+  font-size:18px;
 }
 
-/* Big viewer */
+/* ✅ Kill ONLY the "🖼️ Preview" line in your HTML
+   (it is the small-note with inline margin-bottom)
+*/
+#socialReadyPanel .social-ready-center > .small-note[style*="margin-bottom"]{
+  display:none !important;
+}
+
 #socialCarouselPreviewImg{
-  width: min(760px, 100%);
-  height: 420px;
-  object-fit: contain;
-  border-radius: 18px;
-  border: 1px solid rgba(148,163,184,.35);
-  background: rgba(2,6,23,.65);
+  width:min(760px, 100%);
+  height:420px;
+  object-fit:contain;
+  border-radius:18px;
+  border:1px solid rgba(148,163,184,.35);
+  background:rgba(2,6,23,.65);
   display:block;
-  margin: 0 auto;
+  margin:0 auto;
 }
-
-/* Hide viewer if empty */
 #socialCarouselPreviewImg:not([src]),
 #socialCarouselPreviewImg[src=""]{
   display:none !important;
 }
 
-/* Status */
 #socialCarouselStatus{
   text-align:center;
   margin-top:.6rem;
 }
 
-/* Strip container (wrap, no scroll) */
 #socialCarousel{
   display:flex;
   flex-wrap:wrap;
-  gap: 12px;
-  padding: 14px;
-  margin-top: 18px;
-  overflow: visible;
-  border: 1px dashed rgba(148,163,184,.25);
-  border-radius: 14px;
-  background: rgba(2,6,23,.18);
-  min-height: 170px;
-  align-content: flex-start;
+  gap:12px;
+  padding:14px;
+  margin-top:18px;
+  overflow:visible;
+  border:1px dashed rgba(148,163,184,.25);
+  border-radius:14px;
+  background:rgba(2,6,23,.18);
+  min-height:170px;
+  align-content:flex-start;
 }
 
-/* Thumbs */
+/* thumbs */
 #socialCarousel .social-thumb-btn{
-  width: 108px;
-  height: 108px;
-  padding: 0;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(148,163,184,.25);
-  background: rgba(2,6,23,.55);
-  cursor: pointer;
-  position: relative;
-  flex: 0 0 auto;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  width:108px;
+  height:108px;
+  padding:0;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(148,163,184,.25);
+  background:rgba(2,6,23,.55);
+  cursor:pointer;
+  position:relative;
+  flex:0 0 auto;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 #socialCarousel .social-thumb-btn:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(56,189,248,0.22);
-  border-color: rgba(56,189,248,0.45);
+  transform:translateY(-1px);
+  box-shadow:0 0 16px rgba(56,189,248,0.22);
+  border-color:rgba(56,189,248,0.45);
 }
 #socialCarousel .social-thumb-btn img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
 
-/* Lock badge */
+/* lock badge */
 #socialCarousel .social-lock{
   position:absolute;
   top:8px;
@@ -566,15 +609,15 @@ textarea{
   border-radius:999px;
   display:grid;
   place-items:center;
-  background: rgba(0,0,0,.55);
-  border: 1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.18);
   font-size:14px;
   line-height:1;
   pointer-events:none;
   user-select:none;
 }
 
-/* Actions */
+/* actions row */
 .social-carousel-actions{
   display:flex;
   gap:.8rem;
@@ -582,43 +625,27 @@ textarea{
   flex-wrap:wrap;
 }
 
-/* ✅ REMOVE THE "Preview" TOGGLE/ROW SAFELY (no sibling nukes)
-   Target the common element you showed in your CSS screenshot:
-   - .preview-row
-   - #socialPreview / #socialPreviewIcon / #socialPreviewLabel
-*/
-.preview-row,
-#socialPreview,
-#socialPreviewIcon,
-#socialPreviewLabel{
-  display:none !important;
-}
-
 /* ---------------------------------
    CALCULATOR (SKIN)
 ---------------------------------- */
 #calcModal .side-modal-content{ max-width:420px; }
 
-#calcModal .calculator-body{
-  display:grid;
-  gap:12px;
-}
+#calcModal .calculator-body{ display:grid; gap:12px; }
 
 #calcDisplay{
   width:100%;
   height:64px;
-  padding:14px 14px;
+  padding:14px;
   border-radius:14px;
   font-size:28px;
-  font-weight:800;
+  font-weight:900;
   letter-spacing:.5px;
   text-align:right;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.95);
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.14);
+  color:rgba(255,255,255,0.95);
   outline:none;
 }
-#calcDisplay::placeholder{ color: rgba(255,255,255,0.35); }
 
 .calc-grid{
   display:grid;
@@ -628,54 +655,32 @@ textarea{
 .calc-grid button{
   height:54px;
   border-radius:14px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.95);
+  border:1px solid rgba(255,255,255,0.14);
+  background:rgba(255,255,255,0.07);
+  color:rgba(255,255,255,0.95);
   font-size:18px;
-  font-weight:800;
+  font-weight:900;
   cursor:pointer;
   user-select:none;
-  transition: transform .06s ease, background .12s ease, border-color .12s ease;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.24);
+  transition:transform .06s ease, background .12s ease, border-color .12s ease;
+  box-shadow:0 10px 24px rgba(0,0,0,0.24);
 }
 .calc-grid button:hover{
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.22);
+  background:rgba(255,255,255,0.10);
+  border-color:rgba(255,255,255,0.22);
 }
-.calc-grid button:active{ transform: translateY(1px) scale(0.99); }
-
-.calc-grid button[data-calc="+"],
-.calc-grid button[data-calc="-"],
-.calc-grid button[data-calc="*"],
-.calc-grid button[data-calc="/"]{
-  background: rgba(99,102,241,0.20);
-  border-color: rgba(99,102,241,0.35);
-}
-.calc-grid button[data-calc="="]{
-  background: rgba(16,185,129,0.22);
-  border-color: rgba(16,185,129,0.40);
-}
-.calc-grid button[data-calc="C"],
-.calc-grid button[data-calc="⌫"]{
-  background: rgba(239,68,68,0.18);
-  border-color: rgba(239,68,68,0.35);
-}
+.calc-grid button:active{ transform:translateY(1px) scale(.99); }
 
 /* ---------------------------------
    RESPONSIVE
 ---------------------------------- */
-@media (max-width: 1100px){
-  .layout{
-    grid-template-columns:1fr;
-    padding:1.2rem;
-  }
+@media (max-width:1100px){
+  .layout{ grid-template-columns:1fr; padding:1.2rem; }
   .step2-grid{ grid-template-columns:1fr; }
 
-  .floating-tools,
-  .toolwire,
-  #toolWire{
+  .floating-tools{
     position:static;
-    top:auto !important;
+    top:auto;
     right:auto;
     flex-direction:row;
     flex-wrap:wrap;
@@ -683,240 +688,24 @@ textarea{
     margin-top:1rem;
   }
 
-  #socialReadyPanel{ min-height: 0; }
-  #socialCarouselPreviewImg{ height: 320px; }
-  .social-carousel-preview{
-    grid-template-columns: 68px 1fr 68px;
+  #socialReadyPanel{ min-height:0; }
+  #socialCarouselPreviewImg{ height:320px; }
+
+  #socialReadyPanel .social-ready-row{
+    grid-template-columns:68px 1fr 68px;
   }
   .ghost-circle-btn{ width:54px; height:54px; }
 }
 
-@media (max-width: 900px){
-  .app-header{
-    padding:1.1rem 1.3rem;
-  }
-  .app-logo{
-    height:84px;
-    transform: scale(1.12);
-  }
+@media (max-width:900px){
+  .app-header{ padding:1.1rem 1.3rem; }
+  .app-logo{ height:84px; transform:scale(1.12); }
   .brand-text h1{ font-size:1.75rem; }
   .brand-text p{ font-size:.84rem; }
 }
 
-@media (max-width: 520px){
-  .app-logo{ height:64px; transform: scale(1.08); }
+@media (max-width:520px){
+  .app-logo{ height:64px; transform:scale(1.08); }
   .brand-text p{ display:none; }
   .brand-text h1{ font-size:1.5rem; }
 }
-/* =========================================================
-   STEP 3 — FINAL: ARROWS LEFT/RIGHT (CENTERED) + KILL PREVIEW ICON
-   Paste at VERY BOTTOM of style.css
-========================================================= */
-
-/* 1) FORCE ARROWS TO BE OVERLAYED ON THE VIEWER (NOT IN THE GRID) */
-#socialReadyPanel .social-carousel-preview{
-  position: relative !important;
-  display: block !important;     /* stop grid/flex fighting */
-}
-
-/* Make sure the image stays centered and stable */
-#socialReadyPanel #socialCarouselPreviewImg{
-  display:block !important;
-  margin: 0 auto !important;
-}
-
-/* Position the first arrow as LEFT, last arrow as RIGHT */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn{
-  position: absolute !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  z-index: 5 !important;
-}
-
-/* Left button */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn:first-of-type{
-  left: 14px !important;
-}
-
-/* Right button */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn:last-of-type{
-  right: 14px !important;
-}
-
-/* Optional: keep them off the border visually */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn{
-  width: 56px !important;
-  height: 56px !important;
-}
-
-
-/* 2) KILL THE LITTLE "🖼 Preview" ROW WITHOUT BREAKING THE REAL PREVIEW IMAGE
-   - This hides elements whose id/class includes "preview"
-   - BUT explicitly protects the real viewer row + real preview image
-*/
-
-/* Kill IDs containing preview (except the real preview image) */
-#socialReadyPanel [id*="preview"]:not(#socialCarouselPreviewImg),
-#socialReadyPanel [id*="Preview"]:not(#socialCarouselPreviewImg){
-  display:none !important;
-}
-
-/* Kill classes containing preview (except the viewer container itself) */
-#socialReadyPanel [class*="preview"]:not(.social-carousel-preview),
-#socialReadyPanel [class*="Preview"]:not(.social-carousel-preview){
-  display:none !important;
-}
-/* =========================================================
-   STEP 3 — FINAL LOCK
-   1) Arrows left/right on viewer
-   2) Remove ONLY the "🖼 Preview" line
-========================================================= */
-
-/* 1) Arrows: lock them to the viewer */
-#socialReadyPanel .social-carousel-preview{
-  position: relative !important;
-}
-
-/* keep image stable */
-#socialReadyPanel #socialCarouselPreviewImg{
-  display:block !important;
-  margin: 0 auto !important;
-}
-
-/* both arrows */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn{
-  position:absolute !important;
-  top:50% !important;
-  transform: translateY(-50%) !important;
-  z-index: 10 !important;
-}
-
-/* left arrow */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn:first-of-type{
-  left: 14px !important;
-}
-
-/* right arrow */
-#socialReadyPanel .social-carousel-preview .ghost-circle-btn:last-of-type{
-  right: 14px !important;
-}
-
-
-/* 2) Kill ONLY the Preview line (icon + word) */
-#socialReadyPanel a,
-#socialReadyPanel button,
-#socialReadyPanel label,
-#socialReadyPanel span,
-#socialReadyPanel div{
-  /* nothing */
-}
-
-/* This hides the element whose visible text is "Preview" in Step 3 panel */
-#socialReadyPanel a[href="#preview"],
-#socialReadyPanel a[href*="preview"],
-#socialReadyPanel button[value="preview"],
-#socialReadyPanel [data-action="preview"],
-#socialReadyPanel [data-preview="true"]{
-  display:none !important;
-}
-
-/* Most common case: it’s literally an <a> right under the instruction line */
-#socialReadyPanel .small-note + a{
-  display:none !important;
-}
-
-/* If it’s wrapped (icon + text) inside a div right under the instruction line */
-#socialReadyPanel .small-note + div{
-  display:none !important;
-}
-/* =========================================================
-   STEP 3 — SOCIAL READY: FINAL STABLE FIX
-   - kill 🖼️ Preview row (deterministic)
-   - lock arrows left/right centered
-   - keep viewer big + stable
-========================================================= */
-
-/* 1) Kill the Preview row */
-#srPreviewRow{ display:none !important; }
-
-/* 2) Lock the row as 3 columns (arrows | viewer | arrows) */
-#socialReadyPanel .social-ready-row{
-  display:grid !important;
-  grid-template-columns: 84px 1fr 84px !important; /* gutters so arrows don't touch */
-  gap: 14px !important;
-  align-items:center !important;
-}
-
-/* 3) Center arrow buttons inside their gutter cells */
-#socialReadyPanel .social-ready-row > button{
-  justify-self:center !important;
-  align-self:center !important;
-}
-
-/* 4) Arrow size (clean) */
-#socialReadyPanel .ghost-circle-btn{
-  width:56px !important;
-  height:56px !important;
-}
-
-/* 5) Keep viewer centered and big */
-#socialCarouselPreviewImg{
-  display:block !important;
-  margin:0 auto !important;
-  width:min(760px, 100%) !important;
-  height:420px !important;
-  object-fit:contain !important;
-  border-radius:18px !important;
-  border:1px solid rgba(148,163,184,.35) !important;
-  background:rgba(2,6,23,.65) !important;
-}
-
-/* hide image box ONLY when empty (prevents "viewer gone" confusion) */
-#socialCarouselPreviewImg:not([src]),
-#socialCarouselPreviewImg[src=""]{
-  display:none !important;
-}
-/* =========================================================
-   AI MODALS — RESTORE OUTPUT + REPLY BOXES (GLOBAL FIX)
-   - Shows follow-up UI everywhere (Campaign/Objection/Message/Ask/Car)
-   - Prevents output panels from collapsing
-========================================================= */
-
-/* Always show the follow-up / reply area when present */
-.side-modal [data-ai-followup]{
-  display:block !important;
-}
-
-/* Make follow-up textarea usable */
-.side-modal [data-ai-followup-input]{
-  display:block !important;
-  width:100% !important;
-  min-height: 90px !important;
-  border-radius: 14px !important;
-}
-
-/* Make sure AI output areas are visible and wrap text */
-#workflowOutput,
-#objectionOutput,
-#messageOutput,
-#askOutput,
-#carExpertOutput,
-#helpOutput,
-#payOutput,
-#incomeOutput{
-  display:block !important;
-  white-space: pre-wrap !important;
-  overflow-wrap: anywhere !important;
-}
-
-/* If any of these got accidentally hidden by a .hidden rule */
-.side-modal .hidden{
-  display:none !important;
-}
-.ai-helper-tip {
-  font-size: 0.85rem;
-  color: #9ca3af;
-  margin: 0.25rem 0 0.75rem;
-  line-height: 1.4;
-}
-
