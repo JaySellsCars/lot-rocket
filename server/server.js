@@ -62,13 +62,15 @@ app.post("/api/ai/generate", async (req, res) => {
 
 // HARD GUARD: never serve HTML for /api/*
 // (prevents 'returned non-JSON' forever)
-app.use("/api", (req, res) => {
-  res.status(404).json({ ok: false, error: "Unknown API route", path: req.path });
-});
+
 
 // ===============================
 // AI PING (frontend sanity)
 // ===============================
+app.use("/api", (req, res) => {
+  res.status(404).json({ ok: false, error: "Unknown API route", path: req.path });
+});
+
 app.get("/api/ai/ping", (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
