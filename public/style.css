@@ -878,3 +878,80 @@ textarea{
 .social-ready-center svg{
   display: none !important;
 }
+/* =========================================================
+   STEP 3 — ARROW GUTTERS + KILL PREVIEW LABEL (FINAL)
+========================================================= */
+
+/* Give the viewer a true left/right gutter so arrows never touch the box */
+.social-ready-row,
+.social-carousel-preview{
+  display: grid !important;
+  grid-template-columns: 84px 1fr 84px !important; /* wider gutters */
+  gap: 14px !important;
+  align-items: center !important;
+}
+
+/* Make the arrow "cells" center the buttons */
+.social-ready-row > :first-child,
+.social-carousel-preview > :first-child,
+.social-ready-row > :last-child,
+.social-carousel-preview > :last-child{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Keep arrows visually off the inner image box edge */
+.ghost-circle-btn{
+  width: 56px !important;
+  height: 56px !important;
+}
+
+/* Ensure the image stays centered and doesn't collide */
+#socialCarouselPreviewImg{
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+/* ---------------------------------------------------------
+   KILL THE "Preview" ICON/TEXT (it’s not the main image)
+--------------------------------------------------------- */
+
+/* Common patterns */
+#preview,
+#previewIcon,
+#previewLabel,
+.preview,
+.preview-icon,
+.preview-label,
+.previewLink,
+.preview-link,
+.previewRow,
+.preview-row,
+#socialPreview,
+#socialPreviewIcon,
+#socialPreviewLabel{
+  display:none !important;
+}
+
+/* If it's a link/label near the viewer area, kill it safely */
+#socialReadyPanel a[href*="preview"],
+#socialReadyPanel [data-preview],
+#socialReadyPanel .small-note a,
+#socialReadyPanel .small-note img{
+  display:none !important;
+}
+
+/* Last-resort: hide any tiny icon+text row that literally contains "Preview" */
+#socialReadyPanel *{
+  -webkit-tap-highlight-color: transparent;
+}
+#socialReadyPanel .small-note{
+  /* keep your instruction line, but remove any inline icon/link */
+}
+#socialReadyPanel .small-note img,
+#socialReadyPanel .small-note .icon,
+#socialReadyPanel .small-note .emoji,
+#socialReadyPanel .small-note a{
+  display:none !important;
+}
