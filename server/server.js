@@ -35,6 +35,36 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "lot-rocket", ts: Date.now() });
 });
+// ===============================
+// AI ROUTES (MUST RETURN JSON)
+// ===============================
+
+// If your frontend posts to /api/ai
+app.post("/api/ai", async (req, res) => {
+  // TEMP SAFE RESPONSE (keeps UI alive). Replace with OpenAI code when ready.
+  res.json({
+    ok: false,
+    error: "AI route not wired on server yet",
+    hint: "Restore your OpenAI handler here",
+    got: req.body || null,
+  });
+});
+
+// If your frontend posts to /api/ai/generate
+app.post("/api/ai/generate", async (req, res) => {
+  res.json({
+    ok: false,
+    error: "AI generate route not wired on server yet",
+    hint: "Restore your OpenAI handler here",
+    got: req.body || null,
+  });
+});
+
+// HARD GUARD: never serve HTML for /api/*
+// (prevents 'returned non-JSON' forever)
+app.use("/api", (req, res) => {
+  res.status(404).json({ ok: false, error: "Unknown API route", path: req.path });
+});
 
 // ===============================
 // AI PING (frontend sanity)
