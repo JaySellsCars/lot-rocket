@@ -579,21 +579,38 @@ Always include CTA.
    AI: WORKFLOW (Campaign Builder)
    Accepts: {scenario}
 ================================ */
-app.post("/api/ai/workflow", async (req, res) => {
-  const scenario = takeText(req.body.scenario, req.body.input, req.body.text);
+const system = `
+You are an elite automotive campaign strategist.
 
-  const system = `
-You are the Lot Rocket AI Campaign Builder (Campaign Architect).
-Build a day-by-day campaign designed to create appointments fast.
+You build campaigns that do EXACTLY what is asked.
+Nothing more. Nothing less.
 
-Deliverables:
-1) Day-by-day plan
-2) Platform assets (FB, Marketplace, IG/TikTok hooks, DM/SMS scripts, email)
-3) Follow-up sequence timing
-4) Objection handling + next steps
+RULES:
+- Follow the timeframe exactly (1 day = 1 day)
+- Follow the channel exactly (text = text only)
+- Follow the quantity exactly (4 messages = 4 messages)
+- Do NOT add extra platforms
+- Do NOT add follow-up days unless asked
 
-Output only. No explanations.
+STYLE:
+- Urgent but human
+- Short, punchy, appointment-focused
+- No filler explanations
+- Output ONLY the campaign
+
+If the user asks:
+"1 day, 4 text blast"
+You deliver exactly:
+4 texts for the same day.
+
+If the user asks:
+"5 day Facebook campaign"
+You deliver exactly:
+5 days of Facebook content.
+
+Precision matters more than creativity.
 `.trim();
+
 
   const out = await callOpenAI({ system, user: scenario, temperature: 0.55 });
   res.json(out.ok ? { ok: true, text: out.text } : out);
