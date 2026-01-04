@@ -17,67 +17,59 @@
 
 <body class="dark-theme">
 
-<header class="app-header" id="appHeader">
-  <div class="branding">
-    <div class="logo-wrap">
-      <!-- WHITE LOGO -->
-      <img
-        src="/assets/logo/lot-rocket-logo-1024.png"
-        alt="Lot Rocket"
-        class="app-logo logo-white"
-      />
+  <!-- HEADER -->
+  <header class="app-header" id="appHeader">
+    <div class="branding">
+      <div class="logo-wrap">
+        <!-- WHITE LOGO -->
+        <img
+          src="/assets/logo/lot-rocket-logo-1024.png"
+          alt="Lot Rocket"
+          class="app-logo logo-white"
+        />
 
-      <!-- OPTIONAL: GRADIENT LOGO (only if you upload it) -->
-      <img
-        src="/assets/logo/lot-rocket-logo-gradient.png"
-        alt=""
-        class="app-logo logo-gradient"
-        aria-hidden="true"
-      />
+        <!-- OPTIONAL: GRADIENT LOGO (only if you upload it) -->
+        <img
+          src="/assets/logo/lot-rocket-logo-gradient.png"
+          alt=""
+          class="app-logo logo-gradient"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div class="brand-text">
+        <div class="brand-title-row">
+          <h1>Lot Rocket</h1>
+          <span class="launch-badge">V1.0 LAUNCH</span>
+        </div>
+        <p class="brand-tagline">A.I. Social Media Kit &amp; Creative Lab for Car Sales Pros</p>
+      </div>
     </div>
+  </header>
 
-<div class="brand-text">
-  <div class="brand-title-row">
-    <h1>Lot Rocket</h1>
-    <span class="launch-badge">V1.0 LAUNCH</span>
-  </div>
-  <p class="brand-tagline">A.I. Social Media Kit &amp; Creative Lab for Car Sales Pros</p>
-</div>
-
-</header>
-
-
-<!-- keeps layout from "jumping" when header becomes sticky -->
-<div class="header-spacer" id="headerSpacer" aria-hidden="true"></div>
-
-
-
-
-
-
+  <!-- keeps layout from "jumping" when header becomes sticky -->
+  <div class="header-spacer" id="headerSpacer" aria-hidden="true"></div>
 
   <!-- FLOATING TOOLS (RIGHT RAIL) -->
-  <div class="floating-tools" aria-label="Floating Tools">
+  <div class="floating-tools" id="toolWire" aria-label="Floating Tools">
     <button class="tool-button" id="toolObjectionBtn" type="button">Objection Coach</button>
     <button class="tool-button" id="toolCalcBtn" type="button">Calculator</button>
     <button class="tool-button" id="toolPaymentBtn" type="button">Payment Calculator</button>
     <button class="tool-button" id="toolIncomeBtn" type="button">Income Calculator</button>
 
-    <!-- RENAMED: AI Campaign Builder (was workflow) -->
+    <!-- AI Campaign Builder (aka workflow) -->
     <button class="tool-button" id="toolWorkflowBtn" type="button">AI Campaign Builder</button>
 
     <button class="tool-button" id="toolMessageBtn" type="button">AI Message Builder</button>
     <button class="tool-button" id="toolAskBtn" type="button">Ask A.I.</button>
-   
-   <button class="tool-button" id="toolCarBtn" type="button">AI Car Expert</button>
-<button class="tool-button tool-help" id="toolHelpBtn" type="button">
-  ❓ Help
-</button>
+    <button class="tool-button" id="toolCarBtn" type="button">AI Car Expert</button>
 
+    <!-- Help -->
+    <button class="tool-button tool-help" id="toolHelpBtn" type="button">❓ Help</button>
 
-    <!-- hidden v1 by app.js wiring -->
-    <button class="tool-button" id="toolImageBtn" type="button">AI Image Generation</button>
-    <button class="tool-button" id="toolVideoBtn" type="button">AI Video Generation</button>
+    <!-- Hidden v1 by app.js wiring -->
+    <button class="tool-button hidden" id="toolImageBtn" type="button">AI Image Generation</button>
+    <button class="tool-button hidden" id="toolVideoBtn" type="button">AI Video Generation</button>
   </div>
 
   <!-- MAIN LAYOUT GRID -->
@@ -267,7 +259,8 @@
           <button id="socialCarouselPrev" class="ghost-circle-btn" type="button">◀</button>
 
           <div class="social-ready-center">
-           <div id="srPreviewRow" class="small-note" style="margin-bottom:.35rem;">🖼️ Preview</div>
+            <!-- deterministic row (CSS can safely hide by ID) -->
+            <div id="srPreviewRow" class="small-note" style="margin-bottom:.35rem;">🖼️ Preview</div>
 
             <img id="socialCarouselPreviewImg" alt="Preview" />
             <div id="socialCarouselStatus" class="small-note" style="margin-top:.5rem;"></div>
@@ -293,12 +286,12 @@
 
   </main>
 
-  <!-- ========================= -->
-  <!-- SIDE TOOL MODALS (OVERLAYS) -->
-  <!-- IDs MUST MATCH app.js WIRING -->
-  <!-- ========================= -->
+  <!-- =========================
+       SIDE TOOL MODALS (OVERLAYS)
+       IDs MUST MATCH app.js WIRING
+       ========================= -->
 
-  <!-- AI CAMPAIGN BUILDER (Workflow Modal) -->
+  <!-- AI CAMPAIGN BUILDER -->
   <section id="workflowModal" class="side-modal hidden" aria-hidden="true">
     <div class="side-modal-content">
       <div class="side-modal-header">
@@ -307,39 +300,35 @@
       </div>
 
       <div class="side-modal-body">
+        <div class="ai-helper-tip">
+          Tip: The more details you give (vehicle, audience, platform, timeframe, goal), the sharper the campaign.
+        </div>
+
         <label class="field">
           <span>Campaign Objective</span>
           <textarea
             id="workflowInput"
-            placeholder="Example: Book 5 appointments in 72 hours for a used SUV. Include platform plan + follow-up automation."
+            placeholder="Example: Create a 5-day Facebook campaign to sell this 2025 Equinox. Goal: test drives. Tone: confident, human. Include 1 urgent promo post on Day 5."
             rows="6"
           ></textarea>
         </label>
 
         <div class="btn-row" style="margin-top:.75rem;">
-          <button id="runWorkflowBtn" class="secondary-btn full" type="button">
-            Build Campaign
-          </button>
+          <button id="runWorkflowBtn" class="secondary-btn full" type="button">Build Campaign</button>
         </div>
 
-        <pre
-          id="workflowOutput"
-          class="summary-box"
-          style="margin-top:1rem; white-space:pre-wrap;"
-        ></pre>
+        <pre id="workflowOutput" class="summary-box" style="margin-top:1rem; white-space:pre-wrap;"></pre>
 
         <!-- UNIVERSAL AI FOLLOW-UP -->
         <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
           <label class="field">
             <span>Reply / Add Details</span>
             <textarea data-ai-followup-input rows="3"
-              placeholder="Answer the questions or add details, then hit Continue…"></textarea>
+              placeholder="Add missing details or answer questions, then hit Continue…"></textarea>
           </label>
 
           <div class="btn-row" style="margin-top:.6rem;">
-            <button type="button" class="secondary-btn full" data-ai-followup-btn>
-              Continue
-            </button>
+            <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
           </div>
 
           <div class="small-note" style="margin-top:.5rem;">
@@ -357,6 +346,7 @@
         <h3>Objection Coach</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
+
       <div class="side-modal-body">
         <textarea id="objectionInput" placeholder="Paste the customer objection here..."></textarea>
         <button id="runObjectionBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate Response</button>
@@ -367,7 +357,7 @@
           <label class="field">
             <span>Reply / Add Details</span>
             <textarea data-ai-followup-input rows="3"
-              placeholder="Answer the questions or add details, then hit Continue…"></textarea>
+              placeholder="Reply as the customer and hit Continue…"></textarea>
           </label>
           <div class="btn-row" style="margin-top:.6rem;">
             <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
@@ -384,6 +374,7 @@
         <h3>Calculator</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
+
       <div class="side-modal-body calculator-body">
         <input id="calcDisplay" type="text" placeholder="0" />
         <div class="calc-grid">
@@ -447,10 +438,7 @@
           <input id="payRebate" type="number" step="0.01" placeholder="e.g. 0" />
         </label>
 
-        <button id="payCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">
-          Calculate
-        </button>
-
+        <button id="payCalcBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Calculate</button>
         <div id="payOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
       </div>
     </div>
@@ -463,6 +451,7 @@
         <h3>Income Calculator</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
+
       <div class="side-modal-body">
         <label class="field"><span>Gross to date</span><input id="incomeMtd" type="number" step="0.01" placeholder="e.g. 32000" /></label>
         <label class="field"><span>Last pay date</span><input id="incomeLastPayDate" type="date" /></label>
@@ -479,8 +468,13 @@
         <h3>AI Message Builder</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
+
       <div class="side-modal-body">
-        <textarea id="messageInput" placeholder="Who are you messaging and what’s the goal?"></textarea>
+        <div class="ai-helper-tip">
+          Tip: Add who you’re messaging, the goal, the tone (firm/soft), and any deadline. More context = better copy.
+        </div>
+
+        <textarea id="messageInput" placeholder="Example: Urgent email to Ms. Jones — funding issue — need a call back today. Tone: professional, calm, direct."></textarea>
         <button id="runMessageBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
         <div id="messageOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
 
@@ -489,7 +483,7 @@
           <label class="field">
             <span>Reply / Add Details</span>
             <textarea data-ai-followup-input rows="3"
-              placeholder="Answer the questions or add details, then hit Continue…"></textarea>
+              placeholder="Add missing details, then hit Continue…"></textarea>
           </label>
           <div class="btn-row" style="margin-top:.6rem;">
             <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
@@ -506,6 +500,7 @@
         <h3>Ask A.I.</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
+
       <div class="side-modal-body">
         <textarea id="askInput" placeholder="Ask anything..."></textarea>
         <button id="runAskBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Ask</button>
@@ -516,7 +511,7 @@
           <label class="field">
             <span>Reply / Add Details</span>
             <textarea data-ai-followup-input rows="3"
-              placeholder="Answer the questions or add details, then hit Continue…"></textarea>
+              placeholder="Add details, then hit Continue…"></textarea>
           </label>
           <div class="btn-row" style="margin-top:.6rem;">
             <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
@@ -525,38 +520,36 @@
       </div>
     </div>
   </section>
-<!-- GLOBAL HELP -->
-<section id="helpModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Need Help?</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
+
+  <!-- GLOBAL HELP -->
+  <section id="helpModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Need Help?</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
+
+      <div class="side-modal-body">
+        <textarea id="helpInput" placeholder="Ask anything about Lot Rocket, social posts, strategy, or what to do next…"></textarea>
+
+        <button id="runHelpBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Get Answer</button>
+
+        <div id="helpOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+
+        <!-- UNIVERSAL AI FOLLOW-UP -->
+        <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
+          <label class="field">
+            <span>Reply / Add Details</span>
+            <textarea data-ai-followup-input rows="3"
+              placeholder="Add context, then hit Continue…"></textarea>
+          </label>
+          <div class="btn-row" style="margin-top:.6rem;">
+            <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div class="side-modal-body">
-      <textarea
-        id="helpInput"
-        placeholder="Ask anything about Lot Rocket, social posts, strategy, or what to do next…"
-      ></textarea>
-
-      <button
-        id="runHelpBtn"
-        class="secondary-btn full"
-        type="button"
-        style="margin-top:.8rem;"
-      >
-        Get Answer
-      </button>
-
-      <div
-        id="helpOutput"
-        class="small-note"
-        style="margin-top:1rem; white-space:pre-wrap;"
-      ></div>
-    </div>
-  </div>
-</section>
-
+  </section>
 
   <!-- AI CAR EXPERT -->
   <section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
@@ -565,6 +558,7 @@
         <h3>AI Car Expert</h3>
         <button class="side-modal-close" type="button" data-close>✕</button>
       </div>
+
       <div class="side-modal-body">
         <textarea id="carExpertInput" placeholder="Ask a car question (trim, towing, reliability, comparisons, etc.)"></textarea>
         <button id="runCarExpertBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
@@ -575,7 +569,7 @@
           <label class="field">
             <span>Reply / Add Details</span>
             <textarea data-ai-followup-input rows="3"
-              placeholder="Answer the questions or add details, then hit Continue…"></textarea>
+              placeholder="Add details, then hit Continue…"></textarea>
           </label>
           <div class="btn-row" style="margin-top:.6rem;">
             <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
