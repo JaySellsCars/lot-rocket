@@ -494,19 +494,94 @@ app.post("/api/ai/social", async (req, res) => {
   const platform = normPlatform(req.body.platform || "facebook");
   const seed = String(req.body.seed || "").trim() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+  // Location can be passed as string or object
+  const locRaw = req.body.location || req.body.geo || req.body.userLocation || req.body.context?.location || "";
+  const location =
+    typeof locRaw === "string"
+      ? locRaw.trim()
+      : (locRaw && typeof locRaw === "object")
+        ? takeText(locRaw.city, locRaw.state, locRaw.metro, locRaw.zip, locRaw.region)
+        : "";
+
+  // Optional audience/demographics (if you have it in UI later)
+  const audience = req.body.audience || req.body.context?.audience || {};
+  const audienceText =
+    typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
+
+  // DM keyword: model name if present, otherwise INFO
+  const rawTitle = takeText(vehicle.model, vehicle.title, vehicle.trim, vehicle.year && vehicle.make && vehicle.model
+    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+    : "");
+  const keyword =
+    (rawTitle || "INFO")
+      .toUpperCase()
+      .replace(/[^A-Z0-9 ]/g, "")
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .join(" ") || "INFO";
+
   const system = [
-    "YOU ARE LOT ROCKET.",
-    "Write a high-converting social post that generates DMs.",
-    "Speak as ONE salesperson. No dealership language. No website links.",
-    "Return ONLY the final post. No commentary.",
-    `PLATFORM: ${platform}`,
-    `SEED: ${seed}`,
+    "YOU ARE LOT ROCKET — VIRAL CAR SALES COPY ENGINE.",
+    "",
+    "MISSION:",
+    "Generate a scroll-stopping, DM-generating post for ONE individual salesperson.",
+    "It must feel human, fast, and native to the platform — not a dealership ad.",
+    "",
+    "VOICE (NON-NEGOTIABLE):",
+    "- First-person singular (I/me). Confident. Direct. No corporate fluff.",
+    "- NEVER say: 'Ready to elevate your drive', 'Check out', 'Stop by', 'Come on in', 'Visit our website', 'Call the dealership'.",
+    "- No dealership language. No links. No disclaimers. No paragraphs.",
+    "",
+    "CORE CONVERSION STRUCTURE (ALWAYS):",
+    "1) HOOK (1–2 lines): pattern interrupt (price shock, bold question, 'be honest…', scarcity).",
+    "2) PROOF (3–6 bullets): only the BEST features + 1 trust signal if available (Clean Carfax / One owner / Certified / No accidents).",
+    "3) URGENCY (1 line): scarcity/timeframe without begging.",
+    `4) CTA (1 line): DM me "${keyword}" to claim it / get details / lock it down.`,
+    "",
+    "EMOJI RULES (FIRE, NOT SPAM):",
+    "- Use emojis as visual bullets/anchors, not decoration.",
+    "- Facebook/IG: 5–10 total emojis max. TikTok: up to 12. LinkedIn: 0–3. X: 0–2. Marketplace: 0–4.",
+    "- Allowed vibe emojis: 🚨🔥✅💰🚗🧊🛞📲👀⚡️💎 (use tastefully).",
+    "",
+    "HASHTAG RULES (TREND-ALIGNED + GEO):",
+    "- Include hashtags ONLY when platform supports it:",
+    "  * facebook/instagram/tiktok: YES (12–18 tags)",
+    "  * marketplace: light (4–8 tags)",
+    "  * x: 0–3 tags",
+    "  * linkedin: 0–6 tags (professional)",
+    "- Use the STAIRCASE METHOD:",
+    "  * 3–5 broad high-volume (ex: #CarForSale #SUV #Chevy)",
+    "  * 5–8 niche (model/trim/features/used/certified)",
+    "  * 3–6 GEO tags based on user location (city/metro/state/area codes if provided)",
+    "- If location is missing, use: 2–3 generic geo tags (ex: #Michigan #DetroitArea #MetroDetroit) ONLY if the vehicle context hints it.",
+    "",
+    "PLATFORM FORMAT:",
+    `- PLATFORM = ${platform}`,
+    "- facebook: 6–12 short lines + bullets + hashtags at bottom.",
+    "- instagram: tighter, punchier, vibe, hashtags at bottom.",
+    "- tiktok: hooky, edgy, 5–9 lines, end with DM keyword or comment keyword, hashtags at bottom.",
+    "- linkedin: credibility-first, minimal emojis, still DM CTA, limited hashtags.",
+    "- x: ultra short, max ~280 chars, minimal hashtags.",
+    "- marketplace: factual + fast, price early, bullets, direct CTA, light hashtags.",
+    "",
+    "PAYMENT RULE:",
+    "- DO NOT mention monthly payments unless payment info is explicitly provided in input.",
+    "",
+    "OUTPUT RULE:",
+    "- Return ONLY the final post text. No labels. No analysis. No markdown.",
+    "",
+    `LOCATION (use for GEO hashtags + local phrasing): ${location || "(not provided)"}`,
+    `AUDIENCE/DEMOGRAPHICS (if present, adapt tone & tags): ${audienceText || "(none)"}`,
+    `SEED (do not print): ${seed}`,
   ].join("\n");
 
   const user = JSON.stringify(vehicle, null, 2);
   const out = await callOpenAI({ system, user, temperature: 0.95 });
+
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 app.post("/api/ai/objection", async (req, res) => {
   const objection = takeText(req.body.objection, req.body.input, req.body.text);
