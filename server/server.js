@@ -1,13 +1,11 @@
 // /server/server.js  (REPLACE ENTIRE FILE)
-// LOT ROCKET — FINAL / LAUNCH READY ✅ (CLEANED)
-// Fixes:
-// ✅ API order correct (API before static + SPA fallback)
-// ✅ /api/* never returns HTML (prevents "AI returned non-JSON")
-// ✅ /api and /api/ return JSON (prevents "Unknown API route /")
-// ✅ No duplicate routes / no duplicate static middleware
-// ✅ /api/boost: HTML scrape + JSON-LD vehicle details (best-effort) + always JSON
-// ✅ /api/proxy (ZIP images) ✅ /api/payment-helper
-// ✅ AI routes: /api/ai/ping + /api/ai/* tools (consistent JSON + timeout)
+// LOT ROCKET — FINAL / LAUNCH READY ✅ (BOOT-SAFE)
+// Fixes: ✅ SyntaxError: Unexpected end of input (guaranteed closed strings/braces)
+// Fixes: ✅ API routes BEFORE static + SPA fallback
+// Fixes: ✅ /api/* never returns HTML (prevents "AI returned non-JSON")
+// Adds: ✅ /api (root) JSON
+// Adds: ✅ /api/boost ✅ /api/proxy ✅ /api/payment-helper
+// Adds: ✅ /api/ai/ping + /api/ai/ask/social/objection/message/workflow/car
 
 "use strict";
 
@@ -24,20 +22,15 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 /* ===============================
-   AI HIT LOGGER (debug)
+   OPTIONAL DEP: CHEERIO
 ================================ */
-app.use((req, _res, next) => {
-  if (req.path.startsWith("/api/ai")) {
-    console.log(
-      "✅ AI HIT:",
-      req.method,
-      req.path,
-      "body keys:",
-      Object.keys(req.body || {})
-    );
-  }
-  next();
-});
+let cheerio = null;
+try {
+  // eslint-disable-next-line global-require
+  cheerio = require("cheerio");
+} catch {
+  cheerio = null;
+}
 
 /* ===============================
    SMALL UTILS
@@ -101,7 +94,17 @@ const normPlatform = (p) =>
   }[String(p || "").toLowerCase()] || "facebook");
 
 /* ===============================
-   FETCH HELPER (Render/Node safe)
+   AI HIT LOGGER (debug)
+================================ */
+app.use((req, _res, next) => {
+  if (req.path.startsWith("/api/ai")) {
+    console.log("✅ AI HIT:", req.method, req.path, "keys:", Object.keys(req.body || {}));
+  }
+  next();
+});
+
+/* ===============================
+   FETCH HELPER (Node 20 safe)
 ================================ */
 async function getFetch() {
   if (typeof fetch === "function") return fetch;
@@ -110,56 +113,39 @@ async function getFetch() {
 }
 
 /* ===============================
-   OPTIONAL: CHEERIO (single load)
-================================ */
-let cheerio = null;
-try {
-  // eslint-disable-next-line global-require
-  cheerio = require("cheerio");
-} catch {
-  cheerio = null;
-}
-
-/* ===============================
-   HEALTH + API ROOT (prevents Unknown API route /)
+   HEALTH + API ROOT
 ================================ */
 app.get("/api/health", (_req, res) => {
   return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
-
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 app.get("/api/", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
 /* ===============================
-   AI PING (support GET + POST)
+   AI PING (GET + POST)
 ================================ */
-app.get("/api/ai/ping", (req, res) => {
-  return res.json({ ok: true, got: req.query || null, ts: Date.now() });
-});
-app.post("/api/ai/ping", (req, res) => {
-  return res.json({ ok: true, got: req.body || null, ts: Date.now() });
-});
+app.get("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.query || null, ts: Date.now() }));
+app.post("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.body || null, ts: Date.now() }));
 
 /* ==================================================
-   BOOST (SCRAPE) — MUST RETURN JSON ALWAYS ✅
+   BOOST (SCRAPE) — ALWAYS JSON
    GET /api/boost?url=...&debug=1
 ================================================== */
 app.get("/api/boost", async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
-  const raw = req.query.url;
-  const url = safeUrl(raw);
+  const url = safeUrl(req.query.url || "");
   const debug = String(req.query.debug || "") === "1";
 
-  if (!url) {
-    return res.status(400).json({ ok: false, error: "Missing or invalid url" });
-  }
+  if (!url) return res.status(400).json({ ok: false, error: "Missing or invalid url" });
 
   if (!cheerio) {
     return res.status(200).json({
       ok: false,
       error: "cheerio not installed. Run: npm i cheerio",
       url,
+      vehicle: { url, title: "", description: "", price: "", mileage: "", vin: "", stock: "" },
+      images: [],
     });
   }
 
@@ -171,23 +157,21 @@ app.get("/api/boost", async (req, res) => {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       },
     });
 
     const html = await r.text();
     const ct = (r.headers.get("content-type") || "").toLowerCase();
 
-    // If dealer blocks or returns non-html, still return JSON (and do NOT crash UI)
     if (!ct.includes("text/html") && !ct.includes("application/xhtml")) {
       return res.status(200).json({
         ok: false,
         error: `Dealer returned non-HTML (${ct || "unknown"})`,
         url,
         status: r.status,
-        images: [],
         vehicle: { url, title: "", description: "", price: "", mileage: "", vin: "", stock: "" },
+        images: [],
       });
     }
 
@@ -208,7 +192,7 @@ app.get("/api/boost", async (req, res) => {
         $("meta[name='twitter:description']").attr("content")
       ) || "";
 
-    // -------- JSON-LD vehicle details (best-effort) --------
+    // ---- JSON-LD vehicle parse (best-effort) ----
     function pick(obj, keys) {
       for (const k of keys) {
         const v = obj && obj[k];
@@ -226,10 +210,10 @@ app.get("/api/boost", async (req, res) => {
         if (t) scripts.push(t);
       });
 
-      for (const rawJson of scripts) {
+      for (const raw of scripts) {
         let data;
         try {
-          data = JSON.parse(rawJson);
+          data = JSON.parse(raw);
         } catch {
           continue;
         }
@@ -237,7 +221,6 @@ app.get("/api/boost", async (req, res) => {
         const items = Array.isArray(data) ? data : [data];
         for (const it of items) {
           const node = it && it["@graph"] ? it["@graph"] : [it];
-
           for (const x of node) {
             const type = x && x["@type"] ? String(x["@type"]).toLowerCase() : "";
             if (!type.includes("vehicle") && !type.includes("product")) continue;
@@ -260,16 +243,14 @@ app.get("/api/boost", async (req, res) => {
         }
       }
 
-      // normalize
       out.price = out.price ? `$${Number(out.price).toLocaleString()}` : "";
       out.mileage = out.mileage ? `${Number(out.mileage).toLocaleString()} mi` : "";
-
       return out;
     }
 
     const ld = parseJsonLdVehicles();
 
-    // -------- Images --------
+    // ---- Images ----
     let images = [];
     const ogImg = absUrl(url, $("meta[property='og:image']").attr("content"));
     if (ogImg) images.push(ogImg);
@@ -294,12 +275,9 @@ app.get("/api/boost", async (req, res) => {
 
     images = uniq(images).slice(0, 60);
 
-    // -------- Fallback regex scan (if JSON-LD missing) --------
+    // ---- Regex fallback scan ----
     const textBlob = $("body").text().replace(/\s+/g, " ").trim();
-    const find = (re) => {
-      const m = textBlob.match(re);
-      return m ? m[0] : "";
-    };
+    const find = (re) => (textBlob.match(re) ? textBlob.match(re)[0] : "");
 
     const rxPrice = find(/\$\s?\d{1,3}(?:,\d{3})+(?:\.\d{2})?/);
     const rxVin = find(/\b[A-HJ-NPR-Z0-9]{17}\b/);
@@ -308,31 +286,27 @@ app.get("/api/boost", async (req, res) => {
 
     const vehicle = {
       url,
-      title: title || "",
-      description: description || "",
+      title,
+      description,
       price: ld.price || rxPrice || "",
       mileage: ld.mileage || rxMileage || "",
       vin: ld.vin || rxVin || "",
-      stock:
-        ld.stock ||
-        (rxStock ? rxStock.replace(/^Stock\s*#?\s*[:\-]?\s*/i, "") : ""),
+      stock: ld.stock || (rxStock ? rxStock.replace(/^Stock\s*#?\s*[:\-]?\s*/i, "") : ""),
     };
 
     return res.status(200).json({
       ok: true,
       vehicle,
       images,
-      ...(debug
-        ? { debug: { status: r.status, contentType: ct, imageCount: images.length } }
-        : {}),
+      ...(debug ? { debug: { status: r.status, contentType: ct, imageCount: images.length } } : {}),
     });
   } catch (e) {
     return res.status(200).json({
       ok: false,
       error: e?.message || String(e),
       url,
-      images: [],
       vehicle: { url, title: "", description: "", price: "", mileage: "", vin: "", stock: "" },
+      images: [],
     });
   }
 });
@@ -363,14 +337,14 @@ app.get("/api/proxy", async (req, res) => {
     res.setHeader("Cache-Control", "no-store");
 
     const buf = Buffer.from(await r.arrayBuffer());
-    res.status(200).send(buf);
+    return res.status(200).send(buf);
   } catch (_e) {
-    res.status(500).send("Proxy error");
+    return res.status(500).send("Proxy error");
   }
 });
 
 /* ==================================================
-   PAYMENT HELPER (server calc)
+   PAYMENT HELPER
    POST /api/payment-helper
 ================================================== */
 app.post("/api/payment-helper", (req, res) => {
@@ -379,10 +353,7 @@ app.post("/api/payment-helper", (req, res) => {
     return Number.isFinite(n) ? n : 0;
   };
   const money = (n) =>
-    `$${Number(n || 0).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   try {
     const price = num(req.body.price);
@@ -396,10 +367,7 @@ app.post("/api/payment-helper", (req, res) => {
     const rebate = num(req.body.rebate);
 
     if (!price || !term) {
-      return res.status(400).json({
-        ok: false,
-        message: "Enter at least Price and Term (months).",
-      });
+      return res.status(400).json({ ok: false, message: "Enter at least Price and Term (months)." });
     }
 
     const tradeNet = trade - payoff;
@@ -410,14 +378,8 @@ app.post("/api/payment-helper", (req, res) => {
     const monthlyRate = Math.max(0, rate) / 100 / 12;
 
     let payment = 0;
-    if (monthlyRate === 0) {
-      payment = amountFinanced / term;
-    } else {
-      const p = amountFinanced;
-      const n = term;
-      const r = monthlyRate;
-      payment = (p * r) / (1 - Math.pow(1 + r, -n));
-    }
+    if (monthlyRate === 0) payment = amountFinanced / term;
+    else payment = (amountFinanced * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -term));
 
     const breakdownText = [
       `Estimated Payment: ${money(payment)} / mo`,
@@ -442,15 +404,13 @@ app.post("/api/payment-helper", (req, res) => {
 });
 
 /* ===============================
-   OPENAI HELPER (timeout + consistent JSON)
+   OPENAI HELPER
 ================================ */
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 20000);
 
 async function callOpenAI({ system, user, temperature = 0.6 }) {
-  if (!process.env.OPENAI_API_KEY) {
-    return { ok: false, error: "Missing OPENAI_API_KEY" };
-  }
+  if (!process.env.OPENAI_API_KEY) return { ok: false, error: "Missing OPENAI_API_KEY" };
 
   const f = await getFetch();
   const controller = new AbortController();
@@ -475,356 +435,205 @@ async function callOpenAI({ system, user, temperature = 0.6 }) {
     });
 
     const j = await r.json().catch(() => null);
-
-    if (!r.ok) {
-      const msg = j?.error?.message || `OpenAI HTTP ${r.status}`;
-      return { ok: false, error: msg };
-    }
+    if (!r.ok) return { ok: false, error: j?.error?.message || `OpenAI HTTP ${r.status}` };
 
     const text = j?.choices?.[0]?.message?.content?.trim();
     return text ? { ok: true, text } : { ok: false, error: "Empty AI response" };
   } catch (e) {
-    const isAbort = e?.name === "AbortError";
-    return { ok: false, error: isAbort ? "OpenAI timeout" : (e?.message || String(e)) };
+    return { ok: false, error: e?.name === "AbortError" ? "OpenAI timeout" : (e?.message || String(e)) };
   } finally {
     clearTimeout(t);
   }
 }
 
 /* ===============================
-   LOT ROCKET HELP KB (v1)
+   APP KB (no backtick nesting)
 ================================ */
-const APP_KB = `
-LOT ROCKET — APP MANUAL
-
-CORE IDEA:
-Lot Rocket is for INDIVIDUAL car salespeople (not dealerships).
-Goal: generate posts, messages, campaigns + creative assets fast.
-
-MAIN FLOW:
-STEP 1 — Dealer URL Scraper
-- Paste dealer vehicle URL
-- Click "Boost This Listing"
-- Server scrapes title/description and extracts up to 60 image URLs (UI uses up to 24)
-- Photos appear in Step 1 grid for selection
-- "Send Selected Photos to Creative Lab" pushes selected photos to Step 3 holding zone
-
-STEP 2 — Social Media Kit
-- Platform textareas: Facebook, IG, TikTok, LinkedIn, X, DM, Marketplace, Hashtags
-- Buttons per platform: New Post, Copy, Remove Emojis
-- Output speaks as ONE salesperson, no dealership talk, no website links
-
-STEP 3 — Creative Lab
-- Holding Zone: up to 24 thumbnails, wraps (no scroll)
-- Double-click a holding photo sends it to Social Ready Strip
-- Social Ready Strip:
-  - Large preview image
-  - Left/right arrows to cycle
-  - Thumbs with lock badge 🔒 for locked images
-  - Download ZIP downloads Social Ready images via /api/proxy
-
-TOOLS (Right Rail):
-- Objection Coach
-- Calculator
-- Payment Calculator: server estimate via /api/payment-helper
-- Income Calculator
-- AI Campaign Builder
-- AI Message Builder
-- Ask A.I. / Help
-- AI Car Expert
-`.trim();
+const APP_KB = [
+  "LOT ROCKET — APP MANUAL",
+  "",
+  "STEP 1 — Dealer URL Scraper",
+  "- Paste dealer vehicle URL",
+  "- Click Boost This Listing",
+  "- Server scrapes title/description + image URLs",
+  "",
+  "STEP 2 — Social Media Kit",
+  "- Platform textareas + New Post / Copy / Remove Emojis",
+  "",
+  "STEP 3 — Creative Lab",
+  "- Holding Zone (up to 24) + Social Ready strip + ZIP via /api/proxy",
+  "",
+  "TOOLS:",
+  "- Objection Coach, Message Builder, Campaign Builder, Ask A.I., Car Expert",
+].join("\n");
 
 /* ===============================
-   AI: HELP / ASK ✅
-   POST /api/ai/ask
+   AI ROUTES
 ================================ */
 app.post("/api/ai/ask", async (req, res) => {
-  try {
-    const q = takeText(req.body.question, req.body.input, req.body.text);
-    const ctx = req.body.context || {};
-    if (!q) return jsonErr(res, "Missing question/input");
+  const q = takeText(req.body.question, req.body.input, req.body.text);
+  const ctx = req.body.context || {};
+  if (!q) return jsonErr(res, "Missing question/input");
 
-    const system = `
-You are Lot Rocket Help.
+  const system = [
+    "You are Lot Rocket Help.",
+    "Answer ONLY about the Lot Rocket app: how it works and how to fix issues.",
+    "Use the app manual as truth:",
+    APP_KB,
+    "",
+    "Output: 3–7 bullets max. If code: file + exact snippet.",
+  ].join("\n");
 
-You answer ONLY about the Lot Rocket app: how it works, how to use it, and how to fix common issues.
-
-USE THIS APP MANUAL AS SOURCE OF TRUTH:
-${APP_KB}
-
-OUTPUT:
-- Short, actionable answer
-- If steps: 3–7 bullets max
-`.trim();
-
-    const user = `
-USER QUESTION:
-${q}
-
-UI CONTEXT:
-${JSON.stringify(ctx, null, 2)}
-`.trim();
-
-    const out = await callOpenAI({ system, user, temperature: 0.25 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return jsonErr(res, e?.message || String(e));
-  }
+  const user = ["USER QUESTION:", q, "", "UI CONTEXT:", JSON.stringify(ctx, null, 2)].join("\n");
+  const out = await callOpenAI({ system, user, temperature: 0.25 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
-/* ===============================
-   AI: SOCIAL POSTS ✅
-   POST /api/ai/social
-================================ */
 app.post("/api/ai/social", async (req, res) => {
-  try {
-    const vehicle = req.body.vehicle || {};
-    const platform = normPlatform(req.body.platform || "facebook");
+  const vehicle = req.body.vehicle || {};
+  const platform = normPlatform(req.body.platform || "facebook");
+  const seed = String(req.body.seed || "").trim() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-    const seed =
-      String(req.body.seed || "").trim() ||
-      `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const system = [
+    "YOU ARE LOT ROCKET.",
+    "Write a high-converting social post that generates DMs.",
+    "Speak as ONE salesperson. No dealership language. No website links.",
+    "Return ONLY the final post. No commentary.",
+    `PLATFORM: ${platform}`,
+    `SEED: ${seed}`,
+  ].join("\n");
 
-    const label = String(vehicle.title || vehicle.label || "").trim();
-    const price = String(vehicle.price || "").trim();
-    const miles = String(vehicle.mileage || "").trim();
-    const ext = String(vehicle.exterior || "").trim();
-    const vin = String(vehicle.vin || "").trim();
-
-    const system = `
-YOU ARE LOT ROCKET.
-
-You are an elite automotive social media salesperson.
-You write posts that generate DMs.
-
-NON-NEGOTIABLE:
-• Speak as ONE salesperson (no dealership language)
-• NO website links
-• Primary goal is messages/appointments
-
-ANTI-STALE:
-Use variation seed to change hook + angle each time.
-Return ONLY the final ${platform} post.
-`.trim();
-
-    const user = `
-PLATFORM: ${platform}
-SEED: ${seed}
-
-LABEL: ${label || "—"}
-PRICE: ${price || "—"}
-MILES: ${miles || "—"}
-COLOR: ${ext || "—"}
-VIN(last6): ${vin ? vin.slice(-6) : "—"}
-
-VEHICLE:
-${JSON.stringify(vehicle, null, 2)}
-`.trim();
-
-    const out = await callOpenAI({ system, user, temperature: 0.95 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return jsonErr(res, e?.message || String(e));
-  }
+  const user = JSON.stringify(vehicle, null, 2);
+  const out = await callOpenAI({ system, user, temperature: 0.95 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
-/* ===============================
-   AI: OBJECTION COACH ✅
-   POST /api/ai/objection
-================================ */
 app.post("/api/ai/objection", async (req, res) => {
-  try {
-const objection = takeText(req.body.objection, req.body.input, req.body.text);
-const followup = takeText(req.body.followup);
-const history = Array.isArray(req.body.history) ? req.body.history : [];
+  const objection = takeText(req.body.objection, req.body.input, req.body.text);
+  const followup = takeText(req.body.followup);
+  const history = Array.isArray(req.body.history) ? req.body.history : [];
 
-const stitchedHistory = history.length
-  ? "\n\nHISTORY:\n" +
-    history.slice(-10).map(m => `${m.role || "user"}: ${String(m.content || "").trim()}`).join("\n")
-  : "";
+  const stitchedHistory = history.length
+    ? "\nHISTORY:\n" +
+      history
+        .slice(-10)
+        .map((m) => `${m.role || "user"}: ${String(m.content || "").trim()}`)
+        .join("\n")
+    : "";
 
-const user = `
-CUSTOMER OBJECTION:
-${objection || "(missing)"}
+  const user = [
+    "CUSTOMER OBJECTION:",
+    objection || "(missing)",
+    "",
+    "CUSTOMER FOLLOW-UP (if any):",
+    followup || "(none)",
+    stitchedHistory,
+  ].join("\n");
 
-CUSTOMER FOLLOW-UP (if any):
-${followup || "(none)"}
-${stitchedHistory}
-`.trim();
+  if (!takeText(user)) return jsonErr(res, "Missing objection/input");
 
+  const system = [
+    "You are LOT ROCKET’S OBJECTION COACH — a high-level automotive closer.",
+    "Today only. No delays. No think-about-it. No fluff.",
+    "Short, spoken, controlled. Leader energy.",
+    "BANS: 'I understand', 'that makes sense', 'investing', feature lists, long paragraphs.",
+    "",
+    "METHOD (mandatory):",
+    "1) One-line agree with the PERSON (not the objection).",
+    "2) Isolate with ONE question.",
+    "3) Reframe with simple money logic (monthly to daily when useful).",
+    "4) Close TODAY with two options (A/B).",
+    "",
+    "OUTPUT FORMAT (exact):",
+    "CLOSER:",
+    "<4–9 short lines>",
+    "",
+    "WHY IT WORKS:",
+    "- <bullet>",
+    "- <bullet>",
+    "- <bullet>",
+    "",
+    "No emojis. No markdown.",
+  ].join("\n");
 
-    if (!takeText(user)) return jsonErr(res, "Missing objection/input");
+  const out = await callOpenAI({ system, user, temperature: 0.45 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+});
 
-const system = `
-You are LOT ROCKET’S OBJECTION COACH — a high-level automotive closer.
-
-YOUR JOB:
-Turn objections into TODAY decisions. No delays. No “think about it.” No fluff.
-
-VOICE:
-Short. Spoken. Controlled. Calm confidence. Leader energy.
-Do NOT sound like a motivational post or a help article.
-
-ABSOLUTE BANS:
-- No “I understand” “that makes sense” “no problem”
-- No “investing in a vehicle”
-- No generic feature/benefit lists
-- No long paragraphs
-- No soft closes (“when would you like…”)
-- No asking permission to close
-
-INPUTS:
-You receive:
-- CUSTOMER OBJECTION (and optional FOLLOW-UP)
-- Optional CONVO HISTORY
-
-MANDATORY METHOD (use this every time):
-1) AGREE WITH THE PERSON (not the objection) in ONE line.
-2) ISOLATE: find the REAL blocker with a single question.
-3) REFRAME in plain money logic (protect payment, protect budget).
-4) CLOSE TODAY with a TWO-OPTION close (A/B) — not yes/no.
-5) LOCK NEXT STEP (appointment, paperwork, or deposit) TODAY.
-
-OUTPUT FORMAT (EXACT — do not add anything else):
-CLOSER:
-<4–9 short lines. Each line max ~12 words. Spoken language.>
-
-WHY IT WORKS:
-- <1 short bullet>
-- <1 short bullet>
-- <1 short bullet>
-
-CLOSER RULES:
-- Use the customer’s numbers when provided (e.g., $50/mo).
-- Convert monthly difference into daily when useful ($50/mo ≈ $1.67/day).
-- If the objection is “need to think,” force a TODAY decision path:
-  “Think about WHAT specifically?” then isolate to payment/vehicle/spouse.
-- Always end with a specific TODAY action.
-- If missing a key detail, ask ONE question then give a close anyway.
-
-TODAY OPTIONS YOU CAN USE:
-- “Come in at 4:40 or 6:10?”
-- “Do we lock this unit now or release it?”
-- “Paperwork started now, or set the appointment today?”
-`.trim();
-
-
-/* ===============================
-   AI: MESSAGE BUILDER ✅
-   POST /api/ai/message
-================================ */
 app.post("/api/ai/message", async (req, res) => {
-  try {
-    const input = takeText(req.body.input, req.body.text);
-    const channel = takeText(req.body.channel);
-    const goal = takeText(req.body.goal);
-    const ctx = req.body.context || {};
+  const input = takeText(req.body.input, req.body.text);
+  const channel = takeText(req.body.channel);
+  const goal = takeText(req.body.goal);
+  const ctx = req.body.context || {};
 
-    if (!input && !goal) return jsonErr(res, "Missing input/text");
+  if (!input && !goal) return jsonErr(res, "Missing input/text");
 
-    const system = `
-You are Lot Rocket — AI Message Builder.
-Write concise, human, momentum-driven messages.
-No dealership voice. No filler. No placeholders.
+  const system = [
+    "You are Lot Rocket — AI Message Builder.",
+    "Write concise, human, momentum-driven messages for car sales.",
+    "No dealership voice. No filler. No placeholders.",
+    "If email: output Subject: and Body:. Otherwise output only the message.",
+  ].join("\n");
 
-If email, output:
-Subject:
-Body:
+  const user = [
+    `CHANNEL: ${channel || "(none)"}`,
+    `GOAL: ${goal || "(none)"}`,
+    "",
+    "INPUT:",
+    input || "",
+    "",
+    "CONTEXT:",
+    JSON.stringify(ctx, null, 2),
+  ].join("\n");
 
-Otherwise output ONLY the message.
-`.trim();
-
-    const user = `
-CHANNEL: ${channel || "(none)"}
-GOAL: ${goal || "(none)"}
-
-INPUT:
-${input || ""}
-
-CONTEXT:
-${JSON.stringify(ctx, null, 2)}
-`.trim();
-
-    const out = await callOpenAI({ system, user, temperature: 0.4 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return jsonErr(res, e?.message || String(e));
-  }
+  const out = await callOpenAI({ system, user, temperature: 0.4 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
-/* ===============================
-   AI: WORKFLOW / CAMPAIGN ✅
-   POST /api/ai/workflow
-================================ */
 app.post("/api/ai/workflow", async (req, res) => {
-  try {
-    const scenario = takeText(
-      req.body.scenario,
-      req.body.objective,
-      req.body.input,
-      req.body.text
-    );
-    if (!scenario) return jsonErr(res, "Missing scenario/objective");
+  const scenario = takeText(req.body.scenario, req.body.objective, req.body.input, req.body.text);
+  if (!scenario) return jsonErr(res, "Missing scenario/objective");
 
-    const system = `
-You are Lot Rocket’s Campaign Builder.
-Default: appointment-first. No price/payments unless explicitly asked.
-Return ONLY the campaign messages, one per line. No labels.
-`.trim();
+  const system = [
+    "You are Lot Rocket’s Campaign Builder.",
+    "Default: appointment-first. No price/payments unless explicitly asked.",
+    "Return ONLY the campaign messages, one per line. No labels.",
+  ].join("\n");
 
-    const out = await callOpenAI({ system, user: scenario, temperature: 0.65 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return jsonErr(res, e?.message || String(e));
-  }
+  const out = await callOpenAI({ system, user: scenario, temperature: 0.65 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
-/* ===============================
-   AI: CAR EXPERT ✅
-   POST /api/ai/car
-================================ */
 app.post("/api/ai/car", async (req, res) => {
-  try {
-    const vehicle = takeText(req.body.vehicle);
-    const question = takeText(req.body.question, req.body.input, req.body.text);
-    if (!question) return jsonErr(res, "Missing question/input");
+  const vehicle = takeText(req.body.vehicle);
+  const question = takeText(req.body.question, req.body.input, req.body.text);
+  if (!question) return jsonErr(res, "Missing question/input");
 
-    const system = `
-You are the Nameless Vehicle Oracle.
-Be specific. Compare trims/years/packages. No guessing.
-Return ONLY the answer.
-`.trim();
+  const system = [
+    "You are the Nameless Vehicle Oracle.",
+    "Be specific. Compare trims/years/packages. No guessing.",
+    "Return ONLY the answer.",
+  ].join("\n");
 
-    const user = `
-VEHICLE CONTEXT:
-${vehicle || "(none provided)"}
-
-QUESTION:
-${question}
-`.trim();
-
-    const out = await callOpenAI({ system, user, temperature: 0.35 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return jsonErr(res, e?.message || String(e));
-  }
+  const user = ["VEHICLE CONTEXT:", vehicle || "(none)", "", "QUESTION:", question].join("\n");
+  const out = await callOpenAI({ system, user, temperature: 0.35 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
-   Prevents returning index.html for API calls
 ================================ */
 app.use("/api", (req, res) => {
   return res.status(404).json({ ok: false, error: "Unknown API route", path: req.path });
 });
 
 /* ===============================
-   STATIC FRONTEND (AFTER API ROUTES) ✅
+   STATIC FRONTEND (AFTER API ROUTES)
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 
 /* ===============================
-   SPA FALLBACK (LAST) ✅
+   SPA FALLBACK (LAST)
 ================================ */
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
 
