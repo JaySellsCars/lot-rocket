@@ -1,7 +1,8 @@
-// /server/server.js — LOT ROCKET (FINAL / LAUNCH READY) ✅
+// /server/server.js  (REPLACE ENTIRE FILE)
+// LOT ROCKET — FINAL / LAUNCH READY ✅
 // Fixes: ✅ /api/boost always returns JSON (no more HTML 200)
 // Adds: ✅ /api/boost (scrape) ✅ /api/proxy (ZIP images) ✅ /api/payment-helper
-// Fixes: ✅ AI routes actually respond (timeout + consistent JSON)
+// Fixes: ✅ AI routes consistent JSON + timeout
 // Adds: ✅ /api/ai/ping, /api/ai/social, /api/ai/objection, /api/ai/message, /api/ai/workflow, /api/ai/ask, /api/ai/car
 // Critical: ✅ API routes come BEFORE static + SPA fallback
 
@@ -357,10 +358,6 @@ app.post("/api/payment-helper", (req, res) => {
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 20000);
 
-function redact(s) {
-  return String(s || "").slice(0, 1800); // prevent runaway logs
-}
-
 async function callOpenAI({ system, user, temperature = 0.6 }) {
   if (!process.env.OPENAI_API_KEY) {
     return { ok: false, error: "Missing OPENAI_API_KEY" };
@@ -409,12 +406,13 @@ async function callOpenAI({ system, user, temperature = 0.6 }) {
     clearTimeout(t);
   }
 }
-// ===============================
-// LOT ROCKET HELP KB (v1)
-// Keep this updated as features evolve.
-// ===============================
+
+/* ===============================
+   LOT ROCKET HELP KB (v1)
+   Keep this updated as features evolve.
+================================ */
 const APP_KB = `
-LOT ROCKET — APP MANUAL (PAID APP / MULTI-USER)
+LOT ROCKET — APP MANUAL
 
 CORE IDEA:
 Lot Rocket is for INDIVIDUAL car salespeople (not dealerships).
@@ -422,9 +420,9 @@ Goal: generate posts, messages, campaigns + creative assets fast.
 
 MAIN FLOW:
 STEP 1 — Dealer URL Scraper
-- User pastes a dealer vehicle URL
-- Clicks "Boost This Listing"
-- App scrapes title/desc and extracts up to 24 photo URLs
+- Paste dealer vehicle URL
+- Click "Boost This Listing"
+- Server scrapes title/description and extracts up to 60 image URLs (UI uses up to 24)
 - Photos appear in Step 1 grid for selection
 - "Send Selected Photos to Creative Lab" pushes selected photos to Step 3 holding zone
 
@@ -443,32 +441,38 @@ STEP 3 — Creative Lab
   - Download ZIP downloads Social Ready images via /api/proxy
 
 TOOLS (Right Rail):
-- Objection Coach: handles objections + teaches
+- Objection Coach: objection handling + coaching
 - Calculator: basic calculator
-- Payment Calculator: computes estimate (server endpoint /api/payment-helper)
-- Income Calculator: estimates income
-- AI Campaign Builder: creates multi-message/timeframe campaigns (obeys quantity/time/channel)
-- AI Message Builder: writes single message/email/text/DM/social reply
-- Ask A.I. (Help): explains how to use the app + troubleshoots
+- Payment Calculator: server estimate via /api/payment-helper
+- Income Calculator: estimates income from YTD gross + last pay date
+- AI Campaign Builder: appointment-first campaigns (no payments/credit unless user asks)
+- AI Message Builder: single message/email/text/DM/social reply
+- Ask A.I. / Help: how to use the app + troubleshooting
 - AI Car Expert: vehicle oracle Q&A
 
-KNOWN RULES:
-- Help AI should answer about HOW to use the app + troubleshooting.
-- If user reports "AI not responding", check OPENAI_API_KEY, network calls, server logs.
-- If /api/boost returns HTML instead of JSON, routes order or fallback is wrong.
-- If ZIP download fails, /api/proxy must be working and CORS is avoided by proxy.
+TROUBLESHOOTING:
+- If AI is generic: user needs to include specific feature/tool + where they are (Step 1/2/3) + what they clicked + any error text.
+- If /api/boost returns HTML: route order or fallback is wrong (API must be before static + SPA fallback).
+- If ZIP download fails: /api/proxy must be working (proxy avoids CORS).
 `.trim();
 
+/* ===============================
+   AI: HELP / ASK (KB POWERED) ✅
+   POST /api/ai/ask
+   Accepts: {question} OR {input} OR {text}
+   Optional: {context}
+================================ */
 app.post("/api/ai/ask", async (req, res) => {
-  const q = takeText(req.body.question, req.body.input, req.body.text);
+  try {
+    const q = takeText(req.body.question, req.body.input, req.body.text);
+    const ctx = req.body.context || {};
 
-  // Optional UI context sent from frontend
-  const ctx = req.body.context || {};
+    if (!q) return jsonErr(res, "Missing question/input");
 
-  const system = `
+    const system = `
 You are Lot Rocket Help.
 
-You must answer ONLY about the Lot Rocket app: how it works, how to use it, and how to fix common issues.
+You answer ONLY about the Lot Rocket app: how it works, how to use it, and how to fix common issues.
 You are speaking to MANY users (paid app), so never personalize to one person.
 
 USE THIS APP MANUAL AS SOURCE OF TRUTH:
@@ -478,14 +482,14 @@ BEHAVIOR:
 - Give direct steps, not generic advice
 - If a fix involves code, specify file + exact snippet
 - If info is missing, ask ONE question max
-- If user includes context (route, errors, state), use it
+- Use UI context if provided
 
 OUTPUT:
 - Short, actionable answer
 - If steps: 3–7 bullets max
 `.trim();
 
-  const user = `
+    const user = `
 USER QUESTION:
 ${q}
 
@@ -493,8 +497,11 @@ UI CONTEXT (may be empty):
 ${JSON.stringify(ctx, null, 2)}
 `.trim();
 
-  const out = await callOpenAI({ system, user, temperature: 0.25 });
-  res.json(out.ok ? { ok: true, text: out.text } : out);
+    const out = await callOpenAI({ system, user, temperature: 0.25 });
+    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+  } catch (e) {
+    return jsonErr(res, e?.message || String(e));
+  }
 });
 
 /* ===============================
@@ -609,37 +616,10 @@ app.post("/api/ai/objection", async (req, res) => {
       ? `CUSTOMER OBJECTION:\n${objection}\n\nCUSTOMER FOLLOW-UP:\n${followup}${stitchedHistory}`
       : `CUSTOMER OBJECTION:\n${objection}${stitchedHistory}`;
 
-    if (!takeText(user)) return res.json({ ok: false, error: "Missing objection/input" });
+    if (!takeText(user)) return jsonErr(res, "Missing objection/input");
 
     const system = `
 You are LOT ROCKET's Objection Coach: an elite automotive closer + teacher.
-
-PRIMARY OUTPUT: What to say to the customer (human, confident, no fluff).
-SECONDARY OUTPUT: A quick coaching note explaining WHY you handled it that way.
-
-NON-NEGOTIABLE STYLE:
-- No numbered lists
-- No headings like "ACKNOWLEDGE" / "FRAME"
-- No corporate voice
-- No soft filler ("totally understand", "sometimes", "how does that sound")
-- No time limits on length (some objections require more)
-- Sound like a real top producer who is calm and in control
-
-CLOSING BEHAVIOR:
-- Take control of the frame without pressure
-- Use REAL levers when relevant:
-  payment: term/down/trade/rate/fees/rebates/vehicle choice
-  rate: credit tier, lender matrix, structure vs advertised rate
-  think about it: clarify risk, protect availability, set a next step
-- Avoid “maybe a different car” unless customer forces it
-- Move to next step with a micro-commitment:
-  "If I can get it to X, are you ready to lock it in?"
-  "Give me your target payment and down, I’ll structure it."
-  "If we solve this, can you come in today/tomorrow?"
-
-TEACHING:
-- After the customer message, add a short coach note (2–5 lines max)
-- Coach note explains the strategy (control, levers, micro-commitment)
 
 OUTPUT FORMAT (EXACT):
 CUSTOMER:
@@ -647,33 +627,45 @@ CUSTOMER:
 
 COACH:
 <quick explanation of why you handled it like that>
+
+NON-NEGOTIABLE STYLE:
+- No corporate voice
+- No fake warmth or filler
+- Calm, in control, direct
+- Take control without pressure
+- End with a micro-commitment / next step
 `.trim();
 
     const out = await callOpenAI({ system, user, temperature: 0.55 });
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
+    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
-    return res.json({ ok: false, error: e?.message || String(e) });
+    return jsonErr(res, e?.message || String(e));
   }
 });
 
-<!-- MESSAGE BUILDER HEADER -->
-<div class="side-modal-header">
-  <h3>AI Message Builder</h3>
-  <p class="small-note">Write it. Send it. Get a response.</p>
-  <button class="side-modal-close" type="button" data-close>✕</button>
-</div>
+/* ===============================
+   AI: MESSAGE BUILDER ✅
+   Accepts: {input} OR {text}
+   Optional: {channel} {goal} {context}
+================================ */
+app.post("/api/ai/message", async (req, res) => {
+  try {
+    const input = takeText(req.body.input, req.body.text);
+    const channel = takeText(req.body.channel); // "email" | "text" | "dm" | "social"
+    const goal = takeText(req.body.goal);
+    const ctx = req.body.context || {};
 
-const system = `
+    if (!input && !goal) return jsonErr(res, "Missing input/text");
+
+    const system = `
 You are Lot Rocket — AI Message Builder.
 
-You write direct-response messages for real car salespeople
-who are actively working live deals.
+You write direct-response messages for real car salespeople who are actively working live deals.
 Every message protects momentum and gets a reply.
 
 ━━━━━━━━━━
 IDENTITY
 ━━━━━━━━━━
-
 • You are ONE individual salesperson
 • Never write as a dealership, store, or company
 • No “we”, “our”, “the team”, or “automotive family”
@@ -682,10 +674,9 @@ IDENTITY
 ━━━━━━━━━━
 STYLE
 ━━━━━━━━━━
-
-• Clear, intentional, and concise
+• Clear, intentional, concise
 • Zero corporate filler
-• Zero legal or compliance tone
+• Zero legal/compliance tone
 • No fake warmth or forced friendliness
 • Confident without being aggressive
 • Never sound scripted
@@ -693,53 +684,34 @@ STYLE
 ━━━━━━━━━━
 SALES PRINCIPLES
 ━━━━━━━━━━
-
-• Every message must:
-  – Protect the deal
-  – Maintain urgency without pressure
-  – Give a clear reason to respond now
-  – Move the conversation forward
-
-• Do NOT ask multiple or open-ended questions
+• Protect the deal
+• Maintain urgency without pressure
+• Give a clear reason to respond now
+• Move the conversation forward
 • Ask for ONE clear action only when it advances the deal
 
 ━━━━━━━━━━
 CHANNEL AWARENESS
 ━━━━━━━━━━
-
-• Email:
-  Professional, firm, clean, time-respectful
-
-• Text / SMS:
-  Conversational, tight, momentum-driven
-
-• DM:
-  Direct, human, fast-moving
-
-• Social reply:
-  Short, casual, response-oriented
+• Email: professional, firm, clean, time-respectful
+• Text/SMS: conversational, tight, momentum-driven
+• DM: direct, human, fast
+• Social reply: short, casual, response-oriented
 
 ━━━━━━━━━━
-CONTENT RULES (STRICT)
+STRICT BANS
 ━━━━━━━━━━
+Never say:
+“I hope this message finds you well”
+“Please let me know a convenient time”
+“We appreciate your business”
 
-• Never say:
-  “I hope this message finds you well”
-  “Please let me know a convenient time”
-  “We appreciate your business”
-
-• Never include placeholders like:
-  [Your Name]
-  [Your Company]
-  [Dealership]
-
-• Write as if the salesperson will copy and send immediately
-• No explanations, disclaimers, or commentary
+Never include placeholders like:
+[Your Name] [Your Company] [Dealership]
 
 ━━━━━━━━━━
 OUTPUT
 ━━━━━━━━━━
-
 Return ONLY the message.
 
 If email, include:
@@ -749,25 +721,27 @@ Body:
 Nothing else.
 `.trim();
 
+    const user = `
+CHANNEL (optional): ${channel || "(not provided)"}
+GOAL (optional): ${goal || "(not provided)"}
 
+INPUT:
+${input || ""}
 
-    const out = await callOpenAI({
-      system,
-      user: input,
-      temperature: 0.4
-    });
+CONTEXT (optional):
+${JSON.stringify(ctx, null, 2)}
+`.trim();
 
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
+    const out = await callOpenAI({ system, user, temperature: 0.4 });
+    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
-    return res.json({ ok: false, error: e?.message || String(e) });
+    return jsonErr(res, e?.message || String(e));
   }
 });
 
-
 /* ===============================
-   AI: WORKFLOW (Campaign Builder) — UNIVERSAL
+   AI: WORKFLOW (Campaign Builder) — APPOINTMENT FIRST ✅
    Accepts: {scenario} OR {objective} OR {input} OR {text}
-   Builds: text / email / social (and combos) as requested
 ================================ */
 app.post("/api/ai/workflow", async (req, res) => {
   try {
@@ -778,43 +752,31 @@ app.post("/api/ai/workflow", async (req, res) => {
       req.body.text
     );
 
-    if (!scenario) return res.json({ ok: false, error: "Missing scenario/objective" });
+    if (!scenario) return jsonErr(res, "Missing scenario/objective");
 
-const system = `
+    const system = `
 You are Lot Rocket’s Campaign Builder.
 
 You create appointment-driven campaigns for car salespeople.
 Your PRIMARY job is to get the customer in the door to see and drive the vehicle.
 
 ━━━━━━━━━━
-DEFAULT MODE (IMPORTANT)
+DEFAULT MODE (LOCKED)
 ━━━━━━━━━━
-
-You are in APPOINTMENT-FIRST MODE by default.
-
-This means:
-• NO talk of price
-• NO talk of payments
-• NO talk of credit
-• NO talk of financing
-• NO talk of trade-ins
+Appointment-first mode by default:
+• NO price
+• NO payments
+• NO credit
+• NO financing
+• NO trade-ins
 • NO incentives unless explicitly requested
 
-You ONLY focus on:
-• Curiosity
-• Availability
-• Timing
-• Vehicle interest
-• Test drive momentum
-
-If (and ONLY if) the user explicitly asks for:
-price / payment / financing / credit / discount  
+If (and ONLY if) the user explicitly asks for price/payment/credit/financing/discount:
 → then you may include it.
 
 ━━━━━━━━━━
 IDENTITY (LOCKED)
 ━━━━━━━━━━
-
 • You are ONE individual salesperson
 • Never write as a dealership
 • Never say “we”, “our”, or “the team”
@@ -823,51 +785,26 @@ IDENTITY (LOCKED)
 ━━━━━━━━━━
 HARD RULES (NON-NEGOTIABLE)
 ━━━━━━━━━━
-
-1. Follow the CHANNEL exactly
-   - Text = text only
-   - Facebook = Facebook posts only
-   - Email = email only
-
-2. Follow the TIMEFRAME exactly
-   - 1 day = messages for that day only
-   - 5 days = one message per day
-
-3. Follow the QUANTITY exactly
-   - If asked for 4 → return exactly 4 messages
-   - No bonus content
-   - No scripts
-   - No automation
-   - No extra sections
-
-4. Do NOT include:
-   - Headings
-   - Explanations
-   - Strategy notes
-   - Objection handling
-   - Emojis unless natural for the channel
+1) Follow the CHANNEL exactly (Text vs Email vs FB etc.)
+2) Follow the TIMEFRAME exactly (1 day = that day only)
+3) Follow the QUANTITY exactly (no extras)
+4) Do NOT include headings, explanations, strategy notes, automation, or extra sections
+5) Emojis only if natural for that channel
 
 ━━━━━━━━━━
 COPY RULES
 ━━━━━━━━━━
-
 • Short, clean, human
-• Sounds like a real text someone would reply to
 • Never overly salesy
 • No pressure language
 • No assumptions
 • No placeholders like [Name]
-
-• Each message must:
-  – Be different in angle
-  – Advance urgency naturally
-  – Protect interest
-  – Ask for ONE simple action at most
+• Each message must be different in angle
+• Ask for ONE simple action at most
 
 ━━━━━━━━━━
 OUTPUT
 ━━━━━━━━━━
-
 Return ONLY the campaign messages.
 One message per line.
 No labels.
@@ -875,34 +812,7 @@ No markdown.
 No commentary.
 `.trim();
 
-
-
-
     const out = await callOpenAI({ system, user: scenario, temperature: 0.65 });
-    return res.json(out.ok ? { ok: true, text: out.text } : out);
-  } catch (e) {
-    return res.json({ ok: false, error: e?.message || String(e) });
-  }
-});
-
-
-/* ===============================
-   AI: ASK AI
-   Accepts: {question} OR {input} OR {text}
-================================ */
-app.post("/api/ai/ask", async (req, res) => {
-  try {
-    const q = takeText(req.body.question, req.body.input, req.body.text);
-    if (!q) return jsonErr(res, "Missing question/input");
-
-    const system = `
-You are the Lot Rocket helper.
-Answer clearly, fast, and practical.
-No fluff. No long lectures.
-If missing details, ask ONE question max.
-`.trim();
-
-    const out = await callOpenAI({ system, user: q, temperature: 0.4 });
     return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return jsonErr(res, e?.message || String(e));
@@ -910,7 +820,7 @@ If missing details, ask ONE question max.
 });
 
 /* ===============================
-   AI: CAR EXPERT
+   AI: CAR EXPERT ✅
    Accepts: {vehicle, question} OR {input} OR {text}
 ================================ */
 app.post("/api/ai/car", async (req, res) => {
