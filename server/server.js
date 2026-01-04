@@ -164,6 +164,18 @@ async function fetchHtmlWithFallback(url) {
     redirect: "follow",
     headers: baseHeaders,
   });
+// 🚫 HARD STOP if dealer blocks scraping
+if (!r || !r.ok) {
+  return res.status(200).json({
+    ok: false,
+    error: `Dealer blocked scraping (${r?.status || "no response"}).`,
+    url,
+    debug: {
+      status: r?.status || null,
+      contentType: r?.headers?.get("content-type") || null,
+    },
+  });
+}
 
   if (r.ok) return r;
 
