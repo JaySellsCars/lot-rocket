@@ -247,25 +247,30 @@ textarea{
   background:rgba(2,6,23,.85);
 }
 
-/* FLOATING TOOLS */
+/* FLOATING TOOLS — aligned with Step 1/2 */
 .floating-tools{
-  position:fixed;
-  right:18px;
-  top:120px;
-  display:flex;
-  flex-direction:column;
-  gap:.6rem;
-  z-index:99999;
+  position: fixed;
+  right: 18px;
+  top: 160px;              /* ✅ adjust 140–220 */
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  z-index: 99999;
 }
+
 .tool-button{
-  padding:.55rem 1rem;
-  border-radius:12px;
-  border:none;
-  background:linear-gradient(135deg,#f97316,#ec4899);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
+  padding: .55rem 1rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg,#f97316,#ec4899);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
 }
+
+
+
+
 /* ================================
    STEP 2 – INNER BUTTONS (NICE UI)
    ================================ */
