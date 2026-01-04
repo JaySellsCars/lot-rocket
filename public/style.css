@@ -708,3 +708,61 @@ textarea{
   .brand-text p{ display:none; }
   .brand-text h1{ font-size:1.5rem; }
 }
+/* =========================================================
+   STEP 3 — FINAL: ARROWS LEFT/RIGHT (CENTERED) + KILL PREVIEW ICON
+   Paste at VERY BOTTOM of style.css
+========================================================= */
+
+/* 1) FORCE ARROWS TO BE OVERLAYED ON THE VIEWER (NOT IN THE GRID) */
+#socialReadyPanel .social-carousel-preview{
+  position: relative !important;
+  display: block !important;     /* stop grid/flex fighting */
+}
+
+/* Make sure the image stays centered and stable */
+#socialReadyPanel #socialCarouselPreviewImg{
+  display:block !important;
+  margin: 0 auto !important;
+}
+
+/* Position the first arrow as LEFT, last arrow as RIGHT */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn{
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 5 !important;
+}
+
+/* Left button */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn:first-of-type{
+  left: 14px !important;
+}
+
+/* Right button */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn:last-of-type{
+  right: 14px !important;
+}
+
+/* Optional: keep them off the border visually */
+#socialReadyPanel .social-carousel-preview .ghost-circle-btn{
+  width: 56px !important;
+  height: 56px !important;
+}
+
+
+/* 2) KILL THE LITTLE "🖼 Preview" ROW WITHOUT BREAKING THE REAL PREVIEW IMAGE
+   - This hides elements whose id/class includes "preview"
+   - BUT explicitly protects the real viewer row + real preview image
+*/
+
+/* Kill IDs containing preview (except the real preview image) */
+#socialReadyPanel [id*="preview"]:not(#socialCarouselPreviewImg),
+#socialReadyPanel [id*="Preview"]:not(#socialCarouselPreviewImg){
+  display:none !important;
+}
+
+/* Kill classes containing preview (except the viewer container itself) */
+#socialReadyPanel [class*="preview"]:not(.social-carousel-preview),
+#socialReadyPanel [class*="Preview"]:not(.social-carousel-preview){
+  display:none !important;
+}
