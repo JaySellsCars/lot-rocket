@@ -521,7 +521,7 @@ app.post("/api/ai/social", async (req, res) => {
       .slice(0, 2)
       .join(" ") || "INFO";
   // Tone preset (optional): closer | chill | viral | luxe | marketplace
-  const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "").trim().toLowerCase();
+const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
 
   const TONE_PRESETS = {
     closer: [
