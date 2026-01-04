@@ -876,3 +876,40 @@ textarea{
 #socialCarouselPreviewImg[src=""]{
   display:none !important;
 }
+/* =========================================================
+   AI MODALS — RESTORE OUTPUT + REPLY BOXES (GLOBAL FIX)
+   - Shows follow-up UI everywhere (Campaign/Objection/Message/Ask/Car)
+   - Prevents output panels from collapsing
+========================================================= */
+
+/* Always show the follow-up / reply area when present */
+.side-modal [data-ai-followup]{
+  display:block !important;
+}
+
+/* Make follow-up textarea usable */
+.side-modal [data-ai-followup-input]{
+  display:block !important;
+  width:100% !important;
+  min-height: 90px !important;
+  border-radius: 14px !important;
+}
+
+/* Make sure AI output areas are visible and wrap text */
+#workflowOutput,
+#objectionOutput,
+#messageOutput,
+#askOutput,
+#carExpertOutput,
+#helpOutput,
+#payOutput,
+#incomeOutput{
+  display:block !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* If any of these got accidentally hidden by a .hidden rule */
+.side-modal .hidden{
+  display:none !important;
+}
