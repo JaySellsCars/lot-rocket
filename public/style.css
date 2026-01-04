@@ -31,7 +31,7 @@ a{ color:#8ab4f8; }
 }
 
 /* ===============================
-   HEADER — PREMIUM + STICKY + MOBILE
+   HEADER — PREMIUM + STICKY + MOBILE (MERGED)
 ================================ */
 
 .app-header{
@@ -135,23 +135,36 @@ a{ color:#8ab4f8; }
 .app-header.is-sticky .branding h1{ font-size:1.9rem; }
 
 /* ===============================
-   MOBILE POLISH
+   MOBILE POLISH (MERGED / NO DUPES)
 ================================ */
+
+/* <= 900px (tablet) */
 @media (max-width: 900px){
   .app-header{ padding:1.1rem 1.3rem; }
   .app-header.is-sticky{ padding:.9rem 1.3rem; }
-  .app-logo{ height:54px; }
+
+  .branding{ gap:14px; }
+
+  .app-logo{ height:58px; }            /* merged: was 54 + 58 -> keep premium size */
+  .app-header.is-sticky .app-logo{ height:52px; }
+
   .branding h1{ font-size:1.65rem; }
+  .app-header.is-sticky .branding h1{ font-size:1.55rem; }
+
   .brand-tagline{ font-size:.82rem; }
 }
 
+/* <= 520px (phone) */
 @media (max-width: 520px){
   .branding{ gap:12px; }
-  .app-logo{ height:46px; }
-  .branding h1{ font-size:1.45rem; }
 
-  /* collapse tagline on small screens */
-  .brand-tagline{ display:none; }
+  .app-logo{ height:50px; }            /* slightly bigger than 46 so it feels premium */
+  .app-header.is-sticky .app-logo{ height:46px; }
+
+  .branding h1{ font-size:1.45rem; }
+  .app-header.is-sticky .branding h1{ font-size:1.38rem; }
+
+  .brand-tagline{ display:none; }      /* clean mobile */
 
   .launch-badge{
     font-size:.6rem;
@@ -161,32 +174,12 @@ a{ color:#8ab4f8; }
 
 
 
+
 /* =========================
    RESPONSIVE POLISH
    ========================= */
 
-@media (max-width: 768px) {
-  .app-header {
-    padding: 1.05rem 1.25rem;
-  }
 
-  .app-logo {
-    height: 58px;
-  }
-
-  .brand-text h1 {
-    font-size: 1.45rem;
-  }
-
-  .brand-text p {
-    display: none; /* clean mobile */
-  }
-
-  .version-badge {
-    font-size: 0.66rem;
-    padding: 0.24rem 0.5rem;
-  }
-}
 
 
 
