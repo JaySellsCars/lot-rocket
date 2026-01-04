@@ -646,6 +646,30 @@
       });
     }
   });
+function buildFeatureBullets(v){
+  const feats = [];
+
+  // only include what we actually have (no guessing)
+  const add = (x) => { if (x && String(x).trim()) feats.push(String(x).trim()); };
+
+  add(v.trim);
+  add(v.engine);
+  add(v.drivetrain);
+  add(v.transmission);
+  add(v.fuel);
+  add(v.carfax);
+  add(v.oneOwner ? "One Owner" : "");
+  add(v.noAccidents ? "No Accidents" : "");
+  add(v.appleCarplay ? "Apple CarPlay" : "");
+  add(v.androidAuto ? "Android Auto" : "");
+  add(v.adaptiveCruise ? "Adaptive Cruise Control" : "");
+  add(v.heatedSeats ? "Heated Seats" : "");
+  add(v.heatedWheel ? "Heated Steering Wheel" : "");
+  add(v.remoteStart ? "Remote Start" : "");
+
+  // de-dupe
+  return [...new Set(feats)].slice(0, 10);
+}
 
   // ==================================================
   // FLOATING TOOLS WIRING
