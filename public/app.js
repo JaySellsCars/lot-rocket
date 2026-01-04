@@ -1530,7 +1530,8 @@
         let res, data;
 
         try {
-          res = await fetch(`/api/boost?url=${encodeURIComponent(url)}&debug=1`, {
+     res = await fetch(`/api/boost?url=${encodeURIComponent(url)}`, {
+
             headers: { Accept: "application/json" },
             cache: "no-store",
           });
