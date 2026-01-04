@@ -1729,26 +1729,29 @@
       grow(followInput);
       followInput.addEventListener("input", () => grow(followInput));
 
-      const showIfNeeded = () => {
-        const text = outEl.textContent || outEl.innerText || outEl.value || "";
-        const shouldShow = isQuestiony(text);
+   const showIfNeeded = () => {
+  const text = (outEl.textContent || outEl.innerText || outEl.value || "").trim();
 
-        const wasHidden =
-          followWrap.style.display === "none" || !followWrap.style.display;
+  // ✅ SHOW FOLLOW-UP whenever there is ANY output (not just “questiony” output)
+  const shouldShow = text.length > 0;
 
-        followWrap.style.display = shouldShow ? "block" : "none";
+  const wasHidden =
+    followWrap.style.display === "none" || !followWrap.style.display;
 
-        if (shouldShow && wasHidden) {
-          setTimeout(() => {
-            followInput.focus();
-            const v = followInput.value || "";
-            try {
-              followInput.setSelectionRange(v.length, v.length);
-            } catch {}
-            grow(followInput);
-          }, 0);
-        }
-      };
+  followWrap.style.display = shouldShow ? "block" : "none";
+
+  if (shouldShow && wasHidden) {
+    setTimeout(() => {
+      followInput.focus();
+      const v = followInput.value || "";
+      try {
+        followInput.setSelectionRange(v.length, v.length);
+      } catch {}
+      grow(followInput);
+    }, 0);
+  }
+};
+
 
       const mo = new MutationObserver(showIfNeeded);
       mo.observe(outEl, { childList: true, subtree: true, characterData: true });
