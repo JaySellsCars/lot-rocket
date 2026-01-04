@@ -56,8 +56,9 @@ a{ color:#8ab4f8; }
 }
 /* Fine-tune logo vertical alignment with tagline */
 .logo-wrap{
-  margin-bottom: 6px; /* adjust 4–10px if needed */
+  margin-bottom: 6px; /* ⬅️ fine-tune: try 4–10px */
 }
+
 
 
 /* ===============================
