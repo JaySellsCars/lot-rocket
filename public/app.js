@@ -209,30 +209,34 @@
 
     obs.observe(DOC.body, { childList: true, subtree: true, characterData: true });
   })();
-// ===============================
-// AUTO-GROW: AI HELPER TEXTAREAS
-// ===============================
-(function wireAiAutoGrow() {
-  const sel = "#workflowInput,#objectionInput,#messageInput,#askInput,#carExpertInput";
 
-  function grow(el) {
-    if (!el || el.tagName !== "TEXTAREA") return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 420) + "px";
-  }
+  // ===============================
+  // AUTO-GROW: AI HELPER TEXTAREAS (includes HELP modal)
+  // ===============================
+  (function wireAiAutoGrow() {
+    const sel =
+      "#workflowInput,#objectionInput,#messageInput,#askInput,#helpInput,#carExpertInput,[data-ai-followup-input]";
 
-  // initial + per-input listener
-  document.querySelectorAll(sel).forEach((ta) => {
-    grow(ta);
-    ta.addEventListener("input", () => grow(ta));
-  });
+    function grow(el) {
+      if (!el || el.tagName !== "TEXTAREA") return;
+      el.style.height = "auto";
+      el.style.overflow = "hidden";
+      el.style.resize = "none";
+      el.style.height = Math.min(el.scrollHeight || 0, 420) + "px";
+    }
 
-  // safety: catches any future dynamic replacements
-  document.addEventListener("input", (e) => {
-    const t = e.target;
-    if (t && t.tagName === "TEXTAREA" && t.matches(sel)) grow(t);
-  });
-})();
+    // initial + per-input listener
+    DOC.querySelectorAll(sel).forEach((ta) => {
+      grow(ta);
+      ta.addEventListener("input", () => grow(ta));
+    });
+
+    // safety: catches any future dynamic replacements
+    DOC.addEventListener("input", (e) => {
+      const t = e.target;
+      if (t && t.tagName === "TEXTAREA" && t.matches(sel)) grow(t);
+    });
+  })();
 
   // ==================================================
   // STEP 2 AUTO-EXPAND WIRING
@@ -505,7 +509,7 @@
   });
 
   // ==================================================
-  // FLOATING TOOLS WIRING (ONE TRUE BLOCK)
+  // FLOATING TOOLS WIRING (ONE TRUE BLOCK) — includes HELP
   // ==================================================
   (function wireFloatingTools() {
     if (window.__LR_FLOATING_TOOLS__) return;
@@ -516,9 +520,10 @@
       calc: "toolCalcBtn",
       payment: "toolPaymentBtn",
       income: "toolIncomeBtn",
-      workflow: "toolWorkflowBtn", // will be labeled "AI Campaign Builder"
+      workflow: "toolWorkflowBtn", // AI Campaign Builder
       message: "toolMessageBtn",
       ask: "toolAskBtn",
+      help: "toolHelpBtn", // ✅ NEW
       car: "toolCarBtn",
       image: "toolImageBtn",
       video: "toolVideoBtn",
@@ -532,6 +537,7 @@
       workflow: "workflowModal",
       message: "messageModal",
       ask: "askModal",
+      help: "helpModal", // ✅ NEW
       car: "carExpertModal",
       image: "imageGenModal",
       video: "videoGenModal",
@@ -631,13 +637,12 @@
   })();
 
   // ==================================================
-  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (Campaign Builder added)
+  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (includes HELP)
   // ==================================================
   (function wireAiExpertsDelegated() {
     if (window.__LR_AI_EXPERTS_DELEGATED__) return;
     window.__LR_AI_EXPERTS_DELEGATED__ = true;
 
-    // ---- Campaign Builder: turn a messy request into a professional campaign brief
     function buildCampaignScenario(userText) {
       const v = window.STORE?.lastVehicle || {};
       const vehicleLine =
@@ -657,7 +662,7 @@
         "ROLE: You are the Lot Rocket AI Campaign Builder (Campaign Architect).",
         "GOAL: Capture buying appointments. Every step must drive a clear CTA to book an appointment, call, or DM.",
         "STYLE: Professional, easy to follow, platform-specific, no fluff. Use short steps and checklists.",
-        "RULE: Ask 5 alignment questions first IF critical details are missing, then produce the campaign.",
+        "RULE: Ask alignment questions first ONLY if critical details are missing, then produce the campaign.",
         "",
         "DELIVERABLES REQUIRED:",
         "1) Campaign Blueprint (Day-by-day).",
@@ -680,23 +685,19 @@
     }
 
     const btnToType = {
-      // Objection
       runObjectionBtn: "objection",
       objectionRunBtn: "objection",
 
-      // Message
       runMessageBtn: "message",
       messageRunBtn: "message",
 
-      // Campaign Builder (formerly workflow)
-      runWorkflowBtn: "campaign", // ✅ your real HTML button
-      // workflowRunBtn removed on purpose (legacy)
+      runWorkflowBtn: "campaign",
 
-      // Ask
       runAskBtn: "ask",
       askRunBtn: "ask",
 
-      // Car expert
+      runHelpBtn: "help", // ✅ NEW
+
       runCarExpertBtn: "car",
       carExpertRunBtn: "car",
     };
@@ -704,8 +705,9 @@
     const typeToEndpoint = {
       objection: "/api/ai/objection",
       message: "/api/ai/message",
-      campaign: "/api/ai/workflow", // ✅ keep server endpoint, but we send a professional campaign scenario
+      campaign: "/api/ai/workflow",
       ask: "/api/ai/ask",
+      help: "/api/ai/ask", // ✅ routes to Ask endpoint
       car: "/api/ai/car",
     };
 
@@ -714,6 +716,7 @@
       message: "messageOutput",
       campaign: "workflowOutput",
       ask: "askOutput",
+      help: "helpOutput", // ✅ NEW
       car: "carExpertOutput",
     };
 
@@ -721,8 +724,20 @@
       return el?.closest?.(".side-modal") || null;
     }
 
-    function findInput(modal) {
+    function findInput(modal, type) {
+      // prefer explicit ids when available
+      const byType = {
+        objection: "#objectionInput",
+        message: "#messageInput",
+        campaign: "#workflowInput",
+        ask: "#askInput",
+        help: "#helpInput",
+        car: "#carExpertInput",
+      };
+      const explicit = byType[type] ? modal?.querySelector(byType[type]) : null;
+
       return (
+        explicit ||
         modal?.querySelector("textarea") ||
         modal?.querySelector("input[type='text']") ||
         modal?.querySelector("input:not([type])") ||
@@ -764,12 +779,15 @@
 
       if (type === "objection") return { objection: text, context: "" };
       if (type === "message") return { goal: "", tone: "", details: text };
-
-      // ✅ Campaign Builder lives on the same server route as workflow.
-      // We pack the "scenario" with a professional campaign brief.
       if (type === "campaign") return { scenario: buildCampaignScenario(text) };
-
       if (type === "ask") return { question: text };
+      if (type === "help")
+        return {
+          question:
+            "You are the Lot Rocket AI Helper. Answer clearly, fast, and practical. No fluff. " +
+            "If the user asks about Lot Rocket usage, give step-by-step. If missing details, ask ONE question max.\n\n" +
+            text,
+        };
       if (type === "car") return { vehicle: vehicleToString(v), question: text };
       return { input: text };
     }
@@ -815,7 +833,7 @@
       e.preventDefault();
 
       const modal = closestModal(btn);
-      const input = findInput(modal);
+      const input = findInput(modal, type);
       const output = findOutput(modal, type);
 
       if (!input || !output) {
@@ -843,7 +861,7 @@
       }
     });
 
-    console.log("✅ AI EXPERTS DELEGATED WIRED (Campaign Builder ready)");
+    console.log("✅ AI EXPERTS DELEGATED WIRED (Help ready)");
   })();
 
   // ==================================================
@@ -966,6 +984,7 @@
       img.src = p.url;
       img.loading = "lazy";
       img.decoding = "async";
+      img.alt = ""; // prevents broken tiny preview icon
 
       const lock = DOC.createElement("div");
       lock.className = "social-lock";
@@ -1360,6 +1379,7 @@
       img.src = src;
       img.loading = "lazy";
       img.decoding = "async";
+      img.alt = ""; // prevents broken tiny preview icon
 
       img.addEventListener("dblclick", (e) => {
         e.preventDefault();
@@ -1527,6 +1547,7 @@
           img.decoding = "async";
           img.style.width = "100%";
           img.style.display = "block";
+          img.alt = ""; // prevents broken tiny preview icon
 
           const badge = DOC.createElement("div");
           badge.textContent = "✓";
@@ -1571,155 +1592,149 @@
       }
     });
   }
-// ===============================
-// UNIVERSAL AI FOLLOW-UP (ALL MODALS) — v1 POLISHED
-// - Auto-shows follow-up when output asks questions
-// - Auto-focuses follow-up when it appears
-// - Auto-grows follow-up textarea
-// - Enter = Continue, Shift+Enter = newline
-// ===============================
-function wireAiFollowups() {
-  const isQuestiony = (t) => {
-    t = String(t || "");
-    return (
-      /\n\s*1[\)\.]\s.+\n\s*2[\)\.]\s.+\n\s*3[\)\.]\s.+/m.test(t) ||
-      /questions?/i.test(t) ||
-      /need to know/i.test(t) ||
-      /please answer/i.test(t) ||
-      /clarify/i.test(t) ||
-      /alignment/i.test(t)
-    );
-  };
 
-  // modalId, mainInputId, runBtnId, outputElId
-  const configs = [
-    ["workflowModal", "workflowInput", "runWorkflowBtn", "workflowOutput"],
-    ["objectionModal", "objectionInput", "runObjectionBtn", "objectionOutput"],
-    ["messageModal", "messageInput", "runMessageBtn", "messageOutput"],
-    ["askModal", "askInput", "runAskBtn", "askOutput"],
-    ["carExpertModal", "carExpertInput", "runCarExpertBtn", "carExpertOutput"],
-  ];
-
-  const labelMap = {
-    workflowModal: "Continue Campaign",
-    objectionModal: "Continue Objection",
-    messageModal: "Continue Message",
-    askModal: "Continue Strategy",
-    carExpertModal: "Continue Car Expert",
-  };
-
-  configs.forEach(([modalId, inputId, runBtnId, outputId]) => {
-    const modal = document.getElementById(modalId);
-    const mainInput = document.getElementById(inputId);
-    const runBtn = document.getElementById(runBtnId);
-    const outEl = document.getElementById(outputId);
-
-    if (!modal || !mainInput || !runBtn || !outEl) return;
-
-    const followWrap = modal.querySelector("[data-ai-followup]");
-    const followInput = modal.querySelector("[data-ai-followup-input]");
-    const followBtn = modal.querySelector("[data-ai-followup-btn]");
-
-    if (!followWrap || !followInput || !followBtn) return;
-
-    // set contextual button label
-    followBtn.textContent = labelMap[modalId] || "Continue";
-
-    // follow-up auto-grow (cap to keep modal stable)
-    function grow(el) {
-      if (!el || el.tagName !== "TEXTAREA") return;
-      el.style.overflow = "hidden";
-      el.style.resize = "none";
-      el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight || 0, 240) + "px";
-    }
-
-    // Enter submits, Shift+Enter newline
-    followInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        followBtn.click();
-      }
-    });
-
-    // initial grow + on input
-    grow(followInput);
-    followInput.addEventListener("input", () => grow(followInput));
-
-    const showIfNeeded = () => {
-      const text = outEl.textContent || outEl.innerText || outEl.value || "";
-      const shouldShow = isQuestiony(text);
-
-      const wasHidden =
-        followWrap.style.display === "none" || !followWrap.style.display;
-
-      followWrap.style.display = shouldShow ? "block" : "none";
-
-      // autofocus only when it just became visible
-      if (shouldShow && wasHidden) {
-        setTimeout(() => {
-          followInput.focus();
-          const v = followInput.value || "";
-          try {
-            followInput.setSelectionRange(v.length, v.length);
-          } catch {}
-          grow(followInput);
-        }, 0);
-      }
+  // ===============================
+  // UNIVERSAL AI FOLLOW-UP (ALL MODALS) — v1 POLISHED
+  // - Auto-shows follow-up when output asks questions
+  // - Auto-focuses follow-up when it appears
+  // - Auto-grows follow-up textarea
+  // - Enter = Continue, Shift+Enter = newline
+  // ===============================
+  function wireAiFollowups() {
+    const isQuestiony = (t) => {
+      t = String(t || "");
+      return (
+        /\n\s*1[\)\.]\s.+\n\s*2[\)\.]\s.+\n\s*3[\)\.]\s.+/m.test(t) ||
+        /questions?/i.test(t) ||
+        /need to know/i.test(t) ||
+        /please answer/i.test(t) ||
+        /clarify/i.test(t) ||
+        /alignment/i.test(t)
+      );
     };
 
-    // Watch output changes (div/pre)
-    const mo = new MutationObserver(showIfNeeded);
-    mo.observe(outEl, { childList: true, subtree: true, characterData: true });
+    // modalId, mainInputId, runBtnId, outputElId
+    const configs = [
+      ["workflowModal", "workflowInput", "runWorkflowBtn", "workflowOutput"],
+      ["objectionModal", "objectionInput", "runObjectionBtn", "objectionOutput"],
+      ["messageModal", "messageInput", "runMessageBtn", "messageOutput"],
+      ["askModal", "askInput", "runAskBtn", "askOutput"],
+      ["helpModal", "helpInput", "runHelpBtn", "helpOutput"], // ✅ NEW
+      ["carExpertModal", "carExpertInput", "runCarExpertBtn", "carExpertOutput"],
+    ];
 
-    // Continue merges follow-up into main input and re-runs
-    followBtn.addEventListener("click", () => {
-      const extra = (followInput.value || "").trim();
-      if (!extra) return;
+    const labelMap = {
+      workflowModal: "Continue Campaign",
+      objectionModal: "Continue Objection",
+      messageModal: "Continue Message",
+      askModal: "Continue Strategy",
+      helpModal: "Continue Help", // ✅ NEW
+      carExpertModal: "Continue Car Expert",
+    };
 
-      const base = (mainInput.value || "").trim();
-      mainInput.value = `${base}\n\nFOLLOW-UP / ANSWERS:\n${extra}\n`;
-      followInput.value = "";
+    configs.forEach(([modalId, inputId, runBtnId, outputId]) => {
+      const modal = DOC.getElementById(modalId);
+      const mainInput = DOC.getElementById(inputId);
+      const runBtn = DOC.getElementById(runBtnId);
+      const outEl = DOC.getElementById(outputId);
+
+      if (!modal || !mainInput || !runBtn || !outEl) return;
+
+      const followWrap = modal.querySelector("[data-ai-followup]");
+      const followInput = modal.querySelector("[data-ai-followup-input]");
+      const followBtn = modal.querySelector("[data-ai-followup-btn]");
+
+      if (!followWrap || !followInput || !followBtn) return;
+
+      followBtn.textContent = labelMap[modalId] || "Continue";
+
+      function grow(el) {
+        if (!el || el.tagName !== "TEXTAREA") return;
+        el.style.overflow = "hidden";
+        el.style.resize = "none";
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight || 0, 240) + "px";
+      }
+
+      followInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          followBtn.click();
+        }
+      });
+
       grow(followInput);
+      followInput.addEventListener("input", () => grow(followInput));
 
-      runBtn.click();
+      const showIfNeeded = () => {
+        const text = outEl.textContent || outEl.innerText || outEl.value || "";
+        const shouldShow = isQuestiony(text);
+
+        const wasHidden =
+          followWrap.style.display === "none" || !followWrap.style.display;
+
+        followWrap.style.display = shouldShow ? "block" : "none";
+
+        if (shouldShow && wasHidden) {
+          setTimeout(() => {
+            followInput.focus();
+            const v = followInput.value || "";
+            try {
+              followInput.setSelectionRange(v.length, v.length);
+            } catch {}
+            grow(followInput);
+          }, 0);
+        }
+      };
+
+      const mo = new MutationObserver(showIfNeeded);
+      mo.observe(outEl, { childList: true, subtree: true, characterData: true });
+
+      followBtn.addEventListener("click", () => {
+        const extra = (followInput.value || "").trim();
+        if (!extra) return;
+
+        const base = (mainInput.value || "").trim();
+        mainInput.value = `${base}\n\nFOLLOW-UP / ANSWERS:\n${extra}\n`;
+        followInput.value = "";
+        grow(followInput);
+
+        runBtn.click();
+      });
+
+      showIfNeeded();
     });
-
-    // initial
-    showIfNeeded();
-  });
-}
-
-// --------------------------------------------------
-// SOCIAL READY WIRES (ONE PASS)
-// --------------------------------------------------
-wireSocialNav();
-wireZipButton();
-renderSocialStrip();
-
-// --------------------------------------------------
-// AI FOLLOW-UP WIRES (ONE PASS)
-// --------------------------------------------------
-wireAiFollowups();
-
-// close modals + wire calculators (ONE PASS)
-(function initToolsOnce() {
-  if (window.__LR_TOOLS_INIT__) return;
-  window.__LR_TOOLS_INIT__ = true;
-
-  if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
-    window.LR_TOOLS.closeAll();
   }
 
-  wirePaymentCalculator();
-  wireIncomeCalcDirect();
+  // --------------------------------------------------
+  // SOCIAL READY WIRES (ONE PASS)
+  // --------------------------------------------------
+  wireSocialNav();
+  wireZipButton();
+  renderSocialStrip();
 
-  console.log("✅ TOOLS INIT COMPLETE");
+  // --------------------------------------------------
+  // AI FOLLOW-UP WIRES (ONE PASS)
+  // --------------------------------------------------
+  wireAiFollowups();
+
+  // close modals + wire calculators (ONE PASS)
+  (function initToolsOnce() {
+    if (window.__LR_TOOLS_INIT__) return;
+    window.__LR_TOOLS_INIT__ = true;
+
+    if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
+      window.LR_TOOLS.closeAll();
+    }
+
+    wirePaymentCalculator();
+    wireIncomeCalcDirect();
+
+    console.log("✅ TOOLS INIT COMPLETE");
+  })();
+
+  // --------------------------------------------------
+  // FINAL
+  // --------------------------------------------------
+  console.log("✅ APP READY");
 })();
-
-// --------------------------------------------------
-// FINAL
-// --------------------------------------------------
-console.log("✅ APP READY");
-})();
-
