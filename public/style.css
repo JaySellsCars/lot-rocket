@@ -702,3 +702,94 @@ textarea{
   .brand-text p{ display:none; }
   .brand-text h1{ font-size:1.5rem; }
 }
+/* =========================================================
+   v2.6.7 HOTFIX PATCH — DO NOT REWRITE FILE
+   Goals:
+   1) Header aligns with Step cards (same left + right padding)
+   2) Step 2 buttons stop changing
+   3) Social preview stops changing size/layout
+========================================================= */
+
+/* 1) HEADER ALIGNMENT = MATCH LAYOUT PADDING */
+:root{
+  --page-left: 3rem;     /* matches .layout left padding */
+  --page-right: 15rem;   /* matches .layout right padding (space for tools column) */
+}
+
+/* Force header content to align with the Step cards grid */
+.app-header{
+  padding-left: var(--page-left) !important;
+  padding-right: var(--page-right) !important;
+  align-items: flex-end !important;
+}
+
+/* Keep layout consistent with the same numbers */
+.layout{
+  padding-left: var(--page-left) !important;
+  padding-right: var(--page-right) !important;
+}
+
+
+/* 2) STEP 2 BUTTONS — LOCK THEM (stop “style drift”) */
+.step2-card .lr-step2-actions{
+  margin-top: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.step2-card .lr-step2-actions-row{
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.step2-card .lr-step2-actions-emoji{
+  display: flex !important;
+  justify-content: center !important;
+}
+
+/* lock the look of the Step2 buttons specifically */
+.step2-card .lr-btn{
+  appearance: none !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  color: rgba(255,255,255,.92) !important;
+  font-weight: 800 !important;
+  letter-spacing: .2px !important;
+  padding: 10px 14px !important;
+  border-radius: 999px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.32) !important;
+  background: rgba(255,255,255,.06) !important;
+  backdrop-filter: blur(10px) !important;
+  transition: transform .08s ease, filter .15s ease, border-color .15s ease !important;
+}
+
+.step2-card .lr-btn:hover{
+  filter: brightness(1.08) !important;
+  border-color: rgba(255,255,255,.26) !important;
+}
+.step2-card .lr-btn:active{
+  transform: translateY(1px) scale(.99) !important;
+}
+
+/* 3) SOCIAL PREVIEW — RESTORE STABLE BIG VIEWER */
+#socialCarouselPreviewImg{
+  width: min(760px, 100%) !important;
+  height: 420px !important;
+  object-fit: contain !important;
+  border-radius: 18px !important;
+  background: rgba(2,6,23,.65) !important;
+  border: 1px solid rgba(148,163,184,.35) !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* Keep arrows from shifting the row */
+.social-carousel-preview{
+  grid-template-columns: 64px 1fr 64px !important;
+  gap: 18px !important;
+  align-items: center !important;
+}
