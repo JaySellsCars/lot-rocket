@@ -35,6 +35,66 @@
     el.style.resize = "none";
     el.style.height = (el.scrollHeight || 0) + "px";
   }
+// ===============================
+// HEADER UX (ALL): sticky shadow, click-to-top, logo swap
+// ===============================
+(function wirePremiumHeader() {
+  if (window.__LR_HEADER_WIRED__) return;
+  window.__LR_HEADER_WIRED__ = true;
+
+  const header = document.getElementById("appHeader");
+  const branding = header?.querySelector(".branding");
+  const logo = document.getElementById("appLogo");
+
+  if (!header || !branding || !logo) return;
+
+  // ✅ click-to-top
+  branding.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // ✅ sticky shadow when scrolled
+  const onScroll = () => {
+    const scrolled = window.scrollY > 6;
+    header.classList.toggle("is-scrolled", scrolled);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  // ✅ auto logo swap (dark/light) via prefers-color-scheme OR body class
+  function applyLogo() {
+    const darkSrc = logo.getAttribute("data-logo-dark") || logo.src;
+    const lightSrc = logo.getAttribute("data-logo-light") || logo.src;
+
+    const bodyIsDark =
+      document.body.classList.contains("dark") ||
+      document.body.classList.contains("dark-theme");
+
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    const useDark = bodyIsDark || prefersDark;
+
+    const next = useDark ? darkSrc : lightSrc;
+    if (next && logo.getAttribute("src") !== next) {
+      logo.style.opacity = "0.85";
+      logo.setAttribute("src", next);
+      setTimeout(() => (logo.style.opacity = "1"), 120);
+    }
+  }
+
+  applyLogo();
+  if (window.matchMedia) {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mq?.addEventListener) mq.addEventListener("change", applyLogo);
+  }
+
+  // if you toggle themes via class later, call: window.LR_applyLogoTheme && window.LR_applyLogoTheme()
+  window.LR_applyLogoTheme = applyLogo;
+
+  console.log("✅ PREMIUM HEADER WIRED");
+})();
 
   // ==================================================
   // UI FX HELPERS (PRESS + LOADING)
