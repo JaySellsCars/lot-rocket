@@ -30,107 +30,76 @@ a{ color:#8ab4f8; }
   --shadow:0 20px 50px rgba(0,0,0,.6);
 }
 
-/* =========================
-   APP HEADER — PREMIUM (ALL)
-   ========================= */
+/* ===============================
+   HEADER — PREMIUM LAUNCH
+================================ */
 
-.app-header {
-  position: sticky;           /* ✅ sticky */
-  top: 0;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.4rem 3rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: linear-gradient(
-    180deg,
-    rgba(15,15,30,0.92),
-    rgba(10,10,20,0.96)
-  );
-  backdrop-filter: blur(10px);
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+.app-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:1.4rem 3.5rem;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  background:
+    radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.18), transparent 60%),
+    linear-gradient(180deg, #0b0b1a, #070711);
 }
 
-/* adds subtle “elevated” look once scrolled */
-.app-header.is-scrolled {
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-  border-bottom-color: rgba(255,255,255,0.10);
+/* Branding container */
+.branding{
+  display:flex;
+  align-items:center;
+  gap:18px;
 }
 
-/* BRAND WRAPPER */
-.branding {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  cursor: pointer;            /* ✅ click-to-top */
-  user-select: none;
+/* LOGO — BIGGER + WHITE */
+.app-logo{
+  height:64px;              /* 👈 key upgrade */
+  width:auto;
+  object-fit:contain;
+  filter: brightness(0) invert(1); /* turns logo white */
+  opacity:.95;
 }
 
-/* LOGO — FORCE BIG / PREMIUM */
-.app-logo {
-  height: 96px;              /* BIGGER */
-  width: auto;
-  object-fit: contain;
-
-  /* FORCE visual scale */
-  transform: scale(1.25);
-  transform-origin: left center;
-
-  filter: drop-shadow(0 12px 28px rgba(255,90,0,0.45));
-  transition: transform .18s ease, filter .18s ease;
+/* Text stack */
+.brand-text{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
 }
 
-.branding:hover .app-logo {
-  transform: scale(1.32);
-  filter: drop-shadow(0 18px 38px rgba(255,90,0,0.6));
+/* Title row */
+.brand-title-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
-
-/* TEXT BLOCK */
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.branding h1{
+  font-size:2.05rem;
+  font-weight:800;
+  margin:0;
+  letter-spacing:.4px;
 }
 
-/* TOPLINE: Title + Badge */
-.brand-topline {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Launch badge */
+.launch-badge{
+  font-size:.65rem;
+  font-weight:700;
+  padding:4px 8px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f59e0b,#ec4899);
+  color:#fff;
+  letter-spacing:.6px;
 }
 
-/* TITLE */
-.brand-text h1 {
-  font-size: 1.9rem;
-  margin: 0;
-  line-height: 1.05;
-  font-weight: 800;
-  letter-spacing: 0.4px;
+/* Tagline */
+.branding p{
+  margin:0;
+  font-size:.88rem;
+  color:rgba(255,255,255,.65);
 }
 
-/* VERSION BADGE */
-.version-badge {
-  font-size: 0.72rem;
-  padding: 0.28rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.86);
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* TAGLINE */
-.brand-text p {
-  margin-top: 0.35rem;
-  margin-bottom: 0;
-  font-size: 0.92rem;
-  color: var(--text-muted);
-  opacity: 0.86;
-}
 
 /* =========================
    RESPONSIVE POLISH
