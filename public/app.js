@@ -1278,6 +1278,29 @@
     const zipBtn = $("downloadZipBtn");
     setBtnLoading(zipBtn, true, "Zipping…");
 
+    // ---- FORCE JPEG CONVERSION (FACEBOOK SAFE) ----
+    async function blobToJpegBlob(blob, quality = 0.92) {
+      if (!blob) throw new Error("missing blob");
+      if (blob.type === "image/jpeg") return blob;
+
+      const bmp = await createImageBitmap(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bmp, 0, 0);
+      if (bmp.close) bmp.close();
+
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (out) => (out ? resolve(out) : reject(new Error("JPEG conversion failed"))),
+          "image/jpeg",
+          quality
+        );
+      });
+    }
+
     try {
       const zip = new JSZip();
       const folder = zip.folder("lot-rocket");
@@ -1290,15 +1313,13 @@
           const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
           const r = await fetch(prox, { cache: "no-store" });
           if (!r.ok) throw new Error("proxy fetch failed");
+
           const blob = await r.blob();
 
-          const ext =
-            blob.type?.includes("png") ? "png" :
-            blob.type?.includes("webp") ? "webp" :
-            blob.type?.includes("jpeg") ? "jpg" :
-            blob.type?.includes("gif") ? "gif" : "jpg";
+          // ALWAYS SAVE AS .JPG
+          const jpegBlob = await blobToJpegBlob(blob, 0.92);
+          folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
 
-          folder.file(`photo_${String(i + 1).padStart(2, "0")}.${ext}`, blob);
           ok++;
         } catch (e) {
           console.warn("ZIP skip:", url, e);
@@ -1319,6 +1340,7 @@
       setBtnLoading(zipBtn, false);
     }
   }
+
 
   function wireZipButton() {
     const btn = $("downloadZipBtn");
