@@ -189,6 +189,64 @@ app.get("/api/boost", async (req, res) => {
     }
 
     const $ = cheerio.load(r.text);
+// --------- JSON-LD VEHICLE PARSE (best-effort) ----------
+function pick(obj, keys) {
+  for (const k of keys) {
+    const v = obj && obj[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+  }
+  return "";
+}
+
+function parseJsonLdVehicles() {
+  const out = { price:"", mileage:"", vin:"", stock:"" };
+
+  const scripts = [];
+  $("script[type='application/ld+json']").each((_, el) => {
+    const t = ($(el).text() || "").trim();
+    if (t) scripts.push(t);
+  });
+
+  for (const raw of scripts) {
+    let data;
+    try { data = JSON.parse(raw); } catch { continue; }
+    const items = Array.isArray(data) ? data : [data];
+
+    for (const it of items) {
+      const node = it && it["@graph"] ? it["@graph"] : [it];
+      for (const x of node) {
+        const type = (x && x["@type"]) ? String(x["@type"]).toLowerCase() : "";
+
+        // Many dealers use "Vehicle" or embed offers inside it
+        if (type.includes("vehicle") || type.includes("product")) {
+          const offers = x.offers || {};
+          const offer0 = Array.isArray(offers) ? offers[0] : offers;
+
+          out.price =
+            out.price ||
+            String(pick(offer0, ["price", "lowPrice", "highPrice", "priceSpecification"]) || "").replace(/[^\d.]/g,"");
+
+          const odo = x.mileageFromOdometer || x.mileage || x.odo || {};
+          if (!out.mileage) {
+            if (typeof odo === "number") out.mileage = String(odo);
+            else if (odo && typeof odo === "object") out.mileage = String(pick(odo, ["value"]) || "");
+          }
+
+          out.vin = out.vin || String(pick(x, ["vehicleIdentificationNumber", "vin"]) || "");
+          out.stock = out.stock || String(pick(x, ["sku", "stockNumber", "stock"]) || "");
+        }
+      }
+    }
+  }
+
+  // normalize
+  out.price = out.price ? `$${Number(out.price).toLocaleString()}` : "";
+  out.mileage = out.mileage ? `${Number(out.mileage).toLocaleString()} mi` : "";
+
+  return out;
+}
+
+const ld = parseJsonLdVehicles();
 
     // --------- VEHICLE BASICS (best-effort) ----------
     const title =
