@@ -253,16 +253,26 @@ textarea{
   background:rgba(2,6,23,.85);
 }
 
-/* FLOATING TOOLS — aligned with Step 1/2 */
+/* FLOATING TOOLS */
 .floating-tools{
-  position: fixed;
-  right: 18px;
-  top: 160px;              /* ✅ adjust 140–220 */
-  display: flex;
-  flex-direction: column;
-  gap: .6rem;
-  z-index: 99999;
+  position:fixed;
+  right:18px;
+  top:120px;
+  display:flex;
+  flex-direction:column;
+  gap:.6rem;
+  z-index:99999;
 }
+
+/* =========================================
+   ALIGN FLOATING TOOLS WITH STEP 1 / STEP 2
+   ========================================= */
+.toolwire,
+#toolWire,
+.floating-tools{
+  top: 160px !important; /* ← this is the alignment control */
+}
+
 
 .tool-button{
   padding: .55rem 1rem;
