@@ -500,9 +500,9 @@ ${JSON.stringify(vehicle, null, 2)}
 });
 
 /* ===============================
-   AI: OBJECTION COACH (ELITE / CONVERSATIONAL)
+   AI: OBJECTION COACH (ELITE)
    Accepts: {objection} OR {input} OR {text}
-   Optional: {followup} OR {history:[{role,content}]}
+   Optional: {followup} OR {history}
 ================================ */
 app.post("/api/ai/objection", async (req, res) => {
   try {
@@ -510,58 +510,65 @@ app.post("/api/ai/objection", async (req, res) => {
     const followup = takeText(req.body.followup);
     const history = Array.isArray(req.body.history) ? req.body.history : [];
 
-    const combined = followup
-      ? `OBJECTION:\n${objection}\n\nFOLLOW-UP:\n${followup}`
-      : objection;
+    const stitchedHistory = history.length
+      ? "\n\nCONVO CONTEXT:\n" +
+        history
+          .slice(-10)
+          .map((m) => `${m.role || "user"}: ${String(m.content || "").trim()}`)
+          .join("\n")
+      : "";
 
-    if (!combined) return jsonErr(res, "Missing objection/input");
+    const user = followup
+      ? `CUSTOMER OBJECTION:\n${objection}\n\nCUSTOMER FOLLOW-UP:\n${followup}${stitchedHistory}`
+      : `CUSTOMER OBJECTION:\n${objection}${stitchedHistory}`;
+
+    if (!takeText(user)) return res.json({ ok: false, error: "Missing objection/input" });
 
     const system = `
-You are an elite automotive objection handler + closer.
+You are LOT ROCKET's Objection Coach: an elite automotive closer + teacher.
 
-GOAL:
-Handle the objection in a way that feels HUMAN and gets the customer moving forward.
+PRIMARY OUTPUT: What to say to the customer (human, confident, no fluff).
+SECONDARY OUTPUT: A quick coaching note explaining WHY you handled it that way.
 
-STYLE:
+NON-NEGOTIABLE STYLE:
 - No numbered lists
-- No headings like "ACKNOWLEDGE/FRAME"
-- No lecture
-- No corporate tone
-- No fake hype, no pressure
-- Short paragraphs, talk like a real person
+- No headings like "ACKNOWLEDGE" / "FRAME"
+- No corporate voice
+- No soft filler ("totally understand", "sometimes", "how does that sound")
+- No time limits on length (some objections require more)
+- Sound like a real top producer who is calm and in control
 
-BEHAVIOR:
-- Address the objection directly
-- Stay calm, confident, and in control
-- Explain the reality simply
-- Offer 1–2 real options (only if it helps)
-- Move toward next step naturally (appointment / confirmation / commitment)
-- Teach a little while closing (one sentence max)
-- You do NOT have to ask a question. Only ask if it advances the deal.
-- If follow-up exists, respond to it like a real conversation (continue, don’t reset)
+CLOSING BEHAVIOR:
+- Take control of the frame without pressure
+- Use REAL levers when relevant:
+  payment: term/down/trade/rate/fees/rebates/vehicle choice
+  rate: credit tier, lender matrix, structure vs advertised rate
+  think about it: clarify risk, protect availability, set a next step
+- Avoid “maybe a different car” unless customer forces it
+- Move to next step with a micro-commitment:
+  "If I can get it to X, are you ready to lock it in?"
+  "Give me your target payment and down, I’ll structure it."
+  "If we solve this, can you come in today/tomorrow?"
 
-OUTPUT:
-Return ONLY what you would say to the customer.
+TEACHING:
+- After the customer message, add a short coach note (2–5 lines max)
+- Coach note explains the strategy (control, levers, micro-commitment)
+
+OUTPUT FORMAT (EXACT):
+CUSTOMER:
+<what you would say to the customer>
+
+COACH:
+<quick explanation of why you handled it like that>
 `.trim();
 
-    // If frontend ever starts sending history, we can stitch it in safely:
-    const stitchedHistory =
-      history.length
-        ? "\n\nCONVERSATION SO FAR:\n" +
-          history
-            .slice(-8)
-            .map((m) => `${m.role || "user"}: ${String(m.content || "").trim()}`)
-            .join("\n")
-        : "";
-
-    const user = `${combined}${stitchedHistory}`.trim();
-
-    const out = await callOpenAI({ system, user, temperature: 0.6 });
-    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+    const out = await callOpenAI({ system, user, temperature: 0.55 });
+    return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
-    return jsonErr(res, e?.message || String(e));
+    return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+
 
 /* ===============================
    AI: MESSAGE BUILDER (COMPAT)
