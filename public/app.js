@@ -1,16 +1,14 @@
 ///// /public/app.js  (REPLACE ENTIRE FILE)
-// LOT ROCKET — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10002
-// ✅ Fixes: Step 1 thumbnails forced SQUARE (grid + wrapper + cover)
-// ✅ Fixes: Helper AI uses /api/ai/ask correctly, consistent payload keys
-// ✅ Fixes: Message Builder payload matches server (/api/ai/message expects {input|text})
-// ✅ Fixes: Campaign Builder payload matches server (/api/ai/workflow expects {scenario|objective|input|text})
-// ✅ Fixes: Ask + Help both hit /api/ai/ask with {question, context}
-// ✅ Fixes: Vehicle Oracle payload matches server (/api/ai/car expects {vehicle, question})
-// ✅ Fixes: Boost fetch call typo (fetch options object correct)
-// ✅ Keeps: Single-pass wiring, no duplicates, no explanations
+// LOT ROCKET — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10003
+// ✅ Step 2 hardened + isolated (no Step 1 mixing)
+// ✅ Step 2 outputs work for textarea OR div/pre
+// ✅ Step 2 never leaves “Output…” placeholders
+// ✅ Boost supports multiple grids (#step1Photos/#boostPhotoGrid/#photoGrid/#creativeThumbGrid)
+// ✅ Thumbs stay square
+// ✅ No duplicates / single-pass wiring
 
 (async () => {
-  const V = "10002";
+  const V = "10003";
   console.log("🚀 APP BOOT OK —", V);
 
   const DOC = document;
@@ -18,9 +16,6 @@
   const q = (sel, root = DOC) => root.querySelector(sel);
   const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
 
-  // --------------------------------------------------
-  // DOM READY
-  // --------------------------------------------------
   const domReady = () =>
     new Promise((res) => {
       if (DOC.readyState === "loading")
@@ -28,158 +23,65 @@
       else res();
     });
   await domReady();
-// ==================================================
-// HARD OVERRIDE: Step 1 thumbnails MUST be square
-// (wins over any CSS regressions)
-// ==================================================
-(function forceSquareThumbs() {
-  if (window.__LR_SQUARE_THUMBS__) return;
-  window.__LR_SQUARE_THUMBS__ = true;
 
-  const style = document.createElement("style");
-  style.id = "lr-square-thumbs-override";
-  style.textContent = `
-    /* Step 1 photo grid (try multiple ids in case HTML changed) */
-    #step1Photos, #boostPhotoGrid, #photoGrid, #creativeThumbGrid{
-      display: grid !important;
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-      gap: 14px !important;
-    }
+  // ==================================================
+  // HARD OVERRIDE: Step 1 thumbnails MUST be square
+  // ==================================================
+  (function forceSquareThumbs() {
+    if (window.__LR_SQUARE_THUMBS__) return;
+    window.__LR_SQUARE_THUMBS__ = true;
 
-    /* Any tile wrapper we create */
-    .lr-thumb{
-      position: relative !important;
-      overflow: hidden !important;
-      border-radius: 14px !important;
-      aspect-ratio: 1 / 1 !important;
-      background: rgba(255,255,255,.04) !important;
-      border: 1px solid rgba(255,255,255,.12) !important;
-    }
+    const style = document.createElement("style");
+    style.id = "lr-square-thumbs-override";
+    style.textContent = `
+      #step1Photos, #boostPhotoGrid, #photoGrid, #creativeThumbGrid{
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 14px !important;
+      }
+      .lr-thumb{
+        position: relative !important;
+        overflow: hidden !important;
+        border-radius: 14px !important;
+        aspect-ratio: 1 / 1 !important;
+        background: rgba(255,255,255,.04) !important;
+        border: 1px solid rgba(255,255,255,.12) !important;
+      }
+      #step1Photos > img, #boostPhotoGrid > img, #photoGrid > img, #creativeThumbGrid > img{
+        width: 100% !important;
+        aspect-ratio: 1 / 1 !important;
+        height: auto !important;
+        object-fit: cover !important;
+        object-position: center !important;
+        border-radius: 14px !important;
+        display: block !important;
+      }
+      .lr-thumb img{
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: center !important;
+        display: block !important;
+      }
+    `;
+    document.head.appendChild(style);
+    console.log("✅ SQUARE THUMB OVERRIDE LOADED");
+  })();
 
-    /* If images are direct children (no wrapper), still force square */
-    #step1Photos > img,
-    #boostPhotoGrid > img,
-    #photoGrid > img,
-    #creativeThumbGrid > img{
-      width: 100% !important;
-      aspect-ratio: 1 / 1 !important;
-      height: auto !important;
-      object-fit: cover !important;
-      object-position: center !important;
-      border-radius: 14px !important;
-      display: block !important;
-    }
-
-    /* If images are inside wrappers */
-    .lr-thumb img{
-      position: absolute !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      object-position: center !important;
-      display: block !important;
-    }
-  `;
-  document.head.appendChild(style);
-
-  console.log("✅ SQUARE THUMB OVERRIDE LOADED");
-})();
-
-  // --------------------------------------------------
+  // ==================================================
   // SAFE GLOBAL STORE
-  // --------------------------------------------------
+  // ==================================================
   window.STORE = window.STORE || {};
   const STORE = window.STORE;
 
-  // ==================================================
-  // AUTO-GROW TEXTAREA (SOCIAL POSTS / COACHES)
-  // ==================================================
-  function autoGrowTextarea(el) {
-    if (!el || el.tagName !== "TEXTAREA") return;
-    el.style.height = "auto";
-    el.style.overflow = "hidden";
-    el.style.resize = "none";
-    el.style.height = (el.scrollHeight || 0) + "px";
-  }
-
-  // ===============================
-  // HEADER UX
-  // ===============================
-  (function wirePremiumHeader() {
-    if (window.__LR_HEADER_WIRED__) return;
-    window.__LR_HEADER_WIRED__ = true;
-
-    const header = document.getElementById("appHeader");
-    const branding = header?.querySelector(".branding");
-    const logo = document.getElementById("appLogo");
-
-    if (!header || !branding || !logo) return;
-
-    branding.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    const onScroll = () => {
-      const scrolled = window.scrollY > 6;
-      header.classList.toggle("is-scrolled", scrolled);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    function applyLogo() {
-      const darkSrc = logo.getAttribute("data-logo-dark") || logo.src;
-      const lightSrc = logo.getAttribute("data-logo-light") || logo.src;
-
-      const bodyIsDark =
-        document.body.classList.contains("dark") ||
-        document.body.classList.contains("dark-theme");
-
-      const prefersDark =
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-      const useDark = bodyIsDark || prefersDark;
-
-      const next = useDark ? darkSrc : lightSrc;
-      if (next && logo.getAttribute("src") !== next) {
-        logo.style.opacity = "0.85";
-        logo.setAttribute("src", next);
-        setTimeout(() => (logo.style.opacity = "1"), 120);
-      }
-    }
-
-    applyLogo();
-    if (window.matchMedia) {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      if (mq?.addEventListener) mq.addEventListener("change", applyLogo);
-    }
-
-    window.LR_applyLogoTheme = applyLogo;
-    console.log("✅ PREMIUM HEADER WIRED");
-  })();
-
-  // ===============================
-  // HEADER COMPACT ON SCROLL
-  // ===============================
-  (function wireHeaderCompact() {
-    if (window.__LR_HEADER_COMPACT__) return;
-    window.__LR_HEADER_COMPACT__ = true;
-
-    const header = document.getElementById("appHeader");
-    if (!header) return;
-
-    const THRESH = 70;
-    function onScroll() {
-      header.classList.toggle("is-compact", window.scrollY > THRESH);
-    }
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-  })();
+  STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
+  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos : [];
+  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos) ? STORE.socialReadyPhotos : [];
 
   // ==================================================
-  // UI FX HELPERS
+  // UI HELPERS
   // ==================================================
   function pressAnim(el) {
     if (!el) return;
@@ -209,6 +111,520 @@
     btn.textContent = label;
     setTimeout(() => (btn.textContent = old), ms);
   }
+
+  function autoGrowTextarea(el) {
+    if (!el || el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.overflow = "hidden";
+    el.style.resize = "none";
+    el.style.height = (el.scrollHeight || 0) + "px";
+  }
+
+  // output setter works for textarea/input OR div/pre
+  function setVal(id, v) {
+    const el = $(id);
+    if (!el) return;
+    const text = (v ?? "").toString();
+
+    if ("value" in el) {
+      el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      autoGrowTextarea(el);
+      return;
+    }
+    el.textContent = text;
+  }
+
+  // ==================================================
+  // HEADER UX
+  // ==================================================
+  (function wirePremiumHeader() {
+    if (window.__LR_HEADER_WIRED__) return;
+    window.__LR_HEADER_WIRED__ = true;
+
+    const header = $("appHeader");
+    const branding = header?.querySelector?.(".branding");
+    const logo = $("appLogo");
+    if (!header || !branding || !logo) return;
+
+    branding.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    const onScroll = () => header.classList.toggle("is-scrolled", window.scrollY > 6);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    function applyLogo() {
+      const darkSrc = logo.getAttribute("data-logo-dark") || logo.src;
+      const lightSrc = logo.getAttribute("data-logo-light") || logo.src;
+
+      const bodyIsDark =
+        document.body.classList.contains("dark") ||
+        document.body.classList.contains("dark-theme");
+
+      const prefersDark =
+        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+      const next = (bodyIsDark || prefersDark) ? darkSrc : lightSrc;
+      if (next && logo.getAttribute("src") !== next) {
+        logo.style.opacity = "0.85";
+        logo.setAttribute("src", next);
+        setTimeout(() => (logo.style.opacity = "1"), 120);
+      }
+    }
+
+    applyLogo();
+    if (window.matchMedia) {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      if (mq?.addEventListener) mq.addEventListener("change", applyLogo);
+    }
+
+    window.LR_applyLogoTheme = applyLogo;
+    console.log("✅ PREMIUM HEADER WIRED");
+  })();
+
+  (function wireHeaderCompact() {
+    if (window.__LR_HEADER_COMPACT__) return;
+    window.__LR_HEADER_COMPACT__ = true;
+
+    const header = $("appHeader");
+    if (!header) return;
+
+    const THRESH = 70;
+    const onScroll = () => header.classList.toggle("is-compact", window.scrollY > THRESH);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  })();
+
+  // ==================================================
+  // AUTO-GROW OBSERVER + Step 2 textareas
+  // ==================================================
+  (function wireAutoGrowObserver() {
+    if (window.__LR_AUTOGROW__) return;
+    window.__LR_AUTOGROW__ = true;
+
+    const obs = new MutationObserver(() => {
+      DOC.querySelectorAll("textarea").forEach((ta) => autoGrowTextarea(ta));
+    });
+
+    obs.observe(DOC.body, { childList: true, subtree: true, characterData: true });
+  })();
+
+  (function wireAiAutoGrow() {
+    const sel =
+      "#workflowInput,#objectionInput,#messageInput,#askInput,#helpInput,#carExpertInput,[data-ai-followup-input]";
+    function grow(el) {
+      if (!el || el.tagName !== "TEXTAREA") return;
+      el.style.height = "auto";
+      el.style.overflow = "hidden";
+      el.style.resize = "none";
+      el.style.height = Math.min(el.scrollHeight || 0, 420) + "px";
+    }
+
+    DOC.querySelectorAll(sel).forEach((ta) => {
+      grow(ta);
+      ta.addEventListener("input", () => grow(ta));
+    });
+
+    DOC.addEventListener("input", (e) => {
+      const t = e.target;
+      if (t && t.tagName === "TEXTAREA" && t.matches(sel)) grow(t);
+    });
+  })();
+
+  // ==================================================
+  // URL NORMALIZER
+  // ==================================================
+  function normalizeDealerUrl(raw) {
+    let s = (raw || "").toString().trim();
+    s = s.replace(/\s+/g, "");
+
+    const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
+    if (lastHttp > 0) s = s.slice(lastHttp);
+
+    s = s.replace(/^whttps:\/\//i, "https://");
+    s = s.replace(/^whttp:\/\//i, "http://");
+
+    if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) s = "https://" + s;
+    return s;
+  }
+
+  // ==================================================
+  // SUMMARY
+  // ==================================================
+  function renderSummary(vehicle) {
+    const out = $("summaryOutput");
+    if (!out) return;
+    const v = vehicle || {};
+    out.innerHTML = `
+      <div class="small-note" style="margin:.35rem 0;">
+        <b>${(v.title || "").replace(/</g, "&lt;")}</b>
+      </div>
+      <div class="small-note">Price: <b>${v.price || "—"}</b> • Mileage: <b>${v.mileage || "—"}</b></div>
+      <div class="small-note">VIN: <b>${v.vin || "—"}</b> • Stock: <b>${v.stock || "—"}</b></div>
+      <div class="small-note">Ext/Int: <b>${v.exterior || "—"}</b> / <b>${v.interior || "—"}</b></div>
+      <div class="small-note">Powertrain: <b>${v.engine || "—"}</b> • <b>${v.transmission || v.trans || "—"}</b></div>
+    `;
+  }
+
+  // ==================================================
+  // STEP 2 MODULE — HARDENED + ISOLATED
+  // ==================================================
+  (function STEP2() {
+    if (window.__LR_STEP2__) return;
+    window.__LR_STEP2__ = true;
+
+    const MAP = {
+      facebook: "fbOutput",
+      instagram: "igOutput",
+      tiktok: "ttOutput",
+      linkedin: "liOutput",
+      x: "xOutput",
+      dm: "dmOutput",
+      marketplace: "marketplaceOutput",
+      hashtags: "hashtagsOutput",
+    };
+
+    function outId(platform) {
+      return MAP[String(platform || "").toLowerCase()] || "";
+    }
+
+    function platformRules(platform) {
+      const p = String(platform || "").toLowerCase();
+      if (p === "hashtags") return { hashtagsOnly: true };
+      if (p === "x") return { maxChars: 280 };
+      if (p === "dm") return { maxChars: 420 };
+      if (p === "tiktok") return { maxChars: 700 };
+      if (p === "instagram") return { maxChars: 900 };
+      if (p === "marketplace") return { maxChars: 1400 };
+      return { maxChars: 1200 };
+    }
+
+    function clampText(text, maxChars) {
+      if (!maxChars) return text;
+      const t = (text || "").toString();
+      if (t.length <= maxChars) return t;
+      return t.slice(0, maxChars - 1).trimEnd() + "…";
+    }
+
+    function buildDesiredFeatures(v) {
+      v = v || {};
+      const feats = [];
+      const add = (x) => {
+        const s = (x || "").toString().trim();
+        if (!s) return;
+        feats.push(s);
+      };
+
+      add(v.engine);
+      add(v.drivetrain);
+      add(v.transmission || v.trans);
+      add(v.trim);
+      add(v.mileage ? `Only ${v.mileage}` : "");
+      add(v.exterior ? `${v.exterior} Exterior` : "");
+      add(v.interior ? `${v.interior} Interior` : "");
+      add(v.price ? `Priced at ${v.price}` : "");
+      add(v.certified ? "Certified Pre-Owned" : "");
+      add(v.oneOwner ? "One Owner" : "");
+      add(v.noAccidents ? "No Accidents" : "");
+      if (v.packages) add(v.packages);
+
+      const txt = (v.description || "").toString();
+      const has = (re) => re.test(txt);
+      if (has(/\bcarplay\b/i)) add("Apple CarPlay");
+      if (has(/\bandroid auto\b/i)) add("Android Auto");
+      if (has(/\badaptive cruise\b|\bacc\b/i)) add("Adaptive Cruise Control");
+      if (has(/\bheated steering wheel\b/i)) add("Heated Steering Wheel");
+      if (has(/\bheated seats?\b/i)) add("Heated Seats");
+      if (has(/\bremote start\b/i)) add("Remote Start");
+      if (has(/\bblind spot\b/i)) add("Blind Spot Monitor");
+      if (has(/\bcross[-\s]?traffic\b/i)) add("Rear Cross-Traffic Alert");
+      if (has(/\blane keep\b|\blane assist\b/i)) add("Lane Keep Assist");
+      if (has(/\bpark assist\b|\brear park\b/i)) add("Rear Park Assist");
+
+      const seen = new Set();
+      const out = [];
+      for (const f of feats) {
+        const key = f.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(f);
+        if (out.length >= 12) break;
+      }
+      return out;
+    }
+
+    function ensureBullets(text, features) {
+      const t = (text || "").toString().trim();
+      const hasBullets = /(^|\n)\s*(•|-|⭐|✅|👉)/m.test(t);
+      if (hasBullets || !features?.length) return t;
+      return t + "\n\n⭐ MOST-WANTED FEATURES:\n" + features.map((f) => `• ${f}`).join("\n");
+    }
+
+    function clearPlaceholderOnce() {
+      const ids = Object.values(MAP);
+      ids.forEach((id) => {
+        const el = $(id);
+        if (!el) return;
+        const val = ("value" in el) ? (el.value || "") : (el.textContent || "");
+        if (el.__LR_CLEARED_ONCE__) return;
+        if (String(val).trim() === "Output...") {
+          if ("value" in el) el.value = "";
+          else el.textContent = "";
+          el.__LR_CLEARED_ONCE__ = true;
+        }
+      });
+    }
+
+    async function aiPost(platform) {
+      const v = STORE.lastVehicle || STORE.vehicle || {};
+      const rules = platformRules(platform);
+      const desiredFeatures = buildDesiredFeatures(v);
+
+      const payload = {
+        platform,
+        vehicle: {
+          url: v.url || "",
+          title: v.title || "",
+          trim: v.trim || "",
+          price: v.price || "",
+          mileage: v.mileage || "",
+          vin: v.vin || "",
+          stock: v.stock || "",
+          exterior: v.exterior || "",
+          interior: v.interior || "",
+          engine: v.engine || "",
+          drivetrain: v.drivetrain || "",
+          transmission: v.transmission || v.trans || "",
+          description: v.description || "",
+        },
+        style: {
+          tone: "high-energy closer",
+          structure: "HOOK + BULLETS + CTA",
+          bulletsRequired: true,
+          hookRequired: true,
+          ctaRequired: true,
+          noFluff: true,
+          rules,
+        },
+        desiredFeatures,
+      };
+
+      const r = await fetch("/api/ai/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const ct = (r.headers.get("content-type") || "").toLowerCase();
+      const raw = await r.text();
+
+      if (!ct.includes("application/json")) {
+        console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 350) });
+        throw new Error("AI returned non-JSON");
+      }
+
+      let j;
+      try {
+        j = JSON.parse(raw);
+      } catch {
+        console.error("❌ AI SOCIAL BAD JSON", raw.slice(0, 350));
+        throw new Error("Bad JSON from AI");
+      }
+
+      if (!j?.ok) throw new Error(j?.error || "AI failed");
+
+      let text = (j.text || "").toString().trim();
+
+      if (rules.hashtagsOnly) {
+        text = text
+          .split(/\s+/)
+          .filter((w) => w.startsWith("#"))
+          .slice(0, 25)
+          .join(" ");
+
+        if (!text) {
+          const base = (v.title || "Car For Sale")
+            .replace(/[^a-z0-9\s]/gi, " ")
+            .trim()
+            .split(/\s+/)
+            .slice(0, 6)
+            .map((w) => `#${w}`);
+          text = base.join(" ");
+        }
+
+        return text.trim();
+      }
+
+      text = ensureBullets(text, desiredFeatures);
+      text = clampText(text, rules.maxChars);
+      return text.trim();
+    }
+
+    async function generateOne(platform) {
+      clearPlaceholderOnce();
+      const id = outId(platform);
+      if (!id || !$(id)) return;
+      setVal(id, "Generating…");
+      try {
+        const text = await aiPost(platform);
+        setVal(id, text);
+      } catch (e) {
+        setVal(id, `AI ERROR: ${String(e?.message || e)}`);
+      }
+    }
+
+    async function generateAll() {
+      clearPlaceholderOnce();
+      const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
+      for (const p of platforms) await generateOne(p);
+    }
+
+    function wireRegenButtons() {
+      const wires = [
+        ["fbNewBtn", "facebook"],
+        ["igNewBtn", "instagram"],
+        ["ttNewBtn", "tiktok"],
+        ["liNewBtn", "linkedin"],
+        ["xNewBtn", "x"],
+        ["dmNewBtn", "dm"],
+        ["mkNewBtn", "marketplace"],
+        ["hashNewBtn", "hashtags"],
+      ];
+
+      wires.forEach(([btnId, platform]) => {
+        const b = $(btnId);
+        if (!b || b.__LR_BOUND__) return;
+        b.__LR_BOUND__ = true;
+
+        b.addEventListener("click", async (e) => {
+          e.preventDefault();
+          pressAnim(b);
+          await generateOne(platform);
+        });
+      });
+    }
+
+    function wireGenerateAll() {
+      const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
+      if (!genAllBtn || genAllBtn.__LR_BOUND__) return;
+      genAllBtn.__LR_BOUND__ = true;
+
+      genAllBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        pressAnim(genAllBtn);
+        generateAll();
+      });
+    }
+
+    window.LR_STEP2 = {
+      generateAll,
+      generateOne,
+      wireRegenButtons,
+      wireGenerateAll,
+      clearPlaceholderOnce,
+    };
+
+    // boot wire
+    clearPlaceholderOnce();
+    wireRegenButtons();
+    wireGenerateAll();
+  })();
+
+  // ==================================================
+  // STEP 2 — COPY + REMOVE EMOJIS
+  // ==================================================
+  (function wireStep2CopyEmoji() {
+    const STEP2 = {
+      fb: { ta: "fbOutput", copy: "fbCopyBtn", emoji: "fbEmojiBtn" },
+      ig: { ta: "igOutput", copy: "igCopyBtn", emoji: "igEmojiBtn" },
+      tt: { ta: "ttOutput", copy: "ttCopyBtn", emoji: "ttEmojiBtn" },
+      li: { ta: "liOutput", copy: "liCopyBtn", emoji: "liEmojiBtn" },
+      x: { ta: "xOutput", copy: "xCopyBtn", emoji: "xEmojiBtn" },
+      dm: { ta: "dmOutput", copy: "dmCopyBtn", emoji: "dmEmojiBtn" },
+      mk: { ta: "marketplaceOutput", copy: "mkCopyBtn", emoji: "mkEmojiBtn" },
+      hash: { ta: "hashtagsOutput", copy: "hashCopyBtn", emoji: "hashEmojiBtn" },
+    };
+
+    function stripEmojis(text) {
+      if (!text) return "";
+      return text
+        .replace(/[\p{Extended_Pictographic}]/gu, "")
+        .replace(/[\uFE0E\uFE0F]/g, "")
+        .replace(/\u200D/g, "")
+        .replace(/[^\S\r\n]{2,}/g, " ")
+        .trim();
+    }
+
+    async function copyText(text) {
+      if (!text) return false;
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+      const ta = DOC.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      DOC.body.appendChild(ta);
+      ta.select();
+      const ok = DOC.execCommand("copy");
+      DOC.body.removeChild(ta);
+      return ok;
+    }
+
+    Object.values(STEP2).forEach((cfg) => {
+      const copyBtn = $(cfg.copy);
+      const emojiBtn = $(cfg.emoji);
+      const ta = $(cfg.ta);
+
+      if (copyBtn && !copyBtn.__LR_BOUND__) {
+        copyBtn.__LR_BOUND__ = true;
+        copyBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          pressAnim(copyBtn);
+          const text = (ta && ("value" in ta ? ta.value : ta.textContent) || "").trim();
+          if (!text) return;
+          try {
+            await copyText(text);
+            flashBtn(copyBtn, "Copied!");
+          } catch {
+            flashBtn(copyBtn, "Copy failed");
+          }
+        });
+      }
+
+      if (emojiBtn && ta && !emojiBtn.__LR_BOUND__) {
+        emojiBtn.__LR_BOUND__ = true;
+        emojiBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          pressAnim(emojiBtn);
+
+          const get = () => ("value" in ta ? ta.value : ta.textContent) || "";
+          const set = (v) => {
+            if ("value" in ta) ta.value = v;
+            else ta.textContent = v;
+            autoGrowTextarea(ta);
+          };
+
+          if (!ta.__LR_EMOJI_ORIG__) ta.__LR_EMOJI_ORIG__ = get();
+
+          const isStripped = !!ta.__LR_EMOJI_STRIPPED__;
+          if (!isStripped) {
+            set(stripEmojis(get()));
+            ta.__LR_EMOJI_STRIPPED__ = true;
+            emojiBtn.textContent = "Restore Emojis";
+          } else {
+            set(ta.__LR_EMOJI_ORIG__ || "");
+            ta.__LR_EMOJI_STRIPPED__ = false;
+            emojiBtn.textContent = "Remove Emojis";
+          }
+        });
+      }
+    });
+  })();
 
   // ==================================================
   // CALCULATOR PAD
@@ -277,9 +693,7 @@
         const result = safeEval(expr);
         if (!Number.isFinite(result)) throw new Error("nan");
         const rounded =
-          Math.abs(result) > 1e12
-            ? result.toExponential(6)
-            : Math.round(result * 1e9) / 1e9;
+          Math.abs(result) > 1e12 ? result.toExponential(6) : Math.round(result * 1e9) / 1e9;
         setDisplay(rounded);
       } catch {
         setDisplay("Error");
@@ -296,37 +710,22 @@
       b.addEventListener("click", () => {
         const v = b.getAttribute("data-calc");
         if (!v) return;
-
         if (v === "C") return clearAll();
         if (v === "⌫") return backspace();
         if (v === "=") return evaluate();
-
         append(v);
       });
     });
 
     DOC.addEventListener("keydown", (e) => {
-      const isOpen =
-        !modal.classList.contains("hidden") && modal.style.display !== "none";
+      const isOpen = !modal.classList.contains("hidden") && modal.style.display !== "none";
       if (!isOpen) return;
 
       const k = e.key;
 
-      if (k === "Escape") {
-        e.preventDefault();
-        clearAll();
-        return;
-      }
-      if (k === "Enter" || k === "=") {
-        e.preventDefault();
-        evaluate();
-        return;
-      }
-      if (k === "Backspace") {
-        e.preventDefault();
-        backspace();
-        return;
-      }
+      if (k === "Escape") return (e.preventDefault(), clearAll());
+      if (k === "Enter" || k === "=") return (e.preventDefault(), evaluate());
+      if (k === "Backspace") return (e.preventDefault(), backspace());
 
       if (/[0-9]/.test(k)) return (e.preventDefault(), append(k));
       if (["+", "-", "*", "/"].includes(k)) return (e.preventDefault(), append(k));
@@ -336,524 +735,6 @@
 
     console.log("✅ CALCULATOR WIRED");
   })();
-
-  // ==================================================
-  // AUTO-GROW OBSERVER
-  // ==================================================
-  (function wireAutoGrowObserver() {
-    if (window.__LR_AUTOGROW__) return;
-    window.__LR_AUTOGROW__ = true;
-
-    const obs = new MutationObserver(() => {
-      DOC.querySelectorAll("textarea").forEach((ta) => autoGrowTextarea(ta));
-    });
-
-    obs.observe(DOC.body, { childList: true, subtree: true, characterData: true });
-  })();
-
-  // ===============================
-  // AUTO-GROW: AI HELPER TEXTAREAS
-  // ===============================
-  (function wireAiAutoGrow() {
-    const sel =
-      "#workflowInput,#objectionInput,#messageInput,#askInput,#helpInput,#carExpertInput,[data-ai-followup-input]";
-
-    function grow(el) {
-      if (!el || el.tagName !== "TEXTAREA") return;
-      el.style.height = "auto";
-      el.style.overflow = "hidden";
-      el.style.resize = "none";
-      el.style.height = Math.min(el.scrollHeight || 0, 420) + "px";
-    }
-
-    DOC.querySelectorAll(sel).forEach((ta) => {
-      grow(ta);
-      ta.addEventListener("input", () => grow(ta));
-    });
-
-    DOC.addEventListener("input", (e) => {
-      const t = e.target;
-      if (t && t.tagName === "TEXTAREA" && t.matches(sel)) grow(t);
-    });
-  })();
-
-  // ==================================================
-  // STEP 2 AUTO-EXPAND WIRING
-  // ==================================================
-  const STEP2_TEXTAREAS = [
-    "fbOutput",
-    "igOutput",
-    "ttOutput",
-    "liOutput",
-    "xOutput",
-    "dmOutput",
-    "marketplaceOutput",
-    "hashtagsOutput",
-  ];
-
-  STEP2_TEXTAREAS.forEach((id) => {
-    const ta = $(id);
-    if (!ta) return;
-    if (!ta.__LR_AUTOGROW_BOUND__) {
-      ta.__LR_AUTOGROW_BOUND__ = true;
-      ta.addEventListener("input", () => autoGrowTextarea(ta));
-    }
-    autoGrowTextarea(ta);
-  });
-
-  // ==================================================
-  // URL NORMALIZER
-  // ==================================================
-  function normalizeDealerUrl(raw) {
-    let s = (raw || "").toString().trim();
-    s = s.replace(/\s+/g, "");
-
-    const lastHttp = Math.max(s.lastIndexOf("http://"), s.lastIndexOf("https://"));
-    if (lastHttp > 0) s = s.slice(lastHttp);
-
-    s = s.replace(/^whttps:\/\//i, "https://");
-    s = s.replace(/^whttp:\/\//i, "http://");
-
-    if (!/^https?:\/\//i.test(s) && /^[\w.-]+\.[a-z]{2,}/i.test(s)) {
-      s = "https://" + s;
-    }
-    return s;
-  }
-
-  // ==================================================
-  // STEP 1 SELECTION — STORE
-  // ==================================================
-  STORE.step1Selected = Array.isArray(STORE.step1Selected) ? STORE.step1Selected : [];
-  STORE.holdingZonePhotos = Array.isArray(STORE.holdingZonePhotos)
-    ? STORE.holdingZonePhotos
-    : [];
-  STORE.socialReadyPhotos = Array.isArray(STORE.socialReadyPhotos)
-    ? STORE.socialReadyPhotos
-    : [];
-
-  // ==================================================
-  // STEP 2 OUTPUT SETTERS + SUMMARY (works with textarea OR div)
-  // ==================================================
-  function setVal(id, v) {
-    const el = $(id);
-    if (!el) return;
-
-    const text = (v ?? "").toString();
-
-    // textarea / input
-    if ("value" in el) {
-      el.value = text;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      autoGrowTextarea(el);
-      return;
-    }
-
-    // div / pre / anything else
-    el.textContent = text;
-  }
-
-  function renderSummary(vehicle) {
-    const out = $("summaryOutput");
-    if (!out) return;
-    const v = vehicle || {};
-    out.innerHTML = `
-      <div class="small-note" style="margin:.35rem 0;">
-        <b>${(v.title || "").replace(/</g, "&lt;")}</b>
-      </div>
-      <div class="small-note">Price: <b>${v.price || "—"}</b> • Mileage: <b>${v.mileage || "—"}</b></div>
-      <div class="small-note">VIN: <b>${v.vin || "—"}</b> • Stock: <b>${v.stock || "—"}</b></div>
-      <div class="small-note">Ext/Int: <b>${v.exterior || "—"}</b> / <b>${v.interior || "—"}</b></div>
-      <div class="small-note">Powertrain: <b>${v.engine || "—"}</b> • <b>${v.transmission || v.trans || "—"}</b></div>
-    `;
-  }
-
-// ==================================================
-// STEP 2 — HARDENED SOCIAL GENERATOR (NO GENERIC POSTS)
-// ==================================================
-
-// map platform -> textarea id (must match index.html)
-function mapPlatformToTextarea(platform) {
-  const m = {
-    facebook: "fbOutput",
-    instagram: "igOutput",
-    tiktok: "ttOutput",
-    linkedin: "liOutput",
-    x: "xOutput",
-    dm: "dmOutput",
-    marketplace: "marketplaceOutput",
-    hashtags: "hashtagsOutput",
-  };
-  return m[String(platform || "").toLowerCase()] || "";
-}
-
-// pull “known” features only if we have evidence (vehicle fields OR description text)
-function buildDesiredFeatures(v) {
-  v = v || {};
-  const feats = [];
-
-  const add = (x) => {
-    const s = (x || "").toString().trim();
-    if (!s) return;
-    feats.push(s);
-  };
-
-  // from structured fields (safe)
-  add(v.engine ? `${v.engine}` : "");
-  add(v.drivetrain ? `${v.drivetrain}` : "");
-  add(v.transmission ? `${v.transmission}` : (v.trans ? `${v.trans}` : ""));
-  add(v.trim ? `${v.trim}` : "");
-  add(v.mileage ? `Only ${v.mileage}` : "");
-  add(v.exterior ? `${v.exterior} Exterior` : "");
-  add(v.interior ? `${v.interior} Interior` : "");
-  add(v.price ? `Priced at ${v.price}` : "");
-  add(v.certified ? "Certified Pre-Owned" : "");
-  add(v.oneOwner ? "One Owner" : "");
-  add(v.noAccidents ? "No Accidents" : "");
-
-  // from description text (pattern only — no guessing)
-  const txt = (v.description || "").toString();
-
-  const has = (re) => re.test(txt);
-  if (has(/\bcarplay\b/i)) add("Apple CarPlay");
-  if (has(/\bandroid auto\b/i)) add("Android Auto");
-  if (has(/\badaptive cruise\b|\bacc\b/i)) add("Adaptive Cruise Control");
-  if (has(/\bheated steering wheel\b/i)) add("Heated Steering Wheel");
-  if (has(/\bheated seats?\b/i)) add("Heated Seats");
-  if (has(/\bremote start\b/i)) add("Remote Start");
-  if (has(/\bblind spot\b/i)) add("Blind Spot Monitor");
-  if (has(/\bcross[-\s]?traffic\b/i)) add("Rear Cross-Traffic Alert");
-  if (has(/\blane keep\b|\blane assist\b/i)) add("Lane Keep Assist");
-  if (has(/\brear park\b|\bpark assist\b/i)) add("Rear Park Assist");
-
-  // optional: packages if provided explicitly
-  if (v.packages) add(v.packages);
-
-  // de-dupe + cap
-  const seen = new Set();
-  const out = [];
-  for (const f of feats) {
-    const key = f.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(f);
-    if (out.length >= 12) break;
-  }
-  return out;
-}
-
-function ensureBullets(text, features) {
-  const t = (text || "").toString().trim();
-  const hasBullets = /(^|\n)\s*(•|-|⭐)/.test(t);
-  if (hasBullets || !features?.length) return t;
-
-  return (
-    t +
-    "\n\n⭐ MOST-WANTED FEATURES:\n" +
-    features.map((f) => `• ${f}`).join("\n")
-  );
-}
-
-// strict, platform-specific rules to stop “generic” output
-function platformRules(platform) {
-  const p = String(platform || "").toLowerCase();
-  if (p === "x") return { maxChars: 280, short: true };
-  if (p === "dm") return { maxChars: 420, short: true };
-  if (p === "tiktok") return { maxChars: 700, short: false };
-  if (p === "instagram") return { maxChars: 900, short: false };
-  if (p === "marketplace") return { maxChars: 1400, short: false };
-  if (p === "hashtags") return { hashtagsOnly: true };
-  return { maxChars: 1200, short: false };
-}
-
-function clampText(text, maxChars) {
-  if (!maxChars) return text;
-  const t = (text || "").toString();
-  if (t.length <= maxChars) return t;
-  return t.slice(0, maxChars - 1).trimEnd() + "…";
-}
-
-async function aiPost(platform) {
-  const v = STORE.lastVehicle || STORE.vehicle || {};
-  const rules = platformRules(platform);
-  const desiredFeatures = buildDesiredFeatures(v);
-
-  // HARD REQUIREMENTS: hook + bullets + CTA (and hashtags only for hashtags)
-  const payload = {
-    platform,
-    vehicle: {
-      url: v.url || "",
-      title: v.title || "",
-      trim: v.trim || "",
-      price: v.price || "",
-      mileage: v.mileage || "",
-      vin: v.vin || "",
-      stock: v.stock || "",
-      exterior: v.exterior || "",
-      interior: v.interior || "",
-      engine: v.engine || "",
-      drivetrain: v.drivetrain || "",
-      transmission: v.transmission || v.trans || "",
-      description: v.description || "",
-    },
-    style: {
-      tone: "high-energy closer",
-      structure: "HOOK + BULLETS + CTA",
-      bulletsRequired: true,
-      hookRequired: true,
-      ctaRequired: true,
-      noFluff: true,
-      rules,
-    },
-    desiredFeatures, // bullet seeds (evidence-based)
-  };
-
-  const r = await fetch("/api/ai/social", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  const ct = (r.headers.get("content-type") || "").toLowerCase();
-  const raw = await r.text();
-
-  if (!ct.includes("application/json")) {
-    console.error("❌ AI SOCIAL NON-JSON", { status: r.status, head: raw.slice(0, 350) });
-    throw new Error("AI returned non-JSON");
-  }
-
-  let j;
-  try {
-    j = JSON.parse(raw);
-  } catch {
-    console.error("❌ AI SOCIAL BAD JSON", raw.slice(0, 350));
-    throw new Error("Bad JSON from AI");
-  }
-
-  if (!j?.ok) throw new Error(j?.error || "AI failed");
-
-  let text = (j.text || "").toString().trim();
-
-  // enforce bullets + clamp
-  if (!rules.hashtagsOnly) {
-    text = ensureBullets(text, desiredFeatures);
-    text = clampText(text, rules.maxChars);
-  } else {
-    // hashtags-only safety
-    text = text
-      .split(/\s+/)
-      .filter((w) => w.startsWith("#"))
-      .slice(0, 25)
-      .join(" ");
-    if (!text) {
-      // last resort if AI fails: make hashtags from title words (still safe)
-      const base = (v.title || "Car For Sale")
-        .replace(/[^a-z0-9\s]/gi, " ")
-        .trim()
-        .split(/\s+/)
-        .slice(0, 6)
-        .map((w) => `#${w}`);
-      text = base.join(" ");
-    }
-  }
-
-  return text;
-}
-
-async function generateAllStep2() {
-  const platforms = ["facebook", "instagram", "tiktok", "linkedin", "x", "dm", "marketplace", "hashtags"];
-  for (const p of platforms) {
-    const id = mapPlatformToTextarea(p);
-    const ta = id ? $(id) : null;
-    if (!ta) continue;
-
-    setVal(id, "Generating…");
-    try {
-      const text = await aiPost(p);
-      setVal(id, text);
-    } catch (e) {
-      setVal(id, `AI ERROR: ${String(e?.message || e)}`);
-    }
-  }
-}
-
-function wireRegenButtons() {
-  const wires = [
-    ["fbNewBtn", "facebook"],
-    ["igNewBtn", "instagram"],
-    ["ttNewBtn", "tiktok"],
-    ["liNewBtn", "linkedin"],
-    ["xNewBtn", "x"],
-    ["dmNewBtn", "dm"],
-    ["mkNewBtn", "marketplace"],
-    ["hashNewBtn", "hashtags"],
-  ];
-
-  wires.forEach(([btnId, platform]) => {
-    const b = $(btnId);
-    if (!b || b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
-
-    b.addEventListener("click", async () => {
-      pressAnim(b);
-      const outId = mapPlatformToTextarea(platform);
-      if (!outId || !$(outId)) return;
-
-      setVal(outId, "Generating…");
-      try {
-        const text = await aiPost(platform);
-        setVal(outId, text);
-      } catch (e) {
-        setVal(outId, `AI ERROR: ${String(e?.message || e)}`);
-      }
-    });
-  });
-}
-
-// Generate All button (works with id OR data attribute)
-(function wireGenerateAll() {
-  const genAllBtn = $("generateAllSocialBtn") || DOC.querySelector("[data-generate-all-social]");
-  if (!genAllBtn || genAllBtn.__LR_BOUND__) return;
-  genAllBtn.__LR_BOUND__ = true;
-
-  genAllBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    pressAnim(genAllBtn);
-    generateAllStep2();
-  });
-})();
-
-// Step2 boot hardening: if placeholders exist, keep them but make sure boxes can be filled
-(function step2BootHarden() {
-  // do NOT erase user text if already there
-  const ids = ["fbOutput","igOutput","ttOutput","liOutput","xOutput","dmOutput","marketplaceOutput","hashtagsOutput"];
-  ids.forEach((id) => {
-    const ta = $(id);
-    if (!ta) return;
-    // if a textarea literally contains "Output..." from template, clear it once
-    if (!ta.__LR_CLEARED_ONCE__ && (ta.value || "").trim() === "Output...") {
-      ta.value = "";
-      ta.__LR_CLEARED_ONCE__ = true;
-      autoGrowTextarea(ta);
-    }
-  });
-
-  // make sure buttons are wired even before first boost
-  wireRegenButtons();
-})();
-
-
-
-  // ==================================================
-  // STEP 2 — COPY + REMOVE EMOJIS
-  // ==================================================
-  const STEP2 = {
-    fb: { ta: "fbOutput", copy: "fbCopyBtn", emoji: "fbEmojiBtn" },
-    ig: { ta: "igOutput", copy: "igCopyBtn", emoji: "igEmojiBtn" },
-    tt: { ta: "ttOutput", copy: "ttCopyBtn", emoji: "ttEmojiBtn" },
-    li: { ta: "liOutput", copy: "liCopyBtn", emoji: "liEmojiBtn" },
-    x: { ta: "xOutput", copy: "xCopyBtn", emoji: "xEmojiBtn" },
-    dm: { ta: "dmOutput", copy: "dmCopyBtn", emoji: "dmEmojiBtn" },
-    mk: { ta: "marketplaceOutput", copy: "mkCopyBtn", emoji: "mkEmojiBtn" },
-    hash: { ta: "hashtagsOutput", copy: "hashCopyBtn", emoji: "hashEmojiBtn" },
-  };
-
-  function stripEmojis(text) {
-    if (!text) return "";
-    return text
-      .replace(/[\p{Extended_Pictographic}]/gu, "")
-      .replace(/[\uFE0E\uFE0F]/g, "")
-      .replace(/\u200D/g, "")
-      .replace(/[^\S\r\n]{2,}/g, " ")
-      .trim();
-  }
-
-  async function copyText(text) {
-    if (!text) return false;
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-    const ta = DOC.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    DOC.body.appendChild(ta);
-    ta.select();
-    const ok = DOC.execCommand("copy");
-    DOC.body.removeChild(ta);
-    return ok;
-  }
-
-  Object.values(STEP2).forEach((cfg) => {
-    const copyBtn = $(cfg.copy);
-    const emojiBtn = $(cfg.emoji);
-    const ta = $(cfg.ta);
-
-    if (copyBtn && !copyBtn.__LR_BOUND__) {
-      copyBtn.__LR_BOUND__ = true;
-      copyBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        pressAnim(copyBtn);
-        const text = (ta?.value || "").trim();
-        if (!text) return;
-
-        try {
-          await copyText(text);
-          flashBtn(copyBtn, "Copied!");
-        } catch (err) {
-          console.warn("Copy failed:", cfg.copy, err);
-          flashBtn(copyBtn, "Copy failed");
-        }
-      });
-    }
-
-    if (emojiBtn && ta && !emojiBtn.__LR_BOUND__) {
-      emojiBtn.__LR_BOUND__ = true;
-      emojiBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        pressAnim(emojiBtn);
-
-        if (!ta.__LR_EMOJI_ORIG__) ta.__LR_EMOJI_ORIG__ = ta.value || "";
-
-        const isStripped = !!ta.__LR_EMOJI_STRIPPED__;
-        if (!isStripped) {
-          ta.value = stripEmojis(ta.value || "");
-          ta.__LR_EMOJI_STRIPPED__ = true;
-          emojiBtn.textContent = "Restore Emojis";
-        } else {
-          ta.value = ta.__LR_EMOJI_ORIG__ || "";
-          ta.__LR_EMOJI_STRIPPED__ = false;
-          emojiBtn.textContent = "Remove Emojis";
-        }
-        autoGrowTextarea(ta);
-      });
-    }
-  });
-function buildFeatureBullets(v){
-  const feats = [];
-
-  // only include what we actually have (no guessing)
-  const add = (x) => { if (x && String(x).trim()) feats.push(String(x).trim()); };
-
-  add(v.trim);
-  add(v.engine);
-  add(v.drivetrain);
-  add(v.transmission);
-  add(v.fuel);
-  add(v.carfax);
-  add(v.oneOwner ? "One Owner" : "");
-  add(v.noAccidents ? "No Accidents" : "");
-  add(v.appleCarplay ? "Apple CarPlay" : "");
-  add(v.androidAuto ? "Android Auto" : "");
-  add(v.adaptiveCruise ? "Adaptive Cruise Control" : "");
-  add(v.heatedSeats ? "Heated Seats" : "");
-  add(v.heatedWheel ? "Heated Steering Wheel" : "");
-  add(v.remoteStart ? "Remote Start" : "");
-
-  // de-dupe
-  return [...new Set(feats)].slice(0, 10);
-}
 
   // ==================================================
   // FLOATING TOOLS WIRING
@@ -925,10 +806,9 @@ function buildFeatureBullets(v){
 
     function openModal(modalId, btnId) {
       const m = $(modalId);
-      if (!m) return console.warn("Modal missing:", modalId);
+      if (!m) return;
 
       closeAll();
-
       m.classList.remove("hidden");
       m.style.display = "flex";
       m.setAttribute("aria-hidden", "false");
@@ -1102,7 +982,6 @@ function buildFeatureBullets(v){
 
     function buildPayload(type, text) {
       const v = window.STORE?.lastVehicle || {};
-
       if (type === "objection") return { objection: text };
       if (type === "message") return { input: text };
       if (type === "campaign") return { scenario: buildCampaignScenario(text) };
@@ -1165,10 +1044,7 @@ function buildFeatureBullets(v){
       const input = findInput(modal, type);
       const output = findOutput(modal, type);
 
-      if (!input || !output) {
-        alert("AI modal missing input/output. Check index.html for duplicate IDs.");
-        return;
-      }
+      if (!input || !output) return;
 
       const text = (input.value || "").trim();
       if (!text) {
@@ -1454,9 +1330,9 @@ function buildFeatureBullets(v){
     });
   }
 
-  // ===============================
+  // ==================================================
   // PAYMENT CALCULATOR
-  // ===============================
+  // ==================================================
   function wirePaymentCalculator() {
     const modal = $("paymentModal");
     if (!modal) return;
@@ -1485,9 +1361,7 @@ function buildFeatureBullets(v){
       term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
       tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
       fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
-      state: String(
-        pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
-      )
+      state: String(pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI")
         .trim()
         .toUpperCase(),
       rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
@@ -1563,9 +1437,9 @@ function buildFeatureBullets(v){
     console.log("✅ PAYMENT CALC WIRED");
   }
 
-  // ===============================
+  // ==================================================
   // INCOME CALCULATOR
-  // ===============================
+  // ==================================================
   function wireIncomeCalcDirect() {
     const modal = $("incomeModal");
     if (!modal) return;
@@ -1668,9 +1542,9 @@ function buildFeatureBullets(v){
     console.log("✅ INCOME CALC WIRED");
   }
 
-  // --------------------------------------------------
+  // ==================================================
   // STEP 3: HOLDING ZONE
-  // --------------------------------------------------
+  // ==================================================
   function ensureHoldingNote() {
     const hz = $("holdingZone");
     if (!hz) return;
@@ -1692,9 +1566,7 @@ function buildFeatureBullets(v){
 
     ensureHoldingNote();
 
-    const photos = Array.isArray(STORE.holdingZonePhotos)
-      ? STORE.holdingZonePhotos.slice(0, 24)
-      : [];
+    const photos = Array.isArray(STORE.holdingZonePhotos) ? STORE.holdingZonePhotos.slice(0, 24) : [];
     hz.innerHTML = "";
 
     if (!photos.length) {
@@ -1712,16 +1584,15 @@ function buildFeatureBullets(v){
       img.addEventListener("dblclick", (e) => {
         e.preventDefault();
         addToSocialReady(src, true);
-        console.log("🔒 ADDED TO SOCIAL READY:", src);
       });
 
       hz.appendChild(img);
     });
   }
 
-  // --------------------------------------------------
+  // ==================================================
   // STEP 1: SEND SELECTED → STEP 3
-  // --------------------------------------------------
+  // ==================================================
   function syncSendBtn() {
     const btn = $("sendToDesignStudio");
     if (!btn) return;
@@ -1746,9 +1617,7 @@ function buildFeatureBullets(v){
     btn.addEventListener("click", () => {
       pressAnim(btn);
 
-      const picked = Array.isArray(STORE.step1Selected)
-        ? STORE.step1Selected.slice(0, 24)
-        : [];
+      const picked = Array.isArray(STORE.step1Selected) ? STORE.step1Selected.slice(0, 24) : [];
       if (!picked.length) return alert("Select at least 1 photo first.");
 
       STORE.holdingZonePhotos = picked.slice(0, 24);
@@ -1758,25 +1627,21 @@ function buildFeatureBullets(v){
 
       const step3 = $("creativeHub");
       if (step3) step3.scrollIntoView({ behavior: "smooth" });
-
-      console.log("✅ SENT TO STEP 3:", picked.length);
     });
   })();
 
-  // --------------------------------------------------
+  // ==================================================
   // HEALTH CHECK
-  // --------------------------------------------------
+  // ==================================================
   try {
     const res = await fetch("/api/health", { cache: "no-store" });
     const json = await res.json();
     console.log("✅ API HEALTH:", json);
-  } catch (e) {
-    console.warn("⚠️ API not available (ok in dev)");
-  }
+  } catch {}
 
-  // --------------------------------------------------
+  // ==================================================
   // BOOST (Step 1) → photos + vehicle + Step 2 AI
-  // --------------------------------------------------
+  // ==================================================
   const boostBtn = $("boostBtn");
   const urlInput = $("dealerUrlInput");
 
@@ -1792,8 +1657,6 @@ function buildFeatureBullets(v){
         const url = normalizeDealerUrl(raw);
         if (!url) return alert("Paste a valid vehicle URL first.");
 
-        console.log("🚀 BOOST:", url);
-
         let res, data;
 
         try {
@@ -1803,15 +1666,10 @@ function buildFeatureBullets(v){
           });
 
           const ct = (res.headers.get("content-type") || "").toLowerCase();
-
           if (!ct.includes("application/json")) {
             const txt = await res.text();
-            console.error("❌ BOOST NON-JSON RESPONSE", {
-              status: res.status,
-              contentType: ct,
-              head: txt.slice(0, 300),
-            });
-            alert(`Boost returned NON-JSON (status ${res.status}). Check console.`);
+            console.error("❌ BOOST NON-JSON RESPONSE", { status: res.status, contentType: ct, head: txt.slice(0, 300) });
+            alert(`Boost returned NON-JSON (status ${res.status}).`);
             return;
           }
 
@@ -1833,21 +1691,21 @@ function buildFeatureBullets(v){
 
         renderSummary(STORE.lastVehicle);
 
-        wireRegenButtons();
-        generateAllStep2();
+        // Step 2 bridge only
+        window.LR_STEP2?.clearPlaceholderOnce?.();
+        window.LR_STEP2?.wireRegenButtons?.();
+        window.LR_STEP2?.wireGenerateAll?.();
+        window.LR_STEP2?.generateAll?.();
 
         const rawImages = Array.isArray(data.images) ? data.images : [];
         const images = [...new Set(rawImages)].filter(Boolean);
 
-const grid = $("step1Photos") || $("boostPhotoGrid") || $("photoGrid") || $("creativeThumbGrid");
-if (!grid) return;
+        const grid = $("step1Photos") || $("boostPhotoGrid") || $("photoGrid") || $("creativeThumbGrid");
+        if (!grid) return;
 
-
-        // ✅ FORCE GRID VISUALS HERE (bypasses CSS regressions)
         grid.style.display = "grid";
         grid.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
         grid.style.gap = "14px";
-
         grid.innerHTML = "";
 
         if (!images.length) {
@@ -1867,9 +1725,8 @@ if (!grid) return;
         const MAX_UI = 24;
 
         images.slice(0, MAX_UI).forEach((src) => {
-          // ✅ GUARANTEED SQUARE THUMB WRAPPER
           const tile = DOC.createElement("div");
-          tile.className = "lr-thumb"; // for CSS if present
+          tile.className = "lr-thumb";
           tile.style.position = "relative";
           tile.style.cursor = "pointer";
           tile.style.borderRadius = "14px";
@@ -1883,7 +1740,6 @@ if (!grid) return;
           img.loading = "lazy";
           img.decoding = "async";
           img.alt = "";
-          // ✅ FORCE COVER + FILL
           img.style.position = "absolute";
           img.style.inset = "0";
           img.style.width = "100%";
@@ -1936,9 +1792,9 @@ if (!grid) return;
     });
   }
 
-  // ===============================
+  // ==================================================
   // UNIVERSAL AI FOLLOW-UP (ALL MODALS)
-  // ===============================
+  // ==================================================
   function wireAiFollowups() {
     const configs = [
       ["workflowModal", "workflowInput", "runWorkflowBtn", "workflowOutput"],
@@ -1959,17 +1815,15 @@ if (!grid) return;
     };
 
     configs.forEach(([modalId, inputId, runBtnId, outputId]) => {
-      const modal = DOC.getElementById(modalId);
-      const mainInput = DOC.getElementById(inputId);
-      const runBtn = DOC.getElementById(runBtnId);
-      const outEl = DOC.getElementById(outputId);
-
+      const modal = $(modalId);
+      const mainInput = $(inputId);
+      const runBtn = $(runBtnId);
+      const outEl = $(outputId);
       if (!modal || !mainInput || !runBtn || !outEl) return;
 
       const followWrap = modal.querySelector("[data-ai-followup]");
       const followInput = modal.querySelector("[data-ai-followup-input]");
       const followBtn = modal.querySelector("[data-ai-followup-btn]");
-
       if (!followWrap || !followInput || !followBtn) return;
 
       followBtn.textContent = labelMap[modalId] || "Continue";
@@ -1995,18 +1849,14 @@ if (!grid) return;
       const showIfNeeded = () => {
         const text = (outEl.textContent || outEl.innerText || outEl.value || "").trim();
         const shouldShow = text.length > 0;
-
         const wasHidden = followWrap.style.display === "none" || !followWrap.style.display;
-
         followWrap.style.display = shouldShow ? "block" : "none";
 
         if (shouldShow && wasHidden) {
           setTimeout(() => {
             followInput.focus();
             const v = followInput.value || "";
-            try {
-              followInput.setSelectionRange(v.length, v.length);
-            } catch {}
+            try { followInput.setSelectionRange(v.length, v.length); } catch {}
             grow(followInput);
           }, 0);
         }
@@ -2031,31 +1881,22 @@ if (!grid) return;
     });
   }
 
-  // --------------------------------------------------
-  // SOCIAL READY WIRES
-  // --------------------------------------------------
+  // ==================================================
+  // FINAL INIT
+  // ==================================================
   wireSocialNav();
   wireZipButton();
   renderSocialStrip();
-
-  // --------------------------------------------------
-  // AI FOLLOW-UP WIRES
-  // --------------------------------------------------
   wireAiFollowups();
 
-  // close modals + wire calculators
   (function initToolsOnce() {
     if (window.__LR_TOOLS_INIT__) return;
     window.__LR_TOOLS_INIT__ = true;
 
-    if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
-      window.LR_TOOLS.closeAll();
-    }
+    if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") window.LR_TOOLS.closeAll();
 
     wirePaymentCalculator();
     wireIncomeCalcDirect();
-
-    console.log("✅ TOOLS INIT COMPLETE");
   })();
 
   console.log("✅ APP READY");
