@@ -509,7 +509,7 @@
   });
 
   // ==================================================
-  // FLOATING TOOLS WIRING (ONE TRUE BLOCK) — includes HELP
+  // FLOATING TOOLS WIRING (ONE TRUE BLOCK) — includes HELP ✅
   // ==================================================
   (function wireFloatingTools() {
     if (window.__LR_FLOATING_TOOLS__) return;
@@ -523,7 +523,7 @@
       workflow: "toolWorkflowBtn", // AI Campaign Builder
       message: "toolMessageBtn",
       ask: "toolAskBtn",
-      help: "toolHelpBtn", // ✅ NEW
+      help: "toolHelpBtn", // ✅
       car: "toolCarBtn",
       image: "toolImageBtn",
       video: "toolVideoBtn",
@@ -537,7 +537,7 @@
       workflow: "workflowModal",
       message: "messageModal",
       ask: "askModal",
-      help: "helpModal", // ✅ NEW
+      help: "helpModal", // ✅
       car: "carExpertModal",
       image: "imageGenModal",
       video: "videoGenModal",
@@ -637,7 +637,8 @@
   })();
 
   // ==================================================
-  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (includes HELP)
+  // AI EXPERTS — DELEGATED + CORRECT PAYLOADS (includes HELP) ✅
+  // IMPORTANT: REMOVED the old wireGlobalHelp() block (it caused double-wiring/conflicts)
   // ==================================================
   (function wireAiExpertsDelegated() {
     if (window.__LR_AI_EXPERTS_DELEGATED__) return;
@@ -696,7 +697,7 @@
       runAskBtn: "ask",
       askRunBtn: "ask",
 
-      runHelpBtn: "help", // ✅ NEW
+      runHelpBtn: "help", // ✅
 
       runCarExpertBtn: "car",
       carExpertRunBtn: "car",
@@ -707,7 +708,7 @@
       message: "/api/ai/message",
       campaign: "/api/ai/workflow",
       ask: "/api/ai/ask",
-      help: "/api/ai/ask", // ✅ routes to Ask endpoint
+      help: "/api/ai/ask", // ✅
       car: "/api/ai/car",
     };
 
@@ -716,7 +717,7 @@
       message: "messageOutput",
       campaign: "workflowOutput",
       ask: "askOutput",
-      help: "helpOutput", // ✅ NEW
+      help: "helpOutput", // ✅
       car: "carExpertOutput",
     };
 
@@ -725,7 +726,6 @@
     }
 
     function findInput(modal, type) {
-      // prefer explicit ids when available
       const byType = {
         objection: "#objectionInput",
         message: "#messageInput",
@@ -860,88 +860,9 @@
         setBusy(btn, false);
       }
     });
-// ===============================
-// GLOBAL HELP (ASK AI) — SAFE / ONE PASS
-// ===============================
-(function wireGlobalHelp() {
-  if (window.__LR_HELP_WIRED__) return;
-  window.__LR_HELP_WIRED__ = true;
 
-  const btn = document.getElementById("toolHelpBtn");
-  const modal = document.getElementById("helpModal");
-  const input = document.getElementById("helpInput");
-  const output = document.getElementById("helpOutput");
-  const run = document.getElementById("runHelpBtn");
-
-  if (!btn || !modal || !input || !run || !output) {
-    console.warn("⚠️ Help modal missing required elements");
-    return;
-  }
-
-  function open() {
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    modal.setAttribute("aria-hidden", "false");
-    setTimeout(() => input.focus(), 0);
-  }
-
-  function close() {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-    modal.setAttribute("aria-hidden", "true");
-  }
-
-  // Open Help
-  btn.addEventListener("click", () => {
-    open();
-  });
-
-  // Close handlers (X button / backdrop)
-  modal.querySelectorAll("[data-close], .modal-close-btn, .side-modal-close").forEach((el) => {
-    el.addEventListener("click", close);
-  });
-
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) close();
-  });
-
-  // ESC closes
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
-
-  // Run Help AI
-  run.addEventListener("click", async () => {
-    const q = (input.value || "").trim();
-    if (!q) {
-      output.textContent = "Ask a question first.";
-      return;
-    }
-
-    output.textContent = "Thinking…";
-    run.disabled = true;
-
-    try {
-      const r = await fetch("/api/ai/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ question: q }),
-      });
-
-      const j = await r.json().catch(() => null);
-      output.textContent = j?.ok ? j.text : j?.error || "AI error.";
-    } catch (e) {
-      output.textContent = "Request failed. Check connection.";
-    } finally {
-      run.disabled = false;
-    }
-  });
-
-  console.log("✅ GLOBAL HELP WIRED");
-})();
+    console.log("✅ AI EXPERTS DELEGATED WIRED (Help included)");
+  })();
 
   // ==================================================
   // HIDE "Send Selected to Social Ready" (next version)
@@ -1063,7 +984,7 @@
       img.src = p.url;
       img.loading = "lazy";
       img.decoding = "async";
-      img.alt = ""; // prevents broken tiny preview icon
+      img.alt = "";
 
       const lock = DOC.createElement("div");
       lock.className = "social-lock";
@@ -1458,7 +1379,7 @@
       img.src = src;
       img.loading = "lazy";
       img.decoding = "async";
-      img.alt = ""; // prevents broken tiny preview icon
+      img.alt = "";
 
       img.addEventListener("dblclick", (e) => {
         e.preventDefault();
@@ -1626,7 +1547,7 @@
           img.decoding = "async";
           img.style.width = "100%";
           img.style.display = "block";
-          img.alt = ""; // prevents broken tiny preview icon
+          img.alt = "";
 
           const badge = DOC.createElement("div");
           badge.textContent = "✓";
@@ -1674,10 +1595,6 @@
 
   // ===============================
   // UNIVERSAL AI FOLLOW-UP (ALL MODALS) — v1 POLISHED
-  // - Auto-shows follow-up when output asks questions
-  // - Auto-focuses follow-up when it appears
-  // - Auto-grows follow-up textarea
-  // - Enter = Continue, Shift+Enter = newline
   // ===============================
   function wireAiFollowups() {
     const isQuestiony = (t) => {
@@ -1692,13 +1609,12 @@
       );
     };
 
-    // modalId, mainInputId, runBtnId, outputElId
     const configs = [
       ["workflowModal", "workflowInput", "runWorkflowBtn", "workflowOutput"],
       ["objectionModal", "objectionInput", "runObjectionBtn", "objectionOutput"],
       ["messageModal", "messageInput", "runMessageBtn", "messageOutput"],
       ["askModal", "askInput", "runAskBtn", "askOutput"],
-      ["helpModal", "helpInput", "runHelpBtn", "helpOutput"], // ✅ NEW
+      ["helpModal", "helpInput", "runHelpBtn", "helpOutput"], // ✅
       ["carExpertModal", "carExpertInput", "runCarExpertBtn", "carExpertOutput"],
     ];
 
@@ -1707,7 +1623,7 @@
       objectionModal: "Continue Objection",
       messageModal: "Continue Message",
       askModal: "Continue Strategy",
-      helpModal: "Continue Help", // ✅ NEW
+      helpModal: "Continue Help", // ✅
       carExpertModal: "Continue Car Expert",
     };
 
