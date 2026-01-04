@@ -1102,3 +1102,7 @@ textarea.ai-response {
 .floating-tools{
   outline: 3px solid lime !important;
 }
+/* FINAL — FLOATING TOOLS ALIGN WITH STEP CARDS */
+.floating-tools{
+  top: 190px !important;  /* try 190 → 220 if needed */
+}
