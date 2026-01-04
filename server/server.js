@@ -595,54 +595,84 @@ Return ONLY the message.
 });
 
 /* ===============================
-   AI: WORKFLOW (Campaign Builder)
+   AI: WORKFLOW (Campaign Builder) — UNIVERSAL
    Accepts: {scenario} OR {objective} OR {input} OR {text}
-   Output: EXACTLY what was asked (count/timeframe/channel)
+   Builds: text / email / social (and combos) as requested
 ================================ */
 app.post("/api/ai/workflow", async (req, res) => {
   try {
-    const scenario = takeText(req.body.scenario, req.body.objective, req.body.input, req.body.text);
-    if (!scenario) return res.json({ ok:false, error:"Missing scenario/objective" });
+    const scenario = takeText(
+      req.body.scenario,
+      req.body.objective,
+      req.body.input,
+      req.body.text
+    );
+
+    if (!scenario) return res.json({ ok: false, error: "Missing scenario/objective" });
 
     const system = `
-You are LOT ROCKET's Campaign Builder — elite automotive follow-up strategist.
+You are LOT ROCKET's Campaign Builder — a master multi-channel automotive follow-up strategist.
 
-YOUR JOB:
-Deliver EXACTLY what the user requested. No extras. No drifting.
+MISSION:
+Build elite campaigns for car salespeople across SMS/Text, Email, and Social posts (Facebook/IG/TikTok/LinkedIn/X/Marketplace).
+You do EXACTLY what the user asks—no drift.
 
-HARD ENFORCEMENT:
-- If user asks for "1 day 5 texts" => output EXACTLY 5 text messages for the same day.
-- If user asks for "4 texts" => output EXACTLY 4.
-- If user asks for "5 day Facebook campaign" => output EXACTLY 5 days of Facebook posts.
-- Do NOT add other platforms.
-- Do NOT add extra days.
-- Do NOT add extra sections.
+NON-NEGOTIABLE PRECISION:
+- Obey the TIMEFRAME exactly (1 day = 1 day, 3 day = 3 day, etc.)
+- Obey the CHANNEL exactly (email only = email only; text only = text only; Facebook only = Facebook only)
+- Obey the COUNT exactly (5 texts = 5 texts; 3 emails = 3 emails)
+- Do NOT add extra platforms, extra days, or extra sections unless explicitly requested.
 
-QUALITY RULES (Texts):
-- Human, punchy, confident. Not corny.
-- No "Exciting news!" / no generic hype.
-- Each text has a different angle:
-  1) direct + simple
-  2) value/benefit
-  3) scarcity/availability (realistic)
-  4) objection-prevent (rate/payment/credit) without sounding desperate
-  5) close for a time (two options)
-- Always one clear CTA per text.
-- Keep each text under ~240 characters unless user asks otherwise.
+IF THE REQUEST IS CLEAR:
+Deliver immediately. Do NOT refuse.
 
-OUTPUT FORMAT (EXACT):
-Text 1: ...
-Text 2: ...
-Text 3: ...
-Text 4: ...
-Text 5: ...
-(Only include as many texts as requested.)
+IF SOMETHING IS TRULY MISSING:
+Ask ONE quick question only (example: "Is this new or used?" or "Any price/payment target?").
+Never ask multiple questions.
+
+QUALITY RULES (ALL CHANNELS):
+- Human. Confident. Appointment-driven.
+- No generic hype ("Exciting news!") and no corporate tone.
+- Each touch should have a distinct angle (value, lifestyle, urgency, social proof, objection prevention, micro-close).
+- Always one clear CTA per touch (time options, “reply YES”, “want numbers?”, “can you do 4:40 or 6:10?”).
+
+CHANNEL-SPECIFIC RULES:
+
+SMS/TEXT:
+- Short, punchy, conversational.
+- Each text must feel different (not template spam).
+- Avoid desperation. Avoid all-caps. Use light emojis only if it fits.
+
+EMAIL:
+- Provide: Subject + Body.
+- 3–7 short paragraphs max.
+- Natural tone, not newsletter.
+- Include a simple CTA + a “two times” close.
+- If it's a showroom visit / she left to think: use a gentle but confident re-engagement sequence.
+
+SOCIAL:
+- Platform-appropriate formatting.
+- Facebook: 2–3 tight sections + bullets + DM CTA.
+- IG: punchy lines + whitespace.
+- TikTok: hook + short bullets + CTA.
+- X: <= 280 chars.
+
+OUTPUT FORMAT (STRICT):
+Return ONLY the campaign deliverables.
+No strategy explanations unless the user explicitly asks.
+
+When the user specifies:
+"create a 3 day email follow up"
+Return exactly:
+Day 1 Email: Subject + Body
+Day 2 Email: Subject + Body
+Day 3 Email: Subject + Body
 `.trim();
 
-    const out = await callOpenAI({ system, user: scenario, temperature: 0.6 });
-    return res.json(out.ok ? { ok:true, text: out.text } : out);
+    const out = await callOpenAI({ system, user: scenario, temperature: 0.65 });
+    return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
-    return res.json({ ok:false, error: e?.message || String(e) });
+    return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
 
