@@ -23,43 +23,43 @@ body{
 }
 
 a{ color:#8ab4f8; }
-
 .hidden{ display:none !important; }
 
+/* ---------------------------------
+   TOKENS
+---------------------------------- */
 :root{
-  /* Core surfaces */
   --bg-panel:#020617;
   --border-soft:rgba(148,163,184,.55);
 
-  /* Text */
   --text-main:#e5e7eb;
   --text-muted:#9ca3af;
 
-  /* Brand accents */
   --accent-1:#f97316;
   --accent-2:#ec4899;
 
-  /* Shape + depth */
   --radius:18px;
   --inner:14px;
   --shadow:0 20px 50px rgba(0,0,0,.6);
 
+  /* Layout alignment */
+  --page-left: 3rem;
+  --page-right: 15rem;
+
   /* ✅ SINGLE DIAL — Floating tools vertical alignment */
-  /* Adjust ONLY this number to line up with Step cards */
-  --tools-top: 210px;
+  --tools-top: 240px;
 }
 
-
 /* ---------------------------------
-   HEADER — SAFE PREMIUM
+   HEADER
 ---------------------------------- */
 .app-header{
   position:relative;
   z-index:50;
   display:flex;
-  align-items:flex-end;          /* ✅ anchors content bottoms */
+  align-items:flex-end;
   justify-content:space-between;
-  padding:1.15rem 3.5rem;        /* ✅ slightly tighter = cleaner */
+  padding:1.15rem var(--page-right) 1.15rem var(--page-left);
   border-bottom:1px solid rgba(255,255,255,.08);
 
   background:
@@ -67,41 +67,32 @@ a{ color:#8ab4f8; }
     linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
 }
 
-
-/* Branding container — baseline locked for logo + text */
+/* Branding */
 .branding{
   display:flex;
-  align-items:flex-end;   /* hard baseline alignment */
+  align-items:center; /* keeps logo + text lined up */
   gap:18px;
 }
-
-/* Logo wrapper — no artificial vertical offset */
-.logo-wrap{
-  margin-bottom:0;        /* prevents header misalignment */
-}
+.logo-wrap{ margin-bottom:0; }
 
 .app-logo{
   height:165px;
   width:auto;
   object-fit:contain;
   filter: brightness(0) invert(1);
-
   transform: scale(1.22);
   transform-origin: left center;
-
   opacity:.98;
   transition: transform .18s ease, filter .18s ease, opacity .18s ease;
 }
-
-
-/* Premium hover (unchanged behavior) */
 .branding:hover .app-logo{
   transform: scale(1.28);
   filter: brightness(0) invert(1) drop-shadow(0 0 22px rgba(236,72,153,.45));
 }
 
-
-/* Title + tagline */
+.brand-text{
+  padding-top: 6px; /* micro baseline nudge */
+}
 .brand-text h1{
   font-size:2.25rem;
   font-weight:900;
@@ -114,7 +105,6 @@ a{ color:#8ab4f8; }
   color:rgba(255,255,255,.68);
 }
 
-/* Badge */
 .version-badge{
   font-size:.72rem;
   font-weight:900;
@@ -133,7 +123,7 @@ a{ color:#8ab4f8; }
   display:grid;
   grid-template-columns:1.05fr 1.6fr;
   gap:2.5rem;
-  padding:1.5rem 15rem 3rem 3rem;
+  padding:1.5rem var(--page-right) 3rem var(--page-left);
   align-items:start;
 }
 .column{ min-width:0; }
@@ -199,7 +189,7 @@ textarea{
 }
 
 /* ---------------------------------
-   BUTTONS
+   BUTTONS (core)
 ---------------------------------- */
 .primary-btn{
   border-radius:999px;
@@ -237,9 +227,7 @@ textarea{
   filter: brightness(1.03);
   box-shadow: 0 16px 38px rgba(0,0,0,.45);
 }
-.secondary-btn:active{
-  transform: translateY(2px) scale(.99);
-}
+.secondary-btn:active{ transform: translateY(2px) scale(.99); }
 
 .primary-btn.full,
 .secondary-btn.full{
@@ -249,7 +237,7 @@ textarea{
   align-items:center;
 }
 
-/* Step 1 buttons consistency */
+/* Step 1 buttons */
 #boostBtn,
 #sendToDesignStudio{
   width:100%;
@@ -262,11 +250,12 @@ textarea{
   gap:.55rem;
 }
 
-/* Make Send match Boost vibe (override safely) */
+/* Send matches Boost */
 #sendToDesignStudio{
   border:none !important;
   background:linear-gradient(90deg,var(--accent-1),var(--accent-2)) !important;
   color:#020617 !important;
+  margin-top: 18px; /* ✅ moved down from photo grid */
 }
 
 /* ---------------------------------
@@ -277,6 +266,7 @@ textarea{
   grid-template-columns:repeat(4,1fr);
   gap:.6rem;
   margin-top:.9rem;
+  margin-bottom:0;
 }
 
 /* ---------------------------------
@@ -287,6 +277,7 @@ textarea{
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:1.2rem;
 }
+
 .step2-card textarea{
   min-height:140px;
   border-radius:16px;
@@ -294,7 +285,7 @@ textarea{
   overflow:hidden; /* key for auto-grow JS */
 }
 
-/* Step 2 inner actions UI */
+/* Step 2 inner actions */
 .lr-step2-actions{
   margin-top: 10px;
   display:flex;
@@ -312,31 +303,24 @@ textarea{
   justify-content:center;
 }
 
-.lr-btn{
+/* ✅ LOCK Step2 buttons to gradient (prevents gray drift) */
+.step2-card .lr-btn{
   appearance:none;
-  border:1px solid rgba(255,255,255,.16);
-  color:rgba(255,255,255,.92);
-  font-weight:800;
+  border:none;
+  color:#020617;
+  font-weight:900;
   letter-spacing:.2px;
   padding:10px 14px;
   border-radius:999px;
   cursor:pointer;
   user-select:none;
-  transition: transform .08s ease, filter .15s ease, border-color .15s ease;
+  transition: transform .08s ease, filter .15s ease;
   box-shadow:0 10px 24px rgba(0,0,0,.32);
-  background:rgba(255,255,255,.06);
-  backdrop-filter: blur(10px);
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
 }
-.lr-btn:hover{
-  filter: brightness(1.08);
-  border-color: rgba(255,255,255,.26);
-}
-.lr-btn:active{ transform: translateY(1px) scale(.99); }
-.lr-btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
-.lr-btn-secondary{
-  background: linear-gradient(90deg, rgba(255,153,0,.55), rgba(255,59,203,.55));
-  border-color: rgba(255,255,255,.18);
-}
+.step2-card .lr-btn:hover{ filter: brightness(1.06); }
+.step2-card .lr-btn:active{ transform: translateY(1px) scale(.99); }
+.step2-card .lr-btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 .lr-step2-actions-emoji .lr-btn{ min-width:180px; }
 
 /* ---------------------------------
@@ -347,7 +331,7 @@ textarea{
 #toolWire{
   position:fixed;
   right:18px;
-  top: var(--tools-top) !important; /* ✅ ONLY alignment control */
+  top: var(--tools-top) !important;
   display:flex;
   flex-direction:column;
   gap:.6rem;
@@ -365,7 +349,7 @@ textarea{
 }
 
 /* ---------------------------------
-   SIDE MODALS — VERTICAL LAYOUT FIX
+   SIDE MODALS — VERTICAL LAYOUT
 ---------------------------------- */
 .side-modal{
   position: fixed;
@@ -439,7 +423,6 @@ textarea{
 .side-modal select,
 .side-modal button{ width:100%; }
 
-/* Helpful inputs (auto-grow friendly) */
 #workflowInput,
 #objectionInput,
 #messageInput,
@@ -452,7 +435,7 @@ textarea{
 }
 
 /* ---------------------------------
-   STEP 3 — HOLDING ZONE (WRAP, up to 24)
+   STEP 3 — HOLDING ZONE (WRAP)
 ---------------------------------- */
 #holdingZone{
   display:flex;
@@ -474,26 +457,32 @@ textarea{
 }
 
 /* ---------------------------------
-   SOCIAL READY — BIG VIEWER + THUMBS + LOCK
+   SOCIAL READY — VIEWER + THUMBS + LOCK
 ---------------------------------- */
 #socialReadyPanel{
   padding: 1.2rem;
   min-height: 600px;
 }
 
-/* viewer row */
+/* Viewer row: gutters so arrows never overlap the inner box */
 .social-carousel-preview{
   display:grid;
-  grid-template-columns: 64px 1fr 64px;
-  gap: 18px;
+  grid-template-columns: 84px 1fr 84px;
+  gap: 14px;
   align-items: center;
   margin-top: 14px;
 }
+.social-carousel-preview > :first-child,
+.social-carousel-preview > :last-child{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
-/* arrows */
+/* Arrows */
 .ghost-circle-btn{
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: rgba(2,6,23,.7);
@@ -502,7 +491,7 @@ textarea{
   font-size: 18px;
 }
 
-/* ✅ BIGGER viewer */
+/* Big viewer */
 #socialCarouselPreviewImg{
   width: min(760px, 100%);
   height: 420px;
@@ -514,19 +503,19 @@ textarea{
   margin: 0 auto;
 }
 
-/* hide preview if empty */
+/* Hide viewer if empty */
 #socialCarouselPreviewImg:not([src]),
 #socialCarouselPreviewImg[src=""]{
   display:none !important;
 }
 
-/* status */
+/* Status */
 #socialCarouselStatus{
   text-align:center;
   margin-top:.6rem;
 }
 
-/* strip container (wrap, no scroll) */
+/* Strip container (wrap, no scroll) */
 #socialCarousel{
   display:flex;
   flex-wrap:wrap;
@@ -541,7 +530,7 @@ textarea{
   align-content: flex-start;
 }
 
-/* ✅ thumbs look correct */
+/* Thumbs */
 #socialCarousel .social-thumb-btn{
   width: 108px;
   height: 108px;
@@ -567,7 +556,7 @@ textarea{
   display: block;
 }
 
-/* ✅ lock badge */
+/* Lock badge */
 #socialCarousel .social-lock{
   position:absolute;
   top:8px;
@@ -585,12 +574,24 @@ textarea{
   user-select:none;
 }
 
-/* actions */
+/* Actions */
 .social-carousel-actions{
   display:flex;
   gap:.8rem;
   margin-top:14px;
   flex-wrap:wrap;
+}
+
+/* ✅ REMOVE THE "Preview" TOGGLE/ROW SAFELY (no sibling nukes)
+   Target the common element you showed in your CSS screenshot:
+   - .preview-row
+   - #socialPreview / #socialPreviewIcon / #socialPreviewLabel
+*/
+.preview-row,
+#socialPreview,
+#socialPreviewIcon,
+#socialPreviewLabel{
+  display:none !important;
 }
 
 /* ---------------------------------
@@ -685,14 +686,19 @@ textarea{
   #socialReadyPanel{ min-height: 0; }
   #socialCarouselPreviewImg{ height: 320px; }
   .social-carousel-preview{
-    grid-template-columns: 54px 1fr 54px;
+    grid-template-columns: 68px 1fr 68px;
   }
   .ghost-circle-btn{ width:54px; height:54px; }
 }
 
 @media (max-width: 900px){
-  .app-header{ padding:1.1rem 1.3rem; }
-  .app-logo{ height:84px; transform: scale(1.12); }
+  .app-header{
+    padding:1.1rem 1.3rem;
+  }
+  .app-logo{
+    height:84px;
+    transform: scale(1.12);
+  }
   .brand-text h1{ font-size:1.75rem; }
   .brand-text p{ font-size:.84rem; }
 }
@@ -701,288 +707,4 @@ textarea{
   .app-logo{ height:64px; transform: scale(1.08); }
   .brand-text p{ display:none; }
   .brand-text h1{ font-size:1.5rem; }
-}
-/* =========================================================
-   v2.6.7 HOTFIX PATCH — DO NOT REWRITE FILE
-   Goals:
-   1) Header aligns with Step cards (same left + right padding)
-   2) Step 2 buttons stop changing
-   3) Social preview stops changing size/layout
-========================================================= */
-
-/* 1) HEADER ALIGNMENT = MATCH LAYOUT PADDING */
-:root{
-  --page-left: 3rem;     /* matches .layout left padding */
-  --page-right: 15rem;   /* matches .layout right padding (space for tools column) */
-}
-
-/* Force header content to align with the Step cards grid */
-.app-header{
-  padding-left: var(--page-left) !important;
-  padding-right: var(--page-right) !important;
-  align-items: flex-end !important;
-}
-
-/* Keep layout consistent with the same numbers */
-.layout{
-  padding-left: var(--page-left) !important;
-  padding-right: var(--page-right) !important;
-}
-
-
-/* 2) STEP 2 BUTTONS — LOCK THEM (stop “style drift”) */
-.step2-card .lr-step2-actions{
-  margin-top: 10px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-}
-
-.step2-card .lr-step2-actions-row{
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  gap: 12px !important;
-}
-
-.step2-card .lr-step2-actions-emoji{
-  display: flex !important;
-  justify-content: center !important;
-}
-
-/* lock the look of the Step2 buttons specifically */
-.step2-card .lr-btn{
-  appearance: none !important;
-  border: 1px solid rgba(255,255,255,.16) !important;
-  color: rgba(255,255,255,.92) !important;
-  font-weight: 800 !important;
-  letter-spacing: .2px !important;
-  padding: 10px 14px !important;
-  border-radius: 999px !important;
-  cursor: pointer !important;
-  user-select: none !important;
-  box-shadow: 0 10px 24px rgba(0,0,0,.32) !important;
-  background: rgba(255,255,255,.06) !important;
-  backdrop-filter: blur(10px) !important;
-  transition: transform .08s ease, filter .15s ease, border-color .15s ease !important;
-}
-
-.step2-card .lr-btn:hover{
-  filter: brightness(1.08) !important;
-  border-color: rgba(255,255,255,.26) !important;
-}
-.step2-card .lr-btn:active{
-  transform: translateY(1px) scale(.99) !important;
-}
-
-/* 3) SOCIAL PREVIEW — RESTORE STABLE BIG VIEWER */
-#socialCarouselPreviewImg{
-  width: min(760px, 100%) !important;
-  height: 420px !important;
-  object-fit: contain !important;
-  border-radius: 18px !important;
-  background: rgba(2,6,23,.65) !important;
-  border: 1px solid rgba(148,163,184,.35) !important;
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-/* Keep arrows from shifting the row */
-.social-carousel-preview{
-  grid-template-columns: 64px 1fr 64px !important;
-  gap: 18px !important;
-  align-items: center !important;
-}
-/* =========================================================
-   v2.6.7 ALIGNMENT + BUTTON COLOR RESTORE (SAFE OVERRIDE)
-   Paste at VERY BOTTOM of style.css
-========================================================= */
-
-/* 1) FLOATING TOOLS — align with Step 1 / Step 2 card tops */
-:root{
-  /* Start here. If tools are still high/low, move by 5–10px. */
-  --tools-top: 240px;
-}
-
-/* Ensure ONLY the var controls the stack (no other top rules win) */
-.floating-tools,
-.toolwire,
-#toolWire{
-  top: var(--tools-top) !important;
-}
-
-
-/* 2) HEADER BRANDING — make logo + words line up clean */
-.branding{
-  align-items: center !important; /* lock logo + text on same center line */
-}
-
-.logo-wrap{
-  margin-bottom: 0 !important;
-}
-
-/* If the text still feels a hair low/high, tweak ONLY this */
-.brand-text{
-  padding-top: 6px !important; /* try 0px, 6px, 10px */
-}
-
-
-/* 3) RESTORE “SOCIAL MEDIA” BUTTON COLORS (Step 2 action buttons) */
-.step2-card .lr-btn{
-  background: linear-gradient(90deg, var(--accent-1), var(--accent-2)) !important;
-  border: none !important;
-  color: #020617 !important;
-  font-weight: 900 !important;
-}
-
-.step2-card .lr-btn:hover{
-  filter: brightness(1.06) !important;
-}
-
-.step2-card .lr-btn:active{
-  transform: translateY(1px) scale(.99) !important;
-}
-/* =========================================================
-   STEP 3 — SOCIAL READY STRIP FINAL FIX
-   - Arrows vertically centered on image sides
-   - Remove stray small preview icon
-========================================================= */
-
-/* Force the viewer row to be a true 3-column layout */
-.social-ready-row,
-.social-carousel-preview{
-  display: grid !important;
-  grid-template-columns: 56px 1fr 56px !important;
-  align-items: center !important;
-}
-
-/* Arrow buttons — centered vertically beside image */
-.social-ready-row .ghost-circle-btn,
-.social-carousel-preview .ghost-circle-btn{
-  align-self: center !important;
-}
-
-/* Center image cleanly */
-#socialCarouselPreviewImg{
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-/* ❌ REMOVE the tiny preview icon/image/text */
-.social-ready-center img:not(#socialCarouselPreviewImg),
-.social-ready-center .preview,
-.social-ready-center .preview-icon,
-.social-ready-center .preview-thumb,
-.social-ready-center .small-preview,
-.social-ready-center [data-preview],
-.social-ready-center svg{
-  display: none !important;
-}
-/* =========================================================
-   STEP 3 — ARROW GUTTERS + KILL PREVIEW LABEL (FINAL)
-========================================================= */
-
-/* Give the viewer a true left/right gutter so arrows never touch the box */
-.social-ready-row,
-.social-carousel-preview{
-  display: grid !important;
-  grid-template-columns: 84px 1fr 84px !important; /* wider gutters */
-  gap: 14px !important;
-  align-items: center !important;
-}
-
-/* Make the arrow "cells" center the buttons */
-.social-ready-row > :first-child,
-.social-carousel-preview > :first-child,
-.social-ready-row > :last-child,
-.social-carousel-preview > :last-child{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Keep arrows visually off the inner image box edge */
-.ghost-circle-btn{
-  width: 56px !important;
-  height: 56px !important;
-}
-
-/* Ensure the image stays centered and doesn't collide */
-#socialCarouselPreviewImg{
-  margin: 0 auto !important;
-  display: block !important;
-}
-
-/* ---------------------------------------------------------
-   KILL THE "Preview" ICON/TEXT (it’s not the main image)
---------------------------------------------------------- */
-
-/* Common patterns */
-#preview,
-#previewIcon,
-#previewLabel,
-.preview,
-.preview-icon,
-.preview-label,
-.previewLink,
-.preview-link,
-.previewRow,
-.preview-row,
-#socialPreview,
-#socialPreviewIcon,
-#socialPreviewLabel{
-  display:none !important;
-}
-
-/* If it's a link/label near the viewer area, kill it safely */
-#socialReadyPanel a[href*="preview"],
-#socialReadyPanel [data-preview],
-#socialReadyPanel .small-note a,
-#socialReadyPanel .small-note img{
-  display:none !important;
-}
-
-/* Last-resort: hide any tiny icon+text row that literally contains "Preview" */
-#socialReadyPanel *{
-  -webkit-tap-highlight-color: transparent;
-}
-#socialReadyPanel .small-note{
-  /* keep your instruction line, but remove any inline icon/link */
-}
-#socialReadyPanel .small-note img,
-#socialReadyPanel .small-note .icon,
-#socialReadyPanel .small-note .emoji,
-#socialReadyPanel .small-note a{
-  display:none !important;
-}
-/* =========================================================
-   STEP 3 — KILL THE "🖼 Preview" ROW (FINAL, CONTENT-BASED)
-========================================================= */
-
-/* Hide any small row inside the Social Ready panel that contains the word "Preview" */
-#socialReadyPanel :is(a, button, label, div, span, p):has(> :is(img, svg, i, .icon, .emoji)),
-#socialReadyPanel :is(a, button, label, div, span, p):has(> :is(img, svg, i, .icon, .emoji)) *{
-  /* no-op: keeps selector stable */
-}
-
-/* Actual kill: any element in the panel that literally contains 'Preview' text */
-#socialReadyPanel :is(a, button, label, div, span, p):has-text("Preview"){
-  display: none !important;
-}
-/* Fallback: hide the first small inline line under the Social Ready instruction text */
-#socialReadyPanel .small-note + *{
-  display: none !important;
-}
-/* =========================================================
-   STEP 1 — MOVE "SEND SELECTED PHOTOS TO CREATIVE LAB" DOWN
-========================================================= */
-
-/* Add breathing room ABOVE the button (below photo grid) */
-#sendToDesignStudio{
-  margin-top: 18px !important;   /* try 18 → 24 if you want more */
-}
-
-/* Ensure the photo grid itself stays tight */
-.photo-grid{
-  margin-bottom: 0 !important;
 }
