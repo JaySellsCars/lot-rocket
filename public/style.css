@@ -913,3 +913,10 @@ textarea{
 .side-modal .hidden{
   display:none !important;
 }
+.ai-helper-tip {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin: 0.25rem 0 0.75rem;
+  line-height: 1.4;
+}
+
