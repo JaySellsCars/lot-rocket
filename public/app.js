@@ -1289,7 +1289,10 @@
       canvas.height = bmp.height;
 
       const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bmp, 0, 0);
+
       if (bmp.close) bmp.close();
 
       return await new Promise((resolve, reject) => {
