@@ -127,7 +127,9 @@ app.get("/api/boost", async (req, res) => {
   const url = safeUrl(raw);
   const debug = String(req.query.debug || "") === "1";
 
-  if (!url) return res.status(400).json({ ok: false, error: "Missing or invalid url" });
+  if (!url) {
+    return res.status(400).json({ ok: false, error: "Missing or invalid url" });
+  }
 
   let cheerio = null;
   try {
@@ -136,60 +138,66 @@ app.get("/api/boost", async (req, res) => {
     cheerio = null;
   }
 
-  try {
-    const f = await getFetch();
+  if (!cheerio) {
+    return res.status(200).json({
+      ok: false,
+      error: "cheerio not installed. Run: npm i cheerio",
+      url,
+    });
+  }
 
-    const r = await f(url, {
+  const f = await getFetch();
+
+  // Common “browser-like” headers
+  const baseHeaders = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36",
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+  };
+
+  async function fetchHtmlDirect(targetUrl) {
+    const r = await f(targetUrl, {
       redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        ...baseHeaders,
+        Referer: targetUrl,
+        Origin: new URL(targetUrl).origin,
       },
     });
-
     const html = await r.text();
     const ct = (r.headers.get("content-type") || "").toLowerCase();
+    return { r, html, ct, via: "direct" };
+  }
 
-    if (!ct.includes("text/html") && !ct.includes("application/xhtml")) {
-      return res.status(200).json({
-        ok: false,
-        error: `Dealer returned non-HTML (${ct || "unknown"})`,
-        url,
-        status: r.status,
-      });
-    }
+  async function fetchHtmlViaJina(targetUrl) {
+    // r.jina.ai often bypasses basic 403 blocks
+    const cleaned = targetUrl.replace(/^https?:\/\//i, "");
+    const jinaUrl = `https://r.jina.ai/https://${cleaned}`;
 
-    if (!cheerio) {
-      return res.status(200).json({
-        ok: false,
-        error: "cheerio not installed. Run: npm i cheerio",
-        url,
-      });
-    }
+    const r = await f(jinaUrl, {
+      redirect: "follow",
+      headers: {
+        ...baseHeaders,
+        Referer: jinaUrl,
+      },
+    });
+    const html = await r.text();
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    return { r, html, ct, via: "jina", jinaUrl };
+  }
 
-    const $ = cheerio.load(html);
-
-    const title =
-      takeText(
-        $("meta[property='og:title']").attr("content"),
-        $("meta[name='twitter:title']").attr("content"),
-        $("title").text(),
-        $("h1").first().text()
-      ) || "";
-
-    const description =
-      takeText(
-        $("meta[property='og:description']").attr("content"),
-        $("meta[name='description']").attr("content"),
-        $("meta[name='twitter:description']").attr("content")
-      ) || "";
-
+  function extractImages(base, $, rawHtml) {
     let images = [];
-    const ogImg = absUrl(url, $("meta[property='og:image']").attr("content"));
+
+    // OG image first
+    const ogImg = absUrl(base, $("meta[property='og:image']").attr("content"));
     if (ogImg) images.push(ogImg);
 
+    // Common srcset parsing
     $("img").each((_, el) => {
       const src =
         $(el).attr("data-src") ||
@@ -197,7 +205,12 @@ app.get("/api/boost", async (req, res) => {
         $(el).attr("data-original") ||
         $(el).attr("src") ||
         "";
-      const abs = absUrl(url, src);
+
+      const srcset = $(el).attr("srcset") || "";
+      const firstSrcset = (srcset.split(",")[0] || "").trim().split(" ")[0];
+
+      const pick = src || firstSrcset || "";
+      const abs = absUrl(base, pick);
       if (!abs) return;
 
       const lower = abs.toLowerCase();
@@ -208,7 +221,57 @@ app.get("/api/boost", async (req, res) => {
       images.push(abs);
     });
 
+    // JSON-LD images (common on dealers)
+    $("script[type='application/ld+json']").each((_, el) => {
+      const txt = $(el).text() || "";
+      if (!txt.trim()) return;
+      try {
+        const j = JSON.parse(txt);
+        const grab = (node) => {
+          if (!node) return;
+          if (typeof node === "string") {
+            const u = absUrl(base, node);
+            if (u) images.push(u);
+            return;
+          }
+          if (Array.isArray(node)) return node.forEach(grab);
+          if (typeof node === "object") {
+            if (node.image) grab(node.image);
+            if (node.contentUrl) grab(node.contentUrl);
+            if (node.url) grab(node.url);
+            Object.values(node).forEach(grab);
+          }
+        };
+        grab(j);
+      } catch {}
+    });
+
+    // LAST RESORT: find image-ish URLs in raw HTML/text (jina often returns text)
+    if (rawHtml) {
+      const matches =
+        rawHtml.match(/https?:\/\/[^\s"'<>]+?\.(jpg|jpeg|png|webp)/gi) || [];
+      matches.forEach((u) => images.push(u));
+    }
+
     images = uniq(images).slice(0, 60);
+    return images;
+  }
+
+  function extractVehicle(urlBase, $) {
+    const title =
+      takeText(
+        $("meta[property='og:title']").attr("content"),
+        $("meta[name='twitter:title']").attr("content"),
+        $("title").text(),
+        $("h1").first().text()
+      ) || "Dealer Website";
+
+    const description =
+      takeText(
+        $("meta[property='og:description']").attr("content"),
+        $("meta[name='description']").attr("content"),
+        $("meta[name='twitter:description']").attr("content")
+      ) || "";
 
     const textBlob = $("body").text().replace(/\s+/g, " ").trim();
     const find = (re) => {
@@ -221,22 +284,73 @@ app.get("/api/boost", async (req, res) => {
     const mileage = find(/\b\d{1,3}(?:,\d{3})+\s?(?:miles|mi)\b/i);
     const stock = find(/\bStock\s*#?\s*[:\-]?\s*[A-Za-z0-9\-]+\b/i);
 
-    const vehicle = {
-      url,
-      title: title || "",
-      description: description || "",
+    return {
+      url: urlBase,
+      title,
+      description,
       price: price || "",
       mileage: mileage || "",
       vin: vin || "",
       stock: stock ? stock.replace(/^Stock\s*#?\s*[:\-]?\s*/i, "") : "",
     };
+  }
+
+  // ---------- Attempt 1: DIRECT ----------
+  try {
+    let attempt = await fetchHtmlDirect(url);
+
+    // If dealer blocks (403/401/429), try Jina fallback
+    if (attempt.r.status === 403 || attempt.r.status === 401 || attempt.r.status === 429) {
+      const fallback = await fetchHtmlViaJina(url);
+      // Use fallback only if it returns something usable
+      if (fallback?.html && fallback.html.length > 200) attempt = fallback;
+    }
+
+    // If still blocked
+    if (attempt.r.status === 403 || attempt.r.status === 401 || attempt.r.status === 429) {
+      return res.status(200).json({
+        ok: false,
+        error:
+          `Dealer blocked scraping (HTTP ${attempt.r.status}). Try a different dealer site, or we can add a per-dealer extractor for this domain.`,
+        url,
+        ...(debug ? { debug: { status: attempt.r.status, contentType: attempt.ct, via: attempt.via } } : {}),
+      });
+    }
+
+    // Must be “HTML-ish” or text (jina)
+    const isOkType =
+      attempt.ct.includes("text/html") ||
+      attempt.ct.includes("application/xhtml") ||
+      attempt.ct.includes("text/plain");
+
+    if (!isOkType) {
+      return res.status(200).json({
+        ok: false,
+        error: `Dealer returned non-HTML (${attempt.ct || "unknown"})`,
+        url,
+        status: attempt.r.status,
+      });
+    }
+
+    const $ = cheerio.load(attempt.html);
+
+    const vehicle = extractVehicle(url, $);
+    const images = extractImages(url, $, attempt.html);
 
     return res.status(200).json({
       ok: true,
       vehicle,
       images,
       ...(debug
-        ? { debug: { status: r.status, contentType: ct, imageCount: images.length } }
+        ? {
+            debug: {
+              status: attempt.r.status,
+              contentType: attempt.ct,
+              imageCount: images.length,
+              via: attempt.via,
+              ...(attempt.jinaUrl ? { jinaUrl: attempt.jinaUrl } : {}),
+            },
+          }
         : {}),
     });
   } catch (e) {
@@ -247,6 +361,7 @@ app.get("/api/boost", async (req, res) => {
     });
   }
 });
+
 
 /* ==================================================
    PROXY (for ZIP downloads)
