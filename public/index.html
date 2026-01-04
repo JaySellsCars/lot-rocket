@@ -521,35 +521,64 @@
     </div>
   </section>
 
-  <!-- GLOBAL HELP -->
-  <section id="helpModal" class="side-modal hidden" aria-hidden="true">
-    <div class="side-modal-content">
-      <div class="side-modal-header">
-        <h3>Need Help?</h3>
-        <button class="side-modal-close" type="button" data-close>✕</button>
-      </div>
+<!-- GLOBAL HELP -->
+<section id="helpModal" class="side-modal hidden" aria-hidden="true">
+  <div class="side-modal-content">
+    <div class="side-modal-header">
+      <h3>Need Help?</h3>
+      <button class="side-modal-close" type="button" data-close>✕</button>
+    </div>
 
-      <div class="side-modal-body">
-        <textarea id="helpInput" placeholder="Ask anything about Lot Rocket, social posts, strategy, or what to do next…"></textarea>
+    <div class="side-modal-body">
+      <textarea
+        id="helpInput"
+        placeholder="Ask anything about Lot Rocket, how to use a feature, or what to do next…"
+      ></textarea>
 
-        <button id="runHelpBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Get Answer</button>
+      <button
+        id="runHelpBtn"
+        class="secondary-btn full"
+        type="button"
+        style="margin-top:.8rem;"
+      >
+        Get Answer
+      </button>
 
-        <div id="helpOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+      <div
+        id="helpOutput"
+        class="small-note"
+        style="margin-top:1rem; white-space:pre-wrap;"
+      ></div>
 
-        <!-- UNIVERSAL AI FOLLOW-UP -->
-        <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
-          <label class="field">
-            <span>Reply / Add Details</span>
-            <textarea data-ai-followup-input rows="3"
-              placeholder="Add context, then hit Continue…"></textarea>
-          </label>
-          <div class="btn-row" style="margin-top:.6rem;">
-            <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
-          </div>
+      <!-- UNIVERSAL AI FOLLOW-UP -->
+      <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
+        <label class="field">
+          <span>Reply / Add Details</span>
+          <textarea
+            data-ai-followup-input
+            rows="3"
+            placeholder="Add context or answer the question, then hit Continue…"
+          ></textarea>
+        </label>
+
+        <div class="btn-row" style="margin-top:.6rem;">
+          <button
+            type="button"
+            class="secondary-btn full"
+            data-ai-followup-btn
+          >
+            Continue
+          </button>
+        </div>
+
+        <div class="small-note" style="margin-top:.5rem;">
+          Tip: The more context you give, the better the guidance.
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
+
 
   <!-- AI CAR EXPERT -->
   <section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
