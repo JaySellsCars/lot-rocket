@@ -409,6 +409,93 @@ async function callOpenAI({ system, user, temperature = 0.6 }) {
     clearTimeout(t);
   }
 }
+// ===============================
+// LOT ROCKET HELP KB (v1)
+// Keep this updated as features evolve.
+// ===============================
+const APP_KB = `
+LOT ROCKET — APP MANUAL (PAID APP / MULTI-USER)
+
+CORE IDEA:
+Lot Rocket is for INDIVIDUAL car salespeople (not dealerships).
+Goal: generate posts, messages, campaigns + creative assets fast.
+
+MAIN FLOW:
+STEP 1 — Dealer URL Scraper
+- User pastes a dealer vehicle URL
+- Clicks "Boost This Listing"
+- App scrapes title/desc and extracts up to 24 photo URLs
+- Photos appear in Step 1 grid for selection
+- "Send Selected Photos to Creative Lab" pushes selected photos to Step 3 holding zone
+
+STEP 2 — Social Media Kit
+- Platform textareas: Facebook, IG, TikTok, LinkedIn, X, DM, Marketplace, Hashtags
+- Buttons per platform: New Post, Copy, Remove Emojis
+- Output speaks as ONE salesperson, no dealership talk, no website links
+
+STEP 3 — Creative Lab
+- Holding Zone: up to 24 thumbnails, wraps (no scroll)
+- Double-click a holding photo sends it to Social Ready Strip
+- Social Ready Strip:
+  - Large preview image
+  - Left/right arrows to cycle
+  - Thumbs with lock badge 🔒 for locked images
+  - Download ZIP downloads Social Ready images via /api/proxy
+
+TOOLS (Right Rail):
+- Objection Coach: handles objections + teaches
+- Calculator: basic calculator
+- Payment Calculator: computes estimate (server endpoint /api/payment-helper)
+- Income Calculator: estimates income
+- AI Campaign Builder: creates multi-message/timeframe campaigns (obeys quantity/time/channel)
+- AI Message Builder: writes single message/email/text/DM/social reply
+- Ask A.I. (Help): explains how to use the app + troubleshoots
+- AI Car Expert: vehicle oracle Q&A
+
+KNOWN RULES:
+- Help AI should answer about HOW to use the app + troubleshooting.
+- If user reports "AI not responding", check OPENAI_API_KEY, network calls, server logs.
+- If /api/boost returns HTML instead of JSON, routes order or fallback is wrong.
+- If ZIP download fails, /api/proxy must be working and CORS is avoided by proxy.
+`.trim();
+
+app.post("/api/ai/ask", async (req, res) => {
+  const q = takeText(req.body.question, req.body.input, req.body.text);
+
+  // Optional UI context sent from frontend
+  const ctx = req.body.context || {};
+
+  const system = `
+You are Lot Rocket Help.
+
+You must answer ONLY about the Lot Rocket app: how it works, how to use it, and how to fix common issues.
+You are speaking to MANY users (paid app), so never personalize to one person.
+
+USE THIS APP MANUAL AS SOURCE OF TRUTH:
+${APP_KB}
+
+BEHAVIOR:
+- Give direct steps, not generic advice
+- If a fix involves code, specify file + exact snippet
+- If info is missing, ask ONE question max
+- If user includes context (route, errors, state), use it
+
+OUTPUT:
+- Short, actionable answer
+- If steps: 3–7 bullets max
+`.trim();
+
+  const user = `
+USER QUESTION:
+${q}
+
+UI CONTEXT (may be empty):
+${JSON.stringify(ctx, null, 2)}
+`.trim();
+
+  const out = await callOpenAI({ system, user, temperature: 0.25 });
+  res.json(out.ok ? { ok: true, text: out.text } : out);
+});
 
 /* ===============================
    AI: SOCIAL POSTS (CORE VALUE) ✅
