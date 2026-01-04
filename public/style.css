@@ -31,236 +31,98 @@ a{ color:#8ab4f8; }
 }
 
 /* ===============================
-   HEADER — PREMIUM GLASS + ANIM + COMPACT
+   HEADER — SAFE PREMIUM (NO HTML CHANGES REQUIRED)
 ================================ */
 
 .app-header{
-  position:sticky;
-  top:0;
-  z-index:999;
-
+  position:relative;
+  z-index:50;
   display:flex;
   align-items:center;
   justify-content:space-between;
-
-  padding:2.2rem 4rem;
+  padding:1.35rem 3.5rem;
   border-bottom:1px solid rgba(255,255,255,.08);
 
-  /* Glass / depth */
   background:
-    radial-gradient(1400px 260px at 20% -70%, rgba(236,72,153,.22), transparent 60%),
-    linear-gradient(180deg, rgba(10,10,22,.72), rgba(7,7,17,.62));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-
-  box-shadow: 0 10px 34px rgba(0,0,0,.35);
-
-  transition: padding .18s ease, background .18s ease, box-shadow .18s ease;
+    radial-gradient(1200px 220px at 20% -60%, rgba(236,72,153,.16), transparent 60%),
+    linear-gradient(180deg, rgba(10,10,22,.92), rgba(7,7,17,.88));
 }
 
-/* Branding layout */
+/* Branding container stays stable */
 .branding{
   display:flex;
   align-items:center;
-  gap:22px;
+  gap:18px;
 }
 
 /* ===============================
-   LOGO — BIGGER ON PC + FIX SQUARE PADDING (DROP-IN CLEAN)
-   + OPTIONAL: EXTRA HUGE DESKTOP MODE
+   LOGO — BIGGER ON PC (NO WRAP)
+   Fixes “small logo” even with padded PNG
 ================================ */
-
-/* Wrap gives the logo a real visual footprint */
-.logo-wrap{
-  position:relative;
-  width:190px;    /* ⬅️ BIGGER on PC */
-  height:190px;   /* ⬅️ BIGGER on PC */
-  flex:0 0 auto;
-  display:grid;
-  place-items:center;
-
-  border-radius:22px;
-  background: rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow: 0 12px 28px rgba(0,0,0,.35);
-
-  overflow:hidden;
-  transform: translateZ(0);
-
-  /* Entrance animation */
-  animation: lrPop .55s ease both;
-}
-
-/* This is the key: the image fills the wrap even if the PNG has padding */
 .app-logo{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
+  height:120px;              /* 🔥 BIG on PC */
+  width:auto;
   object-fit:contain;
 
-  /* Force “bigger” inside padded PNG */
-  transform: scale(1.22);
-  transition: transform .18s ease, opacity .18s ease, filter .18s ease;
-}
-
-/* White logo default */
-.logo-white{
+  /* White logo look without needing a separate file */
   filter: brightness(0) invert(1);
+
+  /* Makes padded PNG feel bigger */
+  transform: scale(1.18);
+  transform-origin:left center;
+
   opacity:.98;
+  transition: transform .18s ease, filter .18s ease, opacity .18s ease;
 }
 
-/* Optional gradient logo sits on top, hidden until hover */
-.logo-gradient{
-  opacity:0;
-  transform: scale(1.22);
-  filter:none;
-}
-
-/* Hover: glow + gradient swap */
-.branding:hover .logo-wrap{
-  box-shadow: 0 16px 40px rgba(236,72,153,.18), 0 10px 30px rgba(0,0,0,.45);
-  border-color: rgba(236,72,153,.22);
-}
-
-.branding:hover .logo-white{
-  opacity:0;
-}
-
-.branding:hover .logo-gradient{
-  opacity:1;
-}
-
-/* Extra premium glow on hover */
+/* Premium hover glow (NO red box) */
 .branding:hover .app-logo{
-  transform: scale(1.28);
-  filter: drop-shadow(0 0 22px rgba(236,72,153,.55));
+  opacity:1;
+  transform: scale(1.24);
+  filter: brightness(0) invert(1) drop-shadow(0 0 22px rgba(236,72,153,.45));
 }
 
-/* ===============================
-   OPTIONAL: EXTRA HUGE DESKTOP MODE (KILLER)
-   (Only triggers on big screens so mobile stays clean)
-================================ */
-@media (min-width: 1100px){
-  .logo-wrap{
-    width:220px;
-    height:220px;
-    border-radius:26px;
-  }
-  .app-logo{
-    transform: scale(1.30);
-  }
-  .branding:hover .app-logo{
-    transform: scale(1.36);
-  }
-}
-
-/* ===============================
-   TEXT
-================================ */
-
-.brand-text{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-
-  /* Entrance animation */
-  animation: lrSlide .6s ease both;
-  animation-delay: .05s;
-}
-
-.brand-title-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.branding h1{
-  font-size:2.45rem;
+/* Title + tagline */
+.brand-text h1{
+  font-size:2.25rem;
   font-weight:900;
   margin:0;
-  letter-spacing:.5px;
+  letter-spacing:.4px;
+}
+.brand-text p{
+  margin:.25rem 0 0;
+  font-size:.92rem;
+  color:rgba(255,255,255,.68);
 }
 
-.launch-badge{
-  font-size:.7rem;
+/* Badge (if you use .version-badge already) */
+.version-badge{
+  font-size:.72rem;
   font-weight:900;
   padding:5px 10px;
   border-radius:999px;
   background:linear-gradient(135deg,#f59e0b,#ec4899);
   color:#fff;
-  letter-spacing:.8px;
-  box-shadow: 0 10px 24px rgba(236,72,153,.22);
-}
-
-.brand-tagline{
-  margin:0;
-  font-size:.95rem;
-  color:rgba(255,255,255,.68);
-}
-
-/* ===============================
-   COMPACT MODE ON SCROLL
-   (logo-only style + tighter header)
-================================ */
-
-.app-header.is-compact{
-  padding:1.2rem 4rem;
-  background:
-    radial-gradient(1200px 220px at 20% -70%, rgba(236,72,153,.16), transparent 60%),
-    linear-gradient(180deg, rgba(10,10,22,.86), rgba(7,7,17,.82));
-  box-shadow: 0 14px 40px rgba(0,0,0,.5);
-}
-
-.app-header.is-compact .logo-wrap{
-  width:92px;
-  height:92px;
-  border-radius:18px;
-}
-
-.app-header.is-compact .app-logo{
-  transform: scale(1.18);
-}
-
-.app-header.is-compact .brand-text{
-  opacity:0;
-  pointer-events:none;
-  width:0;
-  margin:0;
-  overflow:hidden;
-}
-
-/* ===============================
-   ANIMATIONS
-================================ */
-
-@keyframes lrPop{
-  from{ opacity:0; transform: scale(.86); }
-  to{ opacity:1; transform: scale(1); }
-}
-
-@keyframes lrSlide{
-  from{ opacity:0; transform: translateX(-10px); }
-  to{ opacity:1; transform: translateX(0); }
+  letter-spacing:.7px;
+  box-shadow: 0 10px 24px rgba(236,72,153,.18);
 }
 
 /* ===============================
    RESPONSIVE
 ================================ */
-
 @media (max-width: 900px){
-  .app-header{ padding:1.4rem 1.5rem; }
-  .app-header.is-compact{ padding:1.0rem 1.5rem; }
-
-  .logo-wrap{ width:96px; height:96px; border-radius:18px; }
-  .branding h1{ font-size:1.9rem; }
+  .app-header{ padding:1.1rem 1.3rem; }
+  .app-logo{ height:84px; transform: scale(1.12); }
+  .brand-text h1{ font-size:1.75rem; }
+  .brand-text p{ font-size:.84rem; }
 }
 
 @media (max-width: 520px){
-  .logo-wrap{ width:78px; height:78px; border-radius:16px; }
-  .branding h1{ font-size:1.6rem; }
-  .brand-tagline{ display:none; }
+  .app-logo{ height:64px; transform: scale(1.08); }
+  .brand-text p{ display:none; }
+  .brand-text h1{ font-size:1.5rem; }
 }
+
 
 
 
