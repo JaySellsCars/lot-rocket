@@ -176,9 +176,7 @@ app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
    - MUST be above express.static + SPA fallback
 ================================ */
 
-// Ensure you have this near the top of server.js:
-// const Stripe = require("stripe");
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 
 app.get("/api/stripe/checkout", async (req, res) => {
   try {
