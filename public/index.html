@@ -611,25 +611,43 @@
       </div>
     </div>
   </section>
-<div id="lrPaywall" aria-hidden="true">
-  <div class="box">
+
+<!-- PRO FEATURE BUTTONS -->
+<button id="creativeLabBtn" data-pro="1">Creative Lab</button>
+<button id="aiToolsBtn" data-pro="1">AI Tools</button>
+
+<!-- PAYWALL (ONLY ONE IN APP) -->
+<div id="lrPaywall" aria-hidden="true" class="lr-paywall hidden">
+  <div class="lr-paywall-box">
     <div class="lr-lock-badge">🔒 Pro Required</div>
-    <h2 style="margin:10px 0 6px;">Unlock Lot Rocket Pro</h2>
-    <p style="margin:0;opacity:.9;">
-      Your account isn’t active yet. Upgrade to unlock all tools and features.
+
+    <h2>Unlock Lot Rocket Pro</h2>
+
+    <p>
+      Your account isn’t active yet.
+      Upgrade to unlock all tools and features.
     </p>
-    <div class="row">
-      <button id="lrClosePaywall">Not now</button>
-      <button id="lrUpgradeNow">🚀 Upgrade Now</button>
+
+    <div class="lr-paywall-actions">
+      <button id="lrClosePaywall" type="button">
+        Not now
+      </button>
+
+      <button id="lrUpgradeNow" type="button">
+        🚀 Upgrade Now
+      </button>
     </div>
   </div>
 </div>
 
-<button id="upgradeBtn" class="btn-upgrade">
+<!-- OPTIONAL GLOBAL UPGRADE CTA -->
+<button id="upgradeBtn" class="btn-upgrade" type="button">
   🚀 Upgrade to Lot Rocket Pro
 </button>
 
+<!-- APP SCRIPT (LAST) -->
 <script src="/app.js?v=10002"></script>
 </body>
 </html>
+
 
