@@ -782,3 +782,46 @@ textarea{
   object-fit: cover;
   display: block;
 }
+/* LOCKED STATE */
+.lr-locked {
+  opacity: .45;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+.lr-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid rgba(148,163,184,.45);
+  border-radius: 999px;
+  opacity: .9;
+}
+
+/* Paywall overlay */
+#lrPaywall {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.72);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#lrPaywall .box {
+  width: min(560px, 92vw);
+  background: #0b1020;
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+#lrPaywall .row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
