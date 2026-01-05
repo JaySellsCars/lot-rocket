@@ -196,8 +196,61 @@ async function getFetch() {
 app.get("/api/health", (_req, res) => {
   return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
+
+// ✅ keep ONE api root (remove /api/ duplicate)
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
-app.get("/api/", (_req, res) => res.json({ ok: true, note: "api root alive" }));
+
+/* ===============================
+   STRIPE (server-side checkout)
+   - MUST be above express.static + SPA fallback
+================================ */
+
+// Ensure you have this near the top of server.js:
+// const Stripe = require("stripe");
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+app.get("/api/stripe/checkout", async (req, res) => {
+  try {
+    const priceId = process.env.STRIPE_PRICE_ID;
+    if (!priceId) {
+      return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
+    }
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/pro-success`,
+      cancel_url: `${baseUrl}/`,
+    });
+
+    return res.redirect(303, session.url);
+  } catch (err) {
+    console.error("❌ Stripe checkout error:", err);
+    return res.status(500).json({ ok: false, error: "Stripe checkout failed" });
+  }
+});
+
+// PRO SUCCESS: set LR_PRO=1 then back to app
+app.get("/pro-success", (req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.end(`<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Lot Rocket Pro</title></head>
+<body style="font-family:system-ui;background:#0b1020;color:#fff;padding:24px;">
+  <h1>✅ Pro Activated</h1>
+  <p>Sending you back…</p>
+  <script>
+    try { localStorage.setItem("LR_PRO","1"); } catch(e) {}
+    window.location.href = "/";
+  </script>
+</body>
+</html>`);
+});
 
 /* ===============================
    AI PING (GET + POST)
@@ -209,6 +262,7 @@ app.post("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.body || nul
    BOOST (SCRAPE) — ALWAYS JSON
    GET /api/boost?url=...&debug=1
 ================================================== */
+
 app.get("/api/boost", async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
