@@ -1955,3 +1955,8 @@ function LR_applyLock(isPaid) {
     }
   }, true);
 }
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🔒 LOCK TEST RUNNING");
+  LR_wirePaywallButtons();
+  LR_applyLock(false); // FORCE LOCK
+});
