@@ -69,35 +69,6 @@ app.post(
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
-// ==================================================
-// STRIPE: CREATE CHECKOUT SESSION (SUBSCRIPTION)
-// ==================================================
-app.post("/api/stripe/create-checkout-session", async (req, res) => {
-  try {
-    const priceId = process.env.STRIPE_PRICE_ID;
-    const appUrl = process.env.APP_URL;
-
-    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
-    if (!appUrl) return res.status(500).json({ ok: false, error: "Missing APP_URL" });
-
-    // If you have auth, replace this with req.user.id + req.user.email
-    const { userId, email } = req.body || {};
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer_email: email || undefined,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/?paid=1`,
-      cancel_url: `${appUrl}/?paid=0`,
-      metadata: { userId: userId ? String(userId) : "" },
-    });
-
-    return res.json({ ok: true, url: session.url });
-  } catch (err) {
-    console.error("❌ create-checkout-session error:", err);
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
 
 /* ===============================
    OPTIONAL DEP: CHEERIO
