@@ -212,12 +212,13 @@ app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 app.get("/api/stripe/checkout", async (req, res) => {
   try {
     const priceId = process.env.STRIPE_PRICE_ID;
-    if (!priceId) {
-      return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
-    }
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
-    }
+    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
+    if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
+
+    console.log("💳 STRIPE checkout start:", {
+      priceId,
+      hasKey: !!process.env.STRIPE_SECRET_KEY,
+    });
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
 
@@ -230,10 +231,26 @@ app.get("/api/stripe/checkout", async (req, res) => {
 
     return res.redirect(303, session.url);
   } catch (err) {
-    console.error("❌ Stripe checkout error:", err);
-    return res.status(500).json({ ok: false, error: "Stripe checkout failed" });
+    // ✅ SHOW THE REAL STRIPE ERROR
+    console.error("❌ Stripe checkout error:", {
+      message: err?.message,
+      type: err?.type,
+      code: err?.code,
+      param: err?.param,
+      statusCode: err?.statusCode,
+      raw: err?.raw?.message,
+    });
+
+    return res.status(500).json({
+      ok: false,
+      error: err?.message || err?.raw?.message || "Stripe checkout failed",
+      code: err?.code || err?.raw?.code || null,
+      type: err?.type || null,
+      param: err?.param || null,
+    });
   }
 });
+
 
 // PRO SUCCESS: set LR_PRO=1 then back to app
 app.get("/pro-success", (req, res) => {
