@@ -7,8 +7,8 @@
     "start": "node server/server.js"
   },
   "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
     "express": "^4.19.2",
-    "cheerio": "^1.0.0-rc.12"
+    "stripe": "^20.1.0"
   }
 }
-
