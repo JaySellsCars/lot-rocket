@@ -1926,3 +1926,32 @@
 
   console.log("✅ APP READY");
 })();
+function LR_showPaywall() {
+  document.getElementById("lrPaywall")?.style.setProperty("display", "flex");
+}
+
+function LR_hidePaywall() {
+  document.getElementById("lrPaywall")?.style.setProperty("display", "none");
+}
+
+document.getElementById("lrClosePaywall")?.addEventListener("click", LR_hidePaywall);
+document.getElementById("lrUpgradeNow")?.addEventListener("click", () => {
+  LR_hidePaywall();
+  document.getElementById("upgradeBtn")?.click();
+});
+
+function LR_applyLock(isPaid) {
+  document.querySelectorAll("[data-pro='1']").forEach(el => {
+    if (!isPaid) el.classList.add("lr-locked");
+    else el.classList.remove("lr-locked");
+  });
+
+  document.addEventListener("click", e => {
+    const locked = e.target.closest("[data-pro='1']");
+    if (locked && !isPaid) {
+      e.preventDefault();
+      e.stopPropagation();
+      LR_showPaywall();
+    }
+  }, true);
+}
