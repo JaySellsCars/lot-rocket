@@ -18,6 +18,55 @@ const PORT = process.env.PORT || 3000;
 /* ===============================
    BODY PARSING
 ================================ */
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error("❌ Stripe webhook signature failed:", err.message);
+      return res.status(400).send("Webhook Error");
+    }
+
+    try {
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        const userId = session.metadata?.userId;
+        const customerId = session.customer;
+        const subscriptionId = session.subscription;
+
+        if (userId) {
+          // TODO: Replace with your DB update:
+          // set isPaid true + store stripeCustomerId/subscriptionId
+          console.log("✅ PAID ON:", { userId, customerId, subscriptionId });
+        }
+      }
+
+      if (event.type === "customer.subscription.deleted") {
+        const sub = event.data.object;
+        // TODO: set isPaid false by stripeSubscriptionId
+        console.log("🛑 PAID OFF:", { subscriptionId: sub.id });
+      }
+
+      return res.json({ received: true });
+    } catch (e) {
+      console.error("❌ Webhook handler error:", e);
+      return res.status(500).json({ ok: false });
+    }
+  }
+);
+
+
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
