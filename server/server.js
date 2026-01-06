@@ -236,42 +236,71 @@ app.get("/api/stripe/ping", async (_req, res) => {
 
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
-/* =============================== */
-
-   STRIPE CHECKOUT
+/* ===============================
+   STRIPE CHECKOUT (CLEAN / DEDUPED)
    - MUST be above express.static + SPA fallback
+   - POST returns JSON {ok,url}
+   - GET redirects (for simple links)
+   - Success routes to /pro-success which sets LR_PRO=1
 ================================ */
 
 // Render is behind a proxy. This makes baseUrl correct.
 app.set("trust proxy", 1);
 
 function getBaseUrl(req) {
-  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https").toString().split(",")[0].trim();
-  const host = (req.headers["x-forwarded-host"] || req.get("host") || "").toString().split(",")[0].trim();
+  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https")
+    .toString()
+    .split(",")[0]
+    .trim();
+  const host = (req.headers["x-forwarded-host"] || req.get("host") || "")
+    .toString()
+    .split(",")[0]
+    .trim();
   return `${proto}://${host}`;
+}
+
+function stripeModeLabel() {
+  const key = process.env.STRIPE_SECRET_KEY || "";
+  // Stripe test keys start with sk_test_
+  return key.startsWith("sk_test_") ? "TEST" : "LIVE";
+}
+
+async function createCheckoutSession(req) {
+  if (!stripe) {
+    const e = new Error("Missing STRIPE_SECRET_KEY");
+    e.status = 500;
+    throw e;
+  }
+
+  const priceId = process.env.STRIPE_PRICE_ID;
+  if (!priceId) {
+    const e = new Error("Missing STRIPE_PRICE_ID");
+    e.status = 500;
+    throw e;
+  }
+
+  const baseUrl = getBaseUrl(req);
+
+  console.log("💳 STRIPE checkout:", { priceId, mode: stripeModeLabel(), baseUrl });
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    line_items: [{ price: priceId, quantity: 1 }],
+
+    // ✅ IMPORTANT: send to pro-success so we can set LR_PRO=1
+    success_url: `${baseUrl}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/?canceled=1`,
+
+    allow_promotion_codes: true,
+  });
+
+  return session;
 }
 
 // POST: returns JSON {ok,url}
 app.post("/api/stripe/checkout", async (req, res) => {
   try {
-    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
-
-    const priceId = process.env.STRIPE_PRICE_ID;
-    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
-
-    const baseUrl = getBaseUrl(req);
-
-    console.log("💳 STRIPE checkout (POST):", { priceId, mode: stripeModeLabel(), baseUrl });
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-success_url: `${baseUrl}/?session_id={CHECKOUT_SESSION_ID}`,
-cancel_url: `${baseUrl}/?canceled=1`,
-
-      allow_promotion_codes: true,
-    });
-
+    const session = await createCheckoutSession(req);
     return res.json({ ok: true, url: session.url });
   } catch (err) {
     console.error("❌ Stripe checkout (POST) error:", {
@@ -279,11 +308,11 @@ cancel_url: `${baseUrl}/?canceled=1`,
       type: err?.type,
       code: err?.code,
       param: err?.param,
-      statusCode: err?.statusCode,
+      statusCode: err?.statusCode || err?.status,
       raw: err?.raw?.message,
     });
 
-    return res.status(500).json({
+    return res.status(err?.statusCode || err?.status || 500).json({
       ok: false,
       error: err?.message || err?.raw?.message || "Stripe checkout failed",
       code: err?.code || err?.raw?.code || null,
@@ -293,27 +322,10 @@ cancel_url: `${baseUrl}/?canceled=1`,
   }
 });
 
-// GET: redirects to Stripe (your frontend uses this)
+// GET: redirects to Stripe (safe fallback)
 app.get("/api/stripe/checkout", async (req, res) => {
   try {
-    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
-
-    const priceId = process.env.STRIPE_PRICE_ID;
-    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
-
-    const baseUrl = getBaseUrl(req);
-
-    console.log("💳 STRIPE checkout (GET):", { priceId, mode: stripeModeLabel(), baseUrl });
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-success_url: `${baseUrl}/?session_id={CHECKOUT_SESSION_ID}`,
-cancel_url: `${baseUrl}/?canceled=1`,
-
-      allow_promotion_codes: true,
-    });
-
+    const session = await createCheckoutSession(req);
     return res.redirect(303, session.url);
   } catch (err) {
     console.error("❌ Stripe checkout (GET) error:", {
@@ -321,11 +333,11 @@ cancel_url: `${baseUrl}/?canceled=1`,
       type: err?.type,
       code: err?.code,
       param: err?.param,
-      statusCode: err?.statusCode,
+      statusCode: err?.statusCode || err?.status,
       raw: err?.raw?.message,
     });
 
-    return res.status(500).json({
+    return res.status(err?.statusCode || err?.status || 500).json({
       ok: false,
       error: err?.message || err?.raw?.message || "Stripe checkout failed",
       code: err?.code || err?.raw?.code || null,
@@ -340,12 +352,15 @@ app.get("/pro-success", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.end(`<!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Lot Rocket Pro</title></head>
+<head>
+  <meta charset="utf-8">
+  <title>Lot Rocket Pro</title>
+</head>
 <body style="font-family:system-ui;background:#0b1020;color:#fff;padding:24px;">
   <h1>✅ Pro Activated</h1>
   <p>Sending you back…</p>
   <script>
-    try { localStorage.setItem("LR_PRO","1"); } catch(e) {}
+    try { localStorage.setItem("LR_PRO","1"); localStorage.setItem("lr_pro","1"); } catch(e) {}
     window.location.href = "/";
   </script>
 </body>
@@ -355,10 +370,15 @@ app.get("/pro-success", (_req, res) => {
 /* ===============================
    AI PING (GET + POST)
 ================================ */
-app.get("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.query || null, ts: Date.now() }));
-app.post("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.body || null, ts: Date.now() }));
+app.get("/api/ai/ping", (req, res) =>
+  res.json({ ok: true, got: req.query || null, ts: Date.now() })
+);
+app.post("/api/ai/ping", (req, res) =>
+  res.json({ ok: true, got: req.body || null, ts: Date.now() })
+);
 
-/* ==================================================
+/* ================================================== */
+
    BOOST (SCRAPE) — ALWAYS JSON
    GET /api/boost?url=...&debug=1
 ================================================== */
