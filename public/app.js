@@ -20,8 +20,7 @@
 
   const domReady = () =>
     new Promise((res) => {
-      if (DOC.readyState === "loading")
-        DOC.addEventListener("DOMContentLoaded", res, { once: true });
+      if (DOC.readyState === "loading") DOC.addEventListener("DOMContentLoaded", res, { once: true });
       else res();
     });
 
@@ -31,7 +30,7 @@
   // LOT ROCKET — PRO LOCK + PAYWALL (v2 CLEAN)
   // - Blocks any element with data-pro="1"
   // - Shows #lrPaywall
-  // - Upgrade buttons POST /api/stripe/checkout (expects {ok,url})
+  // - Upgrade buttons POST /api/stripe/checkout (expects {ok,url}) OR fallback GET redirect
   // - Pro flag uses localStorage "LR_PRO" (also supports legacy "lr_pro")
   // ==================================================
   (function LR_PRO_LOCK() {
@@ -46,6 +45,7 @@
     const upgradeBtn = byId("upgradeBtn");
 
     const CHECKOUT_ENDPOINT = "/api/stripe/checkout";
+    const STORAGE_KEY = "LR_PRO";
 
     function openPaywall() {
       if (!paywall) return console.warn("lrPaywall missing in HTML");
@@ -62,53 +62,61 @@
     }
 
     function isProActive() {
-      const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
-      return v === "1" || v === "true";
+      try {
+        const v = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("lr_pro");
+        return v === "1" || v === "true";
+      } catch {
+        return false;
+      }
     }
 
     async function goCheckout() {
       try {
+        // Try POST first (JSON response)
         const r = await fetch(CHECKOUT_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ returnUrl: window.location.origin }),
         });
 
-        const data = await r.json().catch(() => ({}));
-        const url = data.url || data.checkoutUrl;
-
-        if (!r.ok || !url) {
-          console.error("❌ Checkout failed:", { status: r.status, data });
-          alert("Checkout not configured. Check Render logs.");
-          return;
+        if (r.ok) {
+          const data = await r.json().catch(() => ({}));
+          const url = data.url || data.checkoutUrl;
+          if (url) {
+            window.location.href = url;
+            return;
+          }
         }
 
-        window.location.href = url;
+        // Fallback: GET route (server redirects to Stripe)
+        window.location.href = CHECKOUT_ENDPOINT;
       } catch (e) {
         console.error("❌ Checkout error:", e);
-        alert("Checkout error. Check Render logs.");
+        window.location.href = CHECKOUT_ENDPOINT;
       }
     }
 
-    closeBtn &&
+    // Close
+    if (closeBtn && !closeBtn.__LR_BOUND__) {
+      closeBtn.__LR_BOUND__ = true;
       closeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         closePaywall();
       });
+    }
 
-    upgradeNowBtn &&
-      upgradeNowBtn.addEventListener("click", (e) => {
+    // Upgrade buttons
+    [upgradeNowBtn, upgradeBtn].forEach((btn) => {
+      if (!btn || btn.__LR_BOUND__) return;
+      btn.__LR_BOUND__ = true;
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
+        closePaywall();
         goCheckout();
       });
+    });
 
-    upgradeBtn &&
-      upgradeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        goCheckout();
-      });
-
-    // Capture-phase gate: blocks anything with data-pro="1"
+    // Capture-phase gate
     DOC.addEventListener(
       "click",
       (e) => {
@@ -130,10 +138,9 @@
     DOC.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePaywall();
     });
+
+    window.LR_PRO = { isProActive, openPaywall, closePaywall, goCheckout };
   })();
-
-  // ==================================================
-
 
   // ==================================================
   // HARD OVERRIDE: Step 1 thumbnails MUST be square
@@ -271,13 +278,11 @@
       const lightSrc = logo.getAttribute("data-logo-light") || logo.src;
 
       const bodyIsDark =
-        document.body.classList.contains("dark") ||
-        document.body.classList.contains("dark-theme");
+        document.body.classList.contains("dark") || document.body.classList.contains("dark-theme");
 
-      const prefersDark =
-        window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-      const next = (bodyIsDark || prefersDark) ? darkSrc : lightSrc;
+      const next = bodyIsDark || prefersDark ? darkSrc : lightSrc;
       if (next && logo.getAttribute("src") !== next) {
         logo.style.opacity = "0.85";
         logo.setAttribute("src", next);
@@ -478,7 +483,7 @@
       ids.forEach((id) => {
         const el = $(id);
         if (!el) return;
-        const val = ("value" in el) ? (el.value || "") : (el.textContent || "");
+        const val = "value" in el ? el.value || "" : el.textContent || "";
         if (el.__LR_CLEARED_ONCE__) return;
         if (String(val).trim() === "Output...") {
           if ("value" in el) el.value = "";
@@ -629,15 +634,8 @@
       });
     }
 
-    window.LR_STEP2 = {
-      generateAll,
-      generateOne,
-      wireRegenButtons,
-      wireGenerateAll,
-      clearPlaceholderOnce,
-    };
+    window.LR_STEP2 = { generateAll, generateOne, wireRegenButtons, wireGenerateAll, clearPlaceholderOnce };
 
-    // boot wire
     clearPlaceholderOnce();
     wireRegenButtons();
     wireGenerateAll();
@@ -696,7 +694,7 @@
         copyBtn.addEventListener("click", async (e) => {
           e.preventDefault();
           pressAnim(copyBtn);
-          const text = (ta && ("value" in ta ? ta.value : ta.textContent) || "").trim();
+          const text = ((ta && ("value" in ta ? ta.value : ta.textContent)) || "").trim();
           if (!text) return;
           try {
             await copyText(text);
@@ -1389,7 +1387,6 @@
     const zipBtn = $("downloadZipBtn");
     setBtnLoading(zipBtn, true, "Zipping…");
 
-    // ---- FORCE JPEG CONVERSION (FACEBOOK SAFE) ----
     async function blobToJpegBlob(blob, quality = 0.92) {
       if (!blob) throw new Error("missing blob");
       if (blob.type === "image/jpeg") return blob;
@@ -1429,8 +1426,6 @@
           if (!r.ok) throw new Error("proxy fetch failed");
 
           const blob = await r.blob();
-
-          // ALWAYS SAVE AS .JPG
           const jpegBlob = await blobToJpegBlob(blob, 0.92);
           folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
 
@@ -1454,7 +1449,6 @@
       setBtnLoading(zipBtn, false);
     }
   }
-
 
   function wireZipButton() {
     const btn = $("downloadZipBtn");
@@ -1497,7 +1491,9 @@
       term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
       tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
       fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
-      state: String(pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI")
+      state: String(
+        pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
+      )
         .trim()
         .toUpperCase(),
       rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
@@ -1804,7 +1800,11 @@
           const ct = (res.headers.get("content-type") || "").toLowerCase();
           if (!ct.includes("application/json")) {
             const txt = await res.text();
-            console.error("❌ BOOST NON-JSON RESPONSE", { status: res.status, contentType: ct, head: txt.slice(0, 300) });
+            console.error("❌ BOOST NON-JSON RESPONSE", {
+              status: res.status,
+              contentType: ct,
+              head: txt.slice(0, 300),
+            });
             alert(`Boost returned NON-JSON (status ${res.status}).`);
             return;
           }
@@ -1992,7 +1992,9 @@
           setTimeout(() => {
             followInput.focus();
             const v = followInput.value || "";
-            try { followInput.setSelectionRange(v.length, v.length); } catch {}
+            try {
+              followInput.setSelectionRange(v.length, v.length);
+            } catch {}
             grow(followInput);
           }, 0);
         }
@@ -2037,19 +2039,3 @@
 
   console.log("✅ APP READY");
 })();
-function LR_showPaywall() {
-  document.getElementById("lrPaywall")?.style.setProperty("display", "flex");
-}
-
-function LR_hidePaywall() {
-  document.getElementById("lrPaywall")?.style.setProperty("display", "none");
-}
-
-document.getElementById("lrClosePaywall")?.addEventListener("click", LR_hidePaywall);
-document.getElementById("lrUpgradeNow")?.addEventListener("click", () => {
-  LR_hidePaywall();
-  document.getElementById("upgradeBtn")?.click();
-});
-
-try { console.log("APP READY"); } catch {}
-
