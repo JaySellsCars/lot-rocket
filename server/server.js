@@ -18,7 +18,8 @@ const PORT = process.env.PORT || 3000;
 /* ===============================
    BODY PARSING
 ================================ */
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const Stripe = require("stripe");
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 
 
