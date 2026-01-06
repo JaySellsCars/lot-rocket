@@ -24,130 +24,116 @@
         DOC.addEventListener("DOMContentLoaded", res, { once: true });
       else res();
     });
+
   await domReady();
-// ==================================================
-// LOT ROCKET — PRO LOCK + PAYWALL (v1)
-// - Blocks any element with data-pro="1"
-// - Shows #lrPaywall
-// - "Upgrade" buttons route to /api/stripe/checkout (or /api/checkout) depending on your server
-// ==================================================
-(function LR_PRO_LOCK() {
-  if (window.__LR_PRO_LOCK__) return;
-  window.__LR_PRO_LOCK__ = true;
 
-  const DOC = document;
-  const byId = (id) => DOC.getElementById(id);
+  // ==================================================
+  // LOT ROCKET — PRO LOCK + PAYWALL (v2 CLEAN)
+  // - Blocks any element with data-pro="1"
+  // - Shows #lrPaywall
+  // - Upgrade buttons POST /api/stripe/checkout (expects {ok,url})
+  // - Pro flag uses localStorage "LR_PRO" (also supports legacy "lr_pro")
+  // ==================================================
+  (function LR_PRO_LOCK() {
+    if (window.__LR_PRO_LOCK__) return;
+    window.__LR_PRO_LOCK__ = true;
 
-  const paywall = byId("lrPaywall");
-  const closeBtn = byId("lrClosePaywall");
-  const upgradeNowBtn = byId("lrUpgradeNow");
-  const upgradeBtn = byId("upgradeBtn");
+    const byId = (id) => DOC.getElementById(id);
 
-  // If your server route is different, change this ONE line:
-  const CHECKOUT_ENDPOINT = "/api/stripe/checkout"; // fallback below if not found
+    const paywall = byId("lrPaywall");
+    const closeBtn = byId("lrClosePaywall");
+    const upgradeNowBtn = byId("lrUpgradeNow");
+    const upgradeBtn = byId("upgradeBtn");
 
-  function openPaywall() {
-    if (!paywall) return console.warn("lrPaywall missing in HTML");
-    paywall.classList.remove("hidden");
-    paywall.style.display = "flex";
-    paywall.setAttribute("aria-hidden", "false");
-  }
+    const CHECKOUT_ENDPOINT = "/api/stripe/checkout";
 
-  function closePaywall() {
-    if (!paywall) return;
-    paywall.classList.add("hidden");
-    paywall.style.display = "none";
-    paywall.setAttribute("aria-hidden", "true");
-  }
+    function openPaywall() {
+      if (!paywall) return console.warn("lrPaywall missing in HTML");
+      paywall.classList.remove("hidden");
+      paywall.style.display = "flex";
+      paywall.setAttribute("aria-hidden", "false");
+    }
 
-  // 🔥 Core: if user is NOT active pro, block pro clicks
-  // This is a simple client gate. Later we will swap to Supabase auth check.
-  function isProActive() {
-    // Default: false (locked)
-    // If you later store a flag like localStorage.setItem("lr_pro","1") you can use it here.
-    return localStorage.getItem("lr_pro") === "1";
-  }
+    function closePaywall() {
+      if (!paywall) return;
+      paywall.classList.add("hidden");
+      paywall.style.display = "none";
+      paywall.setAttribute("aria-hidden", "true");
+    }
 
-  // ✅ Stripe checkout (server creates session + returns url)
-  async function goCheckout() {
-    try {
-      // Optionally include a return URL (server may ignore)
-      const body = { returnUrl: window.location.origin };
+    function isProActive() {
+      const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
+      return v === "1" || v === "true";
+    }
 
-      let r = await fetch(CHECKOUT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      // If your endpoint name differs, try fallback
-      if (!r.ok) {
-        r = await fetch("/api/checkout", {
+    async function goCheckout() {
+      try {
+        const r = await fetch(CHECKOUT_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ returnUrl: window.location.origin }),
         });
+
+        const data = await r.json().catch(() => ({}));
+        const url = data.url || data.checkoutUrl;
+
+        if (!r.ok || !url) {
+          console.error("❌ Checkout failed:", { status: r.status, data });
+          alert("Checkout not configured. Check Render logs.");
+          return;
+        }
+
+        window.location.href = url;
+      } catch (e) {
+        console.error("❌ Checkout error:", e);
+        alert("Checkout error. Check Render logs.");
       }
-
-      const data = await r.json().catch(() => ({}));
-
-      // Common patterns: {url} or {checkoutUrl}
-      const url = data.url || data.checkoutUrl;
-      if (!url) {
-        console.error("Checkout response missing url:", data);
-        alert("Checkout is not configured yet (missing URL).");
-        return;
-      }
-
-      window.location.href = url;
-    } catch (e) {
-      console.error("Checkout error:", e);
-      alert("Checkout error. Check Render logs.");
     }
-  }
 
-  // ✅ Close paywall
-  closeBtn && closeBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    closePaywall();
-  });
-
-  // ✅ Upgrade buttons
-  upgradeNowBtn && upgradeNowBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    goCheckout();
-  });
-
-  upgradeBtn && upgradeBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    goCheckout();
-  });
-
-  // ✅ Global click gate: blocks anything with data-pro="1"
-  DOC.addEventListener(
-    "click",
-    (e) => {
-      const el = e.target && e.target.closest ? e.target.closest("[data-pro]") : null;
-      if (!el) return;
-
-      const needsPro = el.getAttribute("data-pro") === "1";
-      if (!needsPro) return;
-
-      // If not pro, block the click and show paywall
-      if (!isProActive()) {
+    closeBtn &&
+      closeBtn.addEventListener("click", (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        openPaywall();
-      }
-    },
-    true // capture phase so we intercept before other handlers
-  );
+        closePaywall();
+      });
 
-  // Optional: allow ESC to close paywall
-  DOC.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePaywall();
-  });
-})();
+    upgradeNowBtn &&
+      upgradeNowBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        goCheckout();
+      });
+
+    upgradeBtn &&
+      upgradeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        goCheckout();
+      });
+
+    // Capture-phase gate: blocks anything with data-pro="1"
+    DOC.addEventListener(
+      "click",
+      (e) => {
+        const el = e.target?.closest?.("[data-pro]");
+        if (!el) return;
+
+        const needsPro = el.getAttribute("data-pro") === "1";
+        if (!needsPro) return;
+
+        if (!isProActive()) {
+          e.preventDefault();
+          e.stopPropagation();
+          openPaywall();
+        }
+      },
+      true
+    );
+
+    DOC.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePaywall();
+    });
+  })();
+
+  // ==================================================
+
 
   // ==================================================
   // HARD OVERRIDE: Step 1 thumbnails MUST be square
