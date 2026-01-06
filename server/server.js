@@ -180,6 +180,34 @@ app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 ================================ */
 
 
+app.post("/api/stripe/checkout", async (req, res) => {
+  try {
+    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
+
+    const priceId = process.env.STRIPE_PRICE_ID;
+    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/pro-success`,
+      cancel_url: `${baseUrl}/`,
+    });
+
+    return res.json({ ok: true, url: session.url });
+  } catch (err) {
+    console.error("❌ Stripe checkout error:", err);
+    return res.status(500).json({
+      ok: false,
+      error: err?.message || "Stripe checkout failed",
+      code: err?.code || null,
+      type: err?.type || null,
+      param: err?.param || null,
+    });
+  }
+});
 
 app.get("/api/stripe/checkout", async (req, res) => {
   try {
