@@ -1031,6 +1031,20 @@ app.get("/api/stripe/verify", async (req, res) => {
   }
 });
 
+app.get("/api/netcheck", async (_req, res) => {
+  try {
+    const https = require("https");
+    const req = https.request(
+      { method: "GET", host: "api.stripe.com", path: "/", timeout: 8000 },
+      (r) => res.json({ ok: true, status: r.statusCode, headers: r.headers })
+    );
+    req.on("timeout", () => req.destroy(new Error("timeout")));
+    req.on("error", (e) => res.status(500).json({ ok: false, error: e.message }));
+    req.end();
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
