@@ -211,6 +211,7 @@ function wireAuthUI(){
     }
   };
 }
+await initSupabaseAuth();
 
 // ==================================================
 // PAID-APP BOOT GATE (WHOLE APP = PRO)
