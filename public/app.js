@@ -25,6 +25,83 @@
     });
 
   await domReady();
+
+    // ==================================================
+  // PAID-APP BOOT GATE (WHOLE APP = PRO)
+  // - If Stripe returned with session_id, verify and unlock
+  // - If not Pro, show paywall and STOP boot
+  // ==================================================
+  async function stripeReturnCheckAndUnlock() {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    if (!sessionId) return false;
+
+    try {
+      const r = await fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sessionId)}`, {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
+      const j = await r.json().catch(() => ({}));
+
+      if (r.ok && j?.ok && j?.pro) {
+        try { localStorage.setItem("LR_PRO", "1"); } catch {}
+        console.log("✅ PRO ACTIVATED");
+        // Clean URL + hard reload
+        history.replaceState({}, "", "/");
+        location.reload();
+        return true; // (won't reach after reload, but safe)
+      }
+
+      console.warn("❌ verify did not confirm pro:", j);
+      return false;
+    } catch (e) {
+      console.error("❌ verify failed:", e);
+      return false;
+    }
+  }
+
+  function isProActive() {
+    try {
+      const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
+      return v === "1" || v === "true";
+    } catch {
+      return false;
+    }
+  }
+
+  function showPaywallAndLockPage() {
+    // Hide the entire app UI (whatever wrapper you have)
+    // Try common wrappers; keep this flexible
+    const appRoot =
+      document.getElementById("app") ||
+      document.getElementById("appRoot") ||
+      document.querySelector("main") ||
+      document.body;
+
+    if (appRoot) appRoot.classList.add("lr-locked");
+
+    const pw = document.getElementById("lrPaywall");
+    if (pw) {
+      pw.classList.remove("hidden");
+      pw.style.display = "flex";
+      pw.setAttribute("aria-hidden", "false");
+    } else {
+      console.warn("lrPaywall missing in HTML");
+      alert("Paywall missing in HTML (#lrPaywall).");
+    }
+  }
+
+  // ---- RUN THE GATE ----
+  await stripeReturnCheckAndUnlock();
+
+  if (!isProActive()) {
+    showPaywallAndLockPage();
+    console.log("🔒 APP LOCKED (not pro) — stopping boot");
+    return; // ✅ STOP HERE. Do not wire the app.
+  }
+
+  console.log("🔓 APP UNLOCKED (pro) — continuing boot");
+
 // ==================================================
 // STRIPE SUCCESS HANDLER (sets LR_PRO after checkout)
 // ==================================================
