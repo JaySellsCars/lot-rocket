@@ -1,11 +1,18 @@
 // /server/server.js  (REPLACE ENTIRE FILE)
 // LOT ROCKET — FINAL / LAUNCH READY ✅ (BOOT-SAFE)
-// Fixes: ✅ SyntaxError: Unexpected end of input (guaranteed closed strings/braces)
 // Fixes: ✅ API routes BEFORE static + SPA fallback
 // Fixes: ✅ /api/* never returns HTML (prevents "AI returned non-JSON")
 // Adds: ✅ /api (root) JSON
 // Adds: ✅ /api/boost ✅ /api/proxy ✅ /api/payment-helper
 // Adds: ✅ /api/ai/ping + /api/ai/ask/social/objection/message/workflow/car
+// Stripe fixes:
+// ✅ Safe Stripe init (won’t crash if env missing)
+// ✅ Webhook is safe even if Stripe not configured (returns clean error)
+// ✅ Raw webhook body parsed BEFORE json()
+// ✅ GET /api/stripe/checkout redirects to Stripe
+// ✅ POST /api/stripe/checkout returns {ok,url}
+// ✅ Logs Stripe mode (TEST/LIVE) + price id
+// ✅ Uses absolute baseUrl that works behind Render proxy
 
 "use strict";
 
@@ -16,60 +23,66 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ===============================
-   BODY PARSING
+   STRIPE (SAFE INIT)
 ================================ */
 const Stripe = require("stripe");
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
+function stripeModeLabel() {
+  const k = process.env.STRIPE_SECRET_KEY || "";
+  if (k.startsWith("sk_test")) return "TEST";
+  if (k.startsWith("sk_live")) return "LIVE";
+  return k ? "UNKNOWN" : "MISSING";
+}
 
-
-app.post(
-  "/api/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    const sig = req.headers["stripe-signature"];
-    let event;
-
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error("❌ Stripe webhook signature failed:", err.message);
-      return res.status(400).send("Webhook Error");
-    }
-
-    try {
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-        const userId = session.metadata?.userId;
-        const customerId = session.customer;
-        const subscriptionId = session.subscription;
-
-        if (userId) {
-          // TODO: Replace with your DB update:
-          // set isPaid true + store stripeCustomerId/subscriptionId
-          console.log("✅ PAID ON:", { userId, customerId, subscriptionId });
-        }
-      }
-
-      if (event.type === "customer.subscription.deleted") {
-        const sub = event.data.object;
-        // TODO: set isPaid false by stripeSubscriptionId
-        console.log("🛑 PAID OFF:", { subscriptionId: sub.id });
-      }
-
-      return res.json({ received: true });
-    } catch (e) {
-      console.error("❌ Webhook handler error:", e);
-      return res.status(500).json({ ok: false });
-    }
+/* ===============================
+   STRIPE WEBHOOK (RAW BODY REQUIRED)
+   NOTE: Must be defined BEFORE express.json()
+================================ */
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!stripe) {
+    return res.status(500).send("Stripe not configured (missing STRIPE_SECRET_KEY)");
   }
-);
 
+  const sig = req.headers["stripe-signature"];
+  if (!sig) return res.status(400).send("Missing Stripe-Signature header");
 
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error("❌ Stripe webhook signature failed:", err?.message || err);
+    return res.status(400).send("Webhook Error");
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const userId = session?.metadata?.userId || null;
+      const customerId = session?.customer || null;
+      const subscriptionId = session?.subscription || null;
+
+      // TODO: Replace with DB update:
+      // set isPaid true + store stripeCustomerId/subscriptionId
+      console.log("✅ PAID ON:", { userId, customerId, subscriptionId });
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object;
+      // TODO: set isPaid false by stripeSubscriptionId
+      console.log("🛑 PAID OFF:", { subscriptionId: sub?.id || null });
+    }
+
+    return res.json({ received: true });
+  } catch (e) {
+    console.error("❌ Webhook handler error:", e);
+    return res.status(500).json({ ok: false });
+  }
+});
+
+/* ===============================
+   BODY PARSING
+================================ */
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -171,15 +184,23 @@ app.get("/api/health", (_req, res) => {
   return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
 
-// ✅ keep ONE api root (remove /api/ duplicate)
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
 /* ===============================
-   STRIPE (server-side checkout)
+   STRIPE CHECKOUT
    - MUST be above express.static + SPA fallback
 ================================ */
 
+// Render is behind a proxy. This makes baseUrl correct.
+app.set("trust proxy", 1);
 
+function getBaseUrl(req) {
+  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https").toString().split(",")[0].trim();
+  const host = (req.headers["x-forwarded-host"] || req.get("host") || "").toString().split(",")[0].trim();
+  return `${proto}://${host}`;
+}
+
+// POST: returns JSON {ok,url}
 app.post("/api/stripe/checkout", async (req, res) => {
   try {
     if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
@@ -187,52 +208,21 @@ app.post("/api/stripe/checkout", async (req, res) => {
     const priceId = process.env.STRIPE_PRICE_ID;
     if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
 
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const baseUrl = getBaseUrl(req);
+
+    console.log("💳 STRIPE checkout (POST):", { priceId, mode: stripeModeLabel(), baseUrl });
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/pro-success`,
       cancel_url: `${baseUrl}/`,
+      allow_promotion_codes: true,
     });
 
     return res.json({ ok: true, url: session.url });
   } catch (err) {
-    console.error("❌ Stripe checkout error:", err);
-    return res.status(500).json({
-      ok: false,
-      error: err?.message || "Stripe checkout failed",
-      code: err?.code || null,
-      type: err?.type || null,
-      param: err?.param || null,
-    });
-  }
-});
-
-app.get("/api/stripe/checkout", async (req, res) => {
-  try {
-    const priceId = process.env.STRIPE_PRICE_ID;
-    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
-    if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
-
-    console.log("💳 STRIPE checkout start:", {
-      priceId,
-      hasKey: !!process.env.STRIPE_SECRET_KEY,
-    });
-
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${baseUrl}/pro-success`,
-      cancel_url: `${baseUrl}/`,
-    });
-
-    return res.redirect(303, session.url);
-  } catch (err) {
-    // ✅ SHOW THE REAL STRIPE ERROR
-    console.error("❌ Stripe checkout error:", {
+    console.error("❌ Stripe checkout (POST) error:", {
       message: err?.message,
       type: err?.type,
       code: err?.code,
@@ -251,9 +241,49 @@ app.get("/api/stripe/checkout", async (req, res) => {
   }
 });
 
+// GET: redirects to Stripe (your frontend uses this)
+app.get("/api/stripe/checkout", async (req, res) => {
+  try {
+    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
+
+    const priceId = process.env.STRIPE_PRICE_ID;
+    if (!priceId) return res.status(500).json({ ok: false, error: "Missing STRIPE_PRICE_ID" });
+
+    const baseUrl = getBaseUrl(req);
+
+    console.log("💳 STRIPE checkout (GET):", { priceId, mode: stripeModeLabel(), baseUrl });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/pro-success`,
+      cancel_url: `${baseUrl}/`,
+      allow_promotion_codes: true,
+    });
+
+    return res.redirect(303, session.url);
+  } catch (err) {
+    console.error("❌ Stripe checkout (GET) error:", {
+      message: err?.message,
+      type: err?.type,
+      code: err?.code,
+      param: err?.param,
+      statusCode: err?.statusCode,
+      raw: err?.raw?.message,
+    });
+
+    return res.status(500).json({
+      ok: false,
+      error: err?.message || err?.raw?.message || "Stripe checkout failed",
+      code: err?.code || err?.raw?.code || null,
+      type: err?.type || null,
+      param: err?.param || null,
+    });
+  }
+});
 
 // PRO SUCCESS: set LR_PRO=1 then back to app
-app.get("/pro-success", (req, res) => {
+app.get("/pro-success", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.end(`<!doctype html>
 <html>
@@ -279,7 +309,6 @@ app.post("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.body || nul
    BOOST (SCRAPE) — ALWAYS JSON
    GET /api/boost?url=...&debug=1
 ================================================== */
-
 app.get("/api/boost", async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
 
@@ -341,7 +370,6 @@ app.get("/api/boost", async (req, res) => {
         $("meta[name='twitter:description']").attr("content")
       ) || "";
 
-    // ---- JSON-LD vehicle parse (best-effort) ----
     function pick(obj, keys) {
       for (const k of keys) {
         const v = obj && obj[k];
@@ -399,7 +427,6 @@ app.get("/api/boost", async (req, res) => {
 
     const ld = parseJsonLdVehicles();
 
-    // ---- Images ----
     let images = [];
     const ogImg = absUrl(url, $("meta[property='og:image']").attr("content"));
     if (ogImg) images.push(ogImg);
@@ -424,7 +451,6 @@ app.get("/api/boost", async (req, res) => {
 
     images = uniq(images).slice(0, 60);
 
-    // ---- Regex fallback scan ----
     const textBlob = $("body").text().replace(/\s+/g, " ").trim();
     const find = (re) => (textBlob.match(re) ? textBlob.match(re)[0] : "");
 
@@ -596,7 +622,7 @@ async function callOpenAI({ system, user, temperature = 0.6 }) {
 }
 
 /* ===============================
-   APP KB (no backtick nesting)
+   APP KB
 ================================ */
 const APP_KB = [
   "LOT ROCKET — APP MANUAL",
@@ -643,7 +669,6 @@ app.post("/api/ai/social", async (req, res) => {
   const platform = normPlatform(req.body.platform || "facebook");
   const seed = String(req.body.seed || "").trim() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-  // Location can be passed as string or object
   const locRaw = req.body.location || req.body.geo || req.body.userLocation || req.body.context?.location || "";
   const location =
     typeof locRaw === "string"
@@ -652,15 +677,16 @@ app.post("/api/ai/social", async (req, res) => {
         ? takeText(locRaw.city, locRaw.state, locRaw.metro, locRaw.zip, locRaw.region)
         : "";
 
-  // Optional audience/demographics (if you have it in UI later)
   const audience = req.body.audience || req.body.context?.audience || {};
-  const audienceText =
-    typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
+  const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
 
-  // DM keyword: model name if present, otherwise INFO
-  const rawTitle = takeText(vehicle.model, vehicle.title, vehicle.trim, vehicle.year && vehicle.make && vehicle.model
-    ? `${vehicle.year} ${vehicle.make} ${vehicle.model}`
-    : "");
+  const rawTitle = takeText(
+    vehicle.model,
+    vehicle.title,
+    vehicle.trim,
+    vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : ""
+  );
+
   const keyword =
     (rawTitle || "INFO")
       .toUpperCase()
@@ -669,39 +695,15 @@ app.post("/api/ai/social", async (req, res) => {
       .split(/\s+/)
       .slice(0, 2)
       .join(" ") || "INFO";
-  // Tone preset (optional): closer | chill | viral | luxe | marketplace
-const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
+
+  const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
 
   const TONE_PRESETS = {
-    closer: [
-      "TONE PRESET: CLOSER",
-      "- High intent. Strong urgency. Assume buyer is ready.",
-      "- Short lines. Firm CTA. No soft language.",
-    ].join("\n"),
-
-    chill: [
-      "TONE PRESET: CHILL",
-      "- Friendly, conversational, car-guy energy.",
-      "- No pressure. Still DM-driven.",
-    ].join("\n"),
-
-    viral: [
-      "TONE PRESET: VIRAL",
-      "- Scroll-stopping hooks. Bold questions. High energy.",
-      "- Emojis used as anchors (within platform limits).",
-    ].join("\n"),
-
-    luxe: [
-      "TONE PRESET: LUXE",
-      "- Clean, premium, confident.",
-      "- Fewer emojis. Focus on experience and quality.",
-    ].join("\n"),
-
-    marketplace: [
-      "TONE PRESET: MARKETPLACE",
-      "- Price early. Bullet facts. Zero fluff.",
-      "- Minimal emojis. Direct availability.",
-    ].join("\n"),
+    closer: ["TONE PRESET: CLOSER", "- High intent. Strong urgency. Assume buyer is ready.", "- Short lines. Firm CTA. No soft language."].join("\n"),
+    chill: ["TONE PRESET: CHILL", "- Friendly, conversational, car-guy energy.", "- No pressure. Still DM-driven."].join("\n"),
+    viral: ["TONE PRESET: VIRAL", "- Scroll-stopping hooks. Bold questions. High energy.", "- Emojis used as anchors (within platform limits)."].join("\n"),
+    luxe: ["TONE PRESET: LUXE", "- Clean, premium, confident.", "- Fewer emojis. Focus on experience and quality."].join("\n"),
+    marketplace: ["TONE PRESET: MARKETPLACE", "- Price early. Bullet facts. Zero fluff.", "- Minimal emojis. Direct availability."].join("\n"),
   };
 
   const toneBlock = TONE_PRESETS[toneRaw] ? `\n${TONE_PRESETS[toneRaw]}\n` : "";
@@ -713,8 +715,7 @@ const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "vir
     "Generate a scroll-stopping, DM-generating post for ONE individual salesperson.",
     "It must feel human, fast, and native to the platform — not a dealership ad.",
     "",
-         toneBlock || "",
-
+    toneBlock || "",
     "VOICE (NON-NEGOTIABLE):",
     "- First-person singular (I/me). Confident. Direct. No corporate fluff.",
     "- NEVER say: 'Ready to elevate your drive', 'Check out', 'Stop by', 'Come on in', 'Visit our website', 'Call the dealership'.",
@@ -768,7 +769,6 @@ const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "vir
 
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
-
 
 app.post("/api/ai/objection", async (req, res) => {
   const objection = takeText(req.body.objection, req.body.input, req.body.text);
@@ -904,6 +904,9 @@ app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "../public/index.h
 ================================ */
 app.listen(PORT, () => {
   console.log("🚀 LOT ROCKET LIVE ON PORT", PORT);
+  console.log("STRIPE MODE:", stripeModeLabel());
+  console.log("STRIPE KEY PRESENT?", Boolean(process.env.STRIPE_SECRET_KEY));
+  console.log("STRIPE PRICE ID:", process.env.STRIPE_PRICE_ID || "(missing)");
   console.log("OPENAI KEY PRESENT?", Boolean(process.env.OPENAI_API_KEY));
   console.log("OPENAI MODEL:", OPENAI_MODEL);
   console.log("OPENAI TIMEOUT MS:", OPENAI_TIMEOUT_MS);
