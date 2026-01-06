@@ -68,35 +68,60 @@ app.post(
   express.raw({ type: "*/*" }),
   async (req, res) => {
     const stripe = getStripe();
-    if (!stripe) return res.status(500).send("Stripe not configured (missing STRIPE_SECRET_KEY)");
+    if (!stripe) return res.status(500).send("Stripe not configured");
 
     const sig = req.headers["stripe-signature"];
     if (!sig) return res.status(400).send("Missing Stripe-Signature header");
 
+    const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+    if (!secret) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
+
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        String(process.env.STRIPE_WEBHOOK_SECRET || "")
-      );
+      event = stripe.webhooks.constructEvent(req.body, sig, secret);
     } catch (err) {
       console.error("❌ Stripe webhook signature failed:", err?.message || err);
       return res.status(400).send("Webhook Error");
     }
 
     try {
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-        const userId = session?.metadata?.userId || null;
-        const customerId = session?.customer || null;
-        const subscriptionId = session?.subscription || null;
-        console.log("✅ PAID ON:", { userId, customerId, subscriptionId });
-      }
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
+          console.log("✅ PAID ON:", {
+            id: session?.id || null,
+            userId: session?.metadata?.userId || null,
+            customerId: session?.customer || null,
+            subscriptionId: session?.subscription || null,
+            email: session?.customer_details?.email || null,
+          });
+          break;
+        }
 
-      if (event.type === "customer.subscription.deleted") {
-        const sub = event.data.object;
-        console.log("🛑 PAID OFF:", { subscriptionId: sub?.id || null });
+        case "customer.subscription.deleted": {
+          const sub = event.data.object;
+          console.log("🛑 PAID OFF:", {
+            subscriptionId: sub?.id || null,
+            customerId: sub?.customer || null,
+            status: sub?.status || null,
+          });
+          break;
+        }
+
+        case "invoice.payment_failed": {
+          const inv = event.data.object;
+          console.log("⚠️ invoice.payment_failed:", {
+            invoiceId: inv?.id || null,
+            customerId: inv?.customer || null,
+            subscriptionId: inv?.subscription || null,
+          });
+          break;
+        }
+
+        default:
+          // optional:
+          // console.log("stripe event:", event.type);
+          break;
       }
 
       return res.json({ received: true });
@@ -107,10 +132,8 @@ app.post(
   }
 );
 
+/* =============================== */
 
-
-
-/* ===============================
    BODY PARSING
 ================================ */
 app.use(express.json({ limit: "2mb" }));
