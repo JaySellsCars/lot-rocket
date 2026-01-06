@@ -782,12 +782,13 @@ textarea{
   object-fit: cover;
   display: block;
 }
-/* LOCKED STATE */
+/* Whole-app hard lock */
 .lr-locked {
-  opacity: .45;
+  filter: blur(2px);
   pointer-events: none;
-  filter: grayscale(1);
+  user-select: none;
 }
+
 
 .lr-lock-badge {
   display: inline-flex;
@@ -825,9 +826,4 @@ textarea{
   justify-content: flex-end;
   margin-top: 14px;
 }
-/* Whole-app lock */
-.lr-locked {
-  filter: blur(2px);
-  pointer-events: none;
-  user-select: none;
-}
+
