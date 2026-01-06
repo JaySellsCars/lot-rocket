@@ -909,18 +909,18 @@ app.post("/api/ai/car", async (req, res) => {
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 /* ===============================
-   STRIPE STATUS (DEBUG)
-   MUST BE ABOVE API 404
-/* ===============================
    STRIPE STATUS (DEBUG) — CHEAP PING
    MUST BE ABOVE API 404
 ================================ */
 app.get("/api/stripe/status", async (_req, res) => {
+  console.log("⚡ /api/stripe/status HIT");
+
   const hasKey = !!process.env.STRIPE_SECRET_KEY;
   const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
   const hasPrice = !!process.env.STRIPE_PRICE_ID;
 
   if (!stripe) {
+    console.log("❌ STRIPE: NO INSTANCE");
     return res.status(200).json({
       ok: false,
       bucket: "NO_STRIPE_INSTANCE",
@@ -931,9 +931,10 @@ app.get("/api/stripe/status", async (_req, res) => {
   }
 
   try {
-    // ✅ cheapest real Stripe API call (connectivity + auth)
+    // ✅ cheapest auth/connectivity call
     const acct = await stripe.accounts.retrieve();
 
+    console.log("✅ STRIPE OK:", acct?.id || "(no id)");
     return res.status(200).json({
       ok: true,
       bucket: "STRIPE_OK_PING",
@@ -944,6 +945,12 @@ app.get("/api/stripe/status", async (_req, res) => {
       country: acct?.country || null,
     });
   } catch (err) {
+    console.error("❌ STRIPE STATUS FAIL:", {
+      type: err?.type || null,
+      code: err?.code || null,
+      message: err?.message || String(err),
+    });
+
     return res.status(200).json({
       ok: false,
       bucket: "STRIPE_CALL_FAILED",
@@ -956,8 +963,6 @@ app.get("/api/stripe/status", async (_req, res) => {
     });
   }
 });
-
-
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
