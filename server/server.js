@@ -195,25 +195,49 @@ async function getFetch() {
 app.get("/api/health", (_req, res) => {
   return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
+
+/**
+ * STRIPE PING (LIGHTWEIGHT / RELIABLE)
+ * - Avoids stripe.balance.retrieve() (common StripeConnectionError trigger)
+ * - Just proves the key works + Stripe is reachable
+ */
 app.get("/api/stripe/ping", async (_req, res) => {
   try {
-    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
-    const b = await stripe.balance.retrieve();
-    return res.json({ ok: true, available: b.available?.[0]?.amount ?? null, currency: b.available?.[0]?.currency ?? null });
+    if (!stripe) {
+      return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
+    }
+
+    // lightweight call (does not depend on account balance endpoints)
+    const prices = await stripe.prices.list({ limit: 1 });
+
+    return res.json({
+      ok: true,
+      reachable: true,
+      priceCount: Array.isArray(prices?.data) ? prices.data.length : 0,
+      ts: Date.now(),
+    });
   } catch (err) {
     console.error("❌ STRIPE PING FAIL:", {
       message: err?.message,
       type: err?.type,
       code: err?.code,
+      statusCode: err?.statusCode,
       raw: err?.raw?.message,
     });
-    return res.status(500).json({ ok: false, error: err?.message || "Stripe ping failed", type: err?.type || null, code: err?.code || null });
+
+    return res.status(500).json({
+      ok: false,
+      error: err?.message || err?.raw?.message || "Stripe ping failed",
+      type: err?.type || null,
+      code: err?.code || err?.raw?.code || null,
+    });
   }
 });
 
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
-/* ===============================
+/* =============================== */
+
    STRIPE CHECKOUT
    - MUST be above express.static + SPA fallback
 ================================ */
