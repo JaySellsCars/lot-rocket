@@ -915,15 +915,17 @@ app.post("/api/ai/car", async (req, res) => {
    STRIPE STATUS (DEBUG — LIGHT)
    MUST BE ABOVE API 404
 ================================ */
+/* ===============================
+   STRIPE STATUS (DEBUG) — CHEAP PING
+   MUST BE ABOVE API 404
+================================ */
 app.get("/api/stripe/status", async (_req, res) => {
   const hasKey = !!process.env.STRIPE_SECRET_KEY;
-  const keyPrefix = hasKey
-    ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7)
-    : "";
+  const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
   const hasPrice = !!process.env.STRIPE_PRICE_ID;
 
   if (!stripe) {
-    return res.json({
+    return res.status(200).json({
       ok: false,
       bucket: "NO_STRIPE_INSTANCE",
       hasKey,
@@ -933,19 +935,20 @@ app.get("/api/stripe/status", async (_req, res) => {
   }
 
   try {
-    // 🔹 Lightweight Stripe call (avoids balance / permissions issues)
-    const prices = await stripe.prices.list({ limit: 1 });
+    // ✅ cheapest real Stripe API call (connectivity + auth)
+    const acct = await stripe.accounts.retrieve();
 
-    return res.json({
+    return res.status(200).json({
       ok: true,
-      bucket: "STRIPE_OK_LIGHT",
+      bucket: "STRIPE_OK_PING",
       hasKey,
       keyPrefix,
       hasPrice,
-      priceCount: prices.data.length,
+      accountId: acct?.id || null,
+      country: acct?.country || null,
     });
   } catch (err) {
-    return res.json({
+    return res.status(200).json({
       ok: false,
       bucket: "STRIPE_CALL_FAILED",
       hasKey,
@@ -957,6 +960,7 @@ app.get("/api/stripe/status", async (_req, res) => {
     });
   }
 });
+
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
