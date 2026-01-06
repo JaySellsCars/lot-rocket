@@ -908,6 +908,44 @@ app.use("/api", (req, res) => {
    STATIC FRONTEND (AFTER API ROUTES)
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
+app.get("/api/stripe/status", async (_req, res) => {
+  const hasKey = !!process.env.STRIPE_SECRET_KEY;
+  const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
+  const hasPrice = !!process.env.STRIPE_PRICE_ID;
+
+  if (!stripe) {
+    return res.status(200).json({
+      ok: false,
+      bucket: "NO_STRIPE_INSTANCE",
+      hasKey,
+      keyPrefix,
+      hasPrice,
+    });
+  }
+
+  try {
+    const b = await stripe.balance.retrieve();
+    return res.status(200).json({
+      ok: true,
+      bucket: "STRIPE_OK",
+      hasKey,
+      keyPrefix,
+      hasPrice,
+      currency: b.available?.[0]?.currency ?? null,
+    });
+  } catch (err) {
+    return res.status(200).json({
+      ok: false,
+      bucket: "STRIPE_CALL_FAILED",
+      hasKey,
+      keyPrefix,
+      hasPrice,
+      type: err?.type || null,
+      code: err?.code || null,
+      message: err?.message || String(err),
+    });
+  }
+});
 
 /* ===============================
    SPA FALLBACK (LAST)
