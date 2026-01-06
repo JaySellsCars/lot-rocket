@@ -963,6 +963,31 @@ app.get("/api/stripe/status", async (_req, res) => {
     });
   }
 });
+// ✅ Verify Stripe session after redirect back from Stripe
+app.get("/api/stripe/verify", async (req, res) => {
+  try {
+    const sid = String(req.query.session_id || "").trim();
+    if (!sid) return res.status(400).json({ ok: false, error: "missing session_id" });
+
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+    const session = await stripe.checkout.sessions.retrieve(sid);
+
+    const paid =
+      session &&
+      (session.payment_status === "paid" || session.status === "complete");
+
+    return res.json({
+      ok: true,
+      pro: !!paid,
+      payment_status: session.payment_status,
+      status: session.status,
+    });
+  } catch (e) {
+    console.error("stripe verify error:", e);
+    return res.status(500).json({ ok: false, error: e.message || "verify failed" });
+  }
+});
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
