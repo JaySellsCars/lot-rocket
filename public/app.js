@@ -25,6 +25,41 @@
     });
 
   await domReady();
+// ==================================================
+// STRIPE SUCCESS HANDLER (sets LR_PRO after checkout)
+// ==================================================
+(async function LR_STRIPE_SUCCESS() {
+  try {
+    const u = new URL(window.location.href);
+    const sid = u.searchParams.get("session_id");
+    const paid = u.searchParams.get("paid");
+
+    if (paid === "1") {
+      localStorage.setItem("LR_PRO", "1");
+      u.searchParams.delete("paid");
+      window.history.replaceState({}, "", u.toString());
+      console.log("✅ PRO ACTIVATED (paid=1)");
+      return;
+    }
+
+    if (!sid) return;
+
+    const r = await fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sid)}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+
+    const j = await r.json().catch(() => null);
+    if (r.ok && j?.ok && j?.pro) {
+      localStorage.setItem("LR_PRO", "1");
+      u.searchParams.delete("session_id");
+      window.history.replaceState({}, "", u.toString());
+      console.log("✅ PRO ACTIVATED (verified)");
+    }
+  } catch (e) {
+    console.warn("Stripe success handler error:", e);
+  }
+})();
 
   // ==================================================
   // LOT ROCKET — PRO LOCK + PAYWALL (v2 CLEAN)
