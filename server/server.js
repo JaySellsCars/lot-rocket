@@ -259,11 +259,7 @@ function getBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
-function stripeModeLabel() {
-  const key = process.env.STRIPE_SECRET_KEY || "";
-  // Stripe test keys start with sk_test_
-  return key.startsWith("sk_test_") ? "TEST" : "LIVE";
-}
+
 
 async function createCheckoutSession(req) {
   if (!stripe) {
