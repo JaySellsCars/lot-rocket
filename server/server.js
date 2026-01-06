@@ -911,6 +911,9 @@ app.post("/api/ai/car", async (req, res) => {
 /* ===============================
    STRIPE STATUS (DEBUG)
    MUST BE ABOVE API 404
+/* ===============================
+   STRIPE STATUS (DEBUG — LIGHT)
+   MUST BE ABOVE API 404
 ================================ */
 app.get("/api/stripe/status", async (_req, res) => {
   const hasKey = !!process.env.STRIPE_SECRET_KEY;
@@ -930,7 +933,7 @@ app.get("/api/stripe/status", async (_req, res) => {
   }
 
   try {
-    // 🔹 Lightweight Stripe call (avoids balance API / permissions issues)
+    // 🔹 Lightweight Stripe call (avoids balance / permissions issues)
     const prices = await stripe.prices.list({ limit: 1 });
 
     return res.json({
@@ -978,7 +981,8 @@ app.get("*", (_req, res) =>
   res.sendFile(path.join(__dirname, "../public/index.html"))
 );
 
-/* ===============================
+/* =============================== */
+
    START
 ================================ */
 app.listen(PORT, () => {
