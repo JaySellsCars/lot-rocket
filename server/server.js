@@ -951,17 +951,74 @@ app.post("/api/ai/car", async (req, res) => {
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 /* ===============================
-   STRIPE STATUS (DEBUG) — CHEAP PING
-   MUST BE ABOVE API 404
+   STRIPE (SAFE INIT + NETWORK HARDENED)
+   - One Stripe instance (global)
+   - /api/netcheck isolates Render -> Stripe networking
+   - /api/stripe/status does cheapest authenticated call
+   - /api/stripe/verify uses SAME global stripe (no duplicates)
+   - Place ALL of this ABOVE your /api 404
 ================================ */
+
+let stripe = null;
+function getStripe() {
+  if (stripe) return stripe;
+
+  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
+  if (!key) return null;
+
+  const Stripe = require("stripe");
+  stripe = new Stripe(key, {
+    // pick the version you want; leaving fixed avoids surprises
+    apiVersion: "2024-06-20",
+    timeout: 60000,
+    maxNetworkRetries: 2,
+  });
+
+  return stripe;
+}
+
+// ✅ HARD NETWORK PROBE (NO AUTH) — if this fails, it’s outbound HTTPS from Render
+app.get("/api/netcheck", async (_req, res) => {
+  try {
+    const https = require("https");
+
+    const req = https.request(
+      {
+        method: "GET",
+        host: "api.stripe.com",
+        path: "/",
+        timeout: 8000,
+        headers: { "User-Agent": "lot-rocket-netcheck" },
+      },
+      (r) => {
+        res.json({
+          ok: true,
+          status: r.statusCode,
+          // keep it small; headers prove TLS/HTTP response happened
+          server: r.headers?.server || null,
+          date: r.headers?.date || null,
+        });
+      }
+    );
+
+    req.on("timeout", () => req.destroy(new Error("timeout")));
+    req.on("error", (e) => res.status(500).json({ ok: false, error: e.message }));
+    req.end();
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ✅ STRIPE STATUS (AUTH + CONNECTIVITY)
 app.get("/api/stripe/status", async (_req, res) => {
   console.log("⚡ /api/stripe/status HIT");
 
-  const hasKey = !!process.env.STRIPE_SECRET_KEY;
+  const hasKey = !!(process.env.STRIPE_SECRET_KEY || "").trim();
   const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
-  const hasPrice = !!process.env.STRIPE_PRICE_ID;
+  const hasPrice = !!(process.env.STRIPE_PRICE_ID || "").trim();
 
-  if (!stripe) {
+  const s = getStripe();
+  if (!s) {
     console.log("❌ STRIPE: NO INSTANCE");
     return res.status(200).json({
       ok: false,
@@ -974,9 +1031,9 @@ app.get("/api/stripe/status", async (_req, res) => {
 
   try {
     // ✅ cheapest auth/connectivity call
-    const acct = await stripe.accounts.retrieve();
-
+    const acct = await s.accounts.retrieve();
     console.log("✅ STRIPE OK:", acct?.id || "(no id)");
+
     return res.status(200).json({
       ok: true,
       bucket: "STRIPE_OK_PING",
@@ -1005,49 +1062,43 @@ app.get("/api/stripe/status", async (_req, res) => {
     });
   }
 });
-// ✅ Verify Stripe session after redirect back from Stripe
+
+// ✅ VERIFY SESSION (NO DUPES) — uses same global Stripe instance
 app.get("/api/stripe/verify", async (req, res) => {
   try {
     const sid = String(req.query.session_id || "").trim();
     if (!sid) return res.status(400).json({ ok: false, error: "missing session_id" });
 
-    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const s = getStripe();
+    if (!s) return res.status(200).json({ ok: false, bucket: "NO_STRIPE_INSTANCE" });
 
-    const session = await stripe.checkout.sessions.retrieve(sid);
+    const session = await s.checkout.sessions.retrieve(sid);
 
     const paid =
-      session &&
+      !!session &&
       (session.payment_status === "paid" || session.status === "complete");
 
     return res.json({
       ok: true,
       pro: !!paid,
-      payment_status: session.payment_status,
-      status: session.status,
+      payment_status: session?.payment_status || null,
+      status: session?.status || null,
+      mode: session?.mode || null,
+      customer_email: session?.customer_details?.email || null,
     });
   } catch (e) {
-    console.error("stripe verify error:", e);
+    console.error("stripe verify error:", {
+      type: e?.type || null,
+      code: e?.code || null,
+      message: e?.message || String(e),
+    });
     return res.status(500).json({ ok: false, error: e.message || "verify failed" });
-  }
-});
-
-app.get("/api/netcheck", async (_req, res) => {
-  try {
-    const https = require("https");
-    const req = https.request(
-      { method: "GET", host: "api.stripe.com", path: "/", timeout: 8000 },
-      (r) => res.json({ ok: true, status: r.statusCode, headers: r.headers })
-    );
-    req.on("timeout", () => req.destroy(new Error("timeout")));
-    req.on("error", (e) => res.status(500).json({ ok: false, error: e.message }));
-    req.end();
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
+   - Put this AFTER all /api/* routes (including Stripe routes above)
 ================================ */
 app.use("/api", (req, res) => {
   return res.status(404).json({
@@ -1061,6 +1112,7 @@ app.use("/api", (req, res) => {
    STATIC FRONTEND (AFTER API ROUTES)
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
+
 
 /* ===============================
    SPA FALLBACK (LAST)
