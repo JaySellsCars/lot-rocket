@@ -373,9 +373,8 @@ app.post("/api/ai/ping", (req, res) =>
   res.json({ ok: true, got: req.body || null, ts: Date.now() })
 );
 
-/* ================================================== */
-
-   BOOST (SCRAPE) — ALWAYS JSON
+/* ==================================================
+   BOOST (SCRAPE) - ALWAYS JSON
    GET /api/boost?url=...&debug=1
 ================================================== */
 app.get("/api/boost", async (req, res) => {
@@ -395,6 +394,35 @@ app.get("/api/boost", async (req, res) => {
       images: [],
     });
   }
+
+  try {
+    const f = await getFetch();
+
+    const r = await f(url, {
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+
+    const html = await r.text();
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+
+    if (!ct.includes("text/html") && !ct.includes("application/xhtml")) {
+      return res.status(200).json({
+        ok: false,
+        error: `Dealer returned non-HTML (${ct || "unknown"})`,
+        url,
+        status: r.status,
+        vehicle: { url, title: "", description: "", price: "", mileage: "", vin: "", stock: "" },
+        images: [],
+      });
+    }
+
+    // ... keep the rest of your handler exactly as-is
+
 
   try {
     const f = await getFetch();
