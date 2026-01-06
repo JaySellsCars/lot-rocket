@@ -2081,5 +2081,5 @@ function LR_applyLock(isPaid) {
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🔒 LOCK TEST RUNNING");
   // LR_wirePaywallButtons(); // ❌ REMOVE — undefined, causes crash
-  LR_applyLock(false); // ✅ KEEP — forces lock for testing
+  LR_applyLock(false);  ✅ KEEP — forces lock for testing
 });
