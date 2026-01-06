@@ -825,3 +825,9 @@ textarea{
   justify-content: flex-end;
   margin-top: 14px;
 }
+/* Whole-app lock */
+.lr-locked {
+  filter: blur(2px);
+  pointer-events: none;
+  user-select: none;
+}
