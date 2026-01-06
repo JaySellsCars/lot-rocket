@@ -26,70 +26,109 @@
 
   await domReady();
 
-    // ==================================================
-  // PAID-APP BOOT GATE (WHOLE APP = PRO)
-  // - If Stripe returned with session_id, verify and unlock
-  // - If not Pro, show paywall and STOP boot
-  // ==================================================
-  async function stripeReturnCheckAndUnlock() {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("session_id");
-    if (!sessionId) return false;
+// ==================================================
+// PAID-APP BOOT GATE (WHOLE APP = PRO)
+// - If Stripe returned with session_id, verify and unlock
+// - If already Pro, silently re-verify using last known session_id
+// ==================================================
+async function stripeReturnCheckAndUnlock() {
+  const params = new URLSearchParams(window.location.search);
+  const sessionIdFromUrl = params.get("session_id");
 
-    try {
-      const r = await fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sessionId)}`, {
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-      const j = await r.json().catch(() => ({}));
+  const getLS = (k) => {
+    try { return localStorage.getItem(k); } catch { return null; }
+  };
+  const setLS = (k, v) => {
+    try { localStorage.setItem(k, v); } catch {}
+  };
+  const delLS = (k) => {
+    try { localStorage.removeItem(k); } catch {}
+  };
 
-      if (r.ok && j?.ok && j?.pro) {
-        try { localStorage.setItem("LR_PRO", "1"); } catch {}
-        console.log("✅ PRO ACTIVATED");
-        // Clean URL + hard reload
+  const hasProFlag = isProActive();
+  const cachedSid = getLS("LR_SID");
+  const sidToVerify = sessionIdFromUrl || (hasProFlag ? cachedSid : null);
+
+  // 1) No session id anywhere -> nothing to verify
+  if (!sidToVerify) return false;
+
+  // 2) Verify with server
+  let j = null;
+  try {
+    const r = await fetch(`/api/stripe/verify?session_id=${encodeURIComponent(sidToVerify)}`, {
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    j = await r.json().catch(() => ({}));
+
+    // VERIFIED PRO ✅
+    if (r.ok && j?.ok && j?.pro) {
+      setLS("LR_PRO", "1");
+      setLS("lr_pro", "1");
+      setLS("LR_SID", sidToVerify);
+      setLS("LR_PRO_TS", String(Date.now()));
+      console.log("✅ PRO VERIFIED");
+
+      // If we came back from Stripe with session_id in URL, clean it once (no reload needed)
+      if (sessionIdFromUrl) {
         history.replaceState({}, "", "/");
-        location.reload();
-        return true; // (won't reach after reload, but safe)
       }
-
-      console.warn("❌ verify did not confirm pro:", j);
-      return false;
-    } catch (e) {
-      console.error("❌ verify failed:", e);
-      return false;
+      return true;
     }
-  }
 
-  function isProActive() {
-    try {
-      const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
-      return v === "1" || v === "true";
-    } catch {
+    // VERIFIED NOT PRO ❌ (or canceled / unpaid)
+    if (r.ok && j?.ok && !j?.pro) {
+      console.warn("🔒 PRO VERIFY: NOT PRO (clearing flags)");
+      delLS("LR_PRO");
+      delLS("lr_pro");
+      delLS("LR_SID");
+      delLS("LR_PRO_TS");
+
+      if (sessionIdFromUrl) history.replaceState({}, "", "/");
       return false;
     }
+
+    // If server returned something unexpected, don't blow up boot; just log.
+    console.warn("⚠️ PRO VERIFY: unexpected response", j);
+    if (sessionIdFromUrl) history.replaceState({}, "", "/");
+    return false;
+  } catch (e) {
+    // Network hiccup: do NOT hard-lock paid users.
+    console.warn("⚠️ PRO VERIFY: network error (keeping current state)", e?.message || e);
+    if (sessionIdFromUrl) history.replaceState({}, "", "/");
+    return hasProFlag; // keep pro if already pro
   }
+}
 
-  function showPaywallAndLockPage() {
-    // Hide the entire app UI (whatever wrapper you have)
-    // Try common wrappers; keep this flexible
-    const appRoot =
-      document.getElementById("app") ||
-      document.getElementById("appRoot") ||
-      document.querySelector("main") ||
-      document.body;
-
-    if (appRoot) appRoot.classList.add("lr-locked");
-
-    const pw = document.getElementById("lrPaywall");
-    if (pw) {
-      pw.classList.remove("hidden");
-      pw.style.display = "flex";
-      pw.setAttribute("aria-hidden", "false");
-    } else {
-      console.warn("lrPaywall missing in HTML");
-      alert("Paywall missing in HTML (#lrPaywall).");
-    }
+function isProActive() {
+  try {
+    const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
+    return v === "1" || v === "true";
+  } catch {
+    return false;
   }
+}
+
+function showPaywallAndLockPage() {
+  const appRoot =
+    document.getElementById("app") ||
+    document.getElementById("appRoot") ||
+    document.querySelector("main") ||
+    document.body;
+
+  if (appRoot) appRoot.classList.add("lr-locked");
+
+  const pw = document.getElementById("lrPaywall");
+  if (pw) {
+    pw.classList.remove("hidden");
+    pw.style.display = "flex";
+    pw.setAttribute("aria-hidden", "false");
+  } else {
+    console.warn("lrPaywall missing in HTML");
+    alert("Paywall missing in HTML (#lrPaywall).");
+  }
+}
+
 
   // ---- RUN THE GATE ----
   await stripeReturnCheckAndUnlock();
