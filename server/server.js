@@ -25,8 +25,20 @@ const PORT = process.env.PORT || 3000;
 /* ===============================
    STRIPE (SAFE INIT)
 ================================ */
+const https = require("https");
 const Stripe = require("stripe");
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      httpAgent: new https.Agent({
+        keepAlive: true,
+        maxSockets: 10,
+        timeout: 60000,
+      }),
+      timeout: 60000,
+    })
+  : null;
+
 
 function stripeModeLabel() {
   const k = process.env.STRIPE_SECRET_KEY || "";
