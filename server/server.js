@@ -624,56 +624,70 @@ app.post("/api/payment-helper", (req, res) => {
     const n = Number(String(v ?? "").replace(/[$,%\s,]/g, ""));
     return Number.isFinite(n) ? n : 0;
   };
+
   const money = (n) =>
-    `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    `$${Number(n || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   try {
     const price = num(req.body.price);
     const down = num(req.body.down);
     const trade = num(req.body.trade);
     const payoff = num(req.body.payoff);
-    const rate = num(req.body.rate);
-    const term = Math.max(0, Math.round(num(req.body.term)));
-    const tax = num(req.body.tax);
+    const rate = num(req.body.rate); // APR %
+    const term = Math.max(0, Math.round(num(req.body.term))); // months
+    const tax = num(req.body.tax); // % (e.g. 6)
     const fees = num(req.body.fees);
     const rebate = num(req.body.rebate);
 
-    if (!price || !term) {
-      return res.status(400).json({ ok: false, message: "Enter at least Price and Term (months)." });
+    // Basic math
+    const equity = trade - payoff; // can be negative
+    const taxable = Math.max(0, price - rebate); // conservative
+    const taxAmt = (taxable * tax) / 100;
+
+    // Amount financed
+    const amountFinanced = Math.max(0, price + taxAmt + fees - down - equity - rebate);
+
+    // Payment calc
+    const monthlyRate = rate > 0 ? rate / 100 / 12 : 0;
+    let payment = 0;
+
+    if (term <= 0) {
+      payment = 0;
+    } else if (monthlyRate === 0) {
+      payment = amountFinanced / term;
+    } else {
+      const pow = Math.pow(1 + monthlyRate, term);
+      payment = amountFinanced * ((monthlyRate * pow) / (pow - 1));
     }
 
-    const tradeNet = trade - payoff;
-    const taxable = Math.max(0, price - Math.max(0, tradeNet) - rebate) + fees;
-    const taxAmt = taxable * (Math.max(0, tax) / 100);
-    const amountFinanced = Math.max(0, taxable + taxAmt - down);
-
-    const monthlyRate = Math.max(0, rate) / 100 / 12;
-
-    let payment = 0;
-    if (monthlyRate === 0) payment = amountFinanced / term;
-    else payment = (amountFinanced * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -term));
-
-    const breakdownText = [
-      `Estimated Payment: ${money(payment)} / mo`,
-      "",
-      `Amount Financed: ${money(amountFinanced)}`,
-      `Price: ${money(price)}`,
-      `Fees/Add-ons: ${money(fees)}`,
-      `Rebate: -${money(rebate)}`,
-      `Trade: ${money(trade)}  •  Payoff: ${money(payoff)}  •  Net: ${money(tradeNet)}`,
-      `Down: ${money(down)}`,
-      `Tax (${tax.toFixed(2)}%): ${money(taxAmt)}`,
-      "",
-      `APR: ${rate.toFixed(2)}%  •  Term: ${term} months`,
-      "",
-      "Note: Estimate only. Exact figures depend on lender, taxes, fees, rebates, and approval structure.",
-    ].join("\n");
-
-    return res.json({ ok: true, breakdownText });
+    return res.status(200).json({
+      ok: true,
+      input: { price, down, trade, payoff, rate, term, tax, fees, rebate },
+      calc: {
+        equity,
+        taxable,
+        taxAmt,
+        amountFinanced,
+        payment,
+      },
+      pretty: {
+        equity: money(equity),
+        taxAmt: money(taxAmt),
+        amountFinanced: money(amountFinanced),
+        payment: money(payment),
+      },
+    });
   } catch (e) {
-    return res.status(500).json({ ok: false, message: e?.message || String(e) });
+    return res.status(200).json({
+      ok: false,
+      error: e?.message || String(e),
+    });
   }
 });
+
 
 /* ===============================
    OPENAI HELPER
