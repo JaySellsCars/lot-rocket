@@ -260,17 +260,25 @@ function openPaywall() {
 function closePaywall() {
   if (!paywall) return;
 
-  // Hide modal
+  // Only hide the modal, NEVER unlock the app
   paywall.classList.add("hidden");
   paywall.style.display = "none";
   paywall.setAttribute("aria-hidden", "true");
 
-  // ✅ If NOT pro, keep the app physically locked
+  // Re-apply full app lock if not pro
   if (!isProActive()) {
-    DOC.documentElement.classList.add("lr-locked");
-    DOC.body.classList.add("lr-locked");
+    const appRoot =
+      document.getElementById("app") ||
+      document.getElementById("appRoot") ||
+      document.querySelector("main") ||
+      document.body;
+
+    if (appRoot) appRoot.classList.add("lr-locked");
+
+    console.log("🔒 PAYWALL CLOSED — APP STILL LOCKED");
   }
 }
+
 
 
     // Upgrade buttons
