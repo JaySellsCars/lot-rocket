@@ -914,7 +914,9 @@ app.post("/api/ai/car", async (req, res) => {
 ================================ */
 app.get("/api/stripe/status", async (_req, res) => {
   const hasKey = !!process.env.STRIPE_SECRET_KEY;
-  const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
+  const keyPrefix = hasKey
+    ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7)
+    : "";
   const hasPrice = !!process.env.STRIPE_PRICE_ID;
 
   if (!stripe) {
@@ -928,14 +930,16 @@ app.get("/api/stripe/status", async (_req, res) => {
   }
 
   try {
-    const b = await stripe.balance.retrieve();
+    // 🔹 Lightweight Stripe call (avoids balance API / permissions issues)
+    const prices = await stripe.prices.list({ limit: 1 });
+
     return res.json({
       ok: true,
-      bucket: "STRIPE_OK",
+      bucket: "STRIPE_OK_LIGHT",
       hasKey,
       keyPrefix,
       hasPrice,
-      currency: b.available?.[0]?.currency ?? null,
+      priceCount: prices.data.length,
     });
   } catch (err) {
     return res.json({
@@ -955,7 +959,11 @@ app.get("/api/stripe/status", async (_req, res) => {
    API 404 JSON (MUST BE LAST API HANDLER)
 ================================ */
 app.use("/api", (req, res) => {
-  return res.status(404).json({ ok: false, error: "Unknown API route", path: req.path });
+  return res.status(404).json({
+    ok: false,
+    error: "Unknown API route",
+    path: req.path,
+  });
 });
 
 /* ===============================
@@ -963,11 +971,12 @@ app.use("/api", (req, res) => {
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 
-
 /* ===============================
    SPA FALLBACK (LAST)
 ================================ */
-app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
+app.get("*", (_req, res) =>
+  res.sendFile(path.join(__dirname, "../public/index.html"))
+);
 
 /* ===============================
    START
