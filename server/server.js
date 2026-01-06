@@ -128,7 +128,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
     return res.status(400).send("Webhook Error");
   }
 
-  // TODO: replace with DB updates (this is the whole point of webhooks)
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -164,8 +163,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
       }
 
       default:
-        // keep quiet or log if you want
-        // console.log("stripe event:", event.type);
         break;
     }
 
@@ -175,6 +172,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
     return res.status(500).json({ ok: false });
   }
 });
+
 
 /* ===============================
    BODY PARSING
