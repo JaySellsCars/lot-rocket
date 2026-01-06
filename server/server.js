@@ -106,6 +106,75 @@ app.post(
     }
   }
 );
+// ===============================
+// STRIPE WEBHOOK (RAW BODY REQUIRED)
+// Put this BEFORE express.json()
+// ===============================
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).send("Stripe not configured");
+
+  const sig = req.headers["stripe-signature"];
+  if (!sig) return res.status(400).send("Missing Stripe-Signature header");
+
+  const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+  if (!secret) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, secret);
+  } catch (err) {
+    console.error("❌ Webhook signature verify failed:", err?.message || err);
+    return res.status(400).send("Webhook Error");
+  }
+
+  // TODO: replace with DB updates (this is the whole point of webhooks)
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        console.log("✅ checkout.session.completed", {
+          id: session?.id,
+          customer: session?.customer,
+          subscription: session?.subscription,
+          email: session?.customer_details?.email,
+          metadata: session?.metadata || {},
+        });
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object;
+        console.log("🛑 customer.subscription.deleted", {
+          id: sub?.id,
+          customer: sub?.customer,
+          status: sub?.status,
+        });
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const inv = event.data.object;
+        console.log("⚠️ invoice.payment_failed", {
+          id: inv?.id,
+          customer: inv?.customer,
+          subscription: inv?.subscription,
+        });
+        break;
+      }
+
+      default:
+        // keep quiet or log if you want
+        // console.log("stripe event:", event.type);
+        break;
+    }
+
+    return res.json({ received: true });
+  } catch (e) {
+    console.error("❌ Webhook handler error:", e);
+    return res.status(500).json({ ok: false });
+  }
+});
 
 /* ===============================
    BODY PARSING
