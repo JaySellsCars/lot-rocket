@@ -25,6 +25,192 @@
     });
 
   await domReady();
+// ==================================================
+// SUPABASE AUTH (PATH A STEP 1)
+// ==================================================
+let SB = null;               // supabase client
+let LR_USER = null;          // current user object
+let LR_SESSION = null;       // current session
+
+function qs(id){ return DOC.getElementById(id); }
+
+function show(el){ if(el) el.classList.remove("hidden"); }
+function hide(el){ if(el) el.classList.add("hidden"); }
+
+function setAuthMsg(msg){
+  const box = qs("lrAuthMsg");
+  if (box) box.textContent = msg || "";
+}
+
+function openAuth(){
+  const m = qs("lrAuth");
+  if (!m) return;
+  m.classList.remove("hidden");
+  m.setAttribute("aria-hidden", "false");
+}
+function closeAuth(){
+  const m = qs("lrAuth");
+  if (!m) return;
+  m.classList.add("hidden");
+  m.setAttribute("aria-hidden", "true");
+}
+
+function renderUserChip(){
+  const chip = qs("lrUserChip");
+  const btnOut = qs("lrSignOut");
+  if (!chip) return;
+
+  // Always show chip once SB is ready
+  show(chip);
+
+  if (LR_USER && LR_USER.email) {
+    chip.textContent = `👤 ${LR_USER.email}`;
+    if (btnOut) show(btnOut);
+  } else {
+    chip.textContent = "👤 Sign in";
+    if (btnOut) hide(btnOut);
+  }
+}
+
+// Expose userId for later (Stripe bind happens Step 2)
+function publishUser(){
+  const userId = LR_USER?.id || "";
+  window.LR_USER_ID = userId;
+  window.dispatchEvent(new CustomEvent("lr:user", { detail: { userId, user: LR_USER || null } }));
+}
+
+async function initSupabaseAuth(){
+  // Fetch safe config from server
+  let cfg = null;
+  try {
+    const r = await fetch("/api/config", { cache: "no-store" });
+    cfg = await r.json();
+  } catch (e) {
+    console.error("❌ /api/config failed", e);
+  }
+
+  const supabaseUrl = cfg?.supabaseUrl || "";
+  const supabaseAnonKey = cfg?.supabaseAnonKey || "";
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("❌ Supabase config missing. Check Render env SUPABASE_URL + SUPABASE_ANON_KEY");
+    return;
+  }
+
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("❌ Supabase JS not loaded. Ensure CDN script is above app.js");
+    return;
+  }
+
+  SB = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  // Initial session
+  const { data: s0 } = await SB.auth.getSession();
+  LR_SESSION = s0?.session || null;
+  LR_USER = LR_SESSION?.user || null;
+  renderUserChip();
+  publishUser();
+
+  // Listen for auth changes
+  SB.auth.onAuthStateChange((_event, session) => {
+    LR_SESSION = session || null;
+    LR_USER = session?.user || null;
+    renderUserChip();
+    publishUser();
+  });
+
+  wireAuthUI();
+  console.log("✅ Supabase Auth READY", { userId: LR_USER?.id || null });
+}
+
+function wireAuthUI(){
+  const chip = qs("lrUserChip");
+  const closeBtn = qs("lrAuthClose");
+
+  if (chip) chip.onclick = () => openAuth();
+  if (closeBtn) closeBtn.onclick = () => closeAuth();
+
+  const btnLink = qs("lrSendLink");
+  const btnIn = qs("lrSignIn");
+  const btnUp = qs("lrSignUp");
+  const btnOut = qs("lrSignOut");
+
+  const emailEl = qs("lrEmail");
+  const passEl = qs("lrPass");
+
+  const getEmail = () => (emailEl?.value || "").trim();
+  const getPass = () => (passEl?.value || "").trim();
+
+  if (btnLink) btnLink.onclick = async () => {
+    if (!SB) return;
+    setAuthMsg("");
+    const email = getEmail();
+    if (!email) return setAuthMsg("Enter your email first.");
+
+    try {
+      const { error } = await SB.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin }
+      });
+      if (error) return setAuthMsg("❌ " + error.message);
+      setAuthMsg("✅ Magic link sent. Check your email.");
+    } catch (e) {
+      setAuthMsg("❌ Magic link error.");
+      console.error(e);
+    }
+  };
+
+  if (btnIn) btnIn.onclick = async () => {
+    if (!SB) return;
+    setAuthMsg("");
+    const email = getEmail();
+    const password = getPass();
+    if (!email || !password) return setAuthMsg("Email + password required for Sign In.");
+
+    try {
+      const { error } = await SB.auth.signInWithPassword({ email, password });
+      if (error) return setAuthMsg("❌ " + error.message);
+      setAuthMsg("✅ Signed in.");
+      closeAuth();
+    } catch (e) {
+      setAuthMsg("❌ Sign in error.");
+      console.error(e);
+    }
+  };
+
+  if (btnUp) btnUp.onclick = async () => {
+    if (!SB) return;
+    setAuthMsg("");
+    const email = getEmail();
+    const password = getPass();
+    if (!email || !password) return setAuthMsg("Email + password required for Create Account.");
+
+    try {
+      const { error } = await SB.auth.signUp({ email, password });
+      if (error) return setAuthMsg("❌ " + error.message);
+      setAuthMsg("✅ Account created. If email confirmation is on, check your inbox.");
+    } catch (e) {
+      setAuthMsg("❌ Sign up error.");
+      console.error(e);
+    }
+  };
+
+  if (btnOut) btnOut.onclick = async () => {
+    if (!SB) return;
+    setAuthMsg("");
+    try {
+      const { error } = await SB.auth.signOut();
+      if (error) return setAuthMsg("❌ " + error.message);
+      setAuthMsg("✅ Signed out.");
+      closeAuth();
+    } catch (e) {
+      setAuthMsg("❌ Sign out error.");
+      console.error(e);
+    }
+  };
+}
 
 // ==================================================
 // PAID-APP BOOT GATE (WHOLE APP = PRO)
