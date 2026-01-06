@@ -896,6 +896,15 @@ app.post("/api/ai/car", async (req, res) => {
   const out = await callOpenAI({ system, user, temperature: 0.35 });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+app.get("/api/stripe/status", async (_req, res) => {
+  if (!stripe) return res.json({ ok: false, bucket: "NO_STRIPE_INSTANCE" });
+  try {
+    await stripe.balance.retrieve();
+    return res.json({ ok: true, bucket: "STRIPE_OK" });
+  } catch (e) {
+    return res.json({ ok: false, bucket: "STRIPE_CALL_FAILED", message: e.message });
+  }
+});
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
