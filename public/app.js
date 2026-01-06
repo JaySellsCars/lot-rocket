@@ -2065,21 +2065,7 @@ document.getElementById("lrUpgradeNow")?.addEventListener("click", () => {
   document.getElementById("upgradeBtn")?.click();
 });
 
-function LR_applyLock(isPaid) {
-  document.querySelectorAll("[data-pro='1']").forEach(el => {
-    if (!isPaid) el.classList.add("lr-locked");
-    else el.classList.remove("lr-locked");
-  });
 
-  document.addEventListener("click", e => {
-    const locked = e.target.closest("[data-pro='1']");
-    if (locked && !isPaid) {
-      e.preventDefault();
-      e.stopPropagation();
-      LR_showPaywall();
-    }
-  }, true);
-}
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🔒 LOCK TEST RUNNING");
   // LR_wirePaywallButtons(); // ❌ REMOVE — undefined, causes crash
