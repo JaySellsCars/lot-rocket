@@ -199,12 +199,20 @@ function showPaywallAndLockPage() {
     const CHECKOUT_ENDPOINT = "/api/stripe/checkout";
     const STORAGE_KEY = "LR_PRO";
 
-    function openPaywall() {
-      if (!paywall) return console.warn("lrPaywall missing in HTML");
-      paywall.classList.remove("hidden");
-      paywall.style.display = "flex";
-      paywall.setAttribute("aria-hidden", "false");
-    }
+function openPaywall() {
+  if (!paywall) return console.warn("lrPaywall missing in HTML");
+
+  // ✅ Lock the page every time paywall opens (if not pro)
+  if (!isProActive()) {
+    DOC.documentElement.classList.add("lr-locked");
+    DOC.body.classList.add("lr-locked");
+  }
+
+  paywall.classList.remove("hidden");
+  paywall.style.display = "flex";
+  paywall.setAttribute("aria-hidden", "false");
+}
+
 
     function closePaywall() {
       if (!paywall) return;
