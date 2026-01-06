@@ -1030,33 +1030,7 @@ app.get("/api/stripe/verify", async (req, res) => {
     return res.status(500).json({ ok: false, error: e.message || "verify failed" });
   }
 });
-app.get("/api/stripe/verify", async (req, res) => {
-  try {
-    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
 
-    const sessionId = String(req.query.session_id || "").trim();
-    if (!sessionId) return res.status(400).json({ ok: false, error: "Missing session_id" });
-
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["subscription", "customer"],
-    });
-
-    const pro =
-      session?.status === "complete" &&
-      ["active", "trialing"].includes(session?.subscription?.status);
-
-    return res.json({
-      ok: true,
-      pro,
-      sessionStatus: session?.status || null,
-      subscriptionStatus: session?.subscription?.status || null,
-      customer: session?.customer?.id || null,
-    });
-  } catch (e) {
-    console.error("❌ stripe verify error:", e);
-    return res.status(500).json({ ok: false, error: e.message || "verify failed" });
-  }
-});
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
