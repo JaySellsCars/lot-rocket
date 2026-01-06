@@ -1,3 +1,5 @@
+// redeploy v10003
+
 ///// /public/app.js  (REPLACE ENTIRE FILE)
 // LOT ROCKET — SINGLE SAFE BOOT FILE (CLEAN / STABLE) v10003
 // ✅ Step 2 hardened + isolated (no Step 1 mixing)
