@@ -28,16 +28,16 @@ const PORT = process.env.PORT || 3000;
 const https = require("https");
 const Stripe = require("stripe");
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      httpAgent: new https.Agent({
-        keepAlive: true,
-        maxSockets: 10,
-        timeout: 60000,
-      }),
-      timeout: 60000,
-    })
-  : null;
+const stripeKey = process.env.STRIPE_SECRET_KEY || "";
+const stripe =
+  stripeKey && stripeKey.startsWith("sk_")
+    ? new Stripe(stripeKey, {
+        apiVersion: "2024-06-20",
+        timeout: 20000,
+        maxNetworkRetries: 2,
+      })
+    : null;
+
 
 
 function stripeModeLabel() {
