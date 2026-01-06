@@ -132,12 +132,12 @@ app.post(
   }
 );
 
-/* =============================== */
-
+/* ===============================
    BODY PARSING
 ================================ */
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
+
 
 /* ===============================
    OPTIONAL DEP: CHEERIO
