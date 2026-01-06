@@ -120,6 +120,44 @@
         </div>
       </section>
     </div>
+<!-- =========================
+     LOT ROCKET AUTH MODAL
+========================= -->
+<div id="lrAuth" class="lr-modal hidden" aria-hidden="true">
+  <div class="lr-modal-box">
+    <div class="lr-modal-top">
+      <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
+      <button id="lrAuthClose" class="lr-x" type="button">✕</button>
+    </div>
+
+    <div class="lr-modal-body">
+      <label class="lr-label">Email</label>
+      <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email"/>
+
+      <label class="lr-label">Password (optional)</label>
+      <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+      <div class="lr-row">
+        <button id="lrSendLink" class="lr-btn" type="button">Send Magic Link</button>
+        <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
+      </div>
+
+      <div class="lr-row">
+        <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
+        <button id="lrSignOut" class="lr-btn danger hidden" type="button">Sign Out</button>
+      </div>
+
+      <div id="lrAuthMsg" class="lr-msg"></div>
+
+      <div class="lr-mini">
+        Magic link = fastest for MVP. Password sign-in works too.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Small user chip -->
+<button id="lrUserChip" class="lr-userchip hidden" type="button">👤 Sign in</button>
 
     <!-- RIGHT COLUMN (STEP 2 TILE GRID) -->
     <div class="column">
