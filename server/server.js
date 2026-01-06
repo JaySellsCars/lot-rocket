@@ -189,6 +189,16 @@ function jsonOk(res, payload) {
 function jsonErr(res, error, extra = {}) {
   return res.status(200).json({ ok: false, error, ...extra });
 }
+// ===============================
+// API: CONFIG (frontend-safe)
+// ===============================
+app.get("/api/config", (req, res) => {
+  res.json({
+    ok: true,
+    supabaseUrl: process.env.SUPABASE_URL || "",
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
+  });
+});
 
 /* ===============================
    PLATFORM NORMALIZER
