@@ -642,23 +642,18 @@ app.post("/api/payment-helper", (req, res) => {
     const fees = num(req.body.fees);
     const rebate = num(req.body.rebate);
 
-    // Basic math
     const equity = trade - payoff; // can be negative
-    const taxable = Math.max(0, price - rebate); // conservative
+    const taxable = Math.max(0, price - rebate);
     const taxAmt = (taxable * tax) / 100;
 
-    // Amount financed
     const amountFinanced = Math.max(0, price + taxAmt + fees - down - equity - rebate);
 
-    // Payment calc
     const monthlyRate = rate > 0 ? rate / 100 / 12 : 0;
     let payment = 0;
 
-    if (term <= 0) {
-      payment = 0;
-    } else if (monthlyRate === 0) {
-      payment = amountFinanced / term;
-    } else {
+    if (term <= 0) payment = 0;
+    else if (monthlyRate === 0) payment = amountFinanced / term;
+    else {
       const pow = Math.pow(1 + monthlyRate, term);
       payment = amountFinanced * ((monthlyRate * pow) / (pow - 1));
     }
@@ -666,13 +661,7 @@ app.post("/api/payment-helper", (req, res) => {
     return res.status(200).json({
       ok: true,
       input: { price, down, trade, payoff, rate, term, tax, fees, rebate },
-      calc: {
-        equity,
-        taxable,
-        taxAmt,
-        amountFinanced,
-        payment,
-      },
+      calc: { equity, taxable, taxAmt, amountFinanced, payment },
       pretty: {
         equity: money(equity),
         taxAmt: money(taxAmt),
@@ -687,6 +676,7 @@ app.post("/api/payment-helper", (req, res) => {
     });
   }
 });
+
 
 
 /* ===============================
