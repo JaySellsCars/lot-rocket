@@ -2065,8 +2065,5 @@ document.getElementById("lrUpgradeNow")?.addEventListener("click", () => {
   document.getElementById("upgradeBtn")?.click();
 });
 
+try { console.log("APP READY"); } catch {}
 
-// legacy test lock removed
-
-console.log("APP READY");
-})();
