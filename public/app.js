@@ -228,24 +228,27 @@
       });
     });
 
-    // Capture-phase gate
-    DOC.addEventListener(
-      "click",
-      (e) => {
-        const el = e.target?.closest?.("[data-pro]");
-        if (!el) return;
+DOC.addEventListener(
+  "click",
+  (e) => {
+    // ✅ NEVER block clicks inside the paywall itself
+    if (e.target?.closest?.("#lrPaywall")) return;
 
-        const needsPro = el.getAttribute("data-pro") === "1";
-        if (!needsPro) return;
+    const el = e.target?.closest?.("[data-pro]");
+    if (!el) return;
 
-        if (!isProActive()) {
-          e.preventDefault();
-          e.stopPropagation();
-          openPaywall();
-        }
-      },
-      true
-    );
+    const needsPro = el.getAttribute("data-pro") === "1";
+    if (!needsPro) return;
+
+    if (!isProActive()) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPaywall();
+    }
+  },
+  true
+);
+
 
     DOC.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePaywall();
