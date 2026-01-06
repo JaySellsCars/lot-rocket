@@ -18,6 +18,14 @@ const PORT = process.env.PORT || 3000;
 /* ===============================
    BODY PARSING
 ================================ */
+const https = require("https");
+const Stripe = require("stripe");
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  maxNetworkRetries: 2,
+  timeout: 30000,
+  httpAgent: new https.Agent({ keepAlive: true }),
+});
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.post(
