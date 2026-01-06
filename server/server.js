@@ -242,8 +242,9 @@ app.post("/api/stripe/checkout", async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${baseUrl}/pro-success`,
-      cancel_url: `${baseUrl}/`,
+success_url: `${baseUrl}/?session_id={CHECKOUT_SESSION_ID}`,
+cancel_url: `${baseUrl}/?canceled=1`,
+
       allow_promotion_codes: true,
     });
 
