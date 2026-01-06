@@ -95,12 +95,13 @@
   await stripeReturnCheckAndUnlock();
 
   if (!isProActive()) {
+    // Keep the app usable, but lock PRO features via LR_PRO_LOCK + paywall
     showPaywallAndLockPage();
-    console.log("🔒 APP LOCKED (not pro) — stopping boot");
-    return; // ✅ STOP HERE. Do not wire the app.
+    console.log("🔒 APP LOCKED (not pro) — continuing boot (pro features gated)");
+  } else {
+    console.log("🔓 APP UNLOCKED (pro) — continuing boot");
   }
 
-  console.log("🔓 APP UNLOCKED (pro) — continuing boot");
 
 // ==================================================
 // STRIPE SUCCESS HANDLER (sets LR_PRO after checkout)
