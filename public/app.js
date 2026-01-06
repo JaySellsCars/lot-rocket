@@ -249,13 +249,21 @@ function showPaywallAndLockPage() {
     }
 
     // Close
-    if (closeBtn && !closeBtn.__LR_BOUND__) {
-      closeBtn.__LR_BOUND__ = true;
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        closePaywall();
-      });
-    }
+function closePaywall() {
+  if (!paywall) return;
+
+  // Hide modal
+  paywall.classList.add("hidden");
+  paywall.style.display = "none";
+  paywall.setAttribute("aria-hidden", "true");
+
+  // ✅ If NOT pro, keep the app physically locked
+  if (!isProActive()) {
+    DOC.documentElement.classList.add("lr-locked");
+    DOC.body.classList.add("lr-locked");
+  }
+}
+
 
     // Upgrade buttons
     [upgradeNowBtn, upgradeBtn].forEach((btn) => {
