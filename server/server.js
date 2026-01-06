@@ -183,6 +183,21 @@ async function getFetch() {
 app.get("/api/health", (_req, res) => {
   return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
+app.get("/api/stripe/ping", async (_req, res) => {
+  try {
+    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
+    const b = await stripe.balance.retrieve();
+    return res.json({ ok: true, available: b.available?.[0]?.amount ?? null, currency: b.available?.[0]?.currency ?? null });
+  } catch (err) {
+    console.error("❌ STRIPE PING FAIL:", {
+      message: err?.message,
+      type: err?.type,
+      code: err?.code,
+      raw: err?.raw?.message,
+    });
+    return res.status(500).json({ ok: false, error: err?.message || "Stripe ping failed", type: err?.type || null, code: err?.code || null });
+  }
+});
 
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
