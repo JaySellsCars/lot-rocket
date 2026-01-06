@@ -1098,7 +1098,6 @@ app.get("/api/stripe/verify", async (req, res) => {
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
-   - Put this AFTER all /api/* routes (including Stripe routes above)
 ================================ */
 app.use("/api", (req, res) => {
   return res.status(404).json({
@@ -1113,13 +1112,13 @@ app.use("/api", (req, res) => {
 ================================ */
 app.use(express.static(path.join(__dirname, "../public")));
 
-
 /* ===============================
    SPA FALLBACK (LAST)
 ================================ */
 app.get("*", (_req, res) =>
   res.sendFile(path.join(__dirname, "../public/index.html"))
 );
+
 
 /* ===============================
    START
