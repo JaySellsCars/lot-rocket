@@ -65,7 +65,7 @@ function getBaseUrl(req) {
 ================================ */
 app.post(
   "/api/stripe/webhook",
-  express.raw({ type: "application/json" }),
+  express.raw({ type: "*/*" }),
   async (req, res) => {
     const stripe = getStripe();
     if (!stripe) return res.status(500).send("Stripe not configured (missing STRIPE_SECRET_KEY)");
@@ -106,6 +106,7 @@ app.post(
     }
   }
 );
+
 
 
 
