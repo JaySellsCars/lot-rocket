@@ -1,96 +1,111 @@
 // /server/server.js  (REPLACE ENTIRE FILE)
-// LOT ROCKET — FINAL / LAUNCH READY ✅ (BOOT-SAFE)
-// Fixes: ✅ API routes BEFORE static + SPA fallback
-// Fixes: ✅ /api/* never returns HTML (prevents "AI returned non-JSON")
-// Adds: ✅ /api (root) JSON
-// Adds: ✅ /api/boost ✅ /api/proxy ✅ /api/payment-helper
-// Adds: ✅ /api/ai/ping + /api/ai/ask/social/objection/message/workflow/car
-// Stripe fixes:
-// ✅ Safe Stripe init (won’t crash if env missing)
-// ✅ Webhook is safe even if Stripe not configured (returns clean error)
-// ✅ Raw webhook body parsed BEFORE json()
-// ✅ GET /api/stripe/checkout redirects to Stripe
-// ✅ POST /api/stripe/checkout returns {ok,url}
-// ✅ Logs Stripe mode (TEST/LIVE) + price id
-// ✅ Uses absolute baseUrl that works behind Render proxy
+// LOT ROCKET — FINAL / LAUNCH READY ✅ (BOOT-SAFE / DEDUPED)
+// ✅ API routes BEFORE static + SPA fallback
+// ✅ /api/* never returns HTML (prevents "AI returned non-JSON")
+// ✅ Webhook uses express.raw() BEFORE express.json()
+// ✅ One Stripe instance (no duplicates) + /api/netcheck probe
+// ✅ Boost/Proxy/Payment Helper stable + ALWAYS JSON where appropriate
+// ✅ AI routes wired to OpenAI Chat Completions (boot-safe)
 
 "use strict";
 
 const express = require("express");
 const path = require("path");
+const https = require("https");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Render is behind a proxy
+app.set("trust proxy", 1);
+
 /* ===============================
-   STRIPE (SAFE INIT)
+   STRIPE (SINGLE SAFE INIT)
 ================================ */
-const https = require("https");
-const Stripe = require("stripe");
+let __stripe = null;
 
-const stripeKey = process.env.STRIPE_SECRET_KEY || "";
-const stripe =
-  stripeKey && stripeKey.startsWith("sk_")
-    ? new Stripe(stripeKey, {
-        apiVersion: "2024-06-20",
-        timeout: 20000,
-        maxNetworkRetries: 2,
-      })
-    : null;
+function getStripe() {
+  if (__stripe) return __stripe;
 
+  const key = String(process.env.STRIPE_SECRET_KEY || "").trim();
+  if (!key || !key.startsWith("sk_")) return null;
 
+  const Stripe = require("stripe");
+  __stripe = new Stripe(key, {
+    apiVersion: "2024-06-20",
+    timeout: 60000,
+    maxNetworkRetries: 2,
+  });
+
+  return __stripe;
+}
 
 function stripeModeLabel() {
-  const k = process.env.STRIPE_SECRET_KEY || "";
+  const k = String(process.env.STRIPE_SECRET_KEY || "");
   if (k.startsWith("sk_test")) return "TEST";
   if (k.startsWith("sk_live")) return "LIVE";
   return k ? "UNKNOWN" : "MISSING";
+}
+
+function getBaseUrl(req) {
+  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https")
+    .toString()
+    .split(",")[0]
+    .trim();
+  const host = (req.headers["x-forwarded-host"] || req.get("host") || "")
+    .toString()
+    .split(",")[0]
+    .trim();
+  return `${proto}://${host}`;
 }
 
 /* ===============================
    STRIPE WEBHOOK (RAW BODY REQUIRED)
    NOTE: Must be defined BEFORE express.json()
 ================================ */
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  if (!stripe) {
-    return res.status(500).send("Stripe not configured (missing STRIPE_SECRET_KEY)");
-  }
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const stripe = getStripe();
+    if (!stripe) return res.status(500).send("Stripe not configured (missing STRIPE_SECRET_KEY)");
 
-  const sig = req.headers["stripe-signature"];
-  if (!sig) return res.status(400).send("Missing Stripe-Signature header");
+    const sig = req.headers["stripe-signature"];
+    if (!sig) return res.status(400).send("Missing Stripe-Signature header");
 
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error("❌ Stripe webhook signature failed:", err?.message || err);
-    return res.status(400).send("Webhook Error");
-  }
-
-  try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      const userId = session?.metadata?.userId || null;
-      const customerId = session?.customer || null;
-      const subscriptionId = session?.subscription || null;
-
-      // TODO: Replace with DB update:
-      // set isPaid true + store stripeCustomerId/subscriptionId
-      console.log("✅ PAID ON:", { userId, customerId, subscriptionId });
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        String(process.env.STRIPE_WEBHOOK_SECRET || "")
+      );
+    } catch (err) {
+      console.error("❌ Stripe webhook signature failed:", err?.message || err);
+      return res.status(400).send("Webhook Error");
     }
 
-    if (event.type === "customer.subscription.deleted") {
-      const sub = event.data.object;
-      // TODO: set isPaid false by stripeSubscriptionId
-      console.log("🛑 PAID OFF:", { subscriptionId: sub?.id || null });
-    }
+    try {
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        const userId = session?.metadata?.userId || null;
+        const customerId = session?.customer || null;
+        const subscriptionId = session?.subscription || null;
+        console.log("✅ PAID ON:", { userId, customerId, subscriptionId });
+      }
 
-    return res.json({ received: true });
-  } catch (e) {
-    console.error("❌ Webhook handler error:", e);
-    return res.status(500).json({ ok: false });
+      if (event.type === "customer.subscription.deleted") {
+        const sub = event.data.object;
+        console.log("🛑 PAID OFF:", { subscriptionId: sub?.id || null });
+      }
+
+      return res.json({ received: true });
+    } catch (e) {
+      console.error("❌ Webhook handler error:", e);
+      return res.status(500).json({ ok: false });
+    }
   }
-});
+);
 
 /* ===============================
    BODY PARSING
@@ -126,6 +141,7 @@ function safeUrl(u) {
     return "";
   }
 }
+
 function absUrl(base, maybe) {
   try {
     if (!maybe) return "";
@@ -138,6 +154,7 @@ function absUrl(base, maybe) {
     return "";
   }
 }
+
 const uniq = (arr) => Array.from(new Set((arr || []).filter(Boolean)));
 
 function jsonOk(res, payload) {
@@ -195,21 +212,92 @@ async function getFetch() {
 app.get("/api/health", (_req, res) => {
   return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
 });
+app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
-/**
- * STRIPE PING (LIGHTWEIGHT / RELIABLE)
- * - Avoids stripe.balance.retrieve() (common StripeConnectionError trigger)
- * - Just proves the key works + Stripe is reachable
- */
+/* ===============================
+   NETCHECK (RENDER -> STRIPE PROBE)
+================================ */
+app.get("/api/netcheck", async (_req, res) => {
+  try {
+    const req2 = https.request(
+      {
+        method: "GET",
+        host: "api.stripe.com",
+        path: "/",
+        timeout: 8000,
+        headers: { "User-Agent": "lot-rocket-netcheck" },
+      },
+      (r) => {
+        res.json({
+          ok: true,
+          status: r.statusCode,
+          server: r.headers?.server || null,
+          date: r.headers?.date || null,
+        });
+      }
+    );
+
+    req2.on("timeout", () => req2.destroy(new Error("timeout")));
+    req2.on("error", (e) => res.status(500).json({ ok: false, error: e.message }));
+    req2.end();
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ===============================
+   STRIPE STATUS + PING
+================================ */
+app.get("/api/stripe/status", async (_req, res) => {
+  console.log("⚡ /api/stripe/status HIT");
+
+  const hasKey = !!String(process.env.STRIPE_SECRET_KEY || "").trim();
+  const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
+  const hasPrice = !!String(process.env.STRIPE_PRICE_ID || "").trim();
+
+  const stripe = getStripe();
+  if (!stripe) {
+    return res.status(200).json({
+      ok: false,
+      bucket: "NO_STRIPE_INSTANCE",
+      hasKey,
+      keyPrefix,
+      hasPrice,
+    });
+  }
+
+  try {
+    const acct = await stripe.accounts.retrieve();
+    return res.status(200).json({
+      ok: true,
+      bucket: "STRIPE_OK_PING",
+      hasKey,
+      keyPrefix,
+      hasPrice,
+      accountId: acct?.id || null,
+      country: acct?.country || null,
+    });
+  } catch (err) {
+    return res.status(200).json({
+      ok: false,
+      bucket: "STRIPE_CALL_FAILED",
+      hasKey,
+      keyPrefix,
+      hasPrice,
+      type: err?.type || null,
+      code: err?.code || null,
+      message: err?.message || String(err),
+    });
+  }
+});
+
+// lightweight ping
 app.get("/api/stripe/ping", async (_req, res) => {
   try {
-    if (!stripe) {
-      return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
-    }
+    const stripe = getStripe();
+    if (!stripe) return res.status(500).json({ ok: false, error: "Missing STRIPE_SECRET_KEY" });
 
-    // lightweight call (does not depend on account balance endpoints)
     const prices = await stripe.prices.list({ limit: 1 });
-
     return res.json({
       ok: true,
       reachable: true,
@@ -234,41 +322,18 @@ app.get("/api/stripe/ping", async (_req, res) => {
   }
 });
 
-app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
-
 /* ===============================
-   STRIPE CHECKOUT (CLEAN / DEDUPED)
-   - MUST be above express.static + SPA fallback
-   - POST returns JSON {ok,url}
-   - GET redirects (for simple links)
-   - Success routes to /pro-success which sets LR_PRO=1
+   STRIPE CHECKOUT
 ================================ */
-
-// Render is behind a proxy. This makes baseUrl correct.
-app.set("trust proxy", 1);
-
-function getBaseUrl(req) {
-  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https")
-    .toString()
-    .split(",")[0]
-    .trim();
-  const host = (req.headers["x-forwarded-host"] || req.get("host") || "")
-    .toString()
-    .split(",")[0]
-    .trim();
-  return `${proto}://${host}`;
-}
-
-
-
 async function createCheckoutSession(req) {
+  const stripe = getStripe();
   if (!stripe) {
     const e = new Error("Missing STRIPE_SECRET_KEY");
     e.status = 500;
     throw e;
   }
 
-  const priceId = process.env.STRIPE_PRICE_ID;
+  const priceId = String(process.env.STRIPE_PRICE_ID || "").trim();
   if (!priceId) {
     const e = new Error("Missing STRIPE_PRICE_ID");
     e.status = 500;
@@ -276,17 +341,13 @@ async function createCheckoutSession(req) {
   }
 
   const baseUrl = getBaseUrl(req);
-
   console.log("💳 STRIPE checkout:", { priceId, mode: stripeModeLabel(), baseUrl });
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
-
-    // ✅ IMPORTANT: send to pro-success so we can set LR_PRO=1
     success_url: `${baseUrl}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/?canceled=1`,
-
     allow_promotion_codes: true,
   });
 
@@ -318,7 +379,7 @@ app.post("/api/stripe/checkout", async (req, res) => {
   }
 });
 
-// GET: redirects to Stripe (safe fallback)
+// GET: redirects
 app.get("/api/stripe/checkout", async (req, res) => {
   try {
     const session = await createCheckoutSession(req);
@@ -343,15 +404,43 @@ app.get("/api/stripe/checkout", async (req, res) => {
   }
 });
 
+// verify session (no dupes)
+app.get("/api/stripe/verify", async (req, res) => {
+  try {
+    const sid = String(req.query.session_id || "").trim();
+    if (!sid) return res.status(400).json({ ok: false, error: "missing session_id" });
+
+    const stripe = getStripe();
+    if (!stripe) return res.status(200).json({ ok: false, bucket: "NO_STRIPE_INSTANCE" });
+
+    const session = await stripe.checkout.sessions.retrieve(sid);
+    const paid =
+      !!session && (session.payment_status === "paid" || session.status === "complete");
+
+    return res.json({
+      ok: true,
+      pro: !!paid,
+      payment_status: session?.payment_status || null,
+      status: session?.status || null,
+      mode: session?.mode || null,
+      customer_email: session?.customer_details?.email || null,
+    });
+  } catch (e) {
+    console.error("stripe verify error:", {
+      type: e?.type || null,
+      code: e?.code || null,
+      message: e?.message || String(e),
+    });
+    return res.status(500).json({ ok: false, error: e.message || "verify failed" });
+  }
+});
+
 // PRO SUCCESS: set LR_PRO=1 then back to app
 app.get("/pro-success", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.end(`<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Lot Rocket Pro</title>
-</head>
+<head><meta charset="utf-8"><title>Lot Rocket Pro</title></head>
 <body style="font-family:system-ui;background:#0b1020;color:#fff;padding:24px;">
   <h1>✅ Pro Activated</h1>
   <p>Sending you back…</p>
@@ -394,35 +483,6 @@ app.get("/api/boost", async (req, res) => {
       images: [],
     });
   }
-
-  try {
-    const f = await getFetch();
-
-    const r = await f(url, {
-      redirect: "follow",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-    });
-
-    const html = await r.text();
-    const ct = (r.headers.get("content-type") || "").toLowerCase();
-
-    if (!ct.includes("text/html") && !ct.includes("application/xhtml")) {
-      return res.status(200).json({
-        ok: false,
-        error: `Dealer returned non-HTML (${ct || "unknown"})`,
-        url,
-        status: r.status,
-        vehicle: { url, title: "", description: "", price: "", mileage: "", vin: "", stock: "" },
-        images: [],
-      });
-    }
-
-    // ... keep the rest of your handler exactly as-is
-
 
   try {
     const f = await getFetch();
@@ -508,7 +568,8 @@ app.get("/api/boost", async (req, res) => {
             const odo = x.mileageFromOdometer || x.mileage || x.odo || {};
             if (!out.mileage) {
               if (typeof odo === "number") out.mileage = String(odo);
-              else if (odo && typeof odo === "object") out.mileage = String(pick(odo, ["value"]) || "");
+              else if (odo && typeof odo === "object")
+                out.mileage = String(pick(odo, ["value"]) || "");
             }
 
             out.vin = out.vin || String(pick(x, ["vehicleIdentificationNumber", "vin"]) || "");
@@ -638,11 +699,11 @@ app.post("/api/payment-helper", (req, res) => {
     const payoff = num(req.body.payoff);
     const rate = num(req.body.rate); // APR %
     const term = Math.max(0, Math.round(num(req.body.term))); // months
-    const tax = num(req.body.tax); // % (e.g. 6)
+    const tax = num(req.body.tax); // %
     const fees = num(req.body.fees);
     const rebate = num(req.body.rebate);
 
-    const equity = trade - payoff; // can be negative
+    const equity = trade - payoff;
     const taxable = Math.max(0, price - rebate);
     const taxAmt = (taxable * tax) / 100;
 
@@ -670,14 +731,9 @@ app.post("/api/payment-helper", (req, res) => {
       },
     });
   } catch (e) {
-    return res.status(200).json({
-      ok: false,
-      error: e?.message || String(e),
-    });
+    return res.status(200).json({ ok: false, error: e?.message || String(e) });
   }
 });
-
-
 
 /* ===============================
    OPENAI HELPER
@@ -716,7 +772,10 @@ async function callOpenAI({ system, user, temperature = 0.6 }) {
     const text = j?.choices?.[0]?.message?.content?.trim();
     return text ? { ok: true, text } : { ok: false, error: "Empty AI response" };
   } catch (e) {
-    return { ok: false, error: e?.name === "AbortError" ? "OpenAI timeout" : (e?.message || String(e)) };
+    return {
+      ok: false,
+      error: e?.name === "AbortError" ? "OpenAI timeout" : e?.message || String(e),
+    };
   } finally {
     clearTimeout(t);
   }
@@ -774,9 +833,9 @@ app.post("/api/ai/social", async (req, res) => {
   const location =
     typeof locRaw === "string"
       ? locRaw.trim()
-      : (locRaw && typeof locRaw === "object")
-        ? takeText(locRaw.city, locRaw.state, locRaw.metro, locRaw.zip, locRaw.region)
-        : "";
+      : locRaw && typeof locRaw === "object"
+      ? takeText(locRaw.city, locRaw.state, locRaw.metro, locRaw.zip, locRaw.region)
+      : "";
 
   const audience = req.body.audience || req.body.context?.audience || {};
   const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
@@ -800,69 +859,35 @@ app.post("/api/ai/social", async (req, res) => {
   const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
 
   const TONE_PRESETS = {
-    closer: ["TONE PRESET: CLOSER", "- High intent. Strong urgency. Assume buyer is ready.", "- Short lines. Firm CTA. No soft language."].join("\n"),
-    chill: ["TONE PRESET: CHILL", "- Friendly, conversational, car-guy energy.", "- No pressure. Still DM-driven."].join("\n"),
-    viral: ["TONE PRESET: VIRAL", "- Scroll-stopping hooks. Bold questions. High energy.", "- Emojis used as anchors (within platform limits)."].join("\n"),
-    luxe: ["TONE PRESET: LUXE", "- Clean, premium, confident.", "- Fewer emojis. Focus on experience and quality."].join("\n"),
-    marketplace: ["TONE PRESET: MARKETPLACE", "- Price early. Bullet facts. Zero fluff.", "- Minimal emojis. Direct availability."].join("\n"),
+    closer: ["TONE PRESET: CLOSER", "- High intent. Strong urgency.", "- Short lines. Firm CTA."].join("\n"),
+    chill: ["TONE PRESET: CHILL", "- Friendly, conversational.", "- No pressure. Still DM-driven."].join("\n"),
+    viral: ["TONE PRESET: VIRAL", "- Scroll-stopping hooks.", "- Emojis used as anchors."].join("\n"),
+    luxe: ["TONE PRESET: LUXE", "- Clean, premium.", "- Fewer emojis."].join("\n"),
+    marketplace: ["TONE PRESET: MARKETPLACE", "- Price early. Bullet facts.", "- Minimal emojis."].join("\n"),
   };
 
   const toneBlock = TONE_PRESETS[toneRaw] ? `\n${TONE_PRESETS[toneRaw]}\n` : "";
 
   const system = [
     "YOU ARE LOT ROCKET — VIRAL CAR SALES COPY ENGINE.",
-    "",
-    "MISSION:",
     "Generate a scroll-stopping, DM-generating post for ONE individual salesperson.",
-    "It must feel human, fast, and native to the platform — not a dealership ad.",
     "",
     toneBlock || "",
     "VOICE (NON-NEGOTIABLE):",
-    "- First-person singular (I/me). Confident. Direct. No corporate fluff.",
-    "- NEVER say: 'Ready to elevate your drive', 'Check out', 'Stop by', 'Come on in', 'Visit our website', 'Call the dealership'.",
+    "- First-person singular (I/me). Confident. Direct.",
     "- No dealership language. No links. No disclaimers. No paragraphs.",
     "",
-    "CORE CONVERSION STRUCTURE (ALWAYS):",
-    "1) HOOK (1–2 lines): pattern interrupt (price shock, bold question, 'be honest…', scarcity).",
-    "2) PROOF (3–6 bullets): only the BEST features + 1 trust signal if available (Clean Carfax / One owner / Certified / No accidents).",
-    "3) URGENCY (1 line): scarcity/timeframe without begging.",
-    `4) CTA (1 line): DM me "${keyword}" to claim it / get details / lock it down.`,
+    "STRUCTURE:",
+    "1) HOOK (1–2 lines)",
+    "2) PROOF (3–6 bullets)",
+    "3) URGENCY (1 line)",
+    `4) CTA: DM me "${keyword}"`,
     "",
-    "EMOJI RULES (FIRE, NOT SPAM):",
-    "- Use emojis as visual bullets/anchors, not decoration.",
-    "- Facebook/IG: 5–10 total emojis max. TikTok: up to 12. LinkedIn: 0–3. X: 0–2. Marketplace: 0–4.",
-    "- Allowed vibe emojis: 🚨🔥✅💰🚗🧊🛞📲👀⚡️💎 (use tastefully).",
-    "",
-    "HASHTAG RULES (TREND-ALIGNED + GEO):",
-    "- Include hashtags ONLY when platform supports it:",
-    "  * facebook/instagram/tiktok: YES (12–18 tags)",
-    "  * marketplace: light (4–8 tags)",
-    "  * x: 0–3 tags",
-    "  * linkedin: 0–6 tags (professional)",
-    "- Use the STAIRCASE METHOD:",
-    "  * 3–5 broad high-volume (ex: #CarForSale #SUV #Chevy)",
-    "  * 5–8 niche (model/trim/features/used/certified)",
-    "  * 3–6 GEO tags based on user location (city/metro/state/area codes if provided)",
-    "- If location is missing, use: 2–3 generic geo tags (ex: #Michigan #DetroitArea #MetroDetroit) ONLY if the vehicle context hints it.",
-    "",
-    "PLATFORM FORMAT:",
-    `- PLATFORM = ${platform}`,
-    "- facebook: 6–12 short lines + bullets + hashtags at bottom.",
-    "- instagram: tighter, punchier, vibe, hashtags at bottom.",
-    "- tiktok: hooky, edgy, 5–9 lines, end with DM keyword or comment keyword, hashtags at bottom.",
-    "- linkedin: credibility-first, minimal emojis, still DM CTA, limited hashtags.",
-    "- x: ultra short, max ~280 chars, minimal hashtags.",
-    "- marketplace: factual + fast, price early, bullets, direct CTA, light hashtags.",
-    "",
-    "PAYMENT RULE:",
-    "- DO NOT mention monthly payments unless payment info is explicitly provided in input.",
-    "",
-    "OUTPUT RULE:",
-    "- Return ONLY the final post text. No labels. No analysis. No markdown.",
-    "",
-    `LOCATION (use for GEO hashtags + local phrasing): ${location || "(not provided)"}`,
-    `AUDIENCE/DEMOGRAPHICS (if present, adapt tone & tags): ${audienceText || "(none)"}`,
-    `SEED (do not print): ${seed}`,
+    "OUTPUT: Return ONLY the final post text.",
+    `PLATFORM = ${platform}`,
+    `LOCATION = ${location || "(not provided)"}`,
+    `AUDIENCE = ${audienceText || "(none)"}`,
+    `SEED (do not print) = ${seed}`,
   ].join("\n");
 
   const user = JSON.stringify(vehicle, null, 2);
@@ -897,26 +922,10 @@ app.post("/api/ai/objection", async (req, res) => {
 
   const system = [
     "You are LOT ROCKET’S OBJECTION COACH — a high-level automotive closer.",
-    "Today only. No delays. No think-about-it. No fluff.",
     "Short, spoken, controlled. Leader energy.",
-    "BANS: 'I understand', 'that makes sense', 'investing', feature lists, long paragraphs.",
-    "",
-    "METHOD (mandatory):",
-    "1) One-line agree with the PERSON (not the objection).",
-    "2) Isolate with ONE question.",
-    "3) Reframe with simple money logic (monthly to daily when useful).",
-    "4) Close TODAY with two options (A/B).",
-    "",
-    "OUTPUT FORMAT (exact):",
-    "CLOSER:",
-    "<4–9 short lines>",
-    "",
-    "WHY IT WORKS:",
-    "- <bullet>",
-    "- <bullet>",
-    "- <bullet>",
-    "",
-    "No emojis. No markdown.",
+    "Output format:",
+    "CLOSER: <4–9 short lines>",
+    "WHY IT WORKS: - bullet - bullet - bullet",
   ].join("\n");
 
   const out = await callOpenAI({ system, user, temperature: 0.45 });
@@ -959,7 +968,6 @@ app.post("/api/ai/workflow", async (req, res) => {
 
   const system = [
     "You are Lot Rocket’s Campaign Builder.",
-    "Default: appointment-first. No price/payments unless explicitly asked.",
     "Return ONLY the campaign messages, one per line. No labels.",
   ].join("\n");
 
@@ -982,151 +990,6 @@ app.post("/api/ai/car", async (req, res) => {
   const out = await callOpenAI({ system, user, temperature: 0.35 });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
-/* ===============================
-   STRIPE (SAFE INIT + NETWORK HARDENED)
-   - One Stripe instance (global)
-   - /api/netcheck isolates Render -> Stripe networking
-   - /api/stripe/status does cheapest authenticated call
-   - /api/stripe/verify uses SAME global stripe (no duplicates)
-   - Place ALL of this ABOVE your /api 404
-================================ */
-
-let stripe = null;
-function getStripe() {
-  if (stripe) return stripe;
-
-  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
-  if (!key) return null;
-
-  const Stripe = require("stripe");
-  stripe = new Stripe(key, {
-    // pick the version you want; leaving fixed avoids surprises
-    apiVersion: "2024-06-20",
-    timeout: 60000,
-    maxNetworkRetries: 2,
-  });
-
-  return stripe;
-}
-
-// ✅ HARD NETWORK PROBE (NO AUTH) — if this fails, it’s outbound HTTPS from Render
-app.get("/api/netcheck", async (_req, res) => {
-  try {
-    const https = require("https");
-
-    const req = https.request(
-      {
-        method: "GET",
-        host: "api.stripe.com",
-        path: "/",
-        timeout: 8000,
-        headers: { "User-Agent": "lot-rocket-netcheck" },
-      },
-      (r) => {
-        res.json({
-          ok: true,
-          status: r.statusCode,
-          // keep it small; headers prove TLS/HTTP response happened
-          server: r.headers?.server || null,
-          date: r.headers?.date || null,
-        });
-      }
-    );
-
-    req.on("timeout", () => req.destroy(new Error("timeout")));
-    req.on("error", (e) => res.status(500).json({ ok: false, error: e.message }));
-    req.end();
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
-// ✅ STRIPE STATUS (AUTH + CONNECTIVITY)
-app.get("/api/stripe/status", async (_req, res) => {
-  console.log("⚡ /api/stripe/status HIT");
-
-  const hasKey = !!(process.env.STRIPE_SECRET_KEY || "").trim();
-  const keyPrefix = hasKey ? String(process.env.STRIPE_SECRET_KEY).slice(0, 7) : "";
-  const hasPrice = !!(process.env.STRIPE_PRICE_ID || "").trim();
-
-  const s = getStripe();
-  if (!s) {
-    console.log("❌ STRIPE: NO INSTANCE");
-    return res.status(200).json({
-      ok: false,
-      bucket: "NO_STRIPE_INSTANCE",
-      hasKey,
-      keyPrefix,
-      hasPrice,
-    });
-  }
-
-  try {
-    // ✅ cheapest auth/connectivity call
-    const acct = await s.accounts.retrieve();
-    console.log("✅ STRIPE OK:", acct?.id || "(no id)");
-
-    return res.status(200).json({
-      ok: true,
-      bucket: "STRIPE_OK_PING",
-      hasKey,
-      keyPrefix,
-      hasPrice,
-      accountId: acct?.id || null,
-      country: acct?.country || null,
-    });
-  } catch (err) {
-    console.error("❌ STRIPE STATUS FAIL:", {
-      type: err?.type || null,
-      code: err?.code || null,
-      message: err?.message || String(err),
-    });
-
-    return res.status(200).json({
-      ok: false,
-      bucket: "STRIPE_CALL_FAILED",
-      hasKey,
-      keyPrefix,
-      hasPrice,
-      type: err?.type || null,
-      code: err?.code || null,
-      message: err?.message || String(err),
-    });
-  }
-});
-
-// ✅ VERIFY SESSION (NO DUPES) — uses same global Stripe instance
-app.get("/api/stripe/verify", async (req, res) => {
-  try {
-    const sid = String(req.query.session_id || "").trim();
-    if (!sid) return res.status(400).json({ ok: false, error: "missing session_id" });
-
-    const s = getStripe();
-    if (!s) return res.status(200).json({ ok: false, bucket: "NO_STRIPE_INSTANCE" });
-
-    const session = await s.checkout.sessions.retrieve(sid);
-
-    const paid =
-      !!session &&
-      (session.payment_status === "paid" || session.status === "complete");
-
-    return res.json({
-      ok: true,
-      pro: !!paid,
-      payment_status: session?.payment_status || null,
-      status: session?.status || null,
-      mode: session?.mode || null,
-      customer_email: session?.customer_details?.email || null,
-    });
-  } catch (e) {
-    console.error("stripe verify error:", {
-      type: e?.type || null,
-      code: e?.code || null,
-      message: e?.message || String(e),
-    });
-    return res.status(500).json({ ok: false, error: e.message || "verify failed" });
-  }
-});
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
@@ -1147,10 +1010,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 /* ===============================
    SPA FALLBACK (LAST)
 ================================ */
-app.get("*", (_req, res) =>
-  res.sendFile(path.join(__dirname, "../public/index.html"))
-);
-
+app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "../public/index.html")));
 
 /* ===============================
    START
