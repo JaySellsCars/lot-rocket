@@ -912,10 +912,6 @@ app.post("/api/ai/car", async (req, res) => {
    STRIPE STATUS (DEBUG)
    MUST BE ABOVE API 404
 /* ===============================
-   STRIPE STATUS (DEBUG — LIGHT)
-   MUST BE ABOVE API 404
-================================ */
-/* ===============================
    STRIPE STATUS (DEBUG) — CHEAP PING
    MUST BE ABOVE API 404
 ================================ */
@@ -960,6 +956,7 @@ app.get("/api/stripe/status", async (_req, res) => {
     });
   }
 });
+
 
 
 /* ===============================
