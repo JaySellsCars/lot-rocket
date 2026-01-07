@@ -327,15 +327,13 @@ function wireAuthUI(){
 }
 await initSupabaseAuth();
 
+// Paid app rule:
+// - Allow viewing the paywall + auth modal without Pro
+// - Never allow using the app until Pro is active
 if (!window.LR_USER_ID) {
-  openAuth();
-
-  window.addEventListener("lr:user", (e) => {
-    if (e.detail?.userId) location.reload();
-  }, { once: true });
-
-  return;
+  openAuth(); // sign in / create account happens BEFORE payment
 }
+
 
 
 
