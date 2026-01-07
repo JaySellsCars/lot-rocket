@@ -566,6 +566,7 @@ function showPaywallAndLockPage() {
   })();
 
 
+
   // ==================================================
   // HARD OVERRIDE: Step 1 thumbnails MUST be square
   // ==================================================
