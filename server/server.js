@@ -199,6 +199,32 @@ app.get("/api/config", (req, res) => {
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
   });
 });
+// ===============================
+// SUPABASE ADMIN (SERVER)
+// ===============================
+const { createClient } = require("@supabase/supabase-js");
+
+function getSupabaseAdmin() {
+  const url = String(process.env.SUPABASE_URL || "").trim();
+  const key = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+
+async function upsertProfilePro({ userId, isPro, customerId, subscriptionId }) {
+  const sb = getSupabaseAdmin();
+  if (!sb) throw new Error("Missing SUPABASE admin env");
+
+  const { error } = await sb.from("profiles").upsert({
+    id: userId,
+    is_pro: !!isPro,
+    stripe_customer_id: customerId || null,
+    stripe_subscription_id: subscriptionId || null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "id" });
+
+  if (error) throw new Error("Supabase upsert failed: " + error.message);
+}
 
 /* ===============================
    PLATFORM NORMALIZER
