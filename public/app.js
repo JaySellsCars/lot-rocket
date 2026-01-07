@@ -212,7 +212,17 @@ function wireAuthUI(){
   };
 }
 await initSupabaseAuth();
-if (!window.LR_USER_ID) { openAuth(); return; }
+
+if (!window.LR_USER_ID) {
+  openAuth();
+
+  window.addEventListener("lr:user", (e) => {
+    if (e.detail?.userId) location.reload();
+  }, { once: true });
+
+  return;
+}
+
 
 // ==================================================
 // PAID-APP BOOT GATE (WHOLE APP = PRO)
