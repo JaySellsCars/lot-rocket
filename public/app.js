@@ -169,54 +169,60 @@ const payload = {
 }
 
 async function initSupabaseAuth() {
-  // Fetch safe config from server
   let cfg = null;
   try {
     const r = await fetch("/api/config", { cache: "no-store" });
     cfg = await r.json();
   } catch (e) {
     console.error("❌ /api/config failed", e);
+    return;
   }
 
   const supabaseUrl = cfg?.supabaseUrl || "";
   const supabaseAnonKey = cfg?.supabaseAnonKey || "";
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("❌ Supabase config missing. Check Render env SUPABASE_URL + SUPABASE_ANON_KEY");
+    console.error("❌ Supabase config missing");
     return;
   }
 
-  if (!window.supabase || !window.supabase.createClient) {
-    console.error("❌ Supabase JS not loaded. Ensure CDN script is above app.js");
-    return;
+  SB = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
+
+  window.SB = SB;
+
+  // 🔥 FORCE SESSION LOAD
+  let session = null;
+  try {
+    const { data, error } = await SB.auth.getSession();
+    if (error) console.warn("⚠️ getSession:", error.message);
+    session = data?.session || null;
+  } catch (e) {
+    console.warn("⚠️ getSession exception", e);
   }
 
-SB = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-});
+  LR_SESSION = session;
+  LR_USER = session?.user || null;
 
-window.SB = SB;         // ✅ add
-window.LR_SB = SB;      // ✅ add (optional)
-
-
-  // Initial session
-  const { data: s0 } = await SB.auth.getSession();
-  LR_SESSION = s0?.session || null;
-  LR_USER = LR_SESSION?.user || null;
-
-  // ✅ Create/ensure profile row as soon as we have a user
-  if (LR_USER?.id) await ensureProfileRow(LR_USER);
+  if (LR_USER?.id) {
+    await ensureProfileRow(LR_USER);
+  }
 
   renderUserChip();
   publishUser();
 
-  // Listen for auth changes
-  SB.auth.onAuthStateChange(async (_event, session) => {
-    LR_SESSION = session || null;
-    LR_USER = session?.user || null;
+  SB.auth.onAuthStateChange(async (_event, s) => {
+    LR_SESSION = s || null;
+    LR_USER = s?.user || null;
 
-    // ✅ Create/ensure profile row on every sign-in
-    if (LR_USER?.id) await ensureProfileRow(LR_USER);
+    if (LR_USER?.id) {
+      await ensureProfileRow(LR_USER);
+    }
 
     renderUserChip();
     publishUser();
@@ -225,6 +231,7 @@ window.LR_SB = SB;      // ✅ add (optional)
   wireAuthUI();
   console.log("✅ Supabase Auth READY", { userId: LR_USER?.id || null });
 }
+
 
 
 
