@@ -555,22 +555,25 @@ app.get("/api/stripe/verify", async (req, res) => {
   }
 });
 
-// PRO SUCCESS: set LR_PRO=1 then back to app
-app.get("/pro-success", (_req, res) => {
+app.get("/pro-success", (req, res) => {
+  const sid = String(req.query.session_id || "").trim();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.end(`<!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Lot Rocket Pro</title></head>
+<head><meta charset="utf-8"><title>Lot Rocket</title></head>
 <body style="font-family:system-ui;background:#0b1020;color:#fff;padding:24px;">
-  <h1>✅ Pro Activated</h1>
+  <h1>✅ Payment Complete</h1>
   <p>Sending you back…</p>
   <script>
-    try { localStorage.setItem("LR_PRO","1"); localStorage.setItem("lr_pro","1"); } catch(e) {}
-    window.location.href = "/";
+    // DO NOT set pro in localStorage (paid app truth = Supabase profile)
+    const sid = ${JSON.stringify(sid)};
+    const u = sid ? "/?session_id=" + encodeURIComponent(sid) : "/";
+    window.location.href = u;
   </script>
 </body>
 </html>`);
 });
+
 
 /* ===============================
    AI PING (GET + POST)
