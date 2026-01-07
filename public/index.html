@@ -1,8 +1,3 @@
-<button data-pro="1">Creative Lab</button>
-<button data-pro="1">AI Tools</button>
-<button id="lrUserChip" class="lr-userchip" type="button" style="display:none;">👤 Sign in</button>
-
-
 <!-- /public/index.html  (REPLACE ENTIRE FILE) -->
 <!doctype html>
 <html lang="en">
@@ -17,7 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="/style.css?v=10003" />
+  <link rel="stylesheet" href="/style.css?v=10003" />
 </head>
 
 <body class="dark-theme">
@@ -121,44 +116,45 @@
         </div>
       </section>
     </div>
-<!-- =========================
-     LOT ROCKET AUTH MODAL
-========================= -->
-<div id="lrAuth" class="lr-modal hidden" aria-hidden="true">
-  <div class="lr-modal-box">
-    <div class="lr-modal-top">
-      <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
-      <button id="lrAuthClose" class="lr-x" type="button">✕</button>
+
+    <!-- =========================
+         LOT ROCKET AUTH MODAL
+    ========================= -->
+    <div id="lrAuth" class="lr-modal hidden" aria-hidden="true">
+      <div class="lr-modal-box">
+        <div class="lr-modal-top">
+          <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
+          <button id="lrAuthClose" class="lr-x" type="button">✕</button>
+        </div>
+
+        <div class="lr-modal-body">
+          <label class="lr-label">Email</label>
+          <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email"/>
+
+          <label class="lr-label">Password (optional)</label>
+          <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+          <div class="lr-row">
+            <button id="lrSendLink" class="lr-btn" type="button">Send Magic Link</button>
+            <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
+          </div>
+
+          <div class="lr-row">
+            <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
+            <button id="lrSignOut" class="lr-btn danger hidden" type="button">Sign Out</button>
+          </div>
+
+          <div id="lrAuthMsg" class="lr-msg"></div>
+
+          <div class="lr-mini">
+            Magic link = fastest for MVP. Password sign-in works too.
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="lr-modal-body">
-      <label class="lr-label">Email</label>
-      <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email"/>
-
-      <label class="lr-label">Password (optional)</label>
-      <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
-
-      <div class="lr-row">
-        <button id="lrSendLink" class="lr-btn" type="button">Send Magic Link</button>
-        <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
-      </div>
-
-      <div class="lr-row">
-        <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
-        <button id="lrSignOut" class="lr-btn danger hidden" type="button">Sign Out</button>
-      </div>
-
-      <div id="lrAuthMsg" class="lr-msg"></div>
-
-      <div class="lr-mini">
-        Magic link = fastest for MVP. Password sign-in works too.
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Small user chip -->
-<button id="lrUserChip" class="lr-userchip hidden" type="button">👤 Sign in</button>
+    <!-- Small user chip (ONLY ONE) -->
+    <button id="lrUserChip" class="lr-userchip hidden" type="button">👤 Sign in</button>
 
     <!-- RIGHT COLUMN (STEP 2 TILE GRID) -->
     <div class="column">
@@ -564,64 +560,63 @@
     </div>
   </section>
 
-<!-- GLOBAL HELP -->
-<section id="helpModal" class="side-modal hidden" aria-hidden="true">
-  <div class="side-modal-content">
-    <div class="side-modal-header">
-      <h3>Need Help?</h3>
-      <button class="side-modal-close" type="button" data-close>✕</button>
-    </div>
+  <!-- GLOBAL HELP -->
+  <section id="helpModal" class="side-modal hidden" aria-hidden="true">
+    <div class="side-modal-content">
+      <div class="side-modal-header">
+        <h3>Need Help?</h3>
+        <button class="side-modal-close" type="button" data-close>✕</button>
+      </div>
 
-    <div class="side-modal-body">
-      <textarea
-        id="helpInput"
-        placeholder="Ask anything about Lot Rocket, how to use a feature, or what to do next…"
-      ></textarea>
+      <div class="side-modal-body">
+        <textarea
+          id="helpInput"
+          placeholder="Ask anything about Lot Rocket, how to use a feature, or what to do next…"
+        ></textarea>
 
-      <button
-        id="runHelpBtn"
-        class="secondary-btn full"
-        type="button"
-        style="margin-top:.8rem;"
-      >
-        Get Answer
-      </button>
+        <button
+          id="runHelpBtn"
+          class="secondary-btn full"
+          type="button"
+          style="margin-top:.8rem;"
+        >
+          Get Answer
+        </button>
 
-      <div
-        id="helpOutput"
-        class="small-note"
-        style="margin-top:1rem; white-space:pre-wrap;"
-      ></div>
+        <div
+          id="helpOutput"
+          class="small-note"
+          style="margin-top:1rem; white-space:pre-wrap;"
+        ></div>
 
-      <!-- UNIVERSAL AI FOLLOW-UP -->
-      <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
-        <label class="field">
-          <span>Reply / Add Details</span>
-          <textarea
-            data-ai-followup-input
-            rows="3"
-            placeholder="Add context or answer the question, then hit Continue…"
-          ></textarea>
-        </label>
+        <!-- UNIVERSAL AI FOLLOW-UP -->
+        <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
+          <label class="field">
+            <span>Reply / Add Details</span>
+            <textarea
+              data-ai-followup-input
+              rows="3"
+              placeholder="Add context or answer the question, then hit Continue…"
+            ></textarea>
+          </label>
 
-        <div class="btn-row" style="margin-top:.6rem;">
-          <button
-            type="button"
-            class="secondary-btn full"
-            data-ai-followup-btn
-          >
-            Continue
-          </button>
-        </div>
+          <div class="btn-row" style="margin-top:.6rem;">
+            <button
+              type="button"
+              class="secondary-btn full"
+              data-ai-followup-btn
+            >
+              Continue
+            </button>
+          </div>
 
-        <div class="small-note" style="margin-top:.5rem;">
-          Tip: The more context you give, the better the guidance.
+          <div class="small-note" style="margin-top:.5rem;">
+            Tip: The more context you give, the better the guidance.
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
-
+  </section>
 
   <!-- AI CAR EXPERT -->
   <section id="carExpertModal" class="side-modal hidden" aria-hidden="true">
@@ -651,56 +646,45 @@
     </div>
   </section>
 
-<!-- PRO FEATURE BUTTONS -->
-<button id="creativeLabBtn" data-pro="1">Creative Lab</button>
-<button id="aiToolsBtn" data-pro="1">AI Tools</button>
+  <!-- PAYWALL (PAID APP) — ONLY ONE -->
+  <div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
+    <div class="lr-paywall-box">
+      <div class="lr-lock-badge">🔒 Paid App</div>
 
-<!-- PAYWALL (ONLY ONE IN APP) -->
-<div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
-  <div class="lr-paywall-box">
-    <div class="lr-lock-badge">🔒 Pro Required</div>
+      <h2>Lot Rocket is a Paid App</h2>
+      <p>Create an account, then subscribe to unlock access.</p>
 
-    <h2>Unlock Lot Rocket Pro</h2>
-
-    <p>
-      Your account isn’t active yet.
-      Upgrade to unlock all tools and features.
-    </p>
-
-    <div class="lr-paywall-actions">
-      <button id="lrClosePaywall" type="button">
-        Not now
-      </button>
-
-      <button id="lrUpgradeNow" type="button">
-        🚀 Upgrade Now
-      </button>
+      <div class="lr-paywall-actions">
+        <button id="lrClosePaywall" type="button">Not now</button>
+        <button id="lrSubscribeNow" type="button">🚀 Subscribe Now</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- PAYWALL (PAID APP) -->
-<div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
-  <div class="lr-paywall-box">
-    <div class="lr-lock-badge">🔒 Paid App</div>
+  <!-- CONFIG (MUST BE BEFORE app.js) -->
+  <script>
+    window.LR_CFG = {
+      appRootId: "appMain",
+      authModalId: "lrAuth",
+      authMsgId: "lrAuthMsg",
+      paywallId: "lrPaywall",
 
-    <h2>Lot Rocket is a Paid App</h2>
-    <p>Create an account, then subscribe to unlock access.</p>
+      openAuthBtnId: "lrUserChip",
+      logoutBtnId: "lrSignOut",
 
-    <div class="lr-paywall-actions">
-      <button id="lrClosePaywall" type="button">Not now</button>
-      <button id="lrSubscribeNow" type="button">🚀 Subscribe Now</button>
-    </div>
-  </div>
-</div>
+      emailInputId: "lrEmail",
+      passInputId: "lrPass",
+      loginBtnId: "lrSignIn",
+      signupBtnId: "lrSignUp",
 
-<!-- SCRIPTS (LAST — DO NOT MOVE) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/app.js?v=10003"></script>
+      closePaywallBtnId: "lrClosePaywall",
+      upgradeBtnId: "lrSubscribeNow"
+    };
+  </script>
 
-
+  <!-- SCRIPTS (LAST — DO NOT MOVE) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/app.js?v=10003"></script>
 
 </body>
 </html>
-
-
