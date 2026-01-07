@@ -376,8 +376,16 @@ async function createCheckoutSession(req) {
     throw e;
   }
 
+  // 🔐 REQUIRE USER (Path A Step 2)
+  const userId = String(req.body?.userId || req.query?.userId || "").trim();
+  if (!userId) {
+    const e = new Error("Missing userId");
+    e.status = 400;
+    throw e;
+  }
+
   const baseUrl = getBaseUrl(req);
-  console.log("💳 STRIPE checkout:", { priceId, mode: stripeModeLabel(), baseUrl });
+  console.log("💳 STRIPE checkout:", { priceId, mode: stripeModeLabel(), baseUrl, userId });
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -385,6 +393,10 @@ async function createCheckoutSession(req) {
     success_url: `${baseUrl}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/?canceled=1`,
     allow_promotion_codes: true,
+
+    // ✅ BIND STRIPE → USER
+    client_reference_id: userId,
+    metadata: { userId },
   });
 
   return session;
@@ -439,6 +451,7 @@ app.get("/api/stripe/checkout", async (req, res) => {
     });
   }
 });
+
 
 // verify session (no dupes)
 app.get("/api/stripe/verify", async (req, res) => {
