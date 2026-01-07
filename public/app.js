@@ -96,23 +96,24 @@ function closeAuth() {
 }
 
 
-  // Restore lock if user is NOT pro
-  try {
-    const root = __lrGetAppRoot();
-    const pro = (function(){
-      try {
-        const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
-        return v === "1" || v === "true";
-      } catch { return false; }
-    })();
+// Restore lock if user is NOT pro
+try {
+  const root = __lrGetAppRoot();
+  const pro = (function(){
+    try {
+      const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
+      return v === "1" || v === "true";
+    } catch { return false; }
+  })();
 
-    if (!pro && m.__LR_WAS_LOCKED__ === "1") {
-      root?.classList?.add("lr-locked");
-      document.documentElement.classList.add("lr-locked");
-      document.body.classList.add("lr-locked");
-    }
-  } catch {}
-}
+  if (!pro && m.__LR_WAS_LOCKED__ === "1") {
+    root?.classList?.add("lr-locked");
+    document.documentElement.classList.add("lr-locked");
+    document.body.classList.add("lr-locked");
+  }
+
+} catch {}
+
 
 
 function renderUserChip(){
