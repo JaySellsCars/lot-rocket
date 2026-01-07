@@ -441,16 +441,18 @@ function showPaywallAndLockPage() {
 }
 
 
-  // ---- RUN THE GATE ----
-  await stripeReturnCheckAndUnlock();
+// ---- RUN THE GATE (PAID APP: WHOLE APP LOCKED) ----
+await stripeReturnCheckAndUnlock();
 
-  if (!isProActive()) {
-    // Keep the app usable, but lock PRO features via LR_PRO_LOCK + paywall
-    showPaywallAndLockPage();
-    console.log("🔒 APP LOCKED (not pro) — continuing boot (pro features gated)");
-  } else {
-    console.log("🔓 APP UNLOCKED (pro) — continuing boot");
-  }
+if (!isProActive()) {
+  showPaywallAndLockPage();
+  console.log("🔒 PAID APP LOCKED — must purchase to use");
+  // HARD STOP: do not wire the rest of the app for non-pro users
+  return;
+}
+
+console.log("🔓 PAID APP UNLOCKED — continuing boot");
+
 
 
 // ==================================================
