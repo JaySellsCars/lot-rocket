@@ -338,6 +338,7 @@ if (!window.LR_USER_ID) {
 }
 
 
+
 // ==================================================
 // PAID-APP BOOT GATE (WHOLE APP = PRO)
 // - If Stripe returned with session_id, verify and unlock
