@@ -83,6 +83,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
   try {
     switch (event.type) {
+
       case "checkout.session.completed": {
         const session = event.data.object;
 
@@ -110,6 +111,49 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
         if (userId) {
           await upsertProfilePro({ userId, isPro: true, customerId, subscriptionId });
+        }
+
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const sub = event.data.object;
+
+        const customerId =
+          typeof sub?.customer === "string"
+            ? sub.customer
+            : sub?.customer?.id || null;
+
+        const status = String(sub?.status || "");
+        const active = status === "active" || status === "trialing";
+
+        console.log("🔁 SUBSCRIPTION UPDATED:", {
+          subscriptionId: sub?.id || null,
+          customerId,
+          status,
+          active,
+        });
+
+        if (customerId) {
+          const sb = getSupabaseAdmin();
+          if (!sb) throw new Error("Missing SUPABASE admin env");
+
+          const { data, error } = await sb
+            .from("profiles")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+
+          if (error) throw new Error("Supabase lookup failed: " + error.message);
+
+          if (data?.id) {
+            await upsertProfilePro({
+              userId: data.id,
+              isPro: active,
+              customerId,
+              subscriptionId: sub?.id || null,
+            });
+          }
         }
 
         break;
@@ -154,50 +198,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         break;
       }
 
-      // ✅ KEEP SUB STATUS ACCURATE (upgrades, downgrades, past_due, resumes, etc.)
-      case "customer.subscription.updated": {
-        const sub = event.data.object;
-
-        const customerId =
-          typeof sub?.customer === "string"
-            ? sub.customer
-            : sub?.customer?.id || null;
-
-        const status = String(sub?.status || "");
-        const active = status === "active" || status === "trialing";
-
-        console.log("🔁 SUBSCRIPTION UPDATED:", {
-          subscriptionId: sub?.id || null,
-          customerId,
-          status,
-          active,
-        });
-
-        if (customerId) {
-          const sb = getSupabaseAdmin();
-          if (!sb) throw new Error("Missing SUPABASE admin env");
-
-          const { data, error } = await sb
-            .from("profiles")
-            .select("id")
-            .eq("stripe_customer_id", customerId)
-            .maybeSingle();
-
-          if (error) throw new Error("Supabase lookup failed: " + error.message);
-
-          if (data?.id) {
-            await upsertProfilePro({
-              userId: data.id,
-              isPro: active,
-              customerId,
-              subscriptionId: sub?.id || null,
-            });
-          }
-        }
-
-        break;
-      }
-
       case "invoice.payment_failed": {
         const inv = event.data.object;
         console.log("⚠️ invoice.payment_failed:", {
@@ -210,6 +210,8 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
       default:
         break;
+    }
+
 
 
     return res.json({ received: true });
