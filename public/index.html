@@ -679,34 +679,18 @@
   </div>
 </div>
 
-<!-- OPTIONAL GLOBAL UPGRADE CTA -->
-<button id="upgradeBtn" class="btn-upgrade" type="button">
-  🚀 Upgrade to Lot Rocket Pro
-</button>
+<!-- PAYWALL (PAID APP) -->
+<div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
+  <div class="lr-paywall-box">
+    <div class="lr-lock-badge">🔒 Paid App</div>
 
-<!-- AUTH MODAL -->
-<div id="lrAuth" class="lr-modal hidden" aria-hidden="true">
-  <div class="lr-modal-box">
-    <div class="lr-modal-head">
-      <div>🔐 Sign in to Lot Rocket</div>
-      <button id="lrAuthClose" type="button">✕</button>
+    <h2>Lot Rocket is a Paid App</h2>
+    <p>Create an account, then subscribe to unlock access.</p>
+
+    <div class="lr-paywall-actions">
+      <button id="lrClosePaywall" type="button">Not now</button>
+      <button id="lrSubscribeNow" type="button">🚀 Subscribe Now</button>
     </div>
-
-    <label for="lrEmail">Email</label>
-    <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email">
-
-    <label for="lrPass">Password (optional)</label>
-    <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password">
-
-    <div class="lr-row">
-      <button id="lrSendLink" type="button">Send Magic Link</button>
-      <button id="lrSignIn" type="button">Sign In</button>
-    </div>
-
-    <button id="lrSignUp" type="button">Create Account</button>
-    <button id="lrSignOut" type="button" class="hidden">Sign Out</button>
-
-    <div id="lrAuthMsg" class="lr-msg"></div>
   </div>
 </div>
 
