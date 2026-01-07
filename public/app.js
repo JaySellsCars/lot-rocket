@@ -417,24 +417,27 @@ function openPaywall() {
       }
     }
 
-    async function goCheckout() {
-      try {
-        // Try POST first (JSON response)
-        const r = await fetch(CHECKOUT_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ returnUrl: window.location.origin }),
-        });
-body: JSON.stringify({ returnUrl: window.location.origin, userId: window.LR_USER_ID }),
+async function goCheckout() {
+  try {
+    // Try POST first (JSON response)
+    const r = await fetch(CHECKOUT_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        returnUrl: window.location.origin,
+        userId: window.LR_USER_ID
+      }),
+    });
 
-        if (r.ok) {
-          const data = await r.json().catch(() => ({}));
-          const url = data.url || data.checkoutUrl;
-          if (url) {
-            window.location.href = url;
-            return;
-          }
-        }
+    if (r.ok) {
+      const data = await r.json().catch(() => ({}));
+      const url = data.url || data.checkoutUrl;
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+    }
+
 
         // Fallback: GET route (server redirects to Stripe)
         window.location.href = CHECKOUT_ENDPOINT;
