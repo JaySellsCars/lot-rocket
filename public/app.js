@@ -45,15 +45,27 @@ function setAuthMsg(msg){
 function openAuth(){
   const m = qs("lrAuth");
   if (!m) return;
+
+  // allow auth modal clicks even when app is "lr-locked"
+  document.documentElement.classList.add("lr-auth-open");
+  document.body.classList.add("lr-auth-open");
+
   m.classList.remove("hidden");
+  m.style.pointerEvents = "auto";
   m.setAttribute("aria-hidden", "false");
 }
+
 function closeAuth(){
   const m = qs("lrAuth");
   if (!m) return;
+
   m.classList.add("hidden");
   m.setAttribute("aria-hidden", "true");
+
+  document.documentElement.classList.remove("lr-auth-open");
+  document.body.classList.remove("lr-auth-open");
 }
+
 
 function renderUserChip(){
   const chip = qs("lrUserChip");
