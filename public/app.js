@@ -54,16 +54,29 @@ function setAuthMsg(msg){
   if (box) box.textContent = msg || "";
 }
 
+function __lrGetAppRoot() {
+  return (
+    document.getElementById("app") ||
+    document.getElementById("appRoot") ||
+    document.querySelector("main") ||
+    document.body
+  );
+}
+
 function openAuth(){
   const m = qs("lrAuth");
   if (!m) return;
 
-  // allow auth modal clicks even when app is "lr-locked"
-  document.documentElement.classList.add("lr-auth-open");
-  document.body.classList.add("lr-auth-open");
+  // TEMP unlock so the auth modal buttons can receive clicks
+  const root = __lrGetAppRoot();
+  try {
+    m.__LR_WAS_LOCKED__ = root?.classList?.contains("lr-locked") ? "1" : "0";
+    root?.classList?.remove("lr-locked");
+    document.documentElement.classList.remove("lr-locked");
+    document.body.classList.remove("lr-locked");
+  } catch {}
 
   m.classList.remove("hidden");
-  m.style.pointerEvents = "auto";
   m.setAttribute("aria-hidden", "false");
 }
 
@@ -74,8 +87,22 @@ function closeAuth(){
   m.classList.add("hidden");
   m.setAttribute("aria-hidden", "true");
 
-  document.documentElement.classList.remove("lr-auth-open");
-  document.body.classList.remove("lr-auth-open");
+  // Restore lock if user is NOT pro
+  try {
+    const root = __lrGetAppRoot();
+    const pro = (function(){
+      try {
+        const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
+        return v === "1" || v === "true";
+      } catch { return false; }
+    })();
+
+    if (!pro && m.__LR_WAS_LOCKED__ === "1") {
+      root?.classList?.add("lr-locked");
+      document.documentElement.classList.add("lr-locked");
+      document.body.classList.add("lr-locked");
+    }
+  } catch {}
 }
 
 
