@@ -54,469 +54,349 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
      - ✅ Stripe webhook is the truth; verify endpoint syncs UI
      ========================================================= */
 
+  /* =========================================================
+     SUPABASE AUTH + PAID-APP GATE (NO DUPLICATES)
+     LOT ROCKET — SINGLE SOURCE OF TRUTH CORE (Paid App Only)
+     - ✅ App is either LOCKED or UNLOCKED
+     - ✅ Truth = Supabase profiles.is_pro
+     - ✅ No /api/stripe/verify required for gating
+     ========================================================= */
+
   (() => {
     "use strict";
 
     // ----------------------------
     // CONFIG (ENV INJECT / GLOBALS)
     // ----------------------------
-    // You can set these via <script>window.LR_CFG={...}</script> before app.js
     const CFG = Object.assign(
       {
         supabaseUrl: window.SUPABASE_URL || window.LR_SUPABASE_URL || "",
         supabaseAnonKey: window.SUPABASE_ANON_KEY || window.LR_SUPABASE_ANON_KEY || "",
-        // API endpoints (must exist server-side)
-        stripeCheckoutUrl: "/api/stripe/checkout", // POST -> {ok,url} (or {url})
-        stripeVerifyUrl: "/api/stripe/verify", // GET  -> {ok,is_pro:boolean}
-        // UI IDs (must exist in HTML)
-        appRootId: "app",
-        authModalId: "lrAuthModal",
+
+        // Server endpoints
+        stripeCheckoutUrl: "/api/stripe/checkout", // POST {userId} -> {ok,url}
+
+        // UI IDs (match your HTML window.LR_CFG)
+        appRootId: "appMain",
+        authModalId: "lrAuth",
         authMsgId: "lrAuthMsg",
         paywallId: "lrPaywall",
-        // buttons/inputs (recommended IDs)
-        openAuthBtnId: "lrOpenAuth",
-        logoutBtnId: "lrLogout",
-        upgradeBtnId: "lrUpgradeNow",
-        closePaywallBtnId: "lrClosePaywall",
+
+        openAuthBtnId: "lrUserChip",
+        logoutBtnId: "lrSignOut",
+
         emailInputId: "lrEmail",
-        passInputId: "lrPassword",
-        loginBtnId: "lrLogin",
-        signupBtnId: "lrSignup",
+        passInputId: "lrPass",
+        loginBtnId: "lrSignIn",
+        signupBtnId: "lrSignUp",
+
+        closePaywallBtnId: "lrClosePaywall",
+        upgradeBtnId: "lrSubscribeNow",
       },
       window.LR_CFG || {}
     );
 
     // ----------------------------
-    // STATE (ONLY THREE STATES)
+    // STATE
     // ----------------------------
-    let SB = null; // supabase client
-    let LR_USER = null; // current user
-    let LR_SESSION = null; // current session
-    let LR_IS_PRO = false; // paid flag (UI sync; webhook is truth)
-
-// ----------------------------
-// DOM HELPERS
-// ----------------------------
-const DOC2 = document;
-const qs = (id) => DOC2.getElementById(id);
-const show = (el) => el && el.classList.remove("hidden");
-const hide = (el) => el && el.classList.add("hidden");
-const setText = (id, msg) => {
-  const el = qs(id);
-  if (el) el.textContent = msg || "";
-};
-
-function __getAppRoot() {
-  return qs(CFG.appRootId) || qs("appRoot") || DOC2.querySelector("main") || DOC2.body;
-}
-
-// HARD LOCK/UNLOCK (visual + interaction)
-function __lockApp() {
-  const root = __getAppRoot();
-  const main = qs("appMain");
-  const wire = qs("toolWire");
-
-  if (root) root.setAttribute("data-locked", "1");
-
-  if (main) {
-    main.style.pointerEvents = "none";
-    main.style.filter = "blur(2px)";
-    main.style.opacity = "0.35";
-    main.setAttribute("aria-hidden", "true");
-  }
-  if (wire) {
-    wire.style.pointerEvents = "none";
-    wire.style.filter = "blur(2px)";
-    wire.style.opacity = "0.35";
-    wire.setAttribute("aria-hidden", "true");
-  }
-}
-
-function __unlockApp() {
-  const root = __getAppRoot();
-  const main = qs("appMain");
-  const wire = qs("toolWire");
-
-  if (root) root.removeAttribute("data-locked");
-
-  if (main) {
-    main.style.pointerEvents = "auto";
-    main.style.filter = "";
-    main.style.opacity = "";
-    main.removeAttribute("aria-hidden");
-  }
-  if (wire) {
-    wire.style.pointerEvents = "auto";
-    wire.style.filter = "";
-    wire.style.opacity = "";
-    wire.removeAttribute("aria-hidden");
-  }
-}
-
-function __openAuth(msg) {
-  __lockApp();
-  hide(qs(CFG.paywallId));
-  setText(CFG.authMsgId, msg || "");
-  show(qs(CFG.authModalId));
-}
-
-function __closeAuth() {
-  hide(qs(CFG.authModalId));
-  setText(CFG.authMsgId, "");
-}
-
-function __openPaywall(msg) {
-  __lockApp();
-  __closeAuth();
-  if (msg) setText(CFG.authMsgId, msg); // optional reuse
-  show(qs(CFG.paywallId));
-}
-
-function __closePaywall() {
-  hide(qs(CFG.paywallId));
-}
-
-// ----------------------------
-// SAFE JSON FETCH
-// ----------------------------
-async function fetchJSON(url, opts = {}) {
-  const res = await fetch(url, opts);
-  const ct = (res.headers.get("content-type") || "").toLowerCase();
-  const text = await res.text();
-  if (!ct.includes("application/json")) {
-    throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 180)}`);
-  }
-  let data = null;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    /* noop */
-  }
-  if (!res.ok) {
-    const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-  return data;
-}
-
-function authHeaders() {
-  const headers = { "Content-Type": "application/json" };
-  if (LR_SESSION?.access_token) headers.Authorization = `Bearer ${LR_SESSION.access_token}`;
-  return headers;
-}
-
-// ----------------------------
-// SUPABASE INIT + PROFILE ENSURE
-// ----------------------------
-async function initSupabaseOnce() {
-  if (SB) return SB;
-
-  if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
-  }
-  if (!window.supabase || !window.supabase.createClient) {
-    throw new Error("Supabase client not found. Load supabase-js before app.js");
-  }
-
-  SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
-
-  // hydrate session/user FIRST
-  const { data: s } = await SB.auth.getSession();
-  LR_SESSION = s?.session || null;
-
-  const { data: u } = await SB.auth.getUser();
-  LR_USER = u?.user || null;
-
-  // 🔒 NOW run gate (SB ready + session/user hydrated)
-  await runGate();
-
-  // subscribe once
-  SB.auth.onAuthStateChange(async (_event, session) => {
-    LR_SESSION = session || null;
-    LR_USER = session?.user || null;
-
-    try {
-      await runGate();
-    } catch (e) {
-      console.warn("Gate error after auth change:", e?.message || e);
-      __openAuth("Auth state changed. Please sign in again.");
-    }
-  });
-
-  return SB;
-}
-
-async function ensureProfileRow() {
-  if (!SB || !LR_USER?.id) return;
-
-  // Create row if missing (requires your RLS + trigger/policy to allow insert/select for own uid)
-  // We keep it minimal: id, email, updated_at; is_pro managed by webhook/service role
-  const payload = {
-    id: LR_USER.id,
-    email: LR_USER.email || null,
-    updated_at: new Date().toISOString(),
-  };
-
-  // Try select first
-  const { data: existing, error: selErr } = await SB
-    .from("profiles")
-    .select("id,is_pro")
-    .eq("id", LR_USER.id)
-    .maybeSingle();
-
-  if (selErr) {
-    // If select fails due to policy misconfig, we still try upsert (common fix path)
-    console.warn("profiles select error:", selErr.message);
-  }
-
-  if (!existing?.id) {
-    const { error: insErr } = await SB.from("profiles").upsert(payload, { onConflict: "id" });
-    if (insErr) console.warn("profiles upsert error:", insErr.message);
-  }
-}
-// ==================================================
-
-// PAID APP GATE (ONLY TRUTH = Supabase profiles.is_pro)
-// ==================================================
-function __lockApp(msg) {
-  try {
-    const main = document.getElementById("appMain");
-    const wire = document.getElementById("toolWire");
-    const pw = document.getElementById("lrPaywall");
-
-    if (main) main.style.pointerEvents = "none";
-    if (wire) wire.style.pointerEvents = "none";
-
-    if (pw) {
-      pw.classList.remove("hidden");
-      pw.setAttribute("aria-hidden", "false");
-    }
-
-    if (typeof setAuthMsg === "function" && msg) setAuthMsg(msg);
-  } catch (e) {
-    console.warn("lockApp failed:", e);
-  }
-}
-
-function __unlockApp() {
-  try {
-    const main = document.getElementById("appMain");
-    const wire = document.getElementById("toolWire");
-    const pw = document.getElementById("lrPaywall");
-
-    if (pw) {
-      pw.classList.add("hidden");
-      pw.setAttribute("aria-hidden", "true");
-    }
-
-    if (main) main.style.pointerEvents = "auto";
-    if (wire) wire.style.pointerEvents = "auto";
-  } catch (e) {
-    console.warn("unlockApp failed:", e);
-  }
-}
-
-async function runGate() {
-  // 1) must have SB
-  if (!SB) {
-    __lockApp("Setup error. Supabase not initialized.");
-    return false;
-  }
-
-  // 2) must be signed in
-  const { data: sess } = await SB.auth.getSession();
-  const user = sess?.session?.user || null;
-  if (!user?.id) {
-    __lockApp("Sign in to continue.");
-    return false;
-  }
-
-  // 2.5) ensure profile row exists
-  await ensureProfileRow();
-
-  // 3) must be paid (profiles.is_pro)
-  const { data, error } = await SB
-    .from("profiles")
-    .select("is_pro")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    __lockApp("Profile check failed. Try again.");
-    console.warn("profiles select error:", error);
-    return false;
-  }
-
-  if (data?.is_pro === true) {
-    __unlockApp();
-    return true;
-  }
-
-  __lockApp("Subscription required.");
-  return false;
-}
-
-// Wire paywall buttons (no duplicates)
-(function wirePaywallButtonsOnce() {
-  if (window.__LR_PAYWALL_WIRED) return;
-  window.__LR_PAYWALL_WIRED = true;
-
-  const closeBtn = document.getElementById("lrClosePaywall");
-  const subBtn = document.getElementById("lrSubscribeNow");
-
-  if (closeBtn) closeBtn.onclick = () => {
-    const pw = document.getElementById("lrPaywall");
-    if (pw) pw.classList.add("hidden");
-  };
-
-  if (subBtn) subBtn.onclick = async () => {
-    const { data: sess } = await SB.auth.getSession();
-    const user = sess?.session?.user || null;
-    if (!user?.id) {
-      if (typeof openAuth === "function") openAuth();
-      return;
-    }
-
-    const r = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id }),
-    });
-
-    const j = await r.json().catch(() => null);
-    if (!j?.ok || !j?.url) {
-      alert(j?.error || "Checkout failed");
-      return;
-    }
-    window.location.href = j.url;
-  };
-})();
+    let SB = null;
+    let LR_USER = null;
+    let LR_SESSION = null;
+    let LR_IS_PRO = false;
 
     // ----------------------------
-    // STRIPE VERIFY (UI SYNC ONLY)
+    // Auth modal click fix (MUST match your authModalId)
     // ----------------------------
-    async function verifyPaidStatus() {
-      // Stripe webhook is the truth.
-      // This endpoint should read from DB (profiles.is_pro) and return {ok,is_pro}
-      // It can use Authorization bearer to map user.
-      const data = await fetchJSON(CFG.stripeVerifyUrl, {
-        method: "GET",
-        headers: authHeaders(),
-      });
+    (function allowAuthModalClicksEvenWhenLocked() {
+      if (document.getElementById("lr-auth-click-fix")) return;
+      const style = document.createElement("style");
+      style.id = "lr-auth-click-fix";
+      style.textContent = `
+        #${CFG.authModalId}, #${CFG.authModalId} * { pointer-events: auto !important; }
+        #${CFG.authModalId} { position: fixed !important; z-index: 999999 !important; }
+      `;
+      document.head.appendChild(style);
+    })();
 
-      LR_IS_PRO = !!data?.is_pro;
-      return LR_IS_PRO;
+    // ----------------------------
+    // DOM HELPERS
+    // ----------------------------
+    const DOC2 = document;
+    const qs = (id) => DOC2.getElementById(id);
+    const show = (el) => el && el.classList.remove("hidden");
+    const hide = (el) => el && el.classList.add("hidden");
+    const setText = (id, msg) => {
+      const el = qs(id);
+      if (el) el.textContent = msg || "";
+    };
+
+    function __getAppRoot() {
+      return qs(CFG.appRootId) || qs("appRoot") || DOC2.querySelector("main") || DOC2.body;
     }
 
     // ----------------------------
-    // CHECKOUT (ONLY ACTION WHEN UNPAID)
+    // HARD LOCK / UNLOCK (SINGLE)
     // ----------------------------
-    async function beginCheckout() {
-      if (!LR_USER) {
-        __openAuth("Please sign in first.");
-        return;
+    function __lockApp(msg) {
+      const root = __getAppRoot();
+      const main = qs("appMain");
+      const wire = qs("toolWire");
+      const pw = qs(CFG.paywallId);
+
+      if (root) root.setAttribute("data-locked", "1");
+
+      if (main) {
+        main.style.pointerEvents = "none";
+        main.style.filter = "blur(2px)";
+        main.style.opacity = "0.35";
+        main.setAttribute("aria-hidden", "true");
+      }
+      if (wire) {
+        wire.style.pointerEvents = "none";
+        wire.style.filter = "blur(2px)";
+        wire.style.opacity = "0.35";
+        wire.setAttribute("aria-hidden", "true");
       }
 
-      // Create checkout session server-side
-      const data = await fetchJSON(CFG.stripeCheckoutUrl, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          // optional fields your server may accept
-          email: LR_USER.email || null,
-          user_id: LR_USER.id || null,
-        }),
-      });
+      // show paywall if present (but auth may override)
+      if (pw) {
+        pw.classList.remove("hidden");
+        pw.setAttribute("aria-hidden", "false");
+      }
 
-      const url = data?.url || data?.checkoutUrl;
-      if (!url) throw new Error("Checkout did not return a URL");
-      window.location.href = url;
+      if (msg) setText(CFG.authMsgId, msg);
+    }
+
+    function __unlockApp() {
+      const root = __getAppRoot();
+      const main = qs("appMain");
+      const wire = qs("toolWire");
+      const pw = qs(CFG.paywallId);
+
+      if (root) root.removeAttribute("data-locked");
+
+      if (pw) {
+        pw.classList.add("hidden");
+        pw.setAttribute("aria-hidden", "true");
+      }
+
+      if (main) {
+        main.style.pointerEvents = "auto";
+        main.style.filter = "";
+        main.style.opacity = "";
+        main.removeAttribute("aria-hidden");
+      }
+      if (wire) {
+        wire.style.pointerEvents = "auto";
+        wire.style.filter = "";
+        wire.style.opacity = "";
+        wire.removeAttribute("aria-hidden");
+      }
+    }
+
+    function __openAuth(msg) {
+      __lockApp(msg || "");
+      hide(qs(CFG.paywallId));
+      show(qs(CFG.authModalId));
+    }
+
+    function __closeAuth() {
+      hide(qs(CFG.authModalId));
+      setText(CFG.authMsgId, "");
+    }
+
+    function __openPaywall(msg) {
+      __lockApp(msg || "Subscription required.");
+      __closeAuth();
+      show(qs(CFG.paywallId));
+    }
+
+    function __closePaywall() {
+      hide(qs(CFG.paywallId));
     }
 
     // ----------------------------
-    // GATE (ONLY THREE STATES)
+    // SUPABASE INIT
+    // ----------------------------
+    async function initSupabaseOnce() {
+      if (SB) return SB;
+
+      if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) {
+        throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+      }
+      if (!window.supabase || !window.supabase.createClient) {
+        throw new Error("Supabase client not found. Load supabase-js before app.js");
+      }
+
+      SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+
+      // hydrate session/user
+      const { data: s } = await SB.auth.getSession();
+      LR_SESSION = s?.session || null;
+
+      const { data: u } = await SB.auth.getUser();
+      LR_USER = u?.user || null;
+
+      // auth changes -> re-gate
+      SB.auth.onAuthStateChange((_event, session) => {
+        LR_SESSION = session || null;
+        LR_USER = session?.user || null;
+        runGate().catch(console.warn);
+      });
+
+      return SB;
+    }
+
+    async function ensureProfileRow() {
+      if (!SB || !LR_USER?.id) return;
+
+      const payload = {
+        id: LR_USER.id,
+        email: LR_USER.email || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: existing } = await SB
+        .from("profiles")
+        .select("id")
+        .eq("id", LR_USER.id)
+        .maybeSingle();
+
+      if (!existing?.id) {
+        const { error } = await SB.from("profiles").upsert(payload, { onConflict: "id" });
+        if (error) console.warn("profiles upsert error:", error.message);
+      }
+    }
+
+    // ----------------------------
+    // STRIPE RETURN HANDLER (ONE)
+    // ----------------------------
+    async function handleStripeReturnOnce() {
+      const url = new URL(window.location.href);
+      const sessionId = url.searchParams.get("session_id");
+      if (!sessionId) return;
+
+      // clean URL so refresh doesn't loop
+      url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+
+      // NOTE: webhook may take a moment; user stays paywalled until profiles.is_pro flips true
+      console.log("✅ Stripe return detected. Re-checking paid status…");
+    }
+
+    // ----------------------------
+    // THE ONLY GATE (ONE)
     // ----------------------------
     async function runGate() {
+      console.log("🚨 RUN GATE HIT", new Date().toISOString());
+
+      // fail closed immediately
+      __lockApp("");
+
       await initSupabaseOnce();
 
-      // STATE 1: Logged out -> force auth modal
-      if (!LR_USER) {
+      // state 1: logged out
+      if (!LR_USER?.id) {
         LR_IS_PRO = false;
         __closePaywall();
-        __unlockApp(); // app UI can render, but auth modal blocks interaction
-        __openAuth("Sign in to access Lot Rocket.");
+        __openAuth("Sign in to continue.");
         return;
       }
 
-      // Logged in -> ensure profile exists
+      // ensure row
       await ensureProfileRow();
 
-      // Read paid status (UI sync)
-      let isPro = false;
-      try {
-        isPro = await verifyPaidStatus();
-      } catch (e) {
-        // If verify fails, fail CLOSED (locked)
-        console.warn("verifyPaidStatus failed:", e?.message || e);
-        isPro = false;
-      }
+      // check profiles.is_pro
+      const { data, error } = await SB
+        .from("profiles")
+        .select("is_pro")
+        .eq("id", LR_USER.id)
+        .maybeSingle();
 
-      // STATE 2: Logged in, NOT PAID -> force paywall
-      if (!isPro) {
-        __openPaywall();
+      if (error) {
+        LR_IS_PRO = false;
+        console.warn("profiles select error:", error.message);
+        __openPaywall("Account check failed.");
         return;
       }
 
-      // STATE 3: Logged in, PAID -> unlock + boot
+      LR_IS_PRO = data?.is_pro === true;
+
+      // state 2: logged in, not paid
+      if (!LR_IS_PRO) {
+        __openPaywall("Subscription required.");
+        return;
+      }
+
+      // state 3: paid
       __closePaywall();
       __closeAuth();
       __unlockApp();
 
-      // Call your main app boot ONCE (no duplicates)
       if (typeof window.LR_BOOT === "function") {
         window.LR_BOOT({ user: LR_USER, session: LR_SESSION, is_pro: true });
       }
+
+      console.log("🔓 PRO UNLOCKED");
     }
 
     // ----------------------------
-    // AUTH UI WIRING (SINGLE)
+    // PAYWALL BUTTONS (ONE)
+    // ----------------------------
+    (function wirePaywallButtonsOnce() {
+      if (window.__LR_PAYWALL_WIRED) return;
+      window.__LR_PAYWALL_WIRED = true;
+
+      const closeBtn = qs(CFG.closePaywallBtnId);
+      const subBtn = qs(CFG.upgradeBtnId);
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          // allowed to close the modal, but app stays locked
+          __closePaywall();
+          __lockApp("");
+        });
+      }
+
+      if (subBtn) {
+        subBtn.addEventListener("click", async () => {
+          await initSupabaseOnce();
+          const { data: sess } = await SB.auth.getSession();
+          const user = sess?.session?.user || null;
+
+          if (!user?.id) return __openAuth("Sign in first.");
+
+          const r = await fetch(CFG.stripeCheckoutUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id }),
+          });
+
+          const j = await r.json().catch(() => null);
+          if (!j?.ok || !j?.url) return alert(j?.error || "Checkout failed");
+          window.location.href = j.url;
+        });
+      }
+    })();
+
+    // ----------------------------
+    // AUTH UI WIRING (ONE)
     // ----------------------------
     function wireAuthUIOnce() {
       const openAuthBtn = qs(CFG.openAuthBtnId);
       if (openAuthBtn && !openAuthBtn.__lr_wired) {
         openAuthBtn.__lr_wired = true;
-        openAuthBtn.addEventListener("click", () => __openAuth());
+        openAuthBtn.addEventListener("click", () => __openAuth(""));
       }
 
       const logoutBtn = qs(CFG.logoutBtnId);
       if (logoutBtn && !logoutBtn.__lr_wired) {
         logoutBtn.__lr_wired = true;
         logoutBtn.addEventListener("click", async () => {
-          if (!SB) await initSupabaseOnce();
+          await initSupabaseOnce();
           await SB.auth.signOut();
           LR_IS_PRO = false;
           runGate().catch(console.warn);
-        });
-      }
-
-      const closePaywallBtn = qs(CFG.closePaywallBtnId);
-      if (closePaywallBtn && !closePaywallBtn.__lr_wired) {
-        closePaywallBtn.__lr_wired = true;
-        closePaywallBtn.addEventListener("click", () => {
-          // Paid app: closing paywall is allowed, but app stays locked
-          __closePaywall();
-          __lockApp();
-        });
-      }
-
-      const upgradeBtn = qs(CFG.upgradeBtnId);
-      if (upgradeBtn && !upgradeBtn.__lr_wired) {
-        upgradeBtn.__lr_wired = true;
-        upgradeBtn.addEventListener("click", () => {
-          beginCheckout().catch((e) => {
-            console.warn(e);
-            __openPaywall("Checkout failed. Try again.");
-          });
         });
       }
 
@@ -528,33 +408,22 @@ async function runGate() {
 
         const email = (qs(CFG.emailInputId)?.value || "").trim();
         const password = (qs(CFG.passInputId)?.value || "").trim();
-        if (!email || !password) {
-          setText(CFG.authMsgId, "Enter email + password.");
-          return;
-        }
+
+        if (!email || !password) return setText(CFG.authMsgId, "Enter email + password.");
 
         setText(CFG.authMsgId, mode === "signup" ? "Creating account…" : "Signing in…");
 
         if (mode === "signup") {
           const { error } = await SB.auth.signUp({ email, password });
-          if (error) {
-            setText(CFG.authMsgId, error.message);
-            return;
-          }
-          setText(CFG.authMsgId, "Check your email to confirm, then sign in.");
-          return;
+          if (error) return setText(CFG.authMsgId, error.message);
+          return setText(CFG.authMsgId, "Check your email to confirm, then sign in.");
         }
 
-        // login
         const { error } = await SB.auth.signInWithPassword({ email, password });
-        if (error) {
-          setText(CFG.authMsgId, error.message);
-          return;
-        }
+        if (error) return setText(CFG.authMsgId, error.message);
 
         setText(CFG.authMsgId, "");
         __closeAuth();
-        // gate will re-run via onAuthStateChange; but also call once for instant UI
         runGate().catch(console.warn);
       }
 
@@ -566,23 +435,6 @@ async function runGate() {
         signupBtn.__lr_wired = true;
         signupBtn.addEventListener("click", () => doAuth("signup"));
       }
-    }
-
-    // ----------------------------
-    // CHECK RETURN FROM STRIPE
-    // ----------------------------
-    async function handleStripeReturnOnce() {
-      // If your success_url appends ?session_id=...
-      const url = new URL(window.location.href);
-      const sessionId = url.searchParams.get("session_id");
-      if (!sessionId) return;
-
-      // Clean URL immediately (prevents loops / re-verifies on refresh)
-      url.searchParams.delete("session_id");
-      window.history.replaceState({}, "", url.toString());
-
-      // Re-run gate (verify endpoint should now see is_pro true after webhook; if webhook is async, user stays paywalled until it flips)
-      runGate().catch(console.warn);
     }
 
     // ----------------------------
@@ -603,7 +455,9 @@ async function runGate() {
       runGate,
     };
 
-    // BOOT ORDER (SINGLE) — FIXED
+    // ----------------------------
+    // BOOT ORDER (SINGLE)
+    // ----------------------------
     (async function LR_CORE_BOOT() {
       try {
         wireAuthUIOnce();
@@ -615,6 +469,7 @@ async function runGate() {
       }
     })();
   })(); // ✅ END LR_CORE (paid-app gate)
+
 
   // ==================================================
   // HARD OVERRIDE: Step 1 thumbnails MUST be square
