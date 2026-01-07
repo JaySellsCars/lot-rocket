@@ -429,20 +429,18 @@
     runGate
   };
 
-  // ----------------------------
-  // BOOT ORDER (SINGLE)
-  // ----------------------------
-  document.addEventListener("DOMContentLoaded", async () => {
-    try {
-      wireAuthUIOnce();
-      await handleStripeReturnOnce();
-      await runGate();
-    } catch (e) {
-      console.warn("LR CORE boot failed:", e?.message || e);
-      __openAuth("Setup error. Check Supabase keys + scripts.");
-    }
-  });
+// BOOT ORDER (SINGLE) — FIXED
+(async function LR_CORE_BOOT() {
+  try {
+    wireAuthUIOnce();
+    await handleStripeReturnOnce();
+    await runGate();
+  } catch (e) {
+    console.warn("LR CORE boot failed:", e?.message || e);
+    __openAuth("Setup error. Check Supabase keys + scripts.");
+  }
 })();
+
 
 
 
