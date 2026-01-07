@@ -182,6 +182,7 @@
         throw new Error("Supabase client not found. Load supabase-js before app.js");
       }
       SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+await runGate();
 
       // hydrate session/user
       const { data: s } = await SB.auth.getSession();
