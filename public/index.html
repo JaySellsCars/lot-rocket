@@ -646,20 +646,128 @@
     </div>
   </section>
 
-  <!-- PAYWALL (PAID APP) — ONLY ONE -->
-  <div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
-    <div class="lr-paywall-box">
-      <div class="lr-lock-badge">🔒 Paid App</div>
+// ==================================================
+// PAID APP GATE (ONLY TRUTH = Supabase profiles.is_pro)
+// ==================================================
+function __lockApp(msg) {
+  try {
+    const main = document.getElementById("appMain");
+    const wire = document.getElementById("toolWire");
+    const pw = document.getElementById("lrPaywall");
 
-      <h2>Lot Rocket is a Paid App</h2>
-      <p>Create an account, then subscribe to unlock access.</p>
+    if (main) main.style.pointerEvents = "none";
+    if (wire) wire.style.pointerEvents = "none";
 
-      <div class="lr-paywall-actions">
-        <button id="lrClosePaywall" type="button">Not now</button>
-        <button id="lrSubscribeNow" type="button">🚀 Subscribe Now</button>
-      </div>
-    </div>
-  </div>
+    if (pw) {
+      pw.classList.remove("hidden");
+      pw.setAttribute("aria-hidden", "false");
+    }
+
+    if (typeof setAuthMsg === "function" && msg) setAuthMsg(msg);
+  } catch (e) {
+    console.warn("lockApp failed:", e);
+  }
+}
+
+function __unlockApp() {
+  try {
+    const main = document.getElementById("appMain");
+    const wire = document.getElementById("toolWire");
+    const pw = document.getElementById("lrPaywall");
+
+    if (pw) {
+      pw.classList.add("hidden");
+      pw.setAttribute("aria-hidden", "true");
+    }
+
+    if (main) main.style.pointerEvents = "auto";
+    if (wire) wire.style.pointerEvents = "auto";
+  } catch (e) {
+    console.warn("unlockApp failed:", e);
+  }
+}
+
+async function runGate() {
+  // 1) must have SB
+  if (!SB) {
+    __lockApp("Setup error. Supabase not initialized.");
+    return false;
+  }
+
+  // 2) must be signed in
+  const { data: sess } = await SB.auth.getSession();
+  const user = sess?.session?.user || null;
+  if (!user?.id) {
+    __lockApp("Sign in to continue.");
+    return false;
+  }
+
+  // 3) must be paid (profiles.is_pro)
+  const { data, error } = await SB
+    .from("profiles")
+    .select("is_pro")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    __lockApp("Profile check failed. Try again.");
+    console.warn("profiles select error:", error);
+    return false;
+  }
+
+  if (data?.is_pro === true) {
+    __unlockApp();
+    return true;
+  }
+
+  __lockApp("Subscription required.");
+  return false;
+}
+
+// Wire paywall buttons
+(function wirePaywallButtons() {
+  const closeBtn = document.getElementById("lrClosePaywall");
+  const subBtn = document.getElementById("lrSubscribeNow");
+
+  if (closeBtn) closeBtn.onclick = () => {
+    const pw = document.getElementById("lrPaywall");
+    if (pw) pw.classList.add("hidden");
+  };
+
+  if (subBtn) subBtn.onclick = async () => {
+    // must be signed in to create a checkout session
+    const { data: sess } = await SB.auth.getSession();
+    const user = sess?.session?.user || null;
+    if (!user?.id) {
+      if (typeof openAuth === "function") openAuth();
+      return;
+    }
+
+    // Create Stripe checkout (server requires userId)
+    const r = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id }),
+    });
+
+    const j = await r.json().catch(() => null);
+    if (!j?.ok || !j?.url) {
+      alert(j?.error || "Checkout failed");
+      return;
+    }
+    window.location.href = j.url;
+  };
+})();
+
+// IMPORTANT: call gate on boot + on auth changes
+(async function bootGate() {
+  await runGate();
+
+  SB.auth.onAuthStateChange(async () => {
+    await runGate();
+  });
+})();
+
 
   <!-- CONFIG (MUST BE BEFORE app.js) -->
   <script>
