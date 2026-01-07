@@ -920,3 +920,20 @@ textarea{
 .lr-mini{ margin-top: 10px; color:#9ca3af; font-size: 12px; }
 .hidden{ display:none !important; }
 
+/* PAID APP LOCK: disable only app, NOT the whole page */
+html.lr-locked, body.lr-locked { pointer-events: auto !important; }
+
+.lr-locked #app,
+.lr-locked #appRoot,
+.lr-locked main {
+  pointer-events: none !important;
+  user-select: none !important;
+  filter: blur(6px);
+}
+
+/* Paywall must stay clickable */
+#lrPaywall {
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+}
+#lrPaywall * { pointer-events: auto !important; }
