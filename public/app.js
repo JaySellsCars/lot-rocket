@@ -605,7 +605,7 @@ DOC.addEventListener(
     const needsPro = el.getAttribute("data-pro") === "1";
     if (!needsPro) return;
 
-    if (!isProActiveLocal()) {
+    if (!isProActive()) {
       e.preventDefault();
       e.stopPropagation();
       openPaywall();
@@ -613,6 +613,7 @@ DOC.addEventListener(
   },
   true
 );
+
 
 
     DOC.addEventListener("keydown", (e) => {
