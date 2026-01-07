@@ -63,74 +63,118 @@ function getBaseUrl(req) {
    STRIPE WEBHOOK (RAW BODY REQUIRED)
    NOTE: Must be defined BEFORE express.json()
 ================================ */
-app.post(
-  "/api/stripe/webhook",
-  express.raw({ type: "*/*" }),
-  async (req, res) => {
-    const stripe = getStripe();
-    if (!stripe) return res.status(500).send("Stripe not configured");
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(500).send("Stripe not configured");
 
-    const sig = req.headers["stripe-signature"];
-    if (!sig) return res.status(400).send("Missing Stripe-Signature header");
+  const sig = req.headers["stripe-signature"];
+  if (!sig) return res.status(400).send("Missing Stripe-Signature header");
 
-    const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
-    if (!secret) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
+  const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+  if (!secret) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, secret);
-    } catch (err) {
-      console.error("❌ Stripe webhook signature failed:", err?.message || err);
-      return res.status(400).send("Webhook Error");
-    }
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, secret);
+  } catch (err) {
+    console.error("❌ Stripe webhook signature failed:", err?.message || err);
+    return res.status(400).send("Webhook Error");
+  }
 
-    try {
-      switch (event.type) {
-        case "checkout.session.completed": {
-          const session = event.data.object;
-          console.log("✅ PAID ON:", {
-            id: session?.id || null,
-            userId: session?.metadata?.userId || null,
-            customerId: session?.customer || null,
-            subscriptionId: session?.subscription || null,
-            email: session?.customer_details?.email || null,
-          });
-          break;
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+
+        const userId = String(
+          session?.metadata?.userId || session?.client_reference_id || ""
+        ).trim();
+
+        const customerId =
+          typeof session?.customer === "string"
+            ? session.customer
+            : session?.customer?.id || null;
+
+        const subscriptionId =
+          typeof session?.subscription === "string"
+            ? session.subscription
+            : session?.subscription?.id || null;
+
+        console.log("✅ PAID ON:", {
+          id: session?.id || null,
+          userId,
+          customerId,
+          subscriptionId,
+          email: session?.customer_details?.email || null,
+        });
+
+        if (userId) {
+          await upsertProfilePro({ userId, isPro: true, customerId, subscriptionId });
         }
 
-        case "customer.subscription.deleted": {
-          const sub = event.data.object;
-          console.log("🛑 PAID OFF:", {
-            subscriptionId: sub?.id || null,
-            customerId: sub?.customer || null,
-            status: sub?.status || null,
-          });
-          break;
-        }
-
-        case "invoice.payment_failed": {
-          const inv = event.data.object;
-          console.log("⚠️ invoice.payment_failed:", {
-            invoiceId: inv?.id || null,
-            customerId: inv?.customer || null,
-            subscriptionId: inv?.subscription || null,
-          });
-          break;
-        }
-
-        default:
-          // optional:
-          // console.log("stripe event:", event.type);
-          break;
+        break;
       }
 
-      return res.json({ received: true });
-    } catch (e) {
-      console.error("❌ Webhook handler error:", e);
-      return res.status(500).json({ ok: false });
+      case "customer.subscription.deleted": {
+        const sub = event.data.object;
+
+        const customerId =
+          typeof sub?.customer === "string"
+            ? sub.customer
+            : sub?.customer?.id || null;
+
+        console.log("🛑 PAID OFF:", {
+          subscriptionId: sub?.id || null,
+          customerId,
+          status: sub?.status || null,
+        });
+
+        if (customerId) {
+          const sb = getSupabaseAdmin();
+          if (!sb) throw new Error("Missing SUPABASE admin env");
+
+          const { data, error } = await sb
+            .from("profiles")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+
+          if (error) throw new Error("Supabase lookup failed: " + error.message);
+
+          if (data?.id) {
+            await upsertProfilePro({
+              userId: data.id,
+              isPro: false,
+              customerId,
+              subscriptionId: null,
+            });
+          }
+        }
+
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const inv = event.data.object;
+        console.log("⚠️ invoice.payment_failed:", {
+          invoiceId: inv?.id || null,
+          customerId: inv?.customer || null,
+          subscriptionId: inv?.subscription || null,
+        });
+        break;
+      }
+
+      default:
+        break;
     }
+
+    return res.json({ received: true });
+  } catch (e) {
+    console.error("❌ Webhook handler error:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || "webhook failed" });
   }
-);
+});
+
 
 /* ===============================
    BODY PARSING
