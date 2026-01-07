@@ -25,6 +25,18 @@
     });
 
   await domReady();
+(function allowAuthModalClicksEvenWhenLocked(){
+  if (document.getElementById("lr-auth-click-fix")) return;
+  const style = document.createElement("style");
+  style.id = "lr-auth-click-fix";
+  style.textContent = `
+    #lrAuth, #lrAuth * { pointer-events: auto !important; }
+    #lrAuth { position: fixed !important; z-index: 999999 !important; }
+  `;
+  document.head.appendChild(style);
+})();
+
+  
 // ==================================================
 // SUPABASE AUTH (PATH A STEP 1)
 // ==================================================
