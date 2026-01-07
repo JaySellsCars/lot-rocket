@@ -532,26 +532,28 @@ function showPaywallAndLockPage() {
     });
 
     // Gate clicks for data-pro="1"
-    DOC.addEventListener(
-      "click",
-      (e) => {
-        // never block clicks inside paywall
-        if (e.target?.closest?.("#lrPaywall")) return;
+DOC.addEventListener(
+  "click",
+  (e) => {
+    // ✅ NEVER block clicks inside paywall OR auth modal
+    if (e.target?.closest?.("#lrPaywall")) return;
+    if (e.target?.closest?.("#lrAuth")) return;
 
-        const el = e.target?.closest?.("[data-pro]");
-        if (!el) return;
+    const el = e.target?.closest?.("[data-pro]");
+    if (!el) return;
 
-        const needsPro = el.getAttribute("data-pro") === "1";
-        if (!needsPro) return;
+    const needsPro = el.getAttribute("data-pro") === "1";
+    if (!needsPro) return;
 
-        if (!isProActiveLocal()) {
-          e.preventDefault();
-          e.stopPropagation();
-          openPaywall();
-        }
-      },
-      true
-    );
+    if (!isProActiveLocal()) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPaywall();
+    }
+  },
+  true
+);
+
 
     DOC.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePaywall();
