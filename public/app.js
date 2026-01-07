@@ -191,9 +191,13 @@ async function initSupabaseAuth() {
     return;
   }
 
-  SB = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-  });
+SB = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+});
+
+window.SB = SB;         // ✅ add
+window.LR_SB = SB;      // ✅ add (optional)
+
 
   // Initial session
   const { data: s0 } = await SB.auth.getSession();
