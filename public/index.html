@@ -686,6 +686,30 @@
 <!-- APP SCRIPT (LAST) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app.js?v=10003"></script>
+<div id="lrAuth" class="lr-modal hidden" aria-hidden="true">
+  <div class="lr-modal-box">
+    <div class="lr-modal-head">
+      <div>🔐 Sign in to Lot Rocket</div>
+      <button id="lrAuthClose" type="button">✕</button>
+    </div>
+
+    <label>Email</label>
+    <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email">
+
+    <label>Password (optional)</label>
+    <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password">
+
+    <div class="lr-row">
+      <button id="lrSendLink" type="button">Send Magic Link</button>
+      <button id="lrSignIn" type="button">Sign In</button>
+    </div>
+
+    <button id="lrSignUp" type="button">Create Account</button>
+    <button id="lrSignOut" type="button" class="hidden">Sign Out</button>
+
+    <div id="lrAuthMsg" class="lr-msg"></div>
+  </div>
+</div>
 
 
 </body>
