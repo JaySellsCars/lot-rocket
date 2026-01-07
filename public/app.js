@@ -155,6 +155,7 @@ const payload = {
 
 
 
+
     const { error } = await SB
       .from("profiles")
       .upsert(payload, { onConflict: "id" });
@@ -231,6 +232,7 @@ async function initSupabaseAuth() {
   wireAuthUI();
   console.log("✅ Supabase Auth READY", { userId: LR_USER?.id || null });
 }
+
 
 
 
