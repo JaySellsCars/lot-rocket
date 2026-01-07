@@ -232,6 +232,122 @@
         if (insErr) console.warn("profiles upsert error:", insErr.message);
       }
     }
+// ==================================================
+// PAID APP GATE (ONLY TRUTH = Supabase profiles.is_pro)
+// ==================================================
+function __lockApp(msg) {
+  try {
+    const main = document.getElementById("appMain");
+    const wire = document.getElementById("toolWire");
+    const pw = document.getElementById("lrPaywall");
+
+    if (main) main.style.pointerEvents = "none";
+    if (wire) wire.style.pointerEvents = "none";
+
+    if (pw) {
+      pw.classList.remove("hidden");
+      pw.setAttribute("aria-hidden", "false");
+    }
+
+    if (typeof setAuthMsg === "function" && msg) setAuthMsg(msg);
+  } catch (e) {
+    console.warn("lockApp failed:", e);
+  }
+}
+
+function __unlockApp() {
+  try {
+    const main = document.getElementById("appMain");
+    const wire = document.getElementById("toolWire");
+    const pw = document.getElementById("lrPaywall");
+
+    if (pw) {
+      pw.classList.add("hidden");
+      pw.setAttribute("aria-hidden", "true");
+    }
+
+    if (main) main.style.pointerEvents = "auto";
+    if (wire) wire.style.pointerEvents = "auto";
+  } catch (e) {
+    console.warn("unlockApp failed:", e);
+  }
+}
+
+async function runGate() {
+  // 1) must have SB
+  if (!SB) {
+    __lockApp("Setup error. Supabase not initialized.");
+    return false;
+  }
+
+  // 2) must be signed in
+  const { data: sess } = await SB.auth.getSession();
+  const user = sess?.session?.user || null;
+  if (!user?.id) {
+    __lockApp("Sign in to continue.");
+    return false;
+  }
+
+  // 2.5) ensure profile row exists
+  await ensureProfileRow();
+
+  // 3) must be paid (profiles.is_pro)
+  const { data, error } = await SB
+    .from("profiles")
+    .select("is_pro")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    __lockApp("Profile check failed. Try again.");
+    console.warn("profiles select error:", error);
+    return false;
+  }
+
+  if (data?.is_pro === true) {
+    __unlockApp();
+    return true;
+  }
+
+  __lockApp("Subscription required.");
+  return false;
+}
+
+// Wire paywall buttons (no duplicates)
+(function wirePaywallButtonsOnce() {
+  if (window.__LR_PAYWALL_WIRED) return;
+  window.__LR_PAYWALL_WIRED = true;
+
+  const closeBtn = document.getElementById("lrClosePaywall");
+  const subBtn = document.getElementById("lrSubscribeNow");
+
+  if (closeBtn) closeBtn.onclick = () => {
+    const pw = document.getElementById("lrPaywall");
+    if (pw) pw.classList.add("hidden");
+  };
+
+  if (subBtn) subBtn.onclick = async () => {
+    const { data: sess } = await SB.auth.getSession();
+    const user = sess?.session?.user || null;
+    if (!user?.id) {
+      if (typeof openAuth === "function") openAuth();
+      return;
+    }
+
+    const r = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id }),
+    });
+
+    const j = await r.json().catch(() => null);
+    if (!j?.ok || !j?.url) {
+      alert(j?.error || "Checkout failed");
+      return;
+    }
+    window.location.href = j.url;
+  };
+})();
 
     // ----------------------------
     // STRIPE VERIFY (UI SYNC ONLY)
