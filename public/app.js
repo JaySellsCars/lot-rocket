@@ -150,9 +150,9 @@ async function ensureProfileRow(user) {
 
 const payload = {
   id: user.id,
-  is_pro: false,
-  // updated_at: new Date().toISOString(), // REMOVE THIS LINE
+  is_pro: false
 };
+
 
 
     const { error } = await SB
