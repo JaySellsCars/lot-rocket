@@ -1,3 +1,6 @@
+console.log("🚨 RUN GATE HIT", new Date().toISOString());
+
+
 // redeploy v10003
 
 ///// /public/app.js  (REPLACE ENTIRE FILE)
