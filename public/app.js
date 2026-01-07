@@ -91,149 +91,188 @@
     let LR_SESSION = null; // current session
     let LR_IS_PRO = false; // paid flag (UI sync; webhook is truth)
 
-    // ----------------------------
-    // DOM HELPERS
-    // ----------------------------
-    const DOC2 = document;
-    const qs = (id) => DOC2.getElementById(id);
-    const show = (el) => el && el.classList.remove("hidden");
-    const hide = (el) => el && el.classList.add("hidden");
-    const setText = (id, msg) => {
-      const el = qs(id);
-      if (el) el.textContent = msg || "";
-    };
+// ----------------------------
+// DOM HELPERS
+// ----------------------------
+const DOC2 = document;
+const qs = (id) => DOC2.getElementById(id);
+const show = (el) => el && el.classList.remove("hidden");
+const hide = (el) => el && el.classList.add("hidden");
+const setText = (id, msg) => {
+  const el = qs(id);
+  if (el) el.textContent = msg || "";
+};
 
-    function __getAppRoot() {
-      return qs(CFG.appRootId) || qs("appRoot") || DOC2.querySelector("main") || DOC2.body;
+function __getAppRoot() {
+  return qs(CFG.appRootId) || qs("appRoot") || DOC2.querySelector("main") || DOC2.body;
+}
+
+// HARD LOCK/UNLOCK (visual + interaction)
+function __lockApp() {
+  const root = __getAppRoot();
+  const main = qs("appMain");
+  const wire = qs("toolWire");
+
+  if (root) root.setAttribute("data-locked", "1");
+
+  if (main) {
+    main.style.pointerEvents = "none";
+    main.style.filter = "blur(2px)";
+    main.style.opacity = "0.35";
+    main.setAttribute("aria-hidden", "true");
+  }
+  if (wire) {
+    wire.style.pointerEvents = "none";
+    wire.style.filter = "blur(2px)";
+    wire.style.opacity = "0.35";
+    wire.setAttribute("aria-hidden", "true");
+  }
+}
+
+function __unlockApp() {
+  const root = __getAppRoot();
+  const main = qs("appMain");
+  const wire = qs("toolWire");
+
+  if (root) root.removeAttribute("data-locked");
+
+  if (main) {
+    main.style.pointerEvents = "auto";
+    main.style.filter = "";
+    main.style.opacity = "";
+    main.removeAttribute("aria-hidden");
+  }
+  if (wire) {
+    wire.style.pointerEvents = "auto";
+    wire.style.filter = "";
+    wire.style.opacity = "";
+    wire.removeAttribute("aria-hidden");
+  }
+}
+
+function __openAuth(msg) {
+  __lockApp();
+  hide(qs(CFG.paywallId));
+  setText(CFG.authMsgId, msg || "");
+  show(qs(CFG.authModalId));
+}
+
+function __closeAuth() {
+  hide(qs(CFG.authModalId));
+  setText(CFG.authMsgId, "");
+}
+
+function __openPaywall(msg) {
+  __lockApp();
+  __closeAuth();
+  if (msg) setText(CFG.authMsgId, msg); // optional reuse
+  show(qs(CFG.paywallId));
+}
+
+function __closePaywall() {
+  hide(qs(CFG.paywallId));
+}
+
+// ----------------------------
+// SAFE JSON FETCH
+// ----------------------------
+async function fetchJSON(url, opts = {}) {
+  const res = await fetch(url, opts);
+  const ct = (res.headers.get("content-type") || "").toLowerCase();
+  const text = await res.text();
+  if (!ct.includes("application/json")) {
+    throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 180)}`);
+  }
+  let data = null;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    /* noop */
+  }
+  if (!res.ok) {
+    const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function authHeaders() {
+  const headers = { "Content-Type": "application/json" };
+  if (LR_SESSION?.access_token) headers.Authorization = `Bearer ${LR_SESSION.access_token}`;
+  return headers;
+}
+
+// ----------------------------
+// SUPABASE INIT + PROFILE ENSURE
+// ----------------------------
+async function initSupabaseOnce() {
+  if (SB) return SB;
+
+  if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) {
+    throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
+  }
+  if (!window.supabase || !window.supabase.createClient) {
+    throw new Error("Supabase client not found. Load supabase-js before app.js");
+  }
+
+  SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+
+  // hydrate session/user FIRST
+  const { data: s } = await SB.auth.getSession();
+  LR_SESSION = s?.session || null;
+
+  const { data: u } = await SB.auth.getUser();
+  LR_USER = u?.user || null;
+
+  // 🔒 NOW run gate (SB ready + session/user hydrated)
+  await runGate();
+
+  // subscribe once
+  SB.auth.onAuthStateChange(async (_event, session) => {
+    LR_SESSION = session || null;
+    LR_USER = session?.user || null;
+
+    try {
+      await runGate();
+    } catch (e) {
+      console.warn("Gate error after auth change:", e?.message || e);
+      __openAuth("Auth state changed. Please sign in again.");
     }
+  });
 
-    function __lockApp() {
-      const root = __getAppRoot();
-      if (root) root.setAttribute("data-locked", "1");
-    }
+  return SB;
+}
 
-    function __unlockApp() {
-      const root = __getAppRoot();
-      if (root) root.removeAttribute("data-locked");
-    }
+async function ensureProfileRow() {
+  if (!SB || !LR_USER?.id) return;
 
-    function __openAuth(msg) {
-      __lockApp();
-      hide(qs(CFG.paywallId));
-      setText(CFG.authMsgId, msg || "");
-      show(qs(CFG.authModalId));
-    }
+  // Create row if missing (requires your RLS + trigger/policy to allow insert/select for own uid)
+  // We keep it minimal: id, email, updated_at; is_pro managed by webhook/service role
+  const payload = {
+    id: LR_USER.id,
+    email: LR_USER.email || null,
+    updated_at: new Date().toISOString(),
+  };
 
-    function __closeAuth() {
-      hide(qs(CFG.authModalId));
-      setText(CFG.authMsgId, "");
-    }
+  // Try select first
+  const { data: existing, error: selErr } = await SB
+    .from("profiles")
+    .select("id,is_pro")
+    .eq("id", LR_USER.id)
+    .maybeSingle();
 
-    function __openPaywall(msg) {
-      __lockApp();
-      __closeAuth();
-      if (msg) setText(CFG.authMsgId, msg); // optional reuse
-      show(qs(CFG.paywallId));
-    }
+  if (selErr) {
+    // If select fails due to policy misconfig, we still try upsert (common fix path)
+    console.warn("profiles select error:", selErr.message);
+  }
 
-    function __closePaywall() {
-      hide(qs(CFG.paywallId));
-    }
-
-    // ----------------------------
-    // SAFE JSON FETCH
-    // ----------------------------
-    async function fetchJSON(url, opts = {}) {
-      const res = await fetch(url, opts);
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-      const text = await res.text();
-      if (!ct.includes("application/json")) {
-        throw new Error(`API returned non-JSON (${res.status}): ${text.slice(0, 180)}`);
-      }
-      let data = null;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        /* noop */
-      }
-      if (!res.ok) {
-        const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-      return data;
-    }
-
-    function authHeaders() {
-      const headers = { "Content-Type": "application/json" };
-      if (LR_SESSION?.access_token) headers.Authorization = `Bearer ${LR_SESSION.access_token}`;
-      return headers;
-    }
-
-    // ----------------------------
-    // SUPABASE INIT + PROFILE ENSURE
-    // ----------------------------
-    async function initSupabaseOnce() {
-      if (SB) return SB;
-
-      if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) {
-        throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
-      }
-      if (!window.supabase || !window.supabase.createClient) {
-        throw new Error("Supabase client not found. Load supabase-js before app.js");
-      }
-      SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
-await runGate();
-
-      // hydrate session/user
-      const { data: s } = await SB.auth.getSession();
-      LR_SESSION = s?.session || null;
-
-      const { data: u } = await SB.auth.getUser();
-      LR_USER = u?.user || null;
-
-      // subscribe once
-      SB.auth.onAuthStateChange((_event, session) => {
-        LR_SESSION = session || null;
-        LR_USER = session?.user || null;
-        // Always re-run gate on any auth change
-        runGate().catch((e) => {
-          console.warn("Gate error after auth change:", e?.message || e);
-          __openAuth("Auth state changed. Please sign in again.");
-        });
-      });
-
-      return SB;
-    }
-
-    async function ensureProfileRow() {
-      if (!SB || !LR_USER?.id) return;
-
-      // Create row if missing (requires your RLS + trigger/policy to allow insert/select for own uid)
-      // We keep it minimal: id, email, updated_at; is_pro managed by webhook/service role
-      const payload = {
-        id: LR_USER.id,
-        email: LR_USER.email || null,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Try select first
-      const { data: existing, error: selErr } = await SB
-        .from("profiles")
-        .select("id,is_pro")
-        .eq("id", LR_USER.id)
-        .maybeSingle();
-
-      if (selErr) {
-        // If select fails due to policy misconfig, we still try upsert (common fix path)
-        console.warn("profiles select error:", selErr.message);
-      }
-
-      if (!existing?.id) {
-        const { error: insErr } = await SB.from("profiles").upsert(payload, { onConflict: "id" });
-        if (insErr) console.warn("profiles upsert error:", insErr.message);
-      }
-    }
+  if (!existing?.id) {
+    const { error: insErr } = await SB.from("profiles").upsert(payload, { onConflict: "id" });
+    if (insErr) console.warn("profiles upsert error:", insErr.message);
+  }
+}
 // ==================================================
+
 // PAID APP GATE (ONLY TRUTH = Supabase profiles.is_pro)
 // ==================================================
 function __lockApp(msg) {
