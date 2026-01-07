@@ -937,3 +937,9 @@ html.lr-locked, body.lr-locked { pointer-events: auto !important; }
   z-index: 999999 !important;
 }
 #lrPaywall * { pointer-events: auto !important; }
+/* FUTURE FEATURES — hidden for paid-app launch */
+#creativeLabBtn,
+#aiToolsBtn,
+#upgradeBtn {
+  display: none !important;
+}
