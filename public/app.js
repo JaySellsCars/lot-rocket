@@ -63,29 +63,38 @@ function __lrGetAppRoot() {
   );
 }
 
-function openAuth(){
+function openAuth() {
   const m = qs("lrAuth");
   if (!m) return;
 
-  // TEMP unlock so the auth modal buttons can receive clicks
-  const root = __lrGetAppRoot();
-  try {
-    m.__LR_WAS_LOCKED__ = root?.classList?.contains("lr-locked") ? "1" : "0";
-    root?.classList?.remove("lr-locked");
-    document.documentElement.classList.remove("lr-locked");
-    document.body.classList.remove("lr-locked");
-  } catch {}
+  // allow auth modal clicks even when app is "locked"
+  DOC.documentElement.classList.remove("lr-locked");
+  DOC.body.classList.remove("lr-locked");
 
   m.classList.remove("hidden");
+  m.style.display = "flex";
   m.setAttribute("aria-hidden", "false");
 }
 
-function closeAuth(){
+function closeAuth() {
   const m = qs("lrAuth");
   if (!m) return;
 
   m.classList.add("hidden");
+  m.style.display = "none";
   m.setAttribute("aria-hidden", "true");
+
+  // if still not pro, re-apply lock after closing auth
+  try {
+    const v = localStorage.getItem("LR_PRO") || localStorage.getItem("lr_pro");
+    const isPro = v === "1" || v === "true";
+    if (!isPro) {
+      DOC.documentElement.classList.add("lr-locked");
+      DOC.body.classList.add("lr-locked");
+    }
+  } catch {}
+}
+
 
   // Restore lock if user is NOT pro
   try {
