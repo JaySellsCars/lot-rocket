@@ -432,29 +432,7 @@ function showPaywallAndLockPage() {
     const CHECKOUT_ENDPOINT = "/api/stripe/checkout";
     const STORAGE_KEY = "LR_PRO";
 
-function openPaywall() {
-  if (!paywall) return console.warn("lrPaywall missing in HTML");
-
-  // ✅ Lock the page every time paywall opens (if not pro)
-  if (!isProActive()) {
-    DOC.documentElement.classList.add("lr-locked");
-    DOC.body.classList.add("lr-locked");
-  }
-
-  paywall.classList.remove("hidden");
-  paywall.style.display = "flex";
-  paywall.setAttribute("aria-hidden", "false");
-}
-
-
-    function closePaywall() {
-      if (!paywall) return;
-      paywall.classList.add("hidden");
-      paywall.style.display = "none";
-      paywall.setAttribute("aria-hidden", "true");
-    }
-
-    function isProActive() {
+    function isProActiveLocal() {
       try {
         const v = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("lr_pro");
         return v === "1" || v === "true";
@@ -463,27 +441,65 @@ function openPaywall() {
       }
     }
 
-async function goCheckout() {
-  try {
-    // Try POST first (JSON response)
-    const r = await fetch(CHECKOUT_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({
-        returnUrl: window.location.origin,
-        userId: window.LR_USER_ID
-      }),
-    });
+    function lockAppRoot() {
+      const appRoot =
+        document.getElementById("app") ||
+        document.getElementById("appRoot") ||
+        document.querySelector("main") ||
+        document.body;
 
-    if (r.ok) {
-      const data = await r.json().catch(() => ({}));
-      const url = data.url || data.checkoutUrl;
-      if (url) {
-        window.location.href = url;
-        return;
-      }
+      if (appRoot) appRoot.classList.add("lr-locked");
+      DOC.documentElement.classList.add("lr-locked");
+      DOC.body.classList.add("lr-locked");
     }
 
+    function openPaywall() {
+      if (!paywall) return console.warn("lrPaywall missing in HTML");
+
+      if (!isProActiveLocal()) lockAppRoot();
+
+      paywall.classList.remove("hidden");
+      paywall.style.display = "flex";
+      paywall.setAttribute("aria-hidden", "false");
+    }
+
+    function closePaywall() {
+      if (!paywall) return;
+
+      paywall.classList.add("hidden");
+      paywall.style.display = "none";
+      paywall.setAttribute("aria-hidden", "true");
+
+      // NEVER unlock the app here
+      if (!isProActiveLocal()) lockAppRoot();
+    }
+
+    async function goCheckout() {
+      try {
+        const userId = String(window.LR_USER_ID || "").trim();
+        if (!userId) {
+          openAuth();
+          return;
+        }
+
+        // Try POST first (JSON response)
+        const r = await fetch(CHECKOUT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            returnUrl: window.location.origin,
+            userId,
+          }),
+        });
+
+        if (r.ok) {
+          const data = await r.json().catch(() => ({}));
+          const url = data.url || data.checkoutUrl;
+          if (url) {
+            window.location.href = url;
+            return;
+          }
+        }
 
         // Fallback: GET route (server redirects to Stripe)
         window.location.href = CHECKOUT_ENDPOINT;
@@ -493,30 +509,14 @@ async function goCheckout() {
       }
     }
 
-    // Close
-function closePaywall() {
-  if (!paywall) return;
-
-  // Only hide the modal, NEVER unlock the app
-  paywall.classList.add("hidden");
-  paywall.style.display = "none";
-  paywall.setAttribute("aria-hidden", "true");
-
-  // Re-apply full app lock if not pro
-  if (!isProActive()) {
-    const appRoot =
-      document.getElementById("app") ||
-      document.getElementById("appRoot") ||
-      document.querySelector("main") ||
-      document.body;
-
-    if (appRoot) appRoot.classList.add("lr-locked");
-
-    console.log("🔒 PAYWALL CLOSED — APP STILL LOCKED");
-  }
-}
-
-
+    // Close button
+    if (closeBtn && !closeBtn.__LR_BOUND__) {
+      closeBtn.__LR_BOUND__ = true;
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        closePaywall();
+      });
+    }
 
     // Upgrade buttons
     [upgradeNowBtn, upgradeBtn].forEach((btn) => {
@@ -529,34 +529,40 @@ function closePaywall() {
       });
     });
 
-DOC.addEventListener(
-  "click",
-  (e) => {
-    // ✅ NEVER block clicks inside the paywall itself
-    if (e.target?.closest?.("#lrPaywall")) return;
+    // Gate clicks for data-pro="1"
+    DOC.addEventListener(
+      "click",
+      (e) => {
+        // never block clicks inside paywall
+        if (e.target?.closest?.("#lrPaywall")) return;
 
-    const el = e.target?.closest?.("[data-pro]");
-    if (!el) return;
+        const el = e.target?.closest?.("[data-pro]");
+        if (!el) return;
 
-    const needsPro = el.getAttribute("data-pro") === "1";
-    if (!needsPro) return;
+        const needsPro = el.getAttribute("data-pro") === "1";
+        if (!needsPro) return;
 
-    if (!isProActive()) {
-      e.preventDefault();
-      e.stopPropagation();
-      openPaywall();
-    }
-  },
-  true
-);
-
+        if (!isProActiveLocal()) {
+          e.preventDefault();
+          e.stopPropagation();
+          openPaywall();
+        }
+      },
+      true
+    );
 
     DOC.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePaywall();
     });
 
-    window.LR_PRO = { isProActive, openPaywall, closePaywall, goCheckout };
+    window.LR_PRO = {
+      isProActive: isProActiveLocal,
+      openPaywall,
+      closePaywall,
+      goCheckout,
+    };
   })();
+
 
   // ==================================================
   // HARD OVERRIDE: Step 1 thumbnails MUST be square
