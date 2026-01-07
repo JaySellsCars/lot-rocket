@@ -524,7 +524,7 @@ app.get("/api/stripe/checkout", async (req, res) => {
 });
 
 
-// verify session (no dupes)
+// verify session (no dupes) + FALLBACK: mark user pro in Supabase if paid
 app.get("/api/stripe/verify", async (req, res) => {
   try {
     const sid = String(req.query.session_id || "").trim();
@@ -533,9 +533,39 @@ app.get("/api/stripe/verify", async (req, res) => {
     const stripe = getStripe();
     if (!stripe) return res.status(200).json({ ok: false, bucket: "NO_STRIPE_INSTANCE" });
 
-    const session = await stripe.checkout.sessions.retrieve(sid);
+    // expand customer/subscription so we can store ids cleanly if needed
+    const session = await stripe.checkout.sessions.retrieve(sid, {
+      expand: ["customer", "subscription"],
+    });
+
     const paid =
       !!session && (session.payment_status === "paid" || session.status === "complete");
+
+    // ✅ FALLBACK: if paid, ensure Supabase profile is marked pro
+    if (paid) {
+      const userId = String(
+        session?.metadata?.userId || session?.client_reference_id || ""
+      ).trim();
+
+      const customerId =
+        typeof session?.customer === "string"
+          ? session.customer
+          : session?.customer?.id || null;
+
+      const subscriptionId =
+        typeof session?.subscription === "string"
+          ? session.subscription
+          : session?.subscription?.id || null;
+
+      if (userId) {
+        await upsertProfilePro({
+          userId,
+          isPro: true,
+          customerId,
+          subscriptionId,
+        });
+      }
+    }
 
     return res.json({
       ok: true,
@@ -544,6 +574,15 @@ app.get("/api/stripe/verify", async (req, res) => {
       status: session?.status || null,
       mode: session?.mode || null,
       customer_email: session?.customer_details?.email || null,
+      // optional debug fields (safe)
+      customer_id:
+        typeof session?.customer === "string"
+          ? session.customer
+          : session?.customer?.id || null,
+      subscription_id:
+        typeof session?.subscription === "string"
+          ? session.subscription
+          : session?.subscription?.id || null,
     });
   } catch (e) {
     console.error("stripe verify error:", {
@@ -555,6 +594,7 @@ app.get("/api/stripe/verify", async (req, res) => {
   }
 });
 
+// PRO SUCCESS: redirect back with session_id (no localStorage pro flag)
 app.get("/pro-success", (req, res) => {
   const sid = String(req.query.session_id || "").trim();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -573,6 +613,9 @@ app.get("/pro-success", (req, res) => {
 </body>
 </html>`);
 });
+
+/* =============================== */
+
 
 
 /* ===============================
