@@ -656,7 +656,7 @@
 <button id="aiToolsBtn" data-pro="1">AI Tools</button>
 
 <!-- PAYWALL (ONLY ONE IN APP) -->
-<div id="lrPaywall" aria-hidden="true" class="lr-paywall hidden">
+<div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
   <div class="lr-paywall-box">
     <div class="lr-lock-badge">🔒 Pro Required</div>
 
@@ -684,9 +684,7 @@
   🚀 Upgrade to Lot Rocket Pro
 </button>
 
-<!-- APP SCRIPT (LAST) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/app.js?v=10003"></script>
+<!-- AUTH MODAL -->
 <div id="lrAuth" class="lr-modal hidden" aria-hidden="true">
   <div class="lr-modal-box">
     <div class="lr-modal-head">
@@ -694,10 +692,10 @@
       <button id="lrAuthClose" type="button">✕</button>
     </div>
 
-    <label>Email</label>
+    <label for="lrEmail">Email</label>
     <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email">
 
-    <label>Password (optional)</label>
+    <label for="lrPass">Password (optional)</label>
     <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password">
 
     <div class="lr-row">
@@ -711,6 +709,11 @@
     <div id="lrAuthMsg" class="lr-msg"></div>
   </div>
 </div>
+
+<!-- SCRIPTS (LAST — DO NOT MOVE) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app.js?v=10003"></script>
+
 
 
 </body>
