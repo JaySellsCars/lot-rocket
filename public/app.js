@@ -425,6 +425,7 @@ function openPaywall() {
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ returnUrl: window.location.origin }),
         });
+body: JSON.stringify({ returnUrl: window.location.origin, userId: window.LR_USER_ID }),
 
         if (r.ok) {
           const data = await r.json().catch(() => ({}));
