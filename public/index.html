@@ -117,30 +117,6 @@
       </section>
     </div>
 
-<!-- LOT ROCKET AUTH MODAL (REQUIRED) -->
-<div id="lrAuthModal" class="lr-modal hidden" aria-hidden="true">
-  <div class="lr-modal-box">
-    <div class="lr-modal-top">
-      <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
-      <button id="lrAuthClose" class="lr-x" type="button">✕</button>
-    </div>
-
-    <div class="lr-modal-body">
-      <label class="lr-label">Email</label>
-      <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email"/>
-
-      <label class="lr-label">Password</label>
-      <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
-
-      <div class="lr-row">
-        <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
-        <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
-      </div>
-
-      <div id="lrAuthMsg" class="lr-msg"></div>
-    </div>
-  </div>
-</div>
 
 
     <!-- Small user chip (ONLY ONE) -->
@@ -673,6 +649,30 @@
 
 <!-- CONFIG (MUST BE BEFORE app.js) -->
 <script>
+<!-- LOT ROCKET AUTH MODAL (REQUIRED) -->
+<div id="lrAuthModal" class="lr-modal hidden" aria-hidden="true">
+  <div class="lr-modal-box">
+    <div class="lr-modal-top">
+      <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
+      <button id="lrAuthClose" class="lr-x" type="button">✕</button>
+    </div>
+
+    <div class="lr-modal-body">
+      <label class="lr-label">Email</label>
+      <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email"/>
+
+      <label class="lr-label">Password</label>
+      <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+      <div class="lr-row">
+        <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
+        <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
+      </div>
+
+      <div id="lrAuthMsg" class="lr-msg"></div>
+    </div>
+  </div>
+</div>
 
   window.LR_CFG = {
     // REQUIRED: Supabase keys
