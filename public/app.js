@@ -217,6 +217,7 @@ function __openAuth(msg) {
     m.style.pointerEvents = "auto";
   }
 }
+const lockApp = _lockApp;
 
 
     function __closeAuth() {
