@@ -253,15 +253,54 @@ function closePaywall() {
     }
   }
 
-  // ----------------------------
-  // STRIPE RETURN CLEANUP
-  // ----------------------------
-  function handleStripeReturnOnce() {
-    const url = new URL(window.location.href);
-    if (!url.searchParams.get("session_id")) return;
-    url.searchParams.delete("session_id");
-    history.replaceState({}, "", url.toString());
+ // ----------------------------
+// STRIPE RETURN CLEANUP + VERIFY
+// ----------------------------
+async function handleStripeReturnOnce() {
+  const url = new URL(window.location.href);
+  const sessionId = url.searchParams.get("session_id");
+  if (!sessionId) return;
+
+  console.log("💳 Stripe return detected:", sessionId);
+
+  try {
+    // Ask backend to verify + update Supabase
+    const r = await fetch(CFG.stripeVerifyUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId })
+    });
+
+    const j = await r.json().catch(() => null);
+
+    if (!r.ok || !j?.ok) {
+      console.error("❌ Stripe verify failed:", j);
+      openAuth("Payment verification failed. Please contact support.");
+      return;
+    }
+
+    console.log("✅ Stripe verified. Refreshing session…");
+
+    // Force Supabase to refresh user + claims
+    await initSupabaseOnce();
+    await SB.auth.refreshSession();
+
+  } catch (e) {
+    console.error("❌ Stripe verify error:", e);
+    openAuth("Payment verification error.");
+    return;
   }
+
+  // Clean URL
+  url.searchParams.delete("session_id");
+  history.replaceState({}, "", url.toString());
+
+  // Re-run gate after payment
+  if (typeof runGate === "function") {
+    console.log("🚪 Re-running gate after Stripe return");
+    await runGate();
+  }
+}
 
   // ----------------------------
   // THE ONLY GATE
