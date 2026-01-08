@@ -61,31 +61,33 @@ style.textContent = `
   // ----------------------------
   // CONFIG
   // ----------------------------
-  const CFG = Object.assign(
-    {
-      supabaseUrl: window.SUPABASE_URL || window.LR_SUPABASE_URL || "",
-      supabaseAnonKey: window.SUPABASE_ANON_KEY || window.LR_SUPABASE_ANON_KEY || "",
+const CFG = Object.assign(
+  {
+    supabaseUrl: window.SUPABASE_URL || window.LR_SUPABASE_URL || "",
+    supabaseAnonKey: window.SUPABASE_ANON_KEY || window.LR_SUPABASE_ANON_KEY || "",
 
-      stripeCheckoutUrl: "/api/stripe/checkout",
+    stripeCheckoutUrl: "/api/stripe/checkout",
+    stripeVerifyUrl: "/api/stripe/verify",
 
-      appRootId: "appMain",
-      authModalId: "lrAuthModal",
-      authMsgId: "lrAuthMsg",
-      paywallId: "lrPaywall",
+    appRootId: "appMain",
+    authModalId: "lrAuthModal",
+    authMsgId: "lrAuthMsg",
+    paywallId: "lrPaywall",
 
-      openAuthBtnId: "lrUserChip",
-      logoutBtnId: "lrSignOut",
+    openAuthBtnId: "lrUserChip",
+    logoutBtnId: "lrSignOut",
 
-      emailInputId: "lrEmail",
-      passInputId: "lrPass",
-      loginBtnId: "lrSignIn",
-      signupBtnId: "lrSignUp",
+    emailInputId: "lrEmail",
+    passInputId: "lrPass",
+    loginBtnId: "lrSignIn",
+    signupBtnId: "lrSignUp",
 
-      closePaywallBtnId: "lrClosePaywall",
-      upgradeBtnId: "lrSubscribeNow",
-    },
-    window.LR_CFG || {}
-  );
+    closePaywallBtnId: "lrClosePaywall",
+    upgradeBtnId: "lrSubscribeNow",
+  },
+  window.LR_CFG || {}
+);
+
 
   // ----------------------------
   // STATE
