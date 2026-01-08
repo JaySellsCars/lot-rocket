@@ -378,6 +378,27 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
         });
       }
     })();
+// ----------------------------
+// AUTH MODAL CONTROL (ONE)
+// ----------------------------
+function __openAuth(msg) {
+  const modal = qs(CFG.authModalId);
+  if (!modal) return console.error("Auth modal not found:", CFG.authModalId);
+
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+
+  if (msg) setText(CFG.authMsgId, msg);
+}
+
+function __closeAuth() {
+  const modal = qs(CFG.authModalId);
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+  setText(CFG.authMsgId, "");
+}
 
     // ----------------------------
     // AUTH UI WIRING (ONE)
