@@ -38,10 +38,16 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
     if (document.getElementById("lr-auth-click-fix")) return;
     const style = document.createElement("style");
     style.id = "lr-auth-click-fix";
-    style.textContent = `
-      #lrAuthModal, #lrAuthModal * { pointer-events: auto !important; }
-      #lrAuthModal { position: fixed !important; z-index: 999999 !important; }
-    `;
+style.textContent = `
+  /* auth modal always clickable + on top */
+  #lrAuthModal, #lrAuthModal * { pointer-events: auto !important; }
+  #lrAuthModal { position: fixed !important; z-index: 999999 !important; }
+
+  /* paywall always clickable + just under auth */
+  #lrPaywall, #lrPaywall * { pointer-events: auto !important; }
+  #lrPaywall { position: fixed !important; z-index: 999998 !important; }
+`;
+
     document.head.appendChild(style);
   })();
 
