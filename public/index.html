@@ -664,25 +664,36 @@
 
 
   <!-- CONFIG (MUST BE BEFORE app.js) -->
-  <script>
-    window.LR_CFG = {
-      appRootId: "appMain",
-      authModalId: "lrAuth",
-      authMsgId: "lrAuthMsg",
-      paywallId: "lrPaywall",
+<script>
+  window.LR_CFG = {
+    // REQUIRED: Supabase keys
+    supabaseUrl: "https://oojqnmxsitcntnkhaoql.supabase.co",
+    supabaseAnonKey: "PASTE_YOUR_ANON_KEY_HERE",
 
-      openAuthBtnId: "lrUserChip",
-      logoutBtnId: "lrSignOut",
+    // UI IDs (MUST match your HTML)
+    appRootId: "appMain",
+    authModalId: "lrAuthModal",
+    authMsgId: "lrAuthMsg",
+    paywallId: "lrPaywall",
 
-      emailInputId: "lrEmail",
-      passInputId: "lrPass",
-      loginBtnId: "lrSignIn",
-      signupBtnId: "lrSignUp",
+    // buttons/inputs (match your HTML screenshot)
+    openAuthBtnId: "lrUserChip",
+    logoutBtnId: "lrSignOut",
 
-      closePaywallBtnId: "lrClosePaywall",
-      upgradeBtnId: "lrSubscribeNow"
-    };
-  </script>
+    emailInputId: "lrEmail",
+    passInputId: "lrPass",
+    loginBtnId: "lrSignIn",
+    signupBtnId: "lrSignUp",
+
+    closePaywallBtnId: "lrClosePaywall",
+    upgradeBtnId: "lrSubscribeNow",
+
+    // API endpoints
+    stripeCheckoutUrl: "/api/stripe/checkout",
+    stripeVerifyUrl: "/api/stripe/verify"
+  };
+</script>
+
 
   <!-- SCRIPTS (LAST — DO NOT MOVE) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
