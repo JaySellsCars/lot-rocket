@@ -117,9 +117,8 @@ const hide = (el) => {
   el.setAttribute("aria-hidden", "true");
 };
 
-};
+const setText = (id, msg) => {
 
-  const setText = (id, msg) => {
     const el = qs(id);
     if (el) el.textContent = msg || "";
   };
