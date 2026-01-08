@@ -283,70 +283,136 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
 // AUTH UI
 // ----------------------------
 function wireAuthOnce() {
-  const loginBtn  = qs(CFG.loginBtnId);
+  const loginBtn = qs(CFG.loginBtnId);
   const signupBtn = qs(CFG.signupBtnId);
   const logoutBtn = qs(CFG.logoutBtnId);
-  const openBtn   = qs(CFG.openAuthBtnId);
+  const openBtn = qs(CFG.openAuthBtnId);
+
+  async function goStripeCheckout(userId) {
+    // POST -> /api/stripe/checkout with userId, then redirect to returned url
+    const r = await fetch(CFG.stripeCheckoutUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    const raw = await r.text();
+
+    if (!ct.includes("application/json")) {
+      console.error("❌ STRIPE CHECKOUT NON-JSON", { status: r.status, head: raw.slice(0, 250) });
+      throw new Error("Stripe checkout returned non-JSON");
+    }
+
+    let j;
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      console.error("❌ STRIPE CHECKOUT BAD JSON", raw.slice(0, 250));
+      throw new Error("Stripe checkout returned bad JSON");
+    }
+
+    if (!r.ok || !j?.url) {
+      console.error("❌ STRIPE CHECKOUT FAIL", { status: r.status, j });
+      throw new Error(j?.error || `Stripe checkout failed (${r.status})`);
+    }
+
+    window.location.href = j.url;
+  }
 
   async function doAuth(mode) {
     await initSupabaseOnce();
 
     const email = qs(CFG.emailInputId)?.value || "";
-    const pass  = qs(CFG.passInputId)?.value  || "";
+    const pass = qs(CFG.passInputId)?.value || "";
     if (!email || !pass) return setText(CFG.authMsgId, "Enter email + password.");
 
     // SIGN UP → create user, then send to Stripe checkout
     if (mode === "signup") {
+      setText(CFG.authMsgId, "Creating account…");
+
       const { data, error } = await SB.auth.signUp({ email, password: pass });
       if (error) return setText(CFG.authMsgId, error.message);
 
-      // If your Supabase email confirmations are ON, the user may not be fully confirmed yet.
-      // You still want to take them to Stripe immediately (paid app flow).
-      window.location.href = CFG.stripeCheckoutUrl;
+      // Supabase returns the new user here (even if email confirm is ON)
+      const userId = data?.user?.id;
+      if (!userId) return setText(CFG.authMsgId, "Signup succeeded, but missing user id.");
+
+      setText(CFG.authMsgId, "Redirecting to payment…");
+      try {
+        await goStripeCheckout(userId);
+      } catch (e) {
+        setText(CFG.authMsgId, e?.message || "Stripe redirect failed.");
+      }
       return;
     }
 
-    // LOGIN → normal flow
-    const { error } = await SB.auth.signInWithPassword({ email, password: pass });
+    // LOGIN → normal flow (gate decides if they are paid)
+    setText(CFG.authMsgId, "Signing in…");
+    const { data, error } = await SB.auth.signInWithPassword({ email, password: pass });
     if (error) return setText(CFG.authMsgId, error.message);
 
+    // Optional: if your product is "paid app only", you can immediately send unpaid users to Stripe
+    // but the gate will handle it either way.
     runGate();
   }
 
-  loginBtn  && loginBtn.addEventListener("click", () => doAuth("login"));
-  signupBtn && signupBtn.addEventListener("click", () => doAuth("signup"));
+  if (loginBtn && !loginBtn.__LR_BOUND__) {
+    loginBtn.__LR_BOUND__ = true;
+    loginBtn.addEventListener("click", () => doAuth("login"));
+  }
 
-  logoutBtn && logoutBtn.addEventListener("click", async () => {
-    await SB.auth.signOut();
-    runGate();
-  });
+  if (signupBtn && !signupBtn.__LR_BOUND__) {
+    signupBtn.__LR_BOUND__ = true;
+    signupBtn.addEventListener("click", () => doAuth("signup"));
+  }
 
-  openBtn && openBtn.addEventListener("click", () => openAuth(""));
+  if (logoutBtn && !logoutBtn.__LR_BOUND__) {
+    logoutBtn.__LR_BOUND__ = true;
+    logoutBtn.addEventListener("click", async () => {
+      await initSupabaseOnce();
+      await SB.auth.signOut();
+      runGate();
+    });
+  }
+
+  if (openBtn && !openBtn.__LR_BOUND__) {
+    openBtn.__LR_BOUND__ = true;
+    openBtn.addEventListener("click", () => openAuth(""));
+  }
 }
 
 // ----------------------------
+// PAYWALL BUTTON
+// ----------------------------
+function wirePaywallOnce() {
+  const btn = qs(CFG.upgradeBtnId);
 
-  // PAYWALL BUTTON
-  // ----------------------------
-  function wirePaywallOnce() {
-    const btn = qs(CFG.upgradeBtnId);
-    btn &&
-      btn.addEventListener("click", async () => {
-        await initSupabaseOnce();
-        const { data } = await SB.auth.getSession();
-        if (!data?.session?.user) return openAuth("Sign in first.");
+  btn &&
+    btn.addEventListener("click", async () => {
+      await initSupabaseOnce();
+      const { data } = await SB.auth.getSession();
+      const userId = data?.session?.user?.id;
 
+      if (!userId) return openAuth("Sign in first.");
+
+      try {
         const r = await fetch(CFG.stripeCheckoutUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: data.session.user.id }),
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ userId }),
         });
 
-        const j = await r.json();
+        const j = await r.json().catch(() => null);
         if (j?.url) window.location.href = j.url;
-        else alert("Stripe checkout failed.");
-      });
-  }
+        else alert(j?.error || "Stripe checkout failed.");
+      } catch (e) {
+        alert("Stripe checkout error.");
+        console.error(e);
+      }
+    });
+}
+
 
   // ----------------------------
   // BOOT
