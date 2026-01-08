@@ -126,92 +126,94 @@ const hide = (el) => {
     return qs(CFG.appRootId) || document.body;
   }
 
-  // ----------------------------
-  // HARD LOCK SYSTEM (SINGLE)
-  // ----------------------------
- function lockApp() {
-  const main = qs("appMain");
+// ----------------------------
+// HARD LOCK SYSTEM (SINGLE)
+// ----------------------------
+function lockApp() {
+  // ✅ use config, not hardcoded IDs
+  const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
   const auth = qs(CFG.authModalId);
-  const pay = qs(CFG.paywallId);
+  const pay  = qs(CFG.paywallId);
 
-  const authOpen = auth && !auth.classList.contains("hidden");
-  const payOpen  = pay && !pay.classList.contains("hidden");
+  const authOpen = !!(auth && !auth.classList.contains("hidden"));
+  const payOpen  = !!(pay  && !pay.classList.contains("hidden"));
 
-  if (main && !authOpen && !payOpen) {
+  // Always lock the app canvas + tools when gated
+  if (main) {
     main.style.filter = "blur(6px)";
     main.style.pointerEvents = "none";
     main.style.userSelect = "none";
   }
 
-  if (wire && !authOpen && !payOpen) {
+  if (wire) {
     wire.style.filter = "blur(6px)";
     wire.style.pointerEvents = "none";
+    wire.style.userSelect = "none";
   }
 
-  if (authOpen || payOpen) {
-    if (main) {
-      main.style.filter = "blur(6px)";
-      main.style.pointerEvents = "none";
-    }
-  }
-
-  if (auth) {
+  // But ALWAYS allow modal interactivity when they are shown
+  if (authOpen && auth) {
     auth.style.filter = "none";
     auth.style.pointerEvents = "auto";
+    auth.style.userSelect = "auto";
   }
 
-  if (pay) {
+  if (payOpen && pay) {
     pay.style.filter = "none";
     pay.style.pointerEvents = "auto";
+    pay.style.userSelect = "auto";
   }
 
   getRoot().setAttribute("data-locked", "1");
 }
 
-  function unlockApp() {
-    const main = qs("appMain");
-    const wire = qs("toolWire");
+function unlockApp() {
+  // ✅ use config, not hardcoded IDs
+  const main = qs(CFG.appRootId);
+  const wire = qs("toolWire");
 
-    if (main) {
-      main.style.filter = "";
-      main.style.pointerEvents = "auto";
-      main.style.userSelect = "";
-    }
-
-    if (wire) {
-      wire.style.filter = "";
-      wire.style.pointerEvents = "auto";
-    }
-
-    getRoot().removeAttribute("data-locked");
+  if (main) {
+    main.style.filter = "";
+    main.style.pointerEvents = "auto";
+    main.style.userSelect = "";
   }
 
-  // ----------------------------
-  // AUTH / PAYWALL UI
-  // ----------------------------
-  function openAuth(msg) {
-    lockApp();
-    hide(qs(CFG.paywallId));
-    show(qs(CFG.authModalId));
-    if (msg) setText(CFG.authMsgId, msg);
+  if (wire) {
+    wire.style.filter = "";
+    wire.style.pointerEvents = "auto";
+    wire.style.userSelect = "";
   }
 
-  function closeAuth() {
-    hide(qs(CFG.authModalId));
-    setText(CFG.authMsgId, "");
-  }
+  getRoot().removeAttribute("data-locked");
+}
 
-  function openPaywall(msg) {
-    lockApp();
-    closeAuth();
-    show(qs(CFG.paywallId));
-    if (msg) setText(CFG.authMsgId, msg);
-  }
+// ----------------------------
+// AUTH / PAYWALL UI
+// ----------------------------
+function openAuth(msg) {
+  lockApp();
+  hide(qs(CFG.paywallId));
+  show(qs(CFG.authModalId));
+  if (msg) setText(CFG.authMsgId, msg);
+}
 
-  function closePaywall() {
-    hide(qs(CFG.paywallId));
-  }
+function closeAuth() {
+  hide(qs(CFG.authModalId));
+  setText(CFG.authMsgId, "");
+}
+
+function openPaywall(msg) {
+  lockApp();
+  closeAuth();
+  show(qs(CFG.paywallId));
+  if (msg) setText(CFG.authMsgId, msg);
+}
+
+function closePaywall() {
+  hide(qs(CFG.paywallId));
+}
+
 
   // ----------------------------
   // SUPABASE INIT (ONE)
