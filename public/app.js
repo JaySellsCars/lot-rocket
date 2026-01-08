@@ -99,8 +99,21 @@ style.textContent = `
   // DOM HELPERS
   // ----------------------------
   const qs = (id) => document.getElementById(id);
-  const show = (el) => el && el.classList.remove("hidden");
-  const hide = (el) => el && el.classList.add("hidden");
+const show = (el) => {
+  if (!el) return;
+  el.classList.remove("hidden");
+  el.style.display = el.id === "lrAuthModal" ? "flex" : (el.id === "lrPaywall" ? "flex" : "");
+  el.style.visibility = "visible";
+  el.setAttribute("aria-hidden", "false");
+};
+
+const hide = (el) => {
+  if (!el) return;
+  el.classList.add("hidden");
+  el.style.display = "none";
+  el.setAttribute("aria-hidden", "true");
+};
+
   const setText = (id, msg) => {
     const el = qs(id);
     if (el) el.textContent = msg || "";
