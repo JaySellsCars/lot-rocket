@@ -98,11 +98,12 @@ style.textContent = `
   // ----------------------------
   // DOM HELPERS
   // ----------------------------
-  const qs = (id) => document.getElementById(id);
+const qs = (id) => document.getElementById(id);
+
 const show = (el) => {
   if (!el) return;
   el.classList.remove("hidden");
-  el.style.display = el.id === "lrAuthModal" ? "flex" : (el.id === "lrPaywall" ? "flex" : "");
+  if (el.id === "lrAuthModal" || el.id === "lrPaywall") el.style.display = "flex";
   el.style.visibility = "visible";
   el.setAttribute("aria-hidden", "false");
 };
@@ -112,6 +113,8 @@ const hide = (el) => {
   el.classList.add("hidden");
   el.style.display = "none";
   el.setAttribute("aria-hidden", "true");
+};
+
 };
 
   const setText = (id, msg) => {
