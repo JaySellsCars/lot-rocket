@@ -204,11 +204,20 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
       }
     }
 
-    function __openAuth(msg) {
-      __lockApp(msg || "");
-      hide(qs(CFG.paywallId));
-      show(qs(CFG.authModalId));
-    }
+function __openAuth(msg) {
+  _lockApp(msg || "");
+  hide(qs(CFG.paywallId));
+  show(qs(CFG.authModalId));
+
+  // force modal crisp
+  const m = qs(CFG.authModalId);
+  if (m) {
+    m.style.filter = "none";
+    m.style.opacity = "1";
+    m.style.pointerEvents = "auto";
+  }
+}
+
 
     function __closeAuth() {
       hide(qs(CFG.authModalId));
