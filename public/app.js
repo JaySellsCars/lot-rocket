@@ -142,6 +142,16 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
       const main = qs("appMain");
       const wire = qs("toolWire");
       const pw = qs(CFG.paywallId);
+  // If a modal is up, never blur it. (prevents blurry login/paywall)
+  const authEl = qs(CFG.authModalId);
+  const payEl = qs(CFG.paywallId);
+  const authOpen = !!(authEl && !authEl.classList.contains("hidden"));
+  const payOpen  = !!(payEl && !payEl.classList.contains("hidden"));
+
+  if (authOpen || payOpen) {
+    if (authEl) { authEl.style.filter = "none"; authEl.style.opacity = "1"; authEl.style.pointerEvents = "auto"; }
+    if (payEl)  { payEl.style.filter  = "none"; payEl.style.opacity  = "1"; payEl.style.pointerEvents  = "auto"; }
+  }
 
       if (root) root.setAttribute("data-locked", "1");
 
