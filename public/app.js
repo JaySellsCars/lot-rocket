@@ -481,17 +481,17 @@ function wirePaywallOnce() {
   // ----------------------------
   // BOOT
   // ----------------------------
-  (async function boot() {
-    try {
-      handleStripeReturnOnce();
-      wireAuthOnce();
-      wirePaywallOnce();
-      await runGate();
-    } catch (e) {
-      console.warn("CORE BOOT FAIL:", e);
-      openAuth("Setup error. Check Supabase keys.");
-    }
-  })();
+(async function boot() {
+  try {
+    await handleStripeReturnOnce();
+    wireAuthOnce();
+    wirePaywallOnce();
+    await runGate();
+  } catch (e) {
+    console.warn("CORE BOOT FAIL:", e);
+    openAuth("Setup error. Check Supabase keys.");
+  }
+})();
 
   // minimal debug
   window.LR_CORE = { runGate, openAuth, openPaywall };
