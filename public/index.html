@@ -591,11 +591,7 @@
           </label>
 
           <div class="btn-row" style="margin-top:.6rem;">
-            <button
-              type="button"
-              class="secondary-btn full"
-              data-ai-followup-btn
-            >
+            <button type="button" class="secondary-btn full" data-ai-followup-btn>
               Continue
             </button>
           </div>
@@ -617,24 +613,48 @@
       </div>
 
       <div class="side-modal-body">
-        <textarea id="carExpertInput" placeholder="Ask a car question (trim, towing, reliability, comparisons, etc.)"></textarea>
-        <button id="runCarExpertBtn" class="secondary-btn full" type="button" style="margin-top:.8rem;">Generate</button>
-        <div id="carExpertOutput" class="small-note" style="margin-top:1rem; white-space:pre-wrap;"></div>
+        <textarea
+          id="carExpertInput"
+          placeholder="Ask a car question (trim, towing, reliability, comparisons, etc.)"
+        ></textarea>
+
+        <button
+          id="runCarExpertBtn"
+          class="secondary-btn full"
+          type="button"
+          style="margin-top:.8rem;"
+        >
+          Generate
+        </button>
+
+        <div
+          id="carExpertOutput"
+          class="small-note"
+          style="margin-top:1rem; white-space:pre-wrap;"
+        ></div>
 
         <!-- UNIVERSAL AI FOLLOW-UP -->
         <div class="ai-followup" data-ai-followup style="display:none; margin-top:1rem;">
           <label class="field">
             <span>Reply / Add Details</span>
-            <textarea data-ai-followup-input rows="3"
-              placeholder="Add details, then hit Continue…"></textarea>
+            <textarea
+              data-ai-followup-input
+              rows="3"
+              placeholder="Add details, then hit Continue…"
+            ></textarea>
           </label>
+
           <div class="btn-row" style="margin-top:.6rem;">
-            <button type="button" class="secondary-btn full" data-ai-followup-btn>Continue</button>
+            <button type="button" class="secondary-btn full" data-ai-followup-btn>
+              Continue
+            </button>
           </div>
         </div>
       </div>
     </div>
   </section>
+
+</main>
 
 <!-- PAYWALL (PAID APP — ONLY ONE) -->
 <div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
@@ -651,10 +671,9 @@
   </div>
 </div>
 
-
-  </main>
-  <!-- CONFIG (MUST BE BEFORE app.js) -->
+<!-- CONFIG (MUST BE BEFORE app.js) -->
 <script>
+
   window.LR_CFG = {
     // REQUIRED: Supabase keys
     supabaseUrl: "https://oojqnmxsitcntnkhaoql.supabase.co",
