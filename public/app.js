@@ -253,8 +253,8 @@ function closePaywall() {
     }
   }
 
- // ----------------------------
-// STRIPE RETURN CLEANUP + VERIFY
+// ----------------------------
+// STRIPE RETURN CLEANUP + VERIFY  (GET — matches server)
 // ----------------------------
 async function handleStripeReturnOnce() {
   const url = new URL(window.location.href);
@@ -264,11 +264,11 @@ async function handleStripeReturnOnce() {
   console.log("💳 Stripe return detected:", sessionId);
 
   try {
-    // Ask backend to verify + update Supabase
-    const r = await fetch(CFG.stripeVerifyUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: sessionId })
+    const verifyUrl = `${CFG.stripeVerifyUrl}?session_id=${encodeURIComponent(sessionId)}`;
+
+    const r = await fetch(verifyUrl, {
+      method: "GET",
+      headers: { Accept: "application/json" }
     });
 
     const j = await r.json().catch(() => null);
@@ -281,7 +281,6 @@ async function handleStripeReturnOnce() {
 
     console.log("✅ Stripe verified. Refreshing session…");
 
-    // Force Supabase to refresh user + claims
     await initSupabaseOnce();
     await SB.auth.refreshSession();
 
@@ -301,6 +300,7 @@ async function handleStripeReturnOnce() {
     await runGate();
   }
 }
+
 
   // ----------------------------
   // THE ONLY GATE
