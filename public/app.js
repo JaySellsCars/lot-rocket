@@ -107,23 +107,45 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
   // ----------------------------
   // HARD LOCK SYSTEM (SINGLE)
   // ----------------------------
-  function lockApp() {
-    const main = qs("appMain");
-    const wire = qs("toolWire");
+ function lockApp() {
+  const main = qs("appMain");
+  const wire = qs("toolWire");
+  const auth = qs(CFG.authModalId);
+  const pay = qs(CFG.paywallId);
 
+  const authOpen = auth && !auth.classList.contains("hidden");
+  const payOpen  = pay && !pay.classList.contains("hidden");
+
+  if (main && !authOpen && !payOpen) {
+    main.style.filter = "blur(6px)";
+    main.style.pointerEvents = "none";
+    main.style.userSelect = "none";
+  }
+
+  if (wire && !authOpen && !payOpen) {
+    wire.style.filter = "blur(6px)";
+    wire.style.pointerEvents = "none";
+  }
+
+  if (authOpen || payOpen) {
     if (main) {
       main.style.filter = "blur(6px)";
       main.style.pointerEvents = "none";
-      main.style.userSelect = "none";
     }
-
-    if (wire) {
-      wire.style.filter = "blur(6px)";
-      wire.style.pointerEvents = "none";
-    }
-
-    getRoot().setAttribute("data-locked", "1");
   }
+
+  if (auth) {
+    auth.style.filter = "none";
+    auth.style.pointerEvents = "auto";
+  }
+
+  if (pay) {
+    pay.style.filter = "none";
+    pay.style.pointerEvents = "auto";
+  }
+
+  getRoot().setAttribute("data-locked", "1");
+}
 
   function unlockApp() {
     const main = qs("appMain");
