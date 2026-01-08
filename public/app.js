@@ -204,6 +204,8 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
       hide(qs(CFG.authModalId));
       setText(CFG.authMsgId, "");
     }
+window.__openAuth = __openAuth;
+window.__closeAuth = __closeAuth;
 
     function __openPaywall(msg) {
       __lockApp(msg || "Subscription required.");
