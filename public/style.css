@@ -967,3 +967,14 @@ html.lr-locked, body.lr-locked { pointer-events: auto !important; }
   z-index: 1000000;
   box-shadow: 0 18px 50px rgba(0,0,0,.55);
 }
+/* ===============================
+   LOCK BLUR EXEMPTION (AUTH/PAYWALL)
+================================ */
+.lr-modal,
+.lr-paywall{
+  filter: none !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
