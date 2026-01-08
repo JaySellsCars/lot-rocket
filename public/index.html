@@ -632,6 +632,31 @@
 
 </main>
 
+<!-- LOT ROCKET AUTH MODAL (REQUIRED) -->
+<div id="lrAuthModal" class="lr-modal hidden" aria-hidden="true">
+  <div class="lr-modal-box">
+    <div class="lr-modal-top">
+      <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
+      <button id="lrAuthClose" class="lr-x" type="button">✕</button>
+    </div>
+
+    <div class="lr-modal-body">
+      <label class="lr-label">Email</label>
+      <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email" />
+
+      <label class="lr-label">Password</label>
+      <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+      <div class="lr-row">
+        <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
+        <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
+      </div>
+
+      <div id="lrAuthMsg" class="lr-msg"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PAYWALL (PAID APP — ONLY ONE) -->
 <div id="lrPaywall" class="lr-paywall hidden" aria-hidden="true">
   <div class="lr-paywall-box">
@@ -649,44 +674,15 @@
 
 <!-- CONFIG (MUST BE BEFORE app.js) -->
 <script>
-<!-- LOT ROCKET AUTH MODAL (REQUIRED) -->
-<div id="lrAuthModal" class="lr-modal hidden" aria-hidden="true">
-  <div class="lr-modal-box">
-    <div class="lr-modal-top">
-      <div class="lr-modal-title">🔐 Sign in to Lot Rocket</div>
-      <button id="lrAuthClose" class="lr-x" type="button">✕</button>
-    </div>
-
-    <div class="lr-modal-body">
-      <label class="lr-label">Email</label>
-      <input id="lrEmail" class="lr-input" type="email" placeholder="you@email.com" autocomplete="email"/>
-
-      <label class="lr-label">Password</label>
-      <input id="lrPass" class="lr-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
-
-      <div class="lr-row">
-        <button id="lrSignIn" class="lr-btn primary" type="button">Sign In</button>
-        <button id="lrSignUp" class="lr-btn" type="button">Create Account</button>
-      </div>
-
-      <div id="lrAuthMsg" class="lr-msg"></div>
-    </div>
-  </div>
-</div>
-
   window.LR_CFG = {
-    // REQUIRED: Supabase keys
     supabaseUrl: "https://oojqnmxsitcntnkhaoql.supabase.co",
-supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vanFubXhzaXRjbnRua2hhb3FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzQ0MDcsImV4cCI6MjA4MzMxMDQwN30.H_8-PccaPNYcBhyAyGaNVts0YVoIIrs-Xtn1712KrfY",
+    supabaseAnonKey: "YOUR_KEY_HERE",
 
-
-    // UI IDs (MUST match your HTML)
     appRootId: "appMain",
     authModalId: "lrAuthModal",
     authMsgId: "lrAuthMsg",
     paywallId: "lrPaywall",
 
-    // buttons/inputs (match your HTML screenshot)
     openAuthBtnId: "lrUserChip",
     logoutBtnId: "lrSignOut",
 
@@ -698,17 +694,14 @@ supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
     closePaywallBtnId: "lrClosePaywall",
     upgradeBtnId: "lrSubscribeNow",
 
-    // API endpoints
     stripeCheckoutUrl: "/api/stripe/checkout",
     stripeVerifyUrl: "/api/stripe/verify"
   };
 </script>
 
-
-  <!-- SCRIPTS (LAST — DO NOT MOVE) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/app.js?v=10003"></script>
 
-
 </body>
 </html>
+
