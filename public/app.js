@@ -279,43 +279,53 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
     }
   }
 
-  // ----------------------------
-  // AUTH UI
-  // ----------------------------
-  function wireAuthOnce() {
-    const loginBtn = qs(CFG.loginBtnId);
-    const signupBtn = qs(CFG.signupBtnId);
-    const logoutBtn = qs(CFG.logoutBtnId);
-    const openBtn = qs(CFG.openAuthBtnId);
+// ----------------------------
+// AUTH UI
+// ----------------------------
+function wireAuthOnce() {
+  const loginBtn  = qs(CFG.loginBtnId);
+  const signupBtn = qs(CFG.signupBtnId);
+  const logoutBtn = qs(CFG.logoutBtnId);
+  const openBtn   = qs(CFG.openAuthBtnId);
 
-    async function doAuth(mode) {
-      await initSupabaseOnce();
-      const email = qs(CFG.emailInputId)?.value || "";
-      const pass = qs(CFG.passInputId)?.value || "";
-      if (!email || !pass) return setText(CFG.authMsgId, "Enter email + password.");
+  async function doAuth(mode) {
+    await initSupabaseOnce();
 
-      if (mode === "signup") {
-        const { error } = await SB.auth.signUp({ email, password: pass });
-        if (error) return setText(CFG.authMsgId, error.message);
-        return setText(CFG.authMsgId, "Check your email, then sign in.");
-      }
+    const email = qs(CFG.emailInputId)?.value || "";
+    const pass  = qs(CFG.passInputId)?.value  || "";
+    if (!email || !pass) return setText(CFG.authMsgId, "Enter email + password.");
 
-      const { error } = await SB.auth.signInWithPassword({ email, password: pass });
+    // SIGN UP → create user, then send to Stripe checkout
+    if (mode === "signup") {
+      const { data, error } = await SB.auth.signUp({ email, password: pass });
       if (error) return setText(CFG.authMsgId, error.message);
-      runGate();
+
+      // If your Supabase email confirmations are ON, the user may not be fully confirmed yet.
+      // You still want to take them to Stripe immediately (paid app flow).
+      window.location.href = CFG.stripeCheckoutUrl;
+      return;
     }
 
-    loginBtn && loginBtn.addEventListener("click", () => doAuth("login"));
-    signupBtn && signupBtn.addEventListener("click", () => doAuth("signup"));
-    logoutBtn &&
-      logoutBtn.addEventListener("click", async () => {
-        await SB.auth.signOut();
-        runGate();
-      });
-    openBtn && openBtn.addEventListener("click", () => openAuth(""));
+    // LOGIN → normal flow
+    const { error } = await SB.auth.signInWithPassword({ email, password: pass });
+    if (error) return setText(CFG.authMsgId, error.message);
+
+    runGate();
   }
 
-  // ----------------------------
+  loginBtn  && loginBtn.addEventListener("click", () => doAuth("login"));
+  signupBtn && signupBtn.addEventListener("click", () => doAuth("signup"));
+
+  logoutBtn && logoutBtn.addEventListener("click", async () => {
+    await SB.auth.signOut();
+    runGate();
+  });
+
+  openBtn && openBtn.addEventListener("click", () => openAuth(""));
+}
+
+// ----------------------------
+
   // PAYWALL BUTTON
   // ----------------------------
   function wirePaywallOnce() {
