@@ -423,13 +423,14 @@ function wireAuthOnce() {
       return;
     }
 
-    // LOGIN → normal flow (gate decides if they are paid)
+     // LOGIN → normal flow (gate decides if they are paid)
     setText(CFG.authMsgId, "Signing in…");
-    const { data, error } = await SB.auth.signInWithPassword({ email, password: pass });
-    if (error) return setText(CFG.authMsgId, error.message);
+    const { data: loginData, error: loginErr } = await SB.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
+    if (loginErr) return setText(CFG.authMsgId, loginErr.message);
 
-    // Optional: if your product is "paid app only", you can immediately send unpaid users to Stripe
-    // but the gate will handle it either way.
     runGate();
   }
 
@@ -451,36 +452,36 @@ function wireAuthOnce() {
       runGate();
     });
   }
-const upgradeBtn = document.getElementById("lrSubscribeNow");
 
-if (upgradeBtn) {
-  upgradeBtn.addEventListener("click", async () => {
-    try {
-      const { data } = await supabase.auth.getSession();
-      const userId = data?.session?.user?.id;
-      if (!userId) {
-        alert("Please log in first");
-        return;
+  // UPGRADE (paywall button -> Stripe Checkout)
+  const upgradeBtn = qs(CFG.upgradeBtnId);
+
+  if (upgradeBtn && !upgradeBtn.__LR_BOUND__) {
+    upgradeBtn.__LR_BOUND__ = true;
+    upgradeBtn.addEventListener("click", async () => {
+      await initSupabaseOnce();
+
+      const { data: sessData } = await SB.auth.getSession();
+      const userId = sessData?.session?.user?.id;
+
+      if (!userId) return openAuth("Sign in first.");
+
+      try {
+        const r = await fetch(CFG.stripeCheckoutUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+
+        const j = await r.json().catch(() => null);
+        if (j?.url) window.location.href = j.url;
+        else alert(j?.error || "Stripe checkout failed.");
+      } catch (e) {
+        console.error("Upgrade error:", e);
+        alert("Stripe checkout error.");
       }
-
-      const r = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-
-      const j = await r.json();
-      if (j?.url) {
-        window.location.href = j.url;
-      } else {
-        alert(j?.error || "Stripe checkout failed");
-      }
-    } catch (e) {
-      console.error("Upgrade error:", e);
-      alert("Something went wrong starting checkout");
-    }
-  });
-}
+    });
+  }
 
   if (openBtn && !openBtn.__LR_BOUND__) {
     openBtn.__LR_BOUND__ = true;
@@ -489,8 +490,9 @@ if (upgradeBtn) {
 }
 
 // ----------------------------
-// PAYWALL BUTTON
+// 💳 PAYWALL / UPGRADE → STRIPE CHECKOUT
 // ----------------------------
+
 function wirePaywallOnce() {
   const btn = qs(CFG.upgradeBtnId);
 
