@@ -638,6 +638,47 @@ app.get("/api/stripe/verify", async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(sid, {
       expand: ["customer", "subscription"],
     });
+// ===============================
+// STRIPE CUSTOMER PORTAL (MANAGE BILLING)
+// POST /api/stripe/portal  { userId }
+// ===============================
+app.post("/api/stripe/portal", async (req, res) => {
+  try {
+    const stripe = getStripe();
+    if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
+
+    const userId = String(req.body?.userId || "").trim();
+    if (!userId) return res.status(400).json({ ok: false, error: "Missing userId" });
+
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(500).json({ ok: false, error: "Missing SUPABASE admin env" });
+
+    const { data, error } = await sb
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) return res.status(500).json({ ok: false, error: error.message });
+
+    const customerId = String(data?.stripe_customer_id || "").trim();
+    if (!customerId) {
+      return res.status(400).json({ ok: false, error: "No stripe_customer_id on profile" });
+    }
+
+    const baseUrl = getBaseUrl(req);
+
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${baseUrl}/`,
+    });
+
+    return res.json({ ok: true, url: portal.url });
+  } catch (e) {
+    console.error("❌ stripe portal error:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || "portal failed" });
+  }
+});
 
     const paid =
       !!session && (session.payment_status === "paid" || session.status === "complete");
