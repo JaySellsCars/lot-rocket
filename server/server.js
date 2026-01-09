@@ -698,15 +698,19 @@ app.post("/api/stripe/portal", async (req, res) => {
           ? session.subscription
           : session?.subscription?.id || null;
 
-await upsertProfilePro({
-  userId,
-  isPro: true,
-  customerId,
-  subscriptionId,
-  subscriptionStatus: session?.subscription?.status || "active",
-});
+      const subscriptionStatus =
+        typeof session?.subscription === "object" && session?.subscription
+          ? session.subscription.status || null
+          : null;
 
-
+      if (userId) {
+        await upsertProfilePro({
+          userId,
+          isPro: true,
+          customerId,
+          subscriptionId,
+          subscriptionStatus: subscriptionStatus || "active",
+        });
       }
     }
 
