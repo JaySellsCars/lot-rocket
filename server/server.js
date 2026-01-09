@@ -662,9 +662,7 @@ app.post("/api/stripe/portal", async (req, res) => {
     if (error) return res.status(500).json({ ok: false, error: error.message });
 
     const customerId = String(data?.stripe_customer_id || "").trim();
-    if (!customerId) {
-      return res.status(400).json({ ok: false, error: "No stripe_customer_id on profile" });
-    }
+    if (!customerId) return res.status(400).json({ ok: false, error: "No stripe_customer_id on profile" });
 
     const baseUrl = getBaseUrl(req);
 
@@ -679,6 +677,7 @@ app.post("/api/stripe/portal", async (req, res) => {
     return res.status(500).json({ ok: false, error: e?.message || "portal failed" });
   }
 });
+
 
     const paid =
       !!session && (session.payment_status === "paid" || session.status === "complete");
