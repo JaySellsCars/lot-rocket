@@ -241,18 +241,30 @@ function closePaywall() {
     return SB;
   }
 
-  async function ensureProfileRow() {
-    if (!SB || !LR_USER?.id) return;
+async function ensureProfileRow() {
+  if (!SB) return;
 
-    const { data } = await SB.from("profiles").select("id").eq("id", LR_USER.id).maybeSingle();
-    if (!data?.id) {
-      await SB.from("profiles").upsert({
-        id: LR_USER.id,
-        email: LR_USER.email || null,
-        updated_at: new Date().toISOString(),
-      });
+  // ALWAYS pull freshest user from Supabase (don’t trust globals)
+  const { data: u } = await SB.auth.getUser();
+  const user = u?.user || null;
+  if (!user?.id) return;
+
+  const { data } = await SB.from("profiles").select("id").eq("id", user.id).maybeSingle();
+  if (!data?.id) {
+    // If FK isn't ready yet, don't crash the app — just skip and let gate retry.
+    const { error } = await SB.from("profiles").upsert({
+      id: user.id,
+      email: user.email || null,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.warn("ensureProfileRow upsert skipped:", error.message);
+      return;
     }
   }
+}
+
 
 // ----------------------------
 // STRIPE RETURN CLEANUP + VERIFY  (GET — matches server)
