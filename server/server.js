@@ -147,12 +147,14 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           if (error) throw new Error("Supabase lookup failed: " + error.message);
 
           if (data?.id) {
-            await upsertProfilePro({
-              userId: data.id,
-              isPro: active,
-              customerId,
-              subscriptionId: sub?.id || null,
-            });
+await upsertProfilePro({
+  userId: data.id,
+  isPro: active,
+  customerId,
+  subscriptionId: sub?.id || null,
+  subscriptionStatus: sub?.status || null,
+});
+
           }
         }
 
