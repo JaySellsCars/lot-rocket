@@ -318,16 +318,32 @@ async function upsertProfilePro({ userId, isPro, customerId, subscriptionId }) {
   const sb = getSupabaseAdmin();
   if (!sb) throw new Error("Missing SUPABASE admin env");
 
-  const { error } = await sb.from("profiles").upsert({
-    id: userId,
-    is_pro: !!isPro,
-    stripe_customer_id: customerId || null,
-    stripe_subscription_id: subscriptionId || null,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "id" });
+  // ✅ Guard: only write profiles if the auth user exists (prevents profiles_id_fkey errors)
+  const { data: authUser, error: authErr } = await sb.auth.admin.getUserById(userId);
+  if (authErr || !authUser?.user?.id) {
+    console.warn("⚠️ upsertProfilePro skipped (no auth user):", {
+      userId,
+      message: authErr?.message || "missing auth user",
+    });
+    return;
+  }
+
+  const { error } = await sb
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        is_pro: !!isPro,
+        stripe_customer_id: customerId || null,
+        stripe_subscription_id: subscriptionId || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
 
   if (error) throw new Error("Supabase upsert failed: " + error.message);
 }
+
 
 /* ===============================
    PLATFORM NORMALIZER
