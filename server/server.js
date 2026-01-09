@@ -343,7 +343,7 @@ async function upsertProfilePro({
     updated_at: new Date().toISOString(),
   };
 
-  // only set this when turning pro on
+  // ✅ only stamp this when turning pro ON
   if (isPro) {
     payload.pro_activated_at = new Date().toISOString();
   }
@@ -354,6 +354,7 @@ async function upsertProfilePro({
 
   if (error) throw new Error("Supabase upsert failed: " + error.message);
 }
+
 
 
 
