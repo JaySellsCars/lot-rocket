@@ -451,6 +451,36 @@ function wireAuthOnce() {
       runGate();
     });
   }
+const upgradeBtn = document.getElementById("lrSubscribeNow");
+
+if (upgradeBtn) {
+  upgradeBtn.addEventListener("click", async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const userId = data?.session?.user?.id;
+      if (!userId) {
+        alert("Please log in first");
+        return;
+      }
+
+      const r = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const j = await r.json();
+      if (j?.url) {
+        window.location.href = j.url;
+      } else {
+        alert(j?.error || "Stripe checkout failed");
+      }
+    } catch (e) {
+      console.error("Upgrade error:", e);
+      alert("Something went wrong starting checkout");
+    }
+  });
+}
 
   if (openBtn && !openBtn.__LR_BOUND__) {
     openBtn.__LR_BOUND__ = true;
