@@ -188,12 +188,14 @@ await upsertProfilePro({
           if (error) throw new Error("Supabase lookup failed: " + error.message);
 
           if (data?.id) {
-            await upsertProfilePro({
-              userId: data.id,
-              isPro: false,
-              customerId,
-              subscriptionId: null,
-            });
+await upsertProfilePro({
+  userId: data.id,
+  isPro: false,
+  customerId,
+  subscriptionId: null,
+  subscriptionStatus: "canceled",
+});
+
           }
         }
 
