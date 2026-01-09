@@ -314,11 +314,17 @@ function getSupabaseAdmin() {
 
 
 
-async function upsertProfilePro({ userId, isPro, customerId, subscriptionId }) {
+async function upsertProfilePro({
+  userId,
+  isPro,
+  customerId,
+  subscriptionId,
+  subscriptionStatus = null,
+}) {
   const sb = getSupabaseAdmin();
   if (!sb) throw new Error("Missing SUPABASE admin env");
 
-  // ✅ Guard: only write profiles if the auth user exists (prevents profiles_id_fkey errors)
+  // ✅ Guard: only write profiles if the auth user exists
   const { data: authUser, error: authErr } = await sb.auth.admin.getUserById(userId);
   if (authErr || !authUser?.user?.id) {
     console.warn("⚠️ upsertProfilePro skipped (no auth user):", {
@@ -328,21 +334,27 @@ async function upsertProfilePro({ userId, isPro, customerId, subscriptionId }) {
     return;
   }
 
+  const payload = {
+    id: userId,
+    is_pro: !!isPro,
+    stripe_customer_id: customerId || null,
+    stripe_subscription_id: subscriptionId || null,
+    subscription_status: subscriptionStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  // only set this when turning pro on
+  if (isPro) {
+    payload.pro_activated_at = new Date().toISOString();
+  }
+
   const { error } = await sb
     .from("profiles")
-    .upsert(
-      {
-        id: userId,
-        is_pro: !!isPro,
-        stripe_customer_id: customerId || null,
-        stripe_subscription_id: subscriptionId || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" }
-    );
+    .upsert(payload, { onConflict: "id" });
 
   if (error) throw new Error("Supabase upsert failed: " + error.message);
 }
+
 
 
 /* ===============================
