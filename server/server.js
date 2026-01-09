@@ -654,13 +654,15 @@ app.get("/api/stripe/verify", async (req, res) => {
           ? session.subscription
           : session?.subscription?.id || null;
 
-      if (userId) {
-        await upsertProfilePro({
-          userId,
-          isPro: true,
-          customerId,
-          subscriptionId,
-        });
+await upsertProfilePro({
+  userId,
+  isPro: true,
+  customerId,
+  subscriptionId,
+  subscriptionStatus: session?.subscription?.status || "active",
+});
+
+
       }
     }
 
