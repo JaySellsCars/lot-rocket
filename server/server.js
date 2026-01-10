@@ -577,17 +577,17 @@ async function createCheckoutSession(req) {
   const baseUrl = getBaseUrl(req);
   console.log("💳 STRIPE checkout:", { priceId, mode: stripeModeLabel(), baseUrl, userId });
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/?canceled=1`,
-    allow_promotion_codes: true,
+const session = await stripe.checkout.sessions.create({
+  mode: "subscription",
+  line_items: [{ price: priceId, quantity: 1 }],
+  success_url: `${baseUrl}/?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${baseUrl}/?canceled=1`,
+  allow_promotion_codes: true,
 
-    // ✅ BIND STRIPE → USER
-    client_reference_id: userId,
-    metadata: { userId },
-  });
+  client_reference_id: userId,
+  metadata: { userId },
+});
+
 
   // 🔎 HARD PROOF LOG
   const acct = await stripe.accounts.retrieve();
