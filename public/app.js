@@ -215,32 +215,47 @@ function closePaywall() {
   hide(qs(CFG.paywallId));
 }
 
+// ----------------------------
+// BILLING BUTTON UI (SAFE)
+// ----------------------------
+function showManageBillingBtn() {
+  const el = document.getElementById("lrManageBilling");
+  if (el) el.classList.remove("hidden");
+}
 
-  // ----------------------------
-  // SUPABASE INIT (ONE)
-  // ----------------------------
-  async function initSupabaseOnce() {
-    if (SB) return SB;
+function hideManageBillingBtn() {
+  const el = document.getElementById("lrManageBilling");
+  if (el) el.classList.add("hidden");
+}
 
-    if (!window.supabase) throw new Error("Supabase SDK missing");
+// ----------------------------
+// SUPABASE INIT (ONE)
+// ----------------------------
+async function initSupabaseOnce() {
+  if (SB) return SB;
 
-    SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+  if (!window.supabase) throw new Error("Supabase SDK missing");
 
-    const { data: s } = await SB.auth.getSession();
-    LR_SESSION = s?.session || null;
+  SB = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
 
-    const { data: u } = await SB.auth.getUser();
-    LR_USER = u?.user || null;
+  const { data: s } = await SB.auth.getSession();
+  LR_SESSION = s?.session || null;
 
-    SB.auth.onAuthStateChange((_e, session) => {
-      LR_SESSION = session || null;
-      LR_USER = session?.user || null;
-      runGate().catch(console.warn);
-    });
+  const { data: u } = await SB.auth.getUser();
+  LR_USER = u?.user || null;
 
-    return SB;
-  }
+  SB.auth.onAuthStateChange((_e, session) => {
+    LR_SESSION = session || null;
+    LR_USER = session?.user || null;
+    runGate().catch(console.warn);
+  });
 
+  return SB;
+}
+
+// ----------------------------
+// PROFILE ROW ENSURE (FK-SAFE)
+// ----------------------------
 async function ensureProfileRow() {
   if (!SB) return;
 
@@ -249,7 +264,12 @@ async function ensureProfileRow() {
   const user = u?.user || null;
   if (!user?.id) return;
 
-  const { data } = await SB.from("profiles").select("id").eq("id", user.id).maybeSingle();
+  const { data } = await SB
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
   if (!data?.id) {
     // If FK isn't ready yet, don't crash the app — just skip and let gate retry.
     const { error } = await SB.from("profiles").upsert({
@@ -264,6 +284,7 @@ async function ensureProfileRow() {
     }
   }
 }
+
 
 // ===============================
 // STRIPE CUSTOMER PORTAL (MANAGE BILLING)
