@@ -12,6 +12,7 @@
 const express = require("express");
 const path = require("path");
 const https = require("https");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -60,178 +61,233 @@ function getBaseUrl(req) {
 }
 
 /* ===============================
+   SUPABASE ADMIN (SERVER)
+================================ */
+function getSupabaseAdmin() {
+  const url = String(process.env.SUPABASE_URL || "").trim();
+  const raw = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (!url || !raw) return null;
+
+  // Optional log (safe-ish): role only
+  try {
+    const payload = JSON.parse(Buffer.from(raw.split(".")[1], "base64").toString("utf8"));
+    console.log("🔐 SUPABASE KEY ROLE:", payload?.role || "(unknown)");
+  } catch {
+    console.log("🔐 SUPABASE KEY ROLE:", "(unknown)");
+  }
+
+  return createClient(url, raw, { auth: { persistSession: false } });
+}
+
+async function upsertProfilePro({
+  userId,
+  isPro,
+  customerId,
+  subscriptionId,
+  subscriptionStatus = null,
+}) {
+  const sb = getSupabaseAdmin();
+  if (!sb) throw new Error("Missing SUPABASE admin env");
+
+  // ✅ Guard: only write profiles if the auth user exists
+  const { data: authUser, error: authErr } = await sb.auth.admin.getUserById(userId);
+  if (authErr || !authUser?.user?.id) {
+    console.warn("⚠️ upsertProfilePro skipped (no auth user):", {
+      userId,
+      message: authErr?.message || "missing auth user",
+    });
+    return;
+  }
+
+  const payload = {
+    id: userId,
+    is_pro: !!isPro,
+    stripe_customer_id: customerId || null,
+    stripe_subscription_id: subscriptionId || null,
+    subscription_status: subscriptionStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  // ✅ only stamp this when turning pro ON
+  if (isPro) payload.pro_activated_at = new Date().toISOString();
+
+  const { error } = await sb.from("profiles").upsert(payload, { onConflict: "id" });
+  if (error) throw new Error("Supabase upsert failed: " + error.message);
+}
+
+/* ===============================
    STRIPE WEBHOOK (RAW BODY REQUIRED)
    NOTE: Must be defined BEFORE express.json()
 ================================ */
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  const stripe = getStripe();
-  if (!stripe) return res.status(500).send("Stripe not configured");
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const stripe = getStripe();
+    if (!stripe) return res.status(500).send("Stripe not configured");
 
-  const sig = req.headers["stripe-signature"];
-  if (!sig) return res.status(400).send("Missing Stripe-Signature header");
+    const sig = req.headers["stripe-signature"];
+    if (!sig) return res.status(400).send("Missing Stripe-Signature header");
 
-  const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
-  if (!secret) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
+    const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+    if (!secret) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
 
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, secret);
-  } catch (err) {
-    console.error("❌ Stripe webhook signature failed:", err?.message || err);
-    return res.status(400).send("Webhook Error");
-  }
-
-  try {
-    switch (event.type) {
-
-      case "checkout.session.completed": {
-        const session = event.data.object;
-
-        const userId = String(
-          session?.metadata?.userId || session?.client_reference_id || ""
-        ).trim();
-
-        const customerId =
-          typeof session?.customer === "string"
-            ? session.customer
-            : session?.customer?.id || null;
-
-        const subscriptionId =
-          typeof session?.subscription === "string"
-            ? session.subscription
-            : session?.subscription?.id || null;
-
-        console.log("✅ PAID ON:", {
-          id: session?.id || null,
-          userId,
-          customerId,
-          subscriptionId,
-          email: session?.customer_details?.email || null,
-        });
-
-        if (userId) {
-          await upsertProfilePro({ userId, isPro: true, customerId, subscriptionId });
-        }
-
-        break;
-      }
-
-      case "customer.subscription.updated": {
-        const sub = event.data.object;
-
-        const customerId =
-          typeof sub?.customer === "string"
-            ? sub.customer
-            : sub?.customer?.id || null;
-
-        const status = String(sub?.status || "");
-        const active = status === "active" || status === "trialing";
-
-        console.log("🔁 SUBSCRIPTION UPDATED:", {
-          subscriptionId: sub?.id || null,
-          customerId,
-          status,
-          active,
-        });
-
-        if (customerId) {
-          const sb = getSupabaseAdmin();
-          if (!sb) throw new Error("Missing SUPABASE admin env");
-
-          const { data, error } = await sb
-            .from("profiles")
-            .select("id")
-            .eq("stripe_customer_id", customerId)
-            .maybeSingle();
-
-          if (error) throw new Error("Supabase lookup failed: " + error.message);
-
-          if (data?.id) {
-await upsertProfilePro({
-  userId: data.id,
-  isPro: active,
-  customerId,
-  subscriptionId: sub?.id || null,
-  subscriptionStatus: sub?.status || null,
-});
-
-          }
-        }
-
-        break;
-      }
-
-      case "customer.subscription.deleted": {
-        const sub = event.data.object;
-
-        const customerId =
-          typeof sub?.customer === "string"
-            ? sub.customer
-            : sub?.customer?.id || null;
-
-        console.log("🛑 PAID OFF:", {
-          subscriptionId: sub?.id || null,
-          customerId,
-          status: sub?.status || null,
-        });
-
-        if (customerId) {
-          const sb = getSupabaseAdmin();
-          if (!sb) throw new Error("Missing SUPABASE admin env");
-
-          const { data, error } = await sb
-            .from("profiles")
-            .select("id")
-            .eq("stripe_customer_id", customerId)
-            .maybeSingle();
-
-          if (error) throw new Error("Supabase lookup failed: " + error.message);
-
-          if (data?.id) {
-await upsertProfilePro({
-  userId: data.id,
-  isPro: false,
-  customerId,
-  subscriptionId: null,
-  subscriptionStatus: "canceled",
-});
-
-          }
-        }
-
-        break;
-      }
-
-      case "invoice.payment_failed": {
-        const inv = event.data.object;
-        console.log("⚠️ invoice.payment_failed:", {
-          invoiceId: inv?.id || null,
-          customerId: inv?.customer || null,
-          subscriptionId: inv?.subscription || null,
-        });
-        break;
-      }
-
-      default:
-        break;
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, secret);
+    } catch (err) {
+      console.error("❌ Stripe webhook signature failed:", err?.message || err);
+      return res.status(400).send("Webhook Error");
     }
 
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
 
+          const userId = String(
+            session?.metadata?.userId || session?.client_reference_id || ""
+          ).trim();
 
-    return res.json({ received: true });
-  } catch (e) {
-    console.error("❌ Webhook handler error:", e?.message || e);
-    return res.status(500).json({ ok: false, error: e?.message || "webhook failed" });
+          const customerId =
+            typeof session?.customer === "string"
+              ? session.customer
+              : session?.customer?.id || null;
+
+          const subscriptionId =
+            typeof session?.subscription === "string"
+              ? session.subscription
+              : session?.subscription?.id || null;
+
+          console.log("✅ PAID ON:", {
+            id: session?.id || null,
+            userId,
+            customerId,
+            subscriptionId,
+            email: session?.customer_details?.email || null,
+          });
+
+          if (userId) {
+            await upsertProfilePro({
+              userId,
+              isPro: true,
+              customerId,
+              subscriptionId,
+              subscriptionStatus: "active",
+            });
+          }
+          break;
+        }
+
+        case "customer.subscription.updated": {
+          const sub = event.data.object;
+
+          const customerId =
+            typeof sub?.customer === "string"
+              ? sub.customer
+              : sub?.customer?.id || null;
+
+          const status = String(sub?.status || "");
+          const active = status === "active" || status === "trialing";
+
+          console.log("🔁 SUBSCRIPTION UPDATED:", {
+            subscriptionId: sub?.id || null,
+            customerId,
+            status,
+            active,
+          });
+
+          if (customerId) {
+            const sb = getSupabaseAdmin();
+            if (!sb) throw new Error("Missing SUPABASE admin env");
+
+            const { data, error } = await sb
+              .from("profiles")
+              .select("id")
+              .eq("stripe_customer_id", customerId)
+              .maybeSingle();
+
+            if (error) throw new Error("Supabase lookup failed: " + error.message);
+
+            if (data?.id) {
+              await upsertProfilePro({
+                userId: data.id,
+                isPro: active,
+                customerId,
+                subscriptionId: sub?.id || null,
+                subscriptionStatus: sub?.status || null,
+              });
+            }
+          }
+          break;
+        }
+
+        case "customer.subscription.deleted": {
+          const sub = event.data.object;
+
+          const customerId =
+            typeof sub?.customer === "string"
+              ? sub.customer
+              : sub?.customer?.id || null;
+
+          console.log("🛑 PAID OFF:", {
+            subscriptionId: sub?.id || null,
+            customerId,
+            status: sub?.status || null,
+          });
+
+          if (customerId) {
+            const sb = getSupabaseAdmin();
+            if (!sb) throw new Error("Missing SUPABASE admin env");
+
+            const { data, error } = await sb
+              .from("profiles")
+              .select("id")
+              .eq("stripe_customer_id", customerId)
+              .maybeSingle();
+
+            if (error) throw new Error("Supabase lookup failed: " + error.message);
+
+            if (data?.id) {
+              await upsertProfilePro({
+                userId: data.id,
+                isPro: false,
+                customerId,
+                subscriptionId: null,
+                subscriptionStatus: "canceled",
+              });
+            }
+          }
+          break;
+        }
+
+        case "invoice.payment_failed": {
+          const inv = event.data.object;
+          console.log("⚠️ invoice.payment_failed:", {
+            invoiceId: inv?.id || null,
+            customerId: inv?.customer || null,
+            subscriptionId: inv?.subscription || null,
+          });
+          break;
+        }
+
+        default:
+          break;
+      }
+
+      return res.json({ received: true });
+    } catch (e) {
+      console.error("❌ Webhook handler error:", e?.message || e);
+      return res.status(500).json({ ok: false, error: e?.message || "webhook failed" });
+    }
   }
-});
-
+);
 
 /* ===============================
    BODY PARSING
 ================================ */
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
-
 
 /* ===============================
    OPTIONAL DEP: CHEERIO
@@ -283,9 +339,10 @@ function jsonOk(res, payload) {
 function jsonErr(res, error, extra = {}) {
   return res.status(200).json({ ok: false, error, ...extra });
 }
-// ===============================
-// API: CONFIG (frontend-safe)
-// ===============================
+
+/* ===============================
+   API: CONFIG (frontend-safe)
+================================ */
 app.get("/api/config", (req, res) => {
   res.json({
     ok: true,
@@ -293,74 +350,6 @@ app.get("/api/config", (req, res) => {
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
   });
 });
-// ===============================
-// SUPABASE ADMIN (SERVER)
-// ===============================
-const { createClient } = require("@supabase/supabase-js");
-
-function getSupabaseAdmin() {
-  const raw = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
-
-  // log which key we ACTUALLY have (anon vs service_role)
-  let role = "";
-  try {
-    const payload = JSON.parse(Buffer.from(raw.split(".")[1], "base64").toString("utf8"));
-    role = payload?.role || "";
-  } catch {}
-
-  console.log("🔐 SUPABASE KEY ROLE:", role || "(unknown)");
-
-  const url = String(process.env.SUPABASE_URL || "").trim();
-  const key = raw;
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
-}
-
-
-
-async function upsertProfilePro({
-  userId,
-  isPro,
-  customerId,
-  subscriptionId,
-  subscriptionStatus = null,
-}) {
-  const sb = getSupabaseAdmin();
-  if (!sb) throw new Error("Missing SUPABASE admin env");
-
-  // ✅ Guard: only write profiles if the auth user exists
-  const { data: authUser, error: authErr } = await sb.auth.admin.getUserById(userId);
-  if (authErr || !authUser?.user?.id) {
-    console.warn("⚠️ upsertProfilePro skipped (no auth user):", {
-      userId,
-      message: authErr?.message || "missing auth user",
-    });
-    return;
-  }
-
-  const payload = {
-    id: userId,
-    is_pro: !!isPro,
-    stripe_customer_id: customerId || null,
-    stripe_subscription_id: subscriptionId || null,
-    subscription_status: subscriptionStatus,
-    updated_at: new Date().toISOString(),
-  };
-
-  // ✅ only stamp this when turning pro ON
-  if (isPro) {
-    payload.pro_activated_at = new Date().toISOString();
-  }
-
-  const { error } = await sb
-    .from("profiles")
-    .upsert(payload, { onConflict: "id" });
-
-  if (error) throw new Error("Supabase upsert failed: " + error.message);
-}
-
-
-
 
 /* ===============================
    PLATFORM NORMALIZER
@@ -404,13 +393,10 @@ async function getFetch() {
   return mod.default;
 }
 
-
 /* ===============================
    HEALTH + API ROOT
 ================================ */
-app.get("/api/health", (_req, res) => {
-  return res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() });
-});
+app.get("/api/health", (_req, res) => res.json({ ok: true, service: "lot-rocket-1", ts: Date.now() }));
 app.get("/api", (_req, res) => res.json({ ok: true, note: "api root alive" }));
 
 /* ===============================
@@ -539,7 +525,7 @@ async function createCheckoutSession(req) {
     throw e;
   }
 
-  // 🔐 REQUIRE USER (Path A Step 2)
+  // 🔐 REQUIRE USER
   const userId = String(req.body?.userId || req.query?.userId || "").trim();
   if (!userId) {
     const e = new Error("Missing userId");
@@ -550,26 +536,25 @@ async function createCheckoutSession(req) {
   const baseUrl = getBaseUrl(req);
   console.log("💳 STRIPE checkout:", { priceId, mode: stripeModeLabel(), baseUrl, userId });
 
-const session = await stripe.checkout.sessions.create({
-  mode: "subscription",
-  line_items: [{ price: priceId, quantity: 1 }],
-  success_url: `${baseUrl}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${baseUrl}/?canceled=1`,
-  allow_promotion_codes: true,
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${baseUrl}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/?canceled=1`,
+    allow_promotion_codes: true,
 
-  // ✅ BIND STRIPE → USER
-  client_reference_id: userId,
-  metadata: { userId },
-});
+    // ✅ BIND STRIPE → USER
+    client_reference_id: userId,
+    metadata: { userId },
+  });
 
-// 🔎 HARD PROOF LOG (DO NOT SKIP)
-const acct = await stripe.accounts.retrieve();
-console.log("✅ CHECKOUT SESSION CREATED:", {
-  id: session?.id,
-  url: session?.url,
-  account: acct?.id || null
-});
-
+  // 🔎 HARD PROOF LOG
+  const acct = await stripe.accounts.retrieve();
+  console.log("✅ CHECKOUT SESSION CREATED:", {
+    id: session?.id,
+    url: session?.url,
+    account: acct?.id || null,
+  });
 
   return session;
 }
@@ -624,84 +609,12 @@ app.get("/api/stripe/checkout", async (req, res) => {
   }
 });
 
-
-// verify session (no dupes) + FALLBACK: mark user pro in Supabase if paid
-app.get("/api/stripe/verify", async (req, res) => {
-  try {
-    const sid = String(req.query.session_id || "").trim();
-    if (!sid) return res.status(400).json({ ok: false, error: "missing session_id" });
-
-    const stripe = getStripe();
-    if (!stripe) return res.status(200).json({ ok: false, bucket: "NO_STRIPE_INSTANCE" });
-
-    // expand customer/subscription so we can store ids cleanly if needed
-    const session = await stripe.checkout.sessions.retrieve(sid, {
-      expand: ["customer", "subscription"],
-    });
-// ===============================
-// STRIPE CUSTOMER PORTAL (MANAGE BILLING)
-// POST /api/stripe/portal
-// ✅ Server derives user from Supabase JWT (NO userId in body)
-// ✅ Reads Supabase profiles.stripe_customer_id (server-side)
-// ✅ Returns {ok:true,url} for Stripe-hosted portal
-// ===============================
-app.post("/api/stripe/portal", async (req, res) => {
-  try {
-    const stripe = getStripe();
-    if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
-
-    const sb = getSupabaseAdmin();
-    if (!sb) return res.status(500).json({ ok: false, error: "Missing SUPABASE admin env" });
-
-    // Require Bearer token (Supabase session JWT)
-    const auth = String(req.headers.authorization || "");
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    if (!token) return res.status(401).json({ ok: false, error: "Missing Authorization Bearer token" });
-
-    // Get user from JWT (server-side)
-    const { data: userData, error: userErr } = await sb.auth.getUser(token);
-    if (userErr || !userData?.user?.id) {
-      return res.status(401).json({ ok: false, error: "Invalid session" });
-    }
-
-    const userId = userData.user.id;
-
-    // Lookup stripe_customer_id (+ is_pro safety)
-    const { data: prof, error: profErr } = await sb
-      .from("profiles")
-      .select("stripe_customer_id,is_pro")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (profErr) return res.status(500).json({ ok: false, error: profErr.message });
-    if (!prof) return res.status(404).json({ ok: false, error: "Profile not found" });
-
-    // Optional but recommended: only PRO users can open portal
-    if (!prof.is_pro) return res.status(403).json({ ok: false, error: "Not pro" });
-
-    const customerId = String(prof.stripe_customer_id || "").trim();
-    if (!customerId) return res.status(400).json({ ok: false, error: "No stripe_customer_id on profile" });
-
-    const baseUrl = getBaseUrl(req);
-    const returnUrl = String(process.env.STRIPE_PORTAL_RETURN_URL || `${baseUrl}/`).trim();
-
-    const portal = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl,
-    });
-
-    return res.json({ ok: true, url: portal.url });
-  } catch (e) {
-    console.error("❌ stripe portal error:", e?.message || e);
-    return res.status(500).json({ ok: false, error: e?.message || "portal failed" });
-  }
-});
-
-
-// ===============================
-// STRIPE VERIFY (YOU ALREADY HAVE THIS ROUTE)
-// (Only showing your provided section, cleaned; logic unchanged)
-// ===============================
+/* ===============================
+   STRIPE VERIFY (SINGLE ROUTE)
+   GET /api/stripe/verify?session_id=...
+   ✅ Verifies Stripe checkout session
+   ✅ If paid, server-side fallback writes profiles.is_pro=true
+================================ */
 app.get("/api/stripe/verify", async (req, res) => {
   try {
     const stripe = getStripe();
@@ -710,7 +623,6 @@ app.get("/api/stripe/verify", async (req, res) => {
     const session_id = String(req.query.session_id || "").trim();
     if (!session_id) return res.status(400).json({ ok: false, error: "Missing session_id" });
 
-    // Expand to get subscription object when possible (keeps your existing behavior)
     const session = await stripe.checkout.sessions.retrieve(session_id, {
       expand: ["subscription", "customer"],
     });
@@ -773,14 +685,70 @@ app.get("/api/stripe/verify", async (req, res) => {
       code: e?.code || null,
       message: e?.message || String(e),
     });
-    return res.status(500).json({ ok: false, error: e.message || "verify failed" });
+    return res.status(500).json({ ok: false, error: e?.message || "verify failed" });
   }
 });
 
+/* ===============================
+   STRIPE CUSTOMER PORTAL (MANAGE BILLING)
+   POST /api/stripe/portal
+   ✅ Server derives user from Supabase JWT (NO userId in body)
+   ✅ Reads profiles.stripe_customer_id (server-side)
+   ✅ Returns {ok:true,url}
+================================ */
+app.post("/api/stripe/portal", async (req, res) => {
+  try {
+    const stripe = getStripe();
+    if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
 
-// ===============================
-// PRO SUCCESS: redirect back with session_id (no localStorage pro flag)
-// ===============================
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(500).json({ ok: false, error: "Missing SUPABASE admin env" });
+
+    const auth = String(req.headers.authorization || "");
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (!token) return res.status(401).json({ ok: false, error: "Missing Authorization Bearer token" });
+
+    // Server-side user from JWT
+    const { data: userData, error: userErr } = await sb.auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
+      return res.status(401).json({ ok: false, error: "Invalid session" });
+    }
+
+    const userId = userData.user.id;
+
+    const { data: prof, error: profErr } = await sb
+      .from("profiles")
+      .select("stripe_customer_id,is_pro")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profErr) return res.status(500).json({ ok: false, error: profErr.message });
+    if (!prof) return res.status(404).json({ ok: false, error: "Profile not found" });
+
+    // Paid app safety: only PRO users can open portal
+    if (!prof.is_pro) return res.status(403).json({ ok: false, error: "Not pro" });
+
+    const customerId = String(prof.stripe_customer_id || "").trim();
+    if (!customerId) return res.status(400).json({ ok: false, error: "No stripe_customer_id on profile" });
+
+    const baseUrl = getBaseUrl(req);
+    const returnUrl = String(process.env.STRIPE_PORTAL_RETURN_URL || `${baseUrl}/`).trim();
+
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    });
+
+    return res.json({ ok: true, url: portal.url });
+  } catch (e) {
+    console.error("❌ stripe portal error:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || "portal failed" });
+  }
+});
+
+/* ===============================
+   PRO SUCCESS (NO localStorage pro flag)
+================================ */
 app.get("/pro-success", (req, res) => {
   const sid = String(req.query.session_id || "").trim();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -791,7 +759,6 @@ app.get("/pro-success", (req, res) => {
   <h1>✅ Payment Complete</h1>
   <p>Sending you back…</p>
   <script>
-    // DO NOT set pro in localStorage (paid app truth = Supabase profile)
     const sid = ${JSON.stringify(sid)};
     const u = sid ? "/?session_id=" + encodeURIComponent(sid) : "/";
     window.location.href = u;
@@ -800,20 +767,11 @@ app.get("/pro-success", (req, res) => {
 </html>`);
 });
 
-
-
-
-
-
 /* ===============================
    AI PING (GET + POST)
 ================================ */
-app.get("/api/ai/ping", (req, res) =>
-  res.json({ ok: true, got: req.query || null, ts: Date.now() })
-);
-app.post("/api/ai/ping", (req, res) =>
-  res.json({ ok: true, got: req.body || null, ts: Date.now() })
-);
+app.get("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.query || null, ts: Date.now() }));
+app.post("/api/ai/ping", (req, res) => res.json({ ok: true, got: req.body || null, ts: Date.now() }));
 
 /* ==================================================
    BOOST (SCRAPE) - ALWAYS JSON
@@ -921,8 +879,7 @@ app.get("/api/boost", async (req, res) => {
             const odo = x.mileageFromOdometer || x.mileage || x.odo || {};
             if (!out.mileage) {
               if (typeof odo === "number") out.mileage = String(odo);
-              else if (odo && typeof odo === "object")
-                out.mileage = String(pick(odo, ["value"]) || "");
+              else if (odo && typeof odo === "object") out.mileage = String(pick(odo, ["value"]) || "");
             }
 
             out.vin = out.vin || String(pick(x, ["vehicleIdentificationNumber", "vin"]) || "");
@@ -1245,7 +1202,6 @@ app.post("/api/ai/social", async (req, res) => {
 
   const user = JSON.stringify(vehicle, null, 2);
   const out = await callOpenAI({ system, user, temperature: 0.95 });
-
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
