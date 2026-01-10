@@ -978,43 +978,5 @@ html.lr-locked, body.lr-locked { pointer-events: auto !important; }
   pointer-events: auto !important;
   transform: none !important;
 }
-/* ===== LOT ROCKET LOGO (SYSTEM MATCH) — FINAL ===== */
-.branding .logo-wrap{
-  position: relative;
-  width: 82px;
-  height: 82px;
-  border-radius: 50%;
-  padding: 4px;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.12),
-    0 12px 30px rgba(0,0,0,.6);
-  overflow: visible;
-}
 
-/* glow */
-.branding .logo-wrap::after{
-  content:"";
-  position:absolute;
-  inset:-12px;
-  border-radius:50%;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  filter: blur(18px);
-  opacity:.45;
-  z-index:0;
-  pointer-events:none;
-}
-
-/* IMPORTANT: the logo image itself must NOT paint a white disk */
-.branding .logo-wrap img{
-  position: relative;
-  z-index:1;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  border-radius:50%;
-  background: transparent !important;  /* <<< kills the white circle */
-  padding: 0 !important;              /* <<< no “inner fill” */
-  display:block;
-}
 
