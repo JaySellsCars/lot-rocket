@@ -265,6 +265,34 @@ async function ensureProfileRow() {
   }
 }
 
+// ===============================
+// STRIPE CUSTOMER PORTAL (MANAGE BILLING)
+// ===============================
+async function openBillingPortal() {
+  try {
+    if (!SB) return alert("Auth not ready.");
+
+    const { data } = await SB.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) return alert("Not logged in.");
+
+    const r = await fetch("/api/stripe/portal", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const j = await r.json();
+    if (!r.ok || !j?.url) {
+      console.error("portal failed", j);
+      return alert(j?.error || "Billing portal unavailable.");
+    }
+
+    window.location.href = j.url;
+  } catch (e) {
+    console.error("openBillingPortal error", e);
+    alert("Billing portal error.");
+  }
+}
 
 // ----------------------------
 // STRIPE RETURN CLEANUP + VERIFY  (GET — matches server)
