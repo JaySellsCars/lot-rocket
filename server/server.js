@@ -640,35 +640,54 @@ app.get("/api/stripe/verify", async (req, res) => {
     });
 // ===============================
 // STRIPE CUSTOMER PORTAL (MANAGE BILLING)
-// POST /api/stripe/portal  { userId }
+// POST /api/stripe/portal
+// ✅ Server derives user from Supabase JWT (NO userId in body)
+// ✅ Reads Supabase profiles.stripe_customer_id (server-side)
+// ✅ Returns {ok:true,url} for Stripe-hosted portal
 // ===============================
 app.post("/api/stripe/portal", async (req, res) => {
   try {
     const stripe = getStripe();
     if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
 
-    const userId = String(req.body?.userId || "").trim();
-    if (!userId) return res.status(400).json({ ok: false, error: "Missing userId" });
-
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(500).json({ ok: false, error: "Missing SUPABASE admin env" });
 
-    const { data, error } = await sb
+    // Require Bearer token (Supabase session JWT)
+    const auth = String(req.headers.authorization || "");
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    if (!token) return res.status(401).json({ ok: false, error: "Missing Authorization Bearer token" });
+
+    // Get user from JWT (server-side)
+    const { data: userData, error: userErr } = await sb.auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
+      return res.status(401).json({ ok: false, error: "Invalid session" });
+    }
+
+    const userId = userData.user.id;
+
+    // Lookup stripe_customer_id (+ is_pro safety)
+    const { data: prof, error: profErr } = await sb
       .from("profiles")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id,is_pro")
       .eq("id", userId)
       .maybeSingle();
 
-    if (error) return res.status(500).json({ ok: false, error: error.message });
+    if (profErr) return res.status(500).json({ ok: false, error: profErr.message });
+    if (!prof) return res.status(404).json({ ok: false, error: "Profile not found" });
 
-    const customerId = String(data?.stripe_customer_id || "").trim();
+    // Optional but recommended: only PRO users can open portal
+    if (!prof.is_pro) return res.status(403).json({ ok: false, error: "Not pro" });
+
+    const customerId = String(prof.stripe_customer_id || "").trim();
     if (!customerId) return res.status(400).json({ ok: false, error: "No stripe_customer_id on profile" });
 
     const baseUrl = getBaseUrl(req);
+    const returnUrl = String(process.env.STRIPE_PORTAL_RETURN_URL || `${baseUrl}/`).trim();
 
     const portal = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${baseUrl}/`,
+      return_url: returnUrl,
     });
 
     return res.json({ ok: true, url: portal.url });
@@ -678,6 +697,23 @@ app.post("/api/stripe/portal", async (req, res) => {
   }
 });
 
+
+// ===============================
+// STRIPE VERIFY (YOU ALREADY HAVE THIS ROUTE)
+// (Only showing your provided section, cleaned; logic unchanged)
+// ===============================
+app.get("/api/stripe/verify", async (req, res) => {
+  try {
+    const stripe = getStripe();
+    if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
+
+    const session_id = String(req.query.session_id || "").trim();
+    if (!session_id) return res.status(400).json({ ok: false, error: "Missing session_id" });
+
+    // Expand to get subscription object when possible (keeps your existing behavior)
+    const session = await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ["subscription", "customer"],
+    });
 
     const paid =
       !!session && (session.payment_status === "paid" || session.status === "complete");
@@ -741,7 +777,10 @@ app.post("/api/stripe/portal", async (req, res) => {
   }
 });
 
+
+// ===============================
 // PRO SUCCESS: redirect back with session_id (no localStorage pro flag)
+// ===============================
 app.get("/pro-success", (req, res) => {
   const sid = String(req.query.session_id || "").trim();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -761,7 +800,8 @@ app.get("/pro-success", (req, res) => {
 </html>`);
 });
 
-/* =============================== */
+
+
 
 
 
