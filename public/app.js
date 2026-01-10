@@ -377,6 +377,8 @@ async function handleStripeReturnOnce() {
     unlockApp();
 
     console.log("🔓 PRO UNLOCKED");
+const b = document.getElementById("lrManageBilling");
+if (b) b.classList.remove("hidden");
 
     if (typeof window.LR_BOOT === "function") {
       window.LR_BOOT({ user: LR_USER, session: LR_SESSION, is_pro: true });
