@@ -516,6 +516,8 @@ function wireAuthOnce() {
     openBtn.addEventListener("click", () => openAuth(""));
   }
 }
+const billBtn = document.getElementById("lrManageBilling");
+if (billBtn) billBtn.addEventListener("click", openBillingPortal);
 
 // ----------------------------
 // 💳 PAYWALL / UPGRADE → STRIPE CHECKOUT
