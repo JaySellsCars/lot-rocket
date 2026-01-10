@@ -978,3 +978,15 @@ html.lr-locked, body.lr-locked { pointer-events: auto !important; }
   pointer-events: auto !important;
   transform: none !important;
 }
+/* ===============================
+   LOGO COLOR TINT (MATCH BUTTONS)
+================================= */
+
+.logo-white {
+  filter:
+    brightness(0)
+    invert(1)
+    sepia(1)
+    saturate(5000%)
+    hue-rotate(330deg);
+}
