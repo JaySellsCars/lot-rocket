@@ -178,6 +178,47 @@ app.post(
           }
           break;
         }
+case "customer.subscription.created": {
+  const sub = event.data.object;
+
+  const customerId =
+    typeof sub.customer === "string"
+      ? sub.customer
+      : sub.customer?.id || null;
+
+  console.log("🆕 SUBSCRIPTION CREATED:", {
+    subscriptionId: sub.id,
+    customerId,
+    status: sub.status,
+  });
+
+  if (customerId) {
+    const sb = getSupabaseAdmin();
+    if (!sb) throw new Error("Missing SUPABASE admin env");
+
+    const { data, error } = await sb
+      .from("profiles")
+      .select("id")
+      .eq("stripe_customer_id", customerId)
+      .maybeSingle();
+
+    if (error) throw new Error("Supabase lookup failed: " + error.message);
+
+    if (data?.id) {
+      await upsertProfilePro({
+        userId: data.id,
+        isPro: true,
+        customerId,
+        subscriptionId: sub.id,
+        subscriptionStatus: sub.status || "active",
+      });
+    } else {
+      console.warn("⚠️ subscription.created but no profile matched customer:", customerId);
+    }
+  }
+
+  break;
+}
 
         case "customer.subscription.updated": {
           const sub = event.data.object;
