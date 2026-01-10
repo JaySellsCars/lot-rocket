@@ -990,3 +990,42 @@ html.lr-locked, body.lr-locked { pointer-events: auto !important; }
     saturate(5000%)
     hue-rotate(330deg);
 }
+/* ===== LOT ROCKET: Logo matches button gradient ===== */
+:root{
+  /* already in your CSS, listed here for clarity */
+  --accent-1:#f97316;
+  --accent-2:#ec4899;
+}
+
+.branding .logo-wrap{
+  position: relative;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  padding: 6px; /* thickness of the ring */
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.12),
+    0 18px 40px rgba(0,0,0,.55);
+}
+
+.branding .logo-wrap::after{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border-radius:50%;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  filter: blur(14px);
+  opacity: .35;
+  z-index: 0;
+}
+
+.branding .logo-wrap .app-logo{
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0b1020; /* keeps center clean */
+  display:block;
+}
