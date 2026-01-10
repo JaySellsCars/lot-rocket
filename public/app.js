@@ -364,47 +364,54 @@ async function handleStripeReturnOnce() {
 }
 
 
-  // ----------------------------
-  // THE ONLY GATE
-  // ----------------------------
-  async function runGate() {
-    console.log("🚨 RUN GATE HIT", new Date().toISOString());
-    lockApp();
+// ----------------------------
+// THE ONLY GATE
+// ----------------------------
+async function runGate() {
+  console.log("🚨 RUN GATE HIT", new Date().toISOString());
+  lockApp();
 
-    await initSupabaseOnce();
+  // UI-only: default hidden until PRO is confirmed
+  hideManageBillingBtn();
 
-    if (!LR_USER?.id) {
-      closePaywall();
-      openAuth("Sign in to continue.");
-      return;
-    }
+  await initSupabaseOnce();
 
-    await ensureProfileRow();
-
-    const { data, error } = await SB
-      .from("profiles")
-      .select("is_pro")
-      .eq("id", LR_USER.id)
-      .maybeSingle();
-
-    if (error || !data?.is_pro) {
-      openPaywall("Subscription required.");
-      return;
-    }
-
-    // ✅ PRO USER
+  if (!LR_USER?.id) {
     closePaywall();
-    closeAuth();
-    unlockApp();
+    openAuth("Sign in to continue.");
+    return;
+  }
 
-console.log("🔓 PRO UNLOCKED");
+  await ensureProfileRow();
 
-// UI only (billing button)
-showManageBillingBtn();
+  const { data, error } = await SB
+    .from("profiles")
+    .select("is_pro")
+    .eq("id", LR_USER.id)
+    .maybeSingle();
 
-if (typeof window.LR_BOOT === "function") {
-  window.LR_BOOT({ user: LR_USER, session: LR_SESSION, is_pro: true });
+  // 🔒 NOT PRO (locked path)
+  if (error || !data?.is_pro) {
+    hideManageBillingBtn(); // UI-only
+    openPaywall("Subscription required.");
+    return;
+  }
+
+  // ✅ PRO USER
+  closePaywall();
+  closeAuth();
+  unlockApp();
+
+  console.log("🔓 PRO UNLOCKED");
+
+  // UI only (billing button)
+  showManageBillingBtn();
+
+  if (typeof window.LR_BOOT === "function") {
+    window.LR_BOOT({ user: LR_USER, session: LR_SESSION, is_pro: true });
+  }
 }
+
 
 
 // ----------------------------
