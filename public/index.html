@@ -97,27 +97,37 @@
           <input id="vehicleLabelInput" type="text" placeholder="Example: 2024 Chevy Silverado LTZ 4x4" />
         </label>
 
-        <label class="field">
-          <span>Price / Offer (optional override)</span>
-          <input id="priceOfferInput" type="text" placeholder="Example: $699/mo or $47,995 + tax" />
-        </label>
+<label class="field">
+  <span>Price / Offer (optional override)</span>
+  <input
+    id="priceOfferInput"
+    name="price_offer"
+    type="text"
+    inputmode="text"
+    autocomplete="off"
+    autocapitalize="off"
+    spellcheck="false"
+    placeholder="Example: $699/mo or $47,995 + tax"
+  />
+</label>
 
-        <div class="summary-box inner-summary" id="summarySnapshot">
-          <div class="small-note">Lot Rocket will scrape the page and pull title, price, description, and photos.</div>
-          <div id="summaryOutput" style="margin-top:.8rem;"></div>
-        </div>
+<div class="summary-box inner-summary" id="summarySnapshot">
+  <div class="small-note">Lot Rocket will scrape the page and pull title, price, description, and photos.</div>
+  <div id="summaryOutput" style="margin-top:.8rem;"></div>
+</div>
 
-        <button id="boostBtn" class="primary-btn full summary-btn" type="button">Boost This Listing</button>
+<button id="boostBtn" class="primary-btn full summary-btn" type="button">Boost This Listing</button>
 
-        <div class="summary-box" style="margin-top:1rem;">
-          <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
-          <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
+<div class="summary-box" style="margin-top:1rem;">
+  <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
+  <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
 
-          <div id="sendToLabWrap">
-            <button id="sendToDesignStudio" class="secondary-btn full" type="button">
-              Send Selected Photos to Creative Lab
-            </button>
-          </div>
+  <div id="sendToLabWrap">
+    <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+      Send Selected Photos to Creative Lab
+    </button>
+  </div>
+
 
           <div id="step1Photos" class="photo-grid"></div>
         </div>
