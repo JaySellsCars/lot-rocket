@@ -397,14 +397,15 @@ async function handleStripeReturnOnce() {
     closeAuth();
     unlockApp();
 
-    console.log("🔓 PRO UNLOCKED");
-const b = document.getElementById("lrManageBilling");
-if (b) b.classList.remove("hidden");
+console.log("🔓 PRO UNLOCKED");
 
-    if (typeof window.LR_BOOT === "function") {
-      window.LR_BOOT({ user: LR_USER, session: LR_SESSION, is_pro: true });
-    }
-  }
+// UI only (billing button)
+showManageBillingBtn();
+
+if (typeof window.LR_BOOT === "function") {
+  window.LR_BOOT({ user: LR_USER, session: LR_SESSION, is_pro: true });
+}
+
 
 // ----------------------------
 // AUTH UI
