@@ -2391,8 +2391,7 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
       const step3 = $("creativeHub");
       if (step3) step3.scrollIntoView({ behavior: "smooth" });
     });
-
-  // (do not close here)  // removed: })();
+  })();
 
 // ==================================================
 // HEALTH CHECK
@@ -2404,10 +2403,10 @@ try {
     .catch(() => {});
 } catch {}
 
-
   // ==================================================
   // BOOST (Step 1) → photos + vehicle + Step 2 AI
   // ==================================================
+
   const boostBtn = $("boostBtn");
   const urlInput = $("dealerUrlInput");
 
