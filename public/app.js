@@ -233,6 +233,9 @@ document.body.classList.add("lr-locked");
 
 function unlockApp() {
   // ✅ use config, not hardcoded IDs
+  document.documentElement.classList.remove("lr-locked");
+document.body.classList.remove("lr-locked");
+
    const shield = document.getElementById("lrLockShield");
   if (shield) shield.style.setProperty("display", "none", "important");
  
