@@ -566,6 +566,11 @@ function wireAuthOnce() {
   const signupBtn = qs(CFG.signupBtnId);
   const logoutBtn = qs(CFG.logoutBtnId);
   const openBtn = qs(CFG.openAuthBtnId);
+const authClose = qs("lrAuthClose");
+if (authClose && !authClose.__LR_BOUND__) {
+  authClose.__LR_BOUND__ = true;
+  authClose.addEventListener("click", closeAuth);
+}
 
   async function goStripeCheckout(userId) {
     // POST -> /api/stripe/checkout with userId, then redirect to returned url
