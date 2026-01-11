@@ -102,19 +102,31 @@ const CFG = Object.assign(
   let LR_SESSION = null;
   let LR_IS_PRO = false;
 
-  // ----------------------------
-  // DOM HELPERS
-  // ----------------------------
+// ----------------------------
+// DOM HELPERS (CLEAN / SINGLE)
+// ----------------------------
 const qs = (id) => document.getElementById(id);
 
+const setText = (id, msg) => {
+  const el = qs(id);
+  if (el) el.textContent = msg || "";
+};
+
+function getRoot() {
+  return qs(CFG.appRootId) || document.body;
+}
+
+// ----------------------------
+// OVERLAY VISIBILITY (CSS-PROOF)
+// ----------------------------
 const show = (el) => {
   if (!el) return;
 
   el.classList.remove("hidden");
   el.setAttribute("aria-hidden", "false");
 
-  // Force overlays visible even if CSS got messed up
-  if (el.id === "lrAuthModal" || el.id === "lrPaywall") {
+  // Only hard-force styles for the two overlays that MUST always appear
+  if (el.id === CFG.authModalId || el.id === CFG.paywallId) {
     el.style.setProperty("position", "fixed", "important");
     el.style.setProperty("inset", "0", "important");
     el.style.setProperty("display", "flex", "important");
@@ -123,10 +135,11 @@ const show = (el) => {
     el.style.setProperty("visibility", "visible", "important");
     el.style.setProperty("opacity", "1", "important");
     el.style.setProperty("pointer-events", "auto", "important");
-    el.style.setProperty("z-index", el.id === "lrAuthModal" ? "999999" : "999998", "important");
+    el.style.setProperty("z-index", el.id === CFG.authModalId ? "999999" : "999998", "important");
   } else {
     el.style.setProperty("display", "block", "important");
     el.style.setProperty("visibility", "visible", "important");
+    el.style.setProperty("opacity", "1", "important");
   }
 };
 
@@ -142,28 +155,19 @@ const hide = (el) => {
   el.style.setProperty("visibility", "hidden", "important");
 };
 
-
-const setText = (id, msg) => {
-
-    const el = qs(id);
-    if (el) el.textContent = msg || "";
-  };
-
-  function getRoot() {
-    return qs(CFG.appRootId) || document.body;
-  }
 // ----------------------------
-// HARD LOCK SHIELD (CSS-PROOF)
+// HARD LOCK SHIELD (CLICK-PROOF)
+// Blocks all app interaction when gated,
+// while overlays remain clickable above it.
 // ----------------------------
 function ensureLockShield() {
-  let shield = document.getElementById("lrLockShield");
+  let shield = qs("lrLockShield");
   if (shield) return shield;
 
   shield = document.createElement("div");
   shield.id = "lrLockShield";
   shield.setAttribute("aria-hidden", "true");
 
-  // Blocks interaction with the app no matter what CSS did
   shield.style.setProperty("position", "fixed", "important");
   shield.style.setProperty("inset", "0", "important");
   shield.style.setProperty("display", "none", "important");
@@ -176,6 +180,7 @@ function ensureLockShield() {
   document.body.appendChild(shield);
   return shield;
 }
+
 
 // ----------------------------
 // HARD LOCK SYSTEM (SINGLE)
