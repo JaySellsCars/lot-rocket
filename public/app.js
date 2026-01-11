@@ -370,6 +370,33 @@ async function handleStripeReturnOnce() {
 async function runGate() {
   console.log("🚨 RUN GATE HIT", new Date().toISOString());
   lockApp();
+  // 🧯 FAILSAFE: if we’re locked but NO overlay is visible, force one open (prevents blur-only dead state)
+  const __visible = (el) =>
+    !!(el && !el.classList.contains("hidden") && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+
+  const __failsafe = (tag) => {
+    try {
+      const root = getRoot();
+      const locked = root?.getAttribute("data-locked") === "1";
+      if (!locked) return;
+
+      const auth = qs(CFG.authModalId);
+      const pay  = qs(CFG.paywallId);
+
+      if (__visible(auth) || __visible(pay)) return;
+
+      if (!LR_USER?.id) openAuth("Sign in to continue.");
+      else openPaywall("Subscription required.");
+
+      console.log("🧯 GATE FAILSAFE FIXED BLUR-ONLY —", tag);
+    } catch (e) {
+      console.warn("🧯 GATE FAILSAFE ERROR", e);
+    }
+  };
+
+  setTimeout(() => __failsafe("t+0"), 0);
+  setTimeout(() => __failsafe("t+400"), 400);
+  setTimeout(() => __failsafe("t+1200"), 1200);
 
   // UI-only: default hidden until PRO is confirmed
   hideManageBillingBtn();
