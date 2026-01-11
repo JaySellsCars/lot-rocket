@@ -152,6 +152,30 @@ const setText = (id, msg) => {
   function getRoot() {
     return qs(CFG.appRootId) || document.body;
   }
+// ----------------------------
+// HARD LOCK SHIELD (CSS-PROOF)
+// ----------------------------
+function ensureLockShield() {
+  let shield = document.getElementById("lrLockShield");
+  if (shield) return shield;
+
+  shield = document.createElement("div");
+  shield.id = "lrLockShield";
+  shield.setAttribute("aria-hidden", "true");
+
+  // Blocks interaction with the app no matter what CSS did
+  shield.style.setProperty("position", "fixed", "important");
+  shield.style.setProperty("inset", "0", "important");
+  shield.style.setProperty("display", "none", "important");
+  shield.style.setProperty("pointer-events", "auto", "important");
+  shield.style.setProperty("z-index", "999990", "important");
+  shield.style.setProperty("background", "rgba(0,0,0,0.15)", "important");
+  shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
+  shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
+
+  document.body.appendChild(shield);
+  return shield;
+}
 
 // ----------------------------
 // HARD LOCK SYSTEM (SINGLE)
