@@ -189,6 +189,9 @@ function lockApp() {
   // ✅ use config, not hardcoded IDs
   const shield = ensureLockShield();
   shield.style.setProperty("display", "block", "important");
+  document.documentElement.classList.add("lr-locked");
+document.body.classList.add("lr-locked");
+
 
   
   const main = qs(CFG.appRootId);
