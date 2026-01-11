@@ -250,32 +250,41 @@ function unlockApp() {
 
   getRoot().removeAttribute("data-locked");
 }
+function getAuthEl() {
+  return qs(CFG.authModalId) || qs("lrAuthModal") || qs("lrAuth");
+}
+function getPayEl() {
+  return qs(CFG.paywallId) || qs("lrPaywall");
+}
 
 // ----------------------------
 // AUTH / PAYWALL UI
 // ----------------------------
 function openAuth(msg) {
   lockApp();
-  hide(qs(CFG.paywallId));
-  show(qs(CFG.authModalId));
+  hide(getPayEl());
+  show(getAuthEl());
   if (msg) setText(CFG.authMsgId, msg);
+  console.log("🔒 LOCKED → AUTH", { authFound: !!getAuthEl(), payFound: !!getPayEl() });
 }
 
 function closeAuth() {
-  hide(qs(CFG.authModalId));
+  hide(getAuthEl());
   setText(CFG.authMsgId, "");
 }
 
 function openPaywall(msg) {
   lockApp();
   closeAuth();
-  show(qs(CFG.paywallId));
+  show(getPayEl());
   if (msg) setText(CFG.authMsgId, msg);
+  console.log("🔒 LOCKED → PAYWALL", { authFound: !!getAuthEl(), payFound: !!getPayEl() });
 }
 
 function closePaywall() {
-  hide(qs(CFG.paywallId));
+  hide(getPayEl());
 }
+
 
 // ----------------------------
 // BILLING BUTTON UI (SAFE)
