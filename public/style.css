@@ -406,6 +406,57 @@ textarea{
 .tool-button.hidden{
   display: none !important;
 }
+/* =========================
+   FLOATING TOOLS (RIGHT RAIL)
+========================= */
+
+.floating-tools {
+  position: fixed;
+  right: var(--page-right);
+  top: var(--tools-top);
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  z-index: 50;
+}
+
+.tool-button {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: .65rem 1rem;
+  min-width: 170px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #020617;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0,0,0,.45);
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.tool-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(0,0,0,.6);
+  opacity: .95;
+}
+
+.tool-button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5);
+}
+
+/* help + manage billing style */
+.tool-button.tool-help {
+  background: rgba(148,163,184,.12);
+  color: #e5e7eb;
+  border: 1px solid rgba(148,163,184,.35);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.tool-button.tool-help:hover {
+  background: rgba(148,163,184,.18);
+}
 
 /* --------------------------------- */
 
