@@ -768,8 +768,8 @@ function wirePaywallOnce() {
 })();
 
   // minimal debug
-  window.LR_CORE = { runGate, openAuth, openPaywall };
-})();
+window.LR_CORE = { runGate, openAuth, openPaywall };
+
 
 
 
