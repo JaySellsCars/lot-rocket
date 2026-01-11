@@ -159,14 +159,14 @@ const hide = (el) => {
 // HARD LOCK SHIELD (CLICK-PROOF + VISIBLE)
 // ----------------------------
 function ensureLockShield() {
-  let shield = document.getElementById("lrLockShield");
+  let shield = qs("lrLockShield");
   if (shield) return shield;
 
   shield = document.createElement("div");
   shield.id = "lrLockShield";
   shield.setAttribute("aria-hidden", "true");
 
-  // Full-screen visible gate layer
+  // Visible full-screen gate layer (so "locked" never feels "broken")
   shield.style.setProperty("position", "fixed", "important");
   shield.style.setProperty("inset", "0", "important");
   shield.style.setProperty("display", "none", "important");
@@ -176,7 +176,6 @@ function ensureLockShield() {
   shield.style.setProperty("z-index", "999990", "important");
   shield.style.setProperty("background", "rgba(0,0,0,.72)", "important");
 
-  // Visible message box (so “locked” never feels like “broken”)
   shield.innerHTML = `
     <div style="width:min(560px,92vw);background:#0b1020;border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:18px;box-shadow:0 24px 90px rgba(0,0,0,.55);">
       <div style="font-weight:800;font-size:18px;margin-bottom:6px;">🔒 Lot Rocket is a Paid App</div>
@@ -192,7 +191,6 @@ function ensureLockShield() {
 
   document.body.appendChild(shield);
 
-  // Buttons (safe)
   shield.querySelector("#lrShieldSignIn").addEventListener("click", () => {
     try { openAuth("Sign in to continue."); } catch {}
   });
