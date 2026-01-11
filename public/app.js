@@ -212,7 +212,8 @@ function ensureLockShield() {
 function lockApp() {
   // ✅ use config, not hardcoded IDs
   const shield = ensureLockShield();
-  shield.style.setProperty("display", "block", "important");
+shield.style.setProperty("display", "flex", "important");
+
   document.documentElement.classList.add("lr-locked");
 document.body.classList.add("lr-locked");
 
