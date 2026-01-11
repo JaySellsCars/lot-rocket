@@ -746,9 +746,9 @@ function wirePaywallOnce() {
 
 
 
-  // ----------------------------
-  // BOOT
-  // ----------------------------
+// ----------------------------
+// BOOT
+// ----------------------------
 (async function boot() {
   try {
     await handleStripeReturnOnce();
@@ -761,8 +761,13 @@ function wirePaywallOnce() {
   }
 })();
 
-  // minimal debug
+// minimal debug
 window.LR_CORE = { runGate, openAuth, openPaywall };
+
+// ✅ CLOSES the earlier `(() => {` wrapper that starts ~line 72
+})();
+
+
 
 
 
