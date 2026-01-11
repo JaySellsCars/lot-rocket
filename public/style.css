@@ -355,15 +355,16 @@ textarea{
 /* ---------------------------------
    FLOATING TOOLS (ONE DIAL)
 ---------------------------------- */
-.floating-tools{
-  position:fixed;
-  right:18px;
-  top:var(--tools-top);
-  display:flex;
-  flex-direction:column;
-  gap:.6rem;
-  z-index:99999;
+.floating-tools {
+  position: fixed;
+  right: var(--page-right);
+  top: var(--tools-top);
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  z-index: 50;
 }
+
 .tool-button{
   padding:.55rem 1rem;
   border-radius:12px;
