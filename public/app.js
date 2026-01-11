@@ -266,17 +266,18 @@ document.body.classList.remove("lr-locked");
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
 
-  if (main) {
-    main.style.filter = "";
-    main.style.pointerEvents = "auto";
-    main.style.userSelect = "";
-  }
+if (main) {
+  main.style.removeProperty("filter");
+  main.style.removeProperty("pointer-events");
+  main.style.removeProperty("user-select");
+}
 
-  if (wire) {
-    wire.style.filter = "";
-    wire.style.pointerEvents = "auto";
-    wire.style.userSelect = "";
-  }
+if (wire) {
+  wire.style.removeProperty("filter");
+  wire.style.removeProperty("pointer-events");
+  wire.style.removeProperty("user-select");
+}
+
 
   getRoot().removeAttribute("data-locked");
 }
