@@ -202,14 +202,17 @@ shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
   document.body.appendChild(shield);
 
   // SAFE bind (never crash)
-  const b1 = shield.querySelector("#lrShieldSignIn");
-  if (b1) b1.addEventListener("click", () => { try { openAuth("Sign in to continue."); } catch {} });
+const b1 = shield.querySelector("#lrShieldSignIn");
+if (b1) b1.addEventListener("click", () => {
+  const openBtn = document.getElementById("lrUserChip");
+  if (openBtn) openBtn.click();
+});
 
-  const b2 = shield.querySelector("#lrShieldSubscribe");
-  if (b2) b2.addEventListener("click", () => { try { openPaywall("Subscription required."); } catch {} });
-
-  return shield;
-}
+const b2 = shield.querySelector("#lrShieldSubscribe");
+if (b2) b2.addEventListener("click", () => {
+  const subBtn = document.getElementById("lrSubscribeNow");
+  if (subBtn) subBtn.click();
+});
 
 
 
