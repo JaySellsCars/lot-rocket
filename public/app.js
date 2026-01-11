@@ -2391,7 +2391,8 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
       const step3 = $("creativeHub");
       if (step3) step3.scrollIntoView({ behavior: "smooth" });
     });
-  })();
+
+  // (do not close here)  // removed: })();
 
   // ==================================================
   // HEALTH CHECK
