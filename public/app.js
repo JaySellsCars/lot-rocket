@@ -166,7 +166,6 @@ function ensureLockShield() {
   shield.id = "lrLockShield";
   shield.setAttribute("aria-hidden", "true");
 
-  // Visible full-screen gate layer (so "locked" never feels "broken")
   shield.style.setProperty("position", "fixed", "important");
   shield.style.setProperty("inset", "0", "important");
   shield.style.setProperty("display", "none", "important");
@@ -191,16 +190,16 @@ function ensureLockShield() {
 
   document.body.appendChild(shield);
 
-  shield.querySelector("#lrShieldSignIn").addEventListener("click", () => {
-    try { openAuth("Sign in to continue."); } catch {}
-  });
+  // SAFE bind (never crash)
+  const b1 = shield.querySelector("#lrShieldSignIn");
+  if (b1) b1.addEventListener("click", () => { try { openAuth("Sign in to continue."); } catch {} });
 
-  shield.querySelector("#lrShieldSubscribe").addEventListener("click", () => {
-    try { openPaywall("Subscription required."); } catch {}
-  });
+  const b2 = shield.querySelector("#lrShieldSubscribe");
+  if (b2) b2.addEventListener("click", () => { try { openPaywall("Subscription required."); } catch {} });
 
   return shield;
 }
+
 
 
 
