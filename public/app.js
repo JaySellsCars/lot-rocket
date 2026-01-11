@@ -226,17 +226,18 @@ document.body.classList.add("lr-locked");
   const payOpen  = !!(pay  && !pay.classList.contains("hidden"));
 
   // Always lock the app canvas + tools when gated
-  if (main) {
-    main.style.filter = "blur(6px)";
-    main.style.pointerEvents = "none";
-    main.style.userSelect = "none";
-  }
+if (main) {
+  main.style.setProperty("filter", "blur(6px)", "important");
+  main.style.setProperty("pointer-events", "none", "important");
+  main.style.setProperty("user-select", "none", "important");
+}
 
-  if (wire) {
-    wire.style.filter = "blur(6px)";
-    wire.style.pointerEvents = "none";
-    wire.style.userSelect = "none";
-  }
+if (wire) {
+  wire.style.setProperty("filter", "blur(6px)", "important");
+  wire.style.setProperty("pointer-events", "none", "important");
+  wire.style.setProperty("user-select", "none", "important");
+}
+
 
   // But ALWAYS allow modal interactivity when they are shown
   if (authOpen && auth) {
