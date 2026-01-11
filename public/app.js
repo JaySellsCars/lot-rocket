@@ -486,11 +486,17 @@ console.log("🧾 GATE DECISION", {
 });
 
   // 🔒 NOT PRO (locked path)
-  if (error || !data?.is_pro) {
-    hideManageBillingBtn(); // UI-only
-    openPaywall("Subscription required.");
-    return;
-  }
+if (error || !data?.is_pro) {
+  LR_IS_PRO = false;
+  hideManageBillingBtn();
+  openPaywall("Subscription required.");
+
+  // hard guarantee: stay locked
+  lockApp();
+  console.log("🔒 GATE LOCKED (NOT PAID)");
+  return;
+}
+
 
   // ✅ PRO USER
   closePaywall();
