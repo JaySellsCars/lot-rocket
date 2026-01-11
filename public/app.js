@@ -2481,50 +2481,70 @@ function wirePaywallOnce() {
     });
   }
 
-  // ==================================================
-  // FINAL INIT
-  // ==================================================
-  wireSocialNav();
-  wireZipButton();
-  renderSocialStrip();
-  wireAiFollowups();
+// ==================================================
+// FINAL INIT (LOT ROCKET LAUNCH BLOCK)
+// ==================================================
+wireSocialNav();
+wireZipButton();
+renderSocialStrip();
+wireAiFollowups();
 
-  (function initToolsOnce() {
-    if (window.__LR_TOOLS_INIT__) return;
-    window.__LR_TOOLS_INIT__ = true;
+// ===============================
+// TOOLS (RUN ONCE)
+// ===============================
+(function initToolsOnce() {
+  if (window.__LR_TOOLS_INIT__) return;
+  window.__LR_TOOLS_INIT__ = true;
 
-    if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
-      window.LR_TOOLS.closeAll();
-    }
+  if (window.LR_TOOLS && typeof window.LR_TOOLS.closeAll === "function") {
+    window.LR_TOOLS.closeAll();
+  }
 
-    wirePaymentCalculator();
-    wireIncomeCalcDirect();
-  })();
-
-  // ==================================================
-  // PREVENT EMAIL AUTOFILL INTO PRICE FIELD
-  // ==================================================
-  (function preventEmailAutofillInPriceBox() {
-    const priceEl = document.getElementById("priceOfferInput");
-    if (!priceEl) return;
-
-    const looksLikeEmail = (v) =>
-      /@/.test(String(v || "")) && /\./.test(String(v || ""));
-
-    // clear immediately if browser injected email
-    if (looksLikeEmail(priceEl.value)) priceEl.value = "";
-
-    // clear on focus
-    priceEl.addEventListener("focus", () => {
-      if (looksLikeEmail(priceEl.value)) priceEl.value = "";
-    });
-
-    // clear on any input
-    priceEl.addEventListener("input", () => {
-      if (looksLikeEmail(priceEl.value)) priceEl.value = "";
-    });
-  })();
-
-  console.log("✅ APP READY");
+  wirePaymentCalculator();
+  wireIncomeCalcDirect();
 })();
+
+// ===============================
+// LOG OUT BUTTON
+// ===============================
+const logoutBtn = document.getElementById("lrLogoutBtn");
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await SB.auth.signOut();
+    } catch (e) {
+      console.warn("Logout error:", e);
+    }
+    location.reload();
+  });
+}
+
+// ===============================
+// PREVENT EMAIL AUTOFILL INTO PRICE FIELD
+// ===============================
+(function preventEmailAutofillInPriceBox() {
+  const priceEl = document.getElementById("priceOfferInput");
+  if (!priceEl) return;
+
+  const looksLikeEmail = (v) =>
+    /@/.test(String(v || "")) && /\./.test(String(v || ""));
+
+  // clear immediately if browser injected email
+  if (looksLikeEmail(priceEl.value)) priceEl.value = "";
+
+  // clear on focus
+  priceEl.addEventListener("focus", () => {
+    if (looksLikeEmail(priceEl.value)) priceEl.value = "";
+  });
+
+  // clear on any input
+  priceEl.addEventListener("input", () => {
+    if (looksLikeEmail(priceEl.value)) priceEl.value = "";
+  });
+})();
+
+console.log("✅ APP READY");
+})();
+
 
