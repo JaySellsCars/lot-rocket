@@ -104,18 +104,39 @@ const qs = (id) => document.getElementById(id);
 
 const show = (el) => {
   if (!el) return;
+
   el.classList.remove("hidden");
-  if (el.id === "lrAuthModal" || el.id === "lrPaywall") el.style.display = "flex";
-  el.style.visibility = "visible";
   el.setAttribute("aria-hidden", "false");
+
+  // Force overlays visible even if CSS got messed up
+  if (el.id === "lrAuthModal" || el.id === "lrPaywall") {
+    el.style.setProperty("position", "fixed", "important");
+    el.style.setProperty("inset", "0", "important");
+    el.style.setProperty("display", "flex", "important");
+    el.style.setProperty("align-items", "center", "important");
+    el.style.setProperty("justify-content", "center", "important");
+    el.style.setProperty("visibility", "visible", "important");
+    el.style.setProperty("opacity", "1", "important");
+    el.style.setProperty("pointer-events", "auto", "important");
+    el.style.setProperty("z-index", el.id === "lrAuthModal" ? "999999" : "999998", "important");
+  } else {
+    el.style.setProperty("display", "block", "important");
+    el.style.setProperty("visibility", "visible", "important");
+  }
 };
 
 const hide = (el) => {
   if (!el) return;
+
   el.classList.add("hidden");
-  el.style.display = "none";
   el.setAttribute("aria-hidden", "true");
+
+  // Hard hide (CSS-proof)
+  el.style.setProperty("display", "none", "important");
+  el.style.setProperty("opacity", "0", "important");
+  el.style.setProperty("visibility", "hidden", "important");
 };
+
 
 const setText = (id, msg) => {
 
