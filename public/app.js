@@ -156,30 +156,54 @@ const hide = (el) => {
 };
 
 // ----------------------------
-// HARD LOCK SHIELD (CLICK-PROOF)
-// Blocks all app interaction when gated,
-// while overlays remain clickable above it.
+// HARD LOCK SHIELD (CLICK-PROOF + VISIBLE)
 // ----------------------------
 function ensureLockShield() {
-  let shield = qs("lrLockShield");
+  let shield = document.getElementById("lrLockShield");
   if (shield) return shield;
 
   shield = document.createElement("div");
   shield.id = "lrLockShield";
   shield.setAttribute("aria-hidden", "true");
 
+  // Full-screen visible gate layer
   shield.style.setProperty("position", "fixed", "important");
   shield.style.setProperty("inset", "0", "important");
   shield.style.setProperty("display", "none", "important");
+  shield.style.setProperty("align-items", "center", "important");
+  shield.style.setProperty("justify-content", "center", "important");
   shield.style.setProperty("pointer-events", "auto", "important");
   shield.style.setProperty("z-index", "999990", "important");
-  shield.style.setProperty("background", "rgba(0,0,0,0.15)", "important");
-  shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
-  shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
+  shield.style.setProperty("background", "rgba(0,0,0,.72)", "important");
+
+  // Visible message box (so “locked” never feels like “broken”)
+  shield.innerHTML = `
+    <div style="width:min(560px,92vw);background:#0b1020;border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:18px;box-shadow:0 24px 90px rgba(0,0,0,.55);">
+      <div style="font-weight:800;font-size:18px;margin-bottom:6px;">🔒 Lot Rocket is a Paid App</div>
+      <div style="opacity:.92;line-height:1.35;margin-bottom:14px;" id="lrLockShieldMsg">
+        Sign in, then subscribe to unlock access.
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" id="lrShieldSignIn">Sign in</button>
+        <button type="button" id="lrShieldSubscribe">Subscribe</button>
+      </div>
+    </div>
+  `;
 
   document.body.appendChild(shield);
+
+  // Buttons (safe)
+  shield.querySelector("#lrShieldSignIn").addEventListener("click", () => {
+    try { openAuth("Sign in to continue."); } catch {}
+  });
+
+  shield.querySelector("#lrShieldSubscribe").addEventListener("click", () => {
+    try { openPaywall("Subscription required."); } catch {}
+  });
+
   return shield;
 }
+
 
 
 // ----------------------------
