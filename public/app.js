@@ -50,10 +50,11 @@ style.textContent = `
   }
 
   #lrAuthModal { z-index: 999999 !important; }
-  #lrPaywall  { z-index: 999998 !important; }
+  #lrPaywall { z-index: 999998 !important; }
 
   #lrAuthModal *, #lrPaywall * { pointer-events: auto !important; }
 `;
+
 
 
 /* =========================================================
