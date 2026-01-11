@@ -296,9 +296,12 @@ function openAuth(msg) {
 }
 
 function closeAuth() {
+  // Never allow closing auth while NOT logged in (prevents "dead app" feel)
+  if (!LR_USER?.id) return;
   hide(getAuthEl());
   setText(CFG.authMsgId, "");
 }
+
 
 function openPaywall(msg) {
   lockApp();
