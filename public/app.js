@@ -2394,14 +2394,16 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
 
   // (do not close here)  // removed: })();
 
-  // ==================================================
-  // HEALTH CHECK
-  // ==================================================
-  try {
-    const res = await fetch("/api/health", { cache: "no-store" });
-    const json = await res.json();
-    console.log("✅ API HEALTH:", json);
-  } catch {}
+// ==================================================
+// HEALTH CHECK
+// ==================================================
+try {
+  fetch("/api/health", { cache: "no-store" })
+    .then((r) => r.json())
+    .then((j) => console.log("✅ API HEALTH:", j))
+    .catch(() => {});
+} catch {}
+
 
   // ==================================================
   // BOOST (Step 1) → photos + vehicle + Step 2 AI
