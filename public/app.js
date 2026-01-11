@@ -262,35 +262,33 @@ if (wire) {
 function unlockApp() {
   // ✅ use config, not hardcoded IDs
   document.documentElement.classList.remove("lr-locked");
-document.body.classList.remove("lr-locked");
+  document.body.classList.remove("lr-locked");
 
-   const shield = document.getElementById("lrLockShield");
-const shield = document.getElementById("lrLockShield");
-if (shield) {
-  shield.style.setProperty("display", "none", "important");
-  shield.style.setProperty("opacity", "0", "important");
-  shield.style.setProperty("visibility", "hidden", "important");
-}
+  const shield = document.getElementById("lrLockShield");
+  if (shield) {
+    shield.style.setProperty("display", "none", "important");
+    shield.style.setProperty("opacity", "0", "important");
+    shield.style.setProperty("visibility", "hidden", "important");
+  }
 
- 
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
 
-if (main) {
-  main.style.removeProperty("filter");
-  main.style.removeProperty("pointer-events");
-  main.style.removeProperty("user-select");
-}
+  if (main) {
+    main.style.removeProperty("filter");
+    main.style.removeProperty("pointer-events");
+    main.style.removeProperty("user-select");
+  }
 
-if (wire) {
-  wire.style.removeProperty("filter");
-  wire.style.removeProperty("pointer-events");
-  wire.style.removeProperty("user-select");
-}
-
+  if (wire) {
+    wire.style.removeProperty("filter");
+    wire.style.removeProperty("pointer-events");
+    wire.style.removeProperty("user-select");
+  }
 
   getRoot().removeAttribute("data-locked");
 }
+
 function getAuthEl() {
   return qs(CFG.authModalId) || qs("lrAuthModal") || qs("lrAuth");
 }
