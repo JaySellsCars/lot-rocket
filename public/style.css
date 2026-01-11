@@ -694,7 +694,6 @@ textarea{
 #lrAuthModal.hidden,
 #lrAuth.hidden{ display:none !important; }
 
-/* keep the auth box clickable/visible */
 #lrAuthModal .box,
 #lrAuth .box{
   width:min(560px, 92vw);
@@ -704,6 +703,7 @@ textarea{
   padding:18px;
   box-shadow:0 24px 90px rgba(0,0,0,.55);
 }
+
 
 /* ---------------------------------
    PAYWALL (matches #lrPaywall + .lr-paywall-box)
