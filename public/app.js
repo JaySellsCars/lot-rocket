@@ -29,32 +29,40 @@ console.log("🚨 RUN GATE HIT", new Date().toISOString());
 
   await domReady();
 
-  // ==================================================
+ // ==================================================
   // Auth modal click fix (IMPORTANT)
   // - Your core uses authModalId: "lrAuthModal"
   // - So we must target #lrAuthModal (NOT #lrAuth)
   // ==================================================
-style.textContent = `
-  /* overlays must win against broken CSS */
-  #lrAuthModal.hidden, #lrPaywall.hidden { display:none !important; }
+(function allowAuthModalClicksEvenWhenLocked() {
+  if (document.getElementById("lr-auth-click-fix")) return;
 
-  #lrAuthModal, #lrPaywall {
-    position: fixed !important;
-    inset: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-  }
+  const style = document.createElement("style");
+  style.id = "lr-auth-click-fix";
 
-  #lrAuthModal { z-index: 999999 !important; }
-  #lrPaywall { z-index: 999998 !important; }
+  style.textContent = `
+    /* overlays must win against broken CSS */
+    #lrAuthModal.hidden, #lrPaywall.hidden { display:none !important; }
 
-  #lrAuthModal *, #lrPaywall * { pointer-events: auto !important; }
-`;
+    #lrAuthModal, #lrPaywall {
+      position: fixed !important;
+      inset: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
 
+    #lrAuthModal { z-index: 999999 !important; }
+    #lrPaywall { z-index: 999998 !important; }
+
+    #lrAuthModal *, #lrPaywall * { pointer-events: auto !important; }
+  `;
+
+  document.head.appendChild(style);
+})();
 
 
 /* =========================================================
