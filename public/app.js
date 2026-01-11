@@ -183,8 +183,8 @@ function ensureLockShield() {
   shield.style.setProperty("pointer-events", "auto", "important");
   shield.style.setProperty("z-index", "999990", "important");
   shield.style.setProperty("background", "rgba(0,0,0,.72)", "important");
-shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
-shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
+  shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
+  shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
 
   shield.innerHTML = `
     <div style="width:min(560px,92vw);background:#0b1020;border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:18px;box-shadow:0 24px 90px rgba(0,0,0,.55);">
@@ -199,15 +199,15 @@ shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
     </div>
   `;
 
-document.body.appendChild(shield);
+  document.body.appendChild(shield);
 
-// SAFE bind (never crash)
-const b1 = shield.querySelector("#lrShieldSignIn");
-const b2 = shield.querySelector("#lrShieldSubscribe");
-if (b1) b1.addEventListener("click", () => openAuth("Sign in to continue."));
-if (b2) b2.addEventListener("click", () => openPaywall("Subscribe to unlock."));
+  // SAFE bind (never crash)
+  const b1 = shield.querySelector("#lrShieldSignIn");
+  const b2 = shield.querySelector("#lrShieldSubscribe");
+  if (b1) b1.addEventListener("click", () => openAuth("Sign in to continue."));
+  if (b2) b2.addEventListener("click", () => openPaywall("Subscribe to unlock."));
 
-return shield;
+  return shield;
 } // ✅ CLOSE ensureLockShield()
 
 //==================================================
@@ -217,16 +217,14 @@ return shield;
 function lockApp() {
   // ✅ use config, not hardcoded IDs
   const shield = ensureLockShield();
-shield.style.setProperty("display", "flex", "important");
-shield.style.setProperty("visibility", "visible", "important");
-shield.style.setProperty("opacity", "1", "important");
-shield.style.setProperty("pointer-events", "auto", "important");
+  shield.style.setProperty("display", "flex", "important");
+  shield.style.setProperty("visibility", "visible", "important");
+  shield.style.setProperty("opacity", "1", "important");
+  shield.style.setProperty("pointer-events", "auto", "important");
 
-document.documentElement.classList.add("lr-locked");
-document.body.classList.add("lr-locked");
+  document.documentElement.classList.add("lr-locked");
+  document.body.classList.add("lr-locked");
 
-
-  
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
   const auth = qs(CFG.authModalId);
@@ -236,18 +234,17 @@ document.body.classList.add("lr-locked");
   const payOpen  = !!(pay  && !pay.classList.contains("hidden"));
 
   // Always lock the app canvas + tools when gated
-if (main) {
-  main.style.setProperty("filter", "blur(6px)", "important");
-  main.style.setProperty("pointer-events", "none", "important");
-  main.style.setProperty("user-select", "none", "important");
-}
+  if (main) {
+    main.style.setProperty("filter", "blur(6px)", "important");
+    main.style.setProperty("pointer-events", "none", "important");
+    main.style.setProperty("user-select", "none", "important");
+  }
 
-if (wire) {
-  wire.style.setProperty("filter", "blur(6px)", "important");
-  wire.style.setProperty("pointer-events", "none", "important");
-  wire.style.setProperty("user-select", "none", "important");
-}
-
+  if (wire) {
+    wire.style.setProperty("filter", "blur(6px)", "important");
+    wire.style.setProperty("pointer-events", "none", "important");
+    wire.style.setProperty("user-select", "none", "important");
+  }
 
   // But ALWAYS allow modal interactivity when they are shown
   if (authOpen && auth) {
@@ -318,8 +315,6 @@ function closeAuth() {
   hide(qs(CFG.authModalId));
   setText(CFG.authMsgId, "");
 }
-
-
 
 function openPaywall(msg) {
   lockApp();
@@ -535,25 +530,24 @@ async function runGate() {
     .select("is_pro")
     .eq("id", LR_USER.id)
     .maybeSingle();
-console.log("🧾 GATE DECISION", {
-  user: LR_USER?.id,
-  email: LR_USER?.email,
-  is_pro: !!data?.is_pro,
-  error: error?.message || null,
-});
+  console.log("🧾 GATE DECISION", {
+    user: LR_USER?.id,
+    email: LR_USER?.email,
+    is_pro: !!data?.is_pro,
+    error: error?.message || null,
+  });
 
   // 🔒 NOT PRO (locked path)
-if (error || !data?.is_pro) {
-  LR_IS_PRO = false;
-  hideManageBillingBtn();
-  openPaywall("Subscription required.");
+  if (error || !data?.is_pro) {
+    LR_IS_PRO = false;
+    hideManageBillingBtn();
+    openPaywall("Subscription required.");
 
-  // hard guarantee: stay locked
-  lockApp();
-  console.log("🔒 GATE LOCKED (NOT PAID)");
-  return;
-}
-
+    // hard guarantee: stay locked
+    lockApp();
+    console.log("🔒 GATE LOCKED (NOT PAID)");
+    return;
+  }
 
   // ✅ PRO USER
   closePaywall();
@@ -580,11 +574,11 @@ function wireAuthOnce() {
   const signupBtn = qs(CFG.signupBtnId);
   const logoutBtn = qs(CFG.logoutBtnId);
   const openBtn = qs(CFG.openAuthBtnId);
-const authClose = qs("lrAuthClose");
-if (authClose && !authClose.__LR_BOUND__) {
-  authClose.__LR_BOUND__ = true;
-  authClose.addEventListener("click", closeAuth);
-}
+  const authClose = qs("lrAuthClose");
+  if (authClose && !authClose.__LR_BOUND__) {
+    authClose.__LR_BOUND__ = true;
+    authClose.addEventListener("click", closeAuth);
+  }
 
   async function goStripeCheckout(userId) {
     // POST -> /api/stripe/checkout with userId, then redirect to returned url
@@ -711,16 +705,31 @@ if (authClose && !authClose.__LR_BOUND__) {
   }
 }
 const billBtn = document.getElementById("lrManageBilling");
-if (billBtn) billBtn.addEventListener("click", openBillingPortal);
+if (billBtn && !billBtn.__LR_BOUND__) {
+  billBtn.__LR_BOUND__ = true;
+  billBtn.addEventListener("click", openBillingPortal);
+}
 
 // ----------------------------
 // 💳 PAYWALL / UPGRADE → STRIPE CHECKOUT
 // ----------------------------
-
 function wirePaywallOnce() {
   const btn = qs(CFG.upgradeBtnId);
+  const closeBtn = qs(CFG.closePaywallBtnId);
 
-  btn &&
+  if (closeBtn && !closeBtn.__LR_BOUND__) {
+    closeBtn.__LR_BOUND__ = true;
+    closeBtn.addEventListener("click", () => {
+      closePaywall();
+      // keep the app locked; shield remains available
+      lockApp();
+      // if not logged in, show auth
+      if (!LR_USER?.id) openAuth("Sign in to continue.");
+    });
+  }
+
+  if (btn && !btn.__LR_BOUND__) {
+    btn.__LR_BOUND__ = true;
     btn.addEventListener("click", async () => {
       await initSupabaseOnce();
       const { data } = await SB.auth.getSession();
@@ -743,6 +752,8 @@ function wirePaywallOnce() {
         console.error(e);
       }
     });
+  }
+}
 
 
 
@@ -2716,5 +2727,3 @@ if (logoutBtn) {
 
 console.log("✅ APP READY");
 })();
-
-
