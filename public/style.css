@@ -739,9 +739,15 @@ textarea{
 /* ---------------------------------
    LOCK BLUR (only app content; modals still clickable)
 ---------------------------------- */
+.lr-locked #appMain,
 .lr-locked #app,
 .lr-locked #appRoot,
 .lr-locked main{
+  pointer-events:none !important;
+  user-select:none !important;
+  filter:blur(6px);
+}
+
   pointer-events:none !important;
   user-select:none !important;
   filter:blur(6px);
