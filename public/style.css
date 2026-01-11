@@ -677,6 +677,33 @@ textarea{
   font-size:13px;
   opacity:.95;
 }
+/* ---------------------------------
+   AUTH MODAL (supports #lrAuthModal OR legacy #lrAuth)
+---------------------------------- */
+#lrAuthModal,
+#lrAuth{
+  position:fixed;
+  inset:0;
+  z-index:1000000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.72);
+  pointer-events:auto;
+}
+#lrAuthModal.hidden,
+#lrAuth.hidden{ display:none !important; }
+
+/* keep the auth box clickable/visible */
+#lrAuthModal .box,
+#lrAuth .box{
+  width:min(560px, 92vw);
+  background:#0b1020;
+  border:1px solid rgba(148,163,184,.35);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 24px 90px rgba(0,0,0,.55);
+}
 
 /* ---------------------------------
    PAYWALL (matches #lrPaywall + .lr-paywall-box)
