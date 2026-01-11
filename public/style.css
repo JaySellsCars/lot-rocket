@@ -1058,5 +1058,50 @@ html.lr-locked, body.lr-locked { pointer-events: auto !important; }
   pointer-events: auto !important;
   transform: none !important;
 }
+/* =========================
+   HARD OVERRIDE: TOOL RAIL
+   (paste at VERY BOTTOM)
+========================= */
+
+#toolWire.floating-tools{
+  position: fixed !important;
+  right: var(--page-right) !important;
+  left: auto !important;
+  top: var(--tools-top) !important;
+  width: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: .6rem !important;
+  z-index: 999 !important;
+}
+
+#toolWire.floating-tools .tool-button{
+  width: auto !important;
+  min-width: 220px !important;
+  max-width: 260px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: .55rem 1rem !important;
+  border-radius: 12px !important;
+  border: none !important;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2)) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,.35) !important;
+}
+
+#toolWire.floating-tools .tool-button.tool-help{
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+}
+
+#toolWire.floating-tools .tool-button.hidden{
+  display: none !important;
+}
 
 
