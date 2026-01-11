@@ -749,7 +749,7 @@ function wirePaywallOnce() {
         console.error(e);
       }
     });
-}
+
 
 
   // ----------------------------
