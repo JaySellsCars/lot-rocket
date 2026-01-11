@@ -478,6 +478,12 @@ async function runGate() {
     .select("is_pro")
     .eq("id", LR_USER.id)
     .maybeSingle();
+console.log("🧾 GATE DECISION", {
+  user: LR_USER?.id,
+  email: LR_USER?.email,
+  is_pro: !!data?.is_pro,
+  error: error?.message || null,
+});
 
   // 🔒 NOT PRO (locked path)
   if (error || !data?.is_pro) {
