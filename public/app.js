@@ -265,7 +265,13 @@ function unlockApp() {
 document.body.classList.remove("lr-locked");
 
    const shield = document.getElementById("lrLockShield");
-  if (shield) shield.style.setProperty("display", "none", "important");
+const shield = document.getElementById("lrLockShield");
+if (shield) {
+  shield.style.setProperty("display", "none", "important");
+  shield.style.setProperty("opacity", "0", "important");
+  shield.style.setProperty("visibility", "hidden", "important");
+}
+
  
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
