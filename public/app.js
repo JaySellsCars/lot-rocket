@@ -182,6 +182,10 @@ function ensureLockShield() {
 // ----------------------------
 function lockApp() {
   // ✅ use config, not hardcoded IDs
+  const shield = ensureLockShield();
+  shield.style.setProperty("display", "block", "important");
+
+  
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
   const auth = qs(CFG.authModalId);
@@ -221,6 +225,9 @@ function lockApp() {
 
 function unlockApp() {
   // ✅ use config, not hardcoded IDs
+   const shield = document.getElementById("lrLockShield");
+  if (shield) shield.style.setProperty("display", "none", "important");
+ 
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
 
