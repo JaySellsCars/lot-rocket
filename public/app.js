@@ -799,6 +799,7 @@ function wirePaywallOnce() {
 
 // minimal debug
 window.LR_CORE = { runGate, openAuth, openPaywall };
+})(); // ONLY if you started a wrapper earlier like: (() => {
 
 
 
