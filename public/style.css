@@ -736,6 +736,7 @@ textarea{
   margin-top:14px;
 }
 
+
 /* ---------------------------------
    LOCK BLUR (only app content; modals still clickable)
 ---------------------------------- */
@@ -748,17 +749,16 @@ textarea{
   filter:blur(6px);
 }
 
-  pointer-events:none !important;
-  user-select:none !important;
-  filter:blur(6px);
-}
-
 /* Ensure overlays are never blurred/blocked */
 .lr-modal,
-#lrPaywall{
+#lrAuthModal,
+#lrAuth,
+#lrPaywall,
+#lrLockShield{
   filter:none !important;
   pointer-events:auto !important;
 }
+
 
 /* ---------------------------------
    FUTURE FEATURES (you wanted hidden)
