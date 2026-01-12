@@ -128,6 +128,26 @@ function getRoot() {
 // ----------------------------
 // OVERLAY VISIBILITY (CSS-PROOF)
 // ----------------------------
+const __lrTopOverlay = (el, z) => {
+  if (!el) return;
+  el.classList.remove("hidden");
+  el.setAttribute("aria-hidden", "false");
+  el.style.setProperty("position", "fixed", "important");
+  el.style.setProperty("inset", "0", "important");
+  el.style.setProperty("display", "flex", "important");
+  el.style.setProperty("align-items", "center", "important");
+  el.style.setProperty("justify-content", "center", "important");
+  el.style.setProperty("visibility", "visible", "important");
+  el.style.setProperty("opacity", "1", "important");
+  el.style.setProperty("pointer-events", "auto", "important");
+  el.style.setProperty("z-index", String(z), "important");
+};
+
+const __lrHideShield = () => {
+  const s = qs("lrLockShield");
+  if (s) s.style.setProperty("display", "none", "important");
+};
+
 const show = (el) => {
   if (!el) return;
 
@@ -136,15 +156,7 @@ const show = (el) => {
 
   // Only hard-force styles for the two overlays that MUST always appear
   if (el.id === CFG.authModalId || el.id === CFG.paywallId) {
-    el.style.setProperty("position", "fixed", "important");
-    el.style.setProperty("inset", "0", "important");
-    el.style.setProperty("display", "flex", "important");
-    el.style.setProperty("align-items", "center", "important");
-    el.style.setProperty("justify-content", "center", "important");
-    el.style.setProperty("visibility", "visible", "important");
-    el.style.setProperty("opacity", "1", "important");
-    el.style.setProperty("pointer-events", "auto", "important");
-    el.style.setProperty("z-index", el.id === CFG.authModalId ? "999999" : "999998", "important");
+    __lrTopOverlay(el, el.id === CFG.authModalId ? 999999 : 999998);
   } else {
     el.style.setProperty("display", "block", "important");
     el.style.setProperty("visibility", "visible", "important");
@@ -217,18 +229,14 @@ function ensureLockShield() {
 function lockApp() {
   // ✅ use config, not hardcoded IDs
   const shield = ensureLockShield();
-  shield.style.setProperty("display", "flex", "important");
-  shield.style.setProperty("visibility", "visible", "important");
-  shield.style.setProperty("opacity", "1", "important");
-  shield.style.setProperty("pointer-events", "auto", "important");
 
   document.documentElement.classList.add("lr-locked");
   document.body.classList.add("lr-locked");
 
   const main = qs(CFG.appRootId);
   const wire = qs("toolWire");
-  const auth = qs(CFG.authModalId);
-  const pay  = qs(CFG.paywallId);
+  const auth = getAuthEl();
+  const pay  = getPayEl();
 
   const authOpen = !!(auth && !auth.classList.contains("hidden"));
   const payOpen  = !!(pay  && !pay.classList.contains("hidden"));
@@ -244,6 +252,17 @@ function lockApp() {
     wire.style.setProperty("filter", "blur(6px)", "important");
     wire.style.setProperty("pointer-events", "none", "important");
     wire.style.setProperty("user-select", "none", "important");
+  }
+
+  // If an overlay is open, shield must be hidden (it blocks the modal)
+  if (authOpen || payOpen) {
+    __lrHideShield();
+  } else {
+    shield.style.setProperty("display", "flex", "important");
+    shield.style.setProperty("visibility", "visible", "important");
+    shield.style.setProperty("opacity", "1", "important");
+    shield.style.setProperty("pointer-events", "auto", "important");
+    shield.style.setProperty("z-index", "999990", "important");
   }
 
   // But ALWAYS allow modal interactivity when they are shown
@@ -304,8 +323,9 @@ function getPayEl() {
 // ----------------------------
 function openAuth(msg) {
   lockApp();
+  __lrHideShield();
   hide(getPayEl());
-  show(getAuthEl());
+  __lrTopOverlay(getAuthEl(), 999999);
   if (msg) setText(CFG.authMsgId, msg);
   console.log("🔒 LOCKED → AUTH", { authFound: !!getAuthEl(), payFound: !!getPayEl() });
 }
@@ -318,8 +338,9 @@ function closeAuth() {
 
 function openPaywall(msg) {
   lockApp();
+  __lrHideShield();
   closeAuth();
-  show(getPayEl());
+  __lrTopOverlay(getPayEl(), 999998);
   if (msg) setText(CFG.authMsgId, msg);
   console.log("🔒 LOCKED → PAYWALL", { authFound: !!getAuthEl(), payFound: !!getPayEl() });
 }
@@ -403,6 +424,7 @@ async function ensureProfileRow() {
 // ===============================
 // STRIPE CUSTOMER PORTAL (MANAGE BILLING)
 // ===============================
+
 async function openBillingPortal() {
   try {
     if (!SB) return alert("Auth not ready.");
