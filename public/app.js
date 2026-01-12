@@ -505,8 +505,11 @@ async function handleStripeReturnOnce() {
 // ----------------------------
 async function runGate() {
   console.log("🚨 RUN GATE HIT", new Date().toISOString());
+
+  // lock first (shield/blur)
   lockApp();
-  // 🧯 FAILSAFE: if we’re locked but NO overlay is visible, force one open (prevents blur-only dead state)
+
+  // 🧯 FAILSAFE: if we’re locked but NO overlay is visible, force one open
   const __visible = (el) =>
     !!(el && !el.classList.contains("hidden") && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
 
@@ -516,8 +519,8 @@ async function runGate() {
       const locked = root?.getAttribute("data-locked") === "1";
       if (!locked) return;
 
-      const auth = qs(CFG.authModalId);
-      const pay  = qs(CFG.paywallId);
+      const auth = getAuthEl ? getAuthEl() : qs(CFG.authModalId);
+      const pay = getPayEl ? getPayEl() : qs(CFG.paywallId);
 
       if (__visible(auth) || __visible(pay)) return;
 
@@ -539,6 +542,7 @@ async function runGate() {
 
   await initSupabaseOnce();
 
+  // NOT LOGGED IN
   if (!LR_USER?.id) {
     closePaywall();
     openAuth("Sign in to continue.");
@@ -552,6 +556,7 @@ async function runGate() {
     .select("is_pro")
     .eq("id", LR_USER.id)
     .maybeSingle();
+
   console.log("🧾 GATE DECISION", {
     user: LR_USER?.id,
     email: LR_USER?.email,
@@ -563,6 +568,7 @@ async function runGate() {
   if (error || !data?.is_pro) {
     LR_IS_PRO = false;
     hideManageBillingBtn();
+
     openPaywall("Subscription required.");
 
     // hard guarantee: stay locked
@@ -586,8 +592,6 @@ async function runGate() {
   }
 }
 
-
-
 // ----------------------------
 // AUTH UI
 // ----------------------------
@@ -596,6 +600,7 @@ function wireAuthOnce() {
   const signupBtn = qs(CFG.signupBtnId);
   const logoutBtn = qs(CFG.logoutBtnId);
   const openBtn = qs(CFG.openAuthBtnId);
+
   const authClose = qs("lrAuthClose");
   if (authClose && !authClose.__LR_BOUND__) {
     authClose.__LR_BOUND__ = true;
@@ -603,7 +608,6 @@ function wireAuthOnce() {
   }
 
   async function goStripeCheckout(userId) {
-    // POST -> /api/stripe/checkout with userId, then redirect to returned url
     const r = await fetch(CFG.stripeCheckoutUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -648,7 +652,6 @@ function wireAuthOnce() {
       const { data, error } = await SB.auth.signUp({ email, password: pass });
       if (error) return setText(CFG.authMsgId, error.message);
 
-      // Supabase returns the new user here (even if email confirm is ON)
       const userId = data?.user?.id;
       if (!userId) return setText(CFG.authMsgId, "Signup succeeded, but missing user id.");
 
@@ -661,12 +664,9 @@ function wireAuthOnce() {
       return;
     }
 
-     // LOGIN → normal flow (gate decides if they are paid)
+    // LOGIN → normal flow (gate decides if they are paid)
     setText(CFG.authMsgId, "Signing in…");
-    const { data: loginData, error: loginErr } = await SB.auth.signInWithPassword({
-      email,
-      password: pass,
-    });
+    const { error: loginErr } = await SB.auth.signInWithPassword({ email, password: pass });
     if (loginErr) return setText(CFG.authMsgId, loginErr.message);
 
     runGate();
@@ -691,41 +691,13 @@ function wireAuthOnce() {
     });
   }
 
-  // UPGRADE (paywall button -> Stripe Checkout)
-  const upgradeBtn = qs(CFG.upgradeBtnId);
-
-  if (upgradeBtn && !upgradeBtn.__LR_BOUND__) {
-    upgradeBtn.__LR_BOUND__ = true;
-    upgradeBtn.addEventListener("click", async () => {
-      await initSupabaseOnce();
-
-      const { data: sessData } = await SB.auth.getSession();
-      const userId = sessData?.session?.user?.id;
-
-      if (!userId) return openAuth("Sign in first.");
-
-      try {
-        const r = await fetch(CFG.stripeCheckoutUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ userId }),
-        });
-
-        const j = await r.json().catch(() => null);
-        if (j?.url) window.location.href = j.url;
-        else alert(j?.error || "Stripe checkout failed.");
-      } catch (e) {
-        console.error("Upgrade error:", e);
-        alert("Stripe checkout error.");
-      }
-    });
-  }
-
   if (openBtn && !openBtn.__LR_BOUND__) {
     openBtn.__LR_BOUND__ = true;
     openBtn.addEventListener("click", () => openAuth(""));
   }
 }
+
+// Manage Billing button (bind once)
 const billBtn = document.getElementById("lrManageBilling");
 if (billBtn && !billBtn.__LR_BOUND__) {
   billBtn.__LR_BOUND__ = true;
@@ -734,6 +706,7 @@ if (billBtn && !billBtn.__LR_BOUND__) {
 
 // ----------------------------
 // 💳 PAYWALL / UPGRADE → STRIPE CHECKOUT
+// (ONLY place that binds upgradeBtnId — avoids double-fire)
 // ----------------------------
 function wirePaywallOnce() {
   const btn = qs(CFG.upgradeBtnId);
@@ -754,6 +727,7 @@ function wirePaywallOnce() {
     btn.__LR_BOUND__ = true;
     btn.addEventListener("click", async () => {
       await initSupabaseOnce();
+
       const { data } = await SB.auth.getSession();
       const userId = data?.session?.user?.id;
 
@@ -777,8 +751,6 @@ function wirePaywallOnce() {
   }
 }
 
-
-
 // ----------------------------
 // BOOT
 // ----------------------------
@@ -797,8 +769,6 @@ function wirePaywallOnce() {
 // minimal debug
 window.LR_CORE = { runGate, openAuth, openPaywall };
 
-// ✅ CLOSES the earlier `(() => {` wrapper that starts ~line 72
-})();
 
 
 
