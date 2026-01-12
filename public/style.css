@@ -740,32 +740,26 @@ textarea{
 /* ---------------------------------
    LOCK BLUR (only app content; modals still clickable)
 ---------------------------------- */
-
-/* Blur/disable ONLY the app canvas (not overlays) */
 .lr-locked #appMain,
 .lr-locked #app,
 .lr-locked #appRoot,
-.lr-locked main,
-.lr-locked #toolWire{
+.lr-locked main{
   pointer-events:none !important;
   user-select:none !important;
-  filter:blur(6px) !important;
+  filter:blur(6px);
 }
 
-/* Overlays must ALWAYS stay interactive + unblurred */
+/* Ensure overlays are never blurred/blocked */
+.lr-modal,
 #lrAuthModal,
 #lrAuth,
 #lrPaywall,
-#lrLockShield,
-.lr-modal{
+#lrLockShield{
   filter:none !important;
   pointer-events:auto !important;
 }
 
-/* If something accidentally sets aria-hidden, don't “dead focus” buttons */
-#lrLockShield[aria-hidden="true"]{
-  aria-hidden:false;
-}
+
 
 
 
