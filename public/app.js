@@ -177,7 +177,11 @@ const hide = (el) => {
 };
 
 // ----------------------------
-// HARD LOCK SHIELD (CLICK-PROOF + VISIBLE)
+// HARD LOCK SHIELD (CLICK-PROOF + VISIBLE) — UPDATED
+// Fixes:
+// - No aria-hidden (it breaks focus/click + causes warnings)
+// - Always binds with delegation (never “null” buttons)
+// - Guarantees buttons are clickable + styled
 // ----------------------------
 function ensureLockShield() {
   let shield = qs("lrLockShield");
@@ -185,39 +189,65 @@ function ensureLockShield() {
 
   shield = document.createElement("div");
   shield.id = "lrLockShield";
-  shield.setAttribute("aria-hidden", "true");
+  // NOTE: do NOT set aria-hidden on an interactive overlay
 
+  // Shell
   shield.style.setProperty("position", "fixed", "important");
   shield.style.setProperty("inset", "0", "important");
-  shield.style.setProperty("display", "none", "important");
+  shield.style.setProperty("display", "none", "important"); // turned on by lockApp()
   shield.style.setProperty("align-items", "center", "important");
   shield.style.setProperty("justify-content", "center", "important");
   shield.style.setProperty("pointer-events", "auto", "important");
-  shield.style.setProperty("z-index", "999990", "important");
+  shield.style.setProperty("z-index", "999999", "important"); // above everything
   shield.style.setProperty("background", "rgba(0,0,0,.72)", "important");
   shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
   shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
 
+  // Panel + buttons (give buttons obvious styling so they’re not tiny/default)
   shield.innerHTML = `
     <div style="width:min(560px,92vw);background:#0b1020;border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:18px;box-shadow:0 24px 90px rgba(0,0,0,.55);">
-      <div style="font-weight:800;font-size:18px;margin-bottom:6px;">🔒 Lot Rocket is a Paid App</div>
+      <div style="font-weight:900;font-size:18px;margin-bottom:6px;">🔒 Lot Rocket is a Paid App</div>
       <div style="opacity:.92;line-height:1.35;margin-bottom:14px;" id="lrLockShieldMsg">
         Sign in, then subscribe to unlock access.
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button type="button" id="lrShieldSignIn">Sign in</button>
-        <button type="button" id="lrShieldSubscribe">Subscribe</button>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+        <button type="button" id="lrShieldSignIn"
+          style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.65);color:#e5e7eb;cursor:pointer;">
+          Sign in
+        </button>
+        <button type="button" id="lrShieldSubscribe"
+          style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(236,72,153,.35);background:linear-gradient(90deg,#f97316,#ec4899);color:#0b1020;font-weight:900;cursor:pointer;">
+          Subscribe
+        </button>
       </div>
     </div>
   `;
 
   document.body.appendChild(shield);
 
-  // SAFE bind (never crash)
-  const b1 = shield.querySelector("#lrShieldSignIn");
-  const b2 = shield.querySelector("#lrShieldSubscribe");
-  if (b1) b1.addEventListener("click", () => openAuth("Sign in to continue."));
-  if (b2) b2.addEventListener("click", () => openPaywall("Subscribe to unlock."));
+  // Single delegated handler (never breaks even if innerHTML changes)
+  if (!shield.__LR_BOUND__) {
+    shield.__LR_BOUND__ = true;
+
+    shield.addEventListener("click", (e) => {
+      const t = e.target;
+
+      if (t && t.id === "lrShieldSignIn") {
+        e.preventDefault();
+        e.stopPropagation();
+        openAuth("Sign in to continue.");
+        return;
+      }
+
+      if (t && t.id === "lrShieldSubscribe") {
+        e.preventDefault();
+        e.stopPropagation();
+        openPaywall("Subscribe to unlock.");
+        return;
+      }
+    });
+  }
 
   return shield;
 } // ✅ CLOSE ensureLockShield()
@@ -225,6 +255,7 @@ function ensureLockShield() {
 //==================================================
 // LOCK SYSTEM
 //==================================================
+
 
 function lockApp() {
   // ✅ use config, not hardcoded IDs
