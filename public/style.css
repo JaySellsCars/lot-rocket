@@ -1039,3 +1039,85 @@ textarea{
 }
 .floating-tools{ width:auto; }
 .floating-tools .tool-button{ width:auto; }
+/* ---------------------------------
+   PAYMENT MODAL — OUTPUT AUTO-EXPANDS (NO INNER SCROLL)
+   - #payOutput grows with text
+   - Disclaimer gets pushed down
+   - If output is huge, the SIDE PANEL scrolls (not the output box)
+---------------------------------- */
+
+#paymentModal .side-modal-content{
+  height:100%;
+}
+
+/* IMPORTANT: allow the modal panel to scroll, not the output box */
+#paymentModal .side-modal-body{
+  flex:1;
+  min-height:0;
+  overflow-y:auto !important;     /* panel scroll (if needed) */
+  overflow-x:hidden !important;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Layout wrapper */
+#paymentModal .pay-split{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* TOP: inputs */
+#paymentModal .pay-top{
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  background:rgba(2,6,23,.25);
+  padding:12px;
+}
+
+#paymentModal .pay-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px 12px;
+}
+
+#paymentModal .pay-grid label.field{ margin:0; }
+#paymentModal .pay-grid label.field > span{
+  font-size:.82rem;
+  margin-bottom:.25rem;
+}
+#paymentModal .pay-grid input{
+  border-radius:12px;
+  padding:.5rem .75rem;
+}
+
+/* BOTTOM: auto height (no forced fill) */
+#paymentModal .pay-bottom{
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  background:rgba(2,6,23,.18);
+  padding:12px;
+}
+
+/* ✅ THIS IS THE FIX: output expands, no inner scroll */
+#paymentModal #payOutput.pay-output,
+#paymentModal .pay-output{
+  display:block;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;     /* no internal scrollbar */
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  border:1px dashed rgba(148,163,184,.25);
+  border-radius:12px;
+  padding:12px;
+  background:rgba(2,6,23,.25);
+  margin:0;
+  min-height:120px;                /* keeps the box visible when empty */
+}
+
+#paymentModal .pay-explain{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(148,163,184,.18);
+}
