@@ -2261,20 +2261,25 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
       setLoading(true);
       out.textContent = "Working…";
 
-      try {
-        const r = await fetch("/api/payment-helper", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(body),
-        });
+try {
+  const r = await fetch("/api/payment-helper", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 
-        const j = await r.json().catch(() => null);
+  const j = await r.json().catch(() => null);
+  console.log("💳 payment-helper response:", { ok: r.ok, status: r.status, j });
 
-        if (!r.ok) {
-          const msg = j?.message || j?.error || `Request failed (${r.status})`;
-          out.textContent = msg;
-          return;
-        }
+  if (!r.ok) {
+    const msg = j?.message || j?.error || `Request failed (${r.status})`;
+    out.textContent = msg;
+    return;
+  }
+
 
       const txt =
   j?.breakdownText ||
