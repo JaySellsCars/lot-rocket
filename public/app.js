@@ -427,18 +427,7 @@ function closePaywall() {
 }
 
 
-// ----------------------------
-// BILLING BUTTON UI (SAFE)
-// ----------------------------
-function showManageBillingBtn() {
-  const el = document.getElementById("lrManageBilling");
-  if (el) el.classList.remove("hidden");
-}
 
-function hideManageBillingBtn() {
-  const el = document.getElementById("lrManageBilling");
-  if (el) el.classList.add("hidden");
-}
 
 // ----------------------------
 // SUPABASE INIT (ONE)
