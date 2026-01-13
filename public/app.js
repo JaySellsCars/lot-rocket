@@ -487,35 +487,62 @@ async function ensureProfileRow() {
 }
 
 
-// ===============================
-// STRIPE CUSTOMER PORTAL (MANAGE BILLING)
-// ===============================
+// ----------------------------
+// BILLING PORTAL (NEW TAB, APP STAYS) ✅
+// Uses a POST <form target="_blank"> so your current tab never navigates.
+// ----------------------------
+function openBillingPortal(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-async function openBillingPortal() {
-  try {
-    if (!SB) return alert("Auth not ready.");
+  const userId = LR_USER?.id;
+  if (!userId) return openAuth("Sign in first.");
 
-    const { data } = await SB.auth.getSession();
-    const token = data?.session?.access_token;
-    if (!token) return alert("Not logged in.");
+  // Use config if you have it, otherwise default
+  const endpoint =
+    (window.LR_CFG && window.LR_CFG.stripePortalUrl) ? window.LR_CFG.stripePortalUrl :
+    "/api/stripe/portal";
 
-    const r = await fetch("/api/stripe/portal", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  // Create a one-time POST form that opens in a new tab
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = endpoint;
+  form.target = "_blank";
+  form.style.display = "none";
 
-    const j = await r.json();
-    if (!r.ok || !j?.url) {
-      console.error("portal failed", j);
-      return alert(j?.error || "Billing portal unavailable.");
-    }
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "userId";
+  input.value = userId;
 
-    window.location.href = j.url;
-  } catch (e) {
-    console.error("openBillingPortal error", e);
-    alert("Billing portal error.");
+  form.appendChild(input);
+  document.body.appendChild(form);
+
+  form.submit();
+  form.remove();
+}
+
+// ----------------------------
+// MANAGE BILLING BUTTON (bind once)
+// ----------------------------
+function showManageBillingBtn() {
+  const el = document.getElementById("lrManageBilling");
+  if (!el) return;
+  el.classList.remove("hidden");
+
+  if (!el.__LR_BOUND__) {
+    el.__LR_BOUND__ = true;
+    el.addEventListener("click", openBillingPortal);
   }
 }
+
+function hideManageBillingBtn() {
+  const el = document.getElementById("lrManageBilling");
+  if (el) el.classList.add("hidden");
+}
+
 
 // ----------------------------
 // STRIPE RETURN CLEANUP + VERIFY  (GET — matches server)
