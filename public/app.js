@@ -177,84 +177,125 @@ const hide = (el) => {
 };
 
 // ----------------------------
-// HARD LOCK SHIELD (CLICK-PROOF + VISIBLE) — UPDATED
+// HARD LOCK SHIELD (CLICK-PROOF + VISIBLE) — UPDATED v2
 // Fixes:
 // - No aria-hidden (it breaks focus/click + causes warnings)
-// - Always binds with delegation (never “null” buttons)
-// - Guarantees buttons are clickable + styled
+// - Hydrates an existing shield (won't return early without binding)
+// - Window CAPTURE click handler (beats any global click-blockers)
+// - Delegated click binding (never “null” buttons)
 // ----------------------------
 function ensureLockShield() {
   let shield = qs("lrLockShield");
-  if (shield) return shield;
 
-  shield = document.createElement("div");
-  shield.id = "lrLockShield";
-  // NOTE: do NOT set aria-hidden on an interactive overlay
-  shield.setAttribute("role", "dialog");
-  shield.setAttribute("aria-modal", "true");
-  shield.setAttribute("aria-label", "Lot Rocket access required");
+  // Create if missing
+  if (!shield) {
+    shield = document.createElement("div");
+    shield.id = "lrLockShield";
+    shield.setAttribute("role", "dialog");
+    shield.setAttribute("aria-modal", "true");
+    shield.setAttribute("aria-label", "Lot Rocket access required");
+    document.body.appendChild(shield);
+  }
 
-  // Shell
+  // Always re-apply shell styles (prevents stale/half-broken shields)
   shield.style.setProperty("position", "fixed", "important");
   shield.style.setProperty("inset", "0", "important");
-  shield.style.setProperty("display", "none", "important"); // turned on by lockApp()
+  shield.style.setProperty("display", "none", "important"); // lockApp() flips to flex
   shield.style.setProperty("align-items", "center", "important");
   shield.style.setProperty("justify-content", "center", "important");
   shield.style.setProperty("pointer-events", "auto", "important");
-  shield.style.setProperty("z-index", "1000001", "important"); // above everything
+  shield.style.setProperty("z-index", "1000001", "important");
   shield.style.setProperty("background", "rgba(0,0,0,.72)", "important");
   shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
   shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
 
-  // Panel + buttons (give buttons obvious styling so they’re not tiny/default)
-  shield.innerHTML = `
-    <div style="width:min(560px,92vw);background:#0b1020;border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:18px;box-shadow:0 24px 90px rgba(0,0,0,.55);">
-      <div style="font-weight:900;font-size:18px;margin-bottom:6px;">🔒 Lot Rocket is a Paid App</div>
-      <div style="opacity:.92;line-height:1.35;margin-bottom:14px;" id="lrLockShieldMsg">
-        Sign in, then subscribe to unlock access.
+  // Ensure inner UI exists (or repair if something overwrote it)
+  const needsUI =
+    !shield.querySelector("#lrShieldSignIn") || !shield.querySelector("#lrShieldSubscribe");
+
+  if (needsUI) {
+    shield.innerHTML = `
+      <div style="width:min(560px,92vw);background:#0b1020;border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:18px;box-shadow:0 24px 90px rgba(0,0,0,.55);">
+        <div style="font-weight:900;font-size:18px;margin-bottom:6px;">🔒 Lot Rocket is a Paid App</div>
+        <div style="opacity:.92;line-height:1.35;margin-bottom:14px;" id="lrLockShieldMsg">
+          Sign in, then subscribe to unlock access.
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+          <button type="button" id="lrShieldSignIn"
+            style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.65);color:#e5e7eb;font-weight:800;cursor:pointer;">
+            Sign in
+          </button>
+          <button type="button" id="lrShieldSubscribe"
+            style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(236,72,153,.35);background:linear-gradient(90deg,#f97316,#ec4899);color:#0b1020;font-weight:900;cursor:pointer;">
+            Subscribe
+          </button>
+        </div>
       </div>
+    `;
+  }
 
-      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
-        <button type="button" id="lrShieldSignIn"
-          style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.65);color:#e5e7eb;font-weight:800;cursor:pointer;">
-          Sign in
-        </button>
-        <button type="button" id="lrShieldSubscribe"
-          style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(236,72,153,.35);background:linear-gradient(90deg,#f97316,#ec4899);color:#0b1020;font-weight:900;cursor:pointer;">
-          Subscribe
-        </button>
-      </div>
-    </div>
-  `;
+  // Delegated target handler
+  const handleShieldClick = (e) => {
+    const t = e && e.target ? e.target : null;
+    if (!t) return false;
 
-  document.body.appendChild(shield);
+    if (t.id === "lrShieldSignIn") {
+      e.preventDefault();
+      e.stopPropagation();
+      try { openAuth("Sign in to continue."); } catch (err) { console.warn("openAuth failed:", err); }
+      return true;
+    }
 
-  // Single delegated handler (never breaks even if innerHTML changes)
+    if (t.id === "lrShieldSubscribe") {
+      e.preventDefault();
+      e.stopPropagation();
+      try { openPaywall("Subscribe to unlock."); } catch (err) { console.warn("openPaywall failed:", err); }
+      return true;
+    }
+
+    return false;
+  };
+
+  // Bind once on the shield (bubble)
   if (!shield.__LR_BOUND__) {
     shield.__LR_BOUND__ = true;
-
     shield.addEventListener("click", (e) => {
-      const t = e && e.target ? e.target : null;
-      if (!t) return;
-
-      if (t.id === "lrShieldSignIn") {
-        e.preventDefault();
-        e.stopPropagation();
-        openAuth("Sign in to continue.");
-        return;
-      }
-
-      if (t.id === "lrShieldSubscribe") {
-        e.preventDefault();
-        e.stopPropagation();
-        openPaywall("Subscribe to unlock.");
-        return;
-      }
+      handleShieldClick(e);
     });
+  }
+
+  // Bind once at WINDOW CAPTURE to beat any global click blockers
+  if (!window.__LR_SHIELD_CAPTURE__) {
+    window.__LR_SHIELD_CAPTURE__ = true;
+
+    window.addEventListener(
+      "click",
+      (e) => {
+        const s = document.getElementById("lrLockShield");
+        if (!s) return;
+
+        // Only intercept when lock shield is actually visible
+        const visible = s.style.display !== "none" && s.offsetParent !== null;
+        if (!visible) return;
+
+        // Only intercept clicks inside shield
+        if (!s.contains(e.target)) return;
+
+        // If it's a shield button click, stop ALL other handlers first
+        const t = e.target;
+        if (t && (t.id === "lrShieldSignIn" || t.id === "lrShieldSubscribe")) {
+          e.stopImmediatePropagation();
+          handleShieldClick(e);
+        }
+      },
+      true
+    );
   }
 
   return shield;
 } // ✅ CLOSE ensureLockShield()
+
 
 //==================================================
 
