@@ -260,6 +260,28 @@ textarea{
   color:#020617 !important;
   margin-top:18px;
 }
+/* TOP BAR (ACCOUNT BUTTONS) */
+.top-bar{
+  position:fixed;
+  top:16px;
+  right:16px;
+  z-index:60;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+#lrUserChip,
+#upgradeBtn,
+#lrLogoutBtn{
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.35);
+  background:rgba(15,23,42,.65);
+  color:#e5e7eb;
+  padding:10px 12px;
+  cursor:pointer;
+  font-weight:800;
+}
 
 /* ---------------------------------
    STEP 1 PHOTOS (+ selection highlight)
