@@ -504,6 +504,63 @@ textarea{
   white-space:pre-wrap;
   overflow-wrap:anywhere;
 }
+/* ---------------------------------
+   CALCULATOR (make it look real)
+---------------------------------- */
+#calcModal .calculator-body{
+  gap:12px;
+}
+
+#calcModal #calcDisplay{
+  width:100%;
+  height:52px;
+  border-radius:14px;
+  padding:12px 14px;
+  font-size:20px;
+  font-weight:800;
+  text-align:right;
+  border:1px solid rgba(148,163,184,.35);
+  background:rgba(2,6,23,.75);
+  color:#e5e7eb;
+  outline:none;
+}
+
+/* THIS is the missing piece: real 4-column keypad */
+#calcModal .calc-grid{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:10px;
+  margin-top:10px;
+}
+
+/* Override your global .side-modal button{width:100%} safely */
+#calcModal .calc-grid button{
+  width:100% !important;     /* fills the grid cell (not the whole modal) */
+  height:48px;
+  border-radius:14px;
+  border:1px solid rgba(148,163,184,.28);
+  background:rgba(255,255,255,.06);
+  color:#e5e7eb;
+  font-weight:900;
+  font-size:18px;
+  cursor:pointer;
+  user-select:none;
+}
+
+#calcModal .calc-grid button:active{
+  transform:translateY(1px) scale(.99);
+}
+
+#calcModal #calcClearBtn{
+  width:100%;
+  height:46px;
+  border-radius:999px;
+  margin-top:10px;
+  border:1px solid rgba(148,163,184,.35);
+  background:rgba(255,255,255,.08);
+  color:#e5e7eb;
+  font-weight:800;
+}
 
 /* ---------------------------------
    STEP 3 — HOLDING ZONE
