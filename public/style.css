@@ -504,6 +504,46 @@ textarea{
   white-space:pre-wrap;
   overflow-wrap:anywhere;
 }
+
+/* =================================
+   PAYMENT MODAL: disclaimer bottom
+================================= */
+
+/* make the payment modal body a vertical layout */
+#paymentModal .side-modal-body{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+
+/* wrapper that contains the input grid + calc button (add this class in HTML below) */
+#paymentModal .pay-form{
+  flex:0 0 auto;
+}
+
+/* output area becomes the scrollable middle */
+#paymentModal #payOutput{
+  flex:1 1 auto;
+  min-height:140px;
+  overflow:auto;
+  border:1px dashed rgba(148,163,184,.35);
+  border-radius:14px;
+  padding:12px;
+  background:rgba(2,6,23,.25);
+  margin-top:12px;
+}
+
+/* disclaimer pinned at bottom */
+#paymentModal .pay-disclaimer{
+  flex:0 0 auto;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(148,163,184,.18);
+  color:rgba(229,231,235,.75);
+  font-size:.85rem;
+  line-height:1.35;
+}
+
 /* ---------------------------------
    CALCULATOR (make it look real)
 ---------------------------------- */
