@@ -43,11 +43,16 @@ a{ color:#8ab4f8; }
 
   /* Layout */
   --page-left: 3rem;
-  --page-right: 15rem;
 
-  /* Floating tools vertical alignment */
+  /* RIGHT RAIL sizing/position */
   --tools-top: 240px;
+  --tools-right: 18px;     /* how close to the outer edge */
+  --tools-width: 196px;    /* smaller rail */
+
+  /* Reserve space so the grid never sits under the rail */
+  --page-right: calc(var(--tools-width) + var(--tools-right) + 24px);
 }
+
 
 /* ---------------------------------
    HEADER + SPACER
