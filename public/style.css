@@ -601,6 +601,63 @@ textarea{
   color:#e5e7eb;
   font-weight:800;
 }
+
+/* ---------------------------------
+   PAYMENT MODAL — NO BODY SCROLL
+   (only #payOutput scrolls)
+---------------------------------- */
+#paymentModal .side-modal-content{
+  height:100%;
+}
+
+#paymentModal .side-modal-body{
+  flex:1;
+  min-height:0;
+  overflow:hidden;          /* stop the “scroll down to disclaimer” */
+  display:flex;
+  flex-direction:column;
+}
+
+#paymentModal .pay-split{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+#paymentModal .pay-top{
+  flex:0 0 auto;            /* inputs stay top */
+}
+
+#paymentModal .pay-bottom{
+  flex:1 1 auto;            /* bottom expands to fill remaining height */
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  padding:12px;
+  background:rgba(2,6,23,.18);
+}
+
+#paymentModal #payOutput.pay-output{
+  flex:1 1 auto;            /* output box grows */
+  min-height:140px;
+  overflow:auto;            /* ONLY this scrolls */
+  border:1px dashed rgba(148,163,184,.25);
+  border-radius:12px;
+  padding:12px;
+  background:rgba(2,6,23,.25);
+}
+
+#paymentModal .pay-explain{
+  flex:0 0 auto;            /* disclaimer stays visible at bottom */
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(148,163,184,.18);
+}
+
 /* ---------------------------------
    PAYMENT CALC — SPLIT TOP/BOTTOM (NO MODAL SCROLL)
 ---------------------------------- */
