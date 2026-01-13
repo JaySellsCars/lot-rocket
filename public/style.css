@@ -370,20 +370,25 @@ textarea{
 .lr-step2-actions-emoji .lr-btn{ min-width:180px; }
 
 /* ---------------------------------
-   FLOATING TOOLS (ONE DIAL)
+   FLOATING TOOLS (RIGHT RAIL) — FIXED ALIGNMENT
 ---------------------------------- */
 .floating-tools{
   position:fixed;
-  right:var(--page-right);
-  top:var(--tools-top);
+  top:220px;                 /* adjust if you want slightly lower/higher */
+  right:18px;                /* ✅ flush to the edge */
   display:flex;
   flex-direction:column;
   gap:.6rem;
-  z-index:50;
+  z-index:60;
+
+  width:240px;               /* ✅ all buttons same width */
+  align-items:stretch;
 }
 
 .tool-button{
-  padding:.55rem 1rem;
+  width:100%;
+  text-align:center;         /* ✅ centered labels */
+  padding:.62rem 1rem;
   border-radius:12px;
   border:none;
   background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
@@ -393,6 +398,7 @@ textarea{
   box-shadow:0 12px 28px rgba(0,0,0,.35);
   transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
 }
+
 .tool-button:hover{
   transform:translateY(-1px);
   box-shadow:0 16px 34px rgba(0,0,0,.45);
@@ -413,6 +419,7 @@ textarea{
 .tool-button.tool-help:hover{
   background:rgba(255,255,255,.14);
 }
+
 
 /* ---------------------------------
    SIDE MODALS
