@@ -1121,3 +1121,38 @@ textarea{
   padding-top:10px;
   border-top:1px solid rgba(148,163,184,.18);
 }
+/* ---------------------------------
+   PAYMENT MODAL — OVERLAP KILLER (FORCE NORMAL FLOW)
+   Put this at the VERY BOTTOM of style.css
+---------------------------------- */
+
+/* ensure bottom section is normal flow */
+#paymentModal .pay-bottom{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:0 !important;
+  overflow:visible !important;
+  position:static !important;
+}
+
+/* output must be static and auto-sized */
+#paymentModal #payOutput,
+#paymentModal #payOutput.pay-output,
+#paymentModal .pay-output{
+  position:static !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+  flex:0 0 auto !important;
+  margin:0 !important;
+}
+
+/* disclaimer must not be positioned or sticky */
+#paymentModal .pay-explain{
+  position:static !important;
+  flex:0 0 auto !important;
+  margin:0 !important;
+}
