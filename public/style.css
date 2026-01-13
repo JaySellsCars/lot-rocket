@@ -847,3 +847,5 @@ textarea{
   .brand-text p{ display:none; }
   .brand-text h1{ font-size:1.5rem; }
 }
+.floating-tools{ width:auto; }
+.floating-tools .tool-button{ width:auto; }
