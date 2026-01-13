@@ -2276,7 +2276,19 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
           return;
         }
 
-        out.textContent = j?.breakdownText || j?.result || "Done.";
+      const txt =
+  j?.breakdownText ||
+  j?.result ||
+  j?.text ||
+  j?.output ||
+  j?.message ||
+  j?.summary ||
+  j?.breakdown;
+
+out.textContent = (typeof txt === "string" && txt.trim())
+  ? txt
+  : JSON.stringify(j ?? { error: "No JSON returned" }, null, 2);
+
       } catch (e) {
         out.textContent = "Network error. Check server logs / endpoint.";
         console.error("payment calc failed:", e);
