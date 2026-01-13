@@ -190,6 +190,9 @@ function ensureLockShield() {
   shield = document.createElement("div");
   shield.id = "lrLockShield";
   // NOTE: do NOT set aria-hidden on an interactive overlay
+  shield.setAttribute("role", "dialog");
+  shield.setAttribute("aria-modal", "true");
+  shield.setAttribute("aria-label", "Lot Rocket access required");
 
   // Shell
   shield.style.setProperty("position", "fixed", "important");
@@ -198,7 +201,7 @@ function ensureLockShield() {
   shield.style.setProperty("align-items", "center", "important");
   shield.style.setProperty("justify-content", "center", "important");
   shield.style.setProperty("pointer-events", "auto", "important");
-  shield.style.setProperty("z-index", "999999", "important"); // above everything
+  shield.style.setProperty("z-index", "1000001", "important"); // above everything
   shield.style.setProperty("background", "rgba(0,0,0,.72)", "important");
   shield.style.setProperty("backdrop-filter", "blur(6px)", "important");
   shield.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
@@ -213,7 +216,7 @@ function ensureLockShield() {
 
       <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
         <button type="button" id="lrShieldSignIn"
-          style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.65);color:#e5e7eb;cursor:pointer;">
+          style="min-width:120px;padding:10px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.65);color:#e5e7eb;font-weight:800;cursor:pointer;">
           Sign in
         </button>
         <button type="button" id="lrShieldSubscribe"
@@ -231,16 +234,17 @@ function ensureLockShield() {
     shield.__LR_BOUND__ = true;
 
     shield.addEventListener("click", (e) => {
-      const t = e.target;
+      const t = e && e.target ? e.target : null;
+      if (!t) return;
 
-      if (t && t.id === "lrShieldSignIn") {
+      if (t.id === "lrShieldSignIn") {
         e.preventDefault();
         e.stopPropagation();
         openAuth("Sign in to continue.");
         return;
       }
 
-      if (t && t.id === "lrShieldSubscribe") {
+      if (t.id === "lrShieldSubscribe") {
         e.preventDefault();
         e.stopPropagation();
         openPaywall("Subscribe to unlock.");
@@ -253,6 +257,7 @@ function ensureLockShield() {
 } // ✅ CLOSE ensureLockShield()
 
 //==================================================
+
 // LOCK SYSTEM
 //==================================================
 
