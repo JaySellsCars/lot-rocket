@@ -380,16 +380,16 @@ textarea{
 ---------------------------------- */
 .floating-tools{
   position:fixed;
-  top:220px;                 /* adjust if you want slightly lower/higher */
-  right:18px;                /* ✅ flush to the edge */
+  right:var(--tools-right);
+  top:var(--tools-top);
+  width:var(--tools-width);
   display:flex;
   flex-direction:column;
-  gap:.6rem;
-  z-index:60;
-
-  width:240px;               /* ✅ all buttons same width */
+  gap:.55rem;
+  z-index:50;
   align-items:stretch;
 }
+
 
 .tool-button{
   width:100%;
