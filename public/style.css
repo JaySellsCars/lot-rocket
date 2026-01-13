@@ -561,6 +561,79 @@ textarea{
   color:#e5e7eb;
   font-weight:800;
 }
+/* ---------------------------------
+   PAYMENT CALC — SPLIT TOP/BOTTOM (NO MODAL SCROLL)
+---------------------------------- */
+#paymentModal .side-modal-content{
+  height: 100%;
+}
+
+#paymentModal .side-modal-body{
+  flex: 1;
+  overflow: hidden;            /* modal never scrolls */
+  display: flex;
+  flex-direction: column;
+}
+
+#paymentModal .pay-split{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#paymentModal .pay-top,
+#paymentModal .pay-bottom{
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 14px;
+  background: rgba(2,6,23,.25);
+  padding: 12px;
+}
+
+#paymentModal .pay-top{
+  flex: 0 0 52%;
+  overflow: hidden;
+}
+
+#paymentModal .pay-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+#paymentModal .pay-grid label.field{
+  margin: 0;
+}
+
+#paymentModal .pay-grid label.field > span{
+  font-size: .82rem;
+  margin-bottom: .25rem;
+}
+
+#paymentModal .pay-grid input{
+  border-radius: 12px;         /* less “pill”, fits better */
+  padding: .5rem .75rem;
+}
+
+#paymentModal .pay-bottom{
+  flex: 1 1 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#paymentModal .pay-output{
+  flex: 1 1 auto;
+  overflow: auto;              /* ONLY output scrolls if long */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px dashed rgba(148,163,184,.25);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(2,6,23,.35);
+  min-height: 120px;
+}
 
 /* ---------------------------------
    STEP 3 — HOLDING ZONE
