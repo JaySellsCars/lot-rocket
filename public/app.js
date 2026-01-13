@@ -2194,131 +2194,176 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     });
   }
 
-  // ==================================================
-  // PAYMENT CALCULATOR
-  // ==================================================
-  function wirePaymentCalculator() {
-    const modal = $("paymentModal");
-    if (!modal) return;
+// ==================================================
+// PAYMENT CALCULATOR
+// ==================================================
+function wirePaymentCalculator() {
+  const modal = $("paymentModal");
+  if (!modal) return;
 
-    const pickInside = (root, selectors) => {
-      for (const sel of selectors) {
-        const el = root.querySelector(sel);
-        if (el) return el;
-      }
-      return null;
-    };
+  const pickInside = (root, selectors) => {
+    for (const sel of selectors) {
+      const el = root.querySelector(sel);
+      if (el) return el;
+    }
+    return null;
+  };
 
-    const num = (v) => {
-      if (v == null) return 0;
-      const s = String(v).replace(/[$,%\s,]/g, "").trim();
-      const n = Number(s);
-      return Number.isFinite(n) ? n : 0;
-    };
+  const num = (v) => {
+    if (v == null) return 0;
+    const s = String(v).replace(/[$,%\s,]/g, "").trim();
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
 
-    const collectPaymentBody = (root) => ({
-      price: num(pickInside(root, ["#payPrice", "input[name='price']", "#price"])?.value),
-      down: num(pickInside(root, ["#payDown", "input[name='down']", "#down"])?.value),
-      trade: num(pickInside(root, ["#payTrade", "input[name='trade']", "#trade"])?.value),
-      payoff: num(pickInside(root, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
-      rate: num(pickInside(root, ["#payApr", "#payRate", "input[name='apr']", "#apr", "#rate"])?.value),
-      term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
-      tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
-      fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
-      state: String(
-        pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
-      )
-        .trim()
-        .toUpperCase(),
-      rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
-    });
+  const money = (n) =>
+    Number.isFinite(n)
+      ? n.toLocaleString(undefined, { style: "currency", currency: "USD" })
+      : "$0";
 
-    const btn = modal.querySelector("#payCalcBtn");
-    const out = modal.querySelector("#payOutput");
+  const collectPaymentBody = (root) => ({
+    price: num(pickInside(root, ["#payPrice", "input[name='price']", "#price"])?.value),
+    down: num(pickInside(root, ["#payDown", "input[name='down']", "#down"])?.value),
+    trade: num(pickInside(root, ["#payTrade", "input[name='trade']", "#trade"])?.value),
+    payoff: num(pickInside(root, ["#payPayoff", "input[name='payoff']", "#payoff"])?.value),
+    rate: num(pickInside(root, ["#payApr", "#payRate", "input[name='apr']", "#apr", "#rate"])?.value),
+    term: num(pickInside(root, ["#payTerm", "input[name='term']", "#term"])?.value),
+    tax: num(pickInside(root, ["#payTax", "input[name='tax']", "#tax"])?.value),
+    fees: num(pickInside(root, ["#payFees", "#dealerFees", "input[name='fees']", "#fees"])?.value),
+    state: String(
+      pickInside(root, ["#payState", "select[name='state']", "input[name='state']"])?.value || "MI"
+    )
+      .trim()
+      .toUpperCase(),
+    rebate: num(pickInside(root, ["#payRebate", "input[name='rebate']", "#rebate"])?.value),
+  });
 
-    if (!btn || !out) return;
-    if (btn.__LR_BOUND__) return;
-    btn.__LR_BOUND__ = true;
+  const btn = modal.querySelector("#payCalcBtn");
+  const out = modal.querySelector("#payOutput");
 
-    const setLoading = (onBusy) => {
-      btn.disabled = !!onBusy;
-      if (onBusy) {
-        btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
-        btn.textContent = "Calculating…";
-      } else {
-        btn.textContent = btn.__LR_OLD_TEXT__ || "Calculate";
-      }
-    };
+  if (!btn || !out) return;
+  if (btn.__LR_BOUND__) return;
+  btn.__LR_BOUND__ = true;
 
-    async function runPaymentCalc() {
-      const body = collectPaymentBody(modal);
+  const setLoading = (onBusy) => {
+    btn.disabled = !!onBusy;
+    if (onBusy) {
+      btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+      btn.textContent = "Calculating…";
+    } else {
+      btn.textContent = btn.__LR_OLD_TEXT__ || "Calculate";
+    }
+  };
 
-      if (!body.price || !body.term) {
-        out.textContent = "Enter at least Price and Term (months).";
+  const buildLocalBreakdown = (b) => {
+    const price = Number.isFinite(b.price) ? b.price : 0;
+    const down = Number.isFinite(b.down) ? b.down : 0;
+    const trade = Number.isFinite(b.trade) ? b.trade : 0;
+    const payoff = Number.isFinite(b.payoff) ? b.payoff : 0;
+    const rate = Number.isFinite(b.rate) ? b.rate : 0;
+    const term = Math.max(1, Math.round(Number.isFinite(b.term) ? b.term : 0));
+    const taxPct = Number.isFinite(b.tax) ? b.tax : 0;
+    const fees = Number.isFinite(b.fees) ? b.fees : 0;
+    const rebate = Number.isFinite(b.rebate) ? b.rebate : 0;
+
+    const tradeEquity = trade - payoff; // can be negative
+    const subtotal = price + fees - rebate;
+    const taxAmt = subtotal * (taxPct / 100);
+    const outTheDoor = subtotal + taxAmt;
+    const amountFinanced = outTheDoor - down - tradeEquity;
+
+    const r = (rate / 100) / 12;
+    const P = amountFinanced;
+    const payment =
+      r > 0 ? (P * r) / (1 - Math.pow(1 + r, -term)) : (term ? P / term : 0);
+
+    return [
+      `Estimated Monthly Payment: ${money(payment)}`,
+      ``,
+      `Amount Financed: ${money(amountFinanced)}`,
+      `Out-the-Door (est.): ${money(outTheDoor)}`,
+      ``,
+      `Breakdown:`,
+      `• Price: ${money(price)}`,
+      `• Fees/Add-ons: ${money(fees)}`,
+      `• Rebate: -${money(rebate)}`,
+      `• Tax (${taxPct}%): ${money(taxAmt)}`,
+      `• Down: -${money(down)}`,
+      `• Trade Equity (trade - payoff): ${money(tradeEquity)}`,
+      ``,
+      `Note: Estimate only. Taxes/fees vary by dealer/state.`,
+    ].join("\n");
+  };
+
+  async function runPaymentCalc() {
+    const body = collectPaymentBody(modal);
+
+    if (!body.price || !body.term) {
+      out.textContent = "Enter at least Price and Term (months).";
+      return;
+    }
+
+    setLoading(true);
+    out.textContent = "Working…";
+
+    try {
+      const r = await fetch("/api/payment-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const j = await r.json().catch(() => null);
+      console.log("💳 payment-helper response:", { ok: r.ok, status: r.status, j });
+
+      if (!r.ok) {
+        const msg = j?.message || j?.error || `Request failed (${r.status})`;
+        out.textContent = msg;
         return;
       }
 
-      setLoading(true);
-      out.textContent = "Working…";
+      const serverText =
+        j?.breakdownText ??
+        j?.breakdown_text ??
+        j?.resultText ??
+        j?.result ??
+        j?.text ??
+        j?.output ??
+        j?.message ??
+        j?.summary ??
+        j?.breakdown;
 
-try {
-  const r = await fetch("/api/payment-helper", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(body),
+      out.textContent =
+        (typeof serverText === "string" && serverText.trim())
+          ? serverText.trim()
+          : buildLocalBreakdown(j?.input || body);
+
+    } catch (e) {
+      out.textContent = "Network error. Check server logs / endpoint.";
+      console.error("payment calc failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    runPaymentCalc();
   });
 
-  const j = await r.json().catch(() => null);
-  console.log("💳 payment-helper response:", { ok: r.ok, status: r.status, j });
-
-  if (!r.ok) {
-    const msg = j?.message || j?.error || `Request failed (${r.status})`;
-    out.textContent = msg;
-    return;
-  }
-
-
-      const txt =
-  j?.breakdownText ||
-  j?.result ||
-  j?.text ||
-  j?.output ||
-  j?.message ||
-  j?.summary ||
-  j?.breakdown;
-
-out.textContent = (typeof txt === "string" && txt.trim())
-  ? txt
-  : JSON.stringify(j ?? { error: "No JSON returned" }, null, 2);
-
-      } catch (e) {
-        out.textContent = "Network error. Check server logs / endpoint.";
-        console.error("payment calc failed:", e);
-      } finally {
-        setLoading(false);
+  modal.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
+        e.preventDefault();
+        runPaymentCalc();
       }
     }
+  });
 
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      runPaymentCalc();
-    });
+  console.log("✅ PAYMENT CALC WIRED");
+}
 
-    modal.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const t = e.target;
-        if (t && (t.tagName === "INPUT" || t.tagName === "SELECT")) {
-          e.preventDefault();
-          runPaymentCalc();
-        }
-      }
-    });
-
-    console.log("✅ PAYMENT CALC WIRED");
-  }
 
   // ==================================================
   // INCOME CALCULATOR
