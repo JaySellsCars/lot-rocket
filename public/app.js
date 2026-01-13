@@ -763,12 +763,86 @@ function wireAuthOnce() {
   }
 }
 
-// Manage Billing button (bind once)
-const billBtn = document.getElementById("lrManageBilling");
-if (billBtn && !billBtn.__LR_BOUND__) {
-  billBtn.__LR_BOUND__ = true;
-  billBtn.addEventListener("click", openBillingPortal);
-}
+// ----------------------------
+// MANAGE BILLING (UI + BIND + NEW TAB) — COMBINED
+// ----------------------------
+(function manageBillingController(){
+  function getBtn(){ return document.getElementById("lrManageBilling"); }
+
+  // Keep these names so the rest of your app can call them
+  window.showManageBillingBtn = function showManageBillingBtn(){
+    const el = getBtn();
+    if (!el) return;
+    el.classList.remove("hidden");
+    bindOnce(el);
+  };
+
+  window.hideManageBillingBtn = function hideManageBillingBtn(){
+    const el = getBtn();
+    if (el) el.classList.add("hidden");
+  };
+
+  function bindOnce(el){
+    if (!el || el.__LR_BOUND__) return;
+    el.__LR_BOUND__ = true;
+
+    el.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      // open immediately to avoid popup blockers
+      const pop = window.open("about:blank", "_blank", "noopener,noreferrer");
+
+      try {
+        // use your existing handler if present
+        if (typeof openBillingPortal === "function") {
+          // if your openBillingPortal already navigates, call it and close blank tab
+          // (or you can update openBillingPortal itself to return a URL)
+          if (pop) pop.close();
+          return openBillingPortal();
+        }
+
+        // fallback: hit portal endpoint and open returned URL
+        const portalEndpoint =
+          (window.LR_CFG && window.LR_CFG.stripePortalUrl) ? window.LR_CFG.stripePortalUrl :
+          "/api/stripe/portal";
+
+        const userId = LR_USER?.id;
+        if (!userId) {
+          if (pop) pop.close();
+          return openAuth("Sign in first.");
+        }
+
+        const r = await fetch(portalEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+
+        const j = await r.json().catch(() => null);
+
+        if (!r.ok || !j?.url) {
+          if (pop) pop.close();
+          const msg = j?.error || j?.message || `Billing portal failed (${r.status})`;
+          alert(msg);
+          return;
+        }
+
+        if (pop) pop.location.href = j.url;
+        else window.open(j.url, "_blank", "noopener,noreferrer");
+
+      } catch (err) {
+        if (pop) pop.close();
+        console.error("Manage billing failed:", err);
+        alert("Billing portal error. Check server logs.");
+      }
+    });
+  }
+
+  // bind early if button exists (safe)
+  const first = getBtn();
+  if (first) bindOnce(first);
+})();
+
 
 // ----------------------------
 // 💳 PAYWALL / UPGRADE → STRIPE CHECKOUT
