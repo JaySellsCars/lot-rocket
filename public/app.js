@@ -1522,6 +1522,29 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
         }, 700);
       }
     }
+// ===============================
+// CALCULATOR — FIX CLEAR BUTTON (RUN ONCE)
+// ===============================
+(function bindCalcClearOnce() {
+  const btn = document.getElementById("calcClearBtn");
+  const display = document.getElementById("calcDisplay");
+  if (!btn || !display) return;
+  if (btn.__LR_BOUND__) return;
+  btn.__LR_BOUND__ = true;
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Reset visible display
+    display.value = "";
+    display.placeholder = "0";
+
+    // Clear any optional state if you’re storing it
+    try { display.dataset.expr = ""; } catch {}
+    try { display.dataset.last = ""; } catch {}
+  });
+})();
 
     buttons.forEach((b) => {
       if (b.__LR_BOUND__) return;
