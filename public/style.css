@@ -603,9 +603,11 @@ textarea{
 }
 
 /* ---------------------------------
-   PAYMENT MODAL — NO BODY SCROLL
-   (only #payOutput scrolls)
+   PAYMENT CALCULATOR — SPLIT TOP/BOTTOM (NO MODAL SCROLL)
+   - Modal body NEVER scrolls
+   - Output grows; only output scrolls if long
 ---------------------------------- */
+
 #paymentModal .side-modal-content{
   height:100%;
 }
@@ -613,7 +615,7 @@ textarea{
 #paymentModal .side-modal-body{
   flex:1;
   min-height:0;
-  overflow:hidden;          /* stop the “scroll down to disclaimer” */
+  overflow:hidden;              /* modal never scrolls */
   display:flex;
   flex-direction:column;
 }
@@ -626,111 +628,72 @@ textarea{
   gap:12px;
 }
 
+/* TOP: inputs */
 #paymentModal .pay-top{
-  flex:0 0 auto;            /* inputs stay top */
-}
-
-#paymentModal .pay-bottom{
-  flex:1 1 auto;            /* bottom expands to fill remaining height */
-  min-height:0;
-  display:flex;
-  flex-direction:column;
+  flex:0 0 auto;                /* keep inputs at top */
   border:1px solid rgba(148,163,184,.25);
   border-radius:14px;
+  background:rgba(2,6,23,.25);
   padding:12px;
-  background:rgba(2,6,23,.18);
+  overflow:hidden;
 }
 
-#paymentModal #payOutput.pay-output{
-  flex:1 1 auto;            /* output box grows */
-  min-height:140px;
-  overflow:auto;            /* ONLY this scrolls */
+#paymentModal .pay-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px 12px;
+}
+
+#paymentModal .pay-grid label.field{
+  margin:0;
+}
+
+#paymentModal .pay-grid label.field > span{
+  font-size:.82rem;
+  margin-bottom:.25rem;
+}
+
+#paymentModal .pay-grid input{
+  border-radius:12px;           /* less pill */
+  padding:.5rem .75rem;
+}
+
+/* BOTTOM: output + disclaimer */
+#paymentModal .pay-bottom{
+  flex:1 1 auto;
+  min-height:0;
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  background:rgba(2,6,23,.18);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  overflow:hidden;              /* bottom container never scrolls */
+}
+
+/* Output grows (only this can scroll if needed) */
+#paymentModal #payOutput.pay-output,
+#paymentModal .pay-output{
+  flex:1 1 auto;
+  min-height:120px;
+  overflow:auto;                /* ONLY output scrolls */
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
   border:1px dashed rgba(148,163,184,.25);
   border-radius:12px;
-  padding:12px;
-  background:rgba(2,6,23,.25);
+  padding:10px;
+  background:rgba(2,6,23,.35);
 }
 
+/* Disclaimer stays visible below output */
 #paymentModal .pay-explain{
-  flex:0 0 auto;            /* disclaimer stays visible at bottom */
-  margin-top:10px;
+  flex:0 0 auto;
+  margin-top:0;
   padding-top:10px;
   border-top:1px solid rgba(148,163,184,.18);
 }
 
-/* ---------------------------------
-   PAYMENT CALC — SPLIT TOP/BOTTOM (NO MODAL SCROLL)
----------------------------------- */
-#paymentModal .side-modal-content{
-  height: 100%;
-}
-
-#paymentModal .side-modal-body{
-  flex: 1;
-  overflow: hidden;            /* modal never scrolls */
-  display: flex;
-  flex-direction: column;
-}
-
-#paymentModal .pay-split{
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-#paymentModal .pay-top,
-#paymentModal .pay-bottom{
-  border: 1px solid rgba(148,163,184,.25);
-  border-radius: 14px;
-  background: rgba(2,6,23,.25);
-  padding: 12px;
-}
-
-#paymentModal .pay-top{
-  flex: 0 0 52%;
-  overflow: hidden;
-}
-
-#paymentModal .pay-grid{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 12px;
-}
-
-#paymentModal .pay-grid label.field{
-  margin: 0;
-}
-
-#paymentModal .pay-grid label.field > span{
-  font-size: .82rem;
-  margin-bottom: .25rem;
-}
-
-#paymentModal .pay-grid input{
-  border-radius: 12px;         /* less “pill”, fits better */
-  padding: .5rem .75rem;
-}
-
-#paymentModal .pay-bottom{
-  flex: 1 1 auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#paymentModal .pay-output{
-  flex: 1 1 auto;
-  overflow: auto;              /* ONLY output scrolls if long */
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  border: 1px dashed rgba(148,163,184,.25);
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(2,6,23,.35);
-  min-height: 120px;
-}
 
 /* ---------------------------------
    STEP 3 — HOLDING ZONE
