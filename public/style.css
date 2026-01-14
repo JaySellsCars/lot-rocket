@@ -1328,3 +1328,28 @@ textarea{
   flex:0 0 auto !important;
   margin:0 !important;
 }
+/* =========================================
+   FIX: User chip / Log Out covering modal X
+   ========================================= */
+
+/* keep the top-right user chip UNDER modals */
+#lrUserChip,
+#lrSignOut,
+#lrManageBilling {
+  position: relative !important;
+  z-index: 900 !important;
+}
+
+/* force side modals ABOVE the chip */
+.side-modal {
+  position: fixed !important;
+  z-index: 5000 !important;
+}
+
+/* make sure the modal close X is always on top */
+.side-modal .side-modal-close,
+.side-modal .modal-close-btn,
+.side-modal [data-close] {
+  position: absolute !important;
+  z-index: 6000 !important;
+}
