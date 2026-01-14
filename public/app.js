@@ -1669,9 +1669,6 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     console.log("✅ CALCULATOR WIRED");
   })();
 
-  // ==================================================
-  // FLOATING TOOLS WIRING
-  // ==================================================
  (function wireFloatingTools() {
   if (window.__LR_FLOATING_TOOLS__) return;
   window.__LR_FLOATING_TOOLS__ = true;
@@ -1704,24 +1701,21 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     video: "videoGenModal",
   };
 
+  // Hide image/video for now
   [BTN.image, BTN.video].forEach((id) => {
     const b = $(id);
     if (b) b.style.display = "none";
   });
 
+  // Rename workflow
   const wfBtn = $(BTN.workflow);
   if (wfBtn) wfBtn.textContent = "AI Campaign Builder";
-
   const wfRun = $("runWorkflowBtn");
   if (wfRun) wfRun.textContent = "Build Campaign";
 
-  // ✅ RENAME ASK TOOL BUTTON
+  // ✅ Rename ASK button on the toolbar
   const askBtn = $(BTN.ask);
   if (askBtn) askBtn.textContent = "A.I Prompt Generator";
-
-  // optional: rename the run button inside Ask modal too (safe text only)
-  const askRun = $("runAskBtn") || $("askRunBtn");
-  if (askRun) askRun.textContent = "Generate Prompt";
 
   const allBtnIds = Object.values(BTN);
 
@@ -1732,7 +1726,21 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     });
   }
 
-  // ✅ Top-right UI that was visually covering the modal X
+  function closeModal(modalId) {
+    const m = $(modalId);
+    if (!m) return;
+    m.classList.add("hidden");
+    m.style.display = "none";
+    m.setAttribute("aria-hidden", "true");
+    m.style.removeProperty("z-index");
+    m.style.removeProperty("position");
+    m.style.removeProperty("pointer-events");
+  }
+
+  // ----------------------------
+  // TOP-RIGHT UI SUPPRESSION
+  // Hides logout/chip while a modal is open so it can't cover the X
+  // ----------------------------
   const TOP_UI_IDS = ["lrUserChip", "lrSignOut", "lrLogoutBtn", "lrManageBilling"];
 
   function setTopUiSuppressed(on) {
@@ -1741,145 +1749,149 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
       if (!el) return;
 
       if (on) {
-        if (!el.__LR_TOPUI_BACKUP__) {
-          el.__LR_TOPUI_BACKUP__ = {
-            display: el.style.display || "",
-            zIndex: el.style.zIndex || "",
-            pointerEvents: el.style.pointerEvents || "",
-            opacity: el.style.opacity || "",
+        if (!el.__LR_TOP_SAVE__) {
+          el.__LR_TOP_SAVE__ = {
+            display: el.style.display,
+            visibility: el.style.visibility,
+            opacity: el.style.opacity,
+            pointerEvents: el.style.pointerEvents,
+            zIndex: el.style.zIndex,
           };
         }
-        // Hide it so it cannot overlap the modal close X visually
         el.style.setProperty("display", "none", "important");
+        el.style.setProperty("visibility", "hidden", "important");
+        el.style.setProperty("opacity", "0", "important");
         el.style.setProperty("pointer-events", "none", "important");
-        el.style.setProperty("z-index", "10", "important");
+        el.style.setProperty("z-index", "0", "important");
       } else {
-        const b = el.__LR_TOPUI_BACKUP__ || null;
-        if (b) {
-          el.style.display = b.display;
-          el.style.zIndex = b.zIndex;
-          el.style.pointerEvents = b.pointerEvents;
-          el.style.opacity = b.opacity;
-          el.__LR_TOPUI_BACKUP__ = null;
+        const s = el.__LR_TOP_SAVE__;
+        if (s) {
+          el.style.display = s.display || "";
+          el.style.visibility = s.visibility || "";
+          el.style.opacity = s.opacity || "";
+          el.style.pointerEvents = s.pointerEvents || "";
+          el.style.zIndex = s.zIndex || "";
         } else {
           el.style.removeProperty("display");
+          el.style.removeProperty("visibility");
+          el.style.removeProperty("opacity");
           el.style.removeProperty("pointer-events");
           el.style.removeProperty("z-index");
-          el.style.removeProperty("opacity");
         }
       }
     });
   }
 
-  function closeModal(modalId) {
-    const m = $(modalId);
-    if (!m) return;
-    m.classList.add("hidden");
-    m.style.display = "none";
-    m.setAttribute("aria-hidden", "true");
-  }
-
   function closeAll() {
     Object.values(MODAL).forEach(closeModal);
     setActive(null);
-    // restore top-right UI
     setTopUiSuppressed(false);
   }
 
- function openModal(modalId, btnId) {
-  const m = $(modalId);
-  if (!m) return;
+  function patchAskUi(modalEl) {
+    if (!modalEl || modalEl.__LR_ASK_PATCHED__) return;
+    modalEl.__LR_ASK_PATCHED__ = true;
 
-  closeAll();
-
-  // suppress top-right UI so it never covers the close X
-  setTopUiSuppressed(true);
-
-  // 🔥 FORCE modal above everything
-  m.classList.remove("hidden");
-  m.style.setProperty("display", "flex", "important");
-  m.style.setProperty("position", "fixed", "important");
-  m.style.setProperty("z-index", "2147483000", "important");
-  m.style.setProperty("pointer-events", "auto", "important");
-  m.setAttribute("aria-hidden", "false");
-  setActive(btnId);
-
-  // ✅ ASK MODAL: rename title + add short explainer (once)
-  if (modalId === MODAL.ask) {
+    // Title
     const titleEl =
-      m.querySelector(".side-modal-title") ||
-      m.querySelector(".modal-title") ||
-      m.querySelector("h2") ||
-      m.querySelector("h3");
-
+      modalEl.querySelector(".side-modal-title") ||
+      modalEl.querySelector(".modal-title") ||
+      modalEl.querySelector("h1,h2,h3");
     if (titleEl) titleEl.textContent = "A.I Prompt Generator";
 
-    let desc = m.querySelector("#lrAskPromptDesc");
-    if (!desc) {
-      desc = document.createElement("div");
-      desc.id = "lrAskPromptDesc";
-      desc.style.margin = "8px 0 12px";
-      desc.style.opacity = "0.88";
-      desc.style.fontSize = "12.5px";
+    // Description under title (insert once)
+    const already = modalEl.querySelector(".lr-ask-desc");
+    if (!already && titleEl) {
+      const desc = document.createElement("div");
+      desc.className = "lr-ask-desc";
+      desc.style.opacity = "0.85";
+      desc.style.fontSize = "13px";
       desc.style.lineHeight = "1.35";
+      desc.style.margin = "8px 0 12px";
       desc.textContent =
-        "Use this to generate copy/paste-ready prompts for content, marketing, sales scripts, automation workflows, and SOPs. Describe what you want, then hit Generate Prompt.";
-
-      if (titleEl && titleEl.parentNode) titleEl.insertAdjacentElement("afterend", desc);
-      else m.insertBefore(desc, m.firstChild);
+        "Use this to generate a copy/paste-ready prompt for ChatGPT/Claude. Tell it what you want, the role, and any constraints — it outputs the finished prompt.";
+      titleEl.insertAdjacentElement("afterend", desc);
     }
+
+    // Button text
+    const run =
+      modalEl.querySelector("#runAskBtn") ||
+      modalEl.querySelector("#askRunBtn") ||
+      modalEl.querySelector("button[id*='Ask'][id*='run']");
+    if (run) run.textContent = "Generate Prompt";
   }
 
-  if (!m.__LR_CLOSE_WIRED__) {
-    m.__LR_CLOSE_WIRED__ = true;
-
-    m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
-      if (x.__LR_BOUND__) return;
-      x.__LR_BOUND__ = true;
-
-      // Ensure the X is always clickable above everything
-      x.style.setProperty("position", "absolute", "important");
-      x.style.setProperty("z-index", "2147483500", "important");
-      x.style.setProperty("pointer-events", "auto", "important");
-
-      x.addEventListener("click", closeAll);
-    });
-
-    m.addEventListener("click", (e) => {
-      if (e.target === m) closeAll();
-    });
-  }
-
-  const focusEl =
-    m.querySelector("textarea") ||
-    m.querySelector("input:not([type='hidden'])") ||
-    m.querySelector("button");
-  if (focusEl) setTimeout(() => focusEl.focus(), 0);
-}
-
-on(DOC, "keydown", (e) => {
-  if (e.key === "Escape") closeAll();
-});
-
-function bind(key) {
-  const btnId = BTN[key];
-  const modalId = MODAL[key];
-  const b = $(btnId);
-  if (!b || b.__LR_BOUND__) return;
-  b.__LR_BOUND__ = true;
-
-  b.addEventListener("click", () => {
-    pressAnim(b);
+  function openModal(modalId, btnId) {
     const m = $(modalId);
-    const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-    if (isOpen) return closeAll();
-    openModal(modalId, btnId);
-  });
-}
+    if (!m) return;
 
-Object.keys(BTN).forEach(bind);
-window.LR_TOOLS = { openModal, closeAll };
-console.log("✅ FLOATING TOOLS WIRED");
+    closeAll();
+
+    // suppress top-right UI so it never covers the close X
+    setTopUiSuppressed(true);
+
+    // 🔥 FORCE modal above everything
+    m.classList.remove("hidden");
+    m.style.setProperty("display", "flex", "important");
+    m.style.setProperty("position", "fixed", "important");
+    m.style.setProperty("z-index", "2147483646", "important");
+    m.style.setProperty("pointer-events", "auto", "important");
+    m.setAttribute("aria-hidden", "false");
+    setActive(btnId);
+
+    // Special UI patch for Ask modal
+    if (modalId === MODAL.ask) patchAskUi(m);
+
+    if (!m.__LR_CLOSE_WIRED__) {
+      m.__LR_CLOSE_WIRED__ = true;
+
+      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+        if (x.__LR_BOUND__) return;
+        x.__LR_BOUND__ = true;
+
+        // Ensure the X is always clickable above everything
+        x.style.setProperty("position", "absolute", "important");
+        x.style.setProperty("z-index", "2147483647", "important");
+        x.style.setProperty("pointer-events", "auto", "important");
+
+        x.addEventListener("click", closeAll);
+      });
+
+      m.addEventListener("click", (e) => {
+        if (e.target === m) closeAll();
+      });
+    }
+
+    const focusEl =
+      m.querySelector("textarea") ||
+      m.querySelector("input:not([type='hidden'])") ||
+      m.querySelector("button");
+    if (focusEl) setTimeout(() => focusEl.focus(), 0);
+  }
+
+  on(DOC, "keydown", (e) => {
+    if (e.key === "Escape") closeAll();
+  });
+
+  function bind(key) {
+    const btnId = BTN[key];
+    const modalId = MODAL[key];
+    const b = $(btnId);
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", () => {
+      pressAnim(b);
+      const m = $(modalId);
+      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+      if (isOpen) return closeAll();
+      openModal(modalId, btnId);
+    });
+  }
+
+  Object.keys(BTN).forEach(bind);
+  window.LR_TOOLS = { openModal, closeAll };
+  console.log("✅ FLOATING TOOLS WIRED");
 })();
 
   // ==================================================
