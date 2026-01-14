@@ -1924,9 +1924,9 @@ function buildPayload(type, text) {
   if (type === "ask") {
     return {
       question: text,
-      mode: "prompt",
       context: {
         tool: "ask",
+        mode: "prompt_creator",
         app: "lot-rocket",
         version: V,
       },
@@ -1937,9 +1937,9 @@ function buildPayload(type, text) {
   if (type === "help") {
     return {
       question: text,
-      mode: "help",
       context: {
         tool: "help",
+        mode: "app_help",
         app: "lot-rocket",
         version: V,
         hint: "Answer only about using Lot Rocket + troubleshooting.",
@@ -1952,34 +1952,34 @@ function buildPayload(type, text) {
   return { input: text };
 }
 
+async function callAI(endpoint, payload) {
+  const r = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-    async function callAI(endpoint, payload) {
-      const r = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(payload),
-      });
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const raw = await r.text();
+  if (!ct.includes("application/json")) throw new Error("Server returned non-JSON");
 
-      const ct = (r.headers.get("content-type") || "").toLowerCase();
-      const raw = await r.text();
-      if (!ct.includes("application/json")) throw new Error("Server returned non-JSON");
+  const j = JSON.parse(raw);
+  if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j?.error || "AI failed");
+  return j?.text || "";
+}
 
-      const j = JSON.parse(raw);
-      if (j && typeof j === "object" && "ok" in j && !j.ok) throw new Error(j?.error || "AI failed");
-      return j?.text || "";
-    }
+function setBusy(btn, onBusy) {
+  if (!btn) return;
+  if (onBusy) {
+    btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+    btn.textContent = "Working…";
+    btn.disabled = true;
+  } else {
+    btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
+    btn.disabled = false;
+  }
+}
 
-    function setBusy(btn, onBusy) {
-      if (!btn) return;
-      if (onBusy) {
-        btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
-        btn.textContent = "Working…";
-        btn.disabled = true;
-      } else {
-        btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
-        btn.disabled = false;
-      }
-    }
 
     DOC.addEventListener("click", async (e) => {
       const btn = e.target?.closest?.("button");
