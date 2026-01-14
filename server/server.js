@@ -1267,6 +1267,38 @@ app.post("/api/ai/ask", async (req, res) => {
     return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+app.post("/api/ai/help", async (req, res) => {
+  try {
+    const question = String(req.body?.question || req.body?.text || "").trim();
+    if (!question) return res.json({ ok: false, error: "Missing question" });
+
+    const system = [
+      "You are Lot Rocket's in-app Help & Troubleshooting assistant.",
+      "Only answer questions about using Lot Rocket, its features, or diagnosing issues inside the app.",
+      "",
+      "RULES:",
+      "- Be concise and practical.",
+      "- If the question is unrelated to Lot Rocket, redirect back to Lot Rocket usage.",
+    ].join("\n");
+
+    const user = question;
+
+    const r = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      temperature: 0.3,
+      max_tokens: 700,
+    });
+
+    const text = r?.choices?.[0]?.message?.content?.trim() || "";
+    return res.json({ ok: true, text });
+  } catch (e) {
+    return res.json({ ok: false, error: e?.message || String(e) });
+  }
+});
 
 
 app.post("/api/ai/social", async (req, res) => {
