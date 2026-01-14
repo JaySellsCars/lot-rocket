@@ -1133,10 +1133,7 @@ async function callOpenAI({ system, user, temperature = 0.6, max_tokens = 900 })
   }
 }
 
-/* =============================== */
 
-   APP KB
-================================ */
 const APP_KB = [
   "LOT ROCKET — APP MANUAL",
   "",
