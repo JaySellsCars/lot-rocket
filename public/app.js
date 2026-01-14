@@ -3111,20 +3111,13 @@ wireAiFollowups();
 })();
 
 // ===============================
-// LOG OUT BUTTON
+// LOG OUT BUTTON LABEL (UI ONLY)
 // ===============================
-const logoutBtn = document.getElementById("lrLogoutBtn");
-
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await SB.auth.signOut();
-    } catch (e) {
-      console.warn("Logout error:", e);
-    }
-    location.reload();
-  });
-}
+(function labelLogoutBtn() {
+  const btn = document.getElementById("lrSignOut"); // this is your real logout button id
+  if (!btn) return;
+  btn.textContent = "Log out";
+})();
 
 // ===============================
 // PREVENT EMAIL AUTOFILL INTO PRICE FIELD
