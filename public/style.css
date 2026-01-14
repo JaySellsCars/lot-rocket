@@ -201,6 +201,46 @@ textarea{
   white-space:pre-wrap;
   word-break:break-word;
 }
+/* ---------------------------------
+   TOP BAR (ACCOUNT)
+---------------------------------- */
+#lrTopBar{
+  position:fixed;
+  top:16px;
+  right:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  z-index:120000;
+}
+
+/* the circle icon button */
+#lrUserChip{
+  width:54px;
+  height:54px;
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.35);
+  background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
+  color:#0b1020;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 14px 34px rgba(0,0,0,.35);
+}
+
+/* the text Log out button */
+#lrLogoutBtn{
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(239,68,68,.45);
+  background:rgba(239,68,68,.14);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 14px 34px rgba(0,0,0,.28);
+}
+
+#lrLogoutBtn:hover{ filter:brightness(1.06); }
+#lrLogoutBtn:active{ transform:translateY(1px); }
 
 /* ---------------------------------
    BUTTONS
