@@ -2201,98 +2201,149 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     }
   }
 
-async function downloadLockedZip(fileHandle) {
+// ----------------------------
+// SIMPLE IDB (store folder handle)
+// ----------------------------
+const LR_IDB = {
+  dbp: null,
+  db() {
+    if (this.dbp) return this.dbp;
+    this.dbp = new Promise((resolve, reject) => {
+      const req = indexedDB.open("lr_fs", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("kv");
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return this.dbp;
+  },
+  async get(key) {
+    const db = await this.db();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("kv", "readonly");
+      const req = tx.objectStore("kv").get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async set(key, val) {
+    const db = await this.db();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("kv", "readwrite");
+      tx.objectStore("kv").put(val, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+};
+
+async function ensureDirPermission(dirHandle) {
+  if (!dirHandle) return false;
+  const opts = { mode: "readwrite" };
+
+  // Some Chrome versions support queryPermission/requestPermission on handles
+  if (dirHandle.queryPermission) {
+    const q = await dirHandle.queryPermission(opts);
+    if (q === "granted") return true;
+  }
+  if (dirHandle.requestPermission) {
+    const r = await dirHandle.requestPermission(opts);
+    return r === "granted";
+  }
+  // If API not present, assume ok
+  return true;
+}
+
+async function getOrPickDownloadDir() {
+  // Try reuse stored handle
+  let dir = await LR_IDB.get("download_dir");
+  if (dir) {
+    const ok = await ensureDirPermission(dir);
+    if (ok) return dir;
+  }
+
+  // Pick folder once (choose Downloads)
+  if (!window.showDirectoryPicker) return null;
+
+  dir = await window.showDirectoryPicker({ mode: "readwrite" });
+  const ok = await ensureDirPermission(dir);
+  if (!ok) return null;
+
+  await LR_IDB.set("download_dir", dir);
+  return dir;
+}
+
+async function blobToJpegBlob(blob, quality = 0.92) {
+  if (!blob) throw new Error("missing blob");
+  if (blob.type === "image/jpeg") return blob;
+
+  const bmp = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = bmp.width;
+  canvas.height = bmp.height;
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bmp, 0, 0);
+  if (bmp.close) bmp.close();
+
+  return await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (out) => (out ? resolve(out) : reject(new Error("JPEG conversion failed"))),
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+// ----------------------------
+// DOWNLOAD PHOTOS "UNZIPPED" INTO A FOLDER
+// ----------------------------
+async function downloadLockedToFolder() {
   normalizeSocialReady();
   const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
-
   if (!locked.length) return alert("Lock at least 1 photo first.");
-  if (!window.JSZip) return alert("JSZip not loaded.");
 
   const zipBtn = $("downloadZipBtn");
-  setBtnLoading(zipBtn, true, "Zipping…");
-
-  function forceDownloadBlob(filename, blob) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    a.style.display = "none";
-    document.body.appendChild(a);
-
-    // Use a real click event (more reliable than a.click in some cases)
-    a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-    a.remove();
-
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-  }
-
-  async function blobToJpegBlob(blob, quality = 0.92) {
-    if (!blob) throw new Error("missing blob");
-    if (blob.type === "image/jpeg") return blob;
-
-    const bmp = await createImageBitmap(blob);
-    const canvas = document.createElement("canvas");
-    canvas.width = bmp.width;
-    canvas.height = bmp.height;
-
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bmp, 0, 0);
-
-    if (bmp.close) bmp.close();
-
-    return await new Promise((resolve, reject) => {
-      canvas.toBlob(
-        (out) => (out ? resolve(out) : reject(new Error("JPEG conversion failed"))),
-        "image/jpeg",
-        quality
-      );
-    });
-  }
+  setBtnLoading(zipBtn, true, "Saving…");
 
   try {
-    const zip = new JSZip();
-    const folder = zip.folder("lot-rocket");
+    const dir = await getOrPickDownloadDir();
+    if (!dir) {
+      alert("Folder saving not supported here. (Need Chrome + HTTPS).");
+      return;
+    }
+
+    // Create a subfolder each time (keeps things clean)
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const sub = await dir.getDirectoryHandle(`lot-rocket-${stamp}`, { create: true });
+
     let ok = 0;
 
     for (let i = 0; i < locked.length; i++) {
       const url = locked[i].url;
-
       try {
         const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
         const r = await fetch(prox, { cache: "no-store" });
-        if (!r.ok) throw new Error("proxy fetch failed");
+        if (!r.ok) throw new Error(`proxy fetch failed (${r.status})`);
 
         const blob = await r.blob();
         const jpegBlob = await blobToJpegBlob(blob, 0.92);
 
-        folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
+        const name = `photo_${String(i + 1).padStart(2, "0")}.jpg`;
+        const fileHandle = await sub.getFileHandle(name, { create: true });
+        const w = await fileHandle.createWritable();
+        await w.write(jpegBlob);
+        await w.close();
+
         ok++;
       } catch (e) {
-        console.warn("ZIP skip:", url, e);
+        console.warn("SAVE skip:", url, e);
       }
     }
 
-    if (!ok) return alert("Could not fetch images to zip.");
-
-    // Ensure correct mime
-    const out = await zip.generateAsync({ type: "blob" });
-    const zipBlob = out && out.type ? out : new Blob([out], { type: "application/zip" });
-
-    // ✅ BEST (Chrome/Edge): write to a file handle obtained during user click
-    if (fileHandle && typeof fileHandle.createWritable === "function") {
-      const w = await fileHandle.createWritable();
-      await w.write(zipBlob);
-      await w.close();
-      console.log("✅ ZIP saved via File Picker:", zipBlob.size);
-      return;
-    }
-
-    // ✅ Fallback: normal download (may be blocked if browser is strict)
-    forceDownloadBlob("lot-rocket-social-ready.zip", zipBlob);
-    console.log("✅ ZIP download triggered:", zipBlob.size);
+    if (!ok) alert("Could not save images. Check /api/proxy and CORS.");
+    else alert(`Saved ${ok} photos into your selected folder.`);
   } finally {
     setBtnLoading(zipBtn, false);
   }
@@ -2303,31 +2354,12 @@ function wireZipButton() {
   if (!btn || btn.__LR_BOUND__) return;
   btn.__LR_BOUND__ = true;
 
-  btn.addEventListener("click", async () => {
+  btn.addEventListener("click", () => {
     pressAnim(btn);
-
-    // 🔒 Capture “save” permission immediately while click is a user gesture
-    let handle = null;
-    if (window.showSaveFilePicker) {
-      try {
-        handle = await window.showSaveFilePicker({
-          suggestedName: "lot-rocket-social-ready.zip",
-          types: [
-            {
-              description: "ZIP Archive",
-              accept: { "application/zip": [".zip"] },
-            },
-          ],
-        });
-      } catch (e) {
-        // user canceled picker — fall back to normal download attempt
-        handle = null;
-      }
-    }
-
-    downloadLockedZip(handle);
+    downloadLockedToFolder();
   });
 }
+
 
 
 
