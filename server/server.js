@@ -1087,7 +1087,7 @@ app.post("/api/payment-helper", (req, res) => {
 });
 
 /* ===============================
-   OPENAI HELPER
+   OPENAI HELPER (FETCH-BASED)
 ================================ */
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 20000);
@@ -1126,12 +1126,13 @@ async function callOpenAI({ system, user, temperature = 0.6, max_tokens = 900 })
   } catch (e) {
     return {
       ok: false,
-      error: e?.name === "AbortError" ? "OpenAI timeout" : e?.message || String(e),
+      error: e?.name === "AbortError" ? "OpenAI timeout" : (e?.message || String(e)),
     };
   } finally {
     clearTimeout(t);
   }
 }
+
 
 
 const APP_KB = [
