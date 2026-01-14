@@ -1222,36 +1222,52 @@ Output must be plain text, no headings, no bullets unless they help clarity.
 //   OR if context string contains "PROMPT CREATOR"
 // ----------------------------
 app.post("/api/ai/ask", async (req, res) => {
-  const q = takeText(req.body.question, req.body.input, req.body.text);
-  const ctxAny = req.body.context;
+  try {
+    const question = String(req.body?.question || req.body?.text || "").trim();
+    if (!question) return res.json({ ok: false, error: "Missing question" });
 
-  if (!q) return jsonErr(res, "Missing question/input");
+    const system = [
+      "You are Lot Rocket's A.I Prompt Generator.",
+      "Your job: generate a copy/paste-ready HIGH QUALITY prompt the user can use in ChatGPT/Claude/etc.",
+      "",
+      "RULES:",
+      "- Do NOT refuse normal requests.",
+      "- Do NOT talk about app troubleshooting.",
+      "- Output should be a finished prompt, not advice.",
+      "- Make it specific, structured, and reusable.",
+      "",
+      "PROMPT FORMAT (use this):",
+      "TITLE:",
+      "ROLE:",
+      "GOAL:",
+      "CONTEXT:",
+      "INPUTS (what user must provide):",
+      "CONSTRAINTS:",
+      "OUTPUT FORMAT:",
+      "EXAMPLES (optional if helpful):",
+      "",
+      "If the user asks for something vague, make reasonable assumptions and produce the best prompt anyway.",
+    ].join("\n");
 
-  const ctxText =
-    typeof ctxAny === "string"
-      ? ctxAny
-      : JSON.stringify(ctxAny || {}, null, 2);
+    const user = `Create the best possible prompt for this request:\n\n${question}`;
 
-  const wantPromptCreator =
-    String(req.body.mode || "").toLowerCase() === "prompt" ||
-    String(req.body.persona || "").toLowerCase() === "prompt" ||
-    String(req.body.role || "").toLowerCase() === "prompt_creator" ||
-    (typeof ctxAny === "string" && /prompt\s*creator/i.test(ctxAny));
+    const r = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      temperature: 0.7,
+      max_tokens: 900,
+    });
 
-  const system = wantPromptCreator ? PROMPT_CREATOR_SYSTEM : HELP_SYSTEM;
-
-  const user = wantPromptCreator
-    ? ["REQUEST:", q, "", "PREFERENCES / CONTEXT:", ctxText].join("\n")
-    : ["USER QUESTION:", q, "", "UI CONTEXT:", ctxText].join("\n");
-
-  const out = await callOpenAI({
-    system,
-    user,
-    temperature: wantPromptCreator ? 0.55 : 0.25,
-  });
-
-  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+    const text = r?.choices?.[0]?.message?.content?.trim() || "";
+    return res.json({ ok: true, text });
+  } catch (e) {
+    return res.json({ ok: false, error: e?.message || String(e) });
+  }
 });
+
 
 app.post("/api/ai/social", async (req, res) => {
   const vehicle = req.body.vehicle || {};
