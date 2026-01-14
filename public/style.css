@@ -288,6 +288,43 @@ textarea{
   cursor:pointer;
   font-weight:800;
 }
+
+/* ---------------------------------
+   USER CHIP (top-right icon) — COLOR + GLOW
+---------------------------------- */
+#lrUserChip{
+  width: 46px;
+  height: 46px;
+  padding: 0 !important;
+  border-radius: 999px;
+
+  border: 1px solid rgba(236,72,153,.40) !important;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 45%),
+              linear-gradient(135deg, #f97316, #ec4899) !important;
+
+  color: #0b1020 !important;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.55),
+    0 0 0 4px rgba(236,72,153,.16);
+}
+
+#lrUserChip:hover{
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow:
+    0 18px 44px rgba(0,0,0,.6),
+    0 0 0 5px rgba(249,115,22,.18),
+    0 0 24px rgba(236,72,153,.28);
+}
+
+#lrUserChip:active{
+  transform: translateY(1px) scale(.99);
+}
+
 /* ---------------------------------
    TOP BAR — make Logout obvious
 ---------------------------------- */
