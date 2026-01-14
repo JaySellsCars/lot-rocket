@@ -1931,14 +1931,6 @@ console.log("✅ FLOATING TOOLS WIRED");
       carExpertRunBtn: "car",
     };
 
-    const typeToEndpoint = {
-      objection: "/api/ai/objection",
-      message: "/api/ai/message",
-      campaign: "/api/ai/workflow",
-      ask: "/api/ai/ask",
-      help: "/api/ai/ask",
-      car: "/api/ai/car",
-    };
 
     const typeToOutputId = {
       objection: "objectionOutput",
