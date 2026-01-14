@@ -2201,90 +2201,107 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     }
   }
 
-  async function downloadLockedZip() {
-    normalizeSocialReady();
-    const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
+async function downloadLockedZip() {
+  normalizeSocialReady();
+  const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
 
-    if (!locked.length) return alert("Lock at least 1 photo first.");
-    if (!window.JSZip) return alert("JSZip not loaded.");
+  if (!locked.length) return alert("Lock at least 1 photo first.");
+  if (!window.JSZip) return alert("JSZip not loaded.");
 
-    const zipBtn = $("downloadZipBtn");
-    setBtnLoading(zipBtn, true, "Zipping…");
+  const zipBtn = $("downloadZipBtn");
+  setBtnLoading(zipBtn, true, "Zipping…");
 
-    async function blobToJpegBlob(blob, quality = 0.92) {
-      if (!blob) throw new Error("missing blob");
-      if (blob.type === "image/jpeg") return blob;
+  // ----------------------------
+  // FORCE DOWNLOAD (NO NEW TAB / ALWAYS SAVES)
+  // ----------------------------
+  function forceDownloadBlob(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const a = DOC.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.style.display = "none";
+    DOC.body.appendChild(a);
 
-      const bmp = await createImageBitmap(blob);
-      const canvas = document.createElement("canvas");
-      canvas.width = bmp.width;
-      canvas.height = bmp.height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(bmp, 0, 0);
-
-      if (bmp.close) bmp.close();
-
-      return await new Promise((resolve, reject) => {
-        canvas.toBlob(
-          (out) => (out ? resolve(out) : reject(new Error("JPEG conversion failed"))),
-          "image/jpeg",
-          quality
-        );
-      });
-    }
-
-    try {
-      const zip = new JSZip();
-      const folder = zip.folder("lot-rocket");
-      let ok = 0;
-
-      for (let i = 0; i < locked.length; i++) {
-        const url = locked[i].url;
-
-        try {
-          const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
-          const r = await fetch(prox, { cache: "no-store" });
-          if (!r.ok) throw new Error("proxy fetch failed");
-
-          const blob = await r.blob();
-          const jpegBlob = await blobToJpegBlob(blob, 0.92);
-          folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
-
-          ok++;
-        } catch (e) {
-          console.warn("ZIP skip:", url, e);
-        }
-      }
-
-      if (!ok) return alert("Could not fetch images to zip.");
-
-      const out = await zip.generateAsync({ type: "blob" });
-      const a = DOC.createElement("a");
-      a.href = URL.createObjectURL(out);
-      a.download = "lot-rocket-social-ready.zip";
-      DOC.body.appendChild(a);
+    // Some browsers need a tick before click
+    setTimeout(() => {
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-    } finally {
-      setBtnLoading(zipBtn, false);
-    }
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }, 0);
   }
 
-  function wireZipButton() {
-    const btn = $("downloadZipBtn");
-    if (!btn || btn.__LR_BOUND__) return;
-    btn.__LR_BOUND__ = true;
-    btn.addEventListener("click", () => {
-      pressAnim(btn);
-      downloadLockedZip();
+  async function blobToJpegBlob(blob, quality = 0.92) {
+    if (!blob) throw new Error("missing blob");
+    if (blob.type === "image/jpeg") return blob;
+
+    const bmp = await createImageBitmap(blob);
+    const canvas = document.createElement("canvas");
+    canvas.width = bmp.width;
+    canvas.height = bmp.height;
+
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0);
+
+    if (bmp.close) bmp.close();
+
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (out) => (out ? resolve(out) : reject(new Error("JPEG conversion failed"))),
+        "image/jpeg",
+        quality
+      );
     });
   }
 
+  try {
+    const zip = new JSZip();
+    const folder = zip.folder("lot-rocket");
+    let ok = 0;
+
+    for (let i = 0; i < locked.length; i++) {
+      const url = locked[i].url;
+
+      try {
+        const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
+        const r = await fetch(prox, { cache: "no-store" });
+        if (!r.ok) throw new Error("proxy fetch failed");
+
+        const blob = await r.blob();
+        const jpegBlob = await blobToJpegBlob(blob, 0.92);
+        folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
+
+        ok++;
+      } catch (e) {
+        console.warn("ZIP skip:", url, e);
+      }
+    }
+
+    if (!ok) return alert("Could not fetch images to zip.");
+
+    const out = await zip.generateAsync({ type: "blob" });
+
+    // ✅ ALWAYS SAVE, NEVER NAVIGATE, NEVER NEW TAB
+    forceDownloadBlob("lot-rocket-social-ready.zip", out);
+  } finally {
+    setBtnLoading(zipBtn, false);
+  }
+}
+
+function wireZipButton() {
+  const btn = $("downloadZipBtn");
+  if (!btn || btn.__LR_BOUND__) return;
+  btn.__LR_BOUND__ = true;
+  btn.addEventListener("click", () => {
+    pressAnim(btn);
+    downloadLockedZip();
+  });
+}
+
 // ==================================================
+
 // PAYMENT CALCULATOR
 // ==================================================
 function wirePaymentCalculator() {
