@@ -2308,20 +2308,18 @@ async function downloadLockedToFolder() {
   setBtnLoading(zipBtn, true, "Saving…");
 
   try {
-    const dir = await getOrPickDownloadDir();
+    const dir = await getOrPickDownloadDir(); // you pick Downloads ONCE
     if (!dir) {
       alert("Folder saving not supported here. (Need Chrome + HTTPS).");
       return;
     }
 
-    // Create a subfolder each time (keeps things clean)
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const sub = await dir.getDirectoryHandle(`lot-rocket-${stamp}`, { create: true });
-
     let ok = 0;
 
     for (let i = 0; i < locked.length; i++) {
       const url = locked[i].url;
+
       try {
         const prox = `/api/proxy?url=${encodeURIComponent(url)}`;
         const r = await fetch(prox, { cache: "no-store" });
@@ -2330,8 +2328,9 @@ async function downloadLockedToFolder() {
         const blob = await r.blob();
         const jpegBlob = await blobToJpegBlob(blob, 0.92);
 
-        const name = `photo_${String(i + 1).padStart(2, "0")}.jpg`;
-        const fileHandle = await sub.getFileHandle(name, { create: true });
+        // Save DIRECTLY into the chosen folder (no subfolder)
+        const name = `lot-rocket_${stamp}_photo_${String(i + 1).padStart(2, "0")}.jpg`;
+        const fileHandle = await dir.getFileHandle(name, { create: true });
         const w = await fileHandle.createWritable();
         await w.write(jpegBlob);
         await w.close();
@@ -2348,6 +2347,7 @@ async function downloadLockedToFolder() {
     setBtnLoading(zipBtn, false);
   }
 }
+
 
 function wireZipButton() {
   const btn = $("downloadZipBtn");
