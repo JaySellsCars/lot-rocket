@@ -1913,25 +1913,45 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
       return parts.join("\n");
     }
 
-    function buildPayload(type, text) {
-      const v = window.STORE?.lastVehicle || {};
-      if (type === "objection") return { objection: text };
-      if (type === "message") return { input: text };
-      if (type === "campaign") return { scenario: buildCampaignScenario(text) };
-      if (type === "ask") return { question: text, context: { tool: "ask" } };
-      if (type === "help")
-        return {
-          question: text,
-          context: {
-            tool: "help",
-            app: "lot-rocket",
-            version: V,
-            hint: "Answer only about using Lot Rocket + troubleshooting.",
-          },
-        };
-      if (type === "car") return { vehicle: vehicleToString(v), question: text };
-      return { input: text };
-    }
+function buildPayload(type, text) {
+  const v = window.STORE?.lastVehicle || {};
+
+  if (type === "objection") return { objection: text };
+  if (type === "message") return { input: text };
+  if (type === "campaign") return { scenario: buildCampaignScenario(text) };
+
+  // Ask A.I. = PROMPT CREATOR
+  if (type === "ask") {
+    return {
+      question: text,
+      mode: "prompt",
+      context: {
+        tool: "ask",
+        app: "lot-rocket",
+        version: V,
+      },
+    };
+  }
+
+  // Help = LOT ROCKET APP HELP / TROUBLESHOOTING
+  if (type === "help") {
+    return {
+      question: text,
+      mode: "help",
+      context: {
+        tool: "help",
+        app: "lot-rocket",
+        version: V,
+        hint: "Answer only about using Lot Rocket + troubleshooting.",
+      },
+    };
+  }
+
+  if (type === "car") return { vehicle: vehicleToString(v), question: text };
+
+  return { input: text };
+}
+
 
     async function callAI(endpoint, payload) {
       const r = await fetch(endpoint, {
