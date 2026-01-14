@@ -2081,14 +2081,15 @@ function setBusy(btn, onBusy) {
       const type = btnToType[btn.id];
       if (!type) return;
 
-const endpoint =
-  type === "help" ? "/api/ai/help" :
-  type === "ask" ? "/api/ai/ask" :
-  type === "car" ? "/api/ai/car" :
-  type === "message" ? "/api/ai/message" :
-  type === "objection" ? "/api/ai/objection" :
-  type === "campaign" ? "/api/ai/workflow" :
-  null;
+const typeToEndpoint = {
+  objection: "/api/ai/objection",
+  message: "/api/ai/message",
+  campaign: "/api/ai/workflow",
+  ask: "/api/ai/ask",
+  help: "/api/ai/help",   // ✅ CHANGE THIS
+  car: "/api/ai/car",
+};
+
 
 if (!endpoint) return;
 
