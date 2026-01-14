@@ -1672,145 +1672,189 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
   // ==================================================
   // FLOATING TOOLS WIRING
   // ==================================================
-  (function wireFloatingTools() {
-    if (window.__LR_FLOATING_TOOLS__) return;
-    window.__LR_FLOATING_TOOLS__ = true;
+ (function wireFloatingTools() {
+  if (window.__LR_FLOATING_TOOLS__) return;
+  window.__LR_FLOATING_TOOLS__ = true;
 
-    const BTN = {
-      objection: "toolObjectionBtn",
-      calc: "toolCalcBtn",
-      payment: "toolPaymentBtn",
-      income: "toolIncomeBtn",
-      workflow: "toolWorkflowBtn",
-      message: "toolMessageBtn",
-      ask: "toolAskBtn",
-      help: "toolHelpBtn",
-      car: "toolCarBtn",
-      image: "toolImageBtn",
-      video: "toolVideoBtn",
-    };
+  const BTN = {
+    objection: "toolObjectionBtn",
+    calc: "toolCalcBtn",
+    payment: "toolPaymentBtn",
+    income: "toolIncomeBtn",
+    workflow: "toolWorkflowBtn",
+    message: "toolMessageBtn",
+    ask: "toolAskBtn",
+    help: "toolHelpBtn",
+    car: "toolCarBtn",
+    image: "toolImageBtn",
+    video: "toolVideoBtn",
+  };
 
-    const MODAL = {
-      objection: "objectionModal",
-      calc: "calcModal",
-      payment: "paymentModal",
-      income: "incomeModal",
-      workflow: "workflowModal",
-      message: "messageModal",
-      ask: "askModal",
-      help: "helpModal",
-      car: "carExpertModal",
-      image: "imageGenModal",
-      video: "videoGenModal",
-    };
+  const MODAL = {
+    objection: "objectionModal",
+    calc: "calcModal",
+    payment: "paymentModal",
+    income: "incomeModal",
+    workflow: "workflowModal",
+    message: "messageModal",
+    ask: "askModal",
+    help: "helpModal",
+    car: "carExpertModal",
+    image: "imageGenModal",
+    video: "videoGenModal",
+  };
 
-    [BTN.image, BTN.video].forEach((id) => {
-      const b = $(id);
-      if (b) b.style.display = "none";
-    });
-
-    const wfBtn = $(BTN.workflow);
-    if (wfBtn) wfBtn.textContent = "AI Campaign Builder";
-
-    const wfRun = $("runWorkflowBtn");
-    if (wfRun) wfRun.textContent = "Build Campaign";
-
-    const allBtnIds = Object.values(BTN);
-
-    function setActive(btnId) {
-      allBtnIds.forEach((id) => {
-        const b = $(id);
-        if (b) b.classList.toggle("active", id === btnId);
-      });
-    }
-
-    function closeModal(modalId) {
-      const m = $(modalId);
-      if (!m) return;
-      m.classList.add("hidden");
-      m.style.display = "none";
-      m.setAttribute("aria-hidden", "true");
-    }
-
-    function closeAll() {
-      Object.values(MODAL).forEach(closeModal);
-      setActive(null);
-    }
-
-function openModal(modalId, btnId) {
-  const m = $(modalId);
-  if (!m) return;
-
-  closeAll();
-
-  // 🔥 FORCE modal above the logout/user chip no matter what
-  m.classList.remove("hidden");
-  m.style.setProperty("display", "flex", "important");
-  m.style.setProperty("position", "fixed", "important");
-  m.style.setProperty("z-index", "2147483000", "important"); // near max
-  m.setAttribute("aria-hidden", "false");
-  setActive(btnId);
-
-  // Push chip/logout down + disable clicks while modal is open
-  ["lrUserChip", "lrSignOut", "lrLogoutBtn", "lrManageBilling"].forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-    el.style.setProperty("z-index", "10", "important");
-    el.style.setProperty("pointer-events", "none", "important");
+  [BTN.image, BTN.video].forEach((id) => {
+    const b = $(id);
+    if (b) b.style.display = "none";
   });
 
-  if (!m.__LR_CLOSE_WIRED__) {
-    m.__LR_CLOSE_WIRED__ = true;
+  const wfBtn = $(BTN.workflow);
+  if (wfBtn) wfBtn.textContent = "AI Campaign Builder";
 
-    m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
-      if (x.__LR_BOUND__) return;
-      x.__LR_BOUND__ = true;
+  const wfRun = $("runWorkflowBtn");
+  if (wfRun) wfRun.textContent = "Build Campaign";
 
-      // ✅ Ensure the X is always clickable + not under the chip
-      x.style.setProperty("position", "absolute", "important");
-      x.style.setProperty("z-index", "2147483500", "important");
-      x.style.setProperty("top", "10px", "important");
-      x.style.setProperty("right", "72px", "important"); // move away from chip
+  // ✅ RENAME ASK TOOL BUTTON
+  const askBtn = $(BTN.ask);
+  if (askBtn) askBtn.textContent = "A.I Prompt Generator";
 
-      x.addEventListener("click", closeAll);
-    });
+  // optional: rename the run button inside Ask modal too (safe text only)
+  const askRun = $("runAskBtn") || $("askRunBtn");
+  if (askRun) askRun.textContent = "Generate Prompt";
 
-    m.addEventListener("click", (e) => {
-      if (e.target === m) closeAll();
+  const allBtnIds = Object.values(BTN);
+
+  function setActive(btnId) {
+    allBtnIds.forEach((id) => {
+      const b = $(id);
+      if (b) b.classList.toggle("active", id === btnId);
     });
   }
 
-  const focusEl =
-    m.querySelector("textarea") ||
-    m.querySelector("input:not([type='hidden'])") ||
-    m.querySelector("button");
-  if (focusEl) setTimeout(() => focusEl.focus(), 0);
-}
+  // ✅ Top-right UI that was visually covering the modal X
+  const TOP_UI_IDS = ["lrUserChip", "lrSignOut", "lrLogoutBtn", "lrManageBilling"];
 
-on(DOC, "keydown", (e) => {
-  if (e.key === "Escape") closeAll();
-});
+  function setTopUiSuppressed(on) {
+    TOP_UI_IDS.forEach((id) => {
+      const el = $(id);
+      if (!el) return;
 
-function bind(key) {
-  const btnId = BTN[key];
-  const modalId = MODAL[key];
-  const b = $(btnId);
-  if (!b || b.__LR_BOUND__) return;
-  b.__LR_BOUND__ = true;
+      if (on) {
+        if (!el.__LR_TOPUI_BACKUP__) {
+          el.__LR_TOPUI_BACKUP__ = {
+            display: el.style.display || "",
+            zIndex: el.style.zIndex || "",
+            pointerEvents: el.style.pointerEvents || "",
+            opacity: el.style.opacity || "",
+          };
+        }
+        // Hide it so it cannot overlap the modal close X visually
+        el.style.setProperty("display", "none", "important");
+        el.style.setProperty("pointer-events", "none", "important");
+        el.style.setProperty("z-index", "10", "important");
+      } else {
+        const b = el.__LR_TOPUI_BACKUP__ || null;
+        if (b) {
+          el.style.display = b.display;
+          el.style.zIndex = b.zIndex;
+          el.style.pointerEvents = b.pointerEvents;
+          el.style.opacity = b.opacity;
+          el.__LR_TOPUI_BACKUP__ = null;
+        } else {
+          el.style.removeProperty("display");
+          el.style.removeProperty("pointer-events");
+          el.style.removeProperty("z-index");
+          el.style.removeProperty("opacity");
+        }
+      }
+    });
+  }
 
-  b.addEventListener("click", () => {
-    pressAnim(b);
+  function closeModal(modalId) {
     const m = $(modalId);
-    const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-    if (isOpen) return closeAll();
-    openModal(modalId, btnId);
-  });
-}
+    if (!m) return;
+    m.classList.add("hidden");
+    m.style.display = "none";
+    m.setAttribute("aria-hidden", "true");
+  }
 
-Object.keys(BTN).forEach(bind);
-window.LR_TOOLS = { openModal, closeAll };
-console.log("✅ FLOATING TOOLS WIRED");
-})(); 
+  function closeAll() {
+    Object.values(MODAL).forEach(closeModal);
+    setActive(null);
+    // restore top-right UI
+    setTopUiSuppressed(false);
+  }
+
+  function openModal(modalId, btnId) {
+    const m = $(modalId);
+    if (!m) return;
+
+    closeAll();
+
+    // suppress top-right UI so it never covers the close X
+    setTopUiSuppressed(true);
+
+    // 🔥 FORCE modal above everything
+    m.classList.remove("hidden");
+    m.style.setProperty("display", "flex", "important");
+    m.style.setProperty("position", "fixed", "important");
+    m.style.setProperty("z-index", "2147483000", "important");
+    m.style.setProperty("pointer-events", "auto", "important");
+    m.setAttribute("aria-hidden", "false");
+    setActive(btnId);
+
+    if (!m.__LR_CLOSE_WIRED__) {
+      m.__LR_CLOSE_WIRED__ = true;
+
+      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+        if (x.__LR_BOUND__) return;
+        x.__LR_BOUND__ = true;
+
+        // Ensure the X is always clickable above everything
+        x.style.setProperty("position", "absolute", "important");
+        x.style.setProperty("z-index", "2147483500", "important");
+        x.style.setProperty("pointer-events", "auto", "important");
+
+        x.addEventListener("click", closeAll);
+      });
+
+      m.addEventListener("click", (e) => {
+        if (e.target === m) closeAll();
+      });
+    }
+
+    const focusEl =
+      m.querySelector("textarea") ||
+      m.querySelector("input:not([type='hidden'])") ||
+      m.querySelector("button");
+    if (focusEl) setTimeout(() => focusEl.focus(), 0);
+  }
+
+  on(DOC, "keydown", (e) => {
+    if (e.key === "Escape") closeAll();
+  });
+
+  function bind(key) {
+    const btnId = BTN[key];
+    const modalId = MODAL[key];
+    const b = $(btnId);
+    if (!b || b.__LR_BOUND__) return;
+    b.__LR_BOUND__ = true;
+
+    b.addEventListener("click", () => {
+      pressAnim(b);
+      const m = $(modalId);
+      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+      if (isOpen) return closeAll();
+      openModal(modalId, btnId);
+    });
+  }
+
+  Object.keys(BTN).forEach(bind);
+  window.LR_TOOLS = { openModal, closeAll };
+  console.log("✅ FLOATING TOOLS WIRED");
+})();
 
 
   // ==================================================
