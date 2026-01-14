@@ -1156,34 +1156,26 @@ const APP_KB = [
 /* ===============================
    AI ROUTES
 ================================ */
-app.post("/api/ai/ask", async (req, res) => {
-  const q = takeText(req.body.question, req.body.input, req.body.text);
-  const ctx = req.body.context || {};
-  if (!q) return jsonErr(res, "Missing question/input");
 
-  const system = [
-    "You are Lot Rocket Help.",
-    "Answer ONLY about the Lot Rocket app: how it works and how to fix issues.",
-    "Use the app manual as truth:",
-    APP_KB,
-    "",
-    "Output: 3–7 bullets max. If code: file + exact snippet.",
-  ].join("\n");
+// ----------------------------
+// SYSTEM PROMPTS
+// ----------------------------
+const HELP_SYSTEM = [
+  "You are Lot Rocket Help.",
+  "Answer ONLY about the Lot Rocket app: how it works and how to fix issues.",
+  "Use the app manual as truth:",
+  APP_KB,
+  "",
+  "Output: 3–7 bullets max. If code: file + exact snippet.",
+].join("\n");
 
-  const user = ["USER QUESTION:", q, "", "UI CONTEXT:", JSON.stringify(ctx, null, 2)].join("\n");
-  const out = await callOpenAI({ system, user, temperature: 0.25 });
-  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
-});
-// ==================================================
-// ASK A.I. PERSONA — PROMPT CREATOR (PASTE-READY)
-// ==================================================
-const LR_ASK_PROMPT_CREATOR_CONTEXT = [
+const PROMPT_CREATOR_SYSTEM = [
   "ROLE: LOT ROCKET PROMPT CREATOR",
   "You create copy/paste prompts the user can reuse anywhere (ChatGPT, Claude, etc.).",
   "",
   "RULES:",
   "- Be practical and fast. No lectures.",
-  "- If the user request is missing details, ask ONLY 3 tight questions max, then ALSO provide a best-guess prompt anyway.",
+  "- If the request is missing details: ask ONLY 3 tight questions max, then ALSO provide a best-guess prompt anyway.",
   "- Prompts must be plug-and-play with clear placeholders like {VEHICLE}, {PRICE}, {LOCATION}, {CTA}.",
   "- Prompts must be written for car sales pros and real-world selling.",
   "",
@@ -1198,6 +1190,68 @@ const LR_ASK_PROMPT_CREATOR_CONTEXT = [
   "- Include emojis + trending hashtags when writing social prompts.",
   "- If user requests a specific persona (ex: Andy Elliott vibe), bake it into the prompt cleanly.",
 ].join("\n");
+
+const OBJECTION_COACH_SYSTEM = `
+You are Lot Rocket's Objection Coach: a high-conviction, modern car-sales closer.
+Your vibe: confident, direct, upbeat, slightly intense, but never rude or robotic.
+You sound like a real top producer: short sentences, contractions, natural talk.
+Goal: move the customer forward TODAY (appointment, deposit, credit app, test drive).
+
+Rules:
+- Never lecture. No generic "I understand" paragraphs.
+- Ask 1-2 sharp questions to regain control.
+- Use simple language. No buzzwords. No corporate tone.
+- No manipulation. No lying. No pressure tactics. No guilt.
+- If info is missing, ask for it in a tight way.
+- If there’s a money objection, isolate it before solving it.
+- Always end with a CLOSE question.
+
+When responding:
+1) One-liner acknowledge + take control (1 sentence).
+2) 2-4 sentences that reframe + solve the objection using the context (vehicle/price/trade/terms if provided).
+3) A "Close Today" question (appointment/deposit/credit app/test drive).
+4) Optional: a short "Text Message Version" (1-2 lines).
+
+Output must be plain text, no headings, no bullets unless they help clarity.
+`.trim();
+
+// ----------------------------
+// ASK (DUAL MODE): Help OR Prompt Creator
+// - Defaults to HELP
+// - Switches to PROMPT CREATOR if body.mode/persona/role says so,
+//   OR if context string contains "PROMPT CREATOR"
+// ----------------------------
+app.post("/api/ai/ask", async (req, res) => {
+  const q = takeText(req.body.question, req.body.input, req.body.text);
+  const ctxAny = req.body.context;
+
+  if (!q) return jsonErr(res, "Missing question/input");
+
+  const ctxText =
+    typeof ctxAny === "string"
+      ? ctxAny
+      : JSON.stringify(ctxAny || {}, null, 2);
+
+  const wantPromptCreator =
+    String(req.body.mode || "").toLowerCase() === "prompt" ||
+    String(req.body.persona || "").toLowerCase() === "prompt" ||
+    String(req.body.role || "").toLowerCase() === "prompt_creator" ||
+    (typeof ctxAny === "string" && /prompt\s*creator/i.test(ctxAny));
+
+  const system = wantPromptCreator ? PROMPT_CREATOR_SYSTEM : HELP_SYSTEM;
+
+  const user = wantPromptCreator
+    ? ["REQUEST:", q, "", "PREFERENCES / CONTEXT:", ctxText].join("\n")
+    : ["USER QUESTION:", q, "", "UI CONTEXT:", ctxText].join("\n");
+
+  const out = await callOpenAI({
+    system,
+    user,
+    temperature: wantPromptCreator ? 0.55 : 0.25,
+  });
+
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+});
 
 app.post("/api/ai/social", async (req, res) => {
   const vehicle = req.body.vehicle || {};
@@ -1275,6 +1329,8 @@ app.post("/api/ai/objection", async (req, res) => {
   const followup = takeText(req.body.followup);
   const history = Array.isArray(req.body.history) ? req.body.history : [];
 
+  if (!objection) return jsonErr(res, "Missing objection/input");
+
   const stitchedHistory = history.length
     ? "\nHISTORY:\n" +
       history
@@ -1285,41 +1341,19 @@ app.post("/api/ai/objection", async (req, res) => {
 
   const user = [
     "CUSTOMER OBJECTION:",
-    objection || "(missing)",
+    objection,
     "",
     "CUSTOMER FOLLOW-UP (if any):",
     followup || "(none)",
     stitchedHistory,
   ].join("\n");
 
-  if (!takeText(user)) return jsonErr(res, "Missing objection/input");
+  const out = await callOpenAI({
+    system: OBJECTION_COACH_SYSTEM,
+    user,
+    temperature: 0.55,
+  });
 
-const OBJECTION_COACH_SYSTEM = `
-You are Lot Rocket's Objection Coach: a high-conviction, modern car-sales closer.
-Your vibe: confident, direct, upbeat, slightly intense, but never rude or robotic.
-You sound like a real top producer: short sentences, contractions, natural talk.
-Goal: move the customer forward TODAY (appointment, deposit, credit app, test drive).
-
-Rules:
-- Never lecture. No generic "I understand" paragraphs.
-- Ask 1-2 sharp questions to regain control.
-- Use simple language. No buzzwords. No corporate tone.
-- No manipulation. No lying. No pressure tactics. No guilt.
-- If info is missing, ask for it in a tight way.
-- If there’s a money objection, isolate it before solving it.
-- Always end with a CLOSE question.
-
-When responding:
-1) One-liner acknowledge + take control (1 sentence).
-2) 2-4 sentences that reframe + solve the objection using the context (vehicle/price/trade/terms if provided).
-3) A "Close Today" question (appointment/deposit/credit app/test drive).
-4) Optional: a short "Text Message Version" (1-2 lines).
-
-Output must be plain text, no headings, no bullets unless they help clarity.
-`;
-
-
-  const out = await callOpenAI({ system, user, temperature: 0.45 });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
 
@@ -1381,6 +1415,7 @@ app.post("/api/ai/car", async (req, res) => {
   const out = await callOpenAI({ system, user, temperature: 0.35 });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 /* ===============================
    API 404 JSON (MUST BE LAST API HANDLER)
