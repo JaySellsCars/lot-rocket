@@ -1225,10 +1225,7 @@ Output must be plain text, no headings, no bullets unless they help clarity.
 `.trim();
 
 // ----------------------------
-// ASK (DUAL MODE): Help OR Prompt Creator
-// - Defaults to HELP
-// - Switches to PROMPT CREATOR if body.mode/persona/role says so,
-//   OR if context string contains "PROMPT CREATOR"
+// ASK: AI PROMPT GENERATOR (PROMPT-ONLY)
 // ----------------------------
 app.post("/api/ai/ask", async (req, res) => {
   try {
@@ -1236,7 +1233,7 @@ app.post("/api/ai/ask", async (req, res) => {
     if (!question) return res.json({ ok: false, error: "Missing question" });
 
     const system = [
-      "You are Lot Rocket's A.I Prompt Generator.",
+      "You are Lot Rocket's AI Prompt Generator.",
       "Your job: generate a copy/paste-ready HIGH QUALITY prompt the user can use in ChatGPT/Claude/etc.",
       "",
       "RULES:",
@@ -1255,27 +1252,28 @@ app.post("/api/ai/ask", async (req, res) => {
       "OUTPUT FORMAT:",
       "EXAMPLES (optional if helpful):",
       "",
-      "If the user asks for something vague, make reasonable assumptions and produce the best prompt anyway.",
+      "If the user is vague, make reasonable assumptions and produce the best prompt anyway.",
+      "Return ONLY the finished prompt text.",
     ].join("\n");
 
     const user = `Create the best possible prompt for this request:\n\n${question}`;
 
-    const r = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
+    const out = await callOpenAI({
+      system,
+      user,
       temperature: 0.7,
       max_tokens: 900,
     });
 
-    const text = r?.choices?.[0]?.message?.content?.trim() || "";
-    return res.json({ ok: true, text });
+    return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+
+// ----------------------------
+// HELP: LOT ROCKET APP HELP / TROUBLESHOOTING ONLY
+// ----------------------------
 app.post("/api/ai/help", async (req, res) => {
   try {
     const question = String(req.body?.question || req.body?.text || "").trim();
@@ -1287,27 +1285,22 @@ app.post("/api/ai/help", async (req, res) => {
       "",
       "RULES:",
       "- Be concise and practical.",
-      "- If the question is unrelated to Lot Rocket, redirect back to Lot Rocket usage.",
+      "- If unrelated to Lot Rocket, redirect back to Lot Rocket usage.",
     ].join("\n");
 
-    const user = question;
-
-    const r = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
+    const out = await callOpenAI({
+      system,
+      user: question,
       temperature: 0.3,
       max_tokens: 700,
     });
 
-    const text = r?.choices?.[0]?.message?.content?.trim() || "";
-    return res.json({ ok: true, text });
+    return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+
 
 
 app.post("/api/ai/social", async (req, res) => {
