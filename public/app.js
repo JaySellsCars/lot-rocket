@@ -2285,6 +2285,7 @@ async function blobToJpegBlob(blob, quality = 0.92) {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bmp, 0, 0);
+
   if (bmp.close) bmp.close();
 
   return await new Promise((resolve, reject) => {
@@ -2295,6 +2296,7 @@ async function blobToJpegBlob(blob, quality = 0.92) {
     );
   });
 }
+
 
 // ----------------------------
 // DOWNLOAD PHOTOS "UNZIPPED" INTO A FOLDER
