@@ -1222,17 +1222,18 @@ Output must be plain text, no headings, no bullets unless they help clarity.
 // ----------------------------
 app.post("/api/ai/ask", async (req, res) => {
   try {
-    const question = String(req.body?.question || req.body?.text || "").trim();
+    const question = String(req.body?.question || req.body?.text || req.body?.input || "").trim();
     if (!question) return res.json({ ok: false, error: "Missing question" });
 
+    const ctx = req.body?.context || {};
     const system = [
-      "You are Lot Rocket's AI Prompt Generator.",
-      "Your job: generate a copy/paste-ready HIGH QUALITY prompt the user can use in ChatGPT/Claude/etc.",
+      "You are Lot Rocket's A.I Prompt Generator.",
+      "You generate a copy/paste-ready HIGH QUALITY prompt the user can use in ChatGPT/Claude/etc.",
       "",
       "RULES:",
       "- Do NOT refuse normal requests.",
-      "- Do NOT talk about app troubleshooting.",
-      "- Output should be a finished prompt, not advice.",
+      "- Do NOT redirect to Lot Rocket troubleshooting.",
+      "- Output ONLY the finished prompt (no preamble, no commentary).",
       "- Make it specific, structured, and reusable.",
       "",
       "PROMPT FORMAT (use this):",
@@ -1246,23 +1247,23 @@ app.post("/api/ai/ask", async (req, res) => {
       "EXAMPLES (optional if helpful):",
       "",
       "If the user is vague, make reasonable assumptions and produce the best prompt anyway.",
-      "Return ONLY the finished prompt text.",
     ].join("\n");
 
-    const user = `Create the best possible prompt for this request:\n\n${question}`;
+    const user = [
+      "USER REQUEST:",
+      question,
+      "",
+      "OPTIONAL CONTEXT (may be empty):",
+      JSON.stringify(ctx, null, 2),
+    ].join("\n");
 
-    const out = await callOpenAI({
-      system,
-      user,
-      temperature: 0.7,
-      max_tokens: 900,
-    });
-
+    const out = await callOpenAI({ system, user, temperature: 0.7, max_tokens: 900 });
     return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+
 
 // ----------------------------
 // HELP: LOT ROCKET APP HELP / TROUBLESHOOTING ONLY
