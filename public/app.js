@@ -2299,24 +2299,17 @@ async function blobToJpegBlob(blob, quality = 0.92) {
 // ----------------------------
 // DOWNLOAD PHOTOS "UNZIPPED" INTO A FOLDER
 // ----------------------------
-async function downloadLockedToFolder() {
+async function downloadLockedZip() {
+  // NOTE: kept the same function name so you don't have to change wiring
   normalizeSocialReady();
   const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
+
   if (!locked.length) return alert("Lock at least 1 photo first.");
 
-  const zipBtn = $("downloadZipBtn");
-  setBtnLoading(zipBtn, true, "Saving…");
+  const btn = $("downloadZipBtn");
+  setBtnLoading(btn, true, "Downloading…");
 
   try {
-    const dir = await getOrPickDownloadDir(); // you pick Downloads ONCE
-    if (!dir) {
-      alert("Folder saving not supported here. (Need Chrome + HTTPS).");
-      return;
-    }
-
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    let ok = 0;
-
     for (let i = 0; i < locked.length; i++) {
       const url = locked[i].url;
 
@@ -2328,37 +2321,26 @@ async function downloadLockedToFolder() {
         const blob = await r.blob();
         const jpegBlob = await blobToJpegBlob(blob, 0.92);
 
-        // Save DIRECTLY into the chosen folder (no subfolder)
-        const name = `lot-rocket_${stamp}_photo_${String(i + 1).padStart(2, "0")}.jpg`;
-        const fileHandle = await dir.getFileHandle(name, { create: true });
-        const w = await fileHandle.createWritable();
-        await w.write(jpegBlob);
-        await w.close();
+        const a = document.createElement("a");
+        const obj = URL.createObjectURL(jpegBlob);
+        a.href = obj;
+        a.download = `lot-rocket_photo_${String(i + 1).padStart(2, "0")}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(obj), 30000);
 
-        ok++;
+        // tiny delay so Chrome doesn't choke on a burst
+        await new Promise((res) => setTimeout(res, 140));
       } catch (e) {
-        console.warn("SAVE skip:", url, e);
+        console.warn("DOWNLOAD skip:", url, e);
       }
     }
-
-    if (!ok) alert("Could not save images. Check /api/proxy and CORS.");
-    else alert(`Saved ${ok} photos into your selected folder.`);
   } finally {
-    setBtnLoading(zipBtn, false);
+    setBtnLoading(btn, false);
   }
 }
 
-
-function wireZipButton() {
-  const btn = $("downloadZipBtn");
-  if (!btn || btn.__LR_BOUND__) return;
-  btn.__LR_BOUND__ = true;
-
-  btn.addEventListener("click", () => {
-    pressAnim(btn);
-    downloadLockedToFolder();
-  });
-}
 
 
 
