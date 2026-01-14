@@ -1270,7 +1270,7 @@ app.post("/api/ai/ask", async (req, res) => {
 // ----------------------------
 app.post("/api/ai/help", async (req, res) => {
   try {
-    const question = String(req.body?.question || req.body?.text || "").trim();
+    const question = String(req.body?.question || req.body?.text || req.body?.input || "").trim();
     if (!question) return res.json({ ok: false, error: "Missing question" });
 
     const system = [
@@ -1279,21 +1279,16 @@ app.post("/api/ai/help", async (req, res) => {
       "",
       "RULES:",
       "- Be concise and practical.",
-      "- If unrelated to Lot Rocket, redirect back to Lot Rocket usage.",
+      "- If the question is unrelated to Lot Rocket, redirect back to Lot Rocket usage.",
     ].join("\n");
 
-    const out = await callOpenAI({
-      system,
-      user: question,
-      temperature: 0.3,
-      max_tokens: 700,
-    });
-
+    const out = await callOpenAI({ system, user: question, temperature: 0.3, max_tokens: 700 });
     return res.json(out.ok ? { ok: true, text: out.text } : out);
   } catch (e) {
     return res.json({ ok: false, error: e?.message || String(e) });
   }
 });
+
 
 
 
