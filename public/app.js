@@ -2201,7 +2201,7 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     }
   }
 
-async function downloadLockedZip() {
+async function downloadLockedZip(fileHandle) {
   normalizeSocialReady();
   const locked = (STORE.socialReadyPhotos || []).filter((p) => p.locked).slice(0, 24);
 
@@ -2211,24 +2211,20 @@ async function downloadLockedZip() {
   const zipBtn = $("downloadZipBtn");
   setBtnLoading(zipBtn, true, "Zipping…");
 
-  // ----------------------------
-  // FORCE DOWNLOAD (NO NEW TAB / ALWAYS SAVES)
-  // ----------------------------
   function forceDownloadBlob(filename, blob) {
     const url = URL.createObjectURL(blob);
-    const a = DOC.createElement("a");
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     a.rel = "noopener";
     a.style.display = "none";
-    DOC.body.appendChild(a);
+    document.body.appendChild(a);
 
-    // Some browsers need a tick before click
-    setTimeout(() => {
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-    }, 0);
+    // Use a real click event (more reliable than a.click in some cases)
+    a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
   }
 
   async function blobToJpegBlob(blob, quality = 0.92) {
@@ -2271,8 +2267,8 @@ async function downloadLockedZip() {
 
         const blob = await r.blob();
         const jpegBlob = await blobToJpegBlob(blob, 0.92);
-        folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
 
+        folder.file(`photo_${String(i + 1).padStart(2, "0")}.jpg`, jpegBlob);
         ok++;
       } catch (e) {
         console.warn("ZIP skip:", url, e);
@@ -2281,10 +2277,22 @@ async function downloadLockedZip() {
 
     if (!ok) return alert("Could not fetch images to zip.");
 
+    // Ensure correct mime
     const out = await zip.generateAsync({ type: "blob" });
+    const zipBlob = out && out.type ? out : new Blob([out], { type: "application/zip" });
 
-    // ✅ ALWAYS SAVE, NEVER NAVIGATE, NEVER NEW TAB
-    forceDownloadBlob("lot-rocket-social-ready.zip", out);
+    // ✅ BEST (Chrome/Edge): write to a file handle obtained during user click
+    if (fileHandle && typeof fileHandle.createWritable === "function") {
+      const w = await fileHandle.createWritable();
+      await w.write(zipBlob);
+      await w.close();
+      console.log("✅ ZIP saved via File Picker:", zipBlob.size);
+      return;
+    }
+
+    // ✅ Fallback: normal download (may be blocked if browser is strict)
+    forceDownloadBlob("lot-rocket-social-ready.zip", zipBlob);
+    console.log("✅ ZIP download triggered:", zipBlob.size);
   } finally {
     setBtnLoading(zipBtn, false);
   }
@@ -2294,13 +2302,33 @@ function wireZipButton() {
   const btn = $("downloadZipBtn");
   if (!btn || btn.__LR_BOUND__) return;
   btn.__LR_BOUND__ = true;
-  btn.addEventListener("click", () => {
+
+  btn.addEventListener("click", async () => {
     pressAnim(btn);
-    downloadLockedZip();
+
+    // 🔒 Capture “save” permission immediately while click is a user gesture
+    let handle = null;
+    if (window.showSaveFilePicker) {
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: "lot-rocket-social-ready.zip",
+          types: [
+            {
+              description: "ZIP Archive",
+              accept: { "application/zip": [".zip"] },
+            },
+          ],
+        });
+      } catch (e) {
+        // user canceled picker — fall back to normal download attempt
+        handle = null;
+      }
+    }
+
+    downloadLockedZip(handle);
   });
 }
 
-// ==================================================
 
 
 // ==================================================
