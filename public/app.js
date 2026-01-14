@@ -1737,61 +1737,81 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
       setActive(null);
     }
 
-    function openModal(modalId, btnId) {
-      const m = $(modalId);
-      if (!m) return;
+function openModal(modalId, btnId) {
+  const m = $(modalId);
+  if (!m) return;
 
-      closeAll();
-      m.classList.remove("hidden");
-      m.style.display = "flex";
-      m.setAttribute("aria-hidden", "false");
-      setActive(btnId);
+  closeAll();
 
-      if (!m.__LR_CLOSE_WIRED__) {
-        m.__LR_CLOSE_WIRED__ = true;
+  // 🔥 FORCE modal above the logout/user chip no matter what
+  m.classList.remove("hidden");
+  m.style.setProperty("display", "flex", "important");
+  m.style.setProperty("position", "fixed", "important");
+  m.style.setProperty("z-index", "2147483000", "important"); // near max
+  m.setAttribute("aria-hidden", "false");
+  setActive(btnId);
 
-        m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
-          if (x.__LR_BOUND__) return;
-          x.__LR_BOUND__ = true;
-          x.addEventListener("click", closeAll);
-        });
+  // Push chip/logout down + disable clicks while modal is open
+  ["lrUserChip", "lrSignOut", "lrLogoutBtn", "lrManageBilling"].forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+    el.style.setProperty("z-index", "10", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+  });
 
-        m.addEventListener("click", (e) => {
-          if (e.target === m) closeAll();
-        });
-      }
+  if (!m.__LR_CLOSE_WIRED__) {
+    m.__LR_CLOSE_WIRED__ = true;
 
-      const focusEl =
-        m.querySelector("textarea") ||
-        m.querySelector("input:not([type='hidden'])") ||
-        m.querySelector("button");
-      if (focusEl) setTimeout(() => focusEl.focus(), 0);
-    }
+    m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+      if (x.__LR_BOUND__) return;
+      x.__LR_BOUND__ = true;
 
-    on(DOC, "keydown", (e) => {
-      if (e.key === "Escape") closeAll();
+      // ✅ Ensure the X is always clickable + not under the chip
+      x.style.setProperty("position", "absolute", "important");
+      x.style.setProperty("z-index", "2147483500", "important");
+      x.style.setProperty("top", "10px", "important");
+      x.style.setProperty("right", "72px", "important"); // move away from chip
+
+      x.addEventListener("click", closeAll);
     });
 
-    function bind(key) {
-      const btnId = BTN[key];
-      const modalId = MODAL[key];
-      const b = $(btnId);
-      if (!b || b.__LR_BOUND__) return;
-      b.__LR_BOUND__ = true;
+    m.addEventListener("click", (e) => {
+      if (e.target === m) closeAll();
+    });
+  }
 
-      b.addEventListener("click", () => {
-        pressAnim(b);
-        const m = $(modalId);
-        const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-        if (isOpen) return closeAll();
-        openModal(modalId, btnId);
-      });
-    }
+  const focusEl =
+    m.querySelector("textarea") ||
+    m.querySelector("input:not([type='hidden'])") ||
+    m.querySelector("button");
+  if (focusEl) setTimeout(() => focusEl.focus(), 0);
+}
 
-    Object.keys(BTN).forEach(bind);
-    window.LR_TOOLS = { openModal, closeAll };
-    console.log("✅ FLOATING TOOLS WIRED");
-  })();
+on(DOC, "keydown", (e) => {
+  if (e.key === "Escape") closeAll();
+});
+
+function bind(key) {
+  const btnId = BTN[key];
+  const modalId = MODAL[key];
+  const b = $(btnId);
+  if (!b || b.__LR_BOUND__) return;
+  b.__LR_BOUND__ = true;
+
+  b.addEventListener("click", () => {
+    pressAnim(b);
+    const m = $(modalId);
+    const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+    if (isOpen) return closeAll();
+    openModal(modalId, btnId);
+  });
+}
+
+Object.keys(BTN).forEach(bind);
+window.LR_TOOLS = { openModal, closeAll };
+console.log("✅ FLOATING TOOLS WIRED");
+})(); 
+
 
   // ==================================================
   // AI EXPERTS — DELEGATED + CORRECT PAYLOADS
