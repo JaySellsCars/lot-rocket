@@ -1786,76 +1786,101 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     setTopUiSuppressed(false);
   }
 
-  function openModal(modalId, btnId) {
-    const m = $(modalId);
-    if (!m) return;
+ function openModal(modalId, btnId) {
+  const m = $(modalId);
+  if (!m) return;
 
-    closeAll();
+  closeAll();
 
-    // suppress top-right UI so it never covers the close X
-    setTopUiSuppressed(true);
+  // suppress top-right UI so it never covers the close X
+  setTopUiSuppressed(true);
 
-    // 🔥 FORCE modal above everything
-    m.classList.remove("hidden");
-    m.style.setProperty("display", "flex", "important");
-    m.style.setProperty("position", "fixed", "important");
-    m.style.setProperty("z-index", "2147483000", "important");
-    m.style.setProperty("pointer-events", "auto", "important");
-    m.setAttribute("aria-hidden", "false");
-    setActive(btnId);
+  // 🔥 FORCE modal above everything
+  m.classList.remove("hidden");
+  m.style.setProperty("display", "flex", "important");
+  m.style.setProperty("position", "fixed", "important");
+  m.style.setProperty("z-index", "2147483000", "important");
+  m.style.setProperty("pointer-events", "auto", "important");
+  m.setAttribute("aria-hidden", "false");
+  setActive(btnId);
 
-    if (!m.__LR_CLOSE_WIRED__) {
-      m.__LR_CLOSE_WIRED__ = true;
+  // ✅ ASK MODAL: rename title + add short explainer (once)
+  if (modalId === MODAL.ask) {
+    const titleEl =
+      m.querySelector(".side-modal-title") ||
+      m.querySelector(".modal-title") ||
+      m.querySelector("h2") ||
+      m.querySelector("h3");
 
-      m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
-        if (x.__LR_BOUND__) return;
-        x.__LR_BOUND__ = true;
+    if (titleEl) titleEl.textContent = "A.I Prompt Generator";
 
-        // Ensure the X is always clickable above everything
-        x.style.setProperty("position", "absolute", "important");
-        x.style.setProperty("z-index", "2147483500", "important");
-        x.style.setProperty("pointer-events", "auto", "important");
+    let desc = m.querySelector("#lrAskPromptDesc");
+    if (!desc) {
+      desc = document.createElement("div");
+      desc.id = "lrAskPromptDesc";
+      desc.style.margin = "8px 0 12px";
+      desc.style.opacity = "0.88";
+      desc.style.fontSize = "12.5px";
+      desc.style.lineHeight = "1.35";
+      desc.textContent =
+        "Use this to generate copy/paste-ready prompts for content, marketing, sales scripts, automation workflows, and SOPs. Describe what you want, then hit Generate Prompt.";
 
-        x.addEventListener("click", closeAll);
-      });
-
-      m.addEventListener("click", (e) => {
-        if (e.target === m) closeAll();
-      });
+      if (titleEl && titleEl.parentNode) titleEl.insertAdjacentElement("afterend", desc);
+      else m.insertBefore(desc, m.firstChild);
     }
-
-    const focusEl =
-      m.querySelector("textarea") ||
-      m.querySelector("input:not([type='hidden'])") ||
-      m.querySelector("button");
-    if (focusEl) setTimeout(() => focusEl.focus(), 0);
   }
 
-  on(DOC, "keydown", (e) => {
-    if (e.key === "Escape") closeAll();
-  });
+  if (!m.__LR_CLOSE_WIRED__) {
+    m.__LR_CLOSE_WIRED__ = true;
 
-  function bind(key) {
-    const btnId = BTN[key];
-    const modalId = MODAL[key];
-    const b = $(btnId);
-    if (!b || b.__LR_BOUND__) return;
-    b.__LR_BOUND__ = true;
+    m.querySelectorAll("[data-close], .side-modal-close, .modal-close-btn").forEach((x) => {
+      if (x.__LR_BOUND__) return;
+      x.__LR_BOUND__ = true;
 
-    b.addEventListener("click", () => {
-      pressAnim(b);
-      const m = $(modalId);
-      const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
-      if (isOpen) return closeAll();
-      openModal(modalId, btnId);
+      // Ensure the X is always clickable above everything
+      x.style.setProperty("position", "absolute", "important");
+      x.style.setProperty("z-index", "2147483500", "important");
+      x.style.setProperty("pointer-events", "auto", "important");
+
+      x.addEventListener("click", closeAll);
+    });
+
+    m.addEventListener("click", (e) => {
+      if (e.target === m) closeAll();
     });
   }
 
-  Object.keys(BTN).forEach(bind);
-  window.LR_TOOLS = { openModal, closeAll };
-  console.log("✅ FLOATING TOOLS WIRED");
-})();
+  const focusEl =
+    m.querySelector("textarea") ||
+    m.querySelector("input:not([type='hidden'])") ||
+    m.querySelector("button");
+  if (focusEl) setTimeout(() => focusEl.focus(), 0);
+}
 
+on(DOC, "keydown", (e) => {
+  if (e.key === "Escape") closeAll();
+});
+
+function bind(key) {
+  const btnId = BTN[key];
+  const modalId = MODAL[key];
+  const b = $(btnId);
+  if (!b || b.__LR_BOUND__) return;
+  b.__LR_BOUND__ = true;
+
+  b.addEventListener("click", () => {
+    pressAnim(b);
+    const m = $(modalId);
+    const isOpen = m && !m.classList.contains("hidden") && m.style.display !== "none";
+    if (isOpen) return closeAll();
+    openModal(modalId, btnId);
+  });
+}
+
+Object.keys(BTN).forEach(bind);
+window.LR_TOOLS = { openModal, closeAll };
+console.log("✅ FLOATING TOOLS WIRED");
+})();
 
   // ==================================================
   // AI EXPERTS — DELEGATED + CORRECT PAYLOADS
