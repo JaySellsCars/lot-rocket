@@ -1093,16 +1093,14 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 20000);
 
 async function callOpenAI({ system, user, temperature = 0.6, max_tokens = 900 }) {
-  const key = process.env.OPENAI_API_KEY || "";
+  const key = process.env.OPENAI_API_KEY;
   if (!key) return { ok: false, error: "Missing OPENAI_API_KEY" };
-
-  const f = (typeof getFetch === "function") ? await getFetch() : fetch;
 
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
 
   try {
-    const r = await f("https://api.openai.com/v1/chat/completions", {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       signal: controller.signal,
       headers: {
@@ -1120,26 +1118,21 @@ async function callOpenAI({ system, user, temperature = 0.6, max_tokens = 900 })
       }),
     });
 
-    const raw = await r.text();
-    let j = null;
-    try { j = JSON.parse(raw); } catch {}
-
-    if (!r.ok) {
-      const msg = j?.error?.message || raw?.slice(0, 200) || `OpenAI HTTP ${r.status}`;
-      return { ok: false, error: msg };
-    }
+    const j = await r.json().catch(() => null);
+    if (!r.ok) return { ok: false, error: j?.error?.message || `OpenAI HTTP ${r.status}` };
 
     const text = j?.choices?.[0]?.message?.content?.trim();
     return text ? { ok: true, text } : { ok: false, error: "Empty AI response" };
   } catch (e) {
     return {
       ok: false,
-      error: e?.name === "AbortError" ? "OpenAI timeout" : (e?.message || String(e)),
+      error: e?.name === "AbortError" ? "OpenAI timeout" : e?.message || String(e),
     };
   } finally {
     clearTimeout(t);
   }
 }
+
 /* =============================== */
 
    APP KB
