@@ -325,6 +325,64 @@ textarea{
 #lrLogoutBtn.hidden{
   display:none !important;
 }
+/* ---------------------------------
+   TOP BAR (ACCOUNT) — MAKE IT VISIBLE
+---------------------------------- */
+#lrTopBar{
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 100001; /* above header + panels */
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(2,6,23,.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 44px rgba(0,0,0,.55);
+}
+
+/* Base styling for the top bar buttons */
+#lrTopBar button{
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,.35);
+  background: rgba(15,23,42,.65);
+  color: #e5e7eb;
+  font-weight: 800;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: transform .08s ease, filter .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+#lrTopBar button:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+/* ---------------------------------
+   LOG OUT — BIG + OBVIOUS
+---------------------------------- */
+#lrLogoutBtn:not(.hidden){
+  border: none !important;
+  background: linear-gradient(90deg,#ef4444,#f97316) !important;
+  color: #0b1020 !important;
+  font-weight: 900 !important;
+  letter-spacing: .2px;
+  box-shadow: 0 18px 44px rgba(239,68,68,.28);
+}
+
+#lrLogoutBtn:not(.hidden):hover{
+  filter: brightness(1.06);
+  box-shadow: 0 22px 56px rgba(239,68,68,.34);
+}
+
+#lrLogoutBtn:not(.hidden):active{
+  transform: translateY(1px) scale(.99);
+}
 
 /* ---------------------------------
    STEP 1 PHOTOS (+ selection highlight)
