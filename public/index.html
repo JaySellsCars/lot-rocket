@@ -86,64 +86,81 @@
 
 
 
-  <!-- MAIN LAYOUT GRID -->
-  <main id="appMain" class="layout">
+<!-- MAIN LAYOUT GRID -->
+<main id="appMain" class="layout">
 
-    <!-- LEFT COLUMN (STEP 1) -->
-    <div class="column">
-      <section id="step1" class="lab-card">
-        <h3>Step 1 – Dealer URL Scraper</h3>
+  <!-- LEFT COLUMN (STEP 1) -->
+  <div class="column">
+    <section id="step1" class="lab-card">
+      <h3>Step 1 – Dealer URL Scraper</h3>
 
-        <label class="field">
-          <span>Dealer Vehicle URL</span>
-          <input id="dealerUrlInput" type="url" placeholder="Paste vehicle URL here..." />
-        </label>
+      <label class="field">
+        <span>Dealer Vehicle URL</span>
+        <input
+          id="dealerUrlInput"
+          type="url"
+          placeholder="Paste vehicle URL here..."
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+      </label>
 
-        <label class="field">
-          <span>Vehicle Label (optional override)</span>
-          <input id="vehicleLabelInput" type="text" placeholder="Example: 2024 Chevy Silverado LTZ 4x4" />
-        </label>
+      <label class="field">
+        <span>Vehicle Label (optional override)</span>
+        <input
+          id="vehicleLabelInput"
+          type="text"
+          placeholder="Example: 2024 Chevy Silverado LTZ 4x4"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+      </label>
 
-<label class="field">
-  <span>Price / Offer (optional override)</span>
-<input
-  id="priceOfferInput"
-  type="text"
-  placeholder="Example: $699/mo or $47,995 + tax"
-  autocomplete="off"
-  autocorrect="off"
-  autocapitalize="off"
-  spellcheck="false"
-  name="price_offer"
-  inputmode="text"
-/>
+      <label class="field">
+        <span>Price / Offer (optional override)</span>
+        <input
+          id="priceOfferInput"
+          name="lr_price_override"
+          type="text"
+          inputmode="decimal"
+          placeholder="Example: $699/mo or $47,995 + tax"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+      </label>
 
+      <div class="summary-box inner-summary" id="summarySnapshot">
+        <div class="small-note">
+          Lot Rocket will scrape the page and pull title, price, description, and photos.
+        </div>
+        <div id="summaryOutput" style="margin-top:.8rem;"></div>
+      </div>
 
-</label>
+      <button id="boostBtn" class="primary-btn full summary-btn" type="button">
+        Boost This Listing
+      </button>
 
+      <div class="summary-box" style="margin-top:1rem;">
+        <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
+        <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
 
-<div class="summary-box inner-summary" id="summarySnapshot">
-  <div class="small-note">Lot Rocket will scrape the page and pull title, price, description, and photos.</div>
-  <div id="summaryOutput" style="margin-top:.8rem;"></div>
-</div>
+        <div id="sendToLabWrap">
+          <button id="sendToDesignStudio" class="secondary-btn full" type="button">
+            Send Selected Photos to Creative Lab
+          </button>
+        </div>
 
-<button id="boostBtn" class="primary-btn full summary-btn" type="button">Boost This Listing</button>
-
-<div class="summary-box" style="margin-top:1rem;">
-  <h3 style="margin-bottom:.5rem;">Photos pulled from dealer site</h3>
-  <div class="small-note">Click “Boost This Listing” to refresh photos. Up to 24 images.</div>
-
-  <div id="sendToLabWrap">
-    <button id="sendToDesignStudio" class="secondary-btn full" type="button">
-      Send Selected Photos to Creative Lab
-    </button>
+        <div id="step1Photos" class="photo-grid"></div>
+      </div>
+    </section>
   </div>
 
-
-          <div id="step1Photos" class="photo-grid"></div>
-        </div>
-      </section>
-    </div>
 
 
 
