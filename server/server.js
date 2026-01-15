@@ -426,12 +426,11 @@ app.use((req, _res, next) => {
 });
 
 /* ===============================
-   FETCH HELPER (Node 20 safe)
+   FETCH HELPER (Node 20+ safe, NO node-fetch)
 ================================ */
 async function getFetch() {
   if (typeof fetch === "function") return fetch;
-  const mod = await import("node-fetch");
-  return mod.default;
+  throw new Error("Global fetch missing. Set Render runtime to Node 20+.");
 }
 
 /* ===============================
