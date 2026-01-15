@@ -2063,67 +2063,72 @@ async function callAI(endpoint, payload) {
 
 function setBusy(btn, onBusy) {
   if (!btn) return;
+
   if (onBusy) {
-    btn.__LR_OLD_TEXT__ = btn.__LR_OLD_TEXT__ ?? btn.textContent;
+    if (btn.__LR_OLD_TEXT__ == null) btn.__LR_OLD_TEXT__ = btn.textContent || "";
     btn.textContent = "Working…";
     btn.disabled = true;
+    btn.setAttribute("aria-busy", "true");
   } else {
-    btn.textContent = btn.__LR_OLD_TEXT__ || btn.textContent;
+    btn.textContent = btn.__LR_OLD_TEXT__ != null ? btn.__LR_OLD_TEXT__ : (btn.textContent || "");
     btn.disabled = false;
+    btn.removeAttribute("aria-busy");
   }
 }
 
+DOC.addEventListener("click", async (e) => {
+  const btn = e.target?.closest?.("button");
+  if (!btn || !btn.id) return;
 
-    DOC.addEventListener("click", async (e) => {
-      const btn = e.target?.closest?.("button");
-      if (!btn || !btn.id) return;
+  const type = btnToType[btn.id];
+  if (!type) return;
 
-      const type = btnToType[btn.id];
-      if (!type) return;
+  const typeToEndpoint = {
+    objection: "/api/ai/objection",
+    message: "/api/ai/message",
+    campaign: "/api/ai/workflow",
+    ask: "/api/ai/ask",
+    help: "/api/ai/help",
+    car: "/api/ai/car",
+  };
 
-const typeToEndpoint = {
-  objection: "/api/ai/objection",
-  message: "/api/ai/message",
-  campaign: "/api/ai/workflow",
-  ask: "/api/ai/ask",
-  help: "/api/ai/help",   // ✅ CHANGE THIS
-  car: "/api/ai/car",
-};
+  const endpoint = typeToEndpoint[String(type || "").toLowerCase()] || "";
+  if (!endpoint) return;
 
+  e.preventDefault();
 
-if (!endpoint) return;
+  const modal = closestModal(btn);
+  const input = findInput(modal, type);
+  const output = findOutput(modal, type);
 
+  if (!input || !output) return;
 
-      e.preventDefault();
+  const text = (input.value || "").trim();
+  if (!text) {
+    output.textContent = "⚠️ Type something in the box first.";
+    return;
+  }
 
-      const modal = closestModal(btn);
-      const input = findInput(modal, type);
-      const output = findOutput(modal, type);
+  setBusy(btn, true);
+  output.textContent = "Thinking…";
 
-      if (!input || !output) return;
+  try {
+    const payload = buildPayload(type, text);
+    const answer = await callAI(endpoint, payload);
 
-      const text = (input.value || "").trim();
-      if (!text) {
-        output.textContent = "⚠️ Type something in the box first.";
-        return;
-      }
+    output.textContent =
+      typeof answer === "string"
+        ? answer
+        : (answer?.text || answer?.error || JSON.stringify(answer));
+  } catch (err) {
+    output.textContent = "AI ERROR: " + (err?.message || err);
+  } finally {
+    setBusy(btn, false);
+  }
+});
 
-      setBusy(btn, true);
-      output.textContent = "Thinking…";
+console.log("✅ AI EXPERTS DELEGATED WIRED");
 
-      try {
-        const payload = buildPayload(type, text);
-        const answer = await callAI(endpoint, payload);
-        output.textContent = answer;
-      } catch (err) {
-        output.textContent = "AI ERROR: " + (err?.message || err);
-      } finally {
-        setBusy(btn, false);
-      }
-    });
-
-    console.log("✅ AI EXPERTS DELEGATED WIRED");
-  })();
 
   // ==================================================
   // HIDE "Send Selected to Social Ready" (next version)
