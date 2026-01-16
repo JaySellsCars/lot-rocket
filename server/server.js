@@ -1336,28 +1336,31 @@ app.post("/api/ai/social", async (req, res) => {
   const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
 
   // ----------------------------
-  // helpers
+  // helpers (local, no deps)
   // ----------------------------
   const s = (v) => String(v == null ? "" : v).trim();
+  const cleanSpaces = (t) => s(t).replace(/\s+/g, " ").trim();
+
   const pullList = (v) => {
     if (Array.isArray(v)) return v;
     if (typeof v === "string") {
       return v
         .split(/\r?\n|•|\u2022|;|,/)
-        .map((x) => String(x || "").trim())
+        .map((x) => cleanSpaces(x))
         .filter(Boolean);
     }
     return [];
   };
 
   const scrubTitle = (t) => {
-    const x = s(t).replace(/\s+/g, " ").trim();
+    let x = cleanSpaces(t);
     if (!x) return "";
-    return x
-      .split("|")[0]
-      .replace(/\s+\-\s+.+$/i, "")
-      .replace(/\s+at\s+.+$/i, "")
-      .trim();
+    x = x.split("|")[0].trim();
+    x = x.replace(/\s+\-\s+.+$/i, "").trim();
+    x = x.replace(/\s+at\s+.+$/i, "").trim();
+    // strip trailing location tokens if present (keeps Y/M/M/T, drops city/state suffixes)
+    x = x.replace(/\b([A-Z][a-z]+)\s*,?\s*[A-Z]{2}\b\s*$/g, "").trim(); // "Plymouth MI"
+    return x;
   };
 
   const rawTitle = takeText(
@@ -1458,12 +1461,12 @@ app.post("/api/ai/social", async (req, res) => {
 
   const platformBlock = PLATFORM_RULES[platform] ? `\n${PLATFORM_RULES[platform]}\n` : "";
 
-  // Lower temp = less “generic AI mush”
+  // Lower temp = less generic AI mush
   const tempByTone = { closer: 0.55, chill: 0.60, viral: 0.68, luxe: 0.55, marketplace: 0.50 };
   const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.62;
 
   // ----------------------------
-  // Build allowed facts/features (NO guessing)
+  // Allowed facts/features (NO guessing)
   // ----------------------------
   const facts = {
     title: safeTitle,
@@ -1488,7 +1491,7 @@ app.post("/api/ai/social", async (req, res) => {
     .concat(pullList(vehicle.equipment))
     .concat(pullList(vehicle.highlights))
     .concat(pullList(vehicle.packages))
-    .map((x) => s(x))
+    .map((x) => cleanSpaces(x))
     .filter(Boolean);
 
   const seen = new Set();
@@ -1498,50 +1501,59 @@ app.post("/api/ai/social", async (req, res) => {
     if (seen.has(k)) continue;
     seen.add(k);
     features.push(f);
-    if (features.length >= 16) break;
+    if (features.length >= 18) break;
   }
 
-  // real features = not just price lines
-  const realFeatures = features.filter((f) => !/^\s*(priced|price)\b/i.test(f) && !/\$\s*\d/.test(f));
-  const hasRealFeatures = realFeatures.length >= 3;
+  const realFeatures = features.filter((f) => {
+    if (/^\s*(priced|price)\b/i.test(f)) return false;
+    if (/\$\s*\d/.test(f)) return false;
+    return true;
+  });
+
+  const hasRealFeatures = realFeatures.length >= 4;
 
   // ----------------------------
-  // Deterministic fallback when features are missing
-  // (prevents generic invented bullets)
+  // Hard fallback: facts-only, but still "Lot Rocket" quality
+  // (NO invented features, NO "most-wanted features" section)
   // ----------------------------
   function buildFallbackPost() {
-    const lines = [];
+    const titleLine = facts.title ? facts.title : "Car for sale";
+    const proof = [];
+    if (facts.price) proof.push(`💰 Price: ${facts.price}`);
+    if (facts.mileage) proof.push(`🛣️ Miles: ${facts.mileage}`);
+    if (facts.stock) proof.push(`📦 Stock: ${facts.stock}`);
+    if (facts.vin) proof.push(`🆔 VIN: ${facts.vin}`);
+
+    const proofBlock = proof.length ? proof.join("\n") : "";
 
     if (platform === "dm") {
-      const parts = [];
-      if (facts.title) parts.push(`👀 ${facts.title}`);
-      if (facts.price) parts.push(`💰 ${facts.price}`);
-      if (facts.mileage) parts.push(`🛣️ ${facts.mileage}`);
-      const header = parts.join(" • ");
-      if (header) lines.push(header);
-      lines.push("Want a quick walkaround + numbers?");
-      lines.push(`DM me "${keyword}" — today or tomorrow?`);
-      return lines.join("\n");
+      const p = [];
+      p.push(`👀 ${titleLine}${facts.price ? ` • ${facts.price}` : ""}`);
+      if (facts.stock) p.push(`Stock: ${facts.stock}${facts.vin ? ` • VIN: ${facts.vin}` : ""}`);
+      p.push("Want a 60-sec walkaround + numbers?");
+      p.push(`DM me "${keyword}" — today or tomorrow?`);
+      return p.join("\n");
     }
 
+    const lines = [];
     lines.push("🚨 STOP SCROLLING 🚨");
-    if (facts.title) lines.push(facts.title);
+    lines.push(titleLine);
+    if (proofBlock) {
+      lines.push("");
+      lines.push(proofBlock);
+    }
     lines.push("");
-
-    if (facts.price) lines.push(`💰 Price: ${facts.price}`);
-    if (facts.mileage) lines.push(`🛣️ Miles: ${facts.mileage}`);
-    if (facts.stock) lines.push(`📦 Stock: ${facts.stock}`);
-    if (facts.vin) lines.push(`🆔 VIN: ${facts.vin}`);
-
+    lines.push("🎥 Want a 60-sec walkaround + the numbers?");
+    lines.push("✅ I’ll send the video first.");
+    lines.push("✅ If you like it, we lock a time to drive it.");
     lines.push("");
-    lines.push("Want a quick walkaround + numbers?");
     lines.push(`DM me "${keyword}" — today or tomorrow?`);
-
     return lines.join("\n");
   }
 
+  // If we don’t have real features, we do NOT call the model.
+  // We ship the best possible post with the facts we actually have.
   if (!hasRealFeatures) {
-    // No features = no “features section”, no invention. Ship the closer fallback.
     return jsonOk(res, { ok: true, text: buildFallbackPost() });
   }
 
@@ -1558,13 +1570,13 @@ app.post("/api/ai/social", async (req, res) => {
     `TRANSMISSION: ${facts.transmission || "(not provided)"}`,
   ].join("\n");
 
-  const featuresBlock = realFeatures.length
-    ? ["ALLOWED FEATURES (USE ONLY THESE; DO NOT INVENT):", ...realFeatures.slice(0, 14).map((x) => `- ${x}`)].join("\n")
-    : "ALLOWED FEATURES: (none)";
+  const featuresBlock = ["ALLOWED FEATURES (USE ONLY THESE; DO NOT INVENT):"]
+    .concat(realFeatures.slice(0, 14).map((x) => `- ${x}`))
+    .join("\n");
 
   const system = [
     "YOU ARE LOT ROCKET — NEXT-LEVEL SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
-    "Your job: beat generic AI by using REAL features, real specs, skimmable structure, and appointment-driven CTA.",
+    "Your job: beat generic AI by using REAL equipment/features, real specs, skimmable structure, and appointment-driven CTA.",
     "",
     toneBlock || "",
     platformBlock || "",
@@ -1594,14 +1606,14 @@ app.post("/api/ai/social", async (req, res) => {
     "",
     "BULLET RULE (HARD):",
     "- Every bullet MUST be a direct lift from ALLOWED FEATURES OR a direct fact line (price/miles/engine/etc).",
-    "- No rewording, no vague synonyms, no made-up benefits.",
+    "- No rewording into vague benefits. No made-up perks.",
     "",
     "STRUCTURE:",
     "1) Hook (1 line, emoji anchored)",
     "2) Vehicle line (TITLE)",
     "3) Proof stack (Price/Miles/Stock/VIN if present)",
     "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (from ALLOWED FEATURES)",
-    "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (from ALLOWED FEATURES)",
+    "5) FEATURES: 6–10 bullets (from ALLOWED FEATURES)",
     "6) Urgency line (no inventory days)",
     `7) CTA: DM me "${keyword}" + two-choice close (today or tomorrow?)`,
     "",
@@ -1616,6 +1628,7 @@ app.post("/api/ai/social", async (req, res) => {
   const out = await callOpenAI({ system, user, temperature });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 
 
