@@ -2128,6 +2128,7 @@ DOC.addEventListener("click", async (e) => {
 });
 
 console.log("✅ AI EXPERTS DELEGATED WIRED");
+})(); // ✅ CLOSE wireAiExpertsDelegated IIFE
 
 
   // ==================================================
