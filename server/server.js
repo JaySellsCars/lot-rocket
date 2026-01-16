@@ -1336,52 +1336,38 @@ app.post("/api/ai/social", async (req, res) => {
   const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
 
   // ----------------------------
-  // Helpers (local, no deps)
+  // helpers
   // ----------------------------
   const s = (v) => String(v == null ? "" : v).trim();
-  const cleanSpaces = (t) => s(t).replace(/\s+/g, " ").trim();
-
-  const scrubDealer = (t) => {
-    let x = cleanSpaces(t);
-    if (!x) return "";
-    // common separators
-    x = x.split("|")[0].trim();
-    x = x.replace(/\s+at\s+.+$/i, "").trim(); // "in X at Dealer"
-    x = x.replace(/\s+\-\s+.+$/i, "").trim(); // "Title - Dealer"
-    // remove obvious dealer phrases if they survive
-    x = x.replace(/\b(LaFontaine|Chevrolet|Plymouth)\b/gi, (m) => m); // no-op placeholder (keeps non-dealer makes)
-    return x;
+  const pullList = (v) => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === "string") {
+      return v
+        .split(/\r?\n|•|\u2022|;|,/)
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+    }
+    return [];
   };
 
-  const extractYMMT = (title) => {
-    const t = cleanSpaces(title);
-    if (!t) return { year: "", make: "", model: "", trim: "" };
-    const m = t.match(/\b(19|20)\d{2}\b/);
-    if (!m) return { year: "", make: "", model: "", trim: "" };
-    const year = m[0];
-    const after = t.slice(t.indexOf(year) + year.length).trim();
-    const parts = after.split(/\s+/).filter(Boolean);
-    const make = parts[0] || "";
-    const model = parts[1] || "";
-    const trim = parts.slice(2).join(" ");
-    return { year, make, model, trim };
+  const scrubTitle = (t) => {
+    const x = s(t).replace(/\s+/g, " ").trim();
+    if (!x) return "";
+    return x
+      .split("|")[0]
+      .replace(/\s+\-\s+.+$/i, "")
+      .replace(/\s+at\s+.+$/i, "")
+      .trim();
   };
 
   const rawTitle = takeText(
+    vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ""}` : "",
     vehicle.model,
     vehicle.title,
-    vehicle.trim,
-    vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : ""
+    vehicle.trim
   );
 
-  const ymm = extractYMMT(scrubDealer(rawTitle));
-  const safeTitle = cleanSpaces(
-    takeText(
-      vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ""}` : "",
-      ymm.year && ymm.make && ymm.model ? `${ymm.year} ${ymm.make} ${ymm.model} ${ymm.trim || ""}` : "",
-      scrubDealer(rawTitle)
-    )
-  );
+  const safeTitle = scrubTitle(rawTitle);
 
   const keyword =
     (safeTitle || "INFO")
@@ -1472,11 +1458,12 @@ app.post("/api/ai/social", async (req, res) => {
 
   const platformBlock = PLATFORM_RULES[platform] ? `\n${PLATFORM_RULES[platform]}\n` : "";
 
-  const tempByTone = { closer: 0.68, chill: 0.74, viral: 0.82, luxe: 0.70, marketplace: 0.66 };
-  const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.78;
+  // Lower temp = less “generic AI mush”
+  const tempByTone = { closer: 0.55, chill: 0.60, viral: 0.68, luxe: 0.55, marketplace: 0.50 };
+  const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.62;
 
   // ----------------------------
-  // Allowed facts (NO guessing)
+  // Build allowed facts/features (NO guessing)
   // ----------------------------
   const facts = {
     title: safeTitle,
@@ -1491,6 +1478,73 @@ app.post("/api/ai/social", async (req, res) => {
     transmission: s(vehicle.transmission),
   };
 
+  const desired = Array.isArray(req.body.desiredFeatures) ? req.body.desiredFeatures : [];
+
+  const featuresRaw = []
+    .concat(desired)
+    .concat(pullList(vehicle.highlightedFeatures))
+    .concat(pullList(vehicle.features))
+    .concat(pullList(vehicle.options))
+    .concat(pullList(vehicle.equipment))
+    .concat(pullList(vehicle.highlights))
+    .concat(pullList(vehicle.packages))
+    .map((x) => s(x))
+    .filter(Boolean);
+
+  const seen = new Set();
+  const features = [];
+  for (const f of featuresRaw) {
+    const k = f.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    features.push(f);
+    if (features.length >= 16) break;
+  }
+
+  // real features = not just price lines
+  const realFeatures = features.filter((f) => !/^\s*(priced|price)\b/i.test(f) && !/\$\s*\d/.test(f));
+  const hasRealFeatures = realFeatures.length >= 3;
+
+  // ----------------------------
+  // Deterministic fallback when features are missing
+  // (prevents generic invented bullets)
+  // ----------------------------
+  function buildFallbackPost() {
+    const lines = [];
+
+    if (platform === "dm") {
+      const parts = [];
+      if (facts.title) parts.push(`👀 ${facts.title}`);
+      if (facts.price) parts.push(`💰 ${facts.price}`);
+      if (facts.mileage) parts.push(`🛣️ ${facts.mileage}`);
+      const header = parts.join(" • ");
+      if (header) lines.push(header);
+      lines.push("Want a quick walkaround + numbers?");
+      lines.push(`DM me "${keyword}" — today or tomorrow?`);
+      return lines.join("\n");
+    }
+
+    lines.push("🚨 STOP SCROLLING 🚨");
+    if (facts.title) lines.push(facts.title);
+    lines.push("");
+
+    if (facts.price) lines.push(`💰 Price: ${facts.price}`);
+    if (facts.mileage) lines.push(`🛣️ Miles: ${facts.mileage}`);
+    if (facts.stock) lines.push(`📦 Stock: ${facts.stock}`);
+    if (facts.vin) lines.push(`🆔 VIN: ${facts.vin}`);
+
+    lines.push("");
+    lines.push("Want a quick walkaround + numbers?");
+    lines.push(`DM me "${keyword}" — today or tomorrow?`);
+
+    return lines.join("\n");
+  }
+
+  if (!hasRealFeatures) {
+    // No features = no “features section”, no invention. Ship the closer fallback.
+    return jsonOk(res, { ok: true, text: buildFallbackPost() });
+  }
+
   const factsLines = [
     `TITLE: ${facts.title || "(not provided)"}`,
     `PRICE: ${facts.price || "(not provided)"}`,
@@ -1504,83 +1558,52 @@ app.post("/api/ai/social", async (req, res) => {
     `TRANSMISSION: ${facts.transmission || "(not provided)"}`,
   ].join("\n");
 
-  // ----------------------------
-  // Allowed features (NO guessing)
-  // Pull from desiredFeatures + any feature arrays on vehicle
-  // ----------------------------
-  const desired = Array.isArray(req.body.desiredFeatures) ? req.body.desiredFeatures : [];
-
-  const pullList = (v) => {
-    if (Array.isArray(v)) return v;
-    if (typeof v === "string") return v.split(/\r?\n|•|\u2022|;/).map((x) => x.trim()).filter(Boolean);
-    return [];
-  };
-
-  const vehicleLists = []
-    .concat(pullList(vehicle.highlightedFeatures))
-    .concat(pullList(vehicle.features))
-    .concat(pullList(vehicle.options))
-    .concat(pullList(vehicle.equipment))
-    .concat(pullList(vehicle.highlights))
-    .concat(pullList(vehicle.packages));
-
-  const featuresRaw = []
-    .concat(desired)
-    .concat(vehicleLists)
-    .map((x) => cleanSpaces(x))
-    .filter(Boolean);
-
-  const seen = new Set();
-  const features = [];
-  for (const f of featuresRaw) {
-    const k = f.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    features.push(f);
-    if (features.length >= 14) break;
-  }
-
-  const featuresBlock = features.length
-    ? ["ALLOWED FEATURES (USE ONLY THESE; DO NOT INVENT):", ...features.map((x) => `- ${x}`)].join("\n")
-    : "ALLOWED FEATURES: (none provided) — DO NOT invent features. Do not use a 'Features People Ask For' section.";
+  const featuresBlock = realFeatures.length
+    ? ["ALLOWED FEATURES (USE ONLY THESE; DO NOT INVENT):", ...realFeatures.slice(0, 14).map((x) => `- ${x}`)].join("\n")
+    : "ALLOWED FEATURES: (none)";
 
   const system = [
     "YOU ARE LOT ROCKET — NEXT-LEVEL SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
-    "Your job: produce sales-ready posts that beat generic AI tools by being specific, skimmable, and appointment-driven.",
+    "Your job: beat generic AI by using REAL features, real specs, skimmable structure, and appointment-driven CTA.",
     "",
     toneBlock || "",
     platformBlock || "",
     "IDENTITY (NON-NEGOTIABLE):",
     "- First-person singular ONLY: I / me / my.",
-    "- You are NOT a dealership. Never say we/us/our. Never reference a dealer group/store.",
-    "- CTA must be personal: 'DM me' / 'Message me' / 'Comment ___ and I'll message you.'",
+    "- Never say we/us/our. Never reference a dealership/store/group.",
+    "- CTA must be personal: DM me / Message me (never 'us').",
     "",
     "TRUTH RULES (NON-NEGOTIABLE):",
-    "- Use ONLY the facts in ALLOWED FACTS + ALLOWED FEATURES below.",
-    "- If a field is missing/empty, OMIT it. Do not guess.",
-    "- Do NOT mention 'days in inventory' or any inventory-age claims.",
-    "- Do NOT claim CPO/CarBravo/one-owner/no-accidents unless explicitly present in ALLOWED FACTS/FEATURES.",
-    "- Do NOT promise financing/approvals/terms. You may say: 'I’ll walk you through options.'",
-    "- No links. No placeholders. No disclaimers. No dealership talk.",
+    "- Use ONLY ALLOWED FACTS + ALLOWED FEATURES below.",
+    "- If missing, OMIT it. Do not guess. Do not generalize.",
+    "- Do NOT mention days in inventory.",
+    "- No links. No placeholders. No disclaimers.",
     "",
-    "ALLOWED FACTS (USE ONLY THESE; DO NOT INVENT):",
+    "BANNED GENERIC PHRASES (DO NOT USE):",
+    "- sleek design",
+    "- modern lifestyle",
+    "- advanced safety features",
+    "- packed with tech",
+    "- fuel-efficient and fun to drive",
+    "- great for city driving",
+    "",
+    "ALLOWED FACTS:",
     factsLines,
     "",
     featuresBlock,
     "",
-    "OUTPUT QUALITY RULES:",
-    "- No generic fluff unless you immediately follow it with REAL bullets from ALLOWED FEATURES.",
-    "- Emojis as anchors (2–10 total). Don’t spam every line.",
-    "- Strong closer mindset: keep momentum, ask for the appointment, use a two-choice close when appropriate.",
+    "BULLET RULE (HARD):",
+    "- Every bullet MUST be a direct lift from ALLOWED FEATURES OR a direct fact line (price/miles/engine/etc).",
+    "- No rewording, no vague synonyms, no made-up benefits.",
     "",
     "STRUCTURE:",
     "1) Hook (1 line, emoji anchored)",
-    "2) Vehicle line (use TITLE if provided)",
-    "3) Proof stack (Price/Miles/VIN/Stock if provided) — 2–4 lines max",
-    "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (facts/features only)",
-    "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (ONLY if ALLOWED FEATURES exist)",
-    "6) Urgency line (scarcity allowed, NO inventory days)",
-    `7) CTA: DM me "${keyword}" + next step (quick video / test drive / time today)`,
+    "2) Vehicle line (TITLE)",
+    "3) Proof stack (Price/Miles/Stock/VIN if present)",
+    "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (from ALLOWED FEATURES)",
+    "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (from ALLOWED FEATURES)",
+    "6) Urgency line (no inventory days)",
+    `7) CTA: DM me "${keyword}" + two-choice close (today or tomorrow?)`,
     "",
     "OUTPUT: Return ONLY the final post text (no analysis).",
     `PLATFORM = ${platform}`,
@@ -1589,19 +1612,11 @@ app.post("/api/ai/social", async (req, res) => {
     `SEED (do not print) = ${seed}`,
   ].join("\n");
 
-  const user = JSON.stringify(
-    {
-      ...vehicle,
-      // keep original fields, but provide a clean title for model input
-      title: safeTitle || s(vehicle.title),
-    },
-    null,
-    2
-  );
-
+  const user = JSON.stringify(vehicle, null, 2);
   const out = await callOpenAI({ system, user, temperature });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 
 
