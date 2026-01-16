@@ -846,12 +846,18 @@ async function getAccessToken(){
 
       const j = await r.json().catch(() => null);
 
-      if (!r.ok || !j?.url) {
-        if (pop) pop.close();
-        const msg = j?.error || j?.message || `Billing portal failed (${r.status})`;
-        alert(msg);
-        return;
-      }
+if (!r.ok || !j?.url) {
+  const msg = j?.error || j?.message || `Billing portal failed (${r.status})`;
+  if (pop && !pop.closed) {
+    pop.document.open();
+    pop.document.write(`<pre style="font:14px/1.4 system-ui;padding:16px;white-space:pre-wrap;">${msg}</pre>`);
+    pop.document.close();
+  } else {
+    alert(msg);
+  }
+  return;
+}
+
 
       // send the new tab to Stripe portal
       if (pop) pop.location.href = j.url;
