@@ -1335,6 +1335,38 @@ app.post("/api/ai/social", async (req, res) => {
   const audience = req.body.audience || req.body.context?.audience || {};
   const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
 
+  // ----------------------------
+  // Helpers (local, no deps)
+  // ----------------------------
+  const s = (v) => String(v == null ? "" : v).trim();
+  const cleanSpaces = (t) => s(t).replace(/\s+/g, " ").trim();
+
+  const scrubDealer = (t) => {
+    let x = cleanSpaces(t);
+    if (!x) return "";
+    // common separators
+    x = x.split("|")[0].trim();
+    x = x.replace(/\s+at\s+.+$/i, "").trim(); // "in X at Dealer"
+    x = x.replace(/\s+\-\s+.+$/i, "").trim(); // "Title - Dealer"
+    // remove obvious dealer phrases if they survive
+    x = x.replace(/\b(LaFontaine|Chevrolet|Plymouth)\b/gi, (m) => m); // no-op placeholder (keeps non-dealer makes)
+    return x;
+  };
+
+  const extractYMMT = (title) => {
+    const t = cleanSpaces(title);
+    if (!t) return { year: "", make: "", model: "", trim: "" };
+    const m = t.match(/\b(19|20)\d{2}\b/);
+    if (!m) return { year: "", make: "", model: "", trim: "" };
+    const year = m[0];
+    const after = t.slice(t.indexOf(year) + year.length).trim();
+    const parts = after.split(/\s+/).filter(Boolean);
+    const make = parts[0] || "";
+    const model = parts[1] || "";
+    const trim = parts.slice(2).join(" ");
+    return { year, make, model, trim };
+  };
+
   const rawTitle = takeText(
     vehicle.model,
     vehicle.title,
@@ -1342,8 +1374,17 @@ app.post("/api/ai/social", async (req, res) => {
     vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : ""
   );
 
+  const ymm = extractYMMT(scrubDealer(rawTitle));
+  const safeTitle = cleanSpaces(
+    takeText(
+      vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ""}` : "",
+      ymm.year && ymm.make && ymm.model ? `${ymm.year} ${ymm.make} ${ymm.model} ${ymm.trim || ""}` : "",
+      scrubDealer(rawTitle)
+    )
+  );
+
   const keyword =
-    (rawTitle || "INFO")
+    (safeTitle || "INFO")
       .toUpperCase()
       .replace(/[^A-Z0-9 ]/g, "")
       .trim()
@@ -1431,11 +1472,80 @@ app.post("/api/ai/social", async (req, res) => {
 
   const platformBlock = PLATFORM_RULES[platform] ? `\n${PLATFORM_RULES[platform]}\n` : "";
 
-  const tempByTone = { closer: 0.72, chill: 0.78, viral: 0.86, luxe: 0.72, marketplace: 0.68 };
-  const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.82;
+  const tempByTone = { closer: 0.68, chill: 0.74, viral: 0.82, luxe: 0.70, marketplace: 0.66 };
+  const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.78;
+
+  // ----------------------------
+  // Allowed facts (NO guessing)
+  // ----------------------------
+  const facts = {
+    title: safeTitle,
+    price: s(vehicle.price),
+    mileage: s(vehicle.mileage),
+    vin: s(vehicle.vin),
+    stock: s(vehicle.stock),
+    exterior: s(vehicle.exterior),
+    interior: s(vehicle.interior),
+    engine: s(vehicle.engine),
+    drivetrain: s(vehicle.drivetrain),
+    transmission: s(vehicle.transmission),
+  };
+
+  const factsLines = [
+    `TITLE: ${facts.title || "(not provided)"}`,
+    `PRICE: ${facts.price || "(not provided)"}`,
+    `MILEAGE: ${facts.mileage || "(not provided)"}`,
+    `VIN: ${facts.vin || "(not provided)"}`,
+    `STOCK: ${facts.stock || "(not provided)"}`,
+    `EXTERIOR: ${facts.exterior || "(not provided)"}`,
+    `INTERIOR: ${facts.interior || "(not provided)"}`,
+    `ENGINE: ${facts.engine || "(not provided)"}`,
+    `DRIVETRAIN: ${facts.drivetrain || "(not provided)"}`,
+    `TRANSMISSION: ${facts.transmission || "(not provided)"}`,
+  ].join("\n");
+
+  // ----------------------------
+  // Allowed features (NO guessing)
+  // Pull from desiredFeatures + any feature arrays on vehicle
+  // ----------------------------
+  const desired = Array.isArray(req.body.desiredFeatures) ? req.body.desiredFeatures : [];
+
+  const pullList = (v) => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === "string") return v.split(/\r?\n|•|\u2022|;/).map((x) => x.trim()).filter(Boolean);
+    return [];
+  };
+
+  const vehicleLists = []
+    .concat(pullList(vehicle.highlightedFeatures))
+    .concat(pullList(vehicle.features))
+    .concat(pullList(vehicle.options))
+    .concat(pullList(vehicle.equipment))
+    .concat(pullList(vehicle.highlights))
+    .concat(pullList(vehicle.packages));
+
+  const featuresRaw = []
+    .concat(desired)
+    .concat(vehicleLists)
+    .map((x) => cleanSpaces(x))
+    .filter(Boolean);
+
+  const seen = new Set();
+  const features = [];
+  for (const f of featuresRaw) {
+    const k = f.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    features.push(f);
+    if (features.length >= 14) break;
+  }
+
+  const featuresBlock = features.length
+    ? ["ALLOWED FEATURES (USE ONLY THESE; DO NOT INVENT):", ...features.map((x) => `- ${x}`)].join("\n")
+    : "ALLOWED FEATURES: (none provided) — DO NOT invent features. Do not use a 'Features People Ask For' section.";
 
   const system = [
-    "YOU ARE LOT ROCKET — SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
+    "YOU ARE LOT ROCKET — NEXT-LEVEL SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
     "Your job: produce sales-ready posts that beat generic AI tools by being specific, skimmable, and appointment-driven.",
     "",
     toneBlock || "",
@@ -1446,24 +1556,29 @@ app.post("/api/ai/social", async (req, res) => {
     "- CTA must be personal: 'DM me' / 'Message me' / 'Comment ___ and I'll message you.'",
     "",
     "TRUTH RULES (NON-NEGOTIABLE):",
-    "- Use ONLY the facts provided in the VEHICLE JSON.",
+    "- Use ONLY the facts in ALLOWED FACTS + ALLOWED FEATURES below.",
     "- If a field is missing/empty, OMIT it. Do not guess.",
     "- Do NOT mention 'days in inventory' or any inventory-age claims.",
-    "- Do NOT claim CPO/CarBravo/one-owner/no-accidents unless explicitly present in the JSON.",
-    "- Do NOT promise financing/approvals/terms. You may say 'I'll walk you through options.'",
+    "- Do NOT claim CPO/CarBravo/one-owner/no-accidents unless explicitly present in ALLOWED FACTS/FEATURES.",
+    "- Do NOT promise financing/approvals/terms. You may say: 'I’ll walk you through options.'",
     "- No links. No placeholders. No disclaimers. No dealership talk.",
     "",
+    "ALLOWED FACTS (USE ONLY THESE; DO NOT INVENT):",
+    factsLines,
+    "",
+    featuresBlock,
+    "",
     "OUTPUT QUALITY RULES:",
-    "- Avoid generic fluff ('packed with tech') unless you immediately list real features from the JSON.",
-    "- Skimmable: short lines + bullets + section headers.",
+    "- No generic fluff unless you immediately follow it with REAL bullets from ALLOWED FEATURES.",
+    "- Emojis as anchors (2–10 total). Don’t spam every line.",
     "- Strong closer mindset: keep momentum, ask for the appointment, use a two-choice close when appropriate.",
     "",
-    "DEFAULT STRUCTURE (use unless platform rules say otherwise):",
-    "1) Hook (1 line)",
-    "2) Vehicle line (Year Make Model Trim if provided)",
-    "3) Proof stack (Price/Miles if provided)",
-    "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (only confirmed facts)",
-    "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (only confirmed features)",
+    "STRUCTURE:",
+    "1) Hook (1 line, emoji anchored)",
+    "2) Vehicle line (use TITLE if provided)",
+    "3) Proof stack (Price/Miles/VIN/Stock if provided) — 2–4 lines max",
+    "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (facts/features only)",
+    "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (ONLY if ALLOWED FEATURES exist)",
     "6) Urgency line (scarcity allowed, NO inventory days)",
     `7) CTA: DM me "${keyword}" + next step (quick video / test drive / time today)`,
     "",
@@ -1474,10 +1589,20 @@ app.post("/api/ai/social", async (req, res) => {
     `SEED (do not print) = ${seed}`,
   ].join("\n");
 
-  const user = JSON.stringify(vehicle, null, 2);
+  const user = JSON.stringify(
+    {
+      ...vehicle,
+      // keep original fields, but provide a clean title for model input
+      title: safeTitle || s(vehicle.title),
+    },
+    null,
+    2
+  );
+
   const out = await callOpenAI({ system, user, temperature });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 
 app.post("/api/ai/objection", async (req, res) => {
