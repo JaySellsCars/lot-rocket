@@ -794,12 +794,15 @@ function wireAuthOnce() {
 // ----------------------------
 // MANAGE BILLING (NEW TAB, AUTH HEADER, APP STAYS) ✅
 // ----------------------------
-(function manageBillingController(){
-  function getBtn(){ return document.getElementById("lrManageBilling"); }
+(function manageBillingController() {
+  function getBtn() {
+    return document.getElementById("lrManageBilling");
+  }
 
-  async function getAccessToken(){
+  async function getAccessToken() {
     try {
       await initSupabaseOnce(); // ensure SB exists
+      if (!window.SB) return "";
       const { data } = await SB.auth.getSession();
       return data?.session?.access_token || "";
     } catch {
@@ -807,23 +810,38 @@ function wireAuthOnce() {
     }
   }
 
-  async function openPortalInNewTab(e){
-    if (e) { e.preventDefault(); e.stopPropagation(); }
+  function writePop(pop, msg) {
+    try {
+      if (!pop || pop.closed) return;
+      pop.document.open();
+      pop.document.write(
+        `<pre style="font:14px/1.45 system-ui;padding:16px;white-space:pre-wrap;">${String(
+          msg || ""
+        )}</pre>`
+      );
+      pop.document.close();
+    } catch {}
+  }
+
+  async function openPortalInNewTab(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
     // open immediately to avoid popup blockers
     const pop = window.open("about:blank", "_blank", "noopener,noreferrer");
+    if (pop) writePop(pop, "Opening billing portal…");
 
     try {
       await initSupabaseOnce();
 
-      // ensure we have a logged-in user
       const userId = LR_USER?.id;
       if (!userId) {
         if (pop && !pop.closed) pop.close();
         return openAuth("Sign in first.");
       }
 
-      // ✅ FIX: define token (was missing)
       const token = await getAccessToken();
       if (!token) {
         if (pop && !pop.closed) pop.close();
@@ -831,7 +849,7 @@ function wireAuthOnce() {
       }
 
       const endpoint =
-        (window.LR_CFG && window.LR_CFG.stripePortalUrl)
+        window.LR_CFG && window.LR_CFG.stripePortalUrl
           ? window.LR_CFG.stripePortalUrl
           : "/api/stripe/portal";
 
@@ -839,66 +857,60 @@ function wireAuthOnce() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": "Bearer " + token,
+          Accept: "application/json",
+          Authorization: "Bearer " + token,
         },
         body: JSON.stringify({ userId }),
       });
 
-      const j = await r.json().catch(() => null);
+      const ct = String(r.headers.get("content-type") || "").toLowerCase();
+      const raw = await r.text();
+
+      let j = null;
+      if (ct.includes("application/json")) {
+        try {
+          j = JSON.parse(raw);
+        } catch {
+          j = null;
+        }
+      }
 
       if (!r.ok || !j?.url) {
-        const msg = j?.error || j?.message || `Billing portal failed (${r.status})`;
+        const msg =
+          (j && (j.error || j.message)) ||
+          raw ||
+          `Billing portal failed (${r.status})`;
 
-        // show error IN the new tab (so we never lose it)
-        if (pop && !pop.closed) {
-          pop.document.open();
-          pop.document.write(
-            `<pre style="font:14px/1.4 system-ui;padding:16px;white-space:pre-wrap;">${String(msg)}</pre>`
-          );
-          pop.document.close();
-        } else {
-          alert(msg);
-        }
+        if (pop && !pop.closed) writePop(pop, msg);
+        else alert(msg);
         return;
       }
 
       // send the new tab to Stripe portal
       if (pop && !pop.closed) pop.location.href = j.url;
       else window.open(j.url, "_blank", "noopener,noreferrer");
-
     } catch (err) {
-      const msg = err?.message || String(err);
-
-      if (pop && !pop.closed) {
-        pop.document.open();
-        pop.document.write(
-          `<pre style="font:14px/1.4 system-ui;padding:16px;white-space:pre-wrap;">${String(msg)}</pre>`
-        );
-        pop.document.close();
-      } else {
-        alert("Billing portal error. Check console.");
-      }
-
       console.error("Manage billing failed:", err);
+      if (pop && !pop.closed) writePop(pop, "Billing portal error. Check console/server logs.");
+      else alert("Billing portal error. Check console/server logs.");
     }
   }
 
-  function bindOnce(el){
+  function bindOnce(el) {
     if (!el || el.__LR_BOUND__) return;
     el.__LR_BOUND__ = true;
     el.addEventListener("click", openPortalInNewTab);
   }
 
   // expose for the rest of your app
-  window.showManageBillingBtn = function(){
+  window.showManageBillingBtn = function () {
     const el = getBtn();
     if (!el) return;
     el.classList.remove("hidden");
     bindOnce(el);
   };
 
-  window.hideManageBillingBtn = function(){
+  window.hideManageBillingBtn = function () {
     const el = getBtn();
     if (el) el.classList.add("hidden");
   };
@@ -906,6 +918,7 @@ function wireAuthOnce() {
   const first = getBtn();
   if (first) bindOnce(first);
 })();
+
 
 
 
