@@ -799,7 +799,7 @@ function wireAuthOnce() {
 
   async function getAccessToken(){
     try {
-      if (!window.SB) return "";
+      await initSupabaseOnce(); // ensure SB exists
       const { data } = await SB.auth.getSession();
       return data?.session?.access_token || "";
     } catch {
@@ -816,18 +816,19 @@ function wireAuthOnce() {
     try {
       await initSupabaseOnce();
 
+      // ensure we have a logged-in user
       const userId = LR_USER?.id;
       if (!userId) {
-        if (pop) pop.close();
+        if (pop && !pop.closed) pop.close();
         return openAuth("Sign in first.");
       }
 
-async function getAccessToken(){
-  await initSupabaseOnce();                 // make sure SB exists
-  const { data } = await SB.auth.getSession();
-  return data?.session?.access_token || "";
-}
-
+      // ✅ FIX: define token (was missing)
+      const token = await getAccessToken();
+      if (!token) {
+        if (pop && !pop.closed) pop.close();
+        return openAuth("Session expired. Sign in again.");
+      }
 
       const endpoint =
         (window.LR_CFG && window.LR_CFG.stripePortalUrl)
@@ -839,34 +840,47 @@ async function getAccessToken(){
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "Authorization": "Bearer " + token,   // ✅ THIS IS THE FIX
+          "Authorization": "Bearer " + token,
         },
         body: JSON.stringify({ userId }),
       });
 
       const j = await r.json().catch(() => null);
 
-if (!r.ok || !j?.url) {
-  const msg = j?.error || j?.message || `Billing portal failed (${r.status})`;
-  if (pop && !pop.closed) {
-    pop.document.open();
-    pop.document.write(`<pre style="font:14px/1.4 system-ui;padding:16px;white-space:pre-wrap;">${msg}</pre>`);
-    pop.document.close();
-  } else {
-    alert(msg);
-  }
-  return;
-}
+      if (!r.ok || !j?.url) {
+        const msg = j?.error || j?.message || `Billing portal failed (${r.status})`;
 
+        // show error IN the new tab (so we never lose it)
+        if (pop && !pop.closed) {
+          pop.document.open();
+          pop.document.write(
+            `<pre style="font:14px/1.4 system-ui;padding:16px;white-space:pre-wrap;">${String(msg)}</pre>`
+          );
+          pop.document.close();
+        } else {
+          alert(msg);
+        }
+        return;
+      }
 
       // send the new tab to Stripe portal
-      if (pop) pop.location.href = j.url;
+      if (pop && !pop.closed) pop.location.href = j.url;
       else window.open(j.url, "_blank", "noopener,noreferrer");
 
     } catch (err) {
-      if (pop) pop.close();
+      const msg = err?.message || String(err);
+
+      if (pop && !pop.closed) {
+        pop.document.open();
+        pop.document.write(
+          `<pre style="font:14px/1.4 system-ui;padding:16px;white-space:pre-wrap;">${String(msg)}</pre>`
+        );
+        pop.document.close();
+      } else {
+        alert("Billing portal error. Check console.");
+      }
+
       console.error("Manage billing failed:", err);
-      alert("Billing portal error. Check server logs.");
     }
   }
 
@@ -892,6 +906,7 @@ if (!r.ok || !j?.url) {
   const first = getBtn();
   if (first) bindOnce(first);
 })();
+
 
 
 
