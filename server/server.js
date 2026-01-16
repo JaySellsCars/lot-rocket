@@ -1354,31 +1354,120 @@ app.post("/api/ai/social", async (req, res) => {
   const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
 
   const TONE_PRESETS = {
-    closer: ["TONE PRESET: CLOSER", "- High intent. Strong urgency.", "- Short lines. Firm CTA."].join("\n"),
-    chill: ["TONE PRESET: CHILL", "- Friendly, conversational.", "- No pressure. Still DM-driven."].join("\n"),
-    viral: ["TONE PRESET: VIRAL", "- Scroll-stopping hooks.", "- Emojis used as anchors."].join("\n"),
-    luxe: ["TONE PRESET: LUXE", "- Clean, premium.", "- Fewer emojis."].join("\n"),
-    marketplace: ["TONE PRESET: MARKETPLACE", "- Price early. Bullet facts.", "- Minimal emojis."].join("\n"),
+    closer: [
+      "TONE PRESET: CLOSER (SHOWROOM MENTALITY)",
+      "- You are a closer. You do NOT let momentum die.",
+      "- Assume the appointment. Ask for the time. Two-choice close.",
+      "- Short, punchy lines. Strong urgency WITHOUT 'days in inventory'.",
+      "- CTA must be 'DM me' / 'Message me' (never 'us').",
+    ].join("\n"),
+    chill: [
+      "TONE PRESET: CHILL",
+      "- Friendly, conversational, still professional.",
+      "- No pressure, but still DM-driven with a clear next step.",
+    ].join("\n"),
+    viral: [
+      "TONE PRESET: VIRAL",
+      "- Scroll-stopping hooks.",
+      "- Emojis used as anchors (not every line).",
+      "- Skimmable sections + bullet stacks.",
+    ].join("\n"),
+    luxe: [
+      "TONE PRESET: LUXE",
+      "- Clean, premium, confident.",
+      "- Fewer emojis, more polish.",
+    ].join("\n"),
+    marketplace: [
+      "TONE PRESET: MARKETPLACE",
+      "- Price/miles early if provided.",
+      "- Bullet facts, minimal emojis, clear DM CTA.",
+    ].join("\n"),
   };
 
   const toneBlock = TONE_PRESETS[toneRaw] ? `\n${TONE_PRESETS[toneRaw]}\n` : "";
 
+  const PLATFORM_RULES = {
+    facebook: [
+      "PLATFORM RULES (FACEBOOK):",
+      "- Skimmable sections. Short lines. Strong CTA.",
+      "- Hashtags optional (8–15 max).",
+    ].join("\n"),
+    instagram: [
+      "PLATFORM RULES (INSTAGRAM):",
+      "- Hook fast. Emojis okay as anchors.",
+      "- End with CTA + 10–18 hashtags max.",
+    ].join("\n"),
+    tiktok: [
+      "PLATFORM RULES (TIKTOK):",
+      "- Write like a caption for a walkaround video.",
+      "- Short punchy lines. 6–12 hashtags max.",
+    ].join("\n"),
+    linkedin: [
+      "PLATFORM RULES (LINKEDIN):",
+      "- More professional. Minimal emojis.",
+      "- Keep it clean, value-driven, still DM-me CTA.",
+    ].join("\n"),
+    x: [
+      "PLATFORM RULES (X):",
+      "- Keep it tight. Avoid long bullet stacks.",
+      "- Aim ~240 characters so it fits after edits.",
+    ].join("\n"),
+    dm: [
+      "PLATFORM RULES (DM/TEXT):",
+      "- 2–5 sentences max. No hashtags.",
+      "- Ask a direct question to lock next step (time today/tomorrow).",
+    ].join("\n"),
+    marketplace: [
+      "PLATFORM RULES (MARKETPLACE):",
+      "- Price + key facts early if provided.",
+      "- Bullet facts, minimal emojis, clear DM CTA.",
+    ].join("\n"),
+    hashtags: [
+      "PLATFORM RULES (HASHTAGS ONLY):",
+      "- Output ONLY hashtags separated by spaces.",
+      "- 10–25 hashtags max.",
+    ].join("\n"),
+  };
+
+  const platformBlock = PLATFORM_RULES[platform] ? `\n${PLATFORM_RULES[platform]}\n` : "";
+
+  const tempByTone = { closer: 0.72, chill: 0.78, viral: 0.86, luxe: 0.72, marketplace: 0.68 };
+  const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.82;
+
   const system = [
-    "YOU ARE LOT ROCKET — VIRAL CAR SALES COPY ENGINE.",
-    "Generate a scroll-stopping, DM-generating post for ONE individual salesperson.",
+    "YOU ARE LOT ROCKET — SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
+    "Your job: produce sales-ready posts that beat generic AI tools by being specific, skimmable, and appointment-driven.",
     "",
     toneBlock || "",
-    "VOICE (NON-NEGOTIABLE):",
-    "- First-person singular (I/me). Confident. Direct.",
-    "- No dealership language. No links. No disclaimers. No paragraphs.",
+    platformBlock || "",
+    "IDENTITY (NON-NEGOTIABLE):",
+    "- First-person singular ONLY: I / me / my.",
+    "- You are NOT a dealership. Never say we/us/our. Never reference a dealer group/store.",
+    "- CTA must be personal: 'DM me' / 'Message me' / 'Comment ___ and I'll message you.'",
     "",
-    "STRUCTURE:",
-    "1) HOOK (1–2 lines)",
-    "2) PROOF (3–6 bullets)",
-    "3) URGENCY (1 line)",
-    `4) CTA: DM me "${keyword}"`,
+    "TRUTH RULES (NON-NEGOTIABLE):",
+    "- Use ONLY the facts provided in the VEHICLE JSON.",
+    "- If a field is missing/empty, OMIT it. Do not guess.",
+    "- Do NOT mention 'days in inventory' or any inventory-age claims.",
+    "- Do NOT claim CPO/CarBravo/one-owner/no-accidents unless explicitly present in the JSON.",
+    "- Do NOT promise financing/approvals/terms. You may say 'I'll walk you through options.'",
+    "- No links. No placeholders. No disclaimers. No dealership talk.",
     "",
-    "OUTPUT: Return ONLY the final post text.",
+    "OUTPUT QUALITY RULES:",
+    "- Avoid generic fluff ('packed with tech') unless you immediately list real features from the JSON.",
+    "- Skimmable: short lines + bullets + section headers.",
+    "- Strong closer mindset: keep momentum, ask for the appointment, use a two-choice close when appropriate.",
+    "",
+    "DEFAULT STRUCTURE (use unless platform rules say otherwise):",
+    "1) Hook (1 line)",
+    "2) Vehicle line (Year Make Model Trim if provided)",
+    "3) Proof stack (Price/Miles if provided)",
+    "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (only confirmed facts)",
+    "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (only confirmed features)",
+    "6) Urgency line (scarcity allowed, NO inventory days)",
+    `7) CTA: DM me "${keyword}" + next step (quick video / test drive / time today)`,
+    "",
+    "OUTPUT: Return ONLY the final post text (no analysis).",
     `PLATFORM = ${platform}`,
     `LOCATION = ${location || "(not provided)"}`,
     `AUDIENCE = ${audienceText || "(none)"}`,
@@ -1386,9 +1475,10 @@ app.post("/api/ai/social", async (req, res) => {
   ].join("\n");
 
   const user = JSON.stringify(vehicle, null, 2);
-  const out = await callOpenAI({ system, user, temperature: 0.95 });
+  const out = await callOpenAI({ system, user, temperature });
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 app.post("/api/ai/objection", async (req, res) => {
   const objection = takeText(req.body.objection, req.body.input, req.body.text);
