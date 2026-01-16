@@ -822,11 +822,12 @@ function wireAuthOnce() {
         return openAuth("Sign in first.");
       }
 
-      const token = await getAccessToken();
-      if (!token) {
-        if (pop) pop.close();
-        return openAuth("Session expired. Sign in again.");
-      }
+async function getAccessToken(){
+  await initSupabaseOnce();                 // make sure SB exists
+  const { data } = await SB.auth.getSession();
+  return data?.session?.access_token || "";
+}
+
 
       const endpoint =
         (window.LR_CFG && window.LR_CFG.stripePortalUrl)
