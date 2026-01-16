@@ -1320,314 +1320,336 @@ app.post("/api/ai/help", async (req, res) => {
 
 
 app.post("/api/ai/social", async (req, res) => {
-  const vehicle = req.body.vehicle || {};
-  const platform = normPlatform(req.body.platform || "facebook");
-  const seed = String(req.body.seed || "").trim() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  try {
+    const vehicleIn = req.body.vehicle || {};
+    const platform = normPlatform(req.body.platform || "facebook");
+    const seed = String(req.body.seed || "").trim() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-  const locRaw = req.body.location || req.body.geo || req.body.userLocation || req.body.context?.location || "";
-  const location =
-    typeof locRaw === "string"
-      ? locRaw.trim()
-      : locRaw && typeof locRaw === "object"
-      ? takeText(locRaw.city, locRaw.state, locRaw.metro, locRaw.zip, locRaw.region)
-      : "";
+    const locRaw = req.body.location || req.body.geo || req.body.userLocation || req.body.context?.location || "";
+    const location =
+      typeof locRaw === "string"
+        ? locRaw.trim()
+        : locRaw && typeof locRaw === "object"
+        ? takeText(locRaw.city, locRaw.state, locRaw.metro, locRaw.zip, locRaw.region)
+        : "";
 
-  const audience = req.body.audience || req.body.context?.audience || {};
-  const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
+    const audience = req.body.audience || req.body.context?.audience || {};
+    const audienceText = typeof audience === "string" ? audience.trim() : JSON.stringify(audience || {}, null, 2);
 
-  // ----------------------------
-  // helpers (local, no deps)
-  // ----------------------------
-  const s = (v) => String(v == null ? "" : v).trim();
-  const cleanSpaces = (t) => s(t).replace(/\s+/g, " ").trim();
+    const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
 
-  const pullList = (v) => {
-    if (Array.isArray(v)) return v;
-    if (typeof v === "string") {
-      return v
-        .split(/\r?\n|•|\u2022|;|,/)
-        .map((x) => cleanSpaces(x))
-        .filter(Boolean);
-    }
-    return [];
-  };
+    const clean = (s) =>
+      String(s || "")
+        .replace(/\u00A0/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-  const scrubTitle = (t) => {
-    let x = cleanSpaces(t);
-    if (!x) return "";
-    x = x.split("|")[0].trim();
-    x = x.replace(/\s+\-\s+.+$/i, "").trim();
-    x = x.replace(/\s+at\s+.+$/i, "").trim();
-    // strip trailing location tokens if present (keeps Y/M/M/T, drops city/state suffixes)
-    x = x.replace(/\b([A-Z][a-z]+)\s*,?\s*[A-Z]{2}\b\s*$/g, "").trim(); // "Plymouth MI"
-    return x;
-  };
+    const uniq = (arr) => {
+      const out = [];
+      const seen = new Set();
+      for (const x of arr || []) {
+        const v = clean(x);
+        if (!v) continue;
+        const k = v.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(v);
+      }
+      return out;
+    };
 
-  const rawTitle = takeText(
-    vehicle.year && vehicle.make && vehicle.model ? `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ""}` : "",
-    vehicle.model,
-    vehicle.title,
-    vehicle.trim
-  );
+    const looksLikeDealer = (s) => {
+      const t = String(s || "").toLowerCase();
+      return (
+        t.includes("lafontaine") ||
+        t.includes("chevrolet plymouth") ||
+        t.includes("dealership") ||
+        t.includes("sales department") ||
+        t.includes("dealer") ||
+        t.includes("carfax") ||
+        t.includes("carbravo") ||
+        t.includes("certified") ||
+        t.includes("eligible benefits") ||
+        t.includes("disclaimer") ||
+        t.includes("price excludes") ||
+        /\(\d{3}\)\s*\d{3}[-\s]?\d{4}/.test(t)
+      );
+    };
 
-  const safeTitle = scrubTitle(rawTitle);
+    const normalizeFeatureLine = (s) => {
+      const v = clean(s);
+      if (!v) return "";
+      if (looksLikeDealer(v)) return "";
+      if (v.length < 2) return "";
+      // kill pure category headers that sometimes show up as list items
+      if (/^(comfort|convenience|exterior|interior|safety|technology|performance|powertrain|packages|options)$/i.test(v)) return "";
+      return v;
+    };
 
-  const keyword =
-    (safeTitle || "INFO")
-      .toUpperCase()
-      .replace(/[^A-Z0-9 ]/g, "")
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .join(" ") || "INFO";
+    const parseYearMakeModelTrim = (title) => {
+      const t = clean(title);
+      // example: "2025 Chevrolet Trax LT Plymouth MI | LaFontaine Chevrolet Plymouth ..."
+      const m = t.match(/\b(19\d{2}|20\d{2})\s+([A-Za-z]+)\s+([A-Za-z0-9\-]+)(?:\s+([A-Za-z0-9\-\+ ]{1,20}))?/);
+      if (!m) return { year: "", make: "", model: "", trim: "" };
+      const year = m[1] || "";
+      const make = m[2] || "";
+      const model = m[3] || "";
+      const trim = clean(m[4] || "");
+      // trim often grabs city words; strip common location tokens if present
+      const trimSafe = trim.replace(/\b(Plymouth|MI|Michigan)\b/gi, "").trim();
+      return { year, make, model, trim: trimSafe };
+    };
 
-  const toneRaw = String(req.body.tone || req.body.style || req.body.voice || "viral").trim().toLowerCase();
+    async function fetchHtml(url, timeoutMs) {
+      const u = clean(url);
+      if (!u || !/^https?:\/\//i.test(u)) return "";
+      const AbortCtrl = globalThis.AbortController;
+      const ac = AbortCtrl ? new AbortCtrl() : null;
+      const t = setTimeout(() => {
+        try { ac && ac.abort(); } catch {}
+      }, timeoutMs || 9000);
 
-  const TONE_PRESETS = {
-    closer: [
-      "TONE PRESET: CLOSER (SHOWROOM MENTALITY)",
-      "- You are a closer. You do NOT let momentum die.",
-      "- Assume the appointment. Ask for the time. Two-choice close.",
-      "- Short, punchy lines. Strong urgency WITHOUT 'days in inventory'.",
-      "- CTA must be 'DM me' / 'Message me' (never 'us').",
-    ].join("\n"),
-    chill: [
-      "TONE PRESET: CHILL",
-      "- Friendly, conversational, still professional.",
-      "- No pressure, but still DM-driven with a clear next step.",
-    ].join("\n"),
-    viral: [
-      "TONE PRESET: VIRAL",
-      "- Scroll-stopping hooks.",
-      "- Emojis used as anchors (not every line).",
-      "- Skimmable sections + bullet stacks.",
-    ].join("\n"),
-    luxe: [
-      "TONE PRESET: LUXE",
-      "- Clean, premium, confident.",
-      "- Fewer emojis, more polish.",
-    ].join("\n"),
-    marketplace: [
-      "TONE PRESET: MARKETPLACE",
-      "- Price/miles early if provided.",
-      "- Bullet facts, minimal emojis, clear DM CTA.",
-    ].join("\n"),
-  };
-
-  const toneBlock = TONE_PRESETS[toneRaw] ? `\n${TONE_PRESETS[toneRaw]}\n` : "";
-
-  const PLATFORM_RULES = {
-    facebook: [
-      "PLATFORM RULES (FACEBOOK):",
-      "- Skimmable sections. Short lines. Strong CTA.",
-      "- Hashtags optional (8–15 max).",
-    ].join("\n"),
-    instagram: [
-      "PLATFORM RULES (INSTAGRAM):",
-      "- Hook fast. Emojis okay as anchors.",
-      "- End with CTA + 10–18 hashtags max.",
-    ].join("\n"),
-    tiktok: [
-      "PLATFORM RULES (TIKTOK):",
-      "- Write like a caption for a walkaround video.",
-      "- Short punchy lines. 6–12 hashtags max.",
-    ].join("\n"),
-    linkedin: [
-      "PLATFORM RULES (LINKEDIN):",
-      "- More professional. Minimal emojis.",
-      "- Keep it clean, value-driven, still DM-me CTA.",
-    ].join("\n"),
-    x: [
-      "PLATFORM RULES (X):",
-      "- Keep it tight. Avoid long bullet stacks.",
-      "- Aim ~240 characters so it fits after edits.",
-    ].join("\n"),
-    dm: [
-      "PLATFORM RULES (DM/TEXT):",
-      "- 2–5 sentences max. No hashtags.",
-      "- Ask a direct question to lock next step (time today/tomorrow).",
-    ].join("\n"),
-    marketplace: [
-      "PLATFORM RULES (MARKETPLACE):",
-      "- Price + key facts early if provided.",
-      "- Bullet facts, minimal emojis, clear DM CTA.",
-    ].join("\n"),
-    hashtags: [
-      "PLATFORM RULES (HASHTAGS ONLY):",
-      "- Output ONLY hashtags separated by spaces.",
-      "- 10–25 hashtags max.",
-    ].join("\n"),
-  };
-
-  const platformBlock = PLATFORM_RULES[platform] ? `\n${PLATFORM_RULES[platform]}\n` : "";
-
-  // Lower temp = less generic AI mush
-  const tempByTone = { closer: 0.55, chill: 0.60, viral: 0.68, luxe: 0.55, marketplace: 0.50 };
-  const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.62;
-
-  // ----------------------------
-  // Allowed facts/features (NO guessing)
-  // ----------------------------
-  const facts = {
-    title: safeTitle,
-    price: s(vehicle.price),
-    mileage: s(vehicle.mileage),
-    vin: s(vehicle.vin),
-    stock: s(vehicle.stock),
-    exterior: s(vehicle.exterior),
-    interior: s(vehicle.interior),
-    engine: s(vehicle.engine),
-    drivetrain: s(vehicle.drivetrain),
-    transmission: s(vehicle.transmission),
-  };
-
-  const desired = Array.isArray(req.body.desiredFeatures) ? req.body.desiredFeatures : [];
-
-  const featuresRaw = []
-    .concat(desired)
-    .concat(pullList(vehicle.highlightedFeatures))
-    .concat(pullList(vehicle.features))
-    .concat(pullList(vehicle.options))
-    .concat(pullList(vehicle.equipment))
-    .concat(pullList(vehicle.highlights))
-    .concat(pullList(vehicle.packages))
-    .map((x) => cleanSpaces(x))
-    .filter(Boolean);
-
-  const seen = new Set();
-  const features = [];
-  for (const f of featuresRaw) {
-    const k = f.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    features.push(f);
-    if (features.length >= 18) break;
-  }
-
-  const realFeatures = features.filter((f) => {
-    if (/^\s*(priced|price)\b/i.test(f)) return false;
-    if (/\$\s*\d/.test(f)) return false;
-    return true;
-  });
-
-  const hasRealFeatures = realFeatures.length >= 4;
-
-  // ----------------------------
-  // Hard fallback: facts-only, but still "Lot Rocket" quality
-  // (NO invented features, NO "most-wanted features" section)
-  // ----------------------------
-  function buildFallbackPost() {
-    const titleLine = facts.title ? facts.title : "Car for sale";
-    const proof = [];
-    if (facts.price) proof.push(`💰 Price: ${facts.price}`);
-    if (facts.mileage) proof.push(`🛣️ Miles: ${facts.mileage}`);
-    if (facts.stock) proof.push(`📦 Stock: ${facts.stock}`);
-    if (facts.vin) proof.push(`🆔 VIN: ${facts.vin}`);
-
-    const proofBlock = proof.length ? proof.join("\n") : "";
-
-    if (platform === "dm") {
-      const p = [];
-      p.push(`👀 ${titleLine}${facts.price ? ` • ${facts.price}` : ""}`);
-      if (facts.stock) p.push(`Stock: ${facts.stock}${facts.vin ? ` • VIN: ${facts.vin}` : ""}`);
-      p.push("Want a 60-sec walkaround + numbers?");
-      p.push(`DM me "${keyword}" — today or tomorrow?`);
-      return p.join("\n");
+      try {
+        const r = await fetch(u, {
+          method: "GET",
+          redirect: "follow",
+          signal: ac ? ac.signal : undefined,
+          headers: {
+            "User-Agent": "Mozilla/5.0",
+            Accept: "text/html,application/xhtml+xml",
+          },
+        });
+        const html = await r.text();
+        return String(html || "");
+      } catch {
+        return "";
+      } finally {
+        clearTimeout(t);
+      }
     }
 
-    const lines = [];
-    lines.push("🚨 STOP SCROLLING 🚨");
-    lines.push(titleLine);
-    if (proofBlock) {
-      lines.push("");
-      lines.push(proofBlock);
+    function extractListItemsNearHeading($, headingRe, stopRe, maxItems) {
+      const out = [];
+      const headings = $("h1,h2,h3,h4,h5,h6").toArray();
+
+      for (const h of headings) {
+        const ht = clean($(h).text());
+        if (!headingRe.test(ht)) continue;
+
+        let node = $(h).next();
+        while (node && node.length) {
+          if (node.is("h1,h2,h3,h4,h5,h6")) {
+            const nt = clean(node.text());
+            if (!stopRe || stopRe.test(nt)) break;
+          }
+
+          node.find("li").each((_, li) => out.push(clean($(li).text())));
+          node = node.next();
+
+          if (maxItems && out.length >= maxItems) break;
+        }
+        break;
+      }
+
+      return uniq(out).map(normalizeFeatureLine).filter(Boolean);
     }
-    lines.push("");
-    lines.push("🎥 Want a 60-sec walkaround + the numbers?");
-    lines.push("✅ I’ll send the video first.");
-    lines.push("✅ If you like it, we lock a time to drive it.");
-    lines.push("");
-    lines.push(`DM me "${keyword}" — today or tomorrow?`);
-    return lines.join("\n");
+
+    async function scrapeFeaturesFromUrl(url) {
+      let cheerioLocal = null;
+      try { cheerioLocal = require("cheerio"); } catch {}
+      if (!cheerioLocal) return { highlights: [], features: [] };
+
+      const html = await fetchHtml(url, 9000);
+      if (!html) return { highlights: [], features: [] };
+
+      const $ = cheerioLocal.load(html);
+
+      const highlights = extractListItemsNearHeading(
+        $,
+        /Highlighted Features/i,
+        /Dealer Comments|Eligible Benefits|All Features/i,
+        60
+      );
+
+      const features = extractListItemsNearHeading(
+        $,
+        /All Features/i,
+        /Similar Vehicles|Other Vehicles|Disclaimer|Legal|Dealer/i,
+        220
+      );
+
+      return {
+        highlights: uniq(highlights).slice(0, 40),
+        features: uniq(features).slice(0, 120),
+      };
+    }
+
+    // ----------------------------
+    // VEHICLE DATA (NO GUESSING)
+    // ----------------------------
+    const rawTitle = takeText(
+      vehicleIn.year && vehicleIn.make && vehicleIn.model ? `${vehicleIn.year} ${vehicleIn.make} ${vehicleIn.model} ${vehicleIn.trim || ""}` : "",
+      vehicleIn.model,
+      vehicleIn.title,
+      vehicleIn.trim
+    );
+
+    const parsed = parseYearMakeModelTrim(rawTitle);
+    const year = takeText(vehicleIn.year, parsed.year);
+    const make = takeText(vehicleIn.make, parsed.make);
+    const model = takeText(vehicleIn.model, parsed.model);
+    const trim = takeText(vehicleIn.trim, parsed.trim);
+
+    const vehicleLine = clean([year, make, model, trim].filter(Boolean).join(" "));
+
+    const keyword =
+      (vehicleLine || "INFO")
+        .toUpperCase()
+        .replace(/[^A-Z0-9 ]/g, "")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .join(" ") || "INFO";
+
+    const price = clean(vehicleIn.price);
+    const mileage = clean(vehicleIn.mileage);
+    const vin = clean(vehicleIn.vin);
+    const stock = clean(vehicleIn.stock);
+
+    // If the front already sends real features, use them. Otherwise scrape from URL.
+    const incomingHighlights = uniq(vehicleIn.highlights || vehicleIn.highlightedFeatures || []);
+    const incomingFeatures = uniq(vehicleIn.features || vehicleIn.equipment || vehicleIn.allFeatures || []);
+
+    let highlights = incomingHighlights;
+    let features = incomingFeatures;
+
+    if ((!highlights.length || !features.length) && vehicleIn.url) {
+      const scraped = await scrapeFeaturesFromUrl(vehicleIn.url);
+      if (!highlights.length) highlights = scraped.highlights;
+      if (!features.length) features = scraped.features;
+    }
+
+    // Build a tight, verified feature pool
+    const featurePool = uniq([
+      ...(highlights || []),
+      ...(features || []),
+      ...(Array.isArray(req.body.desiredFeatures) ? req.body.desiredFeatures : []),
+    ])
+      .map(normalizeFeatureLine)
+      .filter(Boolean)
+      .slice(0, 140);
+
+    const TONE_PRESETS = {
+      closer: [
+        "TONE PRESET: CLOSER (SHOWROOM MENTALITY)",
+        "- You are a closer. Keep momentum alive.",
+        "- Two-choice close (today vs tomorrow).",
+        "- Strong urgency WITHOUT inventory-days claims.",
+      ].join("\n"),
+      chill: [
+        "TONE PRESET: CHILL",
+        "- Friendly, conversational, still professional.",
+        "- Clear next step, light pressure.",
+      ].join("\n"),
+      viral: [
+        "TONE PRESET: VIRAL (SCROLL-STOPPING)",
+        "- Big hook + emoji anchors (purposeful).",
+        "- Skimmable sections + punchy bullets.",
+        "- Sounds like a real salesperson, not a template.",
+      ].join("\n"),
+      luxe: [
+        "TONE PRESET: LUXE",
+        "- Clean, premium, confident.",
+        "- Fewer emojis, more polish.",
+      ].join("\n"),
+      marketplace: [
+        "TONE PRESET: MARKETPLACE",
+        "- Price early if provided.",
+        "- Bullet facts, minimal emojis, clear DM CTA.",
+      ].join("\n"),
+    };
+
+    const toneBlock = TONE_PRESETS[toneRaw] ? `\n${TONE_PRESETS[toneRaw]}\n` : "";
+
+    const PLATFORM_RULES = {
+      facebook: ["PLATFORM RULES (FACEBOOK):", "- Skimmable sections. Short lines.", "- Hashtags optional (8–15 max)."].join("\n"),
+      instagram: ["PLATFORM RULES (INSTAGRAM):", "- Hook fast. Emoji anchors ok.", "- End with CTA + hashtags (10–18 max)."].join("\n"),
+      tiktok: ["PLATFORM RULES (TIKTOK):", "- Caption for a walkaround video.", "- Short punchy lines. 6–12 hashtags max."].join("\n"),
+      linkedin: ["PLATFORM RULES (LINKEDIN):", "- Professional. Minimal emojis.", "- Clean value-driven CTA."].join("\n"),
+      x: ["PLATFORM RULES (X):", "- Keep it tight.", "- Aim ~240 chars."].join("\n"),
+      dm: ["PLATFORM RULES (DM/TEXT):", "- 2–5 sentences max. No hashtags.", "- Ask a direct question (today or tomorrow?)."].join("\n"),
+      marketplace: ["PLATFORM RULES (MARKETPLACE):", "- Price + key facts early.", "- Bullet facts, minimal emojis."].join("\n"),
+      hashtags: ["PLATFORM RULES (HASHTAGS ONLY):", "- Output ONLY hashtags separated by spaces.", "- 10–25 hashtags max."].join("\n"),
+    };
+
+    const platformBlock = PLATFORM_RULES[platform] ? `\n${PLATFORM_RULES[platform]}\n` : "";
+
+    const tempByTone = { closer: 0.82, chill: 0.84, viral: 0.92, luxe: 0.80, marketplace: 0.74 };
+    const temperature = tempByTone[toneRaw] != null ? tempByTone[toneRaw] : 0.88;
+
+    const system = [
+      "YOU ARE LOT ROCKET — NEXT-LEVEL SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
+      "Your job: beat generic AI tools by being SPECIFIC (real equipment), SKIMMABLE, and APPOINTMENT-DRIVEN.",
+      "",
+      toneBlock || "",
+      platformBlock || "",
+      "IDENTITY (NON-NEGOTIABLE):",
+      "- First-person singular ONLY: I / me / my.",
+      "- You are NOT a dealership. Never say we/us/our. Never mention store/dealer names.",
+      "- CTA must be personal: 'DM me' / 'Message me' / 'Comment ___ and I’ll message you.'",
+      "",
+      "TRUTH RULES (NON-NEGOTIABLE):",
+      "- Use ONLY facts from VEHICLE + VERIFIED_FEATURES below.",
+      "- If something is missing, OMIT it. Do not guess.",
+      "- Do NOT mention 'days in inventory' or inventory-age claims.",
+      "- No links. No placeholders. No disclaimers. No dealership talk.",
+      "",
+      "QUALITY RULES (THIS IS LOT ROCKET):",
+      "- No generic fluff unless you immediately list real features.",
+      "- Use engaging emojis as anchors (not spam).",
+      "- Pick the best 8–14 verified features people care about (safety/tech/comfort).",
+      "- Close like a salesperson: keep momentum, ask for today vs tomorrow.",
+      "",
+      "DEFAULT STRUCTURE (FACEBOOK):",
+      "1) Hook (1–2 lines, scroll-stopper + emojis)",
+      "2) Vehicle line (Year Make Model Trim if available)",
+      "3) Proof (Price/Miles if available)",
+      "4) WHY THIS ONE'S SPECIAL: 4–6 bullets (ONLY verified features/facts)",
+      "5) FEATURES PEOPLE ASK FOR: 6–10 bullets (ONLY verified features)",
+      "6) Urgency line (scarcity allowed, NO inventory-days claims)",
+      `7) CTA: DM me "${keyword}" + two-choice close (today vs tomorrow)`,
+      "",
+      "OUTPUT: Return ONLY the final post text (no analysis).",
+      `PLATFORM = ${platform}`,
+      `LOCATION = ${location || "(not provided)"}`,
+      `AUDIENCE = ${audienceText || "(none)"}`,
+      `SEED (do not print) = ${seed}`,
+    ].join("\n");
+
+    const user = JSON.stringify(
+      {
+        vehicle: {
+          vehicleLine,
+          price,
+          mileage,
+          vin,
+          stock,
+          url: clean(vehicleIn.url),
+          description: clean(vehicleIn.description),
+        },
+        verified_features: featurePool,
+      },
+      null,
+      2
+    );
+
+    const out = await callOpenAI({ system, user, temperature });
+    return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+  } catch (e) {
+    return jsonErr(res, e?.message || "AI social failed");
   }
-
-  // If we don’t have real features, we do NOT call the model.
-  // We ship the best possible post with the facts we actually have.
-  if (!hasRealFeatures) {
-    return jsonOk(res, { ok: true, text: buildFallbackPost() });
-  }
-
-  const factsLines = [
-    `TITLE: ${facts.title || "(not provided)"}`,
-    `PRICE: ${facts.price || "(not provided)"}`,
-    `MILEAGE: ${facts.mileage || "(not provided)"}`,
-    `VIN: ${facts.vin || "(not provided)"}`,
-    `STOCK: ${facts.stock || "(not provided)"}`,
-    `EXTERIOR: ${facts.exterior || "(not provided)"}`,
-    `INTERIOR: ${facts.interior || "(not provided)"}`,
-    `ENGINE: ${facts.engine || "(not provided)"}`,
-    `DRIVETRAIN: ${facts.drivetrain || "(not provided)"}`,
-    `TRANSMISSION: ${facts.transmission || "(not provided)"}`,
-  ].join("\n");
-
-  const featuresBlock = ["ALLOWED FEATURES (USE ONLY THESE; DO NOT INVENT):"]
-    .concat(realFeatures.slice(0, 14).map((x) => `- ${x}`))
-    .join("\n");
-
-  const system = [
-    "YOU ARE LOT ROCKET — NEXT-LEVEL SOCIAL POST ENGINE FOR INDIVIDUAL CAR SALES PROFESSIONALS.",
-    "Your job: beat generic AI by using REAL equipment/features, real specs, skimmable structure, and appointment-driven CTA.",
-    "",
-    toneBlock || "",
-    platformBlock || "",
-    "IDENTITY (NON-NEGOTIABLE):",
-    "- First-person singular ONLY: I / me / my.",
-    "- Never say we/us/our. Never reference a dealership/store/group.",
-    "- CTA must be personal: DM me / Message me (never 'us').",
-    "",
-    "TRUTH RULES (NON-NEGOTIABLE):",
-    "- Use ONLY ALLOWED FACTS + ALLOWED FEATURES below.",
-    "- If missing, OMIT it. Do not guess. Do not generalize.",
-    "- Do NOT mention days in inventory.",
-    "- No links. No placeholders. No disclaimers.",
-    "",
-    "BANNED GENERIC PHRASES (DO NOT USE):",
-    "- sleek design",
-    "- modern lifestyle",
-    "- advanced safety features",
-    "- packed with tech",
-    "- fuel-efficient and fun to drive",
-    "- great for city driving",
-    "",
-    "ALLOWED FACTS:",
-    factsLines,
-    "",
-    featuresBlock,
-    "",
-    "BULLET RULE (HARD):",
-    "- Every bullet MUST be a direct lift from ALLOWED FEATURES OR a direct fact line (price/miles/engine/etc).",
-    "- No rewording into vague benefits. No made-up perks.",
-    "",
-    "STRUCTURE:",
-    "1) Hook (1 line, emoji anchored)",
-    "2) Vehicle line (TITLE)",
-    "3) Proof stack (Price/Miles/Stock/VIN if present)",
-    "4) WHY THIS ONE'S SPECIAL: 3–5 bullets (from ALLOWED FEATURES)",
-    "5) FEATURES: 6–10 bullets (from ALLOWED FEATURES)",
-    "6) Urgency line (no inventory days)",
-    `7) CTA: DM me "${keyword}" + two-choice close (today or tomorrow?)`,
-    "",
-    "OUTPUT: Return ONLY the final post text (no analysis).",
-    `PLATFORM = ${platform}`,
-    `LOCATION = ${location || "(not provided)"}`,
-    `AUDIENCE = ${audienceText || "(none)"}`,
-    `SEED (do not print) = ${seed}`,
-  ].join("\n");
-
-  const user = JSON.stringify(vehicle, null, 2);
-  const out = await callOpenAI({ system, user, temperature });
-  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
 
 
 
