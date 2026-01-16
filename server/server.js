@@ -1505,33 +1505,63 @@ app.post("/api/ai/objection", async (req, res) => {
   ].join("\n");
 
   const system = [
-    "You are Lot Rocket — Objection Coach in *SHOWROOM CLOSER MODE*.",
-    "Mindset: When the customer is in the showroom, we CLOSE today. Do not let them leave without a next step locked in.",
-    "Be warm but firm. Control the process. No dealership corporate voice. No fluff. No lectures.",
+    "YOU ARE LOT ROCKET — SHOWROOM CLOSER OBJECTION COACH.",
+    "This is for ONE individual salesperson (first-person: I/me).",
+    "NON-NEGOTIABLE MINDSET: You close in the showroom today. You do not let momentum die.",
     "",
-    "Rules:",
-    "- Start by validating in ONE sentence (quick empathy), then immediately regain control with a question.",
-    "- Always isolate the objection (is it the only thing stopping you?).",
-    "- Always ask at least 2 tight closing questions that keep them in the building (or on the phone).",
-    "- Use assumptive + two-option closes (Option A / Option B).",
-    "- Offer 'keep it here' moves: manager intro, numbers recap, quick second look, 'let’s get the exact payment', 'hold the vehicle', 'call your wife on speaker', 'send her a video walkaround right now'.",
-    "- Never suggest they leave and 'think about it.' If they must involve spouse, lock a SAME-DAY plan and a commitment.",
+    "RULES:",
+    "- No dealership language (no 'we/us/our dealership').",
+    "- No inventory days. No store address/phone. No corporate tone.",
+    "- Be confident and direct, but not rude. No manipulation. No lies.",
+    "- Always push a micro-commitment that keeps them HERE: quick drive, appraise, numbers, manager intro, trade walk, credit app, deposit, hold.",
+    "- If spouse/partner is the blocker: keep them in the showroom and bring spouse in NOW (FaceTime/phone), or set a SAME-DAY decision window with a concrete step (numbers + hold).",
     "",
-    "Output format (exact headers):",
-    "1) Closer Script:",
-    "2) Questions to Ask:",
-    "3) Two-Option Close:",
-    "4) Text Message Version:",
+    "OUTPUT FORMAT (EXACT):",
+    "1) CLOSE RESPONSE (3–6 short lines, no paragraphs)",
+    "2) LOCK-IN STEP (1 line: the next action in the building right now)",
+    "3) TEXT MESSAGE VERSION (1–2 lines I can text them)",
+    "4) NEXT QUESTION (1 line that forces clarity toward yes)",
   ].join("\n");
 
   const out = await callOpenAI({
     system,
     user,
-    temperature: 0.55,
+    temperature: 0.35,
   });
 
   return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
 });
+
+app.post("/api/ai/message", async (req, res) => {
+  const input = takeText(req.body.input, req.body.text);
+  const channel = takeText(req.body.channel);
+  const goal = takeText(req.body.goal);
+  const ctx = req.body.context || {};
+
+  if (!input && !goal) return jsonErr(res, "Missing input/text");
+
+  const system = [
+    "You are Lot Rocket — AI Message Builder.",
+    "Write concise, human, momentum-driven messages for car sales.",
+    "First-person singular (I/me). No dealership voice. No filler. No placeholders.",
+    "If email: output Subject: and Body:. Otherwise output only the message.",
+  ].join("\n");
+
+  const user = [
+    `CHANNEL: ${channel || "(none)"}`,
+    `GOAL: ${goal || "(none)"}`,
+    "",
+    "INPUT:",
+    input || "",
+    "",
+    "CONTEXT:",
+    JSON.stringify(ctx, null, 2),
+  ].join("\n");
+
+  const out = await callOpenAI({ system, user, temperature: 0.4 });
+  return jsonOk(res, out.ok ? { ok: true, text: out.text } : out);
+});
+
 
 app.post("/api/ai/message", async (req, res) => {
   const input = takeText(req.body.input, req.body.text);
