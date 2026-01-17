@@ -799,16 +799,16 @@ function wireAuthOnce() {
     return document.getElementById("lrManageBilling");
   }
 
-  async function getAccessToken() {
-    try {
-      await initSupabaseOnce(); // ensure SB exists
-      if (!window.SB) return "";
-      const { data } = await SB.auth.getSession();
-      return data?.session?.access_token || "";
-    } catch {
-      return "";
-    }
+async function getAccessToken() {
+  try {
+    await initSupabaseOnce(); // ensures SB exists
+    const { data } = await SB.auth.getSession();
+    return data?.session?.access_token || "";
+  } catch {
+    return "";
   }
+}
+
 
   function writePop(pop, msg) {
     try {
