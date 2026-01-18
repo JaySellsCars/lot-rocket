@@ -1789,62 +1789,86 @@ window.LR_CORE = { runGate, openAuth, openPaywall };
     m.style.removeProperty("pointer-events");
   }
 
-  // ----------------------------
-  // TOP-RIGHT UI SUPPRESSION
-  // Hides logout/chip while a modal is open so it can't cover the X
-  // ----------------------------
-  const TOP_UI_IDS = ["lrUserChip", "lrSignOut", "lrLogoutBtn", "lrManageBilling"];
+// ----------------------------
+// TOP-RIGHT UI SUPPRESSION
+// Hides logout/chip while a modal is open so it can't cover the X
+// ----------------------------
+const TOP_UI_IDS = ["lrUserChip", "lrSignOut", "lrLogoutBtn", "lrManageBilling"];
 
-  function setTopUiSuppressed(on) {
-    TOP_UI_IDS.forEach((id) => {
-      const el = $(id);
-      if (!el) return;
+function setTopUiSuppressed(on) {
+  TOP_UI_IDS.forEach((id) => {
+    const el = $(id);
+    if (!el) return;
 
-      if (on) {
-        if (!el.__LR_TOP_SAVE__) {
-          el.__LR_TOP_SAVE__ = {
-            display: el.style.display,
-            visibility: el.style.visibility,
-            opacity: el.style.opacity,
-            pointerEvents: el.style.pointerEvents,
-            zIndex: el.style.zIndex,
-          };
-        }
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("visibility", "hidden", "important");
-        el.style.setProperty("opacity", "0", "important");
-        el.style.setProperty("pointer-events", "none", "important");
-        el.style.setProperty("z-index", "0", "important");
-      } else {
-        const s = el.__LR_TOP_SAVE__;
-        if (s) {
-          el.style.display = s.display || "";
-          el.style.visibility = s.visibility || "";
-          el.style.opacity = s.opacity || "";
-          el.style.pointerEvents = s.pointerEvents || "";
-          el.style.zIndex = s.zIndex || "";
-        } else {
-          el.style.removeProperty("display");
-          el.style.removeProperty("visibility");
-          el.style.removeProperty("opacity");
-          el.style.removeProperty("pointer-events");
-          el.style.removeProperty("z-index");
-        }
+    if (on) {
+      if (!el.__LR_TOP_SAVE__) {
+        el.__LR_TOP_SAVE__ = {
+          display: el.style.getPropertyValue("display"),
+          displayP: el.style.getPropertyPriority("display"),
+          visibility: el.style.getPropertyValue("visibility"),
+          visibilityP: el.style.getPropertyPriority("visibility"),
+          opacity: el.style.getPropertyValue("opacity"),
+          opacityP: el.style.getPropertyPriority("opacity"),
+          pointerEvents: el.style.getPropertyValue("pointer-events"),
+          pointerEventsP: el.style.getPropertyPriority("pointer-events"),
+          zIndex: el.style.getPropertyValue("z-index"),
+          zIndexP: el.style.getPropertyPriority("z-index"),
+        };
       }
-    });
-  }
 
-  function closeAll() {
-    Object.values(MODAL).forEach(closeModal);
-    setActive(null);
-    setTopUiSuppressed(false);
-  }
+      el.style.setProperty("display", "none", "important");
+      el.style.setProperty("visibility", "hidden", "important");
+      el.style.setProperty("opacity", "0", "important");
+      el.style.setProperty("pointer-events", "none", "important");
+      el.style.setProperty("z-index", "0", "important");
+    } else {
+      const s = el.__LR_TOP_SAVE__;
 
-  function patchAskUi(modalEl) {
-    if (!modalEl || modalEl.__LR_ASK_PATCHED__) return;
-    modalEl.__LR_ASK_PATCHED__ = true;
+      if (s) {
+        // display
+        if (s.display) el.style.setProperty("display", s.display, s.displayP || "");
+        else el.style.removeProperty("display");
 
-    // Title
+        // visibility
+        if (s.visibility) el.style.setProperty("visibility", s.visibility, s.visibilityP || "");
+        else el.style.removeProperty("visibility");
+
+        // opacity
+        if (s.opacity) el.style.setProperty("opacity", s.opacity, s.opacityP || "");
+        else el.style.removeProperty("opacity");
+
+        // pointer-events
+        if (s.pointerEvents) el.style.setProperty("pointer-events", s.pointerEvents, s.pointerEventsP || "");
+        else el.style.removeProperty("pointer-events");
+
+        // z-index
+        if (s.zIndex) el.style.setProperty("z-index", s.zIndex, s.zIndexP || "");
+        else el.style.removeProperty("z-index");
+
+        delete el.__LR_TOP_SAVE__;
+      } else {
+        el.style.removeProperty("display");
+        el.style.removeProperty("visibility");
+        el.style.removeProperty("opacity");
+        el.style.removeProperty("pointer-events");
+        el.style.removeProperty("z-index");
+      }
+    }
+  });
+}
+
+function closeAll() {
+  Object.values(MODAL).forEach(closeModal);
+  setActive(null);
+  setTopUiSuppressed(false);
+}
+
+function patchAskUi(modalEl) {
+  if (!modalEl || modalEl.__LR_ASK_PATCHED__) return;
+  modalEl.__LR_ASK_PATCHED__ = true;
+
+  // Title
+
     const titleEl =
       modalEl.querySelector(".side-modal-title") ||
       modalEl.querySelector(".modal-title") ||
